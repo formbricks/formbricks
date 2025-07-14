@@ -7,9 +7,32 @@ import { H4, Small } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { ClockIcon, MousePointerClickIcon, PercentIcon, Repeat1Icon, UsersIcon } from "lucide-react";
 import Link from "next/link";
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { DocumentationLinksSection } from "./documentation-links-section";
+
+const createDocumentationLinks = (t: any) => [
+  {
+    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#html",
+    title: t("environments.surveys.summary.in_app.html_embed"),
+  },
+  {
+    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-js",
+    title: t("environments.surveys.summary.in_app.javascript_sdk"),
+  },
+  {
+    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#swift",
+    title: t("environments.surveys.summary.in_app.ios_sdk"),
+  },
+  {
+    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#android",
+    title: t("environments.surveys.summary.in_app.kotlin_sdk"),
+  },
+  {
+    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-native",
+    title: t("environments.surveys.summary.in_app.react_native_sdk"),
+  },
+];
 
 interface DisplayCriteriaItemProps {
   icon: ReactNode;
@@ -36,28 +59,7 @@ export const AppTab = () => {
   const { environment, project } = useEnvironment();
   const { survey } = useSurvey();
 
-  const documentationLinks = [
-    {
-      href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#html",
-      title: t("environments.surveys.summary.in_app.html_embed"),
-    },
-    {
-      href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-js",
-      title: t("environments.surveys.summary.in_app.javascript_sdk"),
-    },
-    {
-      href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#swift",
-      title: t("environments.surveys.summary.in_app.ios_sdk"),
-    },
-    {
-      href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#android",
-      title: t("environments.surveys.summary.in_app.kotlin_sdk"),
-    },
-    {
-      href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-native",
-      title: t("environments.surveys.summary.in_app.react_native_sdk"),
-    },
-  ];
+  const documentationLinks = useMemo(() => createDocumentationLinks(t), [t]);
 
   const formatRecontactDaysString = (days: number) => {
     if (days === 0) {
@@ -171,7 +173,7 @@ export const AppTab = () => {
                 description={t("environments.surveys.summary.in_app.display_criteria.trigger_description")}
               />
             ))}
-            {survey.displayPercentage && survey.displayPercentage > 0 && (
+            {survey.displayPercentage !== null && survey.displayPercentage > 0 && (
               <DisplayCriteriaItem
                 icon={<PercentIcon className="h-4 w-4" />}
                 title={t("environments.surveys.summary.in_app.display_criteria.randomizer", {
