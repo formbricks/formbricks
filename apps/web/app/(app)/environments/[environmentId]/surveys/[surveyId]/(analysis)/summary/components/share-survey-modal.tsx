@@ -1,20 +1,12 @@
 "use client";
 
-import { AppTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/AppTab";
-import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
+import { AppTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/app-tab";
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useTranslate } from "@tolgee/react";
-import {
-  Code2Icon,
-  LinkIcon,
-  MailIcon,
-  QrCodeIcon,
-  SmartphoneIcon,
-  SquareStack,
-  UserIcon,
-} from "lucide-react";
+import { Code2Icon, LinkIcon, MailIcon, QrCodeIcon, SquareStack, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
@@ -32,7 +24,6 @@ enum ShareViewType {
   EMAIL = "email",
   WEBSITE_EMBED = "website-embed",
   DYNAMIC_POPUP = "dynamic-popup",
-  APP = "app",
 }
 
 interface ShareSurveyModalProps {
@@ -98,7 +89,7 @@ export const ShareSurveyModal = ({
     [t, isSingleUseLinkSurvey]
   );
 
-  const [activeId, setActiveId] = useState(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
+  const [activeId, setActiveId] = useState(ShareViewType.LINK);
   const [showView, setShowView] = useState<ModalView>(modalView);
   const [surveyUrl, setSurveyUrl] = useState("");
 
@@ -123,7 +114,6 @@ export const ShareSurveyModal = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
     setOpen(open);
     if (!open) {
       setShowView("start");
@@ -191,7 +181,10 @@ export const ShareSurveyModal = ({
       <VisuallyHidden asChild>
         <DialogTitle />
       </VisuallyHidden>
-      <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide" aria-describedby={undefined}>
+      <DialogContent
+        className="w-full bg-white p-0 lg:h-[700px]"
+        width={survey.type === "link" ? "wide" : "default"}
+        aria-describedby={undefined}>
         {renderContent()}
       </DialogContent>
     </Dialog>

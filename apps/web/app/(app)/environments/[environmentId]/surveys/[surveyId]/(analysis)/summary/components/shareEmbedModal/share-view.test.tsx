@@ -4,9 +4,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { ShareView } from "./share-view";
 
 // Mock child components
-vi.mock("./AppTab", () => ({
-  AppTab: () => <div data-testid="app-tab">AppTab Content</div>,
-}));
 vi.mock("./EmailTab", () => ({
   EmailTab: (props: { surveyId: string; email: string }) => (
     <div data-testid="email-tab">
@@ -21,24 +18,17 @@ vi.mock("./LinkTab", () => ({
     </div>
   ),
 }));
-vi.mock("./QRCodeTab", () => ({
+vi.mock("./qr-code-tab", () => ({
   QRCodeTab: (props: { surveyUrl: string }) => (
     <div data-testid="qr-code-tab">QRCodeTab Content for {props.surveyUrl}</div>
   ),
 }));
-vi.mock("./WebsiteTab", () => ({
-  WebsiteTab: (props: { surveyUrl: string; environmentId: string }) => (
-    <div data-testid="website-tab">
-      WebsiteTab Content for {props.surveyUrl} in {props.environmentId}
-    </div>
-  ),
-}));
-
 vi.mock("./WebsiteEmbedTab", () => ({
   WebsiteEmbedTab: (props: { surveyUrl: string }) => (
     <div data-testid="website-embed-tab">WebsiteEmbedTab Content for {props.surveyUrl}</div>
   ),
 }));
+
 vi.mock("./DynamicPopupTab", () => ({
   DynamicPopupTab: (props: { environmentId: string; surveyId: string }) => (
     <div data-testid="dynamic-popup-tab">
@@ -46,7 +36,7 @@ vi.mock("./DynamicPopupTab", () => ({
     </div>
   ),
 }));
-vi.mock("./TabContainer", () => ({
+vi.mock("./tab-container", () => ({
   TabContainer: (props: { children: React.ReactNode; title: string; description: string }) => (
     <div data-testid="tab-container">
       <div data-testid="tab-title">{props.title}</div>
@@ -175,7 +165,11 @@ const mockTabs = [
   { id: "dynamic-popup", label: "Dynamic Popup", icon: () => <div data-testid="dynamic-popup-tab-icon" /> },
   { id: "link", label: "Link", icon: () => <div data-testid="link-tab-icon" /> },
   { id: "qr-code", label: "QR Code", icon: () => <div data-testid="qr-code-tab-icon" /> },
-  { id: "app", label: "App", icon: () => <div data-testid="app-tab-icon" /> },
+  {
+    id: "personal-links",
+    label: "Personal Links",
+    icon: () => <div data-testid="personal-links-tab-icon" />,
+  },
 ];
 
 const mockSurveyLink = {
@@ -243,13 +237,12 @@ describe("ShareView", () => {
     vi.clearAllMocks();
   });
 
-  test("does not render desktop tabs for non-link survey type", () => {
+  test("renders sidebar with tabs for all survey types", () => {
     render(<ShareView {...defaultProps} survey={mockSurveyWeb} />);
 
-    // For non-link survey types, desktop sidebar should not be rendered
-    // Check that SidebarProvider is not rendered by looking for sidebar-specific elements
-    const sidebarLabel = screen.queryByText("Share via");
-    expect(sidebarLabel).toBeNull();
+    // Sidebar should always be rendered regardless of survey type
+    const sidebarLabel = screen.getByText("Share via");
+    expect(sidebarLabel).toBeInTheDocument();
   });
 
   test("renders desktop tabs for link survey type", () => {
@@ -307,9 +300,16 @@ describe("ShareView", () => {
     expect(screen.getByTestId("qr-code-tab")).toBeInTheDocument();
   });
 
-  test("renders AppTab when activeId is 'app'", () => {
-    render(<ShareView {...defaultProps} activeId="app" />);
-    expect(screen.getByTestId("app-tab")).toBeInTheDocument();
+  test("renders nothing when activeId is unknown", () => {
+    render(<ShareView {...defaultProps} activeId="unknown-tab" />);
+
+    // Should not render any tab content for unknown activeId
+    expect(screen.queryByTestId("email-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("website-embed-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dynamic-popup-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("link-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("qr-code-tab")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("personal-links-tab")).not.toBeInTheDocument();
   });
 
   test("renders PersonalLinksTab when activeId is 'personal-links'", () => {
@@ -384,5 +384,28 @@ describe("ShareView", () => {
         "border-transparent text-slate-700 hover:text-slate-900"
       );
     }
+  });
+
+  test("renders all tabs from props", () => {
+    render(<ShareView {...defaultProps} />);
+
+    // Check that all tabs are rendered in the sidebar
+    mockTabs.forEach((tab) => {
+      expect(screen.getByLabelText(tab.label)).toBeInTheDocument();
+    });
+  });
+
+  test("renders responsive buttons for all tabs", () => {
+    render(<ShareView {...defaultProps} />);
+
+    // Check that responsive buttons are rendered for all tabs
+    mockTabs.forEach((tab) => {
+      const responsiveButtons = screen.getAllByTestId(`${tab.id}-tab-icon`);
+      const responsiveButton = responsiveButtons.find((icon) => {
+        const button = icon.closest("button");
+        return button && button.getAttribute("data-variant") === "ghost";
+      });
+      expect(responsiveButton).toBeTruthy();
+    });
   });
 });

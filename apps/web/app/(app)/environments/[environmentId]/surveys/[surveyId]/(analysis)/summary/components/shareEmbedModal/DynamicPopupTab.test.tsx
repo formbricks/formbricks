@@ -21,28 +21,15 @@ vi.mock("@/modules/ui/components/alert", () => ({
   AlertTitle: (props: { children: React.ReactNode }) => <div data-testid="alert-title">{props.children}</div>,
 }));
 
-vi.mock("@/modules/ui/components/button", () => ({
-  Button: (props: { variant?: string; asChild?: boolean; children: React.ReactNode }) => (
-    <div data-testid="button" data-variant={props.variant} data-as-child={props.asChild}>
-      {props.children}
-    </div>
-  ),
-}));
-
-vi.mock("@/modules/ui/components/typography", () => ({
-  H4: (props: { children: React.ReactNode }) => <div data-testid="h4">{props.children}</div>,
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
-vi.mock("lucide-react", () => ({
-  ExternalLinkIcon: (props: { className?: string }) => (
-    <div data-testid="external-link-icon" className={props.className}>
-      ExternalLinkIcon
+// Mock DocumentationLinksSection
+vi.mock("./documentation-links-section", () => ({
+  DocumentationLinksSection: (props: { title: string; links: Array<{ href: string; title: string }> }) => (
+    <div data-testid="documentation-links-section" data-title={props.title}>
+      {props.links.map((link) => (
+        <div key={link.title} data-testid="documentation-link" data-href={link.href} data-title={link.title}>
+          {link.title}
+        </div>
+      ))}
     </div>
   ),
 }));
@@ -56,6 +43,12 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
 describe("DynamicPopupTab", () => {
   afterEach(() => {
     cleanup();
@@ -65,6 +58,13 @@ describe("DynamicPopupTab", () => {
     environmentId: "env-123",
     surveyId: "survey-123",
   };
+
+  test("renders with correct container structure", () => {
+    render(<DynamicPopupTab {...defaultProps} />);
+
+    const container = screen.getByTestId("alert").parentElement;
+    expect(container).toHaveClass("flex", "h-full", "flex-col", "justify-between", "space-y-4");
+  });
 
   test("renders alert with correct props", () => {
     render(<DynamicPopupTab {...defaultProps} />);
@@ -100,79 +100,130 @@ describe("DynamicPopupTab", () => {
     expect(alertButton).toBeInTheDocument();
     expect(alertButton).toHaveAttribute("data-as-child", "true");
 
-    const link = screen.getAllByTestId("next-link")[0];
+    const link = screen.getByTestId("next-link");
     expect(link).toHaveAttribute("href", "/environments/env-123/surveys/survey-123/edit");
     expect(link).toHaveTextContent("environments.surveys.summary.dynamic_popup.alert_button");
   });
 
-  test("renders title with correct text", () => {
+  test("renders DocumentationLinksSection with correct title", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const h4 = screen.getByTestId("h4");
-    expect(h4).toBeInTheDocument();
-    expect(h4).toHaveTextContent("environments.surveys.summary.dynamic_popup.title");
+    const documentationSection = screen.getByTestId("documentation-links-section");
+    expect(documentationSection).toBeInTheDocument();
+    expect(documentationSection).toHaveAttribute(
+      "data-title",
+      "environments.surveys.summary.dynamic_popup.title"
+    );
   });
 
-  test("renders attribute-based targeting documentation button", () => {
+  test("passes correct documentation links to DocumentationLinksSection", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const links = screen.getAllByTestId("next-link");
-    const attributeLink = links.find((link) => link.getAttribute("href")?.includes("advanced-targeting"));
+    const documentationLinks = screen.getAllByTestId("documentation-link");
+    expect(documentationLinks).toHaveLength(3);
 
+    // Check attribute-based targeting link
+    const attributeLink = documentationLinks.find(
+      (link) =>
+        link.getAttribute("data-href") ===
+        "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting"
+    );
     expect(attributeLink).toBeInTheDocument();
     expect(attributeLink).toHaveAttribute(
-      "href",
-      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting"
+      "data-title",
+      "environments.surveys.summary.dynamic_popup.attribute_based_targeting"
     );
-    expect(attributeLink).toHaveAttribute("target", "_blank");
-  });
 
-  test("renders code and no code triggers documentation button", () => {
-    render(<DynamicPopupTab {...defaultProps} />);
-
-    const links = screen.getAllByTestId("next-link");
-    const actionsLink = links.find((link) => link.getAttribute("href")?.includes("actions"));
-
+    // Check code and no code triggers link
+    const actionsLink = documentationLinks.find(
+      (link) =>
+        link.getAttribute("data-href") ===
+        "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions"
+    );
     expect(actionsLink).toBeInTheDocument();
     expect(actionsLink).toHaveAttribute(
-      "href",
-      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions"
+      "data-title",
+      "environments.surveys.summary.dynamic_popup.code_no_code_triggers"
     );
-    expect(actionsLink).toHaveAttribute("target", "_blank");
-  });
 
-  test("renders recontact options documentation button", () => {
-    render(<DynamicPopupTab {...defaultProps} />);
-
-    const links = screen.getAllByTestId("next-link");
-    const recontactLink = links.find((link) => link.getAttribute("href")?.includes("recontact"));
-
+    // Check recontact options link
+    const recontactLink = documentationLinks.find(
+      (link) =>
+        link.getAttribute("data-href") ===
+        "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact"
+    );
     expect(recontactLink).toBeInTheDocument();
     expect(recontactLink).toHaveAttribute(
-      "href",
-      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact"
+      "data-title",
+      "environments.surveys.summary.dynamic_popup.recontact_options"
     );
-    expect(recontactLink).toHaveAttribute("target", "_blank");
   });
 
-  test("all documentation buttons have external link icons", () => {
+  test("renders documentation links with correct titles", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const externalLinkIcons = screen.getAllByTestId("external-link-icon");
-    expect(externalLinkIcons).toHaveLength(3);
+    const documentationLinks = screen.getAllByTestId("documentation-link");
 
-    externalLinkIcons.forEach((icon) => {
-      expect(icon).toHaveClass("h-4 w-4 flex-shrink-0");
+    const expectedTitles = [
+      "environments.surveys.summary.dynamic_popup.attribute_based_targeting",
+      "environments.surveys.summary.dynamic_popup.code_no_code_triggers",
+      "environments.surveys.summary.dynamic_popup.recontact_options",
+    ];
+
+    expectedTitles.forEach((title) => {
+      const link = documentationLinks.find((link) => link.getAttribute("data-title") === title);
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveTextContent(title);
     });
   });
 
-  test("documentation button links open in new tab", () => {
+  test("renders documentation links with correct URLs", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const documentationLinks = screen.getAllByTestId("next-link").slice(1, 4); // Skip the alert button link
+    const documentationLinks = screen.getAllByTestId("documentation-link");
 
-    documentationLinks.forEach((link) => {
-      expect(link).toHaveAttribute("target", "_blank");
+    const expectedUrls = [
+      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
+      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions",
+      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact",
+    ];
+
+    expectedUrls.forEach((url) => {
+      const link = documentationLinks.find((link) => link.getAttribute("data-href") === url);
+      expect(link).toBeInTheDocument();
     });
+  });
+
+  test("calls translation function for all text content", () => {
+    render(<DynamicPopupTab {...defaultProps} />);
+
+    // Check alert translations
+    expect(screen.getByTestId("alert-title")).toHaveTextContent(
+      "environments.surveys.summary.dynamic_popup.alert_title"
+    );
+    expect(screen.getByTestId("alert-description")).toHaveTextContent(
+      "environments.surveys.summary.dynamic_popup.alert_description"
+    );
+    expect(screen.getByTestId("next-link")).toHaveTextContent(
+      "environments.surveys.summary.dynamic_popup.alert_button"
+    );
+
+    // Check documentation section title
+    expect(screen.getByTestId("documentation-links-section")).toHaveAttribute(
+      "data-title",
+      "environments.surveys.summary.dynamic_popup.title"
+    );
+  });
+
+  test("renders with correct props when environmentId and surveyId change", () => {
+    const newProps = {
+      environmentId: "env-456",
+      surveyId: "survey-456",
+    };
+
+    render(<DynamicPopupTab {...newProps} />);
+
+    const link = screen.getByTestId("next-link");
+    expect(link).toHaveAttribute("href", "/environments/env-456/surveys/survey-456/edit");
   });
 });

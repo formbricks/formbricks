@@ -3,7 +3,7 @@
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import { DocumentationLinksSection } from "./DocumentationLinksSection";
+import { DocumentationLinksSection } from "./documentation-links-section";
 
 interface DynamicPopupTabProps {
   environmentId: string;

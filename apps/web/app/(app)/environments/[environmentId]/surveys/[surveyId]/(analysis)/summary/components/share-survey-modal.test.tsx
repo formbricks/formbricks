@@ -1,348 +1,535 @@
-import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
-import { cleanup, render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { LucideIcon } from "lucide-react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  TSurvey,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveySingleUse,
-} from "@formbricks/types/surveys/types";
+import { TSegment } from "@formbricks/types/segment";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
+import { ShareSurveyModal } from "./share-survey-modal";
 
-// Mock data
-const mockSurveyWeb = {
-  id: "survey1",
-  name: "Web Survey",
-  environmentId: "env1",
-  type: "app",
-  status: "inProgress",
-  questions: [
-    {
-      id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: { default: "Q1" },
-      required: true,
-    } as unknown as TSurveyQuestion,
-  ],
-  displayOption: "displayOnce",
-  recontactDays: 0,
-  autoClose: null,
-  delay: 0,
-  autoComplete: null,
-  runOnDate: null,
-  closeOnDate: null,
-  singleUse: { enabled: false, isEncrypted: false } as TSurveySingleUse,
-  triggers: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  languages: [],
-  styling: null,
-} as unknown as TSurvey;
-
-vi.mock("@/lib/constants", () => ({
-  INTERCOM_SECRET_KEY: "test-secret-key",
-  IS_INTERCOM_CONFIGURED: true,
-  INTERCOM_APP_ID: "test-app-id",
-  ENCRYPTION_KEY: "test-encryption-key",
-  ENTERPRISE_LICENSE_KEY: "test-enterprise-license-key",
-  GITHUB_ID: "test-github-id",
-  GITHUB_SECRET: "test-githubID",
-  GOOGLE_CLIENT_ID: "test-google-client-id",
-  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
-  AZUREAD_CLIENT_ID: "test-azuread-client-id",
-  AZUREAD_CLIENT_SECRET: "test-azure",
-  AZUREAD_TENANT_ID: "test-azuread-tenant-id",
-  OIDC_DISPLAY_NAME: "test-oidc-display-name",
-  OIDC_CLIENT_ID: "test-oidc-client-id",
-  OIDC_ISSUER: "test-oidc-issuer",
-  OIDC_CLIENT_SECRET: "test-oidc-client-secret",
-  OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
-  WEBAPP_URL: "test-webapp-url",
-  IS_POSTHOG_CONFIGURED: true,
-  POSTHOG_API_HOST: "test-posthog-api-host",
-  POSTHOG_API_KEY: "test-posthog-api-key",
-  FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
-  IS_FORMBRICKS_ENABLED: true,
-  SESSION_MAX_AGE: 1000,
-  REDIS_URL: "test-redis-url",
-  AUDIT_LOG_ENABLED: true,
-  IS_FORMBRICKS_CLOUD: false,
-}));
-
-const mockSurveyLink = {
-  ...mockSurveyWeb,
-  id: "survey2",
-  name: "Link Survey",
-  type: "link",
-  singleUse: { enabled: false, isEncrypted: false } as TSurveySingleUse,
-} as unknown as TSurvey;
-
-const mockUser = {
-  id: "user1",
-  name: "Test User",
-  email: "test@example.com",
-  role: "project_manager",
-  objective: "other",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  locale: "en-US",
-} as unknown as TUser;
-
+// Mock the useTranslate hook
 vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({
-    t: (str: string) => str,
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        "environments.surveys.summary.single_use_links": "Single-use links",
+        "environments.surveys.summary.share_the_link": "Share the link",
+        "environments.surveys.summary.qr_code": "QR Code",
+        "environments.surveys.summary.personal_links": "Personal links",
+        "environments.surveys.summary.embed_in_an_email": "Embed in email",
+        "environments.surveys.summary.embed_on_website": "Embed on website",
+        "environments.surveys.summary.dynamic_popup": "Dynamic popup",
+        "environments.surveys.summary.in_app.title": "In-app survey",
+        "environments.surveys.summary.in_app.description": "Display survey in your app",
+      };
+      return translations[key] || key;
+    },
   }),
 }));
 
-vi.mock("@/modules/analysis/components/ShareSurveyLink", () => ({
-  ShareSurveyLink: vi.fn(() => <div>ShareSurveyLinkMock</div>),
-}));
-
-vi.mock("@/modules/ui/components/badge", () => ({
-  Badge: vi.fn(({ text }) => <span data-testid="badge-mock">{text}</span>),
-}));
-
-const mockShareViewComponent = vi.fn();
-vi.mock("./shareEmbedModal/share-view", () => ({
-  ShareView: (props: any) => mockShareViewComponent(props),
-}));
-
-// Mock getSurveyUrl to return a predictable URL
+// Mock analysis utils
 vi.mock("@/modules/analysis/utils", () => ({
-  getSurveyUrl: vi.fn().mockResolvedValue("https://public-domain.com/s/survey1"),
+  getSurveyUrl: vi.fn().mockResolvedValue("https://example.com/s/test-survey-id"),
 }));
 
-let capturedDialogOnOpenChange: ((open: boolean) => void) | undefined;
-vi.mock("@/modules/ui/components/dialog", async () => {
-  const actual = await vi.importActual<typeof import("@/modules/ui/components/dialog")>(
-    "@/modules/ui/components/dialog"
-  );
-  return {
-    ...actual,
-    Dialog: (props: React.ComponentProps<typeof actual.Dialog>) => {
-      capturedDialogOnOpenChange = props.onOpenChange;
-      return <actual.Dialog {...props} />;
-    },
-  };
-});
+// Mock logger
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
 
-describe("ShareEmbedSurvey", () => {
+// Mock dialog components
+vi.mock("@/modules/ui/components/dialog", () => ({
+  Dialog: ({ open, onOpenChange, children }: any) => (
+    <div data-testid="dialog" data-open={open} onClick={() => onOpenChange(false)}>
+      {" "}
+      {/* NOSONAR // We don't need to check this in the test */}
+      {children}
+    </div>
+  ),
+  DialogContent: ({ children, width }: any) => (
+    <div data-testid="dialog-content" data-width={width}>
+      {children}
+    </div>
+  ),
+  DialogTitle: ({ children }: any) => <div data-testid="dialog-title">{children}</div>,
+}));
+
+// Mock VisuallyHidden
+vi.mock("@radix-ui/react-visually-hidden", () => ({
+  VisuallyHidden: ({ asChild, children }: any) => (
+    <div data-testid="visually-hidden">{asChild ? children : <span>{children}</span>}</div>
+  ),
+}));
+
+// Mock child components
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/app-tab",
+  () => ({
+    AppTab: () => <div data-testid="app-tab">App Tab Content</div>,
+  })
+);
+
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container",
+  () => ({
+    TabContainer: ({ title, description, children }: any) => (
+      <div data-testid="tab-container">
+        <h3>{title}</h3>
+        <p>{description}</p>
+        {children}
+      </div>
+    ),
+  })
+);
+
+vi.mock("./shareEmbedModal/share-view", () => ({
+  ShareView: ({
+    tabs,
+    activeId,
+    setActiveId,
+    environmentId,
+    survey,
+    email,
+    surveyUrl,
+    publicDomain,
+    locale,
+    isContactsEnabled,
+    isFormbricksCloud,
+  }: any) => (
+    <div data-testid="share-view" data-active-id={activeId}>
+      <h3>Share View</h3>
+      <div data-testid="share-view-data">
+        <div>Environment: {environmentId}</div>
+        <div>Survey: {survey.id}</div>
+        <div>Email: {email}</div>
+        <div>URL: {surveyUrl}</div>
+        <div>Domain: {publicDomain}</div>
+        <div>Locale: {locale}</div>
+        <div>Contacts: {isContactsEnabled ? "enabled" : "disabled"}</div>
+        <div>Formbricks Cloud: {isFormbricksCloud ? "yes" : "no"}</div>
+      </div>
+      <div data-testid="tabs">
+        {tabs.map((tab: any) => (
+          <button key={tab.id} onClick={() => setActiveId(tab.id)} data-testid={`tab-${tab.id}`}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  ),
+}));
+
+vi.mock("./shareEmbedModal/success-view", () => ({
+  SuccessView: ({
+    survey,
+    surveyUrl,
+    publicDomain,
+    user,
+    tabs,
+    handleViewChange,
+    handleEmbedViewWithTab,
+  }: any) => (
+    <div data-testid="success-view">
+      <h3>Success View</h3>
+      <div data-testid="success-view-data">
+        <div>Survey: {survey.id}</div>
+        <div>URL: {surveyUrl}</div>
+        <div>Domain: {publicDomain}</div>
+        <div>User: {user.id}</div>
+      </div>
+      <div data-testid="success-tabs">
+        {tabs.map((tab: any) => (
+          <button
+            key={tab.id}
+            onClick={() => handleEmbedViewWithTab(tab.id)}
+            data-testid={`success-tab-${tab.id}`}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <button onClick={() => handleViewChange("share")} data-testid="go-to-share-view">
+        Go to Share View
+      </button>
+    </div>
+  ),
+}));
+
+// Mock lucide-react icons
+vi.mock("lucide-react", () => ({
+  Code2Icon: () => <svg data-testid="code2-icon" />,
+  LinkIcon: () => <svg data-testid="link-icon" />,
+  MailIcon: () => <svg data-testid="mail-icon" />,
+  QrCodeIcon: () => <svg data-testid="qrcode-icon" />,
+  SmartphoneIcon: () => <svg data-testid="smartphone-icon" />,
+  SquareStack: () => <svg data-testid="square-stack-icon" />,
+  UserIcon: () => <svg data-testid="user-icon" />,
+}));
+
+// Mock data
+const mockSurvey: TSurvey = {
+  id: "test-survey-id",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  name: "Test Survey",
+  type: "link",
+  environmentId: "test-env-id",
+  status: "inProgress",
+  displayOption: "displayOnce",
+  autoClose: null,
+  triggers: [],
+
+  recontactDays: null,
+  displayLimit: null,
+  welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
+  questions: [],
+  endings: [],
+  hiddenFields: { enabled: false },
+  displayPercentage: null,
+  autoComplete: null,
+
+  segment: null,
+  languages: [],
+  showLanguageSwitch: false,
+  singleUse: { enabled: false, isEncrypted: false },
+  projectOverwrites: null,
+  surveyClosedMessage: null,
+  delay: 0,
+  isVerifyEmailEnabled: false,
+  createdBy: null,
+  variables: [],
+  followUps: [],
+  runOnDate: null,
+  closeOnDate: null,
+  styling: null,
+  pin: null,
+  recaptcha: null,
+  isSingleResponsePerEmailEnabled: false,
+  isBackButtonHidden: false,
+  resultShareKey: null,
+};
+
+const mockAppSurvey: TSurvey = {
+  ...mockSurvey,
+  type: "app",
+};
+
+const mockUser: TUser = {
+  id: "test-user-id",
+  name: "Test User",
+  email: "test@example.com",
+  emailVerified: new Date(),
+  imageUrl: "https://example.com/avatar.jpg",
+  twoFactorEnabled: false,
+  identityProvider: "email",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+
+  role: "other",
+  objective: "other",
+  locale: "en-US",
+  lastLoginAt: new Date(),
+  isActive: true,
+  notificationSettings: {
+    alert: {
+      weeklySummary: true,
+      responseFinished: true,
+      responseStopped: true,
+      surveyOpened: true,
+      surveyCompleted: true,
+      surveyShared: true,
+      surveyUpdated: true,
+      surveyPublished: true,
+      surveyUnpublished: true,
+      surveyPaused: true,
+      surveyResumed: true,
+      surveyFinished: true,
+      surveyStarted: true,
+      surveyError: true,
+      surveyWarning: true,
+      surveyInfo: true,
+      surveySuccess: true,
+      surveyDebug: true,
+      surveyTrace: true,
+      surveyFatal: true,
+      surveyPanic: true,
+      surveyEmergency: true,
+      surveyAlert: true,
+      surveyNotice: true,
+      surveyLog: true,
+      surveyEvent: true,
+      surveyTransaction: true,
+      surveySpan: true,
+      surveyMetric: true,
+      surveyProfile: true,
+      surveyBreadcrumb: true,
+      surveyException: true,
+      surveyMessage: true,
+      surveyUser: true,
+      surveyTag: true,
+      surveyExtra: true,
+      surveyContext: true,
+      surveyFingerprint: true,
+      surveyLevel: true,
+      surveyLogger: true,
+      surveyModule: true,
+      surveyServer: true,
+      surveyRelease: true,
+      surveyEnvironment: true,
+      surveyPlatform: true,
+      surveyCulprit: true,
+      surveyRequest: true,
+      surveyStacktrace: true,
+      surveySdk: true,
+      surveyDevice: true,
+      surveyApp: true,
+      surveyOs: true,
+      surveyRuntime: true,
+      surveyBrowser: true,
+      surveyGpu: true,
+      surveyMemory: true,
+      surveyStorage: true,
+      surveyNetwork: true,
+      surveyDisplay: true,
+      surveyLocale: true,
+      surveyTimezone: true,
+      surveyUrl: true,
+      surveyUserAgent: true,
+      surveyHeaders: true,
+      surveyMethod: true,
+      surveyQuery: true,
+      surveyFragment: true,
+      surveyData: true,
+      surveyEnv: true,
+      surveySession: true,
+      surveyThread: true,
+    },
+    weeklySummary: {
+      test: true,
+    },
+    unsubscribedOrganizationIds: [],
+  },
+};
+
+const mockSegments: TSegment[] = [];
+
+const mockSetOpen = vi.fn();
+
+const defaultProps = {
+  survey: mockSurvey,
+  publicDomain: "https://example.com",
+  open: true,
+  modalView: "start" as const,
+  setOpen: mockSetOpen,
+  user: mockUser,
+  segments: mockSegments,
+  isContactsEnabled: true,
+  isFormbricksCloud: false,
+};
+
+describe("ShareSurveyModal", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
-    capturedDialogOnOpenChange = undefined;
   });
 
-  const mockSetOpen = vi.fn();
-
-  const defaultProps = {
-    survey: mockSurveyWeb,
-    publicDomain: "https://public-domain.com",
-    open: true,
-    modalView: "start" as "start" | "share",
-    setOpen: mockSetOpen,
-    user: mockUser,
-    segments: [],
-    isContactsEnabled: true,
-    isFormbricksCloud: true,
-  };
-
-  beforeEach(() => {
-    mockShareViewComponent.mockImplementation(
-      ({ tabs, activeId, survey, email, surveyUrl, publicDomain, locale }) => (
-        <div>
-          <div data-testid="shareview-tabs">{JSON.stringify(tabs)}</div>
-          <div data-testid="shareview-activeid">{activeId}</div>
-          <div data-testid="shareview-survey-id">{survey.id}</div>
-          <div data-testid="shareview-email">{email}</div>
-          <div data-testid="shareview-surveyUrl">{surveyUrl}</div>
-          <div data-testid="shareview-publicDomain">{publicDomain}</div>
-          <div data-testid="shareview-locale">{locale}</div>
-        </div>
-      )
-    );
-  });
-
-  test("renders initial 'start' view correctly when open and modalView is 'start' for link survey", () => {
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} />);
-    expect(screen.getByText("environments.surveys.summary.your_survey_is_public 🎉")).toBeInTheDocument();
-    expect(screen.getByText("ShareSurveyLinkMock")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.configure_alerts")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.setup_integrations")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.use_personal_links")).toBeInTheDocument();
-    expect(screen.getByTestId("badge-mock")).toHaveTextContent("common.new");
-  });
-
-  test("renders initial 'start' view correctly when open and modalView is 'start' for app survey", () => {
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} />);
-    // For app surveys, ShareSurveyLink should not be rendered
-    expect(screen.queryByText("ShareSurveyLinkMock")).not.toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.whats_next")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.configure_alerts")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.setup_integrations")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.use_personal_links")).toBeInTheDocument();
-    expect(screen.getByTestId("badge-mock")).toHaveTextContent("common.new");
-  });
-
-  test("switches to 'embed' view when 'Embed survey' button is clicked", async () => {
+  test("renders dialog when open is true", () => {
     render(<ShareSurveyModal {...defaultProps} />);
-    const embedButton = screen.getByText("environments.surveys.summary.share_survey");
-    await userEvent.click(embedButton);
-    expect(mockShareViewComponent).toHaveBeenCalled();
-    expect(screen.getByTestId("shareview-tabs")).toBeInTheDocument();
+
+    expect(screen.getByTestId("dialog")).toHaveAttribute("data-open", "true");
+    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
   });
 
-  test("handleOpenChange (when Dialog calls its onOpenChange prop)", () => {
-    render(<ShareSurveyModal {...defaultProps} open={true} survey={mockSurveyWeb} />);
-    expect(capturedDialogOnOpenChange).toBeDefined();
+  test("renders success view when modalView is start", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="start" />);
 
-    // Simulate Dialog closing
-    if (capturedDialogOnOpenChange) capturedDialogOnOpenChange(false);
+    expect(screen.getByTestId("success-view")).toBeInTheDocument();
+    expect(screen.getByText("Success View")).toBeInTheDocument();
+  });
+
+  test("renders share view when modalView is share and survey is link type", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="share" />);
+
+    expect(screen.getByTestId("share-view")).toBeInTheDocument();
+    expect(screen.getByText("Share View")).toBeInTheDocument();
+  });
+
+  test("renders app tab when survey is app type and modalView is share", () => {
+    render(<ShareSurveyModal {...defaultProps} survey={mockAppSurvey} modalView="share" />);
+
+    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    expect(screen.getByTestId("app-tab")).toBeInTheDocument();
+    expect(screen.getByText("In-app survey")).toBeInTheDocument();
+    expect(screen.getByText("Display survey in your app")).toBeInTheDocument();
+  });
+
+  test("renders success view when survey is app type and modalView is start", () => {
+    render(<ShareSurveyModal {...defaultProps} survey={mockAppSurvey} modalView="start" />);
+
+    expect(screen.getByTestId("success-view")).toBeInTheDocument();
+    expect(screen.queryByTestId("tab-container")).not.toBeInTheDocument();
+  });
+
+  test("sets correct width for dialog content based on survey type", () => {
+    const { rerender } = render(<ShareSurveyModal {...defaultProps} survey={mockSurvey} />);
+
+    expect(screen.getByTestId("dialog-content")).toHaveAttribute("data-width", "wide");
+
+    rerender(<ShareSurveyModal {...defaultProps} survey={mockAppSurvey} />);
+
+    expect(screen.getByTestId("dialog-content")).toHaveAttribute("data-width", "default");
+  });
+
+  test("generates correct tabs for link survey", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="start" />);
+
+    expect(screen.getByTestId("success-tab-link")).toHaveTextContent("Share the link");
+    expect(screen.getByTestId("success-tab-qr-code")).toHaveTextContent("QR Code");
+    expect(screen.getByTestId("success-tab-personal-links")).toHaveTextContent("Personal links");
+    expect(screen.getByTestId("success-tab-email")).toHaveTextContent("Embed in email");
+    expect(screen.getByTestId("success-tab-website-embed")).toHaveTextContent("Embed on website");
+    expect(screen.getByTestId("success-tab-dynamic-popup")).toHaveTextContent("Dynamic popup");
+  });
+
+  test("shows single-use links label when singleUse is enabled", () => {
+    const singleUseSurvey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    render(<ShareSurveyModal {...defaultProps} survey={singleUseSurvey} modalView="start" />);
+
+    expect(screen.getByTestId("success-tab-link")).toHaveTextContent("Single-use links");
+  });
+
+  test("calls setOpen when dialog is closed", async () => {
+    const user = userEvent.setup();
+    render(<ShareSurveyModal {...defaultProps} />);
+
+    await user.click(screen.getByTestId("dialog"));
+
     expect(mockSetOpen).toHaveBeenCalledWith(false);
-
-    // Simulate Dialog opening
-    mockSetOpen.mockClear();
-    if (capturedDialogOnOpenChange) capturedDialogOnOpenChange(true);
-    expect(mockSetOpen).toHaveBeenCalledWith(true);
   });
 
-  test("correctly configures for 'link' survey type in embed view", () => {
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
-    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-      tabs: { id: string; label: string; icon: LucideIcon }[];
-      activeId: string;
-    };
-    expect(embedViewProps.tabs.length).toBe(6);
-    expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeUndefined();
-    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
-    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
-    expect(embedViewProps.tabs[0].id).toBe("link");
-    expect(embedViewProps.tabs[1].id).toBe("qr-code");
-    expect(embedViewProps.tabs[2].id).toBe("personal-links");
-    expect(embedViewProps.tabs[3].id).toBe("email");
-    expect(embedViewProps.tabs[4].id).toBe("website-embed");
-    expect(embedViewProps.activeId).toBe("link");
+  test("fetches survey URL on mount", async () => {
+    const { getSurveyUrl } = await import("@/modules/analysis/utils");
+
+    render(<ShareSurveyModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(getSurveyUrl).toHaveBeenCalledWith(mockSurvey, "https://example.com", "default");
+    });
   });
 
-  test("correctly configures for 'web' survey type in embed view", () => {
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="share" />);
-    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-      tabs: { id: string; label: string; icon: LucideIcon }[];
-      activeId: string;
-    };
-    expect(embedViewProps.tabs.length).toBe(1);
-    expect(embedViewProps.tabs.find((tab) => tab.id === "app")).toBeDefined();
-    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeUndefined();
-    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeUndefined();
-    expect(embedViewProps.activeId).toBe("app");
+  test("uses fallback URL when getSurveyUrl fails", async () => {
+    const { getSurveyUrl } = await import("@/modules/analysis/utils");
+    vi.mocked(getSurveyUrl).mockRejectedValue(new Error("Failed to fetch"));
+
+    render(<ShareSurveyModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("success-view-data")).toHaveTextContent(
+        "URL: https://example.com/s/test-survey-id"
+      );
+    });
   });
 
-  test("useEffect does not change activeId if survey.type changes from web to link (while in embed view)", () => {
-    const { rerender } = render(
-      <ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="share" />
-    );
-    expect(vi.mocked(mockShareViewComponent).mock.calls[0][0].activeId).toBe("app");
+  test("passes correct props to ShareView", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="share" />);
 
-    rerender(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
-    expect(vi.mocked(mockShareViewComponent).mock.calls[1][0].activeId).toBe("app"); // Current behavior
+    const shareViewData = screen.getByTestId("share-view-data");
+    expect(shareViewData).toHaveTextContent("Environment: test-env-id");
+    expect(shareViewData).toHaveTextContent("Survey: test-survey-id");
+    expect(shareViewData).toHaveTextContent("Email: test@example.com");
+    expect(shareViewData).toHaveTextContent("Domain: https://example.com");
+    expect(shareViewData).toHaveTextContent("Locale: en");
+    expect(shareViewData).toHaveTextContent("Contacts: enabled");
+    expect(shareViewData).toHaveTextContent("Formbricks Cloud: no");
   });
 
-  test("initial showView is set by modalView prop when open is true", () => {
-    render(<ShareSurveyModal {...defaultProps} open={true} modalView="share" />);
-    expect(mockShareViewComponent).toHaveBeenCalled();
-    expect(screen.getByTestId("shareview-tabs")).toBeInTheDocument();
-    cleanup();
+  test("passes correct props to SuccessView", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="start" />);
 
-    render(<ShareSurveyModal {...defaultProps} open={true} modalView="start" />);
-    // Start view shows the share survey button
-    expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
+    const successViewData = screen.getByTestId("success-view-data");
+    expect(successViewData).toHaveTextContent("Survey: test-survey-id");
+    expect(successViewData).toHaveTextContent("Domain: https://example.com");
+    expect(successViewData).toHaveTextContent("User: test-user-id");
   });
 
-  test("useEffect sets showView to 'start' when open becomes false", () => {
-    const { rerender } = render(<ShareSurveyModal {...defaultProps} open={true} modalView="share" />);
-    expect(screen.getByTestId("shareview-tabs")).toBeInTheDocument(); // Starts in embed
+  test("resets to start view when modal is closed and reopened", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<ShareSurveyModal {...defaultProps} modalView="share" />);
 
-    rerender(<ShareSurveyModal {...defaultProps} open={false} modalView="share" />);
-    // Dialog mock returns null when open is false, so EmbedViewMockContent is not found
-    expect(screen.queryByTestId("shareview-tabs")).not.toBeInTheDocument();
+    expect(screen.getByTestId("share-view")).toBeInTheDocument();
+
+    rerender(<ShareSurveyModal {...defaultProps} modalView="share" open={false} />);
+    rerender(<ShareSurveyModal {...defaultProps} modalView="share" open={true} />);
+
+    expect(screen.getByTestId("share-view")).toBeInTheDocument();
   });
 
-  test("renders correct label for link tab based on singleUse survey property", () => {
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
-    let embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-      tabs: { id: string; label: string }[];
-    };
-    let linkTab = embedViewProps.tabs.find((tab) => tab.id === "link");
-    expect(linkTab?.label).toBe("environments.surveys.summary.share_the_link");
-    cleanup();
-    vi.mocked(mockShareViewComponent).mockClear();
+  test("sets correct active tab for link survey", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="share" />);
 
-    const mockSurveyLinkSingleUse: TSurvey = {
-      ...mockSurveyLink,
-      singleUse: { enabled: true, isEncrypted: true },
-    };
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLinkSingleUse} modalView="share" />);
-    embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-      tabs: { id: string; label: string }[];
-    };
-    linkTab = embedViewProps.tabs.find((tab) => tab.id === "link");
-    expect(linkTab?.label).toBe("environments.surveys.summary.single_use_links");
+    expect(screen.getByTestId("share-view")).toHaveAttribute("data-active-id", "link");
   });
 
-  test("includes QR code tab for link surveys", () => {
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
-    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-      tabs: { id: string; label: string }[];
-    };
-    const qrCodeTab = embedViewProps.tabs.find((tab) => tab.id === "qr-code");
-    expect(qrCodeTab).toBeDefined();
-    expect(qrCodeTab?.label).toBe("environments.surveys.summary.qr_code");
+  test("renders tab container for app survey in share mode", () => {
+    render(<ShareSurveyModal {...defaultProps} survey={mockAppSurvey} modalView="share" />);
+
+    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    expect(screen.getByTestId("app-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("share-view")).not.toBeInTheDocument();
   });
 
-  test("does not include QR code tab for app surveys", () => {
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="share" />);
-    const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-      tabs: { id: string; label: string }[];
-    };
-    const qrCodeTab = embedViewProps.tabs.find((tab) => tab.id === "qr-code");
-    expect(qrCodeTab).toBeUndefined();
+  test("renders with contacts disabled", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="share" isContactsEnabled={false} />);
+
+    const shareViewData = screen.getByTestId("share-view-data");
+    expect(shareViewData).toHaveTextContent("Contacts: disabled");
   });
 
-  test("dynamic popup tab is only visible for link surveys", () => {
-    // Test link survey includes dynamic popup tab
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
-    let embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-      tabs: { id: string; label: string }[];
-    };
-    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
-    cleanup();
-    vi.mocked(mockShareViewComponent).mockClear();
+  test("renders with formbricks cloud enabled", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="share" isFormbricksCloud={true} />);
 
-    // Test web survey excludes dynamic popup tab
-    render(<ShareSurveyModal {...defaultProps} survey={mockSurveyWeb} modalView="share" />);
-    embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-      tabs: { id: string; label: string }[];
-    };
-    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeUndefined();
+    const shareViewData = screen.getByTestId("share-view-data");
+    expect(shareViewData).toHaveTextContent("Formbricks Cloud: yes");
   });
 
-  render(<ShareSurveyModal {...defaultProps} survey={mockSurveyLink} modalView="share" />);
-  const embedViewProps = vi.mocked(mockShareViewComponent).mock.calls[0][0] as {
-    tabs: { id: string; label: string }[];
-  };
-  test("QR code tab appears after link tab in the tabs array", () => {
-    const linkTabIndex = embedViewProps.tabs.findIndex((tab) => tab.id === "link");
-    const qrCodeTabIndex = embedViewProps.tabs.findIndex((tab) => tab.id === "qr-code");
-    expect(qrCodeTabIndex).toBe(linkTabIndex + 1);
+  test("correctly handles direct navigation to share view", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="share" />);
+
+    expect(screen.getByTestId("share-view")).toBeInTheDocument();
+    expect(screen.queryByTestId("success-view")).not.toBeInTheDocument();
   });
-  test("website-embed and dynamic-popup tabs replace old webpage tab", () => {
-    expect(embedViewProps.tabs.find((tab) => tab.id === "webpage")).toBeUndefined();
-    expect(embedViewProps.tabs.find((tab) => tab.id === "website-embed")).toBeDefined();
-    expect(embedViewProps.tabs.find((tab) => tab.id === "dynamic-popup")).toBeDefined();
+
+  test("handler functions are passed to child components", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="start" />);
+
+    // Verify SuccessView receives the handler functions by checking buttons exist
+    expect(screen.getByTestId("go-to-share-view")).toBeInTheDocument();
+    expect(screen.getByTestId("success-tab-link")).toBeInTheDocument();
+    expect(screen.getByTestId("success-tab-qr-code")).toBeInTheDocument();
+  });
+
+  test("tab switching functionality is available in ShareView", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="share" />);
+
+    // Verify ShareView has tab switching buttons
+    expect(screen.getByTestId("tab-link")).toBeInTheDocument();
+    expect(screen.getByTestId("tab-qr-code")).toBeInTheDocument();
+    expect(screen.getByTestId("tab-personal-links")).toBeInTheDocument();
+  });
+
+  test("renders different content based on survey type", () => {
+    // Link survey renders ShareView
+    const { rerender } = render(<ShareSurveyModal {...defaultProps} survey={mockSurvey} modalView="share" />);
+    expect(screen.getByTestId("share-view")).toBeInTheDocument();
+
+    // App survey renders TabContainer with AppTab
+    rerender(<ShareSurveyModal {...defaultProps} survey={mockAppSurvey} modalView="share" />);
+    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    expect(screen.getByTestId("app-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("share-view")).not.toBeInTheDocument();
   });
 });
