@@ -89,7 +89,7 @@ export const ShareSurveyModal = ({
     [t, isSingleUseLinkSurvey]
   );
 
-  const [activeId, setActiveId] = useState(ShareViewType.LINK);
+  const [activeId, setActiveId] = useState(ShareViewType.LINK as string);
   const [showView, setShowView] = useState<ModalView>(modalView);
   const [surveyUrl, setSurveyUrl] = useState("");
 
@@ -117,6 +117,7 @@ export const ShareSurveyModal = ({
     setOpen(open);
     if (!open) {
       setShowView("start");
+      setActiveId(ShareViewType.LINK);
     }
   };
 
@@ -124,7 +125,7 @@ export const ShareSurveyModal = ({
     setShowView(view);
   };
 
-  const handleEmbedViewWithTab = (tabId: ShareViewType) => {
+  const handleEmbedViewWithTab = (tabId: string) => {
     setShowView("share");
     setActiveId(tabId);
   };

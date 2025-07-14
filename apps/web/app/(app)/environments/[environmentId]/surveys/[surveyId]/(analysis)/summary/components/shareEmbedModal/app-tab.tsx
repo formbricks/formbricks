@@ -166,7 +166,7 @@ export const AppTab = () => {
             <DisplayCriteriaItem
               icon={<UsersIcon className="h-4 w-4" />}
               title={
-                survey.segment?.filters?.length && survey.segment.filters.length > 0
+                (survey.segment?.filters?.length ?? 0) > 0
                   ? t("environments.surveys.summary.in_app.display_criteria.targeted")
                   : t("environments.surveys.summary.in_app.display_criteria.everyone")
               }
