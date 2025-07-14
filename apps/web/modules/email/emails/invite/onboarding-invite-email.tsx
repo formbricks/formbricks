@@ -22,9 +22,11 @@ export async function OnboardingInviteEmail({
     <EmailTemplate t={t}>
       <Container>
         <Heading>{t("emails.onboarding_invite_email_heading", { inviteeName })}</Heading>
-        <Text>{inviteMessage}</Text>
-        <Text className="font-medium">{t("emails.onboarding_invite_email_get_started_in_minutes")}</Text>
-        <ol>
+        <Text className="text-sm">{inviteMessage}</Text>
+        <Text className="text-sm font-medium">
+          {t("emails.onboarding_invite_email_get_started_in_minutes")}
+        </Text>
+        <ol className="text-sm">
           <li>{t("emails.onboarding_invite_email_create_account", { inviterName })}</li>
           <li>{t("emails.onboarding_invite_email_connect_formbricks")}</li>
           <li>{t("emails.onboarding_invite_email_done")} ✅</li>

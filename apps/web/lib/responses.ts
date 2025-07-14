@@ -1,7 +1,7 @@
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
-import { getLocalizedValue } from "./i18n/utils";
+import { getLanguageCode, getLocalizedValue } from "./i18n/utils";
 
 // function to convert response value of type string | number | string[] or Record<string, string> to string | string[]
 export const convertResponseValue = (
@@ -39,12 +39,14 @@ export const getQuestionResponseMapping = (
     response: string | string[];
     type: TSurveyQuestionType;
   }[] = [];
+  const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+
   for (const question of survey.questions) {
     const answer = response.data[question.id];
 
     questionResponseMapping.push({
       question: parseRecallInfo(
-        getLocalizedValue(question.headline, response.language ?? "default"),
+        getLocalizedValue(question.headline, responseLanguageCode ?? "default"),
         response.data
       ),
       response: convertResponseValue(answer, question),

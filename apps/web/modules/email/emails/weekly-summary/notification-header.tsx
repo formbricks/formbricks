@@ -21,14 +21,14 @@ export async function NotificationHeader({
   const getNotificationHeaderimePeriod = (): React.JSX.Element => {
     if (startYear === endYear) {
       return (
-        <Text className="m-0 text-right">
+        <Text className="m-0 text-right text-sm">
           {startDate} - {endDate} {endYear}
         </Text>
       );
     }
 
     return (
-      <Text className="m-0 text-right">
+      <Text className="m-0 text-right text-sm">
         {startDate} {startYear} - {endDate} {endYear}
       </Text>
     );
@@ -40,7 +40,7 @@ export async function NotificationHeader({
           <Heading className="m-0">{t("emails.notification_header_hey")}</Heading>
         </div>
         <div className="float-right">
-          <Text className="m-0 text-right font-semibold">
+          <Text className="m-0 text-right text-sm font-medium">
             {t("emails.notification_header_weekly_report_for")} {projectName}
           </Text>
           {getNotificationHeaderimePeriod()}
