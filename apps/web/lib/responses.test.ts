@@ -9,6 +9,11 @@ vi.mock("@/lib/utils/recall", () => ({
 
 vi.mock("./i18n/utils", () => ({
   getLocalizedValue: vi.fn((obj, lang) => obj[lang] || obj.default),
+  getLanguageCode: vi.fn((surveyLanguages, languageCode) => {
+    if (!surveyLanguages?.length || !languageCode) return "default";
+    const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
+    return language?.default ? "default" : language?.language.code || "default";
+  }),
 }));
 
 describe("Response Processing", () => {
@@ -318,6 +323,32 @@ describe("Response Processing", () => {
             inputType: "text" as const,
             longAnswer: false,
             charLimit: { enabled: false },
+          },
+        ],
+        languages: [
+          {
+            language: {
+              id: "lang1",
+              code: "default",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              alias: null,
+              projectId: "proj1",
+            },
+            default: true,
+            enabled: true,
+          },
+          {
+            language: {
+              id: "lang2",
+              code: "en",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              alias: null,
+              projectId: "proj1",
+            },
+            default: false,
+            enabled: true,
           },
         ],
       };
