@@ -10,8 +10,6 @@ import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { AppTab } from "./app-tab";
 
-// Mock the useTranslate hook
-
 // Mock Next.js Link component
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: any) => (
