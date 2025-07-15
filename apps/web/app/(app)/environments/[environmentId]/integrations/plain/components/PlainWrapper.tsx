@@ -60,7 +60,6 @@ export const PlainWrapper = ({
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
             locale={locale}
-            handlePlainAuthorization={handlePlainAuthorization}
           />
         </>
       ) : (

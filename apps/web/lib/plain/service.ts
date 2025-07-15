@@ -15,12 +15,11 @@ export const writeData = async (
   integrationConfig: TIntegrationPlainConfigData
 ): Promise<Result<void, Error>> => {
   try {
-    // Decrypt the API key
     const decryptedToken = symmetricDecrypt(config.key, ENCRYPTION_KEY!);
     const client = new PlainClient({
       apiKey: decryptedToken,
     });
-
+    console.log("decryptedToken", decryptedToken);
     const titleId = integrationConfig.mapping.find((m) => m.plainField.id === "threadTitle")?.question.id;
 
     const componentTextId = integrationConfig.mapping.find((m) => m.plainField.id === "componentText")

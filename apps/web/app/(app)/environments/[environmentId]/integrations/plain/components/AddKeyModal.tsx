@@ -52,7 +52,7 @@ export const AddKeyModal = ({
             <Input
               id="keyLabel"
               name="keyLabel"
-              placeholder={t("environments.integrations.plain.api_key_label_placeholder")}
+              placeholder="plainApiKey_123"
               value={keyLabel}
               onChange={(e) => setKeyLabel(e.target.value)}
               className="w-full"

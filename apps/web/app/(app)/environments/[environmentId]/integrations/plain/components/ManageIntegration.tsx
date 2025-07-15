@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationPlain, TIntegrationPlainConfigData } from "@formbricks/types/integration/plain";
 import { TUserLocale } from "@formbricks/types/user";
+import { AddKeyModal } from "./AddKeyModal";
 
 interface ManageIntegrationProps {
   environment: TEnvironment;
@@ -24,7 +25,6 @@ interface ManageIntegrationProps {
     React.SetStateAction<(TIntegrationPlainConfigData & { index: number }) | null>
   >;
   locale: TUserLocale;
-  handlePlainAuthorization: () => void;
 }
 
 export const ManageIntegration = ({
@@ -34,10 +34,10 @@ export const ManageIntegration = ({
   setIsConnected,
   setSelectedIntegration,
   locale,
-  handlePlainAuthorization,
 }: ManageIntegrationProps) => {
   const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
 
   let integrationArray: TIntegrationPlainConfigData[] = [];
@@ -79,7 +79,7 @@ export const ManageIntegration = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" onClick={handlePlainAuthorization}>
+              <Button variant="outline" onClick={() => setIsKeyModalOpen(true)}>
                 <RefreshCcwIcon className="mr-2 h-4 w-4" />
                 {t("environments.integrations.plain.update_connection")}
               </Button>
@@ -138,6 +138,8 @@ export const ManageIntegration = ({
         <Trash2Icon />
         {t("environments.integrations.delete_integration")}
       </Button>
+
+      <AddKeyModal environmentId={environment.id} open={isKeyModalOpen} setOpen={setIsKeyModalOpen} />
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
