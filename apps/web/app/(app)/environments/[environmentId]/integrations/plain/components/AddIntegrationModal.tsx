@@ -64,7 +64,7 @@ export const AddIntegrationModal = ({
     }[]
   >([
     {
-      plainField: { id: "threadTitle", name: "Thread Title", type: "threadField" },
+      plainField: { id: "threadTitle", name: "Thread Title", type: "title" },
       question: { id: "", name: "", type: "" },
       isMandatory: true,
     },
@@ -334,7 +334,7 @@ export const AddIntegrationModal = ({
     setLabelIdValues({});
     setMapping([
       {
-        plainField: { id: "threadTitle", name: "Thread Title", type: "threadField" },
+        plainField: { id: "threadTitle", name: "Thread Title", type: "title" },
         question: { id: "", name: "", type: "" },
         isMandatory: true,
       },

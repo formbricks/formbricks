@@ -80,7 +80,7 @@ export const writeData = async (
     });
 
     // Create a thread on Plain
-    const thread = await client.createThread({
+    await client.createThread({
       title: title,
       customerIdentifier: {
         emailAddress: email,
@@ -94,7 +94,6 @@ export const writeData = async (
       ],
       ...(labelId ? { labelTypeIds: [labelId] } : {}),
     });
-    console.log(thread);
     return ok(undefined);
   } catch (error) {
     logger.error("Exception in Plain writeData function", { error });

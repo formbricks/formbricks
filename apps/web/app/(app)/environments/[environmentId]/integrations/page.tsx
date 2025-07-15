@@ -51,6 +51,7 @@ const Page = async (props) => {
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
+  const isPlainIntegrationConnected = isIntegrationConnected("plain");
   const isAirtableIntegrationConnected = isIntegrationConnected("airtable");
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
   const isSlackIntegrationConnected = isIntegrationConnected("slack");
@@ -213,18 +214,13 @@ const Page = async (props) => {
       docsText: t("common.docs"),
       docsNewTab: true,
       connectHref: `/environments/${params.environmentId}/integrations/plain`,
-      connectText: t("common.connect"),
+      connectText: `${isPlainIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
       label: "Plain",
       description: t("environments.integrations.plain.plain_integration_description"),
       icon: <Image src={PlainCom} alt="Plain.com Logo" />,
-      connected: activePiecesWebhookCount > 0,
-      statusText:
-        activePiecesWebhookCount === 1
-          ? `1 ${t("common.integration")}`
-          : activePiecesWebhookCount === 0
-            ? t("common.not_connected")
-            : `${activePiecesWebhookCount} ${t("common.integrations")}`,
+      connected: isPlainIntegrationConnected,
+      statusText: isPlainIntegrationConnected ? t("common.connected") : t("common.not_connected"),
       disabled: isReadOnly,
     },
   ];

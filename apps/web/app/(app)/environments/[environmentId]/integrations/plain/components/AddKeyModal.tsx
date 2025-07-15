@@ -80,7 +80,7 @@ export const AddKeyModal = ({
                   setIsSubmitting(false);
                 }
               }}>
-              {isSubmitting ? t("common.connecting") : t("common.connect")}
+              {t("common.connect")}
             </Button>
           </div>
         </div>

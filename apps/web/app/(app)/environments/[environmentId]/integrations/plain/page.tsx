@@ -14,7 +14,6 @@ import { TIntegrationPlain } from "@formbricks/types/integration/plain";
 const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
-  const enabled = true; // Plain integration is always enabled
 
   const { isReadOnly, environment } = await getEnvironmentAuth(params.environmentId);
 
@@ -23,7 +22,6 @@ const Page = async (props) => {
     getIntegrationByType(params.environmentId, "plain"),
   ]);
 
-  // Plain integration doesn't need databases like Notion does
   const databasesArray = [];
   const locale = await findMatchingLocale();
 
@@ -36,7 +34,7 @@ const Page = async (props) => {
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
       <PageHeader pageTitle={t("environments.integrations.plain.plain_integration") || "Plain Integration"} />
       <PlainWrapper
-        enabled={enabled}
+        enabled={true}
         surveys={surveys}
         environment={environment}
         plainIntegration={plainIntegration as TIntegrationPlain}
