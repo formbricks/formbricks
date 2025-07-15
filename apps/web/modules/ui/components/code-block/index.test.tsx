@@ -118,4 +118,39 @@ describe("CodeBlock", () => {
     expect(codeElement).toHaveClass(`language-${language}`);
     expect(codeElement).toHaveClass(customCodeClass);
   });
+
+  test("applies no margin class when noMargin is true", () => {
+    const codeSnippet = "const test = 'no margin';";
+    const language = "javascript";
+    render(
+      <CodeBlock language={language} noMargin>
+        {codeSnippet}
+      </CodeBlock>
+    );
+
+    const containerElement = screen.getByText(codeSnippet).closest("div");
+    expect(containerElement).not.toHaveClass("mt-4");
+  });
+
+  test("applies default margin class when noMargin is false", () => {
+    const codeSnippet = "const test = 'with margin';";
+    const language = "javascript";
+    render(
+      <CodeBlock language={language} noMargin={false}>
+        {codeSnippet}
+      </CodeBlock>
+    );
+
+    const containerElement = screen.getByText(codeSnippet).closest("div");
+    expect(containerElement).toHaveClass("mt-4");
+  });
+
+  test("applies default margin class when noMargin is undefined", () => {
+    const codeSnippet = "const test = 'default margin';";
+    const language = "javascript";
+    render(<CodeBlock language={language}>{codeSnippet}</CodeBlock>);
+
+    const containerElement = screen.getByText(codeSnippet).closest("div");
+    expect(containerElement).toHaveClass("mt-4");
+  });
 });
