@@ -479,13 +479,6 @@
     "notification_insight_displays": "Affichages",
     "notification_insight_responses": "Réponses",
     "notification_insight_surveys": "Enquêtes",
-    "onboarding_invite_email_button_label": "Rejoins l'organisation de {inviterName}",
-    "onboarding_invite_email_connect_formbricks": "Connectez Formbricks à votre application ou site web via un extrait HTML ou NPM en quelques minutes seulement.",
-    "onboarding_invite_email_create_account": "Créez un compte pour rejoindre l'organisation de {inviterName}.",
-    "onboarding_invite_email_done": "Fait ✅",
-    "onboarding_invite_email_get_started_in_minutes": "Commencez en quelques minutes",
-    "onboarding_invite_email_heading": "Salut ",
-    "onboarding_invite_email_subject": "{inviterName} a besoin d'aide pour configurer Formbricks. Peux-tu l'aider ?",
     "password_changed_email_heading": "Mot de passe changé",
     "password_changed_email_text": "Votre mot de passe a été changé avec succès.",
     "password_reset_notify_email_subject": "Ton mot de passe Formbricks a été changé",
@@ -1724,7 +1717,6 @@
           "single_use_link_description": "Autoriser uniquement une réponse par lien d'enquête",
           "single_use_links": "Liens à usage unique",
           "source_tracking": "Suivi des sources",
-          "title": "Partagez votre enquête pour recueillir des réponses",
           "url_encryption_description": "Désactiver seulement si vous devez définir un identifiant unique personnalisé",
           "url_encryption_label": "Cryptage de l'identifiant à usage unique dans l'URL"
         },
@@ -1736,8 +1728,7 @@
           "code_no_code_triggers": "Déclencheurs avec et sans code",
           "description": "Les enquêtes Formbricks peuvent être intégrées sous forme de pop-up, en fonction de l'interaction de l'utilisateur.",
           "nav_title": "Dynamique (Pop-up)",
-          "recontact_options": "Options de recontact",
-          "title": "Interceptez les utilisateurs dans leur flux pour recueillir des retours contextualisés"
+          "recontact_options": "Options de recontact"
         },
         "embed_on_website": {
           "description": "Les enquêtes Formbricks peuvent être intégrées comme élément statique.",
@@ -1745,8 +1736,7 @@
           "embed_in_app": "Intégrer dans l'application",
           "embed_mode": "Mode d'intégration",
           "embed_mode_description": "Intégrez votre enquête avec un design minimaliste, en supprimant les marges et l'arrière-plan.",
-          "nav_title": "Incorporer sur le site web",
-          "title": "Intégrez le sondage sur votre page web"
+          "nav_title": "Incorporer sur le site web"
         },
         "personal_links": {
           "create_and_manage_segments": "Créez et gérez vos Segments sous Contacts > Segments",
@@ -1760,7 +1750,6 @@
           "nav_title": "Liens personnels",
           "no_segments_available": "Aucun segment disponible",
           "select_segment": "Sélectionner le segment",
-          "title": "Maximisez les insights avec des liens d'enquête personnels",
           "upgrade_prompt_description": "Générez des liens personnels pour un segment et associez les réponses du sondage à chaque contact.",
           "upgrade_prompt_title": "Utilisez des liens personnels avec un plan supérieur",
           "work_with_segments": "Les liens personnels fonctionnent avec les segments."
@@ -1778,13 +1767,11 @@
           "formbricks_email_survey_preview": "Aperçu de l'enquête par e-mail Formbricks",
           "nav_title": "Email intégré",
           "send_preview": "Envoyer un aperçu",
-          "send_preview_email": "Envoyer un e-mail d'aperçu",
-          "title": "Intégrez votre sondage dans un e-mail"
+          "send_preview_email": "Envoyer un e-mail d'aperçu"
         },
         "share_view_title": "Partager par",
         "social_media": {
           "description": "Obtenez des réponses de vos contacts sur divers réseaux sociaux.",
-          "share_your_survey_on_social_media": "Partagez votre sondage sur les réseaux sociaux",
           "source_tracking_enabled": "Suivi des sources activé",
           "source_tracking_enabled_alert_description": "En partageant depuis cette boîte de dialogue, le réseau social sera ajouté au lien du sondage afin que vous sachiez quelles réponses proviennent de chaque réseau.",
           "title": "Médias sociaux"
@@ -1828,7 +1815,6 @@
         "last_quarter": "dernier trimestre",
         "last_year": "l'année dernière",
         "link_to_public_results_copied": "Lien vers les résultats publics copié",
-        "make_survey_accessible_via_qr_code": "Rendez votre sondage accessible via QR Code",
         "mobile_app": "Application mobile",
         "no_responses_found": "Aucune réponse trouvée",
         "only_completed": "Uniquement terminé",
@@ -1846,7 +1832,6 @@
         "quickstart_mobile_apps_description": "Pour commencer avec les enquêtes dans les applications mobiles, veuillez suivre le guide de démarrage rapide :",
         "quickstart_web_apps": "Démarrage rapide : Applications web",
         "quickstart_web_apps_description": "Veuillez suivre le guide de démarrage rapide pour commencer :",
-        "responses_collected_via_qr_code_are_anonymous": "Les réponses collectées via le code QR sont anonymes.",
         "results_are_public": "Les résultats sont publics.",
         "selected_responses_csv": "Réponses sélectionnées (CSV)",
         "selected_responses_excel": "Réponses sélectionnées (Excel)",

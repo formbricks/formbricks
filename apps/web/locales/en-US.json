@@ -479,13 +479,6 @@
     "notification_insight_displays": "Displays",
     "notification_insight_responses": "Responses",
     "notification_insight_surveys": "Surveys",
-    "onboarding_invite_email_button_label": "Join {inviterName}'s organization",
-    "onboarding_invite_email_connect_formbricks": "Connect Formbricks to your app or website via HTML Snippet or NPM in just a few minutes.",
-    "onboarding_invite_email_create_account": "Create an account to join {inviterName}'s organization.",
-    "onboarding_invite_email_done": "Done ✅",
-    "onboarding_invite_email_get_started_in_minutes": "Get Started in Minutes",
-    "onboarding_invite_email_heading": "Hey ",
-    "onboarding_invite_email_subject": "{inviterName} needs a hand setting up Formbricks.  Can you help out?",
     "password_changed_email_heading": "Password changed",
     "password_changed_email_text": "Your password has been changed successfully.",
     "password_reset_notify_email_subject": "Your Formbricks password has been changed",
@@ -1724,7 +1717,6 @@
           "single_use_link_description": "Allow only one response per survey link.",
           "single_use_links": "Single-use links",
           "source_tracking": "Source tracking",
-          "title": "Share your survey to gather responses",
           "url_encryption_description": "Only disable if you need to set a custom single-use ID.",
           "url_encryption_label": "URL encryption of single-use ID"
         },
@@ -1736,8 +1728,7 @@
           "code_no_code_triggers": "Code and no code triggers",
           "description": "Formbricks surveys can be embedded as a pop up, based on user interaction.",
           "nav_title": "Dynamic (Pop-up)",
-          "recontact_options": "Recontact options",
-          "title": "Intercept users in their flow to gather contextualized feedback"
+          "recontact_options": "Recontact options"
         },
         "embed_on_website": {
           "description": "Formbricks surveys can be embedded as a static element.",
@@ -1745,8 +1736,7 @@
           "embed_in_app": "Embed in app",
           "embed_mode": "Embed Mode",
           "embed_mode_description": "Embed your survey with a minimalist design, discarding padding and background.",
-          "nav_title": "Website embed",
-          "title": "Embed the survey in your webpage"
+          "nav_title": "Website embed"
         },
         "personal_links": {
           "create_and_manage_segments": "Create and manage your Segments under Contacts > Segments",
@@ -1760,7 +1750,6 @@
           "nav_title": "Personal links",
           "no_segments_available": "No segments available",
           "select_segment": "Select segment",
-          "title": "Maximize insights with personal survey links",
           "upgrade_prompt_description": "Generate personal links for a segment and link survey responses to each contact.",
           "upgrade_prompt_title": "Use personal links with a higher plan",
           "work_with_segments": "Personal links work with segments."
@@ -1778,13 +1767,11 @@
           "formbricks_email_survey_preview": "Formbricks Email Survey Preview",
           "nav_title": "Email embed",
           "send_preview": "Send preview",
-          "send_preview_email": "Send preview email",
-          "title": "Embed your survey in an email"
+          "send_preview_email": "Send preview email"
         },
         "share_view_title": "Share via",
         "social_media": {
           "description": "Get responses from your contacts on various social media networks.",
-          "share_your_survey_on_social_media": "Share your survey on social media",
           "source_tracking_enabled": "Source tracking enabled",
           "source_tracking_enabled_alert_description": "When sharing from this dialog, the social media network will be appended to the survey link so you know which responses came via each network.",
           "title": "Social media"
@@ -1828,7 +1815,6 @@
         "last_quarter": "Last quarter",
         "last_year": "Last year",
         "link_to_public_results_copied": "Link to public results copied",
-        "make_survey_accessible_via_qr_code": "Make your survey accessible via QR Code",
         "mobile_app": "Mobile app",
         "no_responses_found": "No responses found",
         "only_completed": "Only completed",
@@ -1846,7 +1832,6 @@
         "quickstart_mobile_apps_description": "To get started with surveys in mobile apps, please follow the Quickstart guide:",
         "quickstart_web_apps": "Quickstart: Web apps",
         "quickstart_web_apps_description": "Please follow the Quickstart guide to get started:",
-        "responses_collected_via_qr_code_are_anonymous": "Responses collected via QR code are anonymous.",
         "results_are_public": "Results are public",
         "selected_responses_csv": "Selected responses (CSV)",
         "selected_responses_excel": "Selected responses (Excel)",

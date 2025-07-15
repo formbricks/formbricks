@@ -479,13 +479,6 @@
     "notification_insight_displays": "Ecrãs",
     "notification_insight_responses": "Respostas",
     "notification_insight_surveys": "Inquéritos",
-    "onboarding_invite_email_button_label": "Junte-se à organização de {inviterName}",
-    "onboarding_invite_email_connect_formbricks": "Conecte o Formbricks à sua aplicação ou website através de um Snippet HTML ou NPM em apenas alguns minutos.",
-    "onboarding_invite_email_create_account": "Crie uma conta para se juntar à organização de {inviterName}.",
-    "onboarding_invite_email_done": "Concluído ✅",
-    "onboarding_invite_email_get_started_in_minutes": "Começar em Minutos",
-    "onboarding_invite_email_heading": "Olá ",
-    "onboarding_invite_email_subject": "{inviterName} precisa de ajuda para configurar o Formbricks. Podes ajudar?",
     "password_changed_email_heading": "Palavra-passe alterada",
     "password_changed_email_text": "A sua palavra-passe foi alterada com sucesso.",
     "password_reset_notify_email_subject": "A sua palavra-passe do Formbricks foi alterada",
@@ -1724,7 +1717,6 @@
           "single_use_link_description": "Permitir apenas uma resposta por link de inquérito.",
           "single_use_links": "Links de uso único",
           "source_tracking": "Rastreamento de origem",
-          "title": "Partilhe o seu inquérito para recolher respostas",
           "url_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado.",
           "url_encryption_label": "Encriptação do URL de ID de uso único"
         },
@@ -1736,8 +1728,7 @@
           "code_no_code_triggers": "Gatilhos com código e sem código",
           "description": "Os inquéritos Formbricks podem ser incorporados como uma janela pop-up, com base na interação do utilizador.",
           "nav_title": "Dinâmico (Pop-up)",
-          "recontact_options": "Opções de Recontacto",
-          "title": "Intercepte utilizadores no seu fluxo para recolher feedback contextualizado"
+          "recontact_options": "Opções de Recontacto"
         },
         "embed_on_website": {
           "description": "Os inquéritos Formbricks podem ser incorporados como um elemento estático.",
@@ -1745,8 +1736,7 @@
           "embed_in_app": "Incorporar na aplicação",
           "embed_mode": "Modo de Incorporação",
           "embed_mode_description": "Incorpore o seu inquérito com um design minimalista, descartando o preenchimento e o fundo.",
-          "nav_title": "Incorporar no site",
-          "title": "Incorporar o questionário na sua página web"
+          "nav_title": "Incorporar no site"
         },
         "personal_links": {
           "create_and_manage_segments": "Crie e gere os seus Segmentos em Contactos > Segmentos",
@@ -1760,7 +1750,6 @@
           "nav_title": "Links pessoais",
           "no_segments_available": "Sem segmentos disponíveis",
           "select_segment": "Selecionar segmento",
-          "title": "Maximize os insights com links pessoais de inquérito",
           "upgrade_prompt_description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto.",
           "upgrade_prompt_title": "Utilize links pessoais com um plano superior",
           "work_with_segments": "Os links pessoais funcionam com segmentos."
@@ -1778,13 +1767,11 @@
           "formbricks_email_survey_preview": "Pré-visualização da Pesquisa de E-mail do Formbricks",
           "nav_title": "Incorporação de Email",
           "send_preview": "Enviar pré-visualização",
-          "send_preview_email": "Enviar pré-visualização de email",
-          "title": "Incorporar o seu inquérito num email"
+          "send_preview_email": "Enviar pré-visualização de email"
         },
         "share_view_title": "Partilhar via",
         "social_media": {
           "description": "Obtenha respostas dos seus contactos em várias redes sociais.",
-          "share_your_survey_on_social_media": "Partilhe o seu inquérito nas redes sociais",
           "source_tracking_enabled": "Rastreamento de origem ativado",
           "source_tracking_enabled_alert_description": "Ao partilhar a partir deste diálogo, a rede social será anexada ao link do inquérito para que saiba de que rede vieram as respostas.",
           "title": "Redes Sociais"
@@ -1828,7 +1815,6 @@
         "last_quarter": "Último trimestre",
         "last_year": "Ano passado",
         "link_to_public_results_copied": "Link para resultados públicos copiado",
-        "make_survey_accessible_via_qr_code": "Torne o seu inquérito acessível através do Código QR",
         "mobile_app": "Aplicação móvel",
         "no_responses_found": "Nenhuma resposta encontrada",
         "only_completed": "Apenas concluído",
@@ -1846,7 +1832,6 @@
         "quickstart_mobile_apps_description": "Para começar com inquéritos em aplicações móveis, por favor, siga o guia de início rápido:",
         "quickstart_web_apps": "Início rápido: Aplicações web",
         "quickstart_web_apps_description": "Por favor, siga o guia de início rápido para começar:",
-        "responses_collected_via_qr_code_are_anonymous": "Respostas recolhidas através de código QR são anónimas.",
         "results_are_public": "Os resultados são públicos",
         "selected_responses_csv": "Respostas selecionadas (CSV)",
         "selected_responses_excel": "Respostas selecionadas (Excel)",

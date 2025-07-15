@@ -479,13 +479,6 @@
     "notification_insight_displays": "telas",
     "notification_insight_responses": "Respostas",
     "notification_insight_surveys": "pesquisas",
-    "onboarding_invite_email_button_label": "Entre na organização de {inviterName}",
-    "onboarding_invite_email_connect_formbricks": "Conecte o Formbricks ao seu app ou site via HTML Snippet ou NPM em apenas alguns minutos.",
-    "onboarding_invite_email_create_account": "Crie uma conta para entrar na organização de {inviterName}.",
-    "onboarding_invite_email_done": "Feito ✅",
-    "onboarding_invite_email_get_started_in_minutes": "Comece em Minutos",
-    "onboarding_invite_email_heading": "Oi ",
-    "onboarding_invite_email_subject": "{inviterName} precisa de ajuda para configurar o Formbricks. Você pode ajudar?",
     "password_changed_email_heading": "Senha alterada",
     "password_changed_email_text": "Sua senha foi alterada com sucesso.",
     "password_reset_notify_email_subject": "Sua senha Formbricks foi alterada",
@@ -1724,7 +1717,6 @@
           "single_use_link_description": "Permitir apenas uma resposta por link da pesquisa.",
           "single_use_links": "Links de uso único",
           "source_tracking": "rastreamento de origem",
-          "title": "Compartilhe sua pesquisa para coletar respostas",
           "url_encryption_description": "Desative apenas se precisar definir um ID de uso único personalizado",
           "url_encryption_label": "Criptografia de URL de ID de uso único"
         },
@@ -1736,8 +1728,7 @@
           "code_no_code_triggers": "Gatilhos de código e sem código",
           "description": "\"As pesquisas do Formbricks podem ser integradas como um pop-up, baseado na interação do usuário.\"",
           "nav_title": "Dinâmico (Pop-up)",
-          "recontact_options": "Opções de Recontato",
-          "title": "Intercepte os usuários em seu fluxo para coletar feedback contextualizado"
+          "recontact_options": "Opções de Recontato"
         },
         "embed_on_website": {
           "description": "Os formulários Formbricks podem ser incorporados como um elemento estático.",
@@ -1745,8 +1736,7 @@
           "embed_in_app": "Integrar no app",
           "embed_mode": "Modo Embutido",
           "embed_mode_description": "Incorpore sua pesquisa com um design minimalista, sem preenchimento e fundo.",
-          "nav_title": "Incorporar no site",
-          "title": "Incorporar a pesquisa na sua página da web"
+          "nav_title": "Incorporar no site"
         },
         "personal_links": {
           "create_and_manage_segments": "Crie e gerencie seus Segmentos em Contatos > Segmentos",
@@ -1760,7 +1750,6 @@
           "nav_title": "Links pessoais",
           "no_segments_available": "Nenhum segmento disponível",
           "select_segment": "Selecionar segmento",
-          "title": "Maximize insights com links de pesquisa personalizados",
           "upgrade_prompt_description": "Gerar links pessoais para um segmento e vincular respostas de pesquisa a cada contato.",
           "upgrade_prompt_title": "Use links pessoais com um plano superior",
           "work_with_segments": "Links pessoais funcionam com segmentos."
@@ -1778,13 +1767,11 @@
           "formbricks_email_survey_preview": "Prévia da Pesquisa por E-mail do Formbricks",
           "nav_title": "Incorporação de Email",
           "send_preview": "Enviar prévia",
-          "send_preview_email": "Enviar prévia de e-mail",
-          "title": "Incorpore sua pesquisa em um e-mail"
+          "send_preview_email": "Enviar prévia de e-mail"
         },
         "share_view_title": "Compartilhar via",
         "social_media": {
           "description": "Obtenha respostas de seus contatos em várias redes sociais.",
-          "share_your_survey_on_social_media": "Compartilhe sua pesquisa nas redes sociais",
           "source_tracking_enabled": "rastreamento de origem ativado",
           "source_tracking_enabled_alert_description": "Ao compartilhar a partir deste diálogo, a rede social será adicionada ao link da pesquisa para que você saiba de qual rede vieram as respostas.",
           "title": "Mídia Social"
@@ -1828,7 +1815,6 @@
         "last_quarter": "Último trimestre",
         "last_year": "Último ano",
         "link_to_public_results_copied": "Link pros resultados públicos copiado",
-        "make_survey_accessible_via_qr_code": "Deixe sua pesquisa acessível via Código QR",
         "mobile_app": "app de celular",
         "no_responses_found": "Nenhuma resposta encontrada",
         "only_completed": "Somente concluído",
@@ -1846,7 +1832,6 @@
         "quickstart_mobile_apps_description": "Para começar com pesquisas em aplicativos móveis, por favor, siga o guia de início rápido:",
         "quickstart_web_apps": "Início rápido: Aplicativos web",
         "quickstart_web_apps_description": "Por favor, siga o guia de início rápido para começar:",
-        "responses_collected_via_qr_code_are_anonymous": "Respostas coletadas via código QR são anônimas.",
         "results_are_public": "Os resultados são públicos",
         "selected_responses_csv": "Respostas selecionadas (CSV)",
         "selected_responses_excel": "Respostas selecionadas (Excel)",

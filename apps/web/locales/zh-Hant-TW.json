@@ -479,13 +479,6 @@
     "notification_insight_displays": "顯示次數",
     "notification_insight_responses": "回應數",
     "notification_insight_surveys": "問卷數",
-    "onboarding_invite_email_button_label": "加入 {inviterName} 的組織",
-    "onboarding_invite_email_connect_formbricks": "在幾分鐘內透過 HTML 片段或 NPM 將 Formbricks 連接到您的應用程式或網站。",
-    "onboarding_invite_email_create_account": "建立帳戶以加入 '{'inviterName'}' 的組織。",
-    "onboarding_invite_email_done": "完成 ✅",
-    "onboarding_invite_email_get_started_in_minutes": "在幾分鐘內開始使用",
-    "onboarding_invite_email_heading": "嗨 ",
-    "onboarding_invite_email_subject": "{inviterName} 需要幫忙設置 Formbricks。你能幫忙嗎？",
     "password_changed_email_heading": "密碼已變更",
     "password_changed_email_text": "您的密碼已成功變更。",
     "password_reset_notify_email_subject": "您的 Formbricks 密碼已變更",
@@ -1724,7 +1717,6 @@
           "single_use_link_description": "只允許 1 個回應每個問卷連結。",
           "single_use_links": "單次使用連結",
           "source_tracking": "來源追蹤",
-          "title": "分享 您 的 調查來 收集 回應",
           "url_encryption_description": "僅在需要設定自訂一次性 ID 時停用",
           "url_encryption_label": "單次使用 ID 的 URL 加密"
         },
@@ -1736,8 +1728,7 @@
           "code_no_code_triggers": "程式碼 及 無程式碼 觸發器",
           "description": "Formbricks 調查 可以 嵌入 為 彈出 式 樣 式 ， 根據 使用者 互動 。",
           "nav_title": "動態（彈窗）",
-          "recontact_options": "重新聯絡選項",
-          "title": "攔截使用者於其流程中以收集具上下文的意見反饋"
+          "recontact_options": "重新聯絡選項"
         },
         "embed_on_website": {
           "description": "Formbricks 調查可以 作為 靜態 元素 嵌入。",
@@ -1745,8 +1736,7 @@
           "embed_in_app": "嵌入應用程式",
           "embed_mode": "嵌入模式",
           "embed_mode_description": "以簡約設計嵌入您的問卷，捨棄邊距和背景。",
-          "nav_title": "嵌入網站",
-          "title": "嵌入 調查 在 您 的 網頁"
+          "nav_title": "嵌入網站"
         },
         "personal_links": {
           "create_and_manage_segments": "在 聯絡人 > 分段 中建立和管理您的分段",
@@ -1760,7 +1750,6 @@
           "nav_title": "個人 連結",
           "no_segments_available": "沒有可用的區段",
           "select_segment": "選擇 區隔",
-          "title": "透過個人化調查連結最大化洞察",
           "upgrade_prompt_description": "為一個群組生成個人連結，並將調查回應連結到每個聯絡人。",
           "upgrade_prompt_title": "使用 個人 連結 與 更高 的 計劃",
           "work_with_segments": "個人 連結 可 與 分段 一起 使用"
@@ -1778,13 +1767,11 @@
           "formbricks_email_survey_preview": "Formbricks 電子郵件問卷預覽",
           "nav_title": "電子郵件嵌入",
           "send_preview": "發送預覽",
-          "send_preview_email": "發送預覽電子郵件",
-          "title": "嵌入 你的 調查 在 電子郵件 中"
+          "send_preview_email": "發送預覽電子郵件"
         },
         "share_view_title": "透過 分享",
         "social_media": {
           "description": "從 您 的 聯絡人 在 各 種 社交 媒體 網絡 上 獲得 回應。",
-          "share_your_survey_on_social_media": "分享 您 的 問卷 在 社交媒體 上",
           "source_tracking_enabled": "來源追蹤已啟用",
           "source_tracking_enabled_alert_description": "從 此 對 話 框 共 享 時，社 交 媒 體 網 絡 會 被 附 加 到 調 查鏈 接 下，讓 您 知 道 各 網 絡 的 回 應 來 源。",
           "title": "社群媒體"
@@ -1828,7 +1815,6 @@
         "last_quarter": "上一季",
         "last_year": "去年",
         "link_to_public_results_copied": "已複製公開結果的連結",
-        "make_survey_accessible_via_qr_code": "透過 QR Code 使您的調查問卷可被存取",
         "mobile_app": "行動應用程式",
         "no_responses_found": "找不到回應",
         "only_completed": "僅已完成",
@@ -1846,7 +1832,6 @@
         "quickstart_mobile_apps_description": "要開始使用行動應用程式中的調查，請按照 Quickstart 指南：",
         "quickstart_web_apps": "快速入門：Web apps",
         "quickstart_web_apps_description": "請按照 Quickstart 指南開始：",
-        "responses_collected_via_qr_code_are_anonymous": "透過 QR code 收集的回應都是匿名的。",
         "results_are_public": "結果是公開的",
         "selected_responses_csv": "選擇的回應 (CSV)",
         "selected_responses_excel": "選擇的回應 (Excel)",

@@ -479,13 +479,6 @@
     "notification_insight_displays": "Displays",
     "notification_insight_responses": "Antworten",
     "notification_insight_surveys": "Umfragen",
-    "onboarding_invite_email_button_label": "Tritt {inviterName}s Organisation bei",
-    "onboarding_invite_email_connect_formbricks": "Verbinde Formbricks in nur wenigen Minuten über ein HTML-Snippet oder via NPM mit deiner App oder Website.",
-    "onboarding_invite_email_create_account": "Erstelle ein Konto, um {inviterName}s Organisation beizutreten.",
-    "onboarding_invite_email_done": "Erledigt ✅",
-    "onboarding_invite_email_get_started_in_minutes": "Dauert nur wenige Minuten",
-    "onboarding_invite_email_heading": "Hey ",
-    "onboarding_invite_email_subject": "{inviterName} braucht Hilfe bei Formbricks. Kannst Du ihm helfen?",
     "password_changed_email_heading": "Passwort geändert",
     "password_changed_email_text": "Dein Passwort wurde erfolgreich geändert.",
     "password_reset_notify_email_subject": "Dein Formbricks-Passwort wurde geändert",
@@ -1724,7 +1717,6 @@
           "single_use_link_description": "Erlaube nur eine Antwort pro Umfragelink.",
           "single_use_links": "Einmalige Links",
           "source_tracking": "Quellenverfolgung",
-          "title": "Teilen Sie Ihre Umfrage, um Antworten zu sammeln",
           "url_encryption_description": "Nur deaktivieren, wenn Sie eine benutzerdefinierte Einmal-ID setzen müssen.",
           "url_encryption_label": "Verschlüsselung der URL für einmalige Nutzung ID"
         },
@@ -1736,8 +1728,7 @@
           "code_no_code_triggers": "Code- und No-Code-Auslöser",
           "description": "Formbricks Umfragen können als Pop-up eingebettet werden, basierend auf der Benutzerinteraktion.",
           "nav_title": "Dynamisch (Pop-up)",
-          "recontact_options": "Optionen zur erneuten Kontaktaufnahme",
-          "title": "Nutzer im Ablauf abfangen, um kontextualisiertes Feedback zu sammeln"
+          "recontact_options": "Optionen zur erneuten Kontaktaufnahme"
         },
         "embed_on_website": {
           "description": "Formbricks-Umfragen können als statisches Element eingebettet werden.",
@@ -1745,8 +1736,7 @@
           "embed_in_app": "In App einbetten",
           "embed_mode": "Einbettungsmodus",
           "embed_mode_description": "Bette deine Umfrage mit einem minimalistischen Design ein, ohne Karten und Hintergrund.",
-          "nav_title": "Auf Website einbetten",
-          "title": "Binden Sie die Umfrage auf Ihrer Webseite ein"
+          "nav_title": "Auf Website einbetten"
         },
         "personal_links": {
           "create_and_manage_segments": "Erstellen und verwalten Sie Ihre Segmente unter Kontakte > Segmente",
@@ -1760,7 +1750,6 @@
           "nav_title": "Persönliche Links",
           "no_segments_available": "Keine Segmente verfügbar",
           "select_segment": "Segment auswählen",
-          "title": "Maximieren Sie Erkenntnisse mit persönlichen Umfragelinks",
           "upgrade_prompt_description": "Erstellen Sie persönliche Links für ein Segment und verknüpfen Sie Umfrageantworten mit jedem Kontakt.",
           "upgrade_prompt_title": "Verwende persönliche Links mit einem höheren Plan",
           "work_with_segments": "Persönliche Links funktionieren mit Segmenten."
@@ -1778,13 +1767,11 @@
           "formbricks_email_survey_preview": "Formbricks E-Mail-Umfrage Vorschau",
           "nav_title": "E-Mail-Einbettung",
           "send_preview": "Vorschau senden",
-          "send_preview_email": "Vorschau-E-Mail senden",
-          "title": "Binden Sie Ihre Umfrage in eine E-Mail ein"
+          "send_preview_email": "Vorschau-E-Mail senden"
         },
         "share_view_title": "Teilen über",
         "social_media": {
           "description": "Erhalte Rückmeldungen von deinen Kontakten auf verschiedenen sozialen Medien.",
-          "share_your_survey_on_social_media": "Teilen Sie Ihre Umfrage in sozialen Medien",
           "source_tracking_enabled": "Quellenverfolgung aktiviert",
           "source_tracking_enabled_alert_description": "Wenn Sie aus diesem Dialogfenster teilen, wird das soziale Netzwerk an den Umfragelink angehängt, sodass Sie wissen, welche Antworten über welches Netzwerk eingegangen sind.",
           "title": "Soziale Medien"
@@ -1828,7 +1815,6 @@
         "last_quarter": "Letztes Quartal",
         "last_year": "Letztes Jahr",
         "link_to_public_results_copied": "Link zu öffentlichen Ergebnissen kopiert",
-        "make_survey_accessible_via_qr_code": "Machen Sie Ihre Umfrage über einen QR-Code zugänglich",
         "mobile_app": "Mobile App",
         "no_responses_found": "Keine Antworten gefunden",
         "only_completed": "Nur vollständige Antworten",
@@ -1846,7 +1832,6 @@
         "quickstart_mobile_apps_description": "Um mit Umfragen in mobilen Apps zu beginnen, folge bitte der Schnellstartanleitung:",
         "quickstart_web_apps": "Schnellstart: Web-Apps",
         "quickstart_web_apps_description": "Bitte folge der Schnellstartanleitung, um loszulegen:",
-        "responses_collected_via_qr_code_are_anonymous": "Antworten, die per QR-Code gesammelt werden, sind anonym.",
         "results_are_public": "Ergebnisse sind öffentlich",
         "selected_responses_csv": "Ausgewählte Antworten (CSV)",
         "selected_responses_excel": "Ausgewählte Antworten (Excel)",
