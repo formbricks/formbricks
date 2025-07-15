@@ -74,7 +74,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
   };
 
   return (
-    <div data-testid="qr-code-tab">
+    <>
       {isLoading && (
         <div className="flex flex-col items-center gap-2">
           <LoaderCircle className="h-8 w-8 animate-spin text-slate-500" />
@@ -110,6 +110,6 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
           </Button>
         </div>
       )}
-    </div>
+    </>
   );
 };

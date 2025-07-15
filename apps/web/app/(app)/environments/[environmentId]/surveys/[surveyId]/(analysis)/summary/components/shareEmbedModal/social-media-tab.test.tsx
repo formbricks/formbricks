@@ -47,9 +47,9 @@ describe("SocialMediaTab", () => {
   test("renders source tracking alert with correct content", () => {
     render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
 
-    expect(screen.getByText("environments.surveys.summary.source_tracking_enabled")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.share.source_tracking_enabled")).toBeInTheDocument();
     expect(
-      screen.getByText("environments.surveys.summary.source_tracking_enabled_alert_description")
+      screen.getByText("environments.surveys.share.source_tracking_enabled_alert_description")
     ).toBeInTheDocument();
     expect(screen.getByText("common.learn_more")).toBeInTheDocument();
 
