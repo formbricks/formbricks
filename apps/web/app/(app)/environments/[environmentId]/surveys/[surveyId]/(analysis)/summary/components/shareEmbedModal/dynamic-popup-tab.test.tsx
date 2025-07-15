@@ -62,7 +62,7 @@ describe("DynamicPopupTab", () => {
   test("renders with correct container structure", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const container = screen.getByTestId("alert").parentElement;
+    const container = screen.getByTestId("dynamic-popup-container");
     expect(container).toHaveClass("flex", "h-full", "flex-col", "justify-between", "space-y-4");
   });
 

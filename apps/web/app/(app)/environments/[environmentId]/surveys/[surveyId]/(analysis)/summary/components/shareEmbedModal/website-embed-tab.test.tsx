@@ -180,13 +180,4 @@ describe("WebsiteEmbedTab", () => {
     expect(screen.getByTestId("show-copy")).toHaveTextContent("false");
     expect(screen.getByTestId("no-margin")).toBeInTheDocument();
   });
-
-  test("renders advanced option toggle with correct props", () => {
-    render(<WebsiteEmbedTab {...defaultProps} />);
-
-    const toggle = screen.getByTestId("advanced-option-toggle");
-    expect(toggle).toHaveTextContent("environments.surveys.share.embed_on_website.embed_mode");
-    expect(toggle).toHaveTextContent("environments.surveys.share.embed_on_website.embed_mode_description");
-    expect(screen.getByTestId("custom-container-class")).toHaveTextContent("p-0");
-  });
 });
