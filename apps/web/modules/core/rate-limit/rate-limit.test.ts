@@ -1,11 +1,29 @@
 // Import modules after mocking
-import redis from "@/modules/cache/redis";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+// Import after mocking
 import { checkRateLimit } from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
-// Mock all dependencies
-vi.mock("@/modules/cache/redis");
+const { mockEval, mockRedisClient, mockGetRedisClient } = vi.hoisted(() => {
+  const _mockEval = vi.fn();
+  const _mockRedisClient = {
+    eval: _mockEval,
+  } as any;
+
+  const _mockGetRedisClient = vi.fn().mockReturnValue(_mockRedisClient);
+
+  return {
+    mockEval: _mockEval,
+    mockRedisClient: _mockRedisClient,
+    mockGetRedisClient: _mockGetRedisClient,
+  };
+});
+
+// Mock all dependencies (will use the hoisted mocks above)
+vi.mock("@/modules/cache/redis", () => ({
+  getRedisClient: mockGetRedisClient,
+}));
+
 vi.mock("@/lib/constants", () => ({
   REDIS_URL: "redis://localhost:6379",
   RATE_LIMITING_DISABLED: false,
@@ -31,21 +49,25 @@ describe("checkRateLimit", () => {
     namespace: "test",
   };
 
-  const mockRedis = redis as any;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset Redis mock
-    mockRedis.eval = vi.fn();
+    // Reset the mock to return our mock client
+    mockGetRedisClient.mockReturnValue(mockRedisClient);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
+  // Ensure mocks don't leak to other test suites (e.g. load tests)
+  afterAll(() => {
+    vi.resetModules();
+    vi.resetAllMocks();
+  });
+
   test("should allow request when under limit", async () => {
     // Mock Redis returning count of 2, which is under limit of 5
-    mockRedis.eval.mockResolvedValue([2, 1]);
+    mockEval.mockResolvedValue([2, 1]);
 
     const result = await checkRateLimit(testConfig, "test-user");
 
@@ -57,7 +79,7 @@ describe("checkRateLimit", () => {
 
   test("should deny request when over limit", async () => {
     // Mock Redis returning count of 6, which is over limit of 5
-    mockRedis.eval.mockResolvedValue([6, 0]);
+    mockEval.mockResolvedValue([6, 0]);
 
     const result = await checkRateLimit(testConfig, "test-user");
 
@@ -69,7 +91,7 @@ describe("checkRateLimit", () => {
 
   test("should fail open when Redis is unavailable", async () => {
     // Mock Redis throwing an error
-    mockRedis.eval.mockRejectedValue(new Error("Redis connection failed"));
+    mockEval.mockRejectedValue(new Error("Redis connection failed"));
 
     const result = await checkRateLimit(testConfig, "test-user");
 
@@ -100,7 +122,7 @@ describe("checkRateLimit", () => {
   test("should fail open when Redis is not configured", async () => {
     vi.resetModules();
     vi.doMock("@/modules/cache/redis", () => ({
-      default: null,
+      getRedisClient: vi.fn().mockReturnValue(null),
     }));
 
     // Dynamic import after mocking
@@ -114,16 +136,16 @@ describe("checkRateLimit", () => {
   });
 
   test("should generate correct Redis key with window alignment", async () => {
-    mockRedis.eval.mockResolvedValue([1, 1]);
+    mockEval.mockResolvedValue([1, 1]);
 
     await checkRateLimit(testConfig, "test-user");
 
-    expect(mockRedis.eval).toHaveBeenCalledWith(
+    expect(mockEval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('INCR', key)"),
-      1,
-      expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/),
-      5,
-      expect.any(Number)
+      expect.objectContaining({
+        keys: [expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/)],
+        arguments: ["5", expect.any(String)],
+      })
     );
   });
 
@@ -134,37 +156,37 @@ describe("checkRateLimit", () => {
       namespace: "custom",
     };
 
-    mockRedis.eval.mockResolvedValue([1, 1]);
+    mockEval.mockResolvedValue([1, 1]);
 
     await checkRateLimit(configWithCustomNamespace, "test-user");
 
-    expect(mockRedis.eval).toHaveBeenCalledWith(
+    expect(mockEval).toHaveBeenCalledWith(
       expect.any(String),
-      1,
-      expect.stringMatching(/^fb:rate_limit:custom:test-user:\d+$/),
-      5,
-      expect.any(Number)
+      expect.objectContaining({
+        keys: [expect.stringMatching(/^fb:rate_limit:custom:test-user:\d+$/)],
+        arguments: ["5", expect.any(String)],
+      })
     );
   });
 
   test("should calculate correct TTL for window expiration", async () => {
-    mockRedis.eval.mockResolvedValue([1, 1]);
+    mockEval.mockResolvedValue([1, 1]);
 
     await checkRateLimit(testConfig, "test-user");
 
     // TTL should be between 0 and 300 seconds (window interval)
-    const ttlUsed = mockRedis.eval.mock.calls[0][4];
+    const ttlUsed = parseInt(mockEval.mock.calls[0][1].arguments[1]);
     expect(ttlUsed).toBeGreaterThan(0);
     expect(ttlUsed).toBeLessThanOrEqual(300);
   });
 
   test("should set TTL only on first increment", async () => {
-    mockRedis.eval.mockResolvedValue([1, 1]);
+    mockEval.mockResolvedValue([1, 1]);
 
     await checkRateLimit(testConfig, "test-user");
 
     // Verify the Lua script contains the conditional TTL logic
-    const luaScript = mockRedis.eval.mock.calls[0][0];
+    const luaScript = mockEval.mock.calls[0][0];
     expect(luaScript).toContain("if current == 1 then");
     expect(luaScript).toContain("redis.call('EXPIRE', key, ttl)");
     expect(luaScript).toContain("end");
@@ -201,9 +223,9 @@ describe("checkRateLimit", () => {
     }));
 
     vi.doMock("@/modules/cache/redis", () => ({
-      default: {
+      getRedisClient: vi.fn().mockReturnValue({
         eval: vi.fn().mockResolvedValue([6, 0]),
-      },
+      }),
     }));
 
     // Dynamic import after mocking
@@ -242,9 +264,9 @@ describe("checkRateLimit", () => {
     }));
 
     vi.doMock("@/modules/cache/redis", () => ({
-      default: {
+      getRedisClient: vi.fn().mockReturnValue({
         eval: vi.fn().mockResolvedValue([6, 0]),
-      },
+      }),
     }));
 
     // Dynamic import after mocking
@@ -293,9 +315,9 @@ describe("checkRateLimit", () => {
 
     const redisError = new Error("Redis connection failed");
     vi.doMock("@/modules/cache/redis", () => ({
-      default: {
+      getRedisClient: vi.fn().mockReturnValue({
         eval: vi.fn().mockRejectedValue(redisError),
-      },
+      }),
     }));
 
     // Dynamic import after mocking

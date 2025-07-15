@@ -146,3 +146,30 @@ export interface ApiErrorResponse {
   details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
   responseMessage?: string;
 }
+
+export interface ClientErrorData {
+  title: string;
+  description: string;
+  showButtons?: boolean;
+}
+
+/**
+ * Helper function to get error data from any error for UI display
+ */
+export const getClientErrorData = (error: Error): ClientErrorData => {
+  // Check by error name as fallback (in case instanceof fails due to module loading issues)
+  if (error.name === "TooManyRequestsError") {
+    return {
+      title: "common.error_rate_limit_title",
+      description: "common.error_rate_limit_description",
+      showButtons: false,
+    };
+  }
+
+  // Default to general error for any other error
+  return {
+    title: "common.error_component_title",
+    description: "common.error_component_description",
+    showButtons: true,
+  };
+};

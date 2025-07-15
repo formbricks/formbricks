@@ -1,9 +1,15 @@
-import redis from "@/modules/cache/redis";
 import { ZRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 import { rateLimitConfigs } from "./rate-limit-configs";
+
+const { mockEval, mockRedisClient, mockGetRedisClient } = vi.hoisted(() => {
+  const _mockEval = vi.fn();
+  const _mockRedisClient = { eval: _mockEval } as any;
+  const _mockGetRedisClient = vi.fn().mockReturnValue(_mockRedisClient);
+  return { mockEval: _mockEval, mockRedisClient: _mockRedisClient, mockGetRedisClient: _mockGetRedisClient };
+});
 
 // Mock dependencies for integration tests
 vi.mock("@/lib/constants", () => ({
@@ -13,9 +19,7 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/modules/cache/redis", () => ({
-  default: {
-    eval: vi.fn(),
-  },
+  getRedisClient: mockGetRedisClient,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -42,10 +46,10 @@ vi.mock("@/modules/cache/lib/cacheKeys", () => ({
 }));
 
 describe("rateLimitConfigs", () => {
-  const mockRedis = redis as any;
-
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset the mock to return our mock client
+    mockGetRedisClient.mockReturnValue(mockRedisClient);
   });
 
   describe("Configuration Structure", () => {
@@ -53,6 +57,7 @@ describe("rateLimitConfigs", () => {
       expect(rateLimitConfigs).toHaveProperty("auth");
       expect(rateLimitConfigs).toHaveProperty("api");
       expect(rateLimitConfigs).toHaveProperty("actions");
+      expect(rateLimitConfigs).toHaveProperty("share");
     });
 
     test("should have all auth configurations", () => {
@@ -69,6 +74,11 @@ describe("rateLimitConfigs", () => {
       const actionConfigs = Object.keys(rateLimitConfigs.actions);
       expect(actionConfigs).toEqual(["profileUpdate", "surveyFollowUp"]);
     });
+
+    test("should have all share configurations", () => {
+      const shareConfigs = Object.keys(rateLimitConfigs.share);
+      expect(shareConfigs).toEqual(["url"]);
+    });
   });
 
   describe("Zod Validation", () => {
@@ -77,6 +87,7 @@ describe("rateLimitConfigs", () => {
         ...Object.values(rateLimitConfigs.auth),
         ...Object.values(rateLimitConfigs.api),
         ...Object.values(rateLimitConfigs.actions),
+        ...Object.values(rateLimitConfigs.share),
       ];
 
       allConfigs.forEach((config) => {
@@ -93,6 +104,7 @@ describe("rateLimitConfigs", () => {
       Object.values(rateLimitConfigs.auth).forEach((config) => allNamespaces.push(config.namespace));
       Object.values(rateLimitConfigs.api).forEach((config) => allNamespaces.push(config.namespace));
       Object.values(rateLimitConfigs.actions).forEach((config) => allNamespaces.push(config.namespace));
+      Object.values(rateLimitConfigs.share).forEach((config) => allNamespaces.push(config.namespace));
 
       const uniqueNamespaces = new Set(allNamespaces);
       expect(uniqueNamespaces.size).toBe(allNamespaces.length);
@@ -101,7 +113,7 @@ describe("rateLimitConfigs", () => {
 
   describe("Integration with Rate Limiting", () => {
     test("should work with checkRateLimit function", async () => {
-      mockRedis.eval.mockResolvedValue([1, 1]);
+      mockEval.mockResolvedValue([1, 1]);
 
       const config = rateLimitConfigs.auth.login;
       const result = await checkRateLimit(config, "test-identifier");
@@ -113,7 +125,7 @@ describe("rateLimitConfigs", () => {
     });
 
     test("should work with applyRateLimit helper", async () => {
-      mockRedis.eval.mockResolvedValue([1, 1]);
+      mockEval.mockResolvedValue([1, 1]);
 
       const config = rateLimitConfigs.api.v1;
       await expect(applyRateLimit(config, "api-key-123")).resolves.toBeUndefined();
@@ -126,17 +138,21 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
         { config: rateLimitConfigs.actions.profileUpdate, identifier: "user-profile" },
+        { config: rateLimitConfigs.share.url, identifier: "share-url" },
       ];
 
       const testAllowedRequest = async (config: any, identifier: string) => {
-        mockRedis.eval.mockResolvedValueOnce([1, 1]);
+        mockEval.mockClear();
+        mockEval.mockResolvedValue([1, 1]);
         const result = await checkRateLimit(config, identifier);
         expect(result.ok).toBe(true);
         expect((result as any).data.allowed).toBe(true);
       };
 
       const testExceededLimit = async (config: any, identifier: string) => {
-        mockRedis.eval.mockResolvedValueOnce([config.allowedPerInterval + 1, 0]);
+        // When limit is exceeded, remaining should be 0
+        mockEval.mockClear();
+        mockEval.mockResolvedValue([config.allowedPerInterval + 1, 0]);
         const result = await checkRateLimit(config, identifier);
         expect(result.ok).toBe(true);
         expect((result as any).data.allowed).toBe(false);
