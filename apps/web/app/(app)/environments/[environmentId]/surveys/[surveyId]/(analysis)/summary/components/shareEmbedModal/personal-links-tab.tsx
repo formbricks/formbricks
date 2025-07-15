@@ -167,75 +167,74 @@ export const PersonalLinksTab = ({
   }
 
   return (
-    <FormProvider {...form}>
-      <div className="flex h-full grow flex-col gap-6">
-        {/* Recipients Section */}
-        <FormField
-          control={form.control}
-          name="selectedSegment"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("common.recipients")}</FormLabel>
-              <FormControl>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={publicSegments.length === 0}>
-                  <SelectTrigger className="w-full bg-white">
-                    <SelectValue
-                      placeholder={
-                        publicSegments.length === 0
-                          ? t("environments.surveys.share.personal_links.no_segments_available")
-                          : t("environments.surveys.share.personal_links.select_segment")
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {publicSegments.map((segment) => (
-                      <SelectItem key={segment.id} value={segment.id}>
-                        {segment.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormDescription>
-                {t("environments.surveys.share.personal_links.create_and_manage_segments")}
-              </FormDescription>
-            </FormItem>
-          )}
-        />
+    <div className="flex h-full flex-col justify-between space-y-4">
+      <FormProvider {...form}>
+        <div className="flex grow flex-col gap-6">
+          {/* Recipients Section */}
+          <FormField
+            control={form.control}
+            name="selectedSegment"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("common.recipients")}</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={publicSegments.length === 0}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue
+                        placeholder={
+                          publicSegments.length === 0
+                            ? t("environments.surveys.share.personal_links.no_segments_available")
+                            : t("environments.surveys.share.personal_links.select_segment")
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {publicSegments.map((segment) => (
+                        <SelectItem key={segment.id} value={segment.id}>
+                          {segment.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription>
+                  {t("environments.surveys.share.personal_links.create_and_manage_segments")}
+                </FormDescription>
+              </FormItem>
+            )}
+          />
 
-        {/* Expiry Date Section */}
-        <FormField
-          control={form.control}
-          name="expiryDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("environments.surveys.share.personal_links.expiry_date_optional")}</FormLabel>
-              <FormControl>
-                <RestrictedDatePicker date={field.value} updateSurveyDate={field.onChange} />
-              </FormControl>
-              <FormDescription>
-                {t("environments.surveys.share.personal_links.expiry_date_description")}
-              </FormDescription>
-            </FormItem>
-          )}
-        />
+          {/* Expiry Date Section */}
+          <FormField
+            control={form.control}
+            name="expiryDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("environments.surveys.share.personal_links.expiry_date_optional")}</FormLabel>
+                <FormControl>
+                  <RestrictedDatePicker date={field.value} updateSurveyDate={field.onChange} />
+                </FormControl>
+                <FormDescription>
+                  {t("environments.surveys.share.personal_links.expiry_date_description")}
+                </FormDescription>
+              </FormItem>
+            )}
+          />
 
-        {/* Generate Button */}
-        <Button
-          onClick={handleGenerateLinks}
-          disabled={isButtonDisabled}
-          loading={isGenerating}
-          className="w-fit">
-          <DownloadIcon className="mr-2 h-4 w-4" />
-          {buttonText}
-        </Button>
-      </div>
-      <hr />
-
-      {/* Info Box */}
+          {/* Generate Button */}
+          <Button
+            onClick={handleGenerateLinks}
+            disabled={isButtonDisabled}
+            loading={isGenerating}
+            className="w-fit">
+            <DownloadIcon className="mr-2 h-4 w-4" />
+            {buttonText}
+          </Button>
+        </div>
+      </FormProvider>
       <DocumentationLinks
         links={[
           {
@@ -244,6 +243,6 @@ export const PersonalLinksTab = ({
           },
         ]}
       />
-    </FormProvider>
+    </div>
   );
 };

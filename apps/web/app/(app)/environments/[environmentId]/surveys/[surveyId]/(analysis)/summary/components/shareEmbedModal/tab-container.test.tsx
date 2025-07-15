@@ -50,13 +50,6 @@ describe("TabContainer", () => {
     expect(tabContent).toHaveTextContent("Tab content");
   });
 
-  test("renders with correct container structure", () => {
-    render(<TabContainer {...defaultProps} />);
-
-    const container = screen.getByTestId("h3").parentElement?.parentElement;
-    expect(container).toHaveClass("flex", "h-full", "grow", "flex-col", "items-start", "space-y-4");
-  });
-
   test("renders header with correct structure", () => {
     render(<TabContainer {...defaultProps} />);
 

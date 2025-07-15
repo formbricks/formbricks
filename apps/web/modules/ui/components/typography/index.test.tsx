@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
-import { H1, H2, H3, H4, InlineCode, Large, Lead, List, Muted, P, Quote, Small } from "./index";
+import { H1, H2, H3, H4, InlineCode, InlineSmall, Large, Lead, List, Muted, P, Quote, Small } from "./index";
 
 describe("Typography Components", () => {
   afterEach(() => {
@@ -116,6 +116,16 @@ describe("Typography Components", () => {
     expect(codeElement?.className).toContain("font-semibold");
   });
 
+  test("renders InlineSmall correctly", () => {
+    const { container } = render(<InlineSmall>Small inline text</InlineSmall>);
+    const spanElement = container.querySelector("span");
+
+    expect(spanElement).toBeInTheDocument();
+    expect(spanElement).toHaveTextContent("Small inline text");
+    expect(spanElement?.className).toContain("text-sm");
+    expect(spanElement?.className).toContain("font-normal");
+  });
+
   test("renders List correctly", () => {
     const { container } = render(
       <List>
@@ -151,10 +161,33 @@ describe("Typography Components", () => {
     expect(h1Element).toHaveClass("text-4xl"); // Should still have default classes
   });
 
+  test("InlineSmall applies custom className correctly", () => {
+    const { container } = render(
+      <InlineSmall className="custom-inline-class">Custom small text</InlineSmall>
+    );
+    const spanElement = container.querySelector("span");
+
+    expect(spanElement).toHaveClass("custom-inline-class");
+    expect(spanElement).toHaveClass("text-sm"); // Should still have default classes
+    expect(spanElement).toHaveClass("font-normal");
+  });
+
   test("passes additional props to components", () => {
     const { container } = render(<H1 data-testid="test-heading">Test Heading</H1>);
     const h1Element = container.querySelector("h1");
 
     expect(h1Element).toHaveAttribute("data-testid", "test-heading");
+  });
+
+  test("InlineSmall passes additional props correctly", () => {
+    const { container } = render(
+      <InlineSmall data-testid="test-inline-small" title="Small text tooltip">
+        Test Small
+      </InlineSmall>
+    );
+    const spanElement = container.querySelector("span");
+
+    expect(spanElement).toHaveAttribute("data-testid", "test-inline-small");
+    expect(spanElement).toHaveAttribute("title", "Small text tooltip");
   });
 });

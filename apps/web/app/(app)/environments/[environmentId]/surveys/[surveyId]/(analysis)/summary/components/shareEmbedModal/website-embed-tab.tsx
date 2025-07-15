@@ -35,9 +35,10 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         onToggle={setEmbedModeEnabled}
         title={t("environments.surveys.share.embed_on_website.embed_mode")}
         description={t("environments.surveys.share.embed_on_website.embed_mode_description")}
-        customContainerClass="p-0"
+        customContainerClass="pl-1 pr-0 py-0"
       />
       <Button
+        className="self-start"
         title={t("common.copy_code")}
         aria-label={t("common.copy_code")}
         onClick={() => {
