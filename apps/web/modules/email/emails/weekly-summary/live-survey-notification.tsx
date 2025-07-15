@@ -48,7 +48,9 @@ export async function LiveSurveyNotification({
     if (surveyResponses.length === 0) {
       return (
         <Container className="mt-4">
-          <Text className="m-0 font-bold">{t("emails.live_survey_notification_no_responses_yet")}</Text>
+          <Text className="m-0 text-sm font-medium">
+            {t("emails.live_survey_notification_no_responses_yet")}
+          </Text>
         </Container>
       );
     }
@@ -62,7 +64,7 @@ export async function LiveSurveyNotification({
 
       surveyFields.push(
         <Container className="mt-4" key={`${index.toString()}-${surveyResponse.headline}`}>
-          <Text className="m-0">{surveyResponse.headline}</Text>
+          <Text className="m-0 text-sm">{surveyResponse.headline}</Text>
           {renderEmailResponseValue(surveyResponse.responseValue, surveyResponse.questionType, t)}
         </Container>
       );
@@ -87,7 +89,7 @@ export async function LiveSurveyNotification({
         <Container className="mt-12">
           <Text className="mb-0 inline">
             <Link
-              className="text-xl text-black underline"
+              className="text-sm text-black underline"
               href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}>
               {survey.name}
             </Link>
@@ -98,7 +100,7 @@ export async function LiveSurveyNotification({
             {displayStatus}
           </Text>
           {noResponseLastWeek ? (
-            <Text>{t("emails.live_survey_notification_no_new_response")}</Text>
+            <Text className="text-sm">{t("emails.live_survey_notification_no_new_response")}</Text>
           ) : (
             createSurveyFields(survey.responses)
           )}

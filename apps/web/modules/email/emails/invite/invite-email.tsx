@@ -20,10 +20,10 @@ export async function InviteEmail({
   return (
     <EmailTemplate t={t}>
       <Container>
-        <Heading className="text-xl">
+        <Heading>
           {t("emails.invite_email_heading", { inviteeName })} {inviteeName}
         </Heading>
-        <Text className="font-normal">
+        <Text className="text-sm">
           {t("emails.invite_email_text_par1", { inviterName })} {inviterName}{" "}
           {t("emails.invite_email_text_par2")}
         </Text>
