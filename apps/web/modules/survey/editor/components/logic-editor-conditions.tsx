@@ -241,10 +241,12 @@ export function LogicEditorConditions({
 
     if (isConditionGroup(condition)) {
       return (
-        <div key={condition.id} className="flex items-start gap-x-2">
-          {index > 0 ? <div className="w-10 shrink-0">{connector}</div> : null}
-          <div className="relative flex w-full items-center gap-x-2 rounded-lg border border-slate-400 p-3">
-            <div className="flex-1">
+        <div key={condition.id} className="flex items-baseline gap-x-1">
+          <div className="w-10 shrink-0 text-right text-sm">
+            {index > 0 ? <div>{connector}</div> : <div />}
+          </div>
+          <div className="relative flex w-full items-center gap-x-1 rounded-lg border border-slate-400 p-3">
+            <div className={cn("flex-1")}>
               <LogicEditorConditions
                 conditions={condition}
                 updateQuestion={updateQuestion}
@@ -256,32 +258,34 @@ export function LogicEditorConditions({
               />
             </div>
 
-            <div className="absolute right-3 top-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button
-                    variant="secondary"
-                    className="flex h-10 w-10 items-center justify-center rounded-md">
-                    <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      handleAddConditionBelow(condition.id);
-                    }}
-                    icon={<PlusIcon className="h-4 w-4" />}>
-                    {t("environments.surveys.edit.add_condition_below")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    disabled={depth === 0 && conditions.conditions.length === 1}
-                    onClick={() => handleRemoveCondition(condition.id)}
-                    icon={<TrashIcon className="h-4 w-4" />}>
-                    {t("common.remove")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {condition.conditions.length > 1 && (
+              <div className="absolute right-3 top-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <Button
+                      variant="secondary"
+                      className="flex h-10 w-10 items-center justify-center rounded-md">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        handleAddConditionBelow(condition.id);
+                      }}
+                      icon={<PlusIcon className="h-4 w-4" />}>
+                      {t("environments.surveys.edit.add_condition_below")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={depth === 0 && conditions.conditions.length === 1}
+                      onClick={() => handleRemoveCondition(condition.id)}
+                      icon={<TrashIcon className="h-4 w-4" />}>
+                      {t("common.remove")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -307,7 +311,15 @@ export function LogicEditorConditions({
 
     return (
       <div key={condition.id} className="flex items-center gap-x-2">
-        <div className="w-10 shrink-0">{index > 0 ? <div>{connector}</div> : null}</div>
+        <div className="w-10 shrink-0 text-right text-sm">
+          {index > 0 ? (
+            <div>{connector}</div>
+          ) : parentConditionGroup.conditions.length === 1 ? (
+            <div>When</div>
+          ) : (
+            <div />
+          )}
+        </div>
 
         <div className="grid w-full flex-1 grid-cols-12 gap-x-2">
           <div className="col-span-5">
@@ -375,7 +387,7 @@ export function LogicEditorConditions({
               {t("environments.surveys.edit.add_condition_below")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              disabled={depth === 0 && conditions.conditions.length === 1}
+              // disabled={depth === 0 && conditions.conditions.length === 1}
               onClick={() => handleRemoveCondition(condition.id)}
               icon={<TrashIcon className="h-4 w-4" />}>
               {t("common.remove")}
@@ -399,24 +411,24 @@ export function LogicEditorConditions({
   return (
     <div ref={parent} className="flex flex-col gap-y-4">
       {/* Dropdown for changing the connector */}
-      <div className="flex items-center text-sm">
-        <p className="mr-2 font-semibold text-slate-700">When</p>
-        <Select
-          value={conditions.connector}
-          onValueChange={() => {
-            handleConnectorChange(conditions.id);
-          }}>
-          <SelectTrigger className="w-auto bg-white">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {/* <SelectItem value="and">{t("environments.surveys.edit.logic.all_are_true")}</SelectItem>
-            <SelectItem value="or">{t("environments.surveys.edit.logic.any_is_true")}</SelectItem> */}
-            <SelectItem value="and">all are true</SelectItem>
-            <SelectItem value="or">any is true</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {conditions.conditions.length > 1 && (
+        <div className="flex items-center text-sm">
+          <p className="mr-2 font-semibold text-slate-700">When</p>
+          <Select
+            value={conditions.connector}
+            onValueChange={() => {
+              handleConnectorChange(conditions.id);
+            }}>
+            <SelectTrigger className="w-auto bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="and">all are true</SelectItem>
+              <SelectItem value="or">any is true</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="flex flex-col gap-y-2">
         {conditions?.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
