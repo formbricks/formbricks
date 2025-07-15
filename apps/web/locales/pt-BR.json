@@ -1799,7 +1799,14 @@
           "send_preview_email": "Enviar prévia de e-mail",
           "title": "Incorpore sua pesquisa em um e-mail"
         },
-        "share_view_title": "Compartilhar via"
+        "share_view_title": "Compartilhar via",
+        "social_media": {
+          "description": "Obtenha respostas de seus contatos em várias redes sociais.",
+          "share_your_survey_on_social_media": "Compartilhe sua pesquisa nas redes sociais",
+          "source_tracking_enabled": "rastreamento de origem ativado",
+          "source_tracking_enabled_alert_description": "Ao compartilhar a partir deste diálogo, a rede social será adicionada ao link da pesquisa para que você saiba de qual rede vieram as respostas.",
+          "title": "Mídia Social"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue} ",
@@ -1849,6 +1856,7 @@
         "publish_to_web_warning": "Você está prestes a divulgar esses resultados da pesquisa para o público.",
         "publish_to_web_warning_description": "Os resultados da sua pesquisa serão públicos. Qualquer pessoa fora da sua organização pode acessá-los se tiver o link.",
         "qr_code": "Código QR",
+        "qr_code_description": "Respostas coletadas via código QR são anônimas.",
         "qr_code_download_failed": "falha no download do código QR",
         "qr_code_download_with_start_soon": "O download do código QR começará em breve",
         "qr_code_generation_failed": "Houve um problema ao carregar o Código QR do questionário. Por favor, tente novamente.",

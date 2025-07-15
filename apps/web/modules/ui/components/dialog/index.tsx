@@ -11,7 +11,7 @@ const DialogTrigger = DialogPrimitive.Trigger;
 
 const DialogPortal = ({ children, ...props }: DialogPrimitive.DialogPortalProps) => (
   <DialogPrimitive.Portal {...props}>
-    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">{children}</div>
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">{children}</div>
   </DialogPrimitive.Portal>
 );
 DialogPortal.displayName = DialogPrimitive.Portal.displayName;
@@ -41,11 +41,11 @@ interface DialogContentProps {
 const getDialogWidthClass = (width: "default" | "wide" | "narrow"): string => {
   switch (width) {
     case "wide":
-      return "md:w-[720px] lg:w-[960px]";
+      return "sm:w-[90dvw] md:w-[720px] lg:w-[960px]";
     case "narrow":
-      return "md:w-[512px]";
+      return "sm:w-[512px]";
     default:
-      return "md:w-[720px]";
+      return "sm:w-[90dvw] md:w-[720px]";
   }
 };
 
@@ -73,8 +73,8 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Content
           ref={ref}
           className={cn(
-            "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 rounded-t-lg border bg-white p-4 shadow-lg md:rounded-lg",
-            !unconstrained && "md:overflow-hidden",
+            "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 rounded-t-lg border bg-white p-4 shadow-lg sm:rounded-lg",
+            !unconstrained && "sm:overflow-hidden",
             widthClass,
             className
           )}
@@ -105,7 +105,7 @@ const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
   <div
     className={cn(
       "sticky top-[-32px] z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-left",
-      "[&>svg]:text-primary [&>svg]:absolute [&>svg]:size-4 [&>svg~*]:min-h-4 [&>svg~*]:items-center [&>svg~*]:pl-6 md:[&>svg~*]:flex",
+      "[&>svg]:text-primary [&>svg]:absolute [&>svg]:size-4 [&>svg~*]:min-h-4 [&>svg~*]:items-center [&>svg~*]:pl-6 sm:[&>svg~*]:flex",
       className
     )}
     {...props}
@@ -122,7 +122,7 @@ type DialogFooterProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerously
 const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
   <div
     className={cn(
-      "bottom-0 z-10 flex flex-shrink-0 flex-col-reverse gap-2 bg-white md:sticky md:flex-row md:justify-end",
+      "bottom-0 z-10 flex flex-shrink-0 flex-col-reverse gap-2 bg-white sm:sticky sm:flex-row sm:justify-end",
       className
     )}
     {...props}

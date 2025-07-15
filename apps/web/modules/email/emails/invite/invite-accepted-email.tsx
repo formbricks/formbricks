@@ -17,10 +17,10 @@ export async function InviteAcceptedEmail({
   return (
     <EmailTemplate t={t}>
       <Container>
-        <Heading className="text-xl">
+        <Heading>
           {t("emails.invite_accepted_email_heading", { inviterName })} {inviterName}
         </Heading>
-        <Text className="font-normal">
+        <Text className="text-sm">
           {t("emails.invite_accepted_email_text_par1", { inviteeName })} {inviteeName}{" "}
           {t("emails.invite_accepted_email_text_par2")}
         </Text>

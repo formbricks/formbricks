@@ -1,6 +1,5 @@
 "use client";
 
-import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
@@ -142,19 +141,15 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   };
 
   return (
-    <TabContainer
-      title={t("environments.surveys.share.send_email.title")}
-      description={t("environments.surveys.share.send_email.description")}>
-      <div className="flex h-full w-full flex-col space-y-4">
-        <TabBar
-          tabs={tabs}
-          activeId={activeTab}
-          setActiveId={setActiveTab}
-          tabStyle="button"
-          className="h-10 min-h-10 rounded-md border border-slate-200 bg-slate-100"
-        />
-        <div className="flex-1">{renderTabContent()}</div>
-      </div>
-    </TabContainer>
+    <div className="flex h-full w-full flex-col space-y-4">
+      <TabBar
+        tabs={tabs}
+        activeId={activeTab}
+        setActiveId={setActiveTab}
+        tabStyle="button"
+        className="h-10 min-h-10 rounded-md border border-slate-200 bg-slate-100"
+      />
+      <div className="flex-1">{renderTabContent()}</div>
+    </div>
   );
 };

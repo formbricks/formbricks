@@ -3,7 +3,6 @@
 import { updateSingleUseLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { DisableLinkModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
-import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
@@ -205,9 +204,7 @@ export const AnonymousLinksTab = ({
   };
 
   return (
-    <TabContainer
-      title={t("environments.surveys.share.anonymous_links.title")}
-      description={t("environments.surveys.share.anonymous_links.description")}>
+    <>
       <div className="flex h-full w-full grow flex-col gap-6">
         <AdvancedOptionToggle
           htmlId="multi-use-link-switch"
@@ -341,6 +338,6 @@ export const AnonymousLinksTab = ({
           }}
         />
       )}
-    </TabContainer>
+    </>
   );
 };

@@ -1799,7 +1799,14 @@
           "send_preview_email": "發送預覽電子郵件",
           "title": "嵌入 你的 調查 在 電子郵件 中"
         },
-        "share_view_title": "透過 分享"
+        "share_view_title": "透過 分享",
+        "social_media": {
+          "description": "從 您 的 聯絡人 在 各 種 社交 媒體 網絡 上 獲得 回應。",
+          "share_your_survey_on_social_media": "分享 您 的 問卷 在 社交媒體 上",
+          "source_tracking_enabled": "來源追蹤已啟用",
+          "source_tracking_enabled_alert_description": "從 此 對 話 框 共 享 時，社 交 媒 體 網 絡 會 被 附 加 到 調 查鏈 接 下，讓 您 知 道 各 網 絡 的 回 應 來 源。",
+          "title": "社群媒體"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "已新增回應的篩選器，其中問題 '{'questionIdx'}' 的答案為 '{'filterComboBoxValue'}' - '{'filterValue'}'",
@@ -1849,6 +1856,7 @@
         "publish_to_web_warning": "您即將將這些問卷結果發布到公共領域。",
         "publish_to_web_warning_description": "您的問卷結果將會是公開的。任何組織外的人員都可以存取這些結果（如果他們有連結）。",
         "qr_code": "QR 碼",
+        "qr_code_description": "透過 QR code 收集的回應都是匿名的。",
         "qr_code_download_failed": "QR code 下載失敗",
         "qr_code_download_with_start_soon": "QR code 下載即將開始",
         "qr_code_generation_failed": "載入調查 QR Code 時發生問題。請再試一次。",

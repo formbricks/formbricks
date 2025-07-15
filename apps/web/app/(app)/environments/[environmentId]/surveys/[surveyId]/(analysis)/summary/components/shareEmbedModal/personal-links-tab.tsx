@@ -27,7 +27,6 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSegment } from "@formbricks/types/segment";
 import { generatePersonalLinksAction } from "../../actions";
-import { TabContainer } from "./tab-container";
 
 interface PersonalLinksTabProps {
   environmentId: string;
@@ -169,86 +168,82 @@ export const PersonalLinksTab = ({
 
   return (
     <FormProvider {...form}>
-      <TabContainer
-        title={t("environments.surveys.share.personal_links.title")}
-        description={t("environments.surveys.share.personal_links.description")}>
-        <div className="flex h-full grow flex-col gap-6">
-          {/* Recipients Section */}
-          <FormField
-            control={form.control}
-            name="selectedSegment"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("common.recipients")}</FormLabel>
-                <FormControl>
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={publicSegments.length === 0}>
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue
-                        placeholder={
-                          publicSegments.length === 0
-                            ? t("environments.surveys.share.personal_links.no_segments_available")
-                            : t("environments.surveys.share.personal_links.select_segment")
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {publicSegments.map((segment) => (
-                        <SelectItem key={segment.id} value={segment.id}>
-                          {segment.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormDescription>
-                  {t("environments.surveys.share.personal_links.create_and_manage_segments")}
-                </FormDescription>
-              </FormItem>
-            )}
-          />
-
-          {/* Expiry Date Section */}
-          <FormField
-            control={form.control}
-            name="expiryDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("environments.surveys.share.personal_links.expiry_date_optional")}</FormLabel>
-                <FormControl>
-                  <RestrictedDatePicker date={field.value} updateSurveyDate={field.onChange} />
-                </FormControl>
-                <FormDescription>
-                  {t("environments.surveys.share.personal_links.expiry_date_description")}
-                </FormDescription>
-              </FormItem>
-            )}
-          />
-
-          {/* Generate Button */}
-          <Button
-            onClick={handleGenerateLinks}
-            disabled={isButtonDisabled}
-            loading={isGenerating}
-            className="w-fit">
-            <DownloadIcon className="mr-2 h-4 w-4" />
-            {buttonText}
-          </Button>
-        </div>
-        <hr />
-
-        {/* Info Box */}
-        <DocumentationLinks
-          links={[
-            {
-              title: t("environments.surveys.share.personal_links.work_with_segments"),
-              href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
-            },
-          ]}
+      <div className="flex h-full grow flex-col gap-6">
+        {/* Recipients Section */}
+        <FormField
+          control={form.control}
+          name="selectedSegment"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("common.recipients")}</FormLabel>
+              <FormControl>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={publicSegments.length === 0}>
+                  <SelectTrigger className="w-full bg-white">
+                    <SelectValue
+                      placeholder={
+                        publicSegments.length === 0
+                          ? t("environments.surveys.share.personal_links.no_segments_available")
+                          : t("environments.surveys.share.personal_links.select_segment")
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {publicSegments.map((segment) => (
+                      <SelectItem key={segment.id} value={segment.id}>
+                        {segment.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormDescription>
+                {t("environments.surveys.share.personal_links.create_and_manage_segments")}
+              </FormDescription>
+            </FormItem>
+          )}
         />
-      </TabContainer>
+
+        {/* Expiry Date Section */}
+        <FormField
+          control={form.control}
+          name="expiryDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("environments.surveys.share.personal_links.expiry_date_optional")}</FormLabel>
+              <FormControl>
+                <RestrictedDatePicker date={field.value} updateSurveyDate={field.onChange} />
+              </FormControl>
+              <FormDescription>
+                {t("environments.surveys.share.personal_links.expiry_date_description")}
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+
+        {/* Generate Button */}
+        <Button
+          onClick={handleGenerateLinks}
+          disabled={isButtonDisabled}
+          loading={isGenerating}
+          className="w-fit">
+          <DownloadIcon className="mr-2 h-4 w-4" />
+          {buttonText}
+        </Button>
+      </div>
+      <hr />
+
+      {/* Info Box */}
+      <DocumentationLinks
+        links={[
+          {
+            title: t("environments.surveys.share.personal_links.work_with_segments"),
+            href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
+          },
+        ]}
+      />
     </FormProvider>
   );
 };

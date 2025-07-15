@@ -192,14 +192,6 @@ describe("AnonymousLinksTab", () => {
     cleanup();
   });
 
-  test("renders with multi-use link enabled by default", () => {
-    render(<AnonymousLinksTab {...defaultProps} />);
-
-    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
-    expect(screen.getByTestId("toggle-multi-use-link-switch")).toHaveAttribute("data-checked", "true");
-    expect(screen.getByTestId("toggle-single-use-link-switch")).toHaveAttribute("data-checked", "false");
-  });
-
   test("renders with single-use link enabled when survey has singleUse enabled", () => {
     render(<AnonymousLinksTab {...defaultProps} survey={surveyWithSingleUse} />);
 

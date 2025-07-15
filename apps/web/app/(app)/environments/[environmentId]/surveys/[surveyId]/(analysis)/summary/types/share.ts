@@ -6,5 +6,6 @@ export enum ShareViewType {
   APP = "app",
   WEBSITE_EMBED = "website-embed",
   DYNAMIC_POPUP = "dynamic-popup",
+  SOCIAL_MEDIA = "social-media",
   QR_CODE = "qr-code",
 }

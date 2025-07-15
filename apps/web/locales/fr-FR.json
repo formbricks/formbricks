@@ -1799,7 +1799,14 @@
           "send_preview_email": "Envoyer un e-mail d'aperçu",
           "title": "Intégrez votre sondage dans un e-mail"
         },
-        "share_view_title": "Partager par"
+        "share_view_title": "Partager par",
+        "social_media": {
+          "description": "Obtenez des réponses de vos contacts sur divers réseaux sociaux.",
+          "share_your_survey_on_social_media": "Partagez votre sondage sur les réseaux sociaux",
+          "source_tracking_enabled": "Suivi des sources activé",
+          "source_tracking_enabled_alert_description": "En partageant depuis cette boîte de dialogue, le réseau social sera ajouté au lien du sondage afin que vous sachiez quelles réponses proviennent de chaque réseau.",
+          "title": "Médias sociaux"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est '{'filterComboBoxValue'}' - '{'filterValue'}' ",
@@ -1849,6 +1856,7 @@
         "publish_to_web_warning": "Vous êtes sur le point de rendre ces résultats d'enquête publics.",
         "publish_to_web_warning_description": "Les résultats de votre enquête seront publics. Toute personne en dehors de votre organisation pourra y accéder si elle a le lien.",
         "qr_code": "Code QR",
+        "qr_code_description": "Les réponses collectées via le code QR sont anonymes.",
         "qr_code_download_failed": "Échec du téléchargement du code QR",
         "qr_code_download_with_start_soon": "Le téléchargement du code QR débutera bientôt",
         "qr_code_generation_failed": "\"Un problème est survenu lors du chargement du code QR du sondage. Veuillez réessayer.\"",

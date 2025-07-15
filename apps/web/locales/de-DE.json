@@ -1799,7 +1799,14 @@
           "send_preview_email": "Vorschau-E-Mail senden",
           "title": "Binden Sie Ihre Umfrage in eine E-Mail ein"
         },
-        "share_view_title": "Teilen über"
+        "share_view_title": "Teilen über",
+        "social_media": {
+          "description": "Erhalte Rückmeldungen von deinen Kontakten auf verschiedenen sozialen Medien.",
+          "share_your_survey_on_social_media": "Teilen Sie Ihre Umfrage in sozialen Medien",
+          "source_tracking_enabled": "Quellenverfolgung aktiviert",
+          "source_tracking_enabled_alert_description": "Wenn Sie aus diesem Dialogfenster teilen, wird das soziale Netzwerk an den Umfragelink angehängt, sodass Sie wissen, welche Antworten über welches Netzwerk eingegangen sind.",
+          "title": "Soziale Medien"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} {filterComboBoxValue} - {filterValue} ist",
@@ -1849,6 +1856,7 @@
         "publish_to_web_warning": "Du bist dabei, diese Umfrageergebnisse öffentlich zugänglich zu machen.",
         "publish_to_web_warning_description": "Deine Umfrageergebnisse werden öffentlich sein. Jeder außerhalb deiner Organisation kann darauf zugreifen, wenn er den Link hat.",
         "qr_code": "QR-Code",
+        "qr_code_description": "Antworten, die per QR-Code gesammelt werden, sind anonym.",
         "qr_code_download_failed": "QR-Code-Download fehlgeschlagen",
         "qr_code_download_with_start_soon": "QR Code-Download startet bald",
         "qr_code_generation_failed": "Es gab ein Problem beim Laden des QR-Codes für die Umfrage. Bitte versuchen Sie es erneut.",
