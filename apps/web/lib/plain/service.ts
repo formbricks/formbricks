@@ -19,7 +19,6 @@ export const writeData = async (
     const client = new PlainClient({
       apiKey: decryptedToken,
     });
-    console.log("decryptedToken", decryptedToken);
     const titleId = integrationConfig.mapping.find((m) => m.plainField.id === "threadTitle")?.question.id;
 
     const componentTextId = integrationConfig.mapping.find((m) => m.plainField.id === "componentText")
