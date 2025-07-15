@@ -1782,11 +1782,13 @@
           "title": "Incorpore sua pesquisa em um e-mail"
         },
         "share_view_title": "Compartilhar via",
-        "share_your_survey_on_social_media": "Compartilhe sua pesquisa nas redes sociais",
-        "social_media": "Mídia Social",
-        "social_media_description": "Obtenha respostas de seus contatos em várias redes sociais.",
-        "source_tracking_enabled": "rastreamento de origem ativado",
-        "source_tracking_enabled_alert_description": "Ao compartilhar a partir deste diálogo, a rede social será adicionada ao link da pesquisa para que você saiba de qual rede vieram as respostas."
+        "social_media": {
+          "description": "Obtenha respostas de seus contatos em várias redes sociais.",
+          "share_your_survey_on_social_media": "Compartilhe sua pesquisa nas redes sociais",
+          "source_tracking_enabled": "rastreamento de origem ativado",
+          "source_tracking_enabled_alert_description": "Ao compartilhar a partir deste diálogo, a rede social será adicionada ao link da pesquisa para que você saiba de qual rede vieram as respostas.",
+          "title": "Mídia Social"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue} ",

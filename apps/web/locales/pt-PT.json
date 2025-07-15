@@ -1782,11 +1782,13 @@
           "title": "Incorporar o seu inquérito num email"
         },
         "share_view_title": "Partilhar via",
-        "share_your_survey_on_social_media": "Partilhe o seu inquérito nas redes sociais",
-        "social_media": "Redes Sociais",
-        "social_media_description": "Obtenha respostas dos seus contactos em várias redes sociais.",
-        "source_tracking_enabled": "Rastreamento de origem ativado",
-        "source_tracking_enabled_alert_description": "Ao partilhar a partir deste diálogo, a rede social será anexada ao link do inquérito para que saiba de que rede vieram as respostas."
+        "social_media": {
+          "description": "Obtenha respostas dos seus contactos em várias redes sociais.",
+          "share_your_survey_on_social_media": "Partilhe o seu inquérito nas redes sociais",
+          "source_tracking_enabled": "Rastreamento de origem ativado",
+          "source_tracking_enabled_alert_description": "Ao partilhar a partir deste diálogo, a rede social será anexada ao link do inquérito para que saiba de que rede vieram as respostas.",
+          "title": "Redes Sociais"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue} ",

@@ -119,10 +119,10 @@ export const ShareSurveyModal = ({
       },
       {
         id: ShareViewType.SOCIAL_MEDIA,
-        label: t("environments.surveys.share.social_media"),
+        label: t("environments.surveys.share.social_media.title"),
         icon: Share2Icon,
-        title: t("environments.surveys.share.social_media"),
-        description: t("environments.surveys.share.social_media_description"),
+        title: t("environments.surveys.share.social_media.title"),
+        description: t("environments.surveys.share.social_media.description"),
         component: <SocialMediaTab surveyUrl={surveyUrl} surveyTitle={survey.name} />,
       },
       {

@@ -1782,11 +1782,13 @@
           "title": "Embed your survey in an email"
         },
         "share_view_title": "Share via",
-        "share_your_survey_on_social_media": "Share your survey on social media",
-        "social_media": "Social media",
-        "social_media_description": "Get responses from your contacts on various social media networks.",
-        "source_tracking_enabled": "Source tracking enabled",
-        "source_tracking_enabled_alert_description": "When sharing from this dialog, the social media network will be appended to the survey link so you know which responses came via each network."
+        "social_media": {
+          "description": "Get responses from your contacts on various social media networks.",
+          "share_your_survey_on_social_media": "Share your survey on social media",
+          "source_tracking_enabled": "Source tracking enabled",
+          "source_tracking_enabled_alert_description": "When sharing from this dialog, the social media network will be appended to the survey link so you know which responses came via each network.",
+          "title": "Social media"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question {questionIdx} is {filterComboBoxValue} - {filterValue} ",

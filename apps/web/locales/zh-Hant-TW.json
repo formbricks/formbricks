@@ -1782,11 +1782,13 @@
           "title": "嵌入 你的 調查 在 電子郵件 中"
         },
         "share_view_title": "透過 分享",
-        "share_your_survey_on_social_media": "分享 您 的 問卷 在 社交媒體 上",
-        "social_media": "社群媒體",
-        "social_media_description": "從 您 的 聯絡人 在 各 種 社交 媒體 網絡 上 獲得 回應。",
-        "source_tracking_enabled": "來源追蹤已啟用",
-        "source_tracking_enabled_alert_description": "從 此 對 話 框 共 享 時，社 交 媒 體 網 絡 會 被 附 加 到 調 查鏈 接 下，讓 您 知 道 各 網 絡 的 回 應 來 源。"
+        "social_media": {
+          "description": "從 您 的 聯絡人 在 各 種 社交 媒體 網絡 上 獲得 回應。",
+          "share_your_survey_on_social_media": "分享 您 的 問卷 在 社交媒體 上",
+          "source_tracking_enabled": "來源追蹤已啟用",
+          "source_tracking_enabled_alert_description": "從 此 對 話 框 共 享 時，社 交 媒 體 網 絡 會 被 附 加 到 調 查鏈 接 下，讓 您 知 道 各 網 絡 的 回 應 來 源。",
+          "title": "社群媒體"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "已新增回應的篩選器，其中問題 '{'questionIdx'}' 的答案為 '{'filterComboBoxValue'}' - '{'filterValue'}'",

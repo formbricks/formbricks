@@ -1782,11 +1782,13 @@
           "title": "Binden Sie Ihre Umfrage in eine E-Mail ein"
         },
         "share_view_title": "Teilen über",
-        "share_your_survey_on_social_media": "Teilen Sie Ihre Umfrage in sozialen Medien",
-        "social_media": "Soziale Medien",
-        "social_media_description": "Erhalte Rückmeldungen von deinen Kontakten auf verschiedenen sozialen Medien.",
-        "source_tracking_enabled": "Quellenverfolgung aktiviert",
-        "source_tracking_enabled_alert_description": "Wenn Sie aus diesem Dialogfenster teilen, wird das soziale Netzwerk an den Umfragelink angehängt, sodass Sie wissen, welche Antworten über welches Netzwerk eingegangen sind."
+        "social_media": {
+          "description": "Erhalte Rückmeldungen von deinen Kontakten auf verschiedenen sozialen Medien.",
+          "share_your_survey_on_social_media": "Teilen Sie Ihre Umfrage in sozialen Medien",
+          "source_tracking_enabled": "Quellenverfolgung aktiviert",
+          "source_tracking_enabled_alert_description": "Wenn Sie aus diesem Dialogfenster teilen, wird das soziale Netzwerk an den Umfragelink angehängt, sodass Sie wissen, welche Antworten über welches Netzwerk eingegangen sind.",
+          "title": "Soziale Medien"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} {filterComboBoxValue} - {filterValue} ist",

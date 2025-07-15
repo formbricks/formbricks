@@ -1782,11 +1782,13 @@
           "title": "Intégrez votre sondage dans un e-mail"
         },
         "share_view_title": "Partager par",
-        "share_your_survey_on_social_media": "Partagez votre sondage sur les réseaux sociaux",
-        "social_media": "Médias sociaux",
-        "social_media_description": "Obtenez des réponses de vos contacts sur divers réseaux sociaux.",
-        "source_tracking_enabled": "Suivi des sources activé",
-        "source_tracking_enabled_alert_description": "En partageant depuis cette boîte de dialogue, le réseau social sera ajouté au lien du sondage afin que vous sachiez quelles réponses proviennent de chaque réseau."
+        "social_media": {
+          "description": "Obtenez des réponses de vos contacts sur divers réseaux sociaux.",
+          "share_your_survey_on_social_media": "Partagez votre sondage sur les réseaux sociaux",
+          "source_tracking_enabled": "Suivi des sources activé",
+          "source_tracking_enabled_alert_description": "En partageant depuis cette boîte de dialogue, le réseau social sera ajouté au lien du sondage afin que vous sachiez quelles réponses proviennent de chaque réseau.",
+          "title": "Médias sociaux"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est '{'filterComboBoxValue'}' - '{'filterValue'}' ",

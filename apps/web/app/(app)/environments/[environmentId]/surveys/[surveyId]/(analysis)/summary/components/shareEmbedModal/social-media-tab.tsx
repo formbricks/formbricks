@@ -94,9 +94,9 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
 
       <Alert>
         <AlertCircleIcon />
-        <AlertTitle>{t("environments.surveys.share.source_tracking_enabled")}</AlertTitle>
+        <AlertTitle>{t("environments.surveys.share.social_media.source_tracking_enabled")}</AlertTitle>
         <AlertDescription>
-          {t("environments.surveys.share.source_tracking_enabled_alert_description")}
+          {t("environments.surveys.share.social_media.source_tracking_enabled_alert_description")}
         </AlertDescription>
         <AlertButton
           onClick={() => {
