@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import {
   addConditionBelow,
   createGroupFromResource,
@@ -16,6 +15,7 @@ import {
   getDefaultOperatorForQuestion,
   getMatchValueProps,
 } from "@/modules/survey/editor/lib/utils";
+import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +23,14 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+import { cn } from "@/modules/ui/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
@@ -161,12 +169,14 @@ export function LogicEditorConditions({
       }
     }
 
+    const operator = question ? getDefaultOperatorForQuestion(question, t) : "isSkipped";
+
     handleUpdateCondition(condition.id, {
       leftOperand: {
         value,
         type,
       },
-      operator: "isSkipped",
+      operator,
       rightOperand: undefined,
     });
   };
@@ -218,61 +228,64 @@ export function LogicEditorConditions({
         }
       }
     }
+
     return condition.leftOperand.value;
   };
+
   const renderCondition = (
     condition: TSingleCondition | TConditionGroup,
     index: number,
     parentConditionGroup: TConditionGroup
   ) => {
     const connector = parentConditionGroup.connector;
+
     if (isConditionGroup(condition)) {
       return (
-        <div key={condition.id} className="flex items-start justify-between gap-4">
-          {index === 0 ? (
-            <div>{t("environments.surveys.edit.when")}</div>
-          ) : (
-            <button
-              className={cn("w-14", index === 1 && "cursor-pointer underline")}
-              onClick={() => {
-                if (index !== 1) return;
-                handleConnectorChange(parentConditionGroup.id);
-              }}>
-              {connector}
-            </button>
-          )}
-          <div className="rounded-lg border border-slate-400 p-3">
-            <LogicEditorConditions
-              conditions={condition}
-              updateQuestion={updateQuestion}
-              localSurvey={localSurvey}
-              question={question}
-              questionIdx={questionIdx}
-              logicIdx={logicIdx}
-              depth={depth + 1}
-            />
+        <div key={condition.id} className="flex items-baseline gap-x-1">
+          <div className="w-10 shrink-0 text-right text-sm">
+            {index > 0 ? <div>{connector}</div> : <div />}
           </div>
-          <div className="mt-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleAddConditionBelow(condition.id);
-                  }}
-                  icon={<PlusIcon className="h-4 w-4" />}>
-                  {t("environments.surveys.edit.add_condition_below")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={depth === 0 && conditions.conditions.length === 1}
-                  onClick={() => handleRemoveCondition(condition.id)}
-                  icon={<TrashIcon className="h-4 w-4" />}>
-                  {t("common.remove")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="relative flex w-full items-center gap-x-1 rounded-lg border border-slate-400 p-3">
+            <div className={cn("flex-1")}>
+              <LogicEditorConditions
+                conditions={condition}
+                updateQuestion={updateQuestion}
+                localSurvey={localSurvey}
+                question={question}
+                questionIdx={questionIdx}
+                logicIdx={logicIdx}
+                depth={depth + 1}
+              />
+            </div>
+
+            {condition.conditions.length > 1 && (
+              <div className="absolute right-3 top-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <Button
+                      variant="secondary"
+                      className="flex h-10 w-10 items-center justify-center rounded-md">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        handleAddConditionBelow(condition.id);
+                      }}
+                      icon={<PlusIcon className="h-4 w-4" />}>
+                      {t("environments.surveys.edit.add_condition_below")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={depth === 0 && conditions.conditions.length === 1}
+                      onClick={() => handleRemoveCondition(condition.id)}
+                      icon={<TrashIcon className="h-4 w-4" />}>
+                      {t("common.remove")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -295,68 +308,75 @@ export function LogicEditorConditions({
       "doesNotIncludeAllOf",
       "isAnyOf",
     ].includes(condition.operator);
+
     return (
       <div key={condition.id} className="flex items-center gap-x-2">
-        <div className="w-10 shrink-0">
-          {index === 0 ? (
-            t("environments.surveys.edit.when")
+        <div className="w-10 shrink-0 text-right text-sm">
+          {index > 0 ? (
+            <div>{connector}</div>
+          ) : parentConditionGroup.conditions.length === 1 ? (
+            <div>When</div>
           ) : (
-            <button
-              className={cn("w-14", index === 1 && "cursor-pointer underline")}
-              onClick={() => {
-                if (index !== 1) return;
-                handleConnectorChange(parentConditionGroup.id);
-              }}>
-              {connector}
-            </button>
+            <div />
           )}
         </div>
-        <InputCombobox
-          id={`condition-${depth}-${index}-conditionValue`}
-          key="conditionValue"
-          showSearch={false}
-          groupedOptions={conditionValueOptions}
-          value={getLeftOperandValue(condition)}
-          onChangeValue={(val: string, option) => {
-            handleQuestionChange(condition, val, option);
-          }}
-          comboboxClasses="grow"
-        />
-        <InputCombobox
-          id={`condition-${depth}-${index}-conditionOperator`}
-          key="conditionOperator"
-          showSearch={false}
-          options={conditionOperatorOptions}
-          value={condition.operator}
-          onChangeValue={(val: TSurveyLogicConditionsOperator) => {
-            handleOperatorChange(condition, val);
-          }}
-          comboboxClasses="grow min-w-[150px]"
-        />
-        {show && (
-          <InputCombobox
-            id={`condition-${depth}-${index}-conditionMatchValue`}
-            withInput={showInput}
-            inputProps={{
-              type: inputType,
-              placeholder: t("environments.surveys.edit.select_or_type_value"),
-            }}
-            key="conditionMatchValue"
-            showSearch={false}
-            groupedOptions={options}
-            allowMultiSelect={allowMultiSelect}
-            showCheckIcon={allowMultiSelect}
-            comboboxClasses="grow min-w-[180px] max-w-[300px]"
-            value={condition.rightOperand?.value}
-            clearable={true}
-            onChangeValue={(val, option) => {
-              handleRightOperandChange(condition, val, option);
-            }}
-          />
-        )}
+
+        <div className="grid w-full flex-1 grid-cols-12 gap-x-2">
+          <div className="col-span-5">
+            <InputCombobox
+              id={`condition-${depth}-${index}-conditionValue`}
+              key="conditionValue"
+              showSearch
+              groupedOptions={conditionValueOptions}
+              value={getLeftOperandValue(condition)}
+              onChangeValue={(val: string, option) => {
+                handleQuestionChange(condition, val, option);
+              }}
+            />
+          </div>
+          <div className={cn(show && "col-span-3", !show && "col-span-7")}>
+            <InputCombobox
+              id={`condition-${depth}-${index}-conditionOperator`}
+              key="conditionOperator"
+              showSearch={false}
+              options={conditionOperatorOptions}
+              value={condition.operator}
+              onChangeValue={(val: TSurveyLogicConditionsOperator) => {
+                handleOperatorChange(condition, val);
+              }}
+            />
+          </div>
+          <div className="col-span-4">
+            {show && (
+              <InputCombobox
+                id={`condition-${depth}-${index}-conditionMatchValue`}
+                withInput={showInput}
+                inputProps={{
+                  type: inputType,
+                  placeholder: t("environments.surveys.edit.select_or_type_value"),
+                }}
+                key="conditionMatchValue"
+                showSearch={false}
+                groupedOptions={options}
+                allowMultiSelect={allowMultiSelect}
+                showCheckIcon={allowMultiSelect}
+                value={condition.rightOperand?.value}
+                clearable={true}
+                onChangeValue={(val, option) => {
+                  handleRightOperandChange(condition, val, option);
+                }}
+              />
+            )}
+          </div>
+        </div>
+
         <DropdownMenu>
           <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`}>
-            <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+            <Button
+              variant="outline"
+              className="flex h-10 w-10 items-center justify-center rounded-md bg-white">
+              <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
@@ -367,7 +387,7 @@ export function LogicEditorConditions({
               {t("environments.surveys.edit.add_condition_below")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              disabled={depth === 0 && conditions.conditions.length === 1}
+              // disabled={depth === 0 && conditions.conditions.length === 1}
               onClick={() => handleRemoveCondition(condition.id)}
               icon={<TrashIcon className="h-4 w-4" />}>
               {t("common.remove")}
@@ -389,8 +409,30 @@ export function LogicEditorConditions({
   };
 
   return (
-    <div ref={parent} className="flex flex-col gap-y-2">
-      {conditions?.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
+    <div ref={parent} className="flex flex-col gap-y-4">
+      {/* Dropdown for changing the connector */}
+      {conditions.conditions.length > 1 && (
+        <div className="flex items-center text-sm">
+          <p className="mr-2 font-semibold text-slate-700">When</p>
+          <Select
+            value={conditions.connector}
+            onValueChange={() => {
+              handleConnectorChange(conditions.id);
+            }}>
+            <SelectTrigger className="w-auto bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="and">all are true</SelectItem>
+              <SelectItem value="or">any is true</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-y-2">
+        {conditions?.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
+      </div>
     </div>
   );
 }

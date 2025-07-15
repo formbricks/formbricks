@@ -109,41 +109,56 @@ export const getConditionValueOptions = (
   const questions = localSurvey.questions;
 
   const groupedOptions: TComboboxGroupedOption[] = [];
-  const questionOptions = questions
+  const questionOptions: TComboboxOption[] = [];
+
+  questions
     .filter((_, idx) => idx <= currQuestionIdx)
-    .map((question) => {
+    .forEach((question) => {
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+        // Rows submenu
         const rows = question.rows.map((row, rowIdx) => ({
           icon: getQuestionIconMapping(t)[question.type],
           label: `${getLocalizedValue(row, "default")} (${getLocalizedValue(question.headline, "default")})`,
           value: `${question.id}.${rowIdx}`,
           meta: {
             type: "question",
-            rowIdx: rowIdx,
+            rowIdx: rowIdx.toString(),
           },
         }));
 
-        const questionEntry = {
+        questionOptions.push({
           icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
             type: "question",
           },
-        };
-        return [questionEntry, ...rows];
+          children: [
+            {
+              label: t("environments.surveys.edit.matrix_rows", "Rows"),
+              value: `${question.id}-rows`,
+              children: rows,
+            },
+            {
+              label: t("environments.surveys.edit.matrix_all_fields", "All fields"),
+              value: question.id,
+              meta: {
+                type: "question",
+              },
+            },
+          ],
+        });
+      } else {
+        questionOptions.push({
+          icon: getQuestionIconMapping(t)[question.type],
+          label: getLocalizedValue(question.headline, "default"),
+          value: question.id,
+          meta: {
+            type: "question",
+          },
+        });
       }
-
-      return {
-        icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
-        value: question.id,
-        meta: {
-          type: "question",
-        },
-      };
-    })
-    .flat();
+    });
 
   const variableOptions = variables.map((variable) => {
     return {
@@ -432,7 +447,7 @@ export const getMatchValueProps = (
       const choices = selectedQuestion.choices.map((choice, idx) => {
         return {
           imgSrc: choice.imageUrl,
-          label: `${t("environments.surveys.edit.picture_idx")} ${idx + 1}`,
+          label: `${t("common.picture")} ${idx + 1}`,
           value: choice.id,
           meta: {
             type: "static",
