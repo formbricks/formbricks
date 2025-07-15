@@ -31,6 +31,7 @@ import {
   TPlainMapping,
 } from "@formbricks/types/integration/plain";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { INITIAL_MAPPING, PLAIN_FIELD_TYPES } from "../constants";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -62,27 +63,12 @@ export const AddIntegrationModal = ({
       } | null;
       isMandatory?: boolean;
     }[]
-  >([
-    {
-      plainField: { id: "threadTitle", name: "Thread Title", type: "title" },
-      question: { id: "", name: "", type: "" },
-      isMandatory: true,
-    },
-    {
-      plainField: { id: "componentText", name: "Component Text", type: "componentText" },
-      question: { id: "", name: "", type: "" },
-      isMandatory: true,
-    },
-  ]);
+  >(INITIAL_MAPPING.map((m) => ({ ...m })));
 
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [isLinkingIntegration, setIsLinkingIntegration] = useState(false);
 
-  const plainFieldTypes = [
-    { id: "threadTitle", name: "Thread Title", type: "threadField" as TPlainFieldType },
-    { id: "componentText", name: "Component Text", type: "componentText" as TPlainFieldType },
-    { id: "labelTypeId", name: "Label ID", type: "labelTypeId" as TPlainFieldType },
-  ];
+  const plainFieldTypes = PLAIN_FIELD_TYPES;
 
   // State to track custom label ID values
   const [labelIdValues, setLabelIdValues] = useState<Record<string, string>>({});
@@ -332,18 +318,7 @@ export const AddIntegrationModal = ({
     setIsLinkingIntegration(false);
     setSelectedSurvey(null);
     setLabelIdValues({});
-    setMapping([
-      {
-        plainField: { id: "threadTitle", name: "Thread Title", type: "title" },
-        question: { id: "", name: "", type: "" },
-        isMandatory: true,
-      },
-      {
-        plainField: { id: "componentText", name: "Component Text", type: "componentText" },
-        question: { id: "", name: "", type: "" },
-        isMandatory: true,
-      },
-    ]);
+    setMapping(INITIAL_MAPPING.map((m) => ({ ...m })));
   };
 
   const getFilteredQuestionItems = (selectedIdx) => {
