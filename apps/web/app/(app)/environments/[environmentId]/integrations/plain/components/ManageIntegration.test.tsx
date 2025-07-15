@@ -6,7 +6,6 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationPlain, TIntegrationPlainConfigData } from "@formbricks/types/integration/plain";
 import { ManageIntegration } from "./ManageIntegration";
 
-// Mock dependencies
 vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
   deleteIntegrationAction: vi.fn(),
 }));
@@ -34,9 +33,47 @@ vi.mock("@/modules/ui/components/empty-space-filler", () => ({
   EmptySpaceFiller: ({ emptyMessage }) => <div>{emptyMessage}</div>,
 }));
 
+vi.mock("@/lib/constants", () => {
+  const base = {
+    IS_FORMBRICKS_CLOUD: false,
+    IS_PRODUCTION: false,
+    IS_DEVELOPMENT: true,
+    E2E_TESTING: false,
+    ENCRYPTION_KEY: "12345678901234567890123456789012",
+    REDIS_URL: undefined,
+    ENTERPRISE_LICENSE_KEY: undefined,
+    POSTHOG_API_KEY: undefined,
+    POSTHOG_HOST: undefined,
+    IS_POSTHOG_CONFIGURED: false,
+    GITHUB_ID: undefined,
+    GITHUB_SECRET: undefined,
+    GOOGLE_CLIENT_ID: undefined,
+    GOOGLE_CLIENT_SECRET: undefined,
+    AZUREAD_CLIENT_ID: undefined,
+    AZUREAD_CLIENT_SECRET: undefined,
+    AZUREAD_TENANT_ID: undefined,
+    OIDC_DISPLAY_NAME: undefined,
+    OIDC_CLIENT_ID: undefined,
+    OIDC_ISSUER: undefined,
+    OIDC_CLIENT_SECRET: undefined,
+    OIDC_SIGNING_ALGORITHM: undefined,
+    SESSION_MAX_AGE: 1000,
+    AUDIT_LOG_ENABLED: 1,
+    WEBAPP_URL: undefined,
+    SENTRY_DSN: undefined,
+    SENTRY_RELEASE: undefined,
+    SENTRY_ENVIRONMENT: undefined,
+  };
+  return new Proxy(base, {
+    get(target, prop) {
+      return prop in target ? target[prop as keyof typeof target] : undefined;
+    },
+  });
+});
+
 vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({
-    t: (key) => key, // mock translation function
+    t: (key) => key,
   }),
 }));
 
@@ -83,13 +120,11 @@ describe("ManageIntegration", () => {
   let setOpenAddIntegrationModal: (isOpen: boolean) => void;
   let setIsConnected: (isConnected: boolean) => void;
   let setSelectedIntegration: (integration: (TIntegrationPlainConfigData & { index: number }) | null) => void;
-  let handlePlainAuthorization: () => void;
 
   beforeEach(() => {
     setOpenAddIntegrationModal = vi.fn();
     setIsConnected = vi.fn();
     setSelectedIntegration = vi.fn();
-    handlePlainAuthorization = vi.fn();
   });
 
   afterEach(() => {
@@ -105,7 +140,6 @@ describe("ManageIntegration", () => {
         setIsConnected={setIsConnected}
         setSelectedIntegration={setSelectedIntegration}
         locale={"en-US"}
-        handlePlainAuthorization={handlePlainAuthorization}
       />
     );
     expect(screen.getByText("environments.integrations.plain.no_databases_found")).toBeInTheDocument();
@@ -120,7 +154,6 @@ describe("ManageIntegration", () => {
         setIsConnected={setIsConnected}
         setSelectedIntegration={setSelectedIntegration}
         locale={"en-US"}
-        handlePlainAuthorization={handlePlainAuthorization}
       />
     );
     expect(screen.getAllByText("Survey One")[0]).toBeInTheDocument();
@@ -138,7 +171,6 @@ describe("ManageIntegration", () => {
         setIsConnected={setIsConnected}
         setSelectedIntegration={setSelectedIntegration}
         locale={"en-US"}
-        handlePlainAuthorization={handlePlainAuthorization}
       />
     );
 
