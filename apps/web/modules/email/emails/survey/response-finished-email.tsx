@@ -84,7 +84,7 @@ export async function ResponseFinishedEmail({
                       <Text className="mb-2 flex items-center gap-2 text-sm">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words text-sm font-medium">
+                      <Text className="mt-0 whitespace-pre-wrap break-words text-sm">
                         {hiddenFieldResponse}
                       </Text>
                     </Column>
