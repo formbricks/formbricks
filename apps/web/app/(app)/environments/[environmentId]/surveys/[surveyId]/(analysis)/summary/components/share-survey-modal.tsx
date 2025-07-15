@@ -56,7 +56,7 @@ export const ShareSurveyModal = ({
   isFormbricksCloud,
 }: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
-  const [surveyUrl, setSurveyUrl] = useState(() => getSurveyUrl(survey, publicDomain, "default"));
+  const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
   const [showView, setShowView] = useState<ModalView>(modalView);
   const { email } = user;
   const { t } = useTranslate();
@@ -142,7 +142,19 @@ export const ShareSurveyModal = ({
         component: <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />,
       },
     ],
-    [t]
+    [
+      t,
+      survey,
+      publicDomain,
+      setSurveyUrl,
+      user.locale,
+      surveyUrl,
+      environmentId,
+      segments,
+      isContactsEnabled,
+      isFormbricksCloud,
+      email,
+    ]
   );
 
   const appTabs = [
