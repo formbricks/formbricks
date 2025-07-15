@@ -28,13 +28,19 @@ export const writeData = async (
 
     const labelId = integrationConfig.mapping.find((m) => m.plainField.id === "labelTypeId")?.question.id;
 
-    const title = titleId ? String(data.response.data[titleId]) : null;
-    if (!title) return err(new Error("Missing title in response data."));
+    const rawTitle = titleId ? data.response.data[titleId] : undefined;
+    if (typeof rawTitle !== "string" || rawTitle.trim() === "") {
+      return err(new Error("Missing title in response data."));
+    }
+    const title = rawTitle.trim();
 
-    const componentText = componentTextId ? String(data.response.data[componentTextId]) : null;
-    if (!componentText) return err(new Error("Missing component text in response data."));
+    const rawComponentText = componentTextId ? data.response.data[componentTextId] : undefined;
+    if (typeof rawComponentText !== "string" || rawComponentText.trim() === "") {
+      return err(new Error("Missing component text in response data."));
+    }
+    const componentText = rawComponentText.trim();
 
-    console.log(labelId);
+    const labelValue = labelId ? data.response.data[labelId] : undefined;
 
     // Extract contact information from the response data
     let firstName = "";
@@ -88,11 +94,13 @@ export const writeData = async (
       components: [
         {
           componentText: {
-            text: componentText!,
+            text: componentText,
           },
         },
       ],
-      ...(labelId ? { labelTypeIds: [labelId] } : {}),
+      ...(typeof labelValue === "string" && labelValue.trim() !== ""
+        ? { labelTypeIds: [labelValue.trim()] }
+        : {}),
     });
     return ok(undefined);
   } catch (error) {

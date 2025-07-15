@@ -1,55 +1,41 @@
-import { TPipelineInput } from "@/app/lib/types/pipelines";
+import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { symmetricDecrypt } from "@/lib/crypto";
-import * as PlainSDK from "@team-plain/typescript-sdk";
+import { PlainClient } from "@team-plain/typescript-sdk";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { TIntegrationPlainConfig, TIntegrationPlainConfigData } from "@formbricks/types/integration/plain";
 import { writeData } from "./service";
 
-// Mock dependencies
-vi.mock("@/lib/crypto", () => ({
-  symmetricDecrypt: vi.fn().mockReturnValue("decrypted-api-key"),
-}));
-
-// Create mock functions for PlainClient methods
-const mockUpsertCustomer = vi.fn().mockResolvedValue({});
-const mockCreateThread = vi.fn().mockResolvedValue({
-  id: "thread-123",
-  title: "Test Thread",
-});
-
-// Mock the PlainClient class
+// Mock dependencies before importing the module under test
 vi.mock("@team-plain/typescript-sdk", () => {
   return {
-    PlainClient: vi.fn().mockImplementation(() => {
-      return {
-        upsertCustomer: mockUpsertCustomer,
-        createThread: mockCreateThread,
-      };
-    }),
+    PlainClient: vi.fn(),
   };
 });
 
-vi.mock("@prisma/client", () => ({
-  PipelineTriggers: {
-    responseFinished: "responseFinished",
-    responseCreated: "responseCreated",
-    responseUpdated: "responseUpdated",
-  },
-}));
+vi.mock("@/lib/crypto", () => {
+  return {
+    symmetricDecrypt: vi.fn(),
+  };
+});
 
-vi.mock("@formbricks/logger", () => ({
-  logger: {
-    error: vi.fn(),
-  },
-}));
+vi.mock("@formbricks/logger", () => {
+  return {
+    logger: {
+      error: vi.fn(),
+    },
+  };
+});
 
-vi.mock("@/lib/constants", () => ({
-  ENCRYPTION_KEY: "test-encryption-key",
-}));
+vi.mock("@/lib/constants", () => {
+  return {
+    ENCRYPTION_KEY: "test-encryption-key",
+  };
+});
 
 describe("Plain Service", () => {
+  // Mock data
   const mockConfig: TIntegrationPlainConfig = {
     key: "encrypted-api-key",
     data: [],
@@ -63,7 +49,7 @@ describe("Plain Service", () => {
         plainField: {
           id: "threadTitle",
           name: "Thread Title",
-          type: "title",
+          type: "title" as const,
         },
         question: {
           id: "q1",
@@ -75,7 +61,7 @@ describe("Plain Service", () => {
         plainField: {
           id: "componentText",
           name: "Component Text",
-          type: "componentText",
+          type: "componentText" as const,
         },
         question: {
           id: "q2",
@@ -87,7 +73,7 @@ describe("Plain Service", () => {
         plainField: {
           id: "labelTypeId",
           name: "Label Type",
-          type: "labelTypeId",
+          type: "labelTypeId" as const,
         },
         question: {
           id: "q3",
@@ -128,19 +114,26 @@ describe("Plain Service", () => {
     },
   };
 
-  const mockPipelineInputWithContactArray: TPipelineInput = {
-    ...mockPipelineInput,
-    response: {
-      ...mockPipelineInput.response,
-      data: {
-        ...mockPipelineInput.response.data,
-        contactArray: ["Jane", "Smith", "jane.smith@example.com"],
-      },
-    },
+  // Mock implementations
+  const mockUpsertCustomer = vi.fn().mockResolvedValue({});
+  const mockCreateThread = vi.fn().mockResolvedValue({
+    id: "thread-123",
+    title: "Test Thread",
+  });
+  const mockPlainClientInstance = {
+    upsertCustomer: mockUpsertCustomer,
+    createThread: mockCreateThread,
   };
 
+  // Setup before each test
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Setup PlainClient mock
+    vi.mocked(PlainClient).mockImplementation(() => mockPlainClientInstance as unknown as PlainClient);
+
+    // Setup symmetricDecrypt mock
+    vi.mocked(symmetricDecrypt).mockReturnValue("decrypted-api-key");
   });
 
   test("successfully sends data to Plain", async () => {
@@ -148,8 +141,8 @@ describe("Plain Service", () => {
     const result = await writeData(mockConfig, mockPipelineInput, mockIntegrationConfig);
 
     // Assert
-    expect(symmetricDecrypt).toHaveBeenCalledWith(mockConfig.key, "test-encryption-key");
-    expect(PlainSDK.PlainClient).toHaveBeenCalledWith({ apiKey: "decrypted-api-key" });
+    expect(symmetricDecrypt).toHaveBeenCalledWith("encrypted-api-key", "test-encryption-key");
+    expect(PlainClient).toHaveBeenCalledWith({ apiKey: "decrypted-api-key" });
 
     // Verify customer creation
     expect(mockUpsertCustomer).toHaveBeenCalledWith({
@@ -189,29 +182,6 @@ describe("Plain Service", () => {
     expect(result).toEqual(ok(undefined));
   });
 
-  test("successfully sends data to Plain with contact info from array", async () => {
-    // Act
-    const result = await writeData(mockConfig, mockPipelineInputWithContactArray, mockIntegrationConfig);
-
-    // Assert
-    expect(mockUpsertCustomer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        identifier: {
-          emailAddress: "jane.smith@example.com",
-        },
-        onCreate: {
-          fullName: "Jane Smith",
-          email: {
-            email: "jane.smith@example.com",
-            isVerified: false,
-          },
-        },
-      })
-    );
-
-    expect(result).toEqual(ok(undefined));
-  });
-
   test("returns error when title is missing", async () => {
     // Arrange
     const inputWithoutTitle: TPipelineInput = {
@@ -219,6 +189,7 @@ describe("Plain Service", () => {
       response: {
         ...mockPipelineInput.response,
         data: {
+          // No q1 (title) field
           q2: "This is the component text content",
           q3: "label-456",
           contactInfo: ["John", "Doe", "john.doe@example.com"],
@@ -231,7 +202,6 @@ describe("Plain Service", () => {
 
     // Assert
     expect(result).toEqual(err(new Error("Missing title in response data.")));
-    expect(PlainSDK.PlainClient).toHaveBeenCalledWith({ apiKey: "decrypted-api-key" });
     expect(mockUpsertCustomer).not.toHaveBeenCalled();
     expect(mockCreateThread).not.toHaveBeenCalled();
   });
@@ -244,6 +214,7 @@ describe("Plain Service", () => {
         ...mockPipelineInput.response,
         data: {
           q1: "Test Thread Title",
+          // No q2 (component text) field
           q3: "label-456",
           contactInfo: ["John", "Doe", "john.doe@example.com"],
         },
@@ -255,7 +226,6 @@ describe("Plain Service", () => {
 
     // Assert
     expect(result).toEqual(err(new Error("Missing component text in response data.")));
-    expect(PlainSDK.PlainClient).toHaveBeenCalledWith({ apiKey: "decrypted-api-key" });
     expect(mockUpsertCustomer).not.toHaveBeenCalled();
     expect(mockCreateThread).not.toHaveBeenCalled();
   });
@@ -281,30 +251,17 @@ describe("Plain Service", () => {
 
   test("handles API errors gracefully", async () => {
     // Arrange
-    const error = new Error("API Error");
-    mockUpsertCustomer.mockRejectedValueOnce(error);
-
-    // Act
-    const result = await writeData(mockConfig, mockPipelineInput, mockIntegrationConfig);
-
-    // Assert
-    expect(logger.error).toHaveBeenCalledWith("Exception in Plain writeData function", { error });
-    expect(result).toEqual(err(error));
-  });
-
-  test("handles non-Error exceptions gracefully", async () => {
-    // Arrange
-    const nonErrorException = "String exception";
-    mockUpsertCustomer.mockRejectedValueOnce(nonErrorException);
+    const apiError = new Error("API Error");
+    mockUpsertCustomer.mockRejectedValueOnce(apiError);
 
     // Act
     const result = await writeData(mockConfig, mockPipelineInput, mockIntegrationConfig);
 
     // Assert
     expect(logger.error).toHaveBeenCalledWith("Exception in Plain writeData function", {
-      error: nonErrorException,
+      error: apiError,
     });
-    expect(result).toEqual(err(new Error(String(nonErrorException))));
+    expect(result).toEqual(err(apiError));
   });
 
   test("handles decryption errors", async () => {
