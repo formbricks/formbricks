@@ -76,7 +76,7 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
               if (!question.response) return;
               return (
                 <Row key={question.question}>
-                  <Column className="w-full">
+                  <Column className="w-full font-medium">
                     <Text className="mb-2 text-sm">{question.question}</Text>
                     {renderEmailResponseValue(question.response, question.type, t, true)}
                   </Column>

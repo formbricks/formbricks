@@ -25,7 +25,7 @@ export const renderEmailResponseValue = async (
                 className="mt-2 flex flex-col items-center justify-center rounded-lg bg-slate-200 p-2 text-sm text-black shadow-sm"
                 href={responseItem}
                 key={responseItem}>
-                <FileIcon />
+                <FileIcon className="h-4 w-4" />
                 <Text className="mx-auto mb-0 truncate text-sm">
                   {getOriginalFileNameFromUrl(responseItem)}
                 </Text>
@@ -52,7 +52,7 @@ export const renderEmailResponseValue = async (
     case TSurveyQuestionTypeEnum.Ranking:
       return (
         <Container>
-          <Row className="my-1 text-sm text-slate-700" dir="auto">
+          <Row className="mb-2 text-sm text-slate-700" dir="auto">
             {Array.isArray(response) &&
               response.map(
                 (item, index) =>

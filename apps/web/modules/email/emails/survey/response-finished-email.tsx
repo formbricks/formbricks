@@ -45,7 +45,7 @@ export async function ResponseFinishedEmail({
               if (!question.response) return;
               return (
                 <Row key={question.question}>
-                  <Column className="w-full">
+                  <Column className="w-full font-medium">
                     <Text className="mb-2 text-sm">{question.question}</Text>
                     {renderEmailResponseValue(question.response, question.type, t)}
                   </Column>
@@ -57,8 +57,8 @@ export async function ResponseFinishedEmail({
               if (variableResponse && ["number", "string"].includes(typeof variable)) {
                 return (
                   <Row key={variable.id}>
-                    <Column className="w-full text-sm">
-                      <Text className="mb-2 flex items-center gap-2">
+                    <Column className="w-full text-sm font-medium">
+                      <Text className="mb-1 flex items-center gap-2">
                         {variable.type === "number" ? (
                           <FileDigitIcon className="h-4 w-4" />
                         ) : (
@@ -80,7 +80,7 @@ export async function ResponseFinishedEmail({
               if (hiddenFieldResponse && typeof hiddenFieldResponse === "string") {
                 return (
                   <Row key={hiddenFieldId}>
-                    <Column className="w-full">
+                    <Column className="w-full font-medium">
                       <Text className="mb-2 flex items-center gap-2 text-sm">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
