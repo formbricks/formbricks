@@ -1,9 +1,17 @@
 "use client";
 
+import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@/modules/ui/components/form";
 import {
   Select,
   SelectContent,
@@ -14,11 +22,12 @@ import {
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
 import { DownloadIcon } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSegment } from "@formbricks/types/segment";
 import { generatePersonalLinksAction } from "../../actions";
+import { TabContainer } from "./tab-container";
 
 interface PersonalLinksTabProps {
   environmentId: string;
@@ -26,6 +35,11 @@ interface PersonalLinksTabProps {
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
+}
+
+interface PersonalLinksFormData {
+  selectedSegment: string;
+  expiryDate: Date | null;
 }
 
 // Custom DatePicker component with date restrictions
@@ -63,8 +77,18 @@ export const PersonalLinksTab = ({
   isFormbricksCloud,
 }: PersonalLinksTabProps) => {
   const { t } = useTranslate();
-  const [selectedSegment, setSelectedSegment] = useState<string>("");
-  const [expiryDate, setExpiryDate] = useState<Date | null>(null);
+
+  const form = useForm<PersonalLinksFormData>({
+    defaultValues: {
+      selectedSegment: "",
+      expiryDate: null,
+    },
+  });
+
+  const { watch } = form;
+  const selectedSegment = watch("selectedSegment");
+  const expiryDate = watch("expiryDate");
+
   const [isGenerating, setIsGenerating] = useState(false);
   const publicSegments = segments.filter((segment) => !segment.isPrivate);
 
@@ -84,7 +108,7 @@ export const PersonalLinksTab = ({
     setIsGenerating(true);
 
     // Show initial toast
-    toast.loading(t("environments.surveys.summary.generating_links_toast"), {
+    toast.loading(t("environments.surveys.share.personal_links.generating_links_toast"), {
       duration: 5000,
       id: "generating-links",
     });
@@ -100,7 +124,7 @@ export const PersonalLinksTab = ({
 
     if (result?.data) {
       downloadFile(result.data.downloadUrl, result.data.fileName || "personal-links.csv");
-      toast.success(t("environments.surveys.summary.links_generated_success_toast"), {
+      toast.success(t("environments.surveys.share.personal_links.links_generated_success_toast"), {
         duration: 5000,
         id: "generating-links",
       });
@@ -117,14 +141,14 @@ export const PersonalLinksTab = ({
   // Button state logic
   const isButtonDisabled = !selectedSegment || isGenerating || publicSegments.length === 0;
   const buttonText = isGenerating
-    ? t("environments.surveys.summary.generating_links")
-    : t("environments.surveys.summary.generate_and_download_links");
+    ? t("environments.surveys.share.personal_links.generating_links")
+    : t("environments.surveys.share.personal_links.generate_and_download_links");
 
   if (!isContactsEnabled) {
     return (
       <UpgradePrompt
-        title={t("environments.surveys.summary.personal_links_upgrade_prompt_title")}
-        description={t("environments.surveys.summary.personal_links_upgrade_prompt_description")}
+        title={t("environments.surveys.share.personal_links.upgrade_prompt_title")}
+        description={t("environments.surveys.share.personal_links.upgrade_prompt_description")}
         buttons={[
           {
             text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
@@ -144,88 +168,87 @@ export const PersonalLinksTab = ({
   }
 
   return (
-    <div className="flex h-full grow flex-col gap-6">
-      <div>
-        <h2 className="mb-2 text-lg font-semibold text-slate-800">
-          {t("environments.surveys.summary.generate_personal_links_title")}
-        </h2>
-        <p className="text-sm text-slate-600">
-          {t("environments.surveys.summary.generate_personal_links_description")}
-        </p>
-      </div>
+    <FormProvider {...form}>
+      <TabContainer
+        title={t("environments.surveys.share.personal_links.title")}
+        description={t("environments.surveys.share.personal_links.description")}>
+        <div className="flex h-full grow flex-col gap-6">
+          {/* Recipients Section */}
+          <FormField
+            control={form.control}
+            name="selectedSegment"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("common.recipients")}</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={publicSegments.length === 0}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue
+                        placeholder={
+                          publicSegments.length === 0
+                            ? t("environments.surveys.share.personal_links.no_segments_available")
+                            : t("environments.surveys.share.personal_links.select_segment")
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {publicSegments.map((segment) => (
+                        <SelectItem key={segment.id} value={segment.id}>
+                          {segment.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription>
+                  {t("environments.surveys.share.personal_links.create_and_manage_segments")}
+                </FormDescription>
+              </FormItem>
+            )}
+          />
 
-      <div className="space-y-6">
-        {/* Recipients Section */}
-        <div>
-          <label htmlFor="segment-select" className="mb-2 block text-sm font-medium text-slate-700">
-            {t("common.recipients")}
-          </label>
-          <Select
-            value={selectedSegment}
-            onValueChange={setSelectedSegment}
-            disabled={publicSegments.length === 0}>
-            <SelectTrigger id="segment-select" className="w-full bg-white">
-              <SelectValue
-                placeholder={
-                  publicSegments.length === 0
-                    ? t("environments.surveys.summary.no_segments_available")
-                    : t("environments.surveys.summary.select_segment")
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {publicSegments.map((segment) => (
-                <SelectItem key={segment.id} value={segment.id}>
-                  {segment.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="mt-1 text-xs text-slate-500">
-            {t("environments.surveys.summary.create_and_manage_segments")}
-          </p>
+          {/* Expiry Date Section */}
+          <FormField
+            control={form.control}
+            name="expiryDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("environments.surveys.share.personal_links.expiry_date_optional")}</FormLabel>
+                <FormControl>
+                  <RestrictedDatePicker date={field.value} updateSurveyDate={field.onChange} />
+                </FormControl>
+                <FormDescription>
+                  {t("environments.surveys.share.personal_links.expiry_date_description")}
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+
+          {/* Generate Button */}
+          <Button
+            onClick={handleGenerateLinks}
+            disabled={isButtonDisabled}
+            loading={isGenerating}
+            className="w-fit">
+            <DownloadIcon className="mr-2 h-4 w-4" />
+            {buttonText}
+          </Button>
         </div>
+        <hr />
 
-        {/* Expiry Date Section */}
-        <div>
-          <label htmlFor="expiry-date-picker" className="mb-2 block text-sm font-medium text-slate-700">
-            {t("environments.surveys.summary.expiry_date_optional")}
-          </label>
-          <div id="expiry-date-picker">
-            <RestrictedDatePicker
-              date={expiryDate}
-              updateSurveyDate={(date: Date | null) => setExpiryDate(date)}
-            />
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            {t("environments.surveys.summary.expiry_date_description")}
-          </p>
-        </div>
-
-        {/* Generate Button */}
-        <Button
-          onClick={handleGenerateLinks}
-          disabled={isButtonDisabled}
-          loading={isGenerating}
-          className="w-fit">
-          <DownloadIcon className="mr-2 h-4 w-4" />
-          {buttonText}
-        </Button>
-      </div>
-      <hr />
-
-      {/* Info Box */}
-      <Alert variant="info" size="small">
-        <AlertTitle>{t("environments.surveys.summary.personal_links_work_with_segments")}</AlertTitle>
-        <AlertButton>
-          <Link
-            href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration"
-            target="_blank"
-            rel="noopener noreferrer">
-            {t("common.learn_more")}
-          </Link>
-        </AlertButton>
-      </Alert>
-    </div>
+        {/* Info Box */}
+        <DocumentationLinks
+          links={[
+            {
+              title: t("environments.surveys.share.personal_links.work_with_segments"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
+            },
+          ]}
+        />
+      </TabContainer>
+    </FormProvider>
   );
 };
