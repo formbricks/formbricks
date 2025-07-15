@@ -1,10 +1,9 @@
 "use client";
 
-import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
-import { Copy, QrCode, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
+import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -55,13 +54,11 @@ export const ShareSurveyLink = ({
     }
   };
 
-  const { downloadQRCode } = useSurveyQRCode(surveyUrl);
-
   return (
     <div
-      className={`flex max-w-full flex-col items-center justify-center space-x-2 ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
+      className={`flex max-w-full flex-col items-center justify-center gap-2 ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
       <SurveyLinkDisplay surveyUrl={surveyUrl} key={surveyUrl} />
-      <div className="mt-2 flex items-center justify-center space-x-2">
+      <div className="flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
         <Button
           title={t("environments.surveys.preview_survey_in_a_new_tab")}
@@ -90,15 +87,6 @@ export const ShareSurveyLink = ({
           }}>
           {t("common.copy")}
           <Copy />
-        </Button>
-        <Button
-          variant="secondary"
-          title={t("environments.surveys.summary.download_qr_code")}
-          aria-label={t("environments.surveys.summary.download_qr_code")}
-          size={"icon"}
-          disabled={!surveyUrl}
-          onClick={downloadQRCode}>
-          <QrCode style={{ width: "24px", height: "24px" }} />
         </Button>
         {survey.singleUse?.enabled && (
           <Button

@@ -247,6 +247,7 @@ export const SurveyMenuBar = ({
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
         toast.success(t("environments.surveys.edit.changes_saved"));
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
