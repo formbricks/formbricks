@@ -107,7 +107,7 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
           </Sidebar>
         </SidebarProvider>
         <div
-          className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:p-6 lg:col-span-3`}>
+          className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:p-6 lg:col-span-3 rounded-lg md:rounded-l-lg`}>
           {renderActiveTab()}
           <div className="flex justify-center gap-2 rounded-md pt-6 text-center md:hidden">
             {tabs.map((tab) => (
