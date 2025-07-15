@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
-import { EmailTab } from "./EmailTab";
+import { EmailTab } from "./email-tab";
 
 // Mock actions
 vi.mock("../../actions", () => ({
@@ -20,15 +20,23 @@ vi.mock("@/lib/utils/helper", () => ({
 
 // Mock UI components
 vi.mock("@/modules/ui/components/button", () => ({
-  Button: ({ children, onClick, variant, title, ...props }: any) => (
-    <button onClick={onClick} data-variant={variant} title={title} {...props}>
+  Button: ({ children, onClick, variant, title, "aria-label": ariaLabel, ...props }: any) => (
+    <button onClick={onClick} data-variant={variant} title={title} aria-label={ariaLabel} {...props}>
       {children}
     </button>
   ),
 }));
 vi.mock("@/modules/ui/components/code-block", () => ({
-  CodeBlock: ({ children, language }: { children: React.ReactNode; language: string }) => (
-    <div data-testid="code-block" data-language={language}>
+  CodeBlock: ({
+    children,
+    language,
+    showCopyToClipboard,
+  }: {
+    children: React.ReactNode;
+    language: string;
+    showCopyToClipboard?: boolean;
+  }) => (
+    <div data-testid="code-block" data-language={language} data-show-copy={showCopyToClipboard}>
       {children}
     </div>
   ),
@@ -41,7 +49,9 @@ vi.mock("@/modules/ui/components/loading-spinner", () => ({
 vi.mock("lucide-react", () => ({
   Code2Icon: () => <div data-testid="code2-icon" />,
   CopyIcon: () => <div data-testid="copy-icon" />,
+  EyeIcon: () => <div data-testid="eye-icon" />,
   MailIcon: () => <div data-testid="mail-icon" />,
+  SendIcon: () => <div data-testid="send-icon" />,
 }));
 
 // Mock navigator.clipboard
@@ -74,22 +84,42 @@ describe("EmailTab", () => {
     expect(vi.mocked(getEmailHtmlAction)).toHaveBeenCalledWith({ surveyId });
 
     // Buttons
-    expect(screen.getByRole("button", { name: "send preview email" })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "environments.surveys.summary.view_embed_code_for_email" })
+      screen.getByRole("button", { name: "environments.surveys.share.send_email.send_preview_email" })
     ).toBeInTheDocument();
-    expect(screen.getByTestId("mail-icon")).toBeInTheDocument();
-    expect(screen.getByTestId("code2-icon")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "environments.surveys.share.send_email.embed_code_tab" })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("send-icon")).toBeInTheDocument();
+    // Note: code2-icon is only visible in the embed code tab, not in initial render
 
     // Email preview section
     await waitFor(() => {
-      expect(screen.getByText(`To : ${userEmail}`)).toBeInTheDocument();
+      const emailToElements = screen.getAllByText((content, element) => {
+        return (
+          element?.textContent?.includes("environments.surveys.share.send_email.email_to_label") || false
+        );
+      });
+      expect(emailToElements.length).toBeGreaterThan(0);
     });
     expect(
-      screen.getByText("Subject : environments.surveys.summary.formbricks_email_survey_preview")
-    ).toBeInTheDocument();
+      screen.getAllByText((content, element) => {
+        return (
+          element?.textContent?.includes("environments.surveys.share.send_email.email_subject_label") || false
+        );
+      }).length
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText((content, element) => {
+        return (
+          element?.textContent?.includes(
+            "environments.surveys.share.send_email.formbricks_email_survey_preview"
+          ) || false
+        );
+      }).length
+    ).toBeGreaterThan(0);
     await waitFor(() => {
-      expect(screen.getByText("Hello World ?preview=true&foo=bar")).toBeInTheDocument(); // Raw HTML content
+      expect(screen.getByText("Hello World ?foo=bar")).toBeInTheDocument(); // HTML content rendered as text (preview=true removed)
     });
     expect(screen.queryByTestId("code-block")).not.toBeInTheDocument();
   });
@@ -99,32 +129,47 @@ describe("EmailTab", () => {
     await waitFor(() => expect(vi.mocked(getEmailHtmlAction)).toHaveBeenCalled());
 
     const viewEmbedButton = screen.getByRole("button", {
-      name: "environments.surveys.summary.view_embed_code_for_email",
+      name: "environments.surveys.share.send_email.embed_code_tab",
     });
     await userEvent.click(viewEmbedButton);
 
     // Embed code view
-    expect(screen.getByRole("button", { name: "Embed survey in your website" })).toBeInTheDocument(); // Updated name
     expect(
-      screen.getByRole("button", { name: "environments.surveys.summary.view_embed_code_for_email" }) // Updated name for hide button
+      screen.getByRole("button", { name: "environments.surveys.share.send_email.copy_embed_code" })
     ).toBeInTheDocument();
     expect(screen.getByTestId("copy-icon")).toBeInTheDocument();
     const codeBlock = screen.getByTestId("code-block");
     expect(codeBlock).toBeInTheDocument();
     expect(codeBlock).toHaveTextContent(mockCleanedEmailHtml); // Cleaned HTML
-    expect(screen.queryByText(`To : ${userEmail}`)).not.toBeInTheDocument();
-
-    // Toggle back
-    const hideEmbedButton = screen.getByRole("button", {
-      name: "environments.surveys.summary.view_embed_code_for_email", // Updated name for hide button
-    });
-    await userEvent.click(hideEmbedButton);
-
-    expect(screen.getByRole("button", { name: "send preview email" })).toBeInTheDocument();
+    // The email_to_label should not be visible in embed code view
     expect(
-      screen.getByRole("button", { name: "environments.surveys.summary.view_embed_code_for_email" })
+      screen.queryByText((content, element) => {
+        return (
+          element?.textContent?.includes("environments.surveys.share.send_email.email_to_label") || false
+        );
+      })
+    ).not.toBeInTheDocument();
+
+    // Toggle back to preview
+    const previewButton = screen.getByRole("button", {
+      name: "environments.surveys.share.send_email.email_preview_tab",
+    });
+    await userEvent.click(previewButton);
+
+    expect(
+      screen.getByRole("button", { name: "environments.surveys.share.send_email.send_preview_email" })
     ).toBeInTheDocument();
-    expect(screen.getByText(`To : ${userEmail}`)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "environments.surveys.share.send_email.embed_code_tab" })
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      const emailToElements = screen.getAllByText((content, element) => {
+        return (
+          element?.textContent?.includes("environments.surveys.share.send_email.email_to_label") || false
+        );
+      });
+      expect(emailToElements.length).toBeGreaterThan(0);
+    });
     expect(screen.queryByTestId("code-block")).not.toBeInTheDocument();
   });
 
@@ -133,16 +178,19 @@ describe("EmailTab", () => {
     await waitFor(() => expect(vi.mocked(getEmailHtmlAction)).toHaveBeenCalled());
 
     const viewEmbedButton = screen.getByRole("button", {
-      name: "environments.surveys.summary.view_embed_code_for_email",
+      name: "environments.surveys.share.send_email.embed_code_tab",
     });
     await userEvent.click(viewEmbedButton);
 
-    // Ensure this line queries by the correct aria-label
-    const copyCodeButton = screen.getByRole("button", { name: "Embed survey in your website" });
+    const copyCodeButton = screen.getByRole("button", {
+      name: "environments.surveys.share.send_email.copy_embed_code",
+    });
     await userEvent.click(copyCodeButton);
 
     expect(mockWriteText).toHaveBeenCalledWith(mockCleanedEmailHtml);
-    expect(toast.success).toHaveBeenCalledWith("environments.surveys.summary.embed_code_copied_to_clipboard");
+    expect(toast.success).toHaveBeenCalledWith(
+      "environments.surveys.share.send_email.embed_code_copied_to_clipboard"
+    );
   });
 
   test("sends preview email successfully", async () => {
@@ -150,11 +198,13 @@ describe("EmailTab", () => {
     render(<EmailTab surveyId={surveyId} email={userEmail} />);
     await waitFor(() => expect(vi.mocked(getEmailHtmlAction)).toHaveBeenCalled());
 
-    const sendPreviewButton = screen.getByRole("button", { name: "send preview email" });
+    const sendPreviewButton = screen.getByRole("button", {
+      name: "environments.surveys.share.send_email.send_preview_email",
+    });
     await userEvent.click(sendPreviewButton);
 
     expect(sendEmbedSurveyPreviewEmailAction).toHaveBeenCalledWith({ surveyId });
-    expect(toast.success).toHaveBeenCalledWith("environments.surveys.summary.email_sent");
+    expect(toast.success).toHaveBeenCalledWith("environments.surveys.share.send_email.email_sent");
   });
 
   test("handles send preview email failure (server error)", async () => {
@@ -163,7 +213,9 @@ describe("EmailTab", () => {
     render(<EmailTab surveyId={surveyId} email={userEmail} />);
     await waitFor(() => expect(vi.mocked(getEmailHtmlAction)).toHaveBeenCalled());
 
-    const sendPreviewButton = screen.getByRole("button", { name: "send preview email" });
+    const sendPreviewButton = screen.getByRole("button", {
+      name: "environments.surveys.share.send_email.send_preview_email",
+    });
     await userEvent.click(sendPreviewButton);
 
     expect(sendEmbedSurveyPreviewEmailAction).toHaveBeenCalledWith({ surveyId });
@@ -176,7 +228,9 @@ describe("EmailTab", () => {
     render(<EmailTab surveyId={surveyId} email={userEmail} />);
     await waitFor(() => expect(vi.mocked(getEmailHtmlAction)).toHaveBeenCalled());
 
-    const sendPreviewButton = screen.getByRole("button", { name: "send preview email" });
+    const sendPreviewButton = screen.getByRole("button", {
+      name: "environments.surveys.share.send_email.send_preview_email",
+    });
     await userEvent.click(sendPreviewButton);
 
     expect(sendEmbedSurveyPreviewEmailAction).toHaveBeenCalledWith({ surveyId });
@@ -190,7 +244,9 @@ describe("EmailTab", () => {
     render(<EmailTab surveyId={surveyId} email={userEmail} />);
     await waitFor(() => expect(vi.mocked(getEmailHtmlAction)).toHaveBeenCalled());
 
-    const sendPreviewButton = screen.getByRole("button", { name: "send preview email" });
+    const sendPreviewButton = screen.getByRole("button", {
+      name: "environments.surveys.share.send_email.send_preview_email",
+    });
     await userEvent.click(sendPreviewButton);
 
     expect(sendEmbedSurveyPreviewEmailAction).toHaveBeenCalledWith({ surveyId });
@@ -208,14 +264,19 @@ describe("EmailTab", () => {
   test("renders default email if email prop is not provided", async () => {
     render(<EmailTab surveyId={surveyId} email="" />);
     await waitFor(() => {
-      expect(screen.getByText("To : user@mail.com")).toBeInTheDocument();
+      expect(
+        screen.getByText((content, element) => {
+          return (
+            element?.textContent === "environments.surveys.share.send_email.email_to_label : user@mail.com"
+          );
+        })
+      ).toBeInTheDocument();
     });
   });
 
   test("emailHtml memo removes various ?preview=true patterns", async () => {
     const htmlWithVariants =
       "<p>Test1 ?preview=true</p><p>Test2 ?preview=true&amp;next</p><p>Test3 ?preview=true&;next</p>";
-    // Ensure this line matches the "Received" output from your test error
     const expectedCleanHtml = "<p>Test1 </p><p>Test2 ?next</p><p>Test3 ?next</p>";
     vi.mocked(getEmailHtmlAction).mockResolvedValue({ data: htmlWithVariants });
 
@@ -223,7 +284,7 @@ describe("EmailTab", () => {
     await waitFor(() => expect(vi.mocked(getEmailHtmlAction)).toHaveBeenCalled());
 
     const viewEmbedButton = screen.getByRole("button", {
-      name: "environments.surveys.summary.view_embed_code_for_email",
+      name: "environments.surveys.share.send_email.embed_code_tab",
     });
     await userEvent.click(viewEmbedButton);
 

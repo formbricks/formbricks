@@ -1,40 +1,45 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
+import { ShareViewType } from "../../types/share";
 import { ShareView } from "./share-view";
 
 // Mock child components
-vi.mock("./AppTab", () => ({
+vi.mock("./app-tab", () => ({
   AppTab: () => <div data-testid="app-tab">AppTab Content</div>,
 }));
-vi.mock("./EmailTab", () => ({
+
+vi.mock("./email-tab", () => ({
   EmailTab: (props: { surveyId: string; email: string }) => (
     <div data-testid="email-tab">
       EmailTab Content for {props.surveyId} with {props.email}
     </div>
   ),
 }));
-vi.mock("./LinkTab", () => ({
-  LinkTab: (props: { survey: any; surveyUrl: string }) => (
-    <div data-testid="link-tab">
-      LinkTab Content for {props.survey.id} at {props.surveyUrl}
-    </div>
+
+vi.mock("./qr-code-tab", () => ({
+  QRCodeTab: (props: { surveyUrl: string }) => (
+    <div data-testid="qr-code-tab">QRCodeTab Content for {props.surveyUrl}</div>
   ),
 }));
-vi.mock("./WebsiteEmbedTab", () => ({
+
+vi.mock("./website-embed-tab", () => ({
   WebsiteEmbedTab: (props: { surveyUrl: string }) => (
     <div data-testid="website-embed-tab">WebsiteEmbedTab Content for {props.surveyUrl}</div>
   ),
 }));
-vi.mock("./DynamicPopupTab", () => ({
+
+vi.mock("./dynamic-popup-tab", () => ({
   DynamicPopupTab: (props: { environmentId: string; surveyId: string }) => (
     <div data-testid="dynamic-popup-tab">
       DynamicPopupTab Content for {props.surveyId} in {props.environmentId}
     </div>
   ),
 }));
-vi.mock("./TabContainer", () => ({
+
+vi.mock("./tab-container", () => ({
   TabContainer: (props: { children: React.ReactNode; title: string; description: string }) => (
     <div data-testid="tab-container">
       <div data-testid="tab-title">{props.title}</div>
@@ -52,6 +57,20 @@ vi.mock("./personal-links-tab", () => ({
   ),
 }));
 
+vi.mock("./anonymous-links-tab", () => ({
+  AnonymousLinksTab: (props: {
+    survey: TSurvey;
+    surveyUrl: string;
+    publicDomain: string;
+    setSurveyUrl: (url: string) => void;
+    locale: TUserLocale;
+  }) => (
+    <div data-testid="anonymous-links-tab">
+      AnonymousLinksTab Content for {props.survey.id} at {props.surveyUrl}
+    </div>
+  ),
+}));
+
 vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
   UpgradePrompt: (props: { title: string; description: string }) => (
     <div data-testid="upgrade-prompt">
@@ -60,27 +79,41 @@ vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
   ),
 }));
 
+// Mock @tolgee/react
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
 // Mock lucide-react
 vi.mock("lucide-react", () => ({
+  CopyIcon: () => <div data-testid="copy-icon">CopyIcon</div>,
   ArrowLeftIcon: () => <div data-testid="arrow-left-icon">ArrowLeftIcon</div>,
+  ArrowUpRightIcon: () => <div data-testid="arrow-up-right-icon">ArrowUpRightIcon</div>,
   MailIcon: () => <div data-testid="mail-icon">MailIcon</div>,
   LinkIcon: () => <div data-testid="link-icon">LinkIcon</div>,
   GlobeIcon: () => <div data-testid="globe-icon">GlobeIcon</div>,
   SmartphoneIcon: () => <div data-testid="smartphone-icon">SmartphoneIcon</div>,
   CheckCircle2Icon: () => <div data-testid="check-circle-2-icon">CheckCircle2Icon</div>,
-  AlertCircle: ({ className }: { className?: string }) => (
-    <div className={className} data-testid="alert-circle">
-      AlertCircle
+  AlertCircleIcon: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="alert-circle-icon">
+      AlertCircleIcon
     </div>
   ),
-  AlertTriangle: ({ className }: { className?: string }) => (
-    <div className={className} data-testid="alert-triangle">
-      AlertTriangle
+  AlertTriangleIcon: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="alert-triangle-icon">
+      AlertTriangleIcon
     </div>
   ),
-  Info: ({ className }: { className?: string }) => (
-    <div className={className} data-testid="info">
-      Info
+  InfoIcon: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="info-icon">
+      InfoIcon
+    </div>
+  ),
+  Download: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="download-icon">
+      Download
     </div>
   ),
 }));
@@ -145,106 +178,69 @@ vi.mock("@/lib/cn", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
-const mockTabs = [
-  { id: "email", label: "Email", icon: () => <div data-testid="email-tab-icon" /> },
-  { id: "website-embed", label: "Website Embed", icon: () => <div data-testid="website-embed-tab-icon" /> },
-  { id: "dynamic-popup", label: "Dynamic Popup", icon: () => <div data-testid="dynamic-popup-tab-icon" /> },
-  { id: "link", label: "Link", icon: () => <div data-testid="link-tab-icon" /> },
-  { id: "app", label: "App", icon: () => <div data-testid="app-tab-icon" /> },
+const mockTabs: Array<{ id: ShareViewType; label: string; icon: React.ElementType }> = [
+  { id: ShareViewType.EMAIL, label: "Email", icon: () => <div data-testid="email-tab-icon" /> },
+  {
+    id: ShareViewType.WEBSITE_EMBED,
+    label: "Website Embed",
+    icon: () => <div data-testid="website-embed-tab-icon" />,
+  },
+  {
+    id: ShareViewType.DYNAMIC_POPUP,
+    label: "Dynamic Popup",
+    icon: () => <div data-testid="dynamic-popup-tab-icon" />,
+  },
+  { id: ShareViewType.ANON_LINKS, label: "Anonymous Links", icon: () => <div data-testid="link-tab-icon" /> },
+  { id: ShareViewType.QR_CODE, label: "QR Code", icon: () => <div data-testid="qr-code-tab-icon" /> },
+  { id: ShareViewType.APP, label: "App", icon: () => <div data-testid="app-tab-icon" /> },
 ];
 
-// Create proper mock survey objects
-const createMockSurvey = (type: "link" | "app", id = "survey1"): TSurvey => ({
-  id,
+const mockSurveyLink = {
+  id: "survey1",
+  type: "link",
+  name: "Test Link Survey",
+  status: "inProgress",
+  environmentId: "env1",
   createdAt: new Date(),
   updatedAt: new Date(),
-  name: `Test Survey ${id}`,
-  type,
-  environmentId: "env1",
-  createdBy: "user123",
-  status: "inProgress",
+  questions: [],
   displayOption: "displayOnce",
-  autoClose: null,
+  recontactDays: 0,
   triggers: [],
-  recontactDays: null,
-  displayLimit: null,
-  welcomeCard: {
-    enabled: false,
-    headline: { default: "" },
-    html: { default: "" },
-    fileUrl: undefined,
-    buttonLabel: { default: "" },
-    timeToFinish: false,
-    showResponseCount: false,
-  },
-  questions: [
-    {
-      id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: { default: "Test Question" },
-      subheader: { default: "" },
-      required: true,
-      inputType: "text",
-      placeholder: { default: "" },
-      longAnswer: false,
-      logic: [],
-      charLimit: { enabled: false },
-      buttonLabel: { default: "" },
-      backButtonLabel: { default: "" },
-    },
-  ],
-  endings: [
-    {
-      id: "end1",
-      type: "endScreen",
-      headline: { default: "Thank you!" },
-      subheader: { default: "" },
-      buttonLabel: { default: "" },
-      buttonLink: undefined,
-    },
-  ],
-  hiddenFields: { enabled: false, fieldIds: [] },
-  variables: [],
-  followUps: [],
+  languages: [],
+  autoClose: null,
   delay: 0,
   autoComplete: null,
   runOnDate: null,
   closeOnDate: null,
-  projectOverwrites: null,
+  singleUse: { enabled: false, isEncrypted: false },
   styling: null,
-  showLanguageSwitch: null,
-  surveyClosedMessage: null,
-  segment: null,
-  singleUse: null,
-  isVerifyEmailEnabled: false,
-  recaptcha: null,
-  isSingleResponsePerEmailEnabled: false,
-  isBackButtonHidden: false,
-  pin: null,
-  resultShareKey: null,
-  displayPercentage: null,
-  languages: [
-    {
-      enabled: true,
-      default: true,
-      language: {
-        id: "lang1",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        code: "en",
-        alias: "English",
-        projectId: "project1",
-      },
-    },
-  ],
-});
-
-const mockSurveyLink = createMockSurvey("link", "survey1");
-const mockSurveyApp = createMockSurvey("app", "survey2");
+} as any;
+const mockSurveyWeb = {
+  id: "survey2",
+  type: "app",
+  name: "Test Web Survey",
+  status: "inProgress",
+  environmentId: "env1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  questions: [],
+  displayOption: "displayOnce",
+  recontactDays: 0,
+  triggers: [],
+  languages: [],
+  autoClose: null,
+  delay: 0,
+  autoComplete: null,
+  runOnDate: null,
+  closeOnDate: null,
+  singleUse: { enabled: false, isEncrypted: false },
+  styling: null,
+} as any;
 
 const defaultProps = {
   tabs: mockTabs,
-  activeId: "email",
+  activeId: ShareViewType.EMAIL,
   setActiveId: vi.fn(),
   environmentId: "env1",
   survey: mockSurveyLink,
@@ -265,7 +261,7 @@ describe("ShareView", () => {
   });
 
   test("does not render desktop tabs for non-link survey type", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyApp} />);
+    render(<ShareView {...defaultProps} survey={mockSurveyWeb} />);
 
     // For non-link survey types, desktop sidebar should not be rendered
     // Check that SidebarProvider is not rendered by looking for sidebar-specific elements
@@ -274,23 +270,23 @@ describe("ShareView", () => {
   });
 
   test("renders desktop tabs for link survey type", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     // For link survey types, desktop sidebar should be rendered
-    const sidebarLabel = screen.getByText("Share via");
+    const sidebarLabel = screen.getByText("environments.surveys.share.share_view_title");
     expect(sidebarLabel).toBeInTheDocument();
   });
 
   test("calls setActiveId when a tab is clicked (desktop)", async () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     const websiteEmbedTabButton = screen.getByLabelText("Website Embed");
     await userEvent.click(websiteEmbedTabButton);
-    expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
+    expect(defaultProps.setActiveId).toHaveBeenCalledWith(ShareViewType.WEBSITE_EMBED);
   });
 
   test("renders EmailTab when activeId is 'email'", () => {
-    render(<ShareView {...defaultProps} activeId="email" />);
+    render(<ShareView {...defaultProps} activeId={ShareViewType.EMAIL} />);
     expect(screen.getByTestId("email-tab")).toBeInTheDocument();
     expect(
       screen.getByText(`EmailTab Content for ${defaultProps.survey.id} with ${defaultProps.email}`)
@@ -298,15 +294,13 @@ describe("ShareView", () => {
   });
 
   test("renders WebsiteEmbedTab when activeId is 'website-embed'", () => {
-    render(<ShareView {...defaultProps} activeId="website-embed" />);
-    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    render(<ShareView {...defaultProps} activeId={ShareViewType.WEBSITE_EMBED} />);
     expect(screen.getByTestId("website-embed-tab")).toBeInTheDocument();
     expect(screen.getByText(`WebsiteEmbedTab Content for ${defaultProps.surveyUrl}`)).toBeInTheDocument();
   });
 
   test("renders DynamicPopupTab when activeId is 'dynamic-popup'", () => {
-    render(<ShareView {...defaultProps} activeId="dynamic-popup" />);
-    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    render(<ShareView {...defaultProps} activeId={ShareViewType.DYNAMIC_POPUP} />);
     expect(screen.getByTestId("dynamic-popup-tab")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -315,21 +309,26 @@ describe("ShareView", () => {
     ).toBeInTheDocument();
   });
 
-  test("renders LinkTab when activeId is 'link'", () => {
-    render(<ShareView {...defaultProps} activeId="link" />);
-    expect(screen.getByTestId("link-tab")).toBeInTheDocument();
+  test("renders AnonymousLinksTab when activeId is 'anon-links'", () => {
+    render(<ShareView {...defaultProps} activeId={ShareViewType.ANON_LINKS} />);
+    expect(screen.getByTestId("anonymous-links-tab")).toBeInTheDocument();
     expect(
-      screen.getByText(`LinkTab Content for ${defaultProps.survey.id} at ${defaultProps.surveyUrl}`)
+      screen.getByText(`AnonymousLinksTab Content for ${defaultProps.survey.id} at ${defaultProps.surveyUrl}`)
     ).toBeInTheDocument();
   });
 
+  test("renders QRCodeTab when activeId is 'qr-code'", () => {
+    render(<ShareView {...defaultProps} activeId={ShareViewType.QR_CODE} />);
+    expect(screen.getByTestId("qr-code-tab")).toBeInTheDocument();
+  });
+
   test("renders AppTab when activeId is 'app'", () => {
-    render(<ShareView {...defaultProps} activeId="app" />);
+    render(<ShareView {...defaultProps} activeId={ShareViewType.APP} />);
     expect(screen.getByTestId("app-tab")).toBeInTheDocument();
   });
 
   test("renders PersonalLinksTab when activeId is 'personal-links'", () => {
-    render(<ShareView {...defaultProps} activeId="personal-links" />);
+    render(<ShareView {...defaultProps} activeId={ShareViewType.PERSONAL_LINKS} />);
     expect(screen.getByTestId("personal-links-tab")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -339,7 +338,7 @@ describe("ShareView", () => {
   });
 
   test("calls setActiveId when a responsive tab is clicked", async () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     // Get responsive buttons - these are Button components containing icons
     const responsiveButtons = screen.getAllByTestId("website-embed-tab-icon");
@@ -353,12 +352,12 @@ describe("ShareView", () => {
 
     if (responsiveButton) {
       await userEvent.click(responsiveButton);
-      expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
+      expect(defaultProps.setActiveId).toHaveBeenCalledWith(ShareViewType.WEBSITE_EMBED);
     }
   });
 
   test("applies active styles to the active tab (desktop)", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     const emailTabButton = screen.getByLabelText("Email");
     expect(emailTabButton).toHaveClass("bg-slate-100");
@@ -371,7 +370,7 @@ describe("ShareView", () => {
   });
 
   test("applies active styles to the active tab (responsive)", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     // Get responsive buttons - these are Button components with ghost variant
     const responsiveButtons = screen.getAllByTestId("email-tab-icon");
