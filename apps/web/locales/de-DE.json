@@ -1742,7 +1742,6 @@
           "description": "Formbricks Umfragen können als Pop-up eingebettet werden, basierend auf der Benutzerinteraktion.",
           "docs_title": "Mehr mit Zwischenumfragen tun",
           "nav_title": "Dynamisch (Pop-up)",
-          "read_documentation": "Dokumentation lesen",
           "recontact_options": "Optionen zur erneuten Kontaktaufnahme",
           "title": "Nutzer im Ablauf abfangen, um kontextualisiertes Feedback zu sammeln"
         },
@@ -1900,7 +1899,6 @@
         "quickstart_mobile_apps_description": "Um mit Umfragen in mobilen Apps zu beginnen, folge bitte der Schnellstartanleitung:",
         "quickstart_web_apps": "Schnellstart: Web-Apps",
         "quickstart_web_apps_description": "Bitte folge der Schnellstartanleitung, um loszulegen:",
-        "read_documentation": "Dokumentation lesen",
         "responses_collected_via_qr_code_are_anonymous": "Antworten, die per QR-Code gesammelt werden, sind anonym.",
         "results_are_public": "Ergebnisse sind öffentlich",
         "select_segment": "Segment auswählen",

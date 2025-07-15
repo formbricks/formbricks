@@ -5,7 +5,15 @@ import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useTranslate } from "@tolgee/react";
-import { Code2Icon, LinkIcon, MailIcon, SmartphoneIcon, SquareStack, UserIcon } from "lucide-react";
+import {
+  Code2Icon,
+  LinkIcon,
+  MailIcon,
+  QrCodeIcon,
+  SmartphoneIcon,
+  SquareStack,
+  UserIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -47,6 +55,11 @@ export const ShareSurveyModal = ({
         id: ShareViewType.ANON_LINKS,
         label: t("environments.surveys.share.anonymous_links.nav_title"),
         icon: LinkIcon,
+      },
+      {
+        id: ShareViewType.QR_CODE,
+        label: t("environments.surveys.summary.qr_code"),
+        icon: QrCodeIcon,
       },
       {
         id: ShareViewType.PERSONAL_LINKS,

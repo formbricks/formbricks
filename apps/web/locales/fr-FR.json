@@ -1742,7 +1742,6 @@
           "description": "Les enquêtes Formbricks peuvent être intégrées sous forme de pop-up, en fonction de l'interaction de l'utilisateur.",
           "docs_title": "Faites plus avec les enquêtes d'interception",
           "nav_title": "Dynamique (Pop-up)",
-          "read_documentation": "Lire les documents",
           "recontact_options": "Options de recontact",
           "title": "Interceptez les utilisateurs dans leur flux pour recueillir des retours contextualisés"
         },
@@ -1900,7 +1899,6 @@
         "quickstart_mobile_apps_description": "Pour commencer avec les enquêtes dans les applications mobiles, veuillez suivre le guide de démarrage rapide :",
         "quickstart_web_apps": "Démarrage rapide : Applications web",
         "quickstart_web_apps_description": "Veuillez suivre le guide de démarrage rapide pour commencer :",
-        "read_documentation": "Lire les documents",
         "responses_collected_via_qr_code_are_anonymous": "Les réponses collectées via le code QR sont anonymes.",
         "results_are_public": "Les résultats sont publics.",
         "select_segment": "Sélectionner le segment",

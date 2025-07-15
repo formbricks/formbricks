@@ -1,6 +1,7 @@
 "use client";
 
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
+import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
 import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
@@ -94,6 +95,8 @@ export const ShareView = ({
         );
       case ShareViewType.APP:
         return <AppTab />;
+      case ShareViewType.QR_CODE:
+        return <QRCodeTab surveyUrl={surveyUrl} />;
       case ShareViewType.PERSONAL_LINKS:
         return (
           <PersonalLinksTab

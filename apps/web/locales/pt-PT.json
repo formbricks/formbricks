@@ -1742,7 +1742,6 @@
           "description": "Os inquéritos Formbricks podem ser incorporados como uma janela pop-up, com base na interação do utilizador.",
           "docs_title": "Faça mais com sondagens de interceptação",
           "nav_title": "Dinâmico (Pop-up)",
-          "read_documentation": "Ler Documentação",
           "recontact_options": "Opções de Recontacto",
           "title": "Intercepte utilizadores no seu fluxo para recolher feedback contextualizado"
         },
@@ -1900,7 +1899,6 @@
         "quickstart_mobile_apps_description": "Para começar com inquéritos em aplicações móveis, por favor, siga o guia de início rápido:",
         "quickstart_web_apps": "Início rápido: Aplicações web",
         "quickstart_web_apps_description": "Por favor, siga o guia de início rápido para começar:",
-        "read_documentation": "Ler Documentação",
         "responses_collected_via_qr_code_are_anonymous": "Respostas recolhidas através de código QR são anónimas.",
         "results_are_public": "Os resultados são públicos",
         "select_segment": "Selecionar segmento",

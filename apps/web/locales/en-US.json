@@ -1742,7 +1742,6 @@
           "description": "Formbricks surveys can be embedded as a pop up, based on user interaction.",
           "docs_title": "Do more with intercept surveys",
           "nav_title": "Dynamic (Pop-up)",
-          "read_documentation": "Read docs",
           "recontact_options": "Recontact options",
           "title": "Intercept users in their flow to gather contextualized feedback"
         },
@@ -1900,7 +1899,6 @@
         "quickstart_mobile_apps_description": "To get started with surveys in mobile apps, please follow the Quickstart guide:",
         "quickstart_web_apps": "Quickstart: Web apps",
         "quickstart_web_apps_description": "Please follow the Quickstart guide to get started:",
-        "read_documentation": "Read docs",
         "responses_collected_via_qr_code_are_anonymous": "Responses collected via QR code are anonymous.",
         "results_are_public": "Results are public",
         "select_segment": "Select segment",

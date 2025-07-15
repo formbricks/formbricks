@@ -1742,7 +1742,6 @@
           "description": "Formbricks 調查 可以 嵌入 為 彈出 式 樣 式 ， 根據 使用者 互動 。",
           "docs_title": "使用 截圖 調查 來 完成 更多 工作",
           "nav_title": "動態（彈窗）",
-          "read_documentation": "閱讀 文件",
           "recontact_options": "重新聯絡選項",
           "title": "攔截使用者於其流程中以收集具上下文的意見反饋"
         },
@@ -1900,7 +1899,6 @@
         "quickstart_mobile_apps_description": "要開始使用行動應用程式中的調查，請按照 Quickstart 指南：",
         "quickstart_web_apps": "快速入門：Web apps",
         "quickstart_web_apps_description": "請按照 Quickstart 指南開始：",
-        "read_documentation": "閱讀 文件",
         "responses_collected_via_qr_code_are_anonymous": "透過 QR code 收集的回應都是匿名的。",
         "results_are_public": "結果是公開的",
         "select_segment": "選擇 區隔",
