@@ -41,7 +41,7 @@ const H3 = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElemen
     <h3
       {...props}
       ref={ref}
-      className={cn("scroll-m-20 text-lg tracking-tight text-slate-800", props.className)}>
+      className={cn("scroll-m-20 text-lg font-medium text-slate-800", props.className)}>
       {props.children}
     </h3>
   );

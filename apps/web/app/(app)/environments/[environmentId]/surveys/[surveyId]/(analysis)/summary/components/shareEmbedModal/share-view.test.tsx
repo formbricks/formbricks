@@ -1,7 +1,55 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
+import { ShareViewType } from "../../types/share";
 import { ShareView } from "./share-view";
+
+// Mock sidebar components
+vi.mock("@/modules/ui/components/sidebar", () => ({
+  SidebarProvider: ({ children, open, className, style }: any) => (
+    <div data-testid="sidebar-provider" data-open={open} className={className} style={style}>
+      {children}
+    </div>
+  ),
+  Sidebar: ({ children }: { children: React.ReactNode }) => <div data-testid="sidebar">{children}</div>,
+  SidebarContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-content">{children}</div>
+  ),
+  SidebarGroup: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-group">{children}</div>
+  ),
+  SidebarGroupContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-group-content">{children}</div>
+  ),
+  SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-group-label">{children}</div>
+  ),
+  SidebarMenu: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-menu">{children}</div>
+  ),
+  SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-menu-item">{children}</div>
+  ),
+  SidebarMenuButton: ({
+    children,
+    onClick,
+    tooltip,
+    className,
+    isActive,
+  }: {
+    children: React.ReactNode;
+    onClick: () => void;
+    tooltip: string;
+    className?: string;
+    isActive?: boolean;
+  }) => (
+    <button type="button" onClick={onClick} className={className} aria-label={tooltip} data-active={isActive}>
+      {children}
+    </button>
+  ),
+}));
 
 // Mock child components
 vi.mock("./EmailTab", () => ({
@@ -54,6 +102,20 @@ vi.mock("./personal-links-tab", () => ({
   ),
 }));
 
+vi.mock("./anonymous-links-tab", () => ({
+  AnonymousLinksTab: (props: {
+    survey: TSurvey;
+    surveyUrl: string;
+    publicDomain: string;
+    setSurveyUrl: (url: string) => void;
+    locale: TUserLocale;
+  }) => (
+    <div data-testid="anonymous-links-tab">
+      AnonymousLinksTab Content for {props.survey.id} at {props.surveyUrl}
+    </div>
+  ),
+}));
+
 vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
   UpgradePrompt: (props: { title: string; description: string }) => (
     <div data-testid="upgrade-prompt">
@@ -62,67 +124,35 @@ vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
   ),
 }));
 
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock lucide-react
 vi.mock("lucide-react", () => ({
+  CopyIcon: () => <div data-testid="copy-icon">CopyIcon</div>,
   ArrowLeftIcon: () => <div data-testid="arrow-left-icon">ArrowLeftIcon</div>,
+  ArrowUpRightIcon: () => <div data-testid="arrow-up-right-icon">ArrowUpRightIcon</div>,
   MailIcon: () => <div data-testid="mail-icon">MailIcon</div>,
   LinkIcon: () => <div data-testid="link-icon">LinkIcon</div>,
   GlobeIcon: () => <div data-testid="globe-icon">GlobeIcon</div>,
   SmartphoneIcon: () => <div data-testid="smartphone-icon">SmartphoneIcon</div>,
   CheckCircle2Icon: () => <div data-testid="check-circle-2-icon">CheckCircle2Icon</div>,
-  AlertCircle: ({ className }: { className?: string }) => (
-    <div className={className} data-testid="alert-circle">
-      AlertCircle
+  AlertCircleIcon: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="alert-circle-icon">
+      AlertCircleIcon
     </div>
   ),
-  AlertTriangle: ({ className }: { className?: string }) => (
-    <div className={className} data-testid="alert-triangle">
-      AlertTriangle
+  AlertTriangleIcon: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="alert-triangle-icon">
+      AlertTriangleIcon
     </div>
   ),
-  Info: ({ className }: { className?: string }) => (
-    <div className={className} data-testid="info">
-      Info
+  InfoIcon: ({ className }: { className?: string }) => (
+    <div className={className} data-testid="info-icon">
+      InfoIcon
     </div>
   ),
   Download: ({ className }: { className?: string }) => (
     <div className={className} data-testid="download-icon">
       Download
     </div>
-  ),
-}));
-
-// Mock sidebar components
-vi.mock("@/modules/ui/components/sidebar", () => ({
-  SidebarProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Sidebar: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarGroupContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarMenuItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SidebarMenuButton: ({
-    children,
-    onClick,
-    tooltip,
-    className,
-  }: {
-    children: React.ReactNode;
-    onClick: () => void;
-    tooltip: string;
-    className?: string;
-  }) => (
-    <button type="button" onClick={onClick} className={className} aria-label={tooltip}>
-      {children}
-    </button>
   ),
 }));
 
@@ -217,7 +247,7 @@ const mockSurveyWeb = {
 
 const defaultProps = {
   tabs: mockTabs,
-  activeId: "email",
+  activeId: ShareViewType.EMAIL,
   setActiveId: vi.fn(),
   environmentId: "env1",
   survey: mockSurveyLink,
@@ -231,7 +261,20 @@ const defaultProps = {
   isFormbricksCloud: false,
 };
 
+// Mock window object for resize testing
+Object.defineProperty(window, "innerWidth", {
+  writable: true,
+  configurable: true,
+  value: 1024,
+});
+
 describe("ShareView", () => {
+  beforeEach(() => {
+    // Reset window size to default before each test
+    window.innerWidth = 1024;
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
@@ -246,15 +289,15 @@ describe("ShareView", () => {
   });
 
   test("renders desktop tabs for link survey type", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     // For link survey types, desktop sidebar should be rendered
-    const sidebarLabel = screen.getByText("Share via");
+    const sidebarLabel = screen.getByText("environments.surveys.share.share_view_title");
     expect(sidebarLabel).toBeInTheDocument();
   });
 
   test("calls setActiveId when a tab is clicked (desktop)", async () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     const websiteEmbedTabButton = screen.getByLabelText("Website Embed");
     await userEvent.click(websiteEmbedTabButton);
@@ -323,7 +366,7 @@ describe("ShareView", () => {
   });
 
   test("calls setActiveId when a responsive tab is clicked", async () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     // Get responsive buttons - these are Button components containing icons
     const responsiveButtons = screen.getAllByTestId("website-embed-tab-icon");
@@ -337,12 +380,12 @@ describe("ShareView", () => {
 
     if (responsiveButton) {
       await userEvent.click(responsiveButton);
-      expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
+      expect(defaultProps.setActiveId).toHaveBeenCalledWith(ShareViewType.WEBSITE_EMBED);
     }
   });
 
   test("applies active styles to the active tab (desktop)", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     const emailTabButton = screen.getByLabelText("Email");
     expect(emailTabButton).toHaveClass("bg-slate-100");
@@ -355,7 +398,7 @@ describe("ShareView", () => {
   });
 
   test("applies active styles to the active tab (responsive)", () => {
-    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId="email" />);
+    render(<ShareView {...defaultProps} survey={mockSurveyLink} activeId={ShareViewType.EMAIL} />);
 
     // Get responsive buttons - these are Button components with ghost variant
     const responsiveButtons = screen.getAllByTestId("email-tab-icon");

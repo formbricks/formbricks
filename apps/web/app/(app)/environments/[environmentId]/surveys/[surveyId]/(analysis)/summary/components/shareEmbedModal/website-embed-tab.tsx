@@ -24,22 +24,17 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
 </div>`;
 
   return (
-    <div className="flex h-full flex-col space-y-4">
-      <div className="prose prose-slate max-w-full">
-        <CodeBlock
-          customCodeClass="text-sm h-48 overflow-y-scroll"
-          language="html"
-          showCopyToClipboard={false}
-          noMargin>
-          {iframeCode}
-        </CodeBlock>
-      </div>
+    <>
+      <CodeBlock language="html" noMargin>
+        {iframeCode}
+      </CodeBlock>
+
       <AdvancedOptionToggle
         htmlId="enableEmbedMode"
         isChecked={embedModeEnabled}
         onToggle={setEmbedModeEnabled}
-        title={t("environments.surveys.summary.embed_mode")}
-        description={t("environments.surveys.summary.embed_mode_description")}
+        title={t("environments.surveys.share.embed_on_website.embed_mode")}
+        description={t("environments.surveys.share.embed_on_website.embed_mode_description")}
         customContainerClass="p-0"
       />
       <Button
@@ -48,7 +43,7 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         aria-label={t("common.copy_code")}
         onClick={() => {
           navigator.clipboard.writeText(iframeCode);
-          toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
+          toast.success(t("environments.surveys.share.embed_on_website.embed_code_copied_to_clipboard"));
         }}>
         {t("common.copy_code")}
         <CopyIcon />

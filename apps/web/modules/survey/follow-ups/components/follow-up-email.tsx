@@ -76,8 +76,8 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
               if (!question.response) return;
               return (
                 <Row key={question.question}>
-                  <Column className="w-full">
-                    <Text className="mb-2 font-medium">{question.question}</Text>
+                  <Column className="w-full font-medium">
+                    <Text className="mb-2 text-sm">{question.question}</Text>
                     {renderEmailResponseValue(question.response, question.type, t, true)}
                   </Column>
                 </Row>
@@ -89,22 +89,22 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
           {isDefaultLogo ? (
             <Section className="mt-4 text-center text-sm">
               <Link
-                className="m-0 font-normal text-slate-500"
+                className="m-0 text-sm text-slate-500"
                 href="https://formbricks.com/?utm_source=email_header&utm_medium=email"
                 target="_blank"
                 rel="noopener noreferrer">
                 {t("emails.email_template_text_1")}
               </Link>
               {IMPRINT_ADDRESS && (
-                <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
+                <Text className="m-0 text-sm text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
               )}
-              <Text className="m-0 font-normal text-slate-500 opacity-50">
+              <Text className="m-0 text-sm text-slate-500 opacity-50">
                 {IMPRINT_URL && (
                   <Link
                     href={IMPRINT_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-500">
+                    className="text-sm text-slate-500">
                     {t("emails.imprint")}
                   </Link>
                 )}
@@ -114,7 +114,7 @@ export async function FollowUpEmail(props: FollowUpEmailProps): Promise<React.JS
                     href={PRIVACY_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-500">
+                    className="text-sm text-slate-500">
                     {t("emails.privacy_policy")}
                   </Link>
                 )}

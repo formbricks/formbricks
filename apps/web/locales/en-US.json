@@ -1781,7 +1781,14 @@
           "send_preview_email": "Send preview email",
           "title": "Embed your survey in an email"
         },
-        "share_view_title": "Share via"
+        "share_view_title": "Share via",
+        "social_media": {
+          "description": "Get responses from your contacts on various social media networks.",
+          "share_your_survey_on_social_media": "Share your survey on social media",
+          "source_tracking_enabled": "Source tracking enabled",
+          "source_tracking_enabled_alert_description": "When sharing from this dialog, the social media network will be appended to the survey link so you know which responses came via each network.",
+          "title": "Social media"
+        }
       },
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question {questionIdx} is {filterComboBoxValue} - {filterValue} ",
@@ -1860,6 +1867,7 @@
         "publish_to_web_warning": "You are about to release these survey results to the public.",
         "publish_to_web_warning_description": "Your survey results will be public. Anyone outside your organization can access them if they have the link.",
         "qr_code": "QR code",
+        "qr_code_description": "Responses collected via QR code are anonymous.",
         "qr_code_download_failed": "QR code download failed",
         "qr_code_download_with_start_soon": "QR code download will start soon",
         "qr_code_generation_failed": "There was a problem, loading the survey QR Code. Please try again.",

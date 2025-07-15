@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { DynamicPopupTab } from "./DynamicPopupTab";
+import { DynamicPopupTab } from "./dynamic-popup-tab";
 
 // Mock components
 vi.mock("@/modules/ui/components/alert", () => ({
@@ -69,18 +69,20 @@ describe("DynamicPopupTab", () => {
   test("renders alert with correct props", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alert = screen.getByTestId("alert");
-    expect(alert).toBeInTheDocument();
-    expect(alert).toHaveAttribute("data-variant", "info");
-    expect(alert).toHaveAttribute("data-size", "default");
+    const alerts = screen.getAllByTestId("alert");
+    const infoAlert = alerts.find((alert) => alert.getAttribute("data-variant") === "info");
+    expect(infoAlert).toBeInTheDocument();
+    expect(infoAlert).toHaveAttribute("data-variant", "info");
+    expect(infoAlert).toHaveAttribute("data-size", "default");
   });
 
   test("renders alert title with translation key", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alertTitle = screen.getByTestId("alert-title");
-    expect(alertTitle).toBeInTheDocument();
-    expect(alertTitle).toHaveTextContent("environments.surveys.summary.dynamic_popup.alert_title");
+    const alertTitles = screen.getAllByTestId("alert-title");
+    const infoAlertTitle = alertTitles[0]; // The first one is the info alert
+    expect(infoAlertTitle).toBeInTheDocument();
+    expect(infoAlertTitle).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_title");
   });
 
   test("renders alert description with translation key", () => {
@@ -88,17 +90,16 @@ describe("DynamicPopupTab", () => {
 
     const alertDescription = screen.getByTestId("alert-description");
     expect(alertDescription).toBeInTheDocument();
-    expect(alertDescription).toHaveTextContent(
-      "environments.surveys.summary.dynamic_popup.alert_description"
-    );
+    expect(alertDescription).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_description");
   });
 
   test("renders alert button with link to survey edit page", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alertButton = screen.getByTestId("alert-button");
-    expect(alertButton).toBeInTheDocument();
-    expect(alertButton).toHaveAttribute("data-as-child", "true");
+    const alertButtons = screen.getAllByTestId("alert-button");
+    const infoAlertButton = alertButtons[0]; // The first one is the info alert
+    expect(infoAlertButton).toBeInTheDocument();
+    expect(infoAlertButton).toHaveAttribute("data-as-child", "true");
 
     const link = screen.getByTestId("next-link");
     expect(link).toHaveAttribute("href", "/environments/env-123/surveys/survey-123/edit");

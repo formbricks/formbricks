@@ -69,7 +69,7 @@ export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: Dat
             <Button
               variant={"ghost"}
               className={cn(
-                "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal transition-all ease-in hover:bg-slate-300",
+                "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal",
                 !formattedDate && "text-muted-foreground bg-slate-800"
               )}
               ref={btnRef}>
@@ -80,7 +80,7 @@ export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: Dat
             <Button
               variant={"ghost"}
               className={cn(
-                "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal hover:bg-slate-300",
+                "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal",
                 !formattedDate && "text-muted-foreground"
               )}
               onClick={() => setIsOpen(true)}
@@ -124,7 +124,7 @@ export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: Dat
       </Popover>
       {formattedDate && onClearDate && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={handleClearDate}
           className="h-8 w-8 p-0 hover:bg-slate-200">

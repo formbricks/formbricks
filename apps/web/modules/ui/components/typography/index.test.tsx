@@ -39,8 +39,9 @@ describe("Typography Components", () => {
     expect(h3Element).toBeInTheDocument();
     expect(h3Element).toHaveTextContent("Heading 3");
     expect(h3Element?.className).toContain("text-lg");
-    expect(h3Element?.className).toContain("tracking-tight");
     expect(h3Element?.className).toContain("text-slate-800");
+    expect(h3Element?.className).toContain("font-medium");
+    expect(h3Element?.className).toContain("scroll-m-20");
   });
 
   test("renders H4 correctly", () => {
