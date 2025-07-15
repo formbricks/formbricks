@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
+import { WebsiteEmbedTab } from "./website-embed-tab";
 
 // Mock components
 vi.mock("@/modules/ui/components/advanced-option-toggle", () => ({
@@ -59,7 +59,7 @@ vi.mock("@/modules/ui/components/code-block", () => ({
   }) => (
     <div data-testid="code-block">
       <span data-testid="language">{props.language}</span>
-      <span data-testid="show-copy">{props.showCopyToClipboard.toString()}</span>
+      <span data-testid="show-copy">{props.showCopyToClipboard?.toString() || "false"}</span>
       {props.noMargin && <span data-testid="no-margin">true</span>}
       <pre>{props.children}</pre>
     </div>
@@ -157,7 +157,7 @@ describe("WebsiteEmbedTab", () => {
     );
     const toast = await import("react-hot-toast");
     expect(toast.default.success).toHaveBeenCalledWith(
-      "environments.surveys.summary.embed_code_copied_to_clipboard"
+      "environments.surveys.share.embed_on_website.embed_code_copied_to_clipboard"
     );
   });
 
@@ -185,8 +185,8 @@ describe("WebsiteEmbedTab", () => {
     render(<WebsiteEmbedTab {...defaultProps} />);
 
     const toggle = screen.getByTestId("advanced-option-toggle");
-    expect(toggle).toHaveTextContent("environments.surveys.summary.embed_mode");
-    expect(toggle).toHaveTextContent("environments.surveys.summary.embed_mode_description");
+    expect(toggle).toHaveTextContent("environments.surveys.share.embed_on_website.embed_mode");
+    expect(toggle).toHaveTextContent("environments.surveys.share.embed_on_website.embed_mode_description");
     expect(screen.getByTestId("custom-container-class")).toHaveTextContent("p-0");
   });
 });

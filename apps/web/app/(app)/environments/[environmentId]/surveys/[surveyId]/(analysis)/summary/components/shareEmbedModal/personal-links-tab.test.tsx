@@ -195,12 +195,8 @@ describe("PersonalLinksTab", () => {
   test("renders the component with correct title and description", () => {
     render(<PersonalLinksTab {...defaultProps} />);
 
-    expect(
-      screen.getByText("environments.surveys.summary.generate_personal_links_title")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.surveys.summary.generate_personal_links_description")
-    ).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.share.personal_links.title")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.share.personal_links.description")).toBeInTheDocument();
   });
 
   test("renders recipients section with segment selection", () => {
@@ -208,15 +204,21 @@ describe("PersonalLinksTab", () => {
 
     expect(screen.getByText("common.recipients")).toBeInTheDocument();
     expect(screen.getByTestId("select")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.create_and_manage_segments")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.share.personal_links.create_and_manage_segments")
+    ).toBeInTheDocument();
   });
 
   test("renders expiry date section with date picker", () => {
     render(<PersonalLinksTab {...defaultProps} />);
 
-    expect(screen.getByText("environments.surveys.summary.expiry_date_optional")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.share.personal_links.expiry_date_optional")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("date-picker")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.expiry_date_description")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.share.personal_links.expiry_date_description")
+    ).toBeInTheDocument();
   });
 
   test("renders generate button with correct initial state", () => {
@@ -225,7 +227,9 @@ describe("PersonalLinksTab", () => {
     const button = screen.getByTestId("button");
     expect(button).toBeInTheDocument();
     expect(button).toBeDisabled();
-    expect(screen.getByText("environments.surveys.summary.generate_and_download_links")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.share.personal_links.generate_and_download_links")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("download-icon")).toBeInTheDocument();
   });
 
@@ -234,7 +238,7 @@ describe("PersonalLinksTab", () => {
 
     expect(screen.getByTestId("alert")).toBeInTheDocument();
     expect(
-      screen.getByText("environments.surveys.summary.personal_links_work_with_segments")
+      screen.getByText("environments.surveys.share.personal_links.work_with_segments")
     ).toBeInTheDocument();
     expect(screen.getByTestId("link")).toHaveAttribute(
       "href",
@@ -259,7 +263,9 @@ describe("PersonalLinksTab", () => {
 
     render(<PersonalLinksTab {...propsWithPrivateSegments} />);
 
-    expect(screen.getByText("environments.surveys.summary.no_segments_available")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.share.personal_links.no_segments_available")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("select")).toHaveAttribute("data-disabled", "true");
     expect(screen.getByTestId("button")).toBeDisabled();
   });
@@ -341,10 +347,13 @@ describe("PersonalLinksTab", () => {
     });
 
     // Verify loading toast
-    expect(mockToast.loading).toHaveBeenCalledWith("environments.surveys.summary.generating_links_toast", {
-      duration: 5000,
-      id: "generating-links",
-    });
+    expect(mockToast.loading).toHaveBeenCalledWith(
+      "environments.surveys.share.personal_links.generating_links_toast",
+      {
+        duration: 5000,
+        id: "generating-links",
+      }
+    );
   });
 
   test("generates links with expiry date when date is selected", async () => {
@@ -439,10 +448,13 @@ describe("PersonalLinksTab", () => {
     fireEvent.click(generateButton);
 
     // Verify loading toast is called
-    expect(mockToast.loading).toHaveBeenCalledWith("environments.surveys.summary.generating_links_toast", {
-      duration: 5000,
-      id: "generating-links",
-    });
+    expect(mockToast.loading).toHaveBeenCalledWith(
+      "environments.surveys.share.personal_links.generating_links_toast",
+      {
+        duration: 5000,
+        id: "generating-links",
+      }
+    );
   });
 
   test("button is disabled when no segment is selected", () => {
@@ -472,7 +484,9 @@ describe("PersonalLinksTab", () => {
 
     render(<PersonalLinksTab {...propsWithEmptySegments} />);
 
-    expect(screen.getByText("environments.surveys.summary.no_segments_available")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.share.personal_links.no_segments_available")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("button")).toBeDisabled();
   });
 
