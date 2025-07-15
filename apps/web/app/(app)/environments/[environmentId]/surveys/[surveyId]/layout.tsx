@@ -1,5 +1,5 @@
 import { getSurvey } from "@/lib/survey/service";
-import { SurveyContextWrapper } from "./context/SurveyContext";
+import { SurveyContextWrapper } from "./context/survey-context";
 
 interface SurveyLayoutProps {
   params: Promise<{ surveyId: string; environmentId: string }>;

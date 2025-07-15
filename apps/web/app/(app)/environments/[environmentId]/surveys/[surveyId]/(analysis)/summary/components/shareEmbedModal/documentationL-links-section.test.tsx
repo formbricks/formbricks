@@ -42,7 +42,7 @@ vi.mock("@/modules/ui/components/typography", () => ({
 
 // Mock lucide-react icons
 vi.mock("lucide-react", () => ({
-  MoveUpRight: ({ className }: any) => <svg data-testid="move-up-right-icon" className={className} />,
+  ArrowUpRight: ({ className }: any) => <svg data-testid="arrow-up-right-icon" className={className} />,
 }));
 
 describe("DocumentationLinksSection", () => {
@@ -109,7 +109,7 @@ describe("DocumentationLinksSection", () => {
   test("renders icons for each alert", () => {
     render(<DocumentationLinksSection title="Test Documentation Title" links={mockLinks} />);
 
-    const icons = screen.getAllByTestId("move-up-right-icon");
+    const icons = screen.getAllByTestId("arrow-up-right-icon");
     expect(icons).toHaveLength(3);
   });
 

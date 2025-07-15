@@ -1,5 +1,5 @@
 import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
-import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/EnvironmentContext";
+import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";

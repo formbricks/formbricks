@@ -133,7 +133,7 @@ export const ShareView = ({
             } as React.CSSProperties
           }>
           <Sidebar className="relative h-full p-0" variant="inset" collapsible="icon">
-            <SidebarContent className="h-full border-r border-slate-200 bg-white px-6 pb-6 pt-5">
+            <SidebarContent className="h-full border-r border-slate-200 bg-white p-4">
               <SidebarGroup className="p-0">
                 <SidebarGroupLabel>
                   <Small className="text-xs text-slate-500">Share via</Small>

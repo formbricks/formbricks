@@ -41,7 +41,7 @@ vi.mock("./components/EnvironmentStorageHandler", () => ({
     <div data-testid="EnvironmentStorageHandler" data-environment-id={environmentId} />
   ),
 }));
-vi.mock("@/app/(app)/environments/[environmentId]/context/EnvironmentContext", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/context/environment-context", () => ({
   EnvironmentContextWrapper: ({ children, environment, project }: any) => (
     <div
       data-testid="EnvironmentContextWrapper"

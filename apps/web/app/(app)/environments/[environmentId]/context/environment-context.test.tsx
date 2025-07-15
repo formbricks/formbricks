@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
-import { EnvironmentContextWrapper, useEnvironment } from "./EnvironmentContext";
+import { EnvironmentContextWrapper, useEnvironment } from "./environment-context";
 
 // Mock environment data
 const mockEnvironment: TEnvironment = {

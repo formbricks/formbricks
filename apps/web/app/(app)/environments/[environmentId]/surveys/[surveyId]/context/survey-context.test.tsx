@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { SurveyContextWrapper, useSurvey } from "./SurveyContext";
+import { SurveyContextWrapper, useSurvey } from "./survey-context";
 
 // Mock survey data
 const mockSurvey: TSurvey = {

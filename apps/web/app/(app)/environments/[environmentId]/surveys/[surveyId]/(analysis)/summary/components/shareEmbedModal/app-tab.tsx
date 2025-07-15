@@ -1,14 +1,22 @@
 "use client";
 
-import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/EnvironmentContext";
-import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/SurveyContext";
+import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { H4, Small } from "@/modules/ui/components/typography";
+import { H4, InlineSmall, Small } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
-import { ClockIcon, MousePointerClickIcon, PercentIcon, Repeat1Icon, UsersIcon } from "lucide-react";
+import {
+  CodeXmlIcon,
+  MousePointerClickIcon,
+  PercentIcon,
+  Repeat1Icon,
+  TimerResetIcon,
+  UsersIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { ReactNode, useMemo } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
+import { TSegment } from "@formbricks/types/segment";
 import { DocumentationLinksSection } from "./documentation-links-section";
 
 const createDocumentationLinks = (t: ReturnType<typeof useTranslate>["t"]) => [
@@ -54,15 +62,21 @@ const formatRecontactDaysString = (days: number, t: ReturnType<typeof useTransla
 interface DisplayCriteriaItemProps {
   icon: ReactNode;
   title: ReactNode;
+  titleSuffix?: ReactNode;
   description: ReactNode;
 }
 
-const DisplayCriteriaItem = ({ icon, title, description }: DisplayCriteriaItemProps) => {
+const DisplayCriteriaItem = ({ icon, title, titleSuffix, description }: DisplayCriteriaItemProps) => {
   return (
-    <div className="flex gap-2">
-      {icon}
-      <div className="flex flex-col">
-        <Small>{title}</Small>
+    <div className="grid grid-cols-[auto_1fr] gap-x-2">
+      <div className="flex items-center justify-center">{icon}</div>
+      <div className="flex items-center">
+        <Small>
+          {title} {titleSuffix && <InlineSmall>{titleSuffix}</InlineSmall>}
+        </Small>
+      </div>
+      <div></div>
+      <div className="flex items-start">
         <Small color="muted" margin="headerDescription">
           {description}
         </Small>
@@ -81,8 +95,7 @@ export const AppTab = () => {
 
   const waitTime = () => {
     if (survey.recontactDays !== null) {
-      const waitingTime = formatRecontactDaysString(survey.recontactDays, t);
-      return `${waitingTime} ${t("environments.surveys.summary.in_app.display_criteria.overwritten")}`;
+      return formatRecontactDaysString(survey.recontactDays, t);
     }
     if (project.recontactDays !== null) {
       return formatRecontactDaysString(project.recontactDays, t);
@@ -109,10 +122,8 @@ export const AppTab = () => {
     actionClass: TActionClass,
     noCodeConfigTypeParam: ReturnType<typeof createNoCodeConfigType>
   ) => {
-    let triggerDescription = `${actionClass.name}`;
-
     if (actionClass.type === "code") {
-      triggerDescription += ` (${t("environments.surveys.summary.in_app.display_criteria.code_trigger")})`;
+      return `(${t("environments.surveys.summary.in_app.display_criteria.code_trigger")})`;
     } else {
       const configType = actionClass.noCodeConfig?.type;
       let configTypeLabel = "unknown";
@@ -123,10 +134,17 @@ export const AppTab = () => {
         configTypeLabel = configType;
       }
 
-      triggerDescription += ` (${t("environments.surveys.summary.in_app.display_criteria.no_code_trigger")}, ${configTypeLabel})`;
+      return `(${t("environments.surveys.summary.in_app.display_criteria.no_code_trigger")}, ${configTypeLabel})`;
     }
+  };
 
-    return triggerDescription;
+  const getSegmentTitle = (segment: TSegment | null) => {
+    if (segment && segment.filters && segment.filters.length > 0) {
+      return segment.isPrivate
+        ? t("environments.surveys.summary.in_app.display_criteria.targeted")
+        : segment.title;
+    }
+    return t("environments.surveys.summary.in_app.display_criteria.everyone");
   };
 
   return (
@@ -159,24 +177,32 @@ export const AppTab = () => {
               "flex w-full flex-col space-y-4 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm"
             }>
             <DisplayCriteriaItem
-              icon={<ClockIcon className="h-4 w-4" />}
+              icon={<TimerResetIcon className="h-4 w-4" />}
               title={waitTime()}
+              titleSuffix={
+                survey.recontactDays !== null
+                  ? `(${t("environments.surveys.summary.in_app.display_criteria.overwritten")})`
+                  : undefined
+              }
               description={t("environments.surveys.summary.in_app.display_criteria.time_based_description")}
             />
             <DisplayCriteriaItem
               icon={<UsersIcon className="h-4 w-4" />}
-              title={
-                (survey.segment?.filters?.length ?? 0) > 0
-                  ? t("environments.surveys.summary.in_app.display_criteria.targeted")
-                  : t("environments.surveys.summary.in_app.display_criteria.everyone")
-              }
+              title={getSegmentTitle(survey.segment)}
               description={t("environments.surveys.summary.in_app.display_criteria.audience_description")}
             />
             {survey.triggers.map((trigger) => (
               <DisplayCriteriaItem
                 key={trigger.actionClass.id}
-                icon={<MousePointerClickIcon className="h-4 w-4" />}
-                title={getTriggerDescription(trigger.actionClass, noCodeConfigType)}
+                icon={
+                  trigger.actionClass.type === "code" ? (
+                    <CodeXmlIcon className="h-4 w-4" />
+                  ) : (
+                    <MousePointerClickIcon className="h-4 w-4" />
+                  )
+                }
+                title={trigger.actionClass.name}
+                titleSuffix={getTriggerDescription(trigger.actionClass, noCodeConfigType)}
                 description={t("environments.surveys.summary.in_app.display_criteria.trigger_description")}
               />
             ))}

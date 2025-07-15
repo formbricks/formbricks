@@ -1,11 +1,12 @@
-import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/EnvironmentContext";
-import { SurveyContextWrapper } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/SurveyContext";
+import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { SurveyContextWrapper } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TActionClass, TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
+import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { AppTab } from "./app-tab";
 
@@ -94,6 +95,29 @@ vi.mock("./documentation-links-section", () => ({
     </div>
   ),
 }));
+
+// Mock segment
+const mockSegment: TSegment = {
+  id: "test-segment-id",
+  title: "Test Segment",
+  description: "Test segment description",
+  environmentId: "test-env-id",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  isPrivate: false,
+  filters: [
+    {
+      id: "test-filter-id",
+      connector: "and",
+      resource: "contact",
+      attributeKey: "test-attribute-key",
+      attributeType: "string",
+      condition: "equals",
+      value: "test",
+    } as unknown as TBaseFilter,
+  ],
+  surveys: ["test-survey-id"],
+};
 
 // Mock action class
 const mockActionClass: TActionClass = {
@@ -250,17 +274,20 @@ describe("AppTab", () => {
 
   test("displays correct wait time when survey has recontact days", () => {
     renderWithProviders(true, { recontactDays: 5 });
-    expect(screen.getByText("5 days overwritten")).toBeInTheDocument();
+    expect(screen.getByText("5 days")).toBeInTheDocument();
+    expect(screen.getByText("(overwritten)")).toBeInTheDocument();
   });
 
   test("displays correct wait time when survey has 1 recontact day", () => {
     renderWithProviders(true, { recontactDays: 1 });
-    expect(screen.getByText("1 day overwritten")).toBeInTheDocument();
+    expect(screen.getByText("1 day")).toBeInTheDocument();
+    expect(screen.getByText("(overwritten)")).toBeInTheDocument();
   });
 
   test("displays correct wait time when survey has 0 recontact days", () => {
     renderWithProviders(true, { recontactDays: 0 });
-    expect(screen.getByText("always overwritten")).toBeInTheDocument();
+    expect(screen.getByText("always")).toBeInTheDocument();
+    expect(screen.getByText("(overwritten)")).toBeInTheDocument();
   });
 
   test("displays project recontact days when survey has no recontact days", () => {
@@ -305,19 +332,45 @@ describe("AppTab", () => {
 
   test("displays targeted when survey has segment with filters", () => {
     renderWithProviders(true, {
-      segment: { filters: [{ attribute: "test", operator: "equals", value: "test" }] },
+      segment: mockSegment,
+    });
+    expect(screen.getByText("Test Segment")).toBeInTheDocument();
+  });
+
+  test("displays segment title when survey has public segment with filters", () => {
+    const publicSegment = { ...mockSegment, isPrivate: false, title: "Public Segment" };
+    renderWithProviders(true, {
+      segment: publicSegment,
+    });
+    expect(screen.getByText("Public Segment")).toBeInTheDocument();
+  });
+
+  test("displays targeted when survey has private segment with filters", () => {
+    const privateSegment = { ...mockSegment, isPrivate: true };
+    renderWithProviders(true, {
+      segment: privateSegment,
     });
     expect(screen.getByText("Targeted")).toBeInTheDocument();
   });
 
+  test("displays everyone when survey has segment with no filters", () => {
+    const emptySegment = { ...mockSegment, filters: [] };
+    renderWithProviders(true, {
+      segment: emptySegment,
+    });
+    expect(screen.getByText("Everyone")).toBeInTheDocument();
+  });
+
   test("displays code trigger description correctly", () => {
     renderWithProviders(true, { triggers: [{ actionClass: mockActionClass }] });
-    expect(screen.getByText("Test Action (Code trigger)")).toBeInTheDocument();
+    expect(screen.getByText("Test Action")).toBeInTheDocument();
+    expect(screen.getByText("(Code trigger)")).toBeInTheDocument();
   });
 
   test("displays no-code trigger description correctly", () => {
     renderWithProviders(true, { triggers: [{ actionClass: mockNoCodeActionClass }] });
-    expect(screen.getByText("Test No Code Action (No-code trigger, Click)")).toBeInTheDocument();
+    expect(screen.getByText("Test No Code Action")).toBeInTheDocument();
+    expect(screen.getByText("(No-code trigger, Click)")).toBeInTheDocument();
   });
 
   test("displays randomizer when displayPercentage is set", () => {
@@ -327,6 +380,11 @@ describe("AppTab", () => {
 
   test("does not display randomizer when displayPercentage is null", () => {
     renderWithProviders(true, { displayPercentage: null });
+    expect(screen.queryByText("Show to")).not.toBeInTheDocument();
+  });
+
+  test("does not display randomizer when displayPercentage is 0", () => {
+    renderWithProviders(true, { displayPercentage: 0 });
     expect(screen.queryByText("Show to")).not.toBeInTheDocument();
   });
 

@@ -12,7 +12,7 @@ vi.mock("@/lib/survey/service", () => ({
 }));
 
 // Mock the SurveyContextWrapper component
-vi.mock("./context/SurveyContext", () => ({
+vi.mock("./context/survey-context", () => ({
   SurveyContextWrapper: ({ survey, children }: { survey: TSurvey; children: React.ReactNode }) => (
     <div data-testid="survey-context-wrapper" data-survey-id={survey.id}>
       {children}
