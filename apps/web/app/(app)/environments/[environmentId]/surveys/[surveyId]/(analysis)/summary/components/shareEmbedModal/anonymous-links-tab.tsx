@@ -176,7 +176,7 @@ export const AnonymousLinksTab = ({
 
       const baseSurveyUrl = getSurveyUrl(survey, publicDomain, "default");
 
-      if (response?.data) {
+      if (!!response?.data?.length) {
         const singleUseIds = response.data;
         const surveyLinks = singleUseIds.map((singleUseId) => `${baseSurveyUrl}?suId=${singleUseId}`);
 

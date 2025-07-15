@@ -324,7 +324,7 @@ describe("ShareView", () => {
 
     const websiteEmbedTabButton = screen.getByLabelText("Website Embed");
     await userEvent.click(websiteEmbedTabButton);
-    expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
+    expect(defaultProps.setActiveId).toHaveBeenCalledWith(ShareViewType.WEBSITE_EMBED);
   });
 
   test("renders EmailTab when activeId is 'email'", () => {
@@ -389,7 +389,7 @@ describe("ShareView", () => {
 
     if (responsiveButton) {
       await userEvent.click(responsiveButton);
-      expect(defaultProps.setActiveId).toHaveBeenCalledWith("website-embed");
+      expect(defaultProps.setActiveId).toHaveBeenCalledWith(ShareViewType.WEBSITE_EMBED);
     }
   });
 

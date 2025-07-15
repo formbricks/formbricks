@@ -7,7 +7,6 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useTranslate } from "@tolgee/react";
 import { Code2Icon, LinkIcon, MailIcon, SmartphoneIcon, SquareStack, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -84,22 +83,9 @@ export const ShareSurveyModal = ({
   const [activeId, setActiveId] = useState(
     survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP
   );
-  const [showView, setShowView] = useState<ModalView>(modalView);
-  const [surveyUrl, setSurveyUrl] = useState("");
 
-  useEffect(() => {
-    const fetchSurveyUrl = async () => {
-      try {
-        const url = await getSurveyUrl(survey, publicDomain, "default");
-        setSurveyUrl(url);
-      } catch (error) {
-        logger.error("Failed to fetch survey URL:", error);
-        // Fallback to a default URL if fetching fails
-        setSurveyUrl(`${publicDomain}/s/${survey.id}`);
-      }
-    };
-    fetchSurveyUrl();
-  }, [survey, publicDomain]);
+  const [surveyUrl, setSurveyUrl] = useState(() => getSurveyUrl(survey, publicDomain, "default"));
+  const [showView, setShowView] = useState<ModalView>(modalView);
 
   useEffect(() => {
     if (open) {
