@@ -66,7 +66,8 @@ export const ShareSurveyModal = ({
     icon: React.ElementType;
     title: string;
     description: string;
-    component: React.ReactNode;
+    componentType: React.ComponentType<any>;
+    componentProps: any;
   }[] = useMemo(
     () => [
       {
@@ -75,15 +76,14 @@ export const ShareSurveyModal = ({
         icon: LinkIcon,
         title: t("environments.surveys.share.anonymous_links.nav_title"),
         description: t("environments.surveys.share.anonymous_links.description"),
-        component: (
-          <AnonymousLinksTab
-            survey={survey}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            locale={user.locale}
-            surveyUrl={surveyUrl}
-          />
-        ),
+        componentType: AnonymousLinksTab,
+        componentProps: {
+          survey,
+          publicDomain,
+          setSurveyUrl,
+          locale: user.locale,
+          surveyUrl,
+        },
       },
       {
         id: ShareViewType.PERSONAL_LINKS,
@@ -91,15 +91,14 @@ export const ShareSurveyModal = ({
         icon: UserIcon,
         title: t("environments.surveys.share.personal_links.nav_title"),
         description: t("environments.surveys.share.personal_links.description"),
-        component: (
-          <PersonalLinksTab
-            environmentId={environmentId}
-            surveyId={survey.id}
-            segments={segments}
-            isContactsEnabled={isContactsEnabled}
-            isFormbricksCloud={isFormbricksCloud}
-          />
-        ),
+        componentType: PersonalLinksTab,
+        componentProps: {
+          environmentId,
+          surveyId: survey.id,
+          segments,
+          isContactsEnabled,
+          isFormbricksCloud,
+        },
       },
       {
         id: ShareViewType.WEBSITE_EMBED,
@@ -107,7 +106,8 @@ export const ShareSurveyModal = ({
         icon: Code2Icon,
         title: t("environments.surveys.share.embed_on_website.nav_title"),
         description: t("environments.surveys.share.embed_on_website.description"),
-        component: <WebsiteEmbedTab surveyUrl={surveyUrl} />,
+        componentType: WebsiteEmbedTab,
+        componentProps: { surveyUrl },
       },
       {
         id: ShareViewType.EMAIL,
@@ -115,7 +115,8 @@ export const ShareSurveyModal = ({
         icon: MailIcon,
         title: t("environments.surveys.share.send_email.nav_title"),
         description: t("environments.surveys.share.send_email.description"),
-        component: <EmailTab surveyId={survey.id} email={email} />,
+        componentType: EmailTab,
+        componentProps: { surveyId: survey.id, email },
       },
       {
         id: ShareViewType.SOCIAL_MEDIA,
@@ -123,7 +124,8 @@ export const ShareSurveyModal = ({
         icon: Share2Icon,
         title: t("environments.surveys.share.social_media.title"),
         description: t("environments.surveys.share.social_media.description"),
-        component: <SocialMediaTab surveyUrl={surveyUrl} surveyTitle={survey.name} />,
+        componentType: SocialMediaTab,
+        componentProps: { surveyUrl, surveyTitle: survey.name },
       },
       {
         id: ShareViewType.QR_CODE,
@@ -131,7 +133,8 @@ export const ShareSurveyModal = ({
         icon: QrCodeIcon,
         title: t("environments.surveys.summary.qr_code"),
         description: t("environments.surveys.summary.qr_code_description"),
-        component: <QRCodeTab surveyUrl={surveyUrl} />,
+        componentType: QRCodeTab,
+        componentProps: { surveyUrl },
       },
       {
         id: ShareViewType.DYNAMIC_POPUP,
@@ -139,7 +142,8 @@ export const ShareSurveyModal = ({
         icon: SquareStack,
         title: t("environments.surveys.share.dynamic_popup.nav_title"),
         description: t("environments.surveys.share.dynamic_popup.description"),
-        component: <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />,
+        componentType: DynamicPopupTab,
+        componentProps: { environmentId, surveyId: survey.id },
       },
     ],
     [
@@ -163,7 +167,8 @@ export const ShareSurveyModal = ({
       label: t("environments.surveys.share.embed_on_website.embed_in_app"),
       icon: SmartphoneIcon,
       title: t("environments.surveys.share.embed_on_website.embed_in_app"),
-      component: <AppTab />,
+      componentType: AppTab,
+      componentProps: {},
     },
   ];
 

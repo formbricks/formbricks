@@ -26,7 +26,8 @@ interface ShareViewProps {
     id: ShareViewType;
     label: string;
     icon: React.ElementType;
-    component: React.ReactNode;
+    componentType: React.ComponentType<any>;
+    componentProps: any;
     title: string;
     description?: string;
   }>;
@@ -54,9 +55,12 @@ export const ShareView = ({ tabs, activeId, setActiveId, survey }: ShareViewProp
   const renderActiveTab = () => {
     const activeTab = tabs.find((tab) => tab.id === activeId);
     if (!activeTab) return null;
+
+    const { componentType: Component, componentProps } = activeTab;
+
     return (
       <TabContainer key={activeTab.id} title={activeTab.title} description={activeTab.description ?? ""}>
-        {activeTab.component}
+        <Component {...componentProps} />
       </TabContainer>
     );
   };

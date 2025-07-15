@@ -193,7 +193,8 @@ const mockTabs: Array<{
   id: ShareViewType;
   label: string;
   icon: React.ElementType;
-  component: React.ReactNode;
+  componentType: React.ComponentType<any>;
+  componentProps: any;
   title: string;
   description?: string;
 }> = [
@@ -201,7 +202,8 @@ const mockTabs: Array<{
     id: ShareViewType.EMAIL,
     label: "Email",
     icon: () => <div data-testid="email-tab-icon" />,
-    component: <div data-testid="email-tab-content">Email Content</div>,
+    componentType: () => <div data-testid="email-tab-content">Email Content</div>,
+    componentProps: {},
     title: "Email",
     description: "Email Description",
   },
@@ -209,7 +211,8 @@ const mockTabs: Array<{
     id: ShareViewType.WEBSITE_EMBED,
     label: "Website Embed",
     icon: () => <div data-testid="website-embed-tab-icon" />,
-    component: <div data-testid="website-embed-tab-content">Website Embed Content</div>,
+    componentType: () => <div data-testid="website-embed-tab-content">Website Embed Content</div>,
+    componentProps: {},
     title: "Website Embed",
     description: "Website Embed Description",
   },
@@ -217,7 +220,8 @@ const mockTabs: Array<{
     id: ShareViewType.DYNAMIC_POPUP,
     label: "Dynamic Popup",
     icon: () => <div data-testid="dynamic-popup-tab-icon" />,
-    component: <div data-testid="dynamic-popup-tab-content">Dynamic Popup Content</div>,
+    componentType: () => <div data-testid="dynamic-popup-tab-content">Dynamic Popup Content</div>,
+    componentProps: {},
     title: "Dynamic Popup",
     description: "Dynamic Popup Description",
   },
@@ -225,7 +229,8 @@ const mockTabs: Array<{
     id: ShareViewType.ANON_LINKS,
     label: "Anonymous Links",
     icon: () => <div data-testid="link-tab-icon" />,
-    component: <div data-testid="anonymous-links-tab-content">Anonymous Links Content</div>,
+    componentType: () => <div data-testid="anonymous-links-tab-content">Anonymous Links Content</div>,
+    componentProps: {},
     title: "Anonymous Links",
     description: "Anonymous Links Description",
   },
@@ -233,7 +238,8 @@ const mockTabs: Array<{
     id: ShareViewType.QR_CODE,
     label: "QR Code",
     icon: () => <div data-testid="qr-code-tab-icon" />,
-    component: <div data-testid="qr-code-tab-content">QR Code Content</div>,
+    componentType: () => <div data-testid="qr-code-tab-content">QR Code Content</div>,
+    componentProps: {},
     title: "QR Code",
     description: "QR Code Description",
   },
@@ -241,7 +247,8 @@ const mockTabs: Array<{
     id: ShareViewType.APP,
     label: "App",
     icon: () => <div data-testid="app-tab-icon" />,
-    component: <div data-testid="app-tab-content">App Content</div>,
+    componentType: () => <div data-testid="app-tab-content">App Content</div>,
+    componentProps: {},
     title: "App",
     description: "App Description",
   },
@@ -501,7 +508,8 @@ describe("ShareView", () => {
           id: ShareViewType.EMAIL,
           label: "Email",
           icon: () => <div data-testid="email-tab-icon" />,
-          component: <div data-testid="email-tab-content">Email Content</div>,
+          componentType: () => <div data-testid="email-tab-content">Email Content</div>,
+          componentProps: {},
           title: "Email",
           // No description property
         },
@@ -653,7 +661,8 @@ describe("ShareView", () => {
         id: ShareViewType.EMAIL,
         label: "Test Email",
         icon: () => <div data-testid="test-icon" />,
-        component: <div data-testid="test-content">Test Content</div>,
+        componentType: () => <div data-testid="test-content">Test Content</div>,
+        componentProps: {},
         title: "Test Title",
         description: "Test Description",
       };
