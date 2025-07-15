@@ -35,7 +35,7 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         onToggle={setEmbedModeEnabled}
         title={t("environments.surveys.share.embed_on_website.embed_mode")}
         description={t("environments.surveys.share.embed_on_website.embed_mode_description")}
-        customContainerClass="p-0"
+        customContainerClass="pl-1 pr-0 py-0"
       />
       <Button
         className="self-start"
@@ -48,6 +48,6 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         {t("common.copy_code")}
         <CopyIcon />
       </Button>
-    </div>
+    </>
   );
 };

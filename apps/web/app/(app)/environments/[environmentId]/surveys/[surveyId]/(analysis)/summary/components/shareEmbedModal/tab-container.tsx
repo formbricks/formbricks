@@ -15,7 +15,7 @@ export const TabContainer = ({ title, description, children }: TabContainerProps
           {description}
         </Small>
       </div>
-      <div className="h-full w-full overflow-y-auto">{children}</div>
+      <div className="h-full w-full space-y-4 overflow-y-auto">{children}</div>
     </div>
   );
 };

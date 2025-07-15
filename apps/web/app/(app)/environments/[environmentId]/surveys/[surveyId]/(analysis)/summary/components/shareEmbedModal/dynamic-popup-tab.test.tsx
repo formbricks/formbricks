@@ -21,10 +21,10 @@ vi.mock("@/modules/ui/components/alert", () => ({
   AlertTitle: (props: { children: React.ReactNode }) => <div data-testid="alert-title">{props.children}</div>,
 }));
 
-// Mock DocumentationLinksSection
-vi.mock("./documentation-links-section", () => ({
-  DocumentationLinksSection: (props: { title: string; links: Array<{ href: string; title: string }> }) => (
-    <div data-testid="documentation-links-section" data-title={props.title}>
+// Mock DocumentationLinks
+vi.mock("./documentation-links", () => ({
+  DocumentationLinks: (props: { links: Array<{ href: string; title: string }> }) => (
+    <div data-testid="documentation-links">
       {props.links.map((link) => (
         <div key={link.title} data-testid="documentation-link" data-href={link.href} data-title={link.title}>
           {link.title}
@@ -69,23 +69,21 @@ describe("DynamicPopupTab", () => {
   test("renders alert with correct props", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alerts = screen.getAllByTestId("alert");
-    const infoAlert = alerts.find((alert) => alert.getAttribute("data-variant") === "info");
-    expect(infoAlert).toBeInTheDocument();
-    expect(infoAlert).toHaveAttribute("data-variant", "info");
-    expect(infoAlert).toHaveAttribute("data-size", "default");
+    const alert = screen.getByTestId("alert");
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveAttribute("data-variant", "info");
+    expect(alert).toHaveAttribute("data-size", "default");
   });
 
-  test("renders alert title with translation key", () => {
+  test("renders alert title with correct translation key", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alertTitles = screen.getAllByTestId("alert-title");
-    const infoAlertTitle = alertTitles[0]; // The first one is the info alert
-    expect(infoAlertTitle).toBeInTheDocument();
-    expect(infoAlertTitle).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_title");
+    const alertTitle = screen.getByTestId("alert-title");
+    expect(alertTitle).toBeInTheDocument();
+    expect(alertTitle).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_title");
   });
 
-  test("renders alert description with translation key", () => {
+  test("renders alert description with correct translation key", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
     const alertDescription = screen.getByTestId("alert-description");
@@ -96,28 +94,23 @@ describe("DynamicPopupTab", () => {
   test("renders alert button with link to survey edit page", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alertButtons = screen.getAllByTestId("alert-button");
-    const infoAlertButton = alertButtons[0]; // The first one is the info alert
-    expect(infoAlertButton).toBeInTheDocument();
-    expect(infoAlertButton).toHaveAttribute("data-as-child", "true");
+    const alertButton = screen.getByTestId("alert-button");
+    expect(alertButton).toBeInTheDocument();
+    expect(alertButton).toHaveAttribute("data-as-child", "true");
 
     const link = screen.getByTestId("next-link");
     expect(link).toHaveAttribute("href", "/environments/env-123/surveys/survey-123/edit");
-    expect(link).toHaveTextContent("environments.surveys.summary.dynamic_popup.alert_button");
+    expect(link).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_button");
   });
 
-  test("renders DocumentationLinksSection with correct title", () => {
+  test("renders DocumentationLinks component", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const documentationSection = screen.getByTestId("documentation-links-section");
-    expect(documentationSection).toBeInTheDocument();
-    expect(documentationSection).toHaveAttribute(
-      "data-title",
-      "environments.surveys.summary.dynamic_popup.title"
-    );
+    const documentationLinks = screen.getByTestId("documentation-links");
+    expect(documentationLinks).toBeInTheDocument();
   });
 
-  test("passes correct documentation links to DocumentationLinksSection", () => {
+  test("passes correct documentation links to DocumentationLinks component", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
     const documentationLinks = screen.getAllByTestId("documentation-link");
@@ -132,7 +125,7 @@ describe("DynamicPopupTab", () => {
     expect(attributeLink).toBeInTheDocument();
     expect(attributeLink).toHaveAttribute(
       "data-title",
-      "environments.surveys.summary.dynamic_popup.attribute_based_targeting"
+      "environments.surveys.share.dynamic_popup.attribute_based_targeting"
     );
 
     // Check code and no code triggers link
@@ -144,7 +137,7 @@ describe("DynamicPopupTab", () => {
     expect(actionsLink).toBeInTheDocument();
     expect(actionsLink).toHaveAttribute(
       "data-title",
-      "environments.surveys.summary.dynamic_popup.code_no_code_triggers"
+      "environments.surveys.share.dynamic_popup.code_no_code_triggers"
     );
 
     // Check recontact options link
@@ -156,7 +149,7 @@ describe("DynamicPopupTab", () => {
     expect(recontactLink).toBeInTheDocument();
     expect(recontactLink).toHaveAttribute(
       "data-title",
-      "environments.surveys.summary.dynamic_popup.recontact_options"
+      "environments.surveys.share.dynamic_popup.recontact_options"
     );
   });
 
@@ -166,9 +159,9 @@ describe("DynamicPopupTab", () => {
     const documentationLinks = screen.getAllByTestId("documentation-link");
 
     const expectedTitles = [
-      "environments.surveys.summary.dynamic_popup.attribute_based_targeting",
-      "environments.surveys.summary.dynamic_popup.code_no_code_triggers",
-      "environments.surveys.summary.dynamic_popup.recontact_options",
+      "environments.surveys.share.dynamic_popup.attribute_based_targeting",
+      "environments.surveys.share.dynamic_popup.code_no_code_triggers",
+      "environments.surveys.share.dynamic_popup.recontact_options",
     ];
 
     expectedTitles.forEach((title) => {
@@ -200,19 +193,13 @@ describe("DynamicPopupTab", () => {
 
     // Check alert translations
     expect(screen.getByTestId("alert-title")).toHaveTextContent(
-      "environments.surveys.summary.dynamic_popup.alert_title"
+      "environments.surveys.share.dynamic_popup.alert_title"
     );
     expect(screen.getByTestId("alert-description")).toHaveTextContent(
-      "environments.surveys.summary.dynamic_popup.alert_description"
+      "environments.surveys.share.dynamic_popup.alert_description"
     );
     expect(screen.getByTestId("next-link")).toHaveTextContent(
-      "environments.surveys.summary.dynamic_popup.alert_button"
-    );
-
-    // Check documentation section title
-    expect(screen.getByTestId("documentation-links-section")).toHaveAttribute(
-      "data-title",
-      "environments.surveys.summary.dynamic_popup.title"
+      "environments.surveys.share.dynamic_popup.alert_button"
     );
   });
 
