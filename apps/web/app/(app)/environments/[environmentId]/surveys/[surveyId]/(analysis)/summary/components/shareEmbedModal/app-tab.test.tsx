@@ -11,67 +11,6 @@ import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { AppTab } from "./app-tab";
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string, options?: any) => {
-      if (key === "environments.surveys.summary.in_app.display_criteria.time_based_always") {
-        return "always";
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.time_based_day") {
-        return "day";
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.time_based_days") {
-        return "days";
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.overwritten") {
-        return "overwritten";
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.randomizer") {
-        return `Show to ${options?.percentage}% of users`;
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.randomizer_description") {
-        return `Randomly show to ${options?.percentage}% of users`;
-      }
-      if (key === "environments.surveys.edit.show_only_once") {
-        return "Show only once";
-      }
-      if (key === "environments.surveys.edit.until_they_submit_a_response") {
-        return "Until they submit a response";
-      }
-      if (key === "environments.surveys.edit.keep_showing_while_conditions_match") {
-        return "Keep showing while conditions match";
-      }
-      if (key === "environments.surveys.edit.show_multiple_times") {
-        return "Show multiple times";
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.code_trigger") {
-        return "Code trigger";
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.no_code_trigger") {
-        return "No-code trigger";
-      }
-      if (key === "environments.actions.click") {
-        return "Click";
-      }
-      if (key === "environments.actions.page_view") {
-        return "Page view";
-      }
-      if (key === "environments.actions.exit_intent") {
-        return "Exit intent";
-      }
-      if (key === "environments.actions.fifty_percent_scroll") {
-        return "50% scroll";
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.targeted") {
-        return "Targeted";
-      }
-      if (key === "environments.surveys.summary.in_app.display_criteria.everyone") {
-        return "Everyone";
-      }
-      return key;
-    },
-  }),
-}));
 
 // Mock Next.js Link component
 vi.mock("next/link", () => ({
@@ -274,60 +213,82 @@ describe("AppTab", () => {
 
   test("displays correct wait time when survey has recontact days", () => {
     renderWithProviders(true, { recontactDays: 5 });
-    expect(screen.getByText("5 days")).toBeInTheDocument();
-    expect(screen.getByText("(overwritten)")).toBeInTheDocument();
+    expect(
+      screen.getByText("5 environments.surveys.summary.in_app.display_criteria.time_based_days")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("(environments.surveys.summary.in_app.display_criteria.overwritten)")
+    ).toBeInTheDocument();
   });
 
   test("displays correct wait time when survey has 1 recontact day", () => {
     renderWithProviders(true, { recontactDays: 1 });
-    expect(screen.getByText("1 day")).toBeInTheDocument();
-    expect(screen.getByText("(overwritten)")).toBeInTheDocument();
+    expect(
+      screen.getByText("1 environments.surveys.summary.in_app.display_criteria.time_based_day")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("(environments.surveys.summary.in_app.display_criteria.overwritten)")
+    ).toBeInTheDocument();
   });
 
   test("displays correct wait time when survey has 0 recontact days", () => {
     renderWithProviders(true, { recontactDays: 0 });
-    expect(screen.getByText("always")).toBeInTheDocument();
-    expect(screen.getByText("(overwritten)")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.summary.in_app.display_criteria.time_based_always")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("(environments.surveys.summary.in_app.display_criteria.overwritten)")
+    ).toBeInTheDocument();
   });
 
   test("displays project recontact days when survey has no recontact days", () => {
     renderWithProviders(true, { recontactDays: null }, { recontactDays: 3 });
-    expect(screen.getByText("3 days")).toBeInTheDocument();
+    expect(
+      screen.getByText("3 environments.surveys.summary.in_app.display_criteria.time_based_days")
+    ).toBeInTheDocument();
   });
 
   test("displays always when project has 0 recontact days", () => {
     renderWithProviders(true, { recontactDays: null }, { recontactDays: 0 });
-    expect(screen.getByText("always")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.summary.in_app.display_criteria.time_based_always")
+    ).toBeInTheDocument();
   });
 
   test("displays always when both survey and project have null recontact days", () => {
     renderWithProviders(true, { recontactDays: null }, { recontactDays: null });
-    expect(screen.getByText("always")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.summary.in_app.display_criteria.time_based_always")
+    ).toBeInTheDocument();
   });
 
   test("displays correct display option for displayOnce", () => {
     renderWithProviders(true, { displayOption: "displayOnce" });
-    expect(screen.getByText("Show only once")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.show_only_once")).toBeInTheDocument();
   });
 
   test("displays correct display option for displayMultiple", () => {
     renderWithProviders(true, { displayOption: "displayMultiple" });
-    expect(screen.getByText("Until they submit a response")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.until_they_submit_a_response")).toBeInTheDocument();
   });
 
   test("displays correct display option for respondMultiple", () => {
     renderWithProviders(true, { displayOption: "respondMultiple" });
-    expect(screen.getByText("Keep showing while conditions match")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.edit.keep_showing_while_conditions_match")
+    ).toBeInTheDocument();
   });
 
   test("displays correct display option for displaySome", () => {
     renderWithProviders(true, { displayOption: "displaySome" });
-    expect(screen.getByText("Show multiple times")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.show_multiple_times")).toBeInTheDocument();
   });
 
   test("displays everyone when survey has no segment", () => {
     renderWithProviders(true, { segment: null });
-    expect(screen.getByText("Everyone")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.summary.in_app.display_criteria.everyone")
+    ).toBeInTheDocument();
   });
 
   test("displays targeted when survey has segment with filters", () => {
@@ -350,7 +311,9 @@ describe("AppTab", () => {
     renderWithProviders(true, {
       segment: privateSegment,
     });
-    expect(screen.getByText("Targeted")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.summary.in_app.display_criteria.targeted")
+    ).toBeInTheDocument();
   });
 
   test("displays everyone when survey has segment with no filters", () => {
@@ -358,24 +321,34 @@ describe("AppTab", () => {
     renderWithProviders(true, {
       segment: emptySegment,
     });
-    expect(screen.getByText("Everyone")).toBeInTheDocument();
+    expect(
+      screen.getByText("environments.surveys.summary.in_app.display_criteria.everyone")
+    ).toBeInTheDocument();
   });
 
   test("displays code trigger description correctly", () => {
     renderWithProviders(true, { triggers: [{ actionClass: mockActionClass }] });
     expect(screen.getByText("Test Action")).toBeInTheDocument();
-    expect(screen.getByText("(Code trigger)")).toBeInTheDocument();
+    expect(
+      screen.getByText("(environments.surveys.summary.in_app.display_criteria.code_trigger)")
+    ).toBeInTheDocument();
   });
 
   test("displays no-code trigger description correctly", () => {
     renderWithProviders(true, { triggers: [{ actionClass: mockNoCodeActionClass }] });
     expect(screen.getByText("Test No Code Action")).toBeInTheDocument();
-    expect(screen.getByText("(No-code trigger, Click)")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "(environments.surveys.summary.in_app.display_criteria.no_code_trigger, environments.actions.click)"
+      )
+    ).toBeInTheDocument();
   });
 
   test("displays randomizer when displayPercentage is set", () => {
     renderWithProviders(true, { displayPercentage: 25 });
-    expect(screen.getByText("Show to 25% of users")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/environments\.surveys\.summary\.in_app\.display_criteria\.randomizer/)[0]
+    ).toBeInTheDocument();
   });
 
   test("does not display randomizer when displayPercentage is null", () => {

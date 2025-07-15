@@ -75,7 +75,7 @@ const DisplayCriteriaItem = ({ icon, title, titleSuffix, description }: DisplayC
           {title} {titleSuffix && <InlineSmall>{titleSuffix}</InlineSmall>}
         </Small>
       </div>
-      <div></div>
+      <div />
       <div className="flex items-start">
         <Small color="muted" margin="headerDescription">
           {description}
@@ -139,7 +139,7 @@ export const AppTab = () => {
   };
 
   const getSegmentTitle = (segment: TSegment | null) => {
-    if (segment && segment.filters && segment.filters.length > 0) {
+    if (segment?.filters?.length && segment.filters.length > 0) {
       return segment.isPrivate
         ? t("environments.surveys.summary.in_app.display_criteria.targeted")
         : segment.title;
