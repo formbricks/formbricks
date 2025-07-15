@@ -543,6 +543,20 @@ describe("validation.isSurveyValid", () => {
     );
   });
 
+  test("should return false and toast error if response limit is less than response count", () => {
+    const surveyWithLowLimit = {
+      ...baseSurvey,
+      autoComplete: 3,
+    };
+    expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(
+      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
+      {
+        id: "response-limit-error",
+      }
+    );
+  });
+
   test("should return true if response limit is greater than response count", () => {
     const surveyWithValidLimit = {
       ...baseSurvey,
