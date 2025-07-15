@@ -11,7 +11,7 @@ export const AppTab = () => {
   const [selectedTab, setSelectedTab] = useState("webapp");
 
   return (
-    <div className="flex h-full grow flex-col">
+    <div className="flex h-full w-full grow flex-col">
       <OptionsSwitch
         options={[
           { value: "webapp", label: t("environments.surveys.summary.web_app") },

@@ -192,13 +192,6 @@ describe("PersonalLinksTab", () => {
     cleanup();
   });
 
-  test("renders the component with correct title and description", () => {
-    render(<PersonalLinksTab {...defaultProps} />);
-
-    expect(screen.getByText("environments.surveys.share.personal_links.title")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.share.personal_links.description")).toBeInTheDocument();
-  });
-
   test("renders recipients section with segment selection", () => {
     render(<PersonalLinksTab {...defaultProps} />);
 

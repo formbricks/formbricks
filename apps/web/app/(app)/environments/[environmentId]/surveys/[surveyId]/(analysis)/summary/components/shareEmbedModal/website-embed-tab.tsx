@@ -7,7 +7,6 @@ import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TabContainer } from "./tab-container";
 
 interface WebsiteEmbedTabProps {
   surveyUrl: string;
@@ -25,9 +24,7 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
 </div>`;
 
   return (
-    <TabContainer
-      title={t("environments.surveys.share.embed_on_website.title")}
-      description={t("environments.surveys.share.embed_on_website.description")}>
+    <>
       <CodeBlock language="html" noMargin>
         {iframeCode}
       </CodeBlock>
@@ -50,6 +47,6 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         {t("common.copy_code")}
         <CopyIcon />
       </Button>
-    </TabContainer>
+    </>
   );
 };

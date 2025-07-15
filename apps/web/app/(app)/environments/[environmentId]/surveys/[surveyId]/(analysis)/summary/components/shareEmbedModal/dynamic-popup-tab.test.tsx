@@ -112,14 +112,6 @@ describe("DynamicPopupTab", () => {
     expect(link).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_button");
   });
 
-  test("renders title with correct text", () => {
-    render(<DynamicPopupTab {...defaultProps} />);
-
-    const h3 = screen.getByTestId("h3");
-    expect(h3).toBeInTheDocument();
-    expect(h3).toHaveTextContent("environments.surveys.share.dynamic_popup.title");
-  });
-
   test("renders attribute-based targeting documentation button", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 

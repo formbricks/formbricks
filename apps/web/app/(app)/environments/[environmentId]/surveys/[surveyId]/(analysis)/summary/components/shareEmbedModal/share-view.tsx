@@ -1,7 +1,6 @@
 "use client";
 
-import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
-import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
@@ -20,46 +19,24 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Small } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { useEffect, useState } from "react";
-import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
-import { AnonymousLinksTab } from "./anonymous-links-tab";
-import { AppTab } from "./app-tab";
-import { EmailTab } from "./email-tab";
-import { PersonalLinksTab } from "./personal-links-tab";
-import { WebsiteEmbedTab } from "./website-embed-tab";
 
 interface ShareViewProps {
-  tabs: Array<{ id: ShareViewType; label: string; icon: React.ElementType }>;
+  tabs: Array<{
+    id: ShareViewType;
+    label: string;
+    icon: React.ElementType;
+    componentType: React.ComponentType<any>;
+    componentProps: any;
+    title: string;
+    description?: string;
+  }>;
   activeId: ShareViewType;
   setActiveId: React.Dispatch<React.SetStateAction<ShareViewType>>;
-  environmentId: string;
   survey: TSurvey;
-  email: string;
-  surveyUrl: string;
-  publicDomain: string;
-  setSurveyUrl: React.Dispatch<React.SetStateAction<string>>;
-  locale: TUserLocale;
-  segments: TSegment[];
-  isContactsEnabled: boolean;
-  isFormbricksCloud: boolean;
 }
 
-export const ShareView = ({
-  tabs,
-  activeId,
-  setActiveId,
-  environmentId,
-  survey,
-  email,
-  surveyUrl,
-  publicDomain,
-  setSurveyUrl,
-  locale,
-  segments,
-  isContactsEnabled,
-  isFormbricksCloud,
-}: ShareViewProps) => {
+export const ShareView = ({ tabs, activeId, setActiveId, survey }: ShareViewProps) => {
   const { t } = useTranslate();
   const [isLargeScreen, setIsLargeScreen] = useState(true);
 
@@ -76,40 +53,16 @@ export const ShareView = ({
   }, []);
 
   const renderActiveTab = () => {
-    switch (activeId) {
-      case ShareViewType.EMAIL:
-        return <EmailTab surveyId={survey.id} email={email} />;
-      case ShareViewType.WEBSITE_EMBED:
-        return <WebsiteEmbedTab surveyUrl={surveyUrl} />;
-      case ShareViewType.DYNAMIC_POPUP:
-        return <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />;
-      case ShareViewType.ANON_LINKS:
-        return (
-          <AnonymousLinksTab
-            survey={survey}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            locale={locale}
-          />
-        );
-      case ShareViewType.APP:
-        return <AppTab />;
-      case ShareViewType.QR_CODE:
-        return <QRCodeTab surveyUrl={surveyUrl} />;
-      case ShareViewType.PERSONAL_LINKS:
-        return (
-          <PersonalLinksTab
-            segments={segments}
-            surveyId={survey.id}
-            environmentId={environmentId}
-            isContactsEnabled={isContactsEnabled}
-            isFormbricksCloud={isFormbricksCloud}
-          />
-        );
-      default:
-        return null;
-    }
+    const activeTab = tabs.find((tab) => tab.id === activeId);
+    if (!activeTab) return null;
+
+    const { componentType: Component, componentProps } = activeTab;
+
+    return (
+      <TabContainer key={activeTab.id} title={activeTab.title} description={activeTab.description ?? ""}>
+        <Component {...componentProps} />
+      </TabContainer>
+    );
   };
 
   return (
