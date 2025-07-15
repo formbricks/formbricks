@@ -78,7 +78,7 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
   };
 
   return (
-    <div>
+    <>
       <div className="grid grid-cols-1 gap-4">
         {socialMediaPlatforms.map((platform) => (
           <Button
@@ -109,6 +109,6 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
           {t("common.learn_more")}
         </AlertButton>
       </Alert>
-    </div>
+    </>
   );
 };

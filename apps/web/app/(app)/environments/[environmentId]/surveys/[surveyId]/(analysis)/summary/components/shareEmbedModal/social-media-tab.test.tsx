@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { SocialMediaTab } from "./social-media-tab";
 
@@ -65,12 +66,12 @@ describe("SocialMediaTab", () => {
     expect(platformButtons).toHaveLength(expectedPlatforms.length);
   });
 
-  test("opens sharing window when LinkedIn button is clicked", () => {
+  test("opens sharing window when LinkedIn button is clicked", async () => {
     const mockWindowOpen = vi.spyOn(window, "open");
     render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
 
     const linkedInButton = screen.getByRole("button", { name: /linkedin/i });
-    fireEvent.click(linkedInButton);
+    await userEvent.click(linkedInButton);
 
     expect(mockWindowOpen).toHaveBeenCalledWith(
       expect.stringContaining("linkedin.com/shareArticle"),
@@ -79,24 +80,24 @@ describe("SocialMediaTab", () => {
     );
   });
 
-  test("includes source tracking in shared URLs", () => {
+  test("includes source tracking in shared URLs", async () => {
     const mockWindowOpen = vi.spyOn(window, "open");
     render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
 
     const linkedInButton = screen.getByRole("button", { name: /linkedin/i });
-    fireEvent.click(linkedInButton);
+    await userEvent.click(linkedInButton);
 
     const calledUrl = mockWindowOpen.mock.calls[0][0] as string;
     const decodedUrl = decodeURIComponent(calledUrl);
     expect(decodedUrl).toContain("source=linkedin");
   });
 
-  test("opens sharing window when Facebook button is clicked", () => {
+  test("opens sharing window when Facebook button is clicked", async () => {
     const mockWindowOpen = vi.spyOn(window, "open");
     render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
 
     const facebookButton = screen.getByRole("button", { name: /facebook/i });
-    fireEvent.click(facebookButton);
+    await userEvent.click(facebookButton);
 
     expect(mockWindowOpen).toHaveBeenCalledWith(
       expect.stringContaining("facebook.com/sharer"),
@@ -105,12 +106,12 @@ describe("SocialMediaTab", () => {
     );
   });
 
-  test("opens sharing window when X button is clicked", () => {
+  test("opens sharing window when X button is clicked", async () => {
     const mockWindowOpen = vi.spyOn(window, "open");
     render(<SocialMediaTab surveyUrl={mockSurveyUrl} surveyTitle={mockSurveyTitle} />);
 
     const xButton = screen.getByRole("button", { name: /^x$/i });
-    fireEvent.click(xButton);
+    await userEvent.click(xButton);
 
     expect(mockWindowOpen).toHaveBeenCalledWith(
       expect.stringContaining("twitter.com/intent/tweet"),
@@ -119,7 +120,7 @@ describe("SocialMediaTab", () => {
     );
   });
 
-  test("encodes URLs and titles correctly for sharing", () => {
+  test("encodes URLs and titles correctly for sharing", async () => {
     const specialCharUrl = "https://app.formbricks.com/s/survey1?param=test&other=value";
     const specialCharTitle = "Test Survey & More";
     const mockWindowOpen = vi.spyOn(window, "open");
@@ -127,7 +128,7 @@ describe("SocialMediaTab", () => {
     render(<SocialMediaTab surveyUrl={specialCharUrl} surveyTitle={specialCharTitle} />);
 
     const linkedInButton = screen.getByRole("button", { name: /linkedin/i });
-    fireEvent.click(linkedInButton);
+    await userEvent.click(linkedInButton);
 
     const calledUrl = mockWindowOpen.mock.calls[0][0] as string;
     expect(calledUrl).toContain(encodeURIComponent(specialCharTitle));
