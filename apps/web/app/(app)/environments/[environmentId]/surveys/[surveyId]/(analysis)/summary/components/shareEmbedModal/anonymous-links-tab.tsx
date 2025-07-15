@@ -45,7 +45,7 @@ export const AnonymousLinksTab = ({
   const [disableLinkModal, setDisableLinkModal] = useState<{
     open: boolean;
     type: "multi-use" | "single-use";
-    pendingAction: () => void;
+    pendingAction: () => Promise<void> | void;
   } | null>(null);
 
   const resetState = () => {
