@@ -215,7 +215,7 @@ export const ShareSurveyModal = ({
     }
 
     return (
-      <div className={`h-full w-full bg-slate-50 p-6`}>
+      <div className={`h-full w-full bg-slate-50 p-6 rounded-lg`}>
         <TabContainer
           title={t("environments.surveys.summary.in_app.title")}
           description={t("environments.surveys.summary.in_app.description")}>
