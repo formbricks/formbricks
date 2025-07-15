@@ -17,7 +17,8 @@ export const useSingleUseId = (survey: TSurvey | TSurveyList) => {
         isEncrypted: !!survey.singleUse?.isEncrypted,
         count: 1,
       });
-      if (response?.data) {
+
+      if (!!response?.data?.length) {
         setSingleUseId(response.data[0]);
         return response.data[0];
       } else {
