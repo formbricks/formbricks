@@ -10,7 +10,7 @@ vi.mock("@/lib/utils/recall", () => ({
 vi.mock("./i18n/utils", () => ({
   getLocalizedValue: vi.fn((obj, lang) => obj[lang] || obj.default),
   getLanguageCode: vi.fn((surveyLanguages, languageCode) => {
-    if (!surveyLanguages?.length || !languageCode) return "default";
+    if (!surveyLanguages?.length || !languageCode) return null; // Changed from "default" to null
     const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
     return language?.default ? "default" : language?.language.code || "default";
   }),
@@ -47,6 +47,16 @@ describe("Response Processing", () => {
 
     test("should return empty string for unsupported types", () => {
       expect(processResponseData(undefined as any)).toBe("");
+    });
+
+    test("should filter out null values from array", () => {
+      const input = ["a", null, "c"] as any;
+      expect(processResponseData(input)).toBe("a; c");
+    });
+
+    test("should filter out undefined values from array", () => {
+      const input = ["a", undefined, "c"] as any;
+      expect(processResponseData(input)).toBe("a; c");
     });
   });
 
@@ -128,6 +138,22 @@ describe("Response Processing", () => {
 
     test("should handle pictureSelection type with invalid choice", () => {
       expect(convertResponseValue("invalid", mockPictureSelectionQuestion)).toEqual([]);
+    });
+
+    test("should handle pictureSelection type with number input", () => {
+      expect(convertResponseValue(42, mockPictureSelectionQuestion)).toEqual([]);
+    });
+
+    test("should handle pictureSelection type with object input", () => {
+      expect(convertResponseValue({ key: "value" }, mockPictureSelectionQuestion)).toEqual([]);
+    });
+
+    test("should handle pictureSelection type with null input", () => {
+      expect(convertResponseValue(null as any, mockPictureSelectionQuestion)).toEqual([]);
+    });
+
+    test("should handle pictureSelection type with undefined input", () => {
+      expect(convertResponseValue(undefined as any, mockPictureSelectionQuestion)).toEqual([]);
     });
 
     test("should handle default case with string input", () => {
@@ -379,6 +405,103 @@ describe("Response Processing", () => {
       };
       const mapping = getQuestionResponseMapping(survey, response);
       expect(mapping[0].question).toBe("Question 1 EN");
+    });
+
+    test("should handle null response language", () => {
+      const response = {
+        id: "response1",
+        surveyId: "survey1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        finished: true,
+        data: { q1: "Answer 1" },
+        language: null,
+        meta: {
+          url: undefined,
+          country: undefined,
+          action: undefined,
+          source: undefined,
+          userAgent: undefined,
+        },
+        notes: [],
+        tags: [],
+        person: null,
+        personAttributes: {},
+        ttc: {},
+        variables: {},
+        contact: null,
+        contactAttributes: {},
+        singleUseId: null,
+      };
+      const mapping = getQuestionResponseMapping(mockSurvey, response);
+      expect(mapping).toHaveLength(2);
+      expect(mapping[0].question).toBe("Question 1");
+    });
+
+    test("should handle undefined response language", () => {
+      const response = {
+        id: "response1",
+        surveyId: "survey1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        finished: true,
+        data: { q1: "Answer 1" },
+        language: null,
+        meta: {
+          url: undefined,
+          country: undefined,
+          action: undefined,
+          source: undefined,
+          userAgent: undefined,
+        },
+        notes: [],
+        tags: [],
+        person: null,
+        personAttributes: {},
+        ttc: {},
+        variables: {},
+        contact: null,
+        contactAttributes: {},
+        singleUseId: null,
+      };
+      const mapping = getQuestionResponseMapping(mockSurvey, response);
+      expect(mapping).toHaveLength(2);
+      expect(mapping[0].question).toBe("Question 1");
+    });
+
+    test("should handle empty survey languages", () => {
+      const survey = {
+        ...mockSurvey,
+        languages: [], // Empty languages array
+      };
+      const response = {
+        id: "response1",
+        surveyId: "survey1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        finished: true,
+        data: { q1: "Answer 1" },
+        language: "en",
+        meta: {
+          url: undefined,
+          country: undefined,
+          action: undefined,
+          source: undefined,
+          userAgent: undefined,
+        },
+        notes: [],
+        tags: [],
+        person: null,
+        personAttributes: {},
+        ttc: {},
+        variables: {},
+        contact: null,
+        contactAttributes: {},
+        singleUseId: null,
+      };
+      const mapping = getQuestionResponseMapping(survey, response);
+      expect(mapping).toHaveLength(2);
+      expect(mapping[0].question).toBe("Question 1"); // Should fallback to default
     });
   });
 });
