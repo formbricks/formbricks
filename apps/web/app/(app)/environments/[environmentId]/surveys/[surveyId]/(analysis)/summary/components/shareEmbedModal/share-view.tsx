@@ -1,4 +1,5 @@
 "use client";
+
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { cn } from "@/lib/cn";
@@ -74,7 +75,7 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
             } as React.CSSProperties
           }>
           <Sidebar className="relative h-full p-0" variant="inset" collapsible="icon">
-            <SidebarContent className="h-full border-r border-slate-200 bg-white p-4">
+            <SidebarContent className="h-full rounded-l-lg border-r border-slate-200 bg-white p-4">
               <SidebarGroup className="p-0">
                 <SidebarGroupLabel>
                   <Small className="text-xs text-slate-500">
@@ -89,9 +90,7 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                           onClick={() => setActiveId(tab.id)}
                           className={cn(
                             "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                            tab.id === activeId
-                              ? "bg-slate-100 font-medium text-slate-900"
-                              : "text-slate-700"
+                            tab.id === activeId ? "bg-slate-100 font-medium text-slate-900" : "text-slate-700"
                           )}
                           tooltip={tab.label}
                           isActive={tab.id === activeId}>
@@ -107,7 +106,7 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
           </Sidebar>
         </SidebarProvider>
         <div
-          className={`h-full w-full grow overflow-y-auto bg-slate-50 px-4 py-6 lg:p-6 lg:col-span-3 rounded-lg md:rounded-l-lg`}>
+          className={`h-full w-full grow overflow-y-auto rounded-lg bg-slate-50 px-4 py-6 md:rounded-l-lg lg:col-span-3 lg:p-6`}>
           {renderActiveTab()}
           <div className="flex justify-center gap-2 rounded-md pt-6 text-center md:hidden">
             {tabs.map((tab) => (
