@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
+import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import { TSurvey as TSurveyList } from "@/modules/survey/list/types/surveys";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -12,13 +12,15 @@ export const useSingleUseId = (survey: TSurvey | TSurveyList) => {
 
   const refreshSingleUseId = useCallback(async () => {
     if (survey.singleUse?.enabled) {
-      const response = await generateSingleUseIdAction({
+      const response = await generateSingleUseIdsAction({
         surveyId: survey.id,
         isEncrypted: !!survey.singleUse?.isEncrypted,
+        count: 1,
       });
-      if (response?.data) {
-        setSingleUseId(response.data);
-        return response.data;
+
+      if (!!response?.data?.length) {
+        setSingleUseId(response.data[0]);
+        return response.data[0];
       } else {
         const errorMessage = getFormattedErrorMessage(response);
         toast.error(errorMessage);

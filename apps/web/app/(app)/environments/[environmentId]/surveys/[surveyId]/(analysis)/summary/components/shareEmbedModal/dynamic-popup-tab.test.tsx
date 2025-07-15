@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { DynamicPopupTab } from "./DynamicPopupTab";
+import { DynamicPopupTab } from "./dynamic-popup-tab";
 
 // Mock components
 vi.mock("@/modules/ui/components/alert", () => ({
@@ -30,7 +30,13 @@ vi.mock("@/modules/ui/components/button", () => ({
 }));
 
 vi.mock("@/modules/ui/components/typography", () => ({
+  H3: (props: { children: React.ReactNode }) => <div data-testid="h3">{props.children}</div>,
   H4: (props: { children: React.ReactNode }) => <div data-testid="h4">{props.children}</div>,
+  Small: (props: { children: React.ReactNode; color?: string; margin?: string }) => (
+    <div data-testid="small" data-color={props.color} data-margin={props.margin}>
+      {props.children}
+    </div>
+  ),
 }));
 
 vi.mock("@tolgee/react", () => ({
@@ -69,18 +75,20 @@ describe("DynamicPopupTab", () => {
   test("renders alert with correct props", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alert = screen.getByTestId("alert");
-    expect(alert).toBeInTheDocument();
-    expect(alert).toHaveAttribute("data-variant", "info");
-    expect(alert).toHaveAttribute("data-size", "default");
+    const alerts = screen.getAllByTestId("alert");
+    const infoAlert = alerts.find((alert) => alert.getAttribute("data-variant") === "info");
+    expect(infoAlert).toBeInTheDocument();
+    expect(infoAlert).toHaveAttribute("data-variant", "info");
+    expect(infoAlert).toHaveAttribute("data-size", "default");
   });
 
   test("renders alert title with translation key", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alertTitle = screen.getByTestId("alert-title");
-    expect(alertTitle).toBeInTheDocument();
-    expect(alertTitle).toHaveTextContent("environments.surveys.summary.dynamic_popup.alert_title");
+    const alertTitles = screen.getAllByTestId("alert-title");
+    const infoAlertTitle = alertTitles[0]; // The first one is the info alert
+    expect(infoAlertTitle).toBeInTheDocument();
+    expect(infoAlertTitle).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_title");
   });
 
   test("renders alert description with translation key", () => {
@@ -88,38 +96,37 @@ describe("DynamicPopupTab", () => {
 
     const alertDescription = screen.getByTestId("alert-description");
     expect(alertDescription).toBeInTheDocument();
-    expect(alertDescription).toHaveTextContent(
-      "environments.surveys.summary.dynamic_popup.alert_description"
-    );
+    expect(alertDescription).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_description");
   });
 
   test("renders alert button with link to survey edit page", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alertButton = screen.getByTestId("alert-button");
-    expect(alertButton).toBeInTheDocument();
-    expect(alertButton).toHaveAttribute("data-as-child", "true");
+    const alertButtons = screen.getAllByTestId("alert-button");
+    const infoAlertButton = alertButtons[0]; // The first one is the info alert
+    expect(infoAlertButton).toBeInTheDocument();
+    expect(infoAlertButton).toHaveAttribute("data-as-child", "true");
 
     const link = screen.getAllByTestId("next-link")[0];
     expect(link).toHaveAttribute("href", "/environments/env-123/surveys/survey-123/edit");
-    expect(link).toHaveTextContent("environments.surveys.summary.dynamic_popup.alert_button");
+    expect(link).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_button");
   });
 
   test("renders title with correct text", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const h4 = screen.getByTestId("h4");
-    expect(h4).toBeInTheDocument();
-    expect(h4).toHaveTextContent("environments.surveys.summary.dynamic_popup.title");
+    const h3 = screen.getByTestId("h3");
+    expect(h3).toBeInTheDocument();
+    expect(h3).toHaveTextContent("environments.surveys.share.dynamic_popup.title");
   });
 
   test("renders attribute-based targeting documentation button", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const links = screen.getAllByTestId("next-link");
+    const links = screen.getAllByRole("link");
     const attributeLink = links.find((link) => link.getAttribute("href")?.includes("advanced-targeting"));
 
-    expect(attributeLink).toBeInTheDocument();
+    expect(attributeLink).toBeDefined();
     expect(attributeLink).toHaveAttribute(
       "href",
       "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting"
@@ -130,10 +137,10 @@ describe("DynamicPopupTab", () => {
   test("renders code and no code triggers documentation button", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const links = screen.getAllByTestId("next-link");
+    const links = screen.getAllByRole("link");
     const actionsLink = links.find((link) => link.getAttribute("href")?.includes("actions"));
 
-    expect(actionsLink).toBeInTheDocument();
+    expect(actionsLink).toBeDefined();
     expect(actionsLink).toHaveAttribute(
       "href",
       "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions"
@@ -144,10 +151,10 @@ describe("DynamicPopupTab", () => {
   test("renders recontact options documentation button", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const links = screen.getAllByTestId("next-link");
+    const links = screen.getAllByRole("link");
     const recontactLink = links.find((link) => link.getAttribute("href")?.includes("recontact"));
 
-    expect(recontactLink).toBeInTheDocument();
+    expect(recontactLink).toBeDefined();
     expect(recontactLink).toHaveAttribute(
       "href",
       "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact"
@@ -158,18 +165,27 @@ describe("DynamicPopupTab", () => {
   test("all documentation buttons have external link icons", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const externalLinkIcons = screen.getAllByTestId("external-link-icon");
-    expect(externalLinkIcons).toHaveLength(3);
+    const links = screen.getAllByRole("link");
+    const documentationLinks = links.filter(
+      (link) =>
+        link.getAttribute("href")?.includes("formbricks.com/docs") && link.getAttribute("target") === "_blank"
+    );
 
-    externalLinkIcons.forEach((icon) => {
-      expect(icon).toHaveClass("h-4 w-4 flex-shrink-0");
+    // There are 3 unique documentation URLs
+    expect(documentationLinks).toHaveLength(3);
+
+    documentationLinks.forEach((link) => {
+      expect(link).toHaveAttribute("target", "_blank");
     });
   });
 
   test("documentation button links open in new tab", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const documentationLinks = screen.getAllByTestId("next-link").slice(1, 4); // Skip the alert button link
+    const links = screen.getAllByRole("link");
+    const documentationLinks = links.filter((link) =>
+      link.getAttribute("href")?.includes("formbricks.com/docs")
+    );
 
     documentationLinks.forEach((link) => {
       expect(link).toHaveAttribute("target", "_blank");

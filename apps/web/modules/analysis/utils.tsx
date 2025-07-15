@@ -1,5 +1,3 @@
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
 import { JSX } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -30,27 +28,9 @@ export const renderHyperlinkedContent = (data: string): JSX.Element[] => {
   );
 };
 
-export const getSurveyUrl = async (
-  survey: TSurvey,
-  publicDomain: string,
-  language: string
-): Promise<string> => {
+export const getSurveyUrl = (survey: TSurvey, publicDomain: string, language: string): string => {
   let url = `${publicDomain}/s/${survey.id}`;
   const queryParams: string[] = [];
-
-  if (survey.singleUse?.enabled) {
-    const singleUseIdResponse = await generateSingleUseIdAction({
-      surveyId: survey.id,
-      isEncrypted: survey.singleUse.isEncrypted,
-    });
-
-    if (singleUseIdResponse?.data) {
-      queryParams.push(`suId=${singleUseIdResponse.data}`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(singleUseIdResponse);
-      throw new Error(errorMessage);
-    }
-  }
 
   if (language !== "default") {
     queryParams.push(`lang=${language}`);

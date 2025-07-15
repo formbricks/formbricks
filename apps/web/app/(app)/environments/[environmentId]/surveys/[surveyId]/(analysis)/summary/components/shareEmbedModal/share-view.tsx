@@ -1,8 +1,8 @@
 "use client";
 
-import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/DynamicPopupTab";
-import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/TabContainer";
+import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
 import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
+import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -23,16 +23,16 @@ import { useEffect, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AppTab } from "./AppTab";
-import { EmailTab } from "./EmailTab";
-import { LinkTab } from "./LinkTab";
-import { WebsiteEmbedTab } from "./WebsiteEmbedTab";
+import { AnonymousLinksTab } from "./anonymous-links-tab";
+import { AppTab } from "./app-tab";
+import { EmailTab } from "./email-tab";
 import { PersonalLinksTab } from "./personal-links-tab";
+import { WebsiteEmbedTab } from "./website-embed-tab";
 
 interface ShareViewProps {
-  tabs: Array<{ id: string; label: string; icon: React.ElementType }>;
-  activeId: string;
-  setActiveId: React.Dispatch<React.SetStateAction<string>>;
+  tabs: Array<{ id: ShareViewType; label: string; icon: React.ElementType }>;
+  activeId: ShareViewType;
+  setActiveId: React.Dispatch<React.SetStateAction<ShareViewType>>;
   environmentId: string;
   survey: TSurvey;
   email: string;
@@ -60,8 +60,8 @@ export const ShareView = ({
   isContactsEnabled,
   isFormbricksCloud,
 }: ShareViewProps) => {
-  const [isLargeScreen, setIsLargeScreen] = useState(true);
   const { t } = useTranslate();
+  const [isLargeScreen, setIsLargeScreen] = useState(true);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -77,27 +77,15 @@ export const ShareView = ({
 
   const renderActiveTab = () => {
     switch (activeId) {
-      case "email":
+      case ShareViewType.EMAIL:
         return <EmailTab surveyId={survey.id} email={email} />;
-      case "website-embed":
+      case ShareViewType.WEBSITE_EMBED:
+        return <WebsiteEmbedTab surveyUrl={surveyUrl} />;
+      case ShareViewType.DYNAMIC_POPUP:
+        return <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />;
+      case ShareViewType.ANON_LINKS:
         return (
-          <TabContainer
-            title={t("environments.surveys.share.embed_on_website.title")}
-            description={t("environments.surveys.share.embed_on_website.description")}>
-            <WebsiteEmbedTab surveyUrl={surveyUrl} />
-          </TabContainer>
-        );
-      case "dynamic-popup":
-        return (
-          <TabContainer
-            title={t("environments.surveys.share.dynamic_popup.title")}
-            description={t("environments.surveys.share.dynamic_popup.description")}>
-            <DynamicPopupTab environmentId={environmentId} surveyId={survey.id} />
-          </TabContainer>
-        );
-      case "link":
-        return (
-          <LinkTab
+          <AnonymousLinksTab
             survey={survey}
             surveyUrl={surveyUrl}
             publicDomain={publicDomain}
@@ -105,11 +93,11 @@ export const ShareView = ({
             locale={locale}
           />
         );
-      case "qr-code":
-        return <QRCodeTab surveyUrl={surveyUrl} />;
-      case "app":
+      case ShareViewType.APP:
         return <AppTab />;
-      case "personal-links":
+      case ShareViewType.QR_CODE:
+        return <QRCodeTab surveyUrl={surveyUrl} />;
+      case ShareViewType.PERSONAL_LINKS:
         return (
           <PersonalLinksTab
             segments={segments}
@@ -140,7 +128,9 @@ export const ShareView = ({
               <SidebarContent className="h-full border-r border-slate-200 bg-white p-4">
                 <SidebarGroup className="p-0">
                   <SidebarGroupLabel>
-                    <Small className="text-xs text-slate-500">Share via</Small>
+                    <Small className="text-xs text-slate-500">
+                      {t("environments.surveys.share.share_view_title")}
+                    </Small>
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="flex flex-col gap-1">

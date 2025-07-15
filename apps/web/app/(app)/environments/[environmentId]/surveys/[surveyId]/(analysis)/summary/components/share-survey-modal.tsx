@@ -1,5 +1,6 @@
 "use client";
 
+import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -14,7 +15,6 @@ import {
   UserIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -22,16 +22,6 @@ import { ShareView } from "./shareEmbedModal/share-view";
 import { SuccessView } from "./shareEmbedModal/success-view";
 
 type ModalView = "start" | "share";
-
-enum ShareViewType {
-  LINK = "link",
-  QR_CODE = "qr-code",
-  PERSONAL_LINKS = "personal-links",
-  EMAIL = "email",
-  WEBSITE_EMBED = "website-embed",
-  DYNAMIC_POPUP = "dynamic-popup",
-  APP = "app",
-}
 
 interface ShareSurveyModalProps {
   survey: TSurvey;
@@ -57,14 +47,13 @@ export const ShareSurveyModal = ({
   isFormbricksCloud,
 }: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
-  const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
   const { t } = useTranslate();
   const linkTabs: { id: ShareViewType; label: string; icon: React.ElementType }[] = useMemo(
     () => [
       {
-        id: ShareViewType.LINK,
-        label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
+        id: ShareViewType.ANON_LINKS,
+        label: t("environments.surveys.share.anonymous_links.nav_title"),
         icon: LinkIcon,
       },
       {
@@ -74,53 +63,42 @@ export const ShareSurveyModal = ({
       },
       {
         id: ShareViewType.PERSONAL_LINKS,
-        label: t("environments.surveys.summary.personal_links"),
+        label: t("environments.surveys.share.personal_links.nav_title"),
         icon: UserIcon,
       },
       {
         id: ShareViewType.EMAIL,
-        label: t("environments.surveys.summary.embed_in_an_email"),
+        label: t("environments.surveys.share.send_email.nav_title"),
         icon: MailIcon,
       },
       {
         id: ShareViewType.WEBSITE_EMBED,
-        label: t("environments.surveys.summary.embed_on_website"),
+        label: t("environments.surveys.share.embed_on_website.nav_title"),
         icon: Code2Icon,
       },
       {
         id: ShareViewType.DYNAMIC_POPUP,
-        label: t("environments.surveys.summary.dynamic_popup"),
+        label: t("environments.surveys.share.dynamic_popup.nav_title"),
         icon: SquareStack,
       },
     ],
-    [t, isSingleUseLinkSurvey]
+    [t]
   );
 
   const appTabs = [
     {
       id: ShareViewType.APP,
-      label: t("environments.surveys.summary.embed_in_app"),
+      label: t("environments.surveys.share.embed_on_website.embed_in_app"),
       icon: SmartphoneIcon,
     },
   ];
 
-  const [activeId, setActiveId] = useState(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
-  const [showView, setShowView] = useState<ModalView>(modalView);
-  const [surveyUrl, setSurveyUrl] = useState("");
+  const [activeId, setActiveId] = useState(
+    survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP
+  );
 
-  useEffect(() => {
-    const fetchSurveyUrl = async () => {
-      try {
-        const url = await getSurveyUrl(survey, publicDomain, "default");
-        setSurveyUrl(url);
-      } catch (error) {
-        logger.error("Failed to fetch survey URL:", error);
-        // Fallback to a default URL if fetching fails
-        setSurveyUrl(`${publicDomain}/s/${survey.id}`);
-      }
-    };
-    fetchSurveyUrl();
-  }, [survey, publicDomain]);
+  const [surveyUrl, setSurveyUrl] = useState(() => getSurveyUrl(survey, publicDomain, "default"));
+  const [showView, setShowView] = useState<ModalView>(modalView);
 
   useEffect(() => {
     if (open) {
@@ -129,7 +107,7 @@ export const ShareSurveyModal = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
+    setActiveId(survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP);
     setOpen(open);
     if (!open) {
       setShowView("start");
@@ -150,7 +128,11 @@ export const ShareSurveyModal = ({
       <VisuallyHidden asChild>
         <DialogTitle />
       </VisuallyHidden>
-      <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide" aria-describedby={undefined}>
+      <DialogContent
+        className="w-full overflow-y-auto bg-white p-0 lg:h-[700px]"
+        width="wide"
+        aria-describedby={undefined}
+        unconstrained>
         {showView === "start" ? (
           <SuccessView
             survey={survey}
