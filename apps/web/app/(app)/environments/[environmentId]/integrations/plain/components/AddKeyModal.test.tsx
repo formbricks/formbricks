@@ -2,7 +2,7 @@ import { AddKeyModal } from "@/app/(app)/environments/[environmentId]/integratio
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
-import { type Mock, beforeEach, describe, expect, it, vi } from "vitest";
+import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
 import { connectPlainIntegrationAction } from "../actions";
 
 vi.mock("../actions", () => ({
@@ -25,13 +25,13 @@ describe("AddKeyModal", () => {
     vi.clearAllMocks();
   });
 
-  it("should disable the connect button when the API key is empty", () => {
+  test("should disable the connect button when the API key is empty", () => {
     render(<AddKeyModal environmentId={environmentId} open={true} setOpen={setOpen} />);
     const connectButton = screen.getByRole("button", { name: "common.connect" });
     expect(connectButton).toBeDisabled();
   });
 
-  it("should enable the connect button when the API key is not empty", async () => {
+  test("should enable the connect button when the API key is not empty", async () => {
     render(<AddKeyModal environmentId={environmentId} open={true} setOpen={setOpen} />);
     const apiKeyInput = screen.getByLabelText("environments.integrations.plain.api_key_label");
     await userEvent.type(apiKeyInput, "test-api-key", { pointerEventsCheck: 0 });
@@ -39,7 +39,7 @@ describe("AddKeyModal", () => {
     expect(connectButton).not.toBeDisabled();
   });
 
-  it("should call the connect action and show a success toast on successful connection", async () => {
+  test("should call the connect action and show a success toast on successful connection", async () => {
     render(<AddKeyModal environmentId={environmentId} open={true} setOpen={setOpen} />);
     const apiKeyInput = screen.getByLabelText("environments.integrations.plain.api_key_label");
     await userEvent.type(apiKeyInput, "test-api-key", { pointerEventsCheck: 0 });
@@ -56,7 +56,7 @@ describe("AddKeyModal", () => {
     });
   });
 
-  it("should show an error toast on a failed connection", async () => {
+  test("should show an error toast on a failed connection", async () => {
     (connectPlainIntegrationAction as Mock).mockRejectedValue(new Error("Connection error"));
     render(<AddKeyModal environmentId={environmentId} open={true} setOpen={setOpen} />);
     const apiKeyInput = screen.getByLabelText("environments.integrations.plain.api_key_label");

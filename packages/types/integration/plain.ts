@@ -81,9 +81,7 @@ export const ZIntegrationPlainDatabase = z.object({
 export type TIntegrationPlainDatabase = z.infer<typeof ZIntegrationPlainDatabase>;
 
 export interface TPlainThreadInput {
-  customerIdentifier: {
-    [key: string]: string;
-  };
+  customerIdentifier: Record<string, string>;
   title: string;
   components: string[];
   fields?: Record<string, string>;
