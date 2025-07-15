@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { AppTab } from "./AppTab";
+import { AppTab } from "./app-tab";
 
 vi.mock("@/modules/ui/components/options-switch", () => ({
   OptionsSwitch: (props: {
