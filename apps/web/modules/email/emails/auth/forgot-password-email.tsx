@@ -17,10 +17,10 @@ export async function ForgotPasswordEmail({
     <EmailTemplate t={t}>
       <Container>
         <Heading>{t("emails.forgot_password_email_heading")}</Heading>
-        <Text>{t("emails.forgot_password_email_text")}</Text>
+        <Text className="text-sm">{t("emails.forgot_password_email_text")}</Text>
         <EmailButton href={verifyLink} label={t("emails.forgot_password_email_change_password")} />
-        <Text className="font-bold">{t("emails.forgot_password_email_link_valid_for_24_hours")}</Text>
-        <Text className="mb-0">{t("emails.forgot_password_email_did_not_request")}</Text>
+        <Text className="text-sm font-bold">{t("emails.forgot_password_email_link_valid_for_24_hours")}</Text>
+        <Text className="mb-0 text-sm">{t("emails.forgot_password_email_did_not_request")}</Text>
         <EmailFooter t={t} />
       </Container>
     </EmailTemplate>

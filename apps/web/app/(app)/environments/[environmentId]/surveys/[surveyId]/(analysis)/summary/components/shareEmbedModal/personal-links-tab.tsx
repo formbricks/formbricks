@@ -27,7 +27,6 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSegment } from "@formbricks/types/segment";
 import { generatePersonalLinksAction } from "../../actions";
-import { TabContainer } from "./tab-container";
 
 interface PersonalLinksTabProps {
   environmentId: string;
@@ -168,11 +167,9 @@ export const PersonalLinksTab = ({
   }
 
   return (
-    <FormProvider {...form}>
-      <TabContainer
-        title={t("environments.surveys.share.personal_links.title")}
-        description={t("environments.surveys.share.personal_links.description")}>
-        <div className="flex h-full grow flex-col gap-6">
+    <div className="flex h-full flex-col justify-between space-y-4">
+      <FormProvider {...form}>
+        <div className="flex grow flex-col gap-6">
           {/* Recipients Section */}
           <FormField
             control={form.control}
@@ -237,18 +234,15 @@ export const PersonalLinksTab = ({
             {buttonText}
           </Button>
         </div>
-        <hr />
-
-        {/* Info Box */}
-        <DocumentationLinks
-          links={[
-            {
-              title: t("environments.surveys.share.personal_links.work_with_segments"),
-              href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
-            },
-          ]}
-        />
-      </TabContainer>
-    </FormProvider>
+      </FormProvider>
+      <DocumentationLinks
+        links={[
+          {
+            title: t("environments.surveys.share.personal_links.work_with_segments"),
+            href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
+          },
+        ]}
+      />
+    </div>
   );
 };
