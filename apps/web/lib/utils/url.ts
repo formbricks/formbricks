@@ -1,5 +1,7 @@
 import { TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 
+export const SENSITIVE_KEYS = ["token", "code", "state"];
+
 export const testURLmatch = (
   testUrl: string,
   pageUrlValue: string,
@@ -36,5 +38,30 @@ export const isValidCallbackUrl = (url: string, WEBAPP_URL: string): boolean => 
     return allowedSchemes.includes(parsedUrl.protocol) && allowedDomains.includes(parsedUrl.hostname);
   } catch (err) {
     return false;
+  }
+};
+
+export const isStringUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const sanitizeUrlForLogging = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+
+    SENSITIVE_KEYS.forEach((key) => {
+      if (urlObj.searchParams.has(key)) {
+        urlObj.searchParams.set(key, "********");
+      }
+    });
+
+    return urlObj.origin + urlObj.pathname + (urlObj.search ? `${urlObj.search}` : "");
+  } catch {
+    return "[invalid-url]";
   }
 };
