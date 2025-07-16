@@ -70,20 +70,25 @@ jobs:
             VERSION="0.0.0-$SANITIZED_BRANCH"
             echo "Using branch as prerelease: $VERSION"
           fi
-          
+
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Generated SemVer version: $VERSION"
 
       - name: Update package.json version
         run: |
-          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.VERSION }}\"/" ./apps/web/package.json
-          cat ./apps/web/package.json | grep version
+          cd ./apps/web
+          npm version ${{ env.VERSION }} --no-git-tag-version
+          echo "Updated version to: $(npm pkg get version)"
 
       - name: Set Sentry environment in .env
         run: |
-          echo "SENTRY_ENVIRONMENT=staging" >> .env
-          echo "Set SENTRY_ENVIRONMENT=staging in .env file"
+          if ! grep -q "^SENTRY_ENVIRONMENT=staging$" .env 2>/dev/null; then
+            echo "SENTRY_ENVIRONMENT=staging" >> .env
+            echo "Added SENTRY_ENVIRONMENT=staging to .env file"
+          else
+            echo "SENTRY_ENVIRONMENT=staging already exists in .env file"
+          fi
 
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
@@ -134,13 +139,13 @@ jobs:
         id: extract_image_info
         run: |
           # Use the first readable tag from metadata action output
-          DOCKER_IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
-          echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_OUTPUT
-          
+          DOCKER_IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | head -n1 | xargs)
+          echo "DOCKER_IMAGE=\"$DOCKER_IMAGE\"" >> $GITHUB_OUTPUT
+
           # Use the generated version for Sentry release
           RELEASE_VERSION="$VERSION"
-          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-          
+          echo "RELEASE_VERSION=\"$RELEASE_VERSION\"" >> $GITHUB_OUTPUT
+
           echo "Docker image: $DOCKER_IMAGE"
           echo "Release version: $RELEASE_VERSION"
           echo "Available tags: ${{ steps.meta.outputs.tags }}"
