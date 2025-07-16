@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
-import { H1, H2, H3, H4, InlineCode, Large, Lead, List, Muted, P, Quote, Small } from "./index";
+import { H1, H2, H3, H4, InlineCode, InlineSmall, Large, Lead, List, Muted, P, Quote, Small } from "./index";
 
 describe("Typography Components", () => {
   afterEach(() => {
@@ -38,9 +38,10 @@ describe("Typography Components", () => {
 
     expect(h3Element).toBeInTheDocument();
     expect(h3Element).toHaveTextContent("Heading 3");
-    expect(h3Element?.className).toContain("text-2xl");
-    expect(h3Element?.className).toContain("font-semibold");
+    expect(h3Element?.className).toContain("text-lg");
     expect(h3Element?.className).toContain("text-slate-800");
+    expect(h3Element?.className).toContain("font-medium");
+    expect(h3Element?.className).toContain("scroll-m-20");
   });
 
   test("renders H4 correctly", () => {
@@ -49,8 +50,8 @@ describe("Typography Components", () => {
 
     expect(h4Element).toBeInTheDocument();
     expect(h4Element).toHaveTextContent("Heading 4");
-    expect(h4Element?.className).toContain("text-xl");
-    expect(h4Element?.className).toContain("font-semibold");
+    expect(h4Element?.className).toContain("text-base");
+    expect(h4Element?.className).toContain("tracking-tight");
     expect(h4Element?.className).toContain("text-slate-800");
   });
 
@@ -75,12 +76,11 @@ describe("Typography Components", () => {
 
   test("renders Large correctly", () => {
     const { container } = render(<Large>Large text</Large>);
-    const divElement = container.querySelector("div");
+    const pElement = container.querySelector("p");
 
-    expect(divElement).toBeInTheDocument();
-    expect(divElement).toHaveTextContent("Large text");
-    expect(divElement?.className).toContain("text-lg");
-    expect(divElement?.className).toContain("font-semibold");
+    expect(pElement).toBeInTheDocument();
+    expect(pElement).toHaveTextContent("Large text");
+    expect(pElement?.className).toContain("text-lg");
   });
 
   test("renders Small correctly", () => {
@@ -90,6 +90,8 @@ describe("Typography Components", () => {
     expect(pElement).toBeInTheDocument();
     expect(pElement).toHaveTextContent("Small text");
     expect(pElement?.className).toContain("text-sm");
+    expect(pElement?.className).toContain("leading-none");
+    expect(pElement?.className).toContain("text-slate-800");
     expect(pElement?.className).toContain("font-medium");
   });
 
@@ -112,6 +114,16 @@ describe("Typography Components", () => {
     expect(codeElement?.className).toContain("font-mono");
     expect(codeElement?.className).toContain("text-sm");
     expect(codeElement?.className).toContain("font-semibold");
+  });
+
+  test("renders InlineSmall correctly", () => {
+    const { container } = render(<InlineSmall>Small inline text</InlineSmall>);
+    const spanElement = container.querySelector("span");
+
+    expect(spanElement).toBeInTheDocument();
+    expect(spanElement).toHaveTextContent("Small inline text");
+    expect(spanElement?.className).toContain("text-sm");
+    expect(spanElement?.className).toContain("font-normal");
   });
 
   test("renders List correctly", () => {
@@ -149,10 +161,33 @@ describe("Typography Components", () => {
     expect(h1Element).toHaveClass("text-4xl"); // Should still have default classes
   });
 
+  test("InlineSmall applies custom className correctly", () => {
+    const { container } = render(
+      <InlineSmall className="custom-inline-class">Custom small text</InlineSmall>
+    );
+    const spanElement = container.querySelector("span");
+
+    expect(spanElement).toHaveClass("custom-inline-class");
+    expect(spanElement).toHaveClass("text-sm"); // Should still have default classes
+    expect(spanElement).toHaveClass("font-normal");
+  });
+
   test("passes additional props to components", () => {
     const { container } = render(<H1 data-testid="test-heading">Test Heading</H1>);
     const h1Element = container.querySelector("h1");
 
     expect(h1Element).toHaveAttribute("data-testid", "test-heading");
+  });
+
+  test("InlineSmall passes additional props correctly", () => {
+    const { container } = render(
+      <InlineSmall data-testid="test-inline-small" title="Small text tooltip">
+        Test Small
+      </InlineSmall>
+    );
+    const spanElement = container.querySelector("span");
+
+    expect(spanElement).toHaveAttribute("data-testid", "test-inline-small");
+    expect(spanElement).toHaveAttribute("title", "Small text tooltip");
   });
 });

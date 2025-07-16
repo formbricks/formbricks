@@ -17,14 +17,14 @@ export async function NewEmailVerification({
     <EmailTemplate t={t}>
       <Container>
         <Heading>{t("emails.verification_email_heading")}</Heading>
-        <Text>{t("emails.new_email_verification_text")}</Text>
-        <Text>{t("emails.verification_security_notice")}</Text>
+        <Text className="text-sm">{t("emails.new_email_verification_text")}</Text>
+        <Text className="text-sm">{t("emails.verification_security_notice")}</Text>
         <EmailButton href={verifyLink} label={t("emails.verification_email_verify_email")} />
-        <Text>{t("emails.verification_email_click_on_this_link")}</Text>
-        <Link className="break-all text-black" href={verifyLink}>
+        <Text className="text-sm">{t("emails.verification_email_click_on_this_link")}</Text>
+        <Link className="break-all text-sm text-black" href={verifyLink}>
           {verifyLink}
         </Link>
-        <Text className="font-bold">{t("emails.verification_email_link_valid_for_24_hours")}</Text>
+        <Text className="text-sm font-bold">{t("emails.verification_email_link_valid_for_24_hours")}</Text>
         <EmailFooter t={t} />
       </Container>
     </EmailTemplate>

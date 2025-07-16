@@ -22,10 +22,10 @@ export const getSyncSurveys = reactCache(
   ): Promise<TSurvey[]> => {
     validateInputs([environmentId, ZId]);
     try {
-      const product = await getProjectByEnvironmentId(environmentId);
+      const project = await getProjectByEnvironmentId(environmentId);
 
-      if (!product) {
-        throw new Error("Product not found");
+      if (!project) {
+        throw new Error("Project not found");
       }
 
       let surveys = await getSurveys(environmentId);
@@ -89,8 +89,8 @@ export const getSyncSurveys = reactCache(
             return true;
           }
           return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
-        } else if (product.recontactDays !== null) {
-          return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
+        } else if (project.recontactDays !== null) {
+          return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= project.recontactDays;
         } else {
           return true;
         }
