@@ -196,7 +196,7 @@ export const FillWidth: Story = {
     size: "default",
     width: "fill",
     showIcons: true,
-    numberOfTabs: 3,
+    numberOfTabs: 2,
     tabTexts: "Account,Password,Settings",
   },
   parameters: {
@@ -214,7 +214,7 @@ export const FitWidth: Story = {
     size: "default",
     width: "fit",
     showIcons: true,
-    numberOfTabs: 3,
+    numberOfTabs: 2,
     tabTexts: "Account,Password,Settings",
   },
   parameters: {
@@ -251,7 +251,7 @@ export const Disabled: Story = {
     size: "default",
     width: "fit",
     showIcons: true,
-    numberOfTabs: 3,
+    numberOfTabs: 2,
     tabTexts: "Account,Password,Settings",
   },
   parameters: {
