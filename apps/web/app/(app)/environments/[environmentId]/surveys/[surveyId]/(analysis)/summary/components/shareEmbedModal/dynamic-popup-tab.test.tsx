@@ -21,34 +21,15 @@ vi.mock("@/modules/ui/components/alert", () => ({
   AlertTitle: (props: { children: React.ReactNode }) => <div data-testid="alert-title">{props.children}</div>,
 }));
 
-vi.mock("@/modules/ui/components/button", () => ({
-  Button: (props: { variant?: string; asChild?: boolean; children: React.ReactNode }) => (
-    <div data-testid="button" data-variant={props.variant} data-as-child={props.asChild}>
-      {props.children}
-    </div>
-  ),
-}));
-
-vi.mock("@/modules/ui/components/typography", () => ({
-  H3: (props: { children: React.ReactNode }) => <div data-testid="h3">{props.children}</div>,
-  H4: (props: { children: React.ReactNode }) => <div data-testid="h4">{props.children}</div>,
-  Small: (props: { children: React.ReactNode; color?: string; margin?: string }) => (
-    <div data-testid="small" data-color={props.color} data-margin={props.margin}>
-      {props.children}
-    </div>
-  ),
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
-vi.mock("lucide-react", () => ({
-  ExternalLinkIcon: (props: { className?: string }) => (
-    <div data-testid="external-link-icon" className={props.className}>
-      ExternalLinkIcon
+// Mock DocumentationLinks
+vi.mock("./documentation-links", () => ({
+  DocumentationLinks: (props: { links: Array<{ href: string; title: string }> }) => (
+    <div data-testid="documentation-links">
+      {props.links.map((link) => (
+        <div key={link.title} data-testid="documentation-link" data-href={link.href} data-title={link.title}>
+          {link.title}
+        </div>
+      ))}
     </div>
   ),
 }));
@@ -62,6 +43,12 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
 describe("DynamicPopupTab", () => {
   afterEach(() => {
     cleanup();
@@ -72,26 +59,31 @@ describe("DynamicPopupTab", () => {
     surveyId: "survey-123",
   };
 
+  test("renders with correct container structure", () => {
+    render(<DynamicPopupTab {...defaultProps} />);
+
+    const container = screen.getByTestId("dynamic-popup-container");
+    expect(container).toHaveClass("flex", "h-full", "flex-col", "justify-between", "space-y-4");
+  });
+
   test("renders alert with correct props", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alerts = screen.getAllByTestId("alert");
-    const infoAlert = alerts.find((alert) => alert.getAttribute("data-variant") === "info");
-    expect(infoAlert).toBeInTheDocument();
-    expect(infoAlert).toHaveAttribute("data-variant", "info");
-    expect(infoAlert).toHaveAttribute("data-size", "default");
+    const alert = screen.getByTestId("alert");
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveAttribute("data-variant", "info");
+    expect(alert).toHaveAttribute("data-size", "default");
   });
 
-  test("renders alert title with translation key", () => {
+  test("renders alert title with correct translation key", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alertTitles = screen.getAllByTestId("alert-title");
-    const infoAlertTitle = alertTitles[0]; // The first one is the info alert
-    expect(infoAlertTitle).toBeInTheDocument();
-    expect(infoAlertTitle).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_title");
+    const alertTitle = screen.getByTestId("alert-title");
+    expect(alertTitle).toBeInTheDocument();
+    expect(alertTitle).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_title");
   });
 
-  test("renders alert description with translation key", () => {
+  test("renders alert description with correct translation key", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
     const alertDescription = screen.getByTestId("alert-description");
@@ -102,85 +94,124 @@ describe("DynamicPopupTab", () => {
   test("renders alert button with link to survey edit page", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const alertButtons = screen.getAllByTestId("alert-button");
-    const infoAlertButton = alertButtons[0]; // The first one is the info alert
-    expect(infoAlertButton).toBeInTheDocument();
-    expect(infoAlertButton).toHaveAttribute("data-as-child", "true");
+    const alertButton = screen.getByTestId("alert-button");
+    expect(alertButton).toBeInTheDocument();
+    expect(alertButton).toHaveAttribute("data-as-child", "true");
 
-    const link = screen.getAllByTestId("next-link")[0];
+    const link = screen.getByTestId("next-link");
     expect(link).toHaveAttribute("href", "/environments/env-123/surveys/survey-123/edit");
     expect(link).toHaveTextContent("environments.surveys.share.dynamic_popup.alert_button");
   });
 
-  test("renders attribute-based targeting documentation button", () => {
+  test("renders DocumentationLinks component", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const links = screen.getAllByRole("link");
-    const attributeLink = links.find((link) => link.getAttribute("href")?.includes("advanced-targeting"));
-
-    expect(attributeLink).toBeDefined();
-    expect(attributeLink).toHaveAttribute(
-      "href",
-      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting"
-    );
-    expect(attributeLink).toHaveAttribute("target", "_blank");
+    const documentationLinks = screen.getByTestId("documentation-links");
+    expect(documentationLinks).toBeInTheDocument();
   });
 
-  test("renders code and no code triggers documentation button", () => {
+  test("passes correct documentation links to DocumentationLinks component", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const links = screen.getAllByRole("link");
-    const actionsLink = links.find((link) => link.getAttribute("href")?.includes("actions"));
-
-    expect(actionsLink).toBeDefined();
-    expect(actionsLink).toHaveAttribute(
-      "href",
-      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions"
-    );
-    expect(actionsLink).toHaveAttribute("target", "_blank");
-  });
-
-  test("renders recontact options documentation button", () => {
-    render(<DynamicPopupTab {...defaultProps} />);
-
-    const links = screen.getAllByRole("link");
-    const recontactLink = links.find((link) => link.getAttribute("href")?.includes("recontact"));
-
-    expect(recontactLink).toBeDefined();
-    expect(recontactLink).toHaveAttribute(
-      "href",
-      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact"
-    );
-    expect(recontactLink).toHaveAttribute("target", "_blank");
-  });
-
-  test("all documentation buttons have external link icons", () => {
-    render(<DynamicPopupTab {...defaultProps} />);
-
-    const links = screen.getAllByRole("link");
-    const documentationLinks = links.filter(
-      (link) =>
-        link.getAttribute("href")?.includes("formbricks.com/docs") && link.getAttribute("target") === "_blank"
-    );
-
-    // There are 3 unique documentation URLs
+    const documentationLinks = screen.getAllByTestId("documentation-link");
     expect(documentationLinks).toHaveLength(3);
 
-    documentationLinks.forEach((link) => {
-      expect(link).toHaveAttribute("target", "_blank");
+    // Check attribute-based targeting link
+    const attributeLink = documentationLinks.find(
+      (link) =>
+        link.getAttribute("data-href") ===
+        "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting"
+    );
+    expect(attributeLink).toBeInTheDocument();
+    expect(attributeLink).toHaveAttribute(
+      "data-title",
+      "environments.surveys.share.dynamic_popup.attribute_based_targeting"
+    );
+
+    // Check code and no code triggers link
+    const actionsLink = documentationLinks.find(
+      (link) =>
+        link.getAttribute("data-href") ===
+        "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions"
+    );
+    expect(actionsLink).toBeInTheDocument();
+    expect(actionsLink).toHaveAttribute(
+      "data-title",
+      "environments.surveys.share.dynamic_popup.code_no_code_triggers"
+    );
+
+    // Check recontact options link
+    const recontactLink = documentationLinks.find(
+      (link) =>
+        link.getAttribute("data-href") ===
+        "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact"
+    );
+    expect(recontactLink).toBeInTheDocument();
+    expect(recontactLink).toHaveAttribute(
+      "data-title",
+      "environments.surveys.share.dynamic_popup.recontact_options"
+    );
+  });
+
+  test("renders documentation links with correct titles", () => {
+    render(<DynamicPopupTab {...defaultProps} />);
+
+    const documentationLinks = screen.getAllByTestId("documentation-link");
+
+    const expectedTitles = [
+      "environments.surveys.share.dynamic_popup.attribute_based_targeting",
+      "environments.surveys.share.dynamic_popup.code_no_code_triggers",
+      "environments.surveys.share.dynamic_popup.recontact_options",
+    ];
+
+    expectedTitles.forEach((title) => {
+      const link = documentationLinks.find((link) => link.getAttribute("data-title") === title);
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveTextContent(title);
     });
   });
 
-  test("documentation button links open in new tab", () => {
+  test("renders documentation links with correct URLs", () => {
     render(<DynamicPopupTab {...defaultProps} />);
 
-    const links = screen.getAllByRole("link");
-    const documentationLinks = links.filter((link) =>
-      link.getAttribute("href")?.includes("formbricks.com/docs")
-    );
+    const documentationLinks = screen.getAllByTestId("documentation-link");
 
-    documentationLinks.forEach((link) => {
-      expect(link).toHaveAttribute("target", "_blank");
+    const expectedUrls = [
+      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
+      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions",
+      "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/recontact",
+    ];
+
+    expectedUrls.forEach((url) => {
+      const link = documentationLinks.find((link) => link.getAttribute("data-href") === url);
+      expect(link).toBeInTheDocument();
     });
+  });
+
+  test("calls translation function for all text content", () => {
+    render(<DynamicPopupTab {...defaultProps} />);
+
+    // Check alert translations
+    expect(screen.getByTestId("alert-title")).toHaveTextContent(
+      "environments.surveys.share.dynamic_popup.alert_title"
+    );
+    expect(screen.getByTestId("alert-description")).toHaveTextContent(
+      "environments.surveys.share.dynamic_popup.alert_description"
+    );
+    expect(screen.getByTestId("next-link")).toHaveTextContent(
+      "environments.surveys.share.dynamic_popup.alert_button"
+    );
+  });
+
+  test("renders with correct props when environmentId and surveyId change", () => {
+    const newProps = {
+      environmentId: "env-456",
+      surveyId: "survey-456",
+    };
+
+    render(<DynamicPopupTab {...newProps} />);
+
+    const link = screen.getByTestId("next-link");
+    expect(link).toHaveAttribute("href", "/environments/env-456/surveys/survey-456/edit");
   });
 });

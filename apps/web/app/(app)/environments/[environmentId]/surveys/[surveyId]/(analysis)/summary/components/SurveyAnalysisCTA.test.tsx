@@ -1,450 +1,437 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import toast from "react-hot-toast";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { SurveyAnalysisCTA } from "./SurveyAnalysisCTA";
 
-vi.mock("@/lib/utils/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
-}));
-vi.mock("@/modules/ee/audit-logs/lib/utils", () => ({
-  withAuditLogging: vi.fn((...args: any[]) => {
-    // Check if the last argument is a function and return it directly
-    if (typeof args[args.length - 1] === "function") {
-      return args[args.length - 1];
-    }
-    // Otherwise, return a new function that takes a function as an argument and returns it
-    return (fn: any) => fn;
+// Mock the useTranslate hook
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      if (key === "environments.surveys.summary.configure_alerts") {
+        return "Configure alerts";
+      }
+      if (key === "common.preview") {
+        return "Preview";
+      }
+      if (key === "common.edit") {
+        return "Edit";
+      }
+      if (key === "environments.surveys.summary.share_survey") {
+        return "Share survey";
+      }
+      if (key === "environments.surveys.summary.results_are_public") {
+        return "Results are public";
+      }
+      if (key === "environments.surveys.survey_duplicated_successfully") {
+        return "Survey duplicated successfully";
+      }
+      if (key === "environments.surveys.edit.caution_edit_duplicate") {
+        return "Duplicate & Edit";
+      }
+      return key;
+    },
   }),
 }));
 
-const mockPublicDomain = "https://public-domain.com";
+// Mock Next.js hooks
+const mockPush = vi.fn();
+const mockPathname = "/environments/env-id/surveys/survey-id/summary";
+const mockSearchParams = new URLSearchParams();
 
-// Mock constants
-vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: false,
-  ENCRYPTION_KEY: "test",
-  ENTERPRISE_LICENSE_KEY: "test",
-  GITHUB_ID: "test",
-  GITHUB_SECRET: "test",
-  GOOGLE_CLIENT_ID: "test",
-  GOOGLE_CLIENT_SECRET: "test",
-  AZUREAD_CLIENT_ID: "mock-azuread-client-id",
-  AZUREAD_CLIENT_SECRET: "mock-azure-client-secret",
-  AZUREAD_TENANT_ID: "mock-azuread-tenant-id",
-  OIDC_CLIENT_ID: "mock-oidc-client-id",
-  OIDC_CLIENT_SECRET: "mock-oidc-client-secret",
-  OIDC_ISSUER: "mock-oidc-issuer",
-  OIDC_DISPLAY_NAME: "mock-oidc-display-name",
-  OIDC_SIGNING_ALGORITHM: "mock-oidc-signing-algorithm",
-  WEBAPP_URL: "mock-webapp-url",
-  IS_PRODUCTION: true,
-  FB_LOGO_URL: "https://example.com/mock-logo.png",
-  SMTP_HOST: "mock-smtp-host",
-  SMTP_PORT: "mock-smtp-port",
-  IS_POSTHOG_CONFIGURED: true,
-  AUDIT_LOG_ENABLED: true,
-  SESSION_MAX_AGE: 1000,
-  REDIS_URL: "mock-url",
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+  usePathname: () => mockPathname,
+  useSearchParams: () => mockSearchParams,
 }));
 
-vi.mock("@/lib/env", () => ({
-  env: {
-    PUBLIC_URL: "https://public-domain.com",
+// Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
-// Create a spy for refreshSingleUseId so we can override it in tests
-const refreshSingleUseIdSpy = vi.fn(() => Promise.resolve("newSingleUseId"));
-
-// Mock useSingleUseId hook
-vi.mock("@/modules/survey/hooks/useSingleUseId", () => ({
-  useSingleUseId: () => ({
-    refreshSingleUseId: refreshSingleUseIdSpy,
-  }),
-}));
-
-const mockSearchParams = new URLSearchParams();
-const mockPush = vi.fn();
-const mockReplace = vi.fn();
-
-// Mock next/navigation
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  useSearchParams: () => mockSearchParams,
-  usePathname: () => "/current-path",
-}));
-
-// Mock copySurveyLink to return a predictable string
-vi.mock("@/modules/survey/lib/client-utils", () => ({
-  copySurveyLink: vi.fn((url: string, suId: string) => `${url}?suId=${suId}`),
-}));
-
-// Mock the copy survey action
-const mockCopySurveyToOtherEnvironmentAction = vi.fn();
-vi.mock("@/modules/survey/list/actions", () => ({
-  copySurveyToOtherEnvironmentAction: (args: any) => mockCopySurveyToOtherEnvironmentAction(args),
-}));
-
-// Mock getFormattedErrorMessage function
+// Mock helper functions
 vi.mock("@/lib/utils/helper", () => ({
-  getFormattedErrorMessage: vi.fn((response) => response?.error || "Unknown error"),
+  getFormattedErrorMessage: vi.fn(() => "Error message"),
 }));
 
-// Mock ResponseCountProvider dependencies
-vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext", () => ({
-  useResponseFilter: vi.fn(() => ({ selectedFilter: "all", dateRange: {} })),
+// Mock actions
+vi.mock("@/modules/survey/list/actions", () => ({
+  copySurveyToOtherEnvironmentAction: vi.fn(),
 }));
 
-vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions", () => ({
-  getResponseCountAction: vi.fn(() => Promise.resolve({ data: 5 })),
+// Mock child components
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage",
+  () => ({
+    SuccessMessage: ({ environment, survey }: any) => (
+      <div data-testid="success-message">
+        Success Message for {environment.id} - {survey.id}
+      </div>
+    ),
+  })
+);
+
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal",
+  () => ({
+    ShareSurveyModal: ({ survey, open, setOpen, modalView, user }: any) => (
+      <div data-testid="share-survey-modal" data-open={open} data-modal-view={modalView}>
+        Share Survey Modal for {survey.id} - User: {user.id}
+        <button type="button" onClick={() => setOpen(false)}>
+          Close Modal
+        </button>
+      </div>
+    ),
+  })
+);
+
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown",
+  () => ({
+    SurveyStatusDropdown: ({ environment, survey }: any) => (
+      <div data-testid="survey-status-dropdown">
+        Status Dropdown for {environment.id} - {survey.id}
+      </div>
+    ),
+  })
+);
+
+vi.mock("@/modules/survey/components/edit-public-survey-alert-dialog", () => ({
+  EditPublicSurveyAlertDialog: ({
+    open,
+    setOpen,
+    isLoading,
+    primaryButtonAction,
+    primaryButtonText,
+    secondaryButtonAction,
+    secondaryButtonText,
+  }: any) => (
+    <div data-testid="edit-public-survey-alert-dialog" data-open={open} data-loading={isLoading}>
+      <button type="button" onClick={primaryButtonAction} data-testid="primary-button">
+        {primaryButtonText}
+      </button>
+      <button type="button" onClick={secondaryButtonAction} data-testid="secondary-button">
+        {secondaryButtonText}
+      </button>
+      <button type="button" onClick={() => setOpen(false)}>
+        Close Dialog
+      </button>
+    </div>
+  ),
 }));
 
-vi.mock("@/app/lib/surveys/surveys", () => ({
-  getFormattedFilters: vi.fn(() => []),
+// Mock UI components
+vi.mock("@/modules/ui/components/badge", () => ({
+  Badge: ({ type, size, className, text }: any) => (
+    <div data-testid="badge" data-type={type} data-size={size} className={className}>
+      {text}
+    </div>
+  ),
 }));
 
-vi.mock("@/app/share/[sharingKey]/actions", () => ({
-  getResponseCountBySurveySharingKeyAction: vi.fn(() => Promise.resolve({ data: 5 })),
+vi.mock("@/modules/ui/components/button", () => ({
+  Button: ({ children, onClick, className }: any) => (
+    <button type="button" data-testid="button" onClick={onClick} className={className}>
+      {children}
+    </button>
+  ),
 }));
 
-vi.mock("@/lib/getPublicUrl", () => ({
-  getPublicDomain: vi.fn(() => mockPublicDomain),
+vi.mock("@/modules/ui/components/iconbar", () => ({
+  IconBar: ({ actions }: any) => (
+    <div data-testid="icon-bar">
+      {actions
+        .filter((action: any) => action.isVisible)
+        .map((action: any, index: number) => (
+          <button
+            type="button"
+            key={index} // NOSONAR // We don't need to check this in the test
+            onClick={action.onClick}
+            title={action.tooltip}
+            data-testid={`icon-bar-action-${index}`}>
+            <action.icon />
+          </button>
+        ))}
+    </div>
+  ),
 }));
 
-vi.spyOn(toast, "success");
-vi.spyOn(toast, "error");
+// Mock lucide-react icons
+vi.mock("lucide-react", () => ({
+  BellRing: () => <svg data-testid="bell-ring-icon" />,
+  Eye: () => <svg data-testid="eye-icon" />,
+  SquarePenIcon: () => <svg data-testid="square-pen-icon" />,
+}));
 
-// Mock clipboard API
-const writeTextMock = vi.fn().mockImplementation(() => Promise.resolve());
+// Mock data
+const mockEnvironment: TEnvironment = {
+  id: "test-env-id",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  type: "development",
+  projectId: "test-project-id",
+  appSetupCompleted: true,
+};
 
-// Define it at the global level
-Object.defineProperty(navigator, "clipboard", {
-  value: { writeText: writeTextMock },
-  configurable: true,
-});
-
-const dummySurvey = {
-  id: "survey123",
-  type: "link",
-  environmentId: "env123",
-  status: "inProgress",
-  resultShareKey: null,
-} as unknown as TSurvey;
-
-const dummyAppSurvey = {
-  id: "survey123",
+const mockSurvey: TSurvey = {
+  id: "test-survey-id",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  name: "Test Survey",
   type: "app",
-  environmentId: "env123",
+  environmentId: "test-env-id",
   status: "inProgress",
-} as unknown as TSurvey;
+  displayOption: "displayOnce",
+  autoClose: null,
+  triggers: [],
 
-const dummyEnvironment = { id: "env123", appSetupCompleted: true } as TEnvironment;
-const dummyUser = { id: "user123", name: "Test User" } as TUser;
+  recontactDays: null,
+  displayLimit: null,
+  welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
+  questions: [],
+  endings: [],
+  hiddenFields: { enabled: false },
+  displayPercentage: null,
+  autoComplete: null,
+
+  segment: null,
+  languages: [],
+  showLanguageSwitch: false,
+  singleUse: { enabled: false, isEncrypted: false },
+  projectOverwrites: null,
+  surveyClosedMessage: null,
+  delay: 0,
+  isVerifyEmailEnabled: false,
+  createdBy: null,
+  variables: [],
+  followUps: [],
+  runOnDate: null,
+  closeOnDate: null,
+  styling: null,
+  pin: null,
+  recaptcha: null,
+  isSingleResponsePerEmailEnabled: false,
+  isBackButtonHidden: false,
+  resultShareKey: null,
+};
+
+const mockUser: TUser = {
+  id: "test-user-id",
+  name: "Test User",
+  email: "test@example.com",
+  emailVerified: new Date(),
+  imageUrl: "https://example.com/avatar.jpg",
+  twoFactorEnabled: false,
+  identityProvider: "email",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+
+  role: "other",
+  objective: "other",
+  locale: "en-US",
+  lastLoginAt: new Date(),
+  isActive: true,
+  notificationSettings: {
+    alert: {
+      weeklySummary: true,
+      responseFinished: true,
+    },
+    weeklySummary: {
+      test: true,
+    },
+    unsubscribedOrganizationIds: [],
+  },
+};
+
+const mockSegments: TSegment[] = [];
+
+const defaultProps = {
+  survey: mockSurvey,
+  environment: mockEnvironment,
+  isReadOnly: false,
+  user: mockUser,
+  publicDomain: "https://example.com",
+  responseCount: 0,
+  segments: mockSegments,
+  isContactsEnabled: true,
+  isFormbricksCloud: false,
+};
 
 describe("SurveyAnalysisCTA", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
-    mockSearchParams.delete("share"); // reset params
+    vi.clearAllMocks();
+    mockSearchParams.delete("share");
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  describe("Edit functionality", () => {
-    test("opens EditPublicSurveyAlertDialog when edit icon is clicked and response count > 0", async () => {
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
+  test("renders share survey button", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} />);
 
-      // Find the edit button
-      const editButton = screen.getByRole("button", { name: "common.edit" });
-      await fireEvent.click(editButton);
-
-      // Check if dialog is shown
-      const dialogTitle = screen.getByText("environments.surveys.edit.caution_edit_published_survey");
-      expect(dialogTitle).toBeInTheDocument();
-    });
-
-    test("navigates directly to edit page when response count = 0", async () => {
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={0}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
-
-      // Find the edit button
-      const editButton = screen.getByRole("button", { name: "common.edit" });
-      await fireEvent.click(editButton);
-
-      // Should navigate directly to edit page
-      expect(mockPush).toHaveBeenCalledWith(
-        `/environments/${dummyEnvironment.id}/surveys/${dummySurvey.id}/edit`
-      );
-    });
-
-    test("doesn't show edit button when isReadOnly is true", () => {
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={true}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
-
-      const editButton = screen.queryByRole("button", { name: "common.edit" });
-      expect(editButton).not.toBeInTheDocument();
-    });
+    expect(screen.getByText("Share survey")).toBeInTheDocument();
   });
 
-  describe("Duplicate functionality", () => {
-    test("duplicates survey and redirects on primary button click", async () => {
-      mockCopySurveyToOtherEnvironmentAction.mockResolvedValue({
-        data: { id: "newSurvey456" },
-      });
+  test("renders success message component", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} />);
 
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
-
-      const editButton = screen.getByRole("button", { name: "common.edit" });
-      fireEvent.click(editButton);
-
-      const primaryButton = await screen.findByText("environments.surveys.edit.caution_edit_duplicate");
-      fireEvent.click(primaryButton);
-
-      await waitFor(() => {
-        expect(mockCopySurveyToOtherEnvironmentAction).toHaveBeenCalledWith({
-          environmentId: "env123",
-          surveyId: "survey123",
-          targetEnvironmentId: "env123",
-        });
-        expect(mockPush).toHaveBeenCalledWith("/environments/env123/surveys/newSurvey456/edit");
-        expect(toast.success).toHaveBeenCalledWith("environments.surveys.survey_duplicated_successfully");
-      });
-    });
-
-    test("shows error toast on duplication failure", async () => {
-      const error = { error: "Duplication failed" };
-      mockCopySurveyToOtherEnvironmentAction.mockResolvedValue(error);
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
-
-      const editButton = screen.getByRole("button", { name: "common.edit" });
-      fireEvent.click(editButton);
-
-      const primaryButton = await screen.findByText("environments.surveys.edit.caution_edit_duplicate");
-      fireEvent.click(primaryButton);
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Duplication failed");
-      });
-    });
+    expect(screen.getByTestId("success-message")).toBeInTheDocument();
   });
 
-  describe("Share button and modal", () => {
-    test("opens share modal when 'Share survey' button is clicked", async () => {
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
+  test("renders survey status dropdown when app setup is completed", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} />);
 
-      const shareButton = screen.getByText("environments.surveys.summary.share_survey");
-      fireEvent.click(shareButton);
-
-      // The share button opens the embed modal, not a URL
-      // We can verify this by checking that the ShareEmbedSurvey component is rendered
-      // with the embed modal open
-      expect(screen.getByText("environments.surveys.summary.share_survey")).toBeInTheDocument();
-    });
-
-    test("renders ShareEmbedSurvey component when share modal is open", async () => {
-      mockSearchParams.set("share", "true");
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
-
-      // Assuming ShareEmbedSurvey renders a dialog with a specific title when open
-      const dialog = await screen.findByRole("dialog");
-      expect(dialog).toBeInTheDocument();
-    });
+    expect(screen.getByTestId("survey-status-dropdown")).toBeInTheDocument();
   });
 
-  describe("General UI and visibility", () => {
-    test("shows public results badge when resultShareKey is present", () => {
-      const surveyWithShareKey = { ...dummySurvey, resultShareKey: "someKey" } as TSurvey;
-      render(
-        <SurveyAnalysisCTA
-          survey={surveyWithShareKey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
+  test("does not render survey status dropdown when read-only", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} isReadOnly={true} />);
 
-      expect(screen.getByText("environments.surveys.summary.results_are_public")).toBeInTheDocument();
-    });
+    expect(screen.queryByTestId("survey-status-dropdown")).not.toBeInTheDocument();
+  });
 
-    test("shows SurveyStatusDropdown for non-draft surveys", () => {
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
+  test("renders icon bar with correct actions", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} />);
 
-      expect(screen.getByRole("combobox")).toBeInTheDocument();
-    });
+    expect(screen.getByTestId("icon-bar")).toBeInTheDocument();
+    expect(screen.getByTestId("icon-bar-action-0")).toBeInTheDocument(); // Bell ring
+    expect(screen.getByTestId("icon-bar-action-1")).toBeInTheDocument(); // Square pen
+  });
 
-    test("does not show SurveyStatusDropdown for draft surveys", () => {
-      const draftSurvey = { ...dummySurvey, status: "draft" } as TSurvey;
-      render(
-        <SurveyAnalysisCTA
-          survey={draftSurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
-      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    });
+  test("shows preview icon for link surveys", () => {
+    const linkSurvey = { ...mockSurvey, type: "link" as const };
+    render(<SurveyAnalysisCTA {...defaultProps} survey={linkSurvey} />);
 
-    test("hides status dropdown and edit actions when isReadOnly is true", () => {
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={true}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
+    expect(screen.getByTestId("icon-bar-action-1")).toHaveAttribute("title", "Preview");
+  });
 
-      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "common.edit" })).not.toBeInTheDocument();
-    });
+  test("shows public results badge when resultShareKey exists", () => {
+    const surveyWithShareKey = { ...mockSurvey, resultShareKey: "share-key" };
+    render(<SurveyAnalysisCTA {...defaultProps} survey={surveyWithShareKey} />);
 
-    test("shows preview button for link surveys", () => {
-      render(
-        <SurveyAnalysisCTA
-          survey={dummySurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
-      expect(screen.getByRole("button", { name: "common.preview" })).toBeInTheDocument();
-    });
+    expect(screen.getByTestId("badge")).toBeInTheDocument();
+    expect(screen.getByText("Results are public")).toBeInTheDocument();
+  });
 
-    test("hides preview button for app surveys", () => {
-      render(
-        <SurveyAnalysisCTA
-          survey={dummyAppSurvey}
-          environment={dummyEnvironment}
-          isReadOnly={false}
-          publicDomain={mockPublicDomain}
-          user={dummyUser}
-          responseCount={5}
-          segments={[]}
-          isContactsEnabled={false}
-          isFormbricksCloud={false}
-        />
-      );
-      expect(screen.queryByRole("button", { name: "common.preview" })).not.toBeInTheDocument();
-    });
+  test("opens share modal when share button is clicked", async () => {
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} />);
+
+    await user.click(screen.getByText("Share survey"));
+
+    expect(screen.getByTestId("share-survey-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-open", "true");
+  });
+
+  test("opens share modal when share param is true", () => {
+    mockSearchParams.set("share", "true");
+    render(<SurveyAnalysisCTA {...defaultProps} />);
+
+    expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-open", "true");
+    expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-modal-view", "start");
+  });
+
+  test("navigates to edit when edit button is clicked and no responses", async () => {
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} />);
+
+    await user.click(screen.getByTestId("icon-bar-action-1"));
+
+    expect(mockPush).toHaveBeenCalledWith("/environments/test-env-id/surveys/test-survey-id/edit");
+  });
+
+  test("shows caution dialog when edit button is clicked and has responses", async () => {
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    await user.click(screen.getByTestId("icon-bar-action-1"));
+
+    expect(screen.getByTestId("edit-public-survey-alert-dialog")).toHaveAttribute("data-open", "true");
+  });
+
+  test("navigates to notifications when bell icon is clicked", async () => {
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} />);
+
+    await user.click(screen.getByTestId("icon-bar-action-0"));
+
+    expect(mockPush).toHaveBeenCalledWith("/environments/test-env-id/settings/notifications");
+  });
+
+  test("opens preview window when preview icon is clicked", async () => {
+    const user = userEvent.setup();
+    const linkSurvey = { ...mockSurvey, type: "link" as const };
+    const windowOpenSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+    render(<SurveyAnalysisCTA {...defaultProps} survey={linkSurvey} />);
+
+    await user.click(screen.getByTestId("icon-bar-action-1"));
+
+    expect(windowOpenSpy).toHaveBeenCalledWith("https://example.com/s/test-survey-id?preview=true", "_blank");
+    windowOpenSpy.mockRestore();
+  });
+
+  test("does not show icon bar actions when read-only", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} isReadOnly={true} />);
+
+    const iconBar = screen.getByTestId("icon-bar");
+    expect(iconBar).toBeInTheDocument();
+    // Should only show preview icon for link surveys, but this is app survey
+    expect(screen.queryByTestId("icon-bar-action-0")).not.toBeInTheDocument();
+  });
+
+  test("handles modal close correctly", async () => {
+    mockSearchParams.set("share", "true");
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} />);
+
+    // Verify modal is open initially
+    expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-open", "true");
+
+    await user.click(screen.getByText("Close Modal"));
+
+    // Verify modal is closed
+    expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-open", "false");
+  });
+
+  test("shows status dropdown for link surveys", () => {
+    const linkSurvey = { ...mockSurvey, type: "link" as const };
+    render(<SurveyAnalysisCTA {...defaultProps} survey={linkSurvey} />);
+
+    expect(screen.getByTestId("survey-status-dropdown")).toBeInTheDocument();
+  });
+
+  test("does not show status dropdown for draft surveys", () => {
+    const draftSurvey = { ...mockSurvey, status: "draft" as const };
+    render(<SurveyAnalysisCTA {...defaultProps} survey={draftSurvey} />);
+
+    expect(screen.queryByTestId("survey-status-dropdown")).not.toBeInTheDocument();
+  });
+
+  test("does not show status dropdown when app setup is not completed", () => {
+    const environmentWithoutAppSetup = { ...mockEnvironment, appSetupCompleted: false };
+    render(<SurveyAnalysisCTA {...defaultProps} environment={environmentWithoutAppSetup} />);
+
+    expect(screen.queryByTestId("survey-status-dropdown")).not.toBeInTheDocument();
+  });
+
+  test("renders correctly with all props", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} />);
+
+    expect(screen.getByTestId("icon-bar")).toBeInTheDocument();
+    expect(screen.getByText("Share survey")).toBeInTheDocument();
+    expect(screen.getByTestId("success-message")).toBeInTheDocument();
+    expect(screen.getByTestId("survey-status-dropdown")).toBeInTheDocument();
   });
 });

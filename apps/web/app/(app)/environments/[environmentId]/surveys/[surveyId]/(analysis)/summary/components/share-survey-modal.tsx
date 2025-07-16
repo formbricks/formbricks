@@ -1,5 +1,6 @@
 "use client";
 
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { AnonymousLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/anonymous-links-tab";
 import { AppTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/app-tab";
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
@@ -19,9 +20,8 @@ import {
   MailIcon,
   QrCodeIcon,
   Share2Icon,
-  SmartphoneIcon,
   SquareStack,
-  UserIcon,
+  UserIcon
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
@@ -161,17 +161,6 @@ export const ShareSurveyModal = ({
     ]
   );
 
-  const appTabs = [
-    {
-      id: ShareViewType.APP,
-      label: t("environments.surveys.share.embed_on_website.embed_in_app"),
-      icon: SmartphoneIcon,
-      title: t("environments.surveys.share.embed_on_website.embed_in_app"),
-      componentType: AppTab,
-      componentProps: {},
-    },
-  ];
-
   const [activeId, setActiveId] = useState(
     survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP
   );
@@ -183,10 +172,10 @@ export const ShareSurveyModal = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP);
     setOpen(open);
     if (!open) {
       setShowView("start");
+      setActiveId(ShareViewType.ANON_LINKS);
     }
   };
 
@@ -199,35 +188,54 @@ export const ShareSurveyModal = ({
     setActiveId(tabId);
   };
 
+  const renderContent = () => {
+    if (showView === "start") {
+      return (
+        <SuccessView
+          survey={survey}
+          surveyUrl={surveyUrl}
+          publicDomain={publicDomain}
+          setSurveyUrl={setSurveyUrl}
+          user={user}
+          tabs={linkTabs}
+          handleViewChange={handleViewChange}
+          handleEmbedViewWithTab={handleEmbedViewWithTab}
+        />
+      );
+    }
+
+    if (survey.type === "link") {
+      return (
+        <ShareView
+          tabs={linkTabs}
+          activeId={activeId}
+          setActiveId={setActiveId}
+        />
+      );
+    }
+
+    return (
+      <div className={`h-full w-full bg-slate-50 p-6 rounded-lg`}>
+        <TabContainer
+          title={t("environments.surveys.summary.in_app.title")}
+          description={t("environments.surveys.summary.in_app.description")}>
+          <AppTab />
+        </TabContainer>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <VisuallyHidden asChild>
         <DialogTitle />
       </VisuallyHidden>
       <DialogContent
-        className="w-full overflow-y-auto bg-white p-0 lg:h-[700px]"
-        width="wide"
+        className="w-full bg-white p-0 lg:h-[700px]"
+        width={survey.type === "link" ? "wide" : "default"}
         aria-describedby={undefined}
         unconstrained>
-        {showView === "start" ? (
-          <SuccessView
-            survey={survey}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            user={user}
-            tabs={linkTabs}
-            handleViewChange={handleViewChange}
-            handleEmbedViewWithTab={handleEmbedViewWithTab}
-          />
-        ) : (
-          <ShareView
-            tabs={survey.type === "link" ? linkTabs : appTabs}
-            activeId={activeId}
-            setActiveId={setActiveId}
-            survey={survey}
-          />
-        )}
+          {renderContent()}
       </DialogContent>
     </Dialog>
   );
