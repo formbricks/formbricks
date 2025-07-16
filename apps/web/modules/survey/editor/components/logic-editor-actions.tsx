@@ -105,12 +105,14 @@ export function LogicEditorActions({
 
   return (
     <div className="flex grow flex-col gap-2">
-      <div className="block w-9 shrink-0">{t("environments.surveys.edit.then")}</div>
+      <div className="block w-10 shrink-0 font-medium text-slate-900">
+        {t("environments.surveys.edit.then")}
+      </div>
 
       <div className="flex grow flex-col gap-y-2 border-b border-slate-200 last:pb-3">
         {actions?.map((action, idx) => (
           <div className="ml-5 flex items-center gap-x-2">
-            <CornerDownRightIcon className="h-4 w-4 shrink-0" />
+            <CornerDownRightIcon className="h-4 w-4 shrink-0 text-slate-500" />
             <div key={action.id} className="flex grow items-center justify-between gap-x-2">
               <div className={cn("grid flex-1 grid-cols-12 gap-x-2")}>
                 <div

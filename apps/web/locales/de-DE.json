@@ -199,8 +199,6 @@
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
     "error": "Fehler",
-    "error_component_description": "Diese Ressource existiert nicht oder Du hast nicht die notwendigen Rechte, um darauf zuzugreifen.",
-    "error_component_title": "Fehler beim Laden der Ressourcen",
     "expand_rows": "Zeilen erweitern",
     "finish": "Fertigstellen",
     "follow_these": "Folge diesen",

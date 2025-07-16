@@ -87,8 +87,8 @@ export function LogicEditor({
 
       {isLast ? (
         <div className="ml-5 flex items-center space-x-2">
-          <ArrowRightIcon className="h-4 w-4" />
-          <p className="text-nowrap text-slate-700">
+          <ArrowRightIcon className="h-4 w-4 text-slate-500" />
+          <p className="text-nowrap font-medium text-slate-900">
             {t("environments.surveys.edit.all_other_answers_will_continue_to")}
           </p>
           <Select

@@ -30,6 +30,7 @@ import React, {
   RefAttributes,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -91,6 +92,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   const [open, setOpen] = useState(false);
   const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
   const [localValue, setLocalValue] = useState<string | number | string[] | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const validOptions = useMemo(() => {
     if (options?.length) return flattenOptions(options);
@@ -237,6 +239,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                   placeholder={searchPlaceholder}
                   className="h-8 border-none placeholder-slate-300 outline-none"
                   autoFocus
+                  ref={searchRef}
                 />
               </div>
             ) : (
@@ -253,19 +256,13 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                   {options.map((opt) => (
                     <CommandItem key={opt.value} onSelect={() => handleSelect(opt)} className="truncate px-2">
                       {showCheckIcon && isSelected(opt) && (
-                        <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
+                        <CheckIcon className="h-4 w-4 text-slate-300 hover:text-slate-400" />
                       )}
-                      {opt.icon && <opt.icon className="mr-2 h-5 w-5 text-slate-400" />}
+                      {opt.icon && <opt.icon className="h-5 w-5 text-slate-400" />}
                       {opt.imgSrc && (
-                        <Image
-                          src={opt.imgSrc}
-                          alt={opt.label}
-                          width={24}
-                          height={24}
-                          className="mr-2 shrink-0"
-                        />
+                        <Image src={opt.imgSrc} alt={opt.label} width={24} height={24} className="shrink-0" />
                       )}
-                      <span className="truncate">{opt.label}</span>
+                      <span className="truncate text-slate-900">{opt.label}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -278,25 +275,31 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                     <div className="px-2 pb-2 text-sm font-medium text-slate-500">{group.label}</div>
                     {group.options.map((opt) =>
                       opt.children ? (
-                        <CommandItem key={opt.label} className="flex w-full items-center justify-center p-0">
+                        <CommandItem key={opt.value} className="flex w-full items-center justify-center p-0">
                           <DropdownMenuSub key={opt.value}>
-                            <DropdownMenuSubTrigger className="w-full p-0" tabIndex={-1}>
-                              <CommandItem className="flex w-full justify-between truncate px-2">
+                            <DropdownMenuSubTrigger
+                              className="w-full"
+                              onFocus={(e) => {
+                                if (e.relatedTarget === searchRef.current) {
+                                  searchRef.current?.focus();
+                                }
+                              }}>
+                              <div className="flex w-full items-center gap-2 truncate">
                                 {showCheckIcon && isSelected(opt) && (
                                   <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
                                 )}
-                                {opt.icon && <opt.icon className="mr-2 h-5 w-5 text-slate-400" />}
+                                {opt.icon && <opt.icon className="h-5 w-5 text-slate-400" />}
                                 {opt.imgSrc && (
                                   <Image
                                     src={opt.imgSrc}
                                     alt={opt.label}
                                     width={24}
                                     height={24}
-                                    className="mr-2 shrink-0"
+                                    className="shrink-0"
                                   />
                                 )}
-                                <span className="flex-1 truncate">{opt.label}</span>
-                              </CommandItem>
+                                <span className="flex-1 truncate text-slate-900">{opt.label}</span>
+                              </div>
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent alignOffset={4} className="w-48 p-1">
                               {opt.children.map((child) => (
@@ -330,19 +333,19 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                           onSelect={() => handleSelect(opt)}
                           className="truncate px-2">
                           {showCheckIcon && isSelected(opt) && (
-                            <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
+                            <CheckIcon className="h-4 w-4 text-slate-300 hover:text-slate-400" />
                           )}
-                          {opt.icon && <opt.icon className="mr-2 h-5 w-5 text-slate-400" />}
+                          {opt.icon && <opt.icon className="h-5 w-5 text-slate-400" />}
                           {opt.imgSrc && (
                             <Image
                               src={opt.imgSrc}
                               alt={opt.label}
                               width={24}
                               height={24}
-                              className="mr-2 shrink-0"
+                              className="shrink-0"
                             />
                           )}
-                          <span className="truncate">{opt.label}</span>
+                          <span className="truncate text-slate-900">{opt.label}</span>
                         </CommandItem>
                       )
                     )}

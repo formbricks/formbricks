@@ -242,7 +242,7 @@ export function LogicEditorConditions({
     if (isConditionGroup(condition)) {
       return (
         <div key={condition.id} className="flex items-baseline gap-x-1">
-          <div className="w-10 shrink-0 text-right text-sm">
+          <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">
             {index > 0 ? <div>{connector}</div> : <div />}
           </div>
           <div className="relative flex w-full items-center gap-x-1 rounded-lg border border-slate-400 p-3">
@@ -311,7 +311,7 @@ export function LogicEditorConditions({
 
     return (
       <div key={condition.id} className="flex items-center gap-x-2">
-        <div className="w-10 shrink-0 text-right text-sm">
+        <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">
           {index > 0 ? (
             <div>{connector}</div>
           ) : parentConditionGroup.conditions.length === 1 ? (
@@ -387,7 +387,6 @@ export function LogicEditorConditions({
               {t("environments.surveys.edit.add_condition_below")}
             </DropdownMenuItem>
             <DropdownMenuItem
-              // disabled={depth === 0 && conditions.conditions.length === 1}
               onClick={() => handleRemoveCondition(condition.id)}
               icon={<TrashIcon className="h-4 w-4" />}>
               {t("common.remove")}
@@ -413,7 +412,7 @@ export function LogicEditorConditions({
       {/* Dropdown for changing the connector */}
       {conditions.conditions.length > 1 && (
         <div className="flex items-center text-sm">
-          <p className="mr-2 font-semibold text-slate-700">When</p>
+          <p className="mr-2 font-medium text-slate-900">When</p>
           <Select
             value={conditions.connector}
             onValueChange={() => {
@@ -422,7 +421,7 @@ export function LogicEditorConditions({
             <SelectTrigger className="w-auto bg-white">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="flex items-center justify-between">
               <SelectItem value="and">all are true</SelectItem>
               <SelectItem value="or">any is true</SelectItem>
             </SelectContent>
