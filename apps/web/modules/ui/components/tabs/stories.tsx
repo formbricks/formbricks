@@ -130,7 +130,7 @@ const renderTabs = (args: StoryProps) => {
   const layout = size === "big" ? "column" : "row";
 
   return (
-    <div className="w-full max-w-xl">
+    <div className="w-full max-w-sm">
       <Tabs defaultValue={defaultValue || tabValues[0]} width={width} {...tabsProps}>
         <TabsList variant={variant} size={size} width={width}>
           {finalTabLabels.map((label, index) => {
