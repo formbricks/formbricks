@@ -41,7 +41,7 @@ const H3 = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElemen
     <h3
       {...props}
       ref={ref}
-      className={cn("scroll-m-20 text-lg tracking-tight text-slate-800", props.className)}>
+      className={cn("scroll-m-20 text-lg font-medium text-slate-800", props.className)}>
       {props.children}
     </h3>
   );
@@ -142,6 +142,17 @@ const Small = forwardRef<HTMLParagraphElement, SmallProps>((props, ref) => {
 
 Small.displayName = "Small";
 export { Small };
+
+const InlineSmall = forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
+  return (
+    <span {...props} ref={ref} className={cn("text-sm font-normal", props.className)}>
+      {props.children}
+    </span>
+  );
+});
+
+InlineSmall.displayName = "InlineSmall";
+export { InlineSmall };
 
 const Muted = forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
   return (

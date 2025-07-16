@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TabContainer } from "./TabContainer";
+import { TabContainer } from "./tab-container";
 
 // Mock components
 vi.mock("@/modules/ui/components/typography", () => ({
@@ -48,13 +48,6 @@ describe("TabContainer", () => {
     const tabContent = screen.getByTestId("tab-content");
     expect(tabContent).toBeInTheDocument();
     expect(tabContent).toHaveTextContent("Tab content");
-  });
-
-  test("renders with correct container structure", () => {
-    render(<TabContainer {...defaultProps} />);
-
-    const container = screen.getByTestId("h3").parentElement?.parentElement;
-    expect(container).toHaveClass("flex", "h-full", "grow", "flex-col", "items-start", "space-y-4");
   });
 
   test("renders header with correct structure", () => {

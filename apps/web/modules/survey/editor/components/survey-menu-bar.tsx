@@ -214,7 +214,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
         setIsSurveySaving(false);
         return false;
@@ -281,7 +281,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
         setIsSurveyPublishing(false);
         return;

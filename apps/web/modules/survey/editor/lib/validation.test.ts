@@ -520,6 +520,61 @@ describe("validation.isSurveyValid", () => {
     expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.fallback_missing");
   });
 
+  test("should return false and toast error if response limit is 0", () => {
+    const surveyWithZeroLimit = {
+      ...baseSurvey,
+      autoComplete: 0,
+    };
+    expect(validation.isSurveyValid(surveyWithZeroLimit, "en", mockT, 5)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.response_limit_can_t_be_set_to_0");
+  });
+
+  test("should return false and toast error if response limit is less than or equal to response count", () => {
+    const surveyWithLowLimit = {
+      ...baseSurvey,
+      autoComplete: 5,
+    };
+    expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(
+      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
+      {
+        id: "response-limit-error",
+      }
+    );
+  });
+
+  test("should return false and toast error if response limit is less than response count", () => {
+    const surveyWithLowLimit = {
+      ...baseSurvey,
+      autoComplete: 3,
+    };
+    expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(
+      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
+      {
+        id: "response-limit-error",
+      }
+    );
+  });
+
+  test("should return true if response limit is greater than response count", () => {
+    const surveyWithValidLimit = {
+      ...baseSurvey,
+      autoComplete: 10,
+    };
+    expect(validation.isSurveyValid(surveyWithValidLimit, "en", mockT, 5)).toBe(true);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  test("should return true if autoComplete is null (no limit set)", () => {
+    const surveyWithNoLimit = {
+      ...baseSurvey,
+      autoComplete: null,
+    };
+    expect(validation.isSurveyValid(surveyWithNoLimit, "en", mockT, 5)).toBe(true);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
   describe("App Survey Segment Validation", () => {
     test("should return false and toast error for app survey with invalid segment filters", () => {
       const surveyWithInvalidSegment = {

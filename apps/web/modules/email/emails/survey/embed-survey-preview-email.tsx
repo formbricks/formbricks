@@ -18,13 +18,13 @@ export async function EmbedSurveyPreviewEmail({
   return (
     <EmailTemplate logoUrl={logoUrl} t={t}>
       <Container>
-        <Heading className="text-xl">{t("emails.embed_survey_preview_email_heading")}</Heading>
-        <Text className="font-normal">{t("emails.embed_survey_preview_email_text")}</Text>
-        <Text className="text-sm font-normal">
+        <Heading>{t("emails.embed_survey_preview_email_heading")}</Heading>
+        <Text className="text-sm">{t("emails.embed_survey_preview_email_text")}</Text>
+        <Text className="text-sm">
           <b>{t("emails.embed_survey_preview_email_didnt_request")}</b>{" "}
           {t("emails.embed_survey_preview_email_fight_spam")}
         </Text>
-        <div dangerouslySetInnerHTML={{ __html: html }} />
+        <div className="text-sm" dangerouslySetInnerHTML={{ __html: html }} />
         <Text className="text-center text-sm text-slate-700">
           {t("emails.embed_survey_preview_email_environment_id")}: {environmentId}
         </Text>
