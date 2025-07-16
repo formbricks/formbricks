@@ -5,16 +5,28 @@ import {
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { doesContactExist } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promise<{ id: string }> => {
   validateInputs([displayInput, ZDisplayCreateInputV2]);
 
-  const { contactId, surveyId } = displayInput;
+  const { contactId, surveyId, environmentId } = displayInput;
 
   try {
     const contactExists = contactId ? await doesContactExist(contactId) : false;
+
+    const survey = await prisma.survey.findUnique({
+      where: {
+        id: surveyId,
+        environmentId,
+      },
+    });
+    if (!survey) {
+      throw new InvalidInputError(
+        `The survey with id ${surveyId} and environmentId ${environmentId} does not exist.`
+      );
+    }
 
     const display = await prisma.display.create({
       data: {
