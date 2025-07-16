@@ -16,19 +16,19 @@ export async function CreateReminderNotificationBody({
   const t = await getTranslate();
   return (
     <Container>
-      <Text>
+      <Text className="text-sm">
         {t("emails.weekly_summary_create_reminder_notification_body_text", {
           projectName: notificationData.projectName,
         })}
       </Text>
-      <Text className="pt-4 font-bold">
+      <Text className="pt-4 text-sm font-medium">
         {t("emails.weekly_summary_create_reminder_notification_body_dont_let_a_week_pass")}
       </Text>
       <EmailButton
         href={`${WEBAPP_URL}/environments/${notificationData.environmentId}/surveys?utm_source=weekly&utm_medium=email&utm_content=SetupANewSurveyCTA`}
         label={t("emails.weekly_summary_create_reminder_notification_body_setup_a_new_survey")}
       />
-      <Text className="pt-4">
+      <Text className="pt-4 text-sm">
         {t("emails.weekly_summary_create_reminder_notification_body_need_help")}
         <a href="https://cal.com/johannes/15">
           {t("emails.weekly_summary_create_reminder_notification_body_cal_slot")}

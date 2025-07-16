@@ -38,9 +38,10 @@ export const AdvancedOptionToggle = ({
       </div>
       {children && isChecked && (
         <div
-          className={`mt-4 flex w-full items-center space-x-1 rounded-lg ${
-            childBorder ? "border" : ""
-          } bg-slate-50`}>
+          className={cn(
+            "mt-4 flex w-full items-center space-x-1 overflow-hidden rounded-lg bg-slate-50",
+            childBorder && "border"
+          )}>
           {children}
         </div>
       )}

@@ -83,10 +83,10 @@ describe("renderEmailResponseValue", () => {
       expect(screen.getByText(expectedMessage)).toBeInTheDocument();
       expect(screen.getByText(expectedMessage)).toHaveClass(
         "mt-0",
-        "font-bold",
         "break-words",
         "whitespace-pre-wrap",
-        "italic"
+        "italic",
+        "text-sm"
       );
     });
   });
@@ -225,7 +225,7 @@ ${"This is a very long sentence that should wrap properly within the email layou
 
       // Check if the text has the expected styling classes
       const textElement = screen.getByText(response);
-      expect(textElement).toHaveClass("mt-0", "font-bold", "break-words", "whitespace-pre-wrap");
+      expect(textElement).toHaveClass("mt-0", "break-words", "whitespace-pre-wrap", "text-sm");
     });
 
     test("handles array responses in the default case by rendering them as text", async () => {
@@ -248,7 +248,7 @@ ${"This is a very long sentence that should wrap properly within the email layou
       // Check if the text element contains all items from the response array
       const textElement = container.querySelector("p");
       expect(textElement).not.toBeNull();
-      expect(textElement).toHaveClass("mt-0", "font-bold", "break-words", "whitespace-pre-wrap");
+      expect(textElement).toHaveClass("mt-0", "break-words", "whitespace-pre-wrap", "text-sm");
 
       // Verify each item is present in the text content
       response.forEach((item) => {

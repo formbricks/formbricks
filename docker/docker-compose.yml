@@ -183,8 +183,8 @@ x-environment: &environment
 
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 
-    # Set the below to 1 to enable audit logging. The audit log requires Redis to be configured with the REDIS_URL env variable.
-    # AUDIT_LOG_ENABLED: 1
+          # Set the below to 1 to enable audit logging.
+      # AUDIT_LOG_ENABLED: 1
 
     # Set the below to get the ip address of the user from the request headers
     # AUDIT_LOG_GET_USER_IP: 1

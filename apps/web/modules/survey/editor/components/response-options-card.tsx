@@ -278,7 +278,10 @@ export const ResponseOptionsCard = ({
       toast.error(
         t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
           responseCount,
-        })
+        }),
+        {
+          id: "response-limit-error",
+        }
       );
       return;
     }

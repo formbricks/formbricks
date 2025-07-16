@@ -57,14 +57,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
           currentUserId: ctx.user.id,
         });
 
-        await sendInviteMemberEmail(
-          invitedUserId,
-          parsedInput.email,
-          ctx.user.name,
-          "",
-          false, // is onboarding invite
-          undefined
-        );
+        await sendInviteMemberEmail(invitedUserId, parsedInput.email, ctx.user.name, "");
 
         ctx.auditLoggingCtx.inviteId = invitedUserId;
         ctx.auditLoggingCtx.newObject = {
