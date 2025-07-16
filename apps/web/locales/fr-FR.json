@@ -1733,7 +1733,6 @@
         "embed_on_website": {
           "description": "Les enquêtes Formbricks peuvent être intégrées comme élément statique.",
           "embed_code_copied_to_clipboard": "Code d'intégration copié dans le presse-papiers !",
-          "embed_in_app": "Intégrer dans l'application",
           "embed_mode": "Mode d'intégration",
           "embed_mode_description": "Intégrez votre enquête avec un design minimaliste, en supprimant les marges et l'arrière-plan.",
           "nav_title": "Incorporer sur le site web"
@@ -1844,7 +1843,6 @@
         "last_quarter": "dernier trimestre",
         "last_year": "l'année dernière",
         "link_to_public_results_copied": "Lien vers les résultats publics copié",
-        "mobile_app": "Application mobile",
         "no_responses_found": "Aucune réponse trouvée",
         "only_completed": "Uniquement terminé",
         "other_values_found": "D'autres valeurs trouvées",
@@ -1857,10 +1855,6 @@
         "qr_code_download_failed": "Échec du téléchargement du code QR",
         "qr_code_download_with_start_soon": "Le téléchargement du code QR débutera bientôt",
         "qr_code_generation_failed": "\"Un problème est survenu lors du chargement du code QR du sondage. Veuillez réessayer.\"",
-        "quickstart_mobile_apps": "Démarrage rapide : Applications mobiles",
-        "quickstart_mobile_apps_description": "Pour commencer avec les enquêtes dans les applications mobiles, veuillez suivre le guide de démarrage rapide :",
-        "quickstart_web_apps": "Démarrage rapide : Applications web",
-        "quickstart_web_apps_description": "Veuillez suivre le guide de démarrage rapide pour commencer :",
         "results_are_public": "Les résultats sont publics.",
         "selected_responses_csv": "Réponses sélectionnées (CSV)",
         "selected_responses_excel": "Réponses sélectionnées (Excel)",
@@ -1883,7 +1877,6 @@
         "use_personal_links": "Utilisez des liens personnels",
         "view_site": "Voir le site",
         "waiting_for_response": "En attente d'une réponse \uD83E\uDDD8‍♂️",
-        "web_app": "application web",
         "whats_next": "Qu'est-ce qui vient ensuite ?",
         "your_survey_is_public": "Votre enquête est publique.",
         "youre_not_plugged_in_yet": "Vous n'êtes pas encore branché !"

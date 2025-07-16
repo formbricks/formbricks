@@ -1733,7 +1733,6 @@
         "embed_on_website": {
           "description": "Os inquéritos Formbricks podem ser incorporados como um elemento estático.",
           "embed_code_copied_to_clipboard": "Código incorporado copiado para a área de transferência!",
-          "embed_in_app": "Incorporar na aplicação",
           "embed_mode": "Modo de Incorporação",
           "embed_mode_description": "Incorpore o seu inquérito com um design minimalista, descartando o preenchimento e o fundo.",
           "nav_title": "Incorporar no site"
@@ -1844,7 +1843,6 @@
         "last_quarter": "Último trimestre",
         "last_year": "Ano passado",
         "link_to_public_results_copied": "Link para resultados públicos copiado",
-        "mobile_app": "Aplicação móvel",
         "no_responses_found": "Nenhuma resposta encontrada",
         "only_completed": "Apenas concluído",
         "other_values_found": "Outros valores encontrados",
@@ -1857,10 +1855,6 @@
         "qr_code_download_failed": "Falha ao transferir o código QR",
         "qr_code_download_with_start_soon": "O download do código QR começará em breve",
         "qr_code_generation_failed": "Ocorreu um problema ao carregar o Código QR do questionário. Por favor, tente novamente.",
-        "quickstart_mobile_apps": "Início rápido: Aplicações móveis",
-        "quickstart_mobile_apps_description": "Para começar com inquéritos em aplicações móveis, por favor, siga o guia de início rápido:",
-        "quickstart_web_apps": "Início rápido: Aplicações web",
-        "quickstart_web_apps_description": "Por favor, siga o guia de início rápido para começar:",
         "results_are_public": "Os resultados são públicos",
         "selected_responses_csv": "Respostas selecionadas (CSV)",
         "selected_responses_excel": "Respostas selecionadas (Excel)",
@@ -1883,7 +1877,6 @@
         "use_personal_links": "Utilize links pessoais",
         "view_site": "Ver site",
         "waiting_for_response": "A aguardar uma resposta \uD83E\uDDD8‍♂️",
-        "web_app": "Aplicação web",
         "whats_next": "O que se segue?",
         "your_survey_is_public": "O seu inquérito é público",
         "youre_not_plugged_in_yet": "Ainda não está ligado!"
