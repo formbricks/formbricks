@@ -1,7 +1,7 @@
 import { validateInputs } from "@/lib/utils/validate";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import { createBrevoCustomer, updateBrevoCustomer } from "./brevo";
+import { createBrevoCustomer, deleteBrevoCustomerByEmail, updateBrevoCustomer } from "./brevo";
 
 vi.mock("@/lib/constants", () => ({
   BREVO_API_KEY: "mock_api_key",
@@ -123,5 +123,65 @@ describe("updateBrevoCustomer", () => {
       })
     );
     expect(validateInputs).toHaveBeenCalled();
+  });
+});
+
+describe("deleteBrevoCustomerByEmail", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("should return early if BREVO_API_KEY is not defined", async () => {
+    vi.doMock("@/lib/constants", () => ({
+      BREVO_API_KEY: undefined,
+      BREVO_LIST_ID: "123",
+    }));
+
+    const { deleteBrevoCustomerByEmail } = await import("./brevo"); // Re-import to get the mocked version
+
+    const result = await deleteBrevoCustomerByEmail({ email: "test@example.com" });
+
+    expect(result).toBeUndefined();
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(validateInputs).not.toHaveBeenCalled();
+  });
+
+  test("should log an error if fetch fails", async () => {
+    const loggerSpy = vi.spyOn(logger, "error");
+
+    vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Fetch failed"));
+
+    await deleteBrevoCustomerByEmail({ email: "test@example.com" });
+
+    expect(loggerSpy).toHaveBeenCalledWith(expect.any(Error), "Error deleting user from Brevo");
+  });
+
+  test("should log the error response if fetch status is not 204", async () => {
+    const loggerSpy = vi.spyOn(logger, "error");
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new global.Response("Bad Request", { status: 400, statusText: "Bad Request" })
+    );
+
+    await deleteBrevoCustomerByEmail({ email: "test@example.com" });
+
+    expect(loggerSpy).toHaveBeenCalledWith({ errorText: "Bad Request" }, "Error deleting user from Brevo");
+  });
+
+  test("should successfully delete a Brevo customer", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(new global.Response(null, { status: 204 }));
+
+    await deleteBrevoCustomerByEmail({ email: "test@example.com" });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api.brevo.com/v3/contacts/test%40example.com?identifierType=email_id",
+      expect.objectContaining({
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "api-key": "mock_api_key",
+        },
+      })
+    );
   });
 });
