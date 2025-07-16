@@ -157,30 +157,6 @@ describe("QRCodeTab", () => {
     cleanup();
   });
 
-  describe("Component rendering", () => {
-    test("renders component with title and description", () => {
-      render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
-
-      expect(
-        screen.getByText("environments.surveys.summary.make_survey_accessible_via_qr_code")
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("environments.surveys.summary.responses_collected_via_qr_code_are_anonymous")
-      ).toBeInTheDocument();
-    });
-
-    test("renders without QR code when surveyUrl is empty", () => {
-      render(<QRCodeTab surveyUrl="" />);
-
-      expect(
-        screen.getByText("environments.surveys.summary.make_survey_accessible_via_qr_code")
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("environments.surveys.summary.responses_collected_via_qr_code_are_anonymous")
-      ).toBeInTheDocument();
-    });
-  });
-
   describe("QR Code generation", () => {
     test("attempts to generate QR code when surveyUrl is provided", async () => {
       render(<QRCodeTab surveyUrl={mockSurveyUrl} />);
@@ -256,12 +232,6 @@ describe("QRCodeTab", () => {
     test("shows appropriate state when surveyUrl is empty", async () => {
       render(<QRCodeTab surveyUrl="" />);
 
-      // Component should render some content
-      await waitFor(() => {
-        const content = screen.getByText("environments.surveys.summary.make_survey_accessible_via_qr_code");
-        expect(content).toBeInTheDocument();
-      });
-
       // Should show button (but disabled) when URL is empty, no alert
       const button = screen.getByTestId("button");
       expect(button).toBeInTheDocument();
@@ -285,20 +255,6 @@ describe("QRCodeTab", () => {
       // After rerender, button should still be present
       await waitFor(() => {
         expect(screen.getByTestId("button")).toBeInTheDocument();
-      });
-    });
-
-    test("handles empty surveyUrl gracefully", async () => {
-      render(<QRCodeTab surveyUrl="" />);
-
-      // Component should render basic content even with empty URL
-      await waitFor(() => {
-        const title = screen.getByText("environments.surveys.summary.make_survey_accessible_via_qr_code");
-        const description = screen.getByText(
-          "environments.surveys.summary.responses_collected_via_qr_code_are_anonymous"
-        );
-        expect(title).toBeInTheDocument();
-        expect(description).toBeInTheDocument();
       });
     });
   });

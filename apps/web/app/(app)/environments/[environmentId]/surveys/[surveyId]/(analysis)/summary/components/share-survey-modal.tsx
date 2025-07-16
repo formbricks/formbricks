@@ -1,5 +1,15 @@
 "use client";
 
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
+import { AnonymousLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/anonymous-links-tab";
+import { AppTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/app-tab";
+import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
+import { EmailTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/email-tab";
+import { PersonalLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/personal-links-tab";
+import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
+import { SocialMediaTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/social-media-tab";
+import { WebsiteEmbedTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/website-embed-tab";
+import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -9,12 +19,11 @@ import {
   LinkIcon,
   MailIcon,
   QrCodeIcon,
-  SmartphoneIcon,
+  Share2Icon,
   SquareStack,
-  UserIcon,
+  UserIcon
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { logger } from "@formbricks/logger";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -22,16 +31,6 @@ import { ShareView } from "./shareEmbedModal/share-view";
 import { SuccessView } from "./shareEmbedModal/success-view";
 
 type ModalView = "start" | "share";
-
-enum ShareViewType {
-  LINK = "link",
-  QR_CODE = "qr-code",
-  PERSONAL_LINKS = "personal-links",
-  EMAIL = "email",
-  WEBSITE_EMBED = "website-embed",
-  DYNAMIC_POPUP = "dynamic-popup",
-  APP = "app",
-}
 
 interface ShareSurveyModalProps {
   survey: TSurvey;
@@ -57,70 +56,114 @@ export const ShareSurveyModal = ({
   isFormbricksCloud,
 }: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
-  const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
+  const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
+  const [showView, setShowView] = useState<ModalView>(modalView);
   const { email } = user;
   const { t } = useTranslate();
-  const linkTabs: { id: ShareViewType; label: string; icon: React.ElementType }[] = useMemo(
+  const linkTabs: {
+    id: ShareViewType;
+    label: string;
+    icon: React.ElementType;
+    title: string;
+    description: string;
+    componentType: React.ComponentType<any>;
+    componentProps: any;
+  }[] = useMemo(
     () => [
       {
-        id: ShareViewType.LINK,
-        label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
+        id: ShareViewType.ANON_LINKS,
+        label: t("environments.surveys.share.anonymous_links.nav_title"),
         icon: LinkIcon,
+        title: t("environments.surveys.share.anonymous_links.nav_title"),
+        description: t("environments.surveys.share.anonymous_links.description"),
+        componentType: AnonymousLinksTab,
+        componentProps: {
+          survey,
+          publicDomain,
+          setSurveyUrl,
+          locale: user.locale,
+          surveyUrl,
+        },
+      },
+      {
+        id: ShareViewType.PERSONAL_LINKS,
+        label: t("environments.surveys.share.personal_links.nav_title"),
+        icon: UserIcon,
+        title: t("environments.surveys.share.personal_links.nav_title"),
+        description: t("environments.surveys.share.personal_links.description"),
+        componentType: PersonalLinksTab,
+        componentProps: {
+          environmentId,
+          surveyId: survey.id,
+          segments,
+          isContactsEnabled,
+          isFormbricksCloud,
+        },
+      },
+      {
+        id: ShareViewType.WEBSITE_EMBED,
+        label: t("environments.surveys.share.embed_on_website.nav_title"),
+        icon: Code2Icon,
+        title: t("environments.surveys.share.embed_on_website.nav_title"),
+        description: t("environments.surveys.share.embed_on_website.description"),
+        componentType: WebsiteEmbedTab,
+        componentProps: { surveyUrl },
+      },
+      {
+        id: ShareViewType.EMAIL,
+        label: t("environments.surveys.share.send_email.nav_title"),
+        icon: MailIcon,
+        title: t("environments.surveys.share.send_email.nav_title"),
+        description: t("environments.surveys.share.send_email.description"),
+        componentType: EmailTab,
+        componentProps: { surveyId: survey.id, email },
+      },
+      {
+        id: ShareViewType.SOCIAL_MEDIA,
+        label: t("environments.surveys.share.social_media.title"),
+        icon: Share2Icon,
+        title: t("environments.surveys.share.social_media.title"),
+        description: t("environments.surveys.share.social_media.description"),
+        componentType: SocialMediaTab,
+        componentProps: { surveyUrl, surveyTitle: survey.name },
       },
       {
         id: ShareViewType.QR_CODE,
         label: t("environments.surveys.summary.qr_code"),
         icon: QrCodeIcon,
-      },
-      {
-        id: ShareViewType.PERSONAL_LINKS,
-        label: t("environments.surveys.summary.personal_links"),
-        icon: UserIcon,
-      },
-      {
-        id: ShareViewType.EMAIL,
-        label: t("environments.surveys.summary.embed_in_an_email"),
-        icon: MailIcon,
-      },
-      {
-        id: ShareViewType.WEBSITE_EMBED,
-        label: t("environments.surveys.summary.embed_on_website"),
-        icon: Code2Icon,
+        title: t("environments.surveys.summary.qr_code"),
+        description: t("environments.surveys.summary.qr_code_description"),
+        componentType: QRCodeTab,
+        componentProps: { surveyUrl },
       },
       {
         id: ShareViewType.DYNAMIC_POPUP,
-        label: t("environments.surveys.summary.dynamic_popup"),
+        label: t("environments.surveys.share.dynamic_popup.nav_title"),
         icon: SquareStack,
+        title: t("environments.surveys.share.dynamic_popup.nav_title"),
+        description: t("environments.surveys.share.dynamic_popup.description"),
+        componentType: DynamicPopupTab,
+        componentProps: { environmentId, surveyId: survey.id },
       },
     ],
-    [t, isSingleUseLinkSurvey]
+    [
+      t,
+      survey,
+      publicDomain,
+      setSurveyUrl,
+      user.locale,
+      surveyUrl,
+      environmentId,
+      segments,
+      isContactsEnabled,
+      isFormbricksCloud,
+      email,
+    ]
   );
 
-  const appTabs = [
-    {
-      id: ShareViewType.APP,
-      label: t("environments.surveys.summary.embed_in_app"),
-      icon: SmartphoneIcon,
-    },
-  ];
-
-  const [activeId, setActiveId] = useState(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
-  const [showView, setShowView] = useState<ModalView>(modalView);
-  const [surveyUrl, setSurveyUrl] = useState("");
-
-  useEffect(() => {
-    const fetchSurveyUrl = async () => {
-      try {
-        const url = await getSurveyUrl(survey, publicDomain, "default");
-        setSurveyUrl(url);
-      } catch (error) {
-        logger.error("Failed to fetch survey URL:", error);
-        // Fallback to a default URL if fetching fails
-        setSurveyUrl(`${publicDomain}/s/${survey.id}`);
-      }
-    };
-    fetchSurveyUrl();
-  }, [survey, publicDomain]);
+  const [activeId, setActiveId] = useState(
+    survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP
+  );
 
   useEffect(() => {
     if (open) {
@@ -129,10 +172,10 @@ export const ShareSurveyModal = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? ShareViewType.LINK : ShareViewType.APP);
     setOpen(open);
     if (!open) {
       setShowView("start");
+      setActiveId(ShareViewType.ANON_LINKS);
     }
   };
 
@@ -145,40 +188,54 @@ export const ShareSurveyModal = ({
     setActiveId(tabId);
   };
 
+  const renderContent = () => {
+    if (showView === "start") {
+      return (
+        <SuccessView
+          survey={survey}
+          surveyUrl={surveyUrl}
+          publicDomain={publicDomain}
+          setSurveyUrl={setSurveyUrl}
+          user={user}
+          tabs={linkTabs}
+          handleViewChange={handleViewChange}
+          handleEmbedViewWithTab={handleEmbedViewWithTab}
+        />
+      );
+    }
+
+    if (survey.type === "link") {
+      return (
+        <ShareView
+          tabs={linkTabs}
+          activeId={activeId}
+          setActiveId={setActiveId}
+        />
+      );
+    }
+
+    return (
+      <div className={`h-full w-full bg-slate-50 p-6 rounded-lg`}>
+        <TabContainer
+          title={t("environments.surveys.summary.in_app.title")}
+          description={t("environments.surveys.summary.in_app.description")}>
+          <AppTab />
+        </TabContainer>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <VisuallyHidden asChild>
         <DialogTitle />
       </VisuallyHidden>
-      <DialogContent className="w-full bg-white p-0 lg:h-[700px]" width="wide" aria-describedby={undefined}>
-        {showView === "start" ? (
-          <SuccessView
-            survey={survey}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            user={user}
-            tabs={linkTabs}
-            handleViewChange={handleViewChange}
-            handleEmbedViewWithTab={handleEmbedViewWithTab}
-          />
-        ) : (
-          <ShareView
-            tabs={survey.type === "link" ? linkTabs : appTabs}
-            activeId={activeId}
-            environmentId={environmentId}
-            setActiveId={setActiveId}
-            survey={survey}
-            email={email}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            locale={user.locale}
-            segments={segments}
-            isContactsEnabled={isContactsEnabled}
-            isFormbricksCloud={isFormbricksCloud}
-          />
-        )}
+      <DialogContent
+        className="w-full bg-white p-0 lg:h-[700px]"
+        width={survey.type === "link" ? "wide" : "default"}
+        aria-describedby={undefined}
+        unconstrained>
+          {renderContent()}
       </DialogContent>
     </Dialog>
   );

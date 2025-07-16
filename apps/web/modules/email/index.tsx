@@ -32,7 +32,6 @@ import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-em
 import { VerificationEmail } from "./emails/auth/verification-email";
 import { InviteAcceptedEmail } from "./emails/invite/invite-accepted-email";
 import { InviteEmail } from "./emails/invite/invite-email";
-import { OnboardingInviteEmail } from "./emails/invite/onboarding-invite-email";
 import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
 import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
@@ -166,9 +165,7 @@ export const sendInviteMemberEmail = async (
   inviteId: string,
   email: string,
   inviterName: string,
-  inviteeName: string,
-  isOnboardingInvite?: boolean,
-  inviteMessage?: string
+  inviteeName: string
 ): Promise<boolean> => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
@@ -177,26 +174,12 @@ export const sendInviteMemberEmail = async (
 
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
-  if (isOnboardingInvite && inviteMessage) {
-    const html = await render(
-      await OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName, inviteeName })
-    );
-    return await sendEmail({
-      to: email,
-      subject: t("emails.onboarding_invite_email_subject", {
-        inviterName,
-      }),
-      html,
-    });
-  } else {
-    const t = await getTranslate();
-    const html = await render(await InviteEmail({ inviteeName, inviterName, verifyLink }));
-    return await sendEmail({
-      to: email,
-      subject: t("emails.invite_member_email_subject"),
-      html,
-    });
-  }
+  const html = await render(await InviteEmail({ inviteeName, inviterName, verifyLink }));
+  return await sendEmail({
+    to: email,
+    subject: t("emails.invite_member_email_subject"),
+    html,
+  });
 };
 
 export const sendInviteAcceptedEmail = async (
