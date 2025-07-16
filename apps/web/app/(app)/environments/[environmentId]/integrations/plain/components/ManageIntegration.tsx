@@ -5,8 +5,6 @@ import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
@@ -14,6 +12,7 @@ import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationPlain, TIntegrationPlainConfigData } from "@formbricks/types/integration/plain";
 import { TUserLocale } from "@formbricks/types/user";
+import { IntegrationListPanel } from "../../components/IntegrationListPanel";
 import { AddKeyModal } from "./AddKeyModal";
 
 interface ManageIntegrationProps {
@@ -70,70 +69,48 @@ export const ManageIntegration = ({
   };
 
   return (
-    <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end space-x-2">
-        <div className="mr-6 flex items-center">
-          <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
-          <span className="text-slate-500">{t("common.connected")}</span>
-        </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" onClick={() => setIsKeyModalOpen(true)}>
-                <RefreshCcwIcon className="mr-2 h-4 w-4" />
-                {t("environments.integrations.plain.update_connection")}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t("environments.integrations.plain.update_connection_tooltip")}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <Button
-          onClick={() => {
+    <>
+      <IntegrationListPanel
+        environment={environment}
+        statusNode={
+          <>
+            <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
+            <span className="text-slate-500">{t("common.connected")}</span>
+          </>
+        }
+        reconnectAction={{
+          label: t("environments.integrations.plain.update_connection"),
+          onClick: () => setIsKeyModalOpen(true),
+          icon: <RefreshCcwIcon className="mr-2 h-4 w-4" />,
+          tooltip: t("environments.integrations.plain.update_connection_tooltip"),
+          variant: "outline",
+        }}
+        addNewAction={{
+          label: t("environments.integrations.plain.link_new_database"),
+          onClick: () => {
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
-          }}>
-          {t("environments.integrations.plain.link_new_database")}
-        </Button>
-      </div>
-      {!integrationArray || integrationArray.length === 0 ? (
-        <div className="mt-4 w-full">
-          <EmptySpaceFiller
-            type="table"
-            environment={environment}
-            noWidgetRequired={true}
-            emptyMessage={t("environments.integrations.plain.no_databases_found")}
-          />
-        </div>
-      ) : (
-        <div className="mt-4 flex w-full flex-col items-center justify-center">
-          <div className="mt-6 w-full rounded-lg border border-slate-200">
-            <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-2 hidden text-center sm:block">{t("common.survey")}</div>
-              <div className="col-span-2 hidden text-center sm:block">
-                {t("environments.integrations.plain.survey_id")}
-              </div>
-              <div className="col-span-2 hidden text-center sm:block">{t("common.updated_at")}</div>
-            </div>
-            {integrationArray &&
-              integrationArray.map((data, index) => {
-                return (
-                  <button
-                    key={`${index}-${data.surveyId}`}
-                    className="grid h-16 w-full cursor-pointer grid-cols-6 content-center rounded-lg p-2 hover:bg-slate-100"
-                    onClick={() => {
-                      editIntegration(index);
-                    }}>
-                    <div className="col-span-2 text-center">{data.surveyName}</div>
-                    <div className="col-span-2 text-center">{data.surveyId}</div>
-                    <div className="col-span-2 text-center">
-                      {timeSince(data.createdAt.toString(), locale)}
-                    </div>
-                  </button>
-                );
-              })}
-          </div>
-        </div>
-      )}
+          },
+        }}
+        emptyMessage={t("environments.integrations.plain.no_databases_found")}
+        items={integrationArray}
+        columns={[
+          {
+            header: t("common.survey"),
+            render: (item: TIntegrationPlainConfigData) => item.surveyName,
+          },
+          {
+            header: t("environments.integrations.plain.survey_id"),
+            render: (item: TIntegrationPlainConfigData) => item.surveyId,
+          },
+          {
+            header: t("common.updated_at"),
+            render: (item: TIntegrationPlainConfigData) => timeSince(item.createdAt.toString(), locale),
+          },
+        ]}
+        onRowClick={editIntegration}
+        getRowKey={(item: TIntegrationPlainConfigData, idx) => `${idx}-${item.surveyId}`}
+      />
       <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
         <Trash2Icon />
         {t("environments.integrations.delete_integration")}
@@ -149,6 +126,6 @@ export const ManageIntegration = ({
         text={t("environments.integrations.delete_integration_confirmation")}
         isDeleting={isDeleting}
       />
-    </div>
+    </>
   );
 };
