@@ -10,7 +10,6 @@ import {
   DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
@@ -30,6 +29,7 @@ import {
   TPlainMapping,
 } from "@formbricks/types/integration/plain";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { IntegrationModalFooter } from "../../components/IntegrationModalFooter";
 import { INITIAL_MAPPING, PLAIN_FIELD_TYPES } from "../constants";
 
 interface AddIntegrationModalProps {
@@ -524,35 +524,22 @@ export const AddIntegrationModal = ({
             </div>
           </DialogBody>
 
-          <DialogFooter>
-            {selectedIntegration ? (
-              <Button
-                type="button"
-                variant="destructive"
-                loading={isDeleting}
-                onClick={() => {
-                  deleteLink();
-                }}>
-                {t("common.delete")}
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setOpen(false);
-                  resetForm();
-                }}>
-                {t("common.cancel")}
-              </Button>
-            )}
-            <Button
-              type="submit"
-              loading={isLinkingIntegration}
-              disabled={mapping.filter((m) => m.error).length > 0}>
-              {selectedIntegration ? t("common.update") : t("environments.integrations.plain.connect")}
-            </Button>
-          </DialogFooter>
+          <IntegrationModalFooter
+            hasExistingIntegration={!!selectedIntegration}
+            deleteLabel={t("common.delete")}
+            cancelLabel={t("common.cancel")}
+            submitLabel={
+              selectedIntegration ? t("common.update") : t("environments.integrations.plain.connect")
+            }
+            isDeleting={isDeleting}
+            onDelete={deleteLink}
+            onCancel={() => {
+              setOpen(false);
+              resetForm();
+            }}
+            submitLoading={isLinkingIntegration}
+            submitDisabled={mapping.filter((m) => m.error).length > 0}
+          />
         </form>
       </DialogContent>
     </Dialog>

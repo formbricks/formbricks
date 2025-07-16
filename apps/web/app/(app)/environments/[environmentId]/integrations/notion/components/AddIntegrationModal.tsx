@@ -16,7 +16,6 @@ import {
   DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
@@ -35,6 +34,7 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { IntegrationModalFooter } from "../../components/IntegrationModalFooter";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -491,36 +491,23 @@ export const AddIntegrationModal = ({
             </div>
           </DialogBody>
 
-          <DialogFooter>
-            {selectedIntegration ? (
-              <Button
-                type="button"
-                variant="destructive"
-                loading={isDeleting}
-                onClick={() => {
-                  deleteLink();
-                }}>
-                {t("common.delete")}
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setOpen(false);
-                  resetForm();
-                  setMapping([]);
-                }}>
-                {t("common.cancel")}
-              </Button>
-            )}
-            <Button
-              type="submit"
-              loading={isLinkingDatabase}
-              disabled={mapping.filter((m) => m.error).length > 0}>
-              {selectedIntegration ? t("common.update") : t("environments.integrations.notion.link_database")}
-            </Button>
-          </DialogFooter>
+          <IntegrationModalFooter
+            hasExistingIntegration={!!selectedIntegration}
+            deleteLabel={t("common.delete")}
+            cancelLabel={t("common.cancel")}
+            submitLabel={
+              selectedIntegration ? t("common.update") : t("environments.integrations.notion.link_database")
+            }
+            isDeleting={isDeleting}
+            onDelete={deleteLink}
+            onCancel={() => {
+              setOpen(false);
+              resetForm();
+              setMapping([]);
+            }}
+            submitLoading={isLinkingDatabase}
+            submitDisabled={mapping.filter((m) => m.error).length > 0}
+          />
         </form>
       </DialogContent>
     </Dialog>
