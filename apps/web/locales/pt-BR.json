@@ -201,8 +201,6 @@
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Você está atualmente no ambiente {environment}.",
     "error": "Erro",
-    "error_component_description": "Esse recurso não existe ou você não tem permissão para acessá-lo.",
-    "error_component_title": "Erro ao carregar recursos",
     "expand_rows": "Expandir linhas",
     "finish": "Terminar",
     "follow_these": "Siga esses",

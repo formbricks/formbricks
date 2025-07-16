@@ -111,12 +111,13 @@ export const handleIntegrations = async (
           logger.error(notionResult.error, "Error in notion integration");
         }
         break;
-      case "plain":
+      case "plain": {
         const plainResult = await handlePlainIntegration(integration as TIntegrationPlain, data);
         if (!plainResult.ok) {
           logger.error(plainResult.error, "Error in plain integration");
         }
         break;
+      }
     }
   }
 };

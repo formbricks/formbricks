@@ -25,7 +25,7 @@ export const AddKeyModal = ({
   const [keyLabel, setKeyLabel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const open = externalOpen ?? internalOpen;
   const setOpen = externalSetOpen || setInternalOpen;
 
   return (
@@ -74,7 +74,7 @@ export const AddKeyModal = ({
                   });
                   toast.success(t("environments.integrations.plain.connection_success"));
                   setOpen(false);
-                } catch (error) {
+                } catch {
                   toast.error(t("environments.integrations.plain.connection_error"));
                 } finally {
                   setIsSubmitting(false);

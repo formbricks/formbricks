@@ -25,28 +25,17 @@ interface ActionButtonProps {
 }
 
 interface IntegrationListPanelProps<T> {
-  environment: TEnvironment;
-  /** Green dot + status text */
-  statusNode: React.ReactNode;
-  /** Reconnect button props */
-  reconnectAction: ActionButtonProps;
-  /** Add new mapping button props */
-  addNewAction: ActionButtonProps;
-  /** Empty state message */
-  emptyMessage: string;
-  /** Data rows */
-  items: T[];
-  /** Columns definition (max 3 for current UI) */
-  columns: Column<T>[];
-  /** Row click handler */
-  onRowClick: (index: number) => void;
-  /** Function to derive unique key for row */
-  getRowKey?: (item: T, index: number) => string | number;
+  readonly environment: TEnvironment;
+  readonly statusNode: React.ReactNode;
+  readonly reconnectAction: ActionButtonProps;
+  readonly addNewAction: ActionButtonProps;
+  readonly emptyMessage: string;
+  readonly items: T[];
+  readonly columns: Column<T>[];
+  readonly onRowClick: (index: number) => void;
+  readonly getRowKey?: (item: T, index: number) => string | number;
 }
 
-/**
- * Generic list panel used by integration manage pages to avoid repeating toolbar + table boilerplate.
- */
 export function IntegrationListPanel<T>({
   environment,
   statusNode,

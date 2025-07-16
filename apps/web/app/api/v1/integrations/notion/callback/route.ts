@@ -51,7 +51,7 @@ export const GET = async (req: NextRequest) => {
     });
 
     const tokenData = await response.json();
-    const encryptedAccessToken = symmetricEncrypt(tokenData.access_token, ENCRYPTION_KEY!);
+    const encryptedAccessToken = symmetricEncrypt(tokenData.access_token, ENCRYPTION_KEY);
     tokenData.access_token = encryptedAccessToken;
 
     const notionIntegration: TIntegrationNotionInput = {

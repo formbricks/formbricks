@@ -239,10 +239,10 @@ export const AddIntegrationModal = ({
 
       if (selectedIntegration) {
         // update action
-        plainIntegrationData.config!.data[selectedIntegration.index] = integrationData;
+        plainIntegrationData.config.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        plainIntegrationData.config!.data.push(integrationData);
+        plainIntegrationData.config.data.push(integrationData);
       }
 
       await createOrUpdateIntegrationAction({ environmentId, integrationData: plainIntegrationData });
@@ -261,7 +261,7 @@ export const AddIntegrationModal = ({
   };
 
   const deleteLink = async () => {
-    plainIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
+    plainIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
       await createOrUpdateIntegrationAction({ environmentId, integrationData: plainIntegrationData });

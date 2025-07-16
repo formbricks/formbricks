@@ -15,7 +15,7 @@ export const writeData = async (
   integrationConfig: TIntegrationPlainConfigData
 ): Promise<Result<void, Error>> => {
   try {
-    const decryptedToken = symmetricDecrypt(config.key, ENCRYPTION_KEY!);
+    const decryptedToken = symmetricDecrypt(config.key, ENCRYPTION_KEY);
     const client = new PlainClient({
       apiKey: decryptedToken,
     });

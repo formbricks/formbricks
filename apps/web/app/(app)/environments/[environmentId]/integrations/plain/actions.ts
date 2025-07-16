@@ -39,7 +39,7 @@ export const connectPlainIntegrationAction = authenticatedActionClient
       ],
     });
 
-    const encryptedAccessToken = symmetricEncrypt(key, ENCRYPTION_KEY!);
+    const encryptedAccessToken = symmetricEncrypt(key, ENCRYPTION_KEY);
 
     const existingIntegration = await getIntegrationByType(environmentId, "plain");
     const plainData: TIntegrationPlainConfigData[] =
