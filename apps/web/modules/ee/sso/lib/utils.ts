@@ -15,7 +15,7 @@ const sanitizeUrl = (url: string): string => {
     urlObj.searchParams.delete("token");
     urlObj.searchParams.delete("code");
     urlObj.searchParams.delete("state");
-    return urlObj.pathname + (urlObj.search ? `?${urlObj.search}` : "");
+    return urlObj.pathname + (urlObj.search ? `${urlObj.search}` : "");
   } catch {
     return "[invalid-url]";
   }
@@ -31,5 +31,5 @@ export const createDebugContext = (user: TUser, account: Account, callbackUrl?: 
     component: "sso_handler",
   };
 
-  return redactPII(context);
+  return { ...redactPII(context), name: "formbricks" };
 };
