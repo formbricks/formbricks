@@ -15,7 +15,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TUser } from "@formbricks/types/user";
 import { handleSsoCallback } from "../sso-handlers";
-import { createDebugContext } from "../utils";
 import {
   mockAccount,
   mockCreatedUser,
@@ -96,10 +95,6 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/modules/ee/sso/lib/utils", () => ({
-  createDebugContext: vi.fn(),
-}));
-
 // Mock environment variables
 vi.mock("@/lib/constants", () => ({
   SKIP_INVITE_FOR_SSO: 0,
@@ -118,12 +113,6 @@ describe("handleSsoCallback", () => {
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(createDebugContext).mockReturnValue({
-      correlationId: "test-correlation-id",
-      ...mockUser,
-      ...mockAccount,
-      callbackPath: "http://localhost:3000",
-    });
 
     // Mock organization-related functions
     vi.mocked(getOrganization).mockResolvedValue(mockOrganization);

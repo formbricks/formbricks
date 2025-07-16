@@ -2,13 +2,13 @@ import { createAccount } from "@/lib/account/service";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
-import { createDebugContext } from "@/lib/log-helper";
 import { createMembership } from "@/lib/membership/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
+import { redactPII } from "@/modules/ee/audit-logs/lib/utils";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
@@ -32,7 +32,11 @@ export const handleSsoCallback = async ({
   account: Account;
   callbackUrl: string;
 }) => {
-  const debugContext = createDebugContext({ user, account, callbackUrl, component: "sso_handler" });
+  const debugContext = {
+    correlationId: crypto.randomUUID(),
+    ...redactPII({ user, account, callbackUrl, component: "sso_handler" }),
+    name: "formbricks",
+  };
 
   logger.withContext(debugContext).debug(
     {
