@@ -16,7 +16,7 @@ type StoryProps = React.ComponentProps<typeof Tabs> & StoryOptions;
 const availableIcons = [UserIcon, KeyRound, InfoIcon, Settings, FileText, BarChart];
 
 const meta: Meta<StoryProps> = {
-  title: "ui/Tabs",
+  title: "UI/Tabs",
   component: Tabs,
   tags: ["autodocs"],
   parameters: {
@@ -48,6 +48,17 @@ const meta: Meta<StoryProps> = {
         defaultValue: { summary: "true" },
       },
       order: 2,
+    },
+    width: {
+      control: "select",
+      options: ["fill", "fit"],
+      description: "Width behavior of the tabs component",
+      table: {
+        category: "Appearance",
+        type: { summary: "string" },
+        defaultValue: { summary: "fit" },
+      },
+      order: 3,
     },
 
     // Story Options - Content Category
@@ -96,6 +107,7 @@ const renderTabs = (args: StoryProps) => {
   const {
     variant = "default",
     size = "default",
+    width = "fit",
     showIcons = true,
     numberOfTabs = 2,
     tabTexts = "Account,Password",
@@ -118,9 +130,9 @@ const renderTabs = (args: StoryProps) => {
   const layout = size === "big" ? "column" : "row";
 
   return (
-    <div className="w-full">
-      <Tabs defaultValue={defaultValue || tabValues[0]} {...tabsProps}>
-        <TabsList variant={variant} size={size}>
+    <div className="w-full max-w-2xl">
+      <Tabs defaultValue={defaultValue || tabValues[0]} width={width} {...tabsProps}>
+        <TabsList variant={variant} size={size} width={width}>
           {finalTabLabels.map((label, index) => {
             const IconComponent = availableIcons[index % availableIcons.length];
             return (
@@ -138,7 +150,10 @@ const renderTabs = (args: StoryProps) => {
         </TabsList>
         {finalTabLabels.map((label, index) => (
           <TabsContent key={tabValues[index]} value={tabValues[index]} className="mt-4">
-            Content for {label} tab.
+            <div className="rounded-lg border p-6 text-sm">
+              Content for {label} tab. This content can be of varying lengths to demonstrate how the tabs
+              component handles different content widths.
+            </div>
           </TabsContent>
         ))}
       </Tabs>
@@ -150,6 +165,7 @@ export const Default: Story = {
   render: renderTabs,
   args: {
     size: "default",
+    width: "fit",
     showIcons: false,
     numberOfTabs: 2,
     tabTexts: "Account,Password",
@@ -160,6 +176,7 @@ export const WithIcons: Story = {
   render: renderTabs,
   args: {
     size: "default",
+    width: "fit",
     showIcons: true,
     numberOfTabs: 2,
     tabTexts: "Account,Password",
@@ -167,7 +184,43 @@ export const WithIcons: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Tabs without icons for a cleaner, text-only appearance.",
+        story: "Tabs with icons for enhanced visual navigation.",
+      },
+    },
+  },
+};
+
+export const FillWidth: Story = {
+  render: renderTabs,
+  args: {
+    size: "default",
+    width: "fill",
+    showIcons: true,
+    numberOfTabs: 3,
+    tabTexts: "Account,Password,Settings",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Tabs that stretch to fill the full width of the parent, with triggers evenly distributed.",
+      },
+    },
+  },
+};
+
+export const FitWidth: Story = {
+  render: renderTabs,
+  args: {
+    size: "default",
+    width: "fit",
+    showIcons: true,
+    numberOfTabs: 3,
+    tabTexts: "Account,Password,Settings",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Tabs that fit their content and are centered, with all triggers having equal width.",
       },
     },
   },
@@ -177,6 +230,7 @@ export const BigSize: Story = {
   render: renderTabs,
   args: {
     size: "big",
+    width: "fit",
     showIcons: true,
     numberOfTabs: 2,
     tabTexts: "Account,Password",
@@ -195,6 +249,7 @@ export const Disabled: Story = {
   args: {
     variant: "disabled",
     size: "default",
+    width: "fit",
     showIcons: true,
     numberOfTabs: 3,
     tabTexts: "Account,Password,Settings",

@@ -60,21 +60,32 @@ interface TabsListProps
   extends React.ComponentProps<typeof TabsPrimitive.List>,
     VariantProps<typeof tabsVariants> {}
 
-function TabsList({ className, variant, size, ...props }: TabsListProps) {
-  return (
-    <TabsPrimitive.List
-      data-slot="tabs-list"
-      className={cn(tabsVariants({ variant, size }), className)}
-      {...props}
-    />
-  );
-}
-
 interface TabsTriggerProps
   extends React.ComponentProps<typeof TabsPrimitive.Trigger>,
     VariantProps<typeof tabsTriggerVariants> {
   readonly icon?: React.ReactNode;
   readonly showIcon?: boolean;
+}
+
+function TabsList({ className, variant, size, width, ...props }: TabsListProps) {
+  const isGridLayout = width === "fill";
+
+  return (
+    <TabsPrimitive.List
+      data-slot="tabs-list"
+      className={cn(
+        tabsVariants({ variant, size, width }),
+        isGridLayout ? "grid grid-cols-[repeat(var(--tabs-count),1fr)]" : "flex [&>*]:flex-1",
+        className
+      )}
+      style={
+        isGridLayout
+          ? ({ "--tabs-count": React.Children.count(props.children) } as React.CSSProperties)
+          : undefined
+      }
+      {...props}
+    />
+  );
 }
 
 function TabsTrigger({
@@ -90,7 +101,7 @@ function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
-      className={cn(tabsTriggerVariants({ variant, size, layout }), "h-full min-w-0 flex-1", className)}
+      className={cn(tabsTriggerVariants({ variant, size, layout }), "h-full min-w-max", className)}
       {...props}>
       {showIcon && icon}
       <span className="text-center text-sm font-medium leading-5">{children}</span>
