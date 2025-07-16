@@ -4,15 +4,6 @@ import {
   matchesAnyPattern,
 } from "./route-config";
 
-export const isLoginRoute = (url: string) =>
-  url === "/api/auth/callback/credentials" || url === "/auth/login";
-
-export const isSignupRoute = (url: string) => url === "/auth/signup";
-
-export const isVerifyEmailRoute = (url: string) => url === "/auth/verify-email";
-
-export const isForgotPasswordRoute = (url: string) => url === "/auth/forgot-password";
-
 export const isClientSideApiRoute = (url: string): boolean => {
   // Open Graph image generation route is a client side API route but it should not be rate limited
   if (url.includes("/api/v1/client/og")) return false;
@@ -25,11 +16,6 @@ export const isClientSideApiRoute = (url: string): boolean => {
 
 export const isManagementApiRoute = (url: string): boolean => {
   const regex = /^\/api\/v\d+\/management\//;
-  return regex.test(url);
-};
-
-export const isShareUrlRoute = (url: string): boolean => {
-  const regex = /\/share\/[A-Za-z0-9]+\/(?:summary|responses)/;
   return regex.test(url);
 };
 

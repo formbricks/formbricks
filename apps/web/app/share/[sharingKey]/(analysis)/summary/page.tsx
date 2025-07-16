@@ -6,6 +6,8 @@ import { getEnvironment } from "@/lib/environment/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@/lib/survey/service";
+import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -20,6 +22,8 @@ interface SummaryPageProps {
 }
 
 const Page = async (props: SummaryPageProps) => {
+  await applyIPRateLimit(rateLimitConfigs.share.url);
+
   const t = await getTranslate();
   const params = await props.params;
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);

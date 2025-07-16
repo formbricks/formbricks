@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { hashString } from "./hashString";
+import { hashString } from "./hash-string";
 
 describe("hashString", () => {
   test("should return a string", () => {

@@ -20,7 +20,7 @@ vi.mock("@/lib/constants", () => ({
   IS_PRODUCTION: true,
   AUDIT_LOG_ENABLED: true,
   ENCRYPTION_KEY: "mocked-encryption-key",
-  REDIS_URL: "mock-url",
+  REDIS_URL: undefined,
 }));
 
 describe("utils", () => {

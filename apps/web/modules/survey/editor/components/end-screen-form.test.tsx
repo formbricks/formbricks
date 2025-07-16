@@ -50,7 +50,7 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PORT: "mock-smtp-port",
   IS_POSTHOG_CONFIGURED: true,
   SESSION_MAX_AGE: 1000,
-  REDIS_URL: "test-redis-url",
+  REDIS_URL: undefined,
   AUDIT_LOG_ENABLED: true,
 }));
 
