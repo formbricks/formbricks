@@ -17,7 +17,7 @@ import {
   removeScrollDepthListener,
 } from "@/lib/survey/no-code-action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
-import { TActionClassNoCodeConfig } from "@/types/survey";
+import { type TActionClassNoCodeConfig } from "@/types/survey";
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/common/config", () => ({

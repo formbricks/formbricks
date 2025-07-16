@@ -6,6 +6,7 @@ import { Logger } from "@/lib/common/logger";
 import { handleErrorOnFirstSetup, setup, tearDown } from "@/lib/common/setup";
 import { setIsSetup } from "@/lib/common/status";
 import { filterSurveys, isNowExpired } from "@/lib/common/utils";
+import type * as Utils from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
@@ -50,8 +51,9 @@ vi.mock("@/lib/environment/state", () => ({
 
 // 6) Mock filterSurveys
 vi.mock("@/lib/common/utils", async (importOriginal) => {
+  const originalModule = await importOriginal<typeof Utils>();
   return {
-    ...(await importOriginal<typeof import("@/lib/common/utils")>()),
+    ...originalModule,
     filterSurveys: vi.fn(),
     isNowExpired: vi.fn(),
   };

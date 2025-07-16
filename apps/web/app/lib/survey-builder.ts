@@ -21,8 +21,10 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 
-const defaultButtonLabel = "common.next";
-const defaultBackButtonLabel = "common.back";
+const TRANSLATION_KEYS = {
+  NEXT: "common.next",
+  BACK: "common.back",
+} as const;
 
 export const buildMultipleChoiceQuestion = ({
   id,
@@ -63,8 +65,8 @@ export const buildMultipleChoiceQuestion = ({
       const id = containsOther && isLastIndex ? "other" : choiceIds ? choiceIds[index] : createId();
       return { id, label: createI18nString(choice, []) };
     }),
-    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
-    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    buttonLabel: createI18nString(buttonLabel || t(TRANSLATION_KEYS.NEXT), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(TRANSLATION_KEYS.BACK), []),
     shuffleOption: shuffleOption || "none",
     required: required ?? false,
     logic,
@@ -103,8 +105,8 @@ export const buildOpenTextQuestion = ({
     subheader: subheader ? createI18nString(subheader, []) : undefined,
     placeholder: placeholder ? createI18nString(placeholder, []) : undefined,
     headline: createI18nString(headline, []),
-    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
-    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    buttonLabel: createI18nString(buttonLabel || t(TRANSLATION_KEYS.NEXT), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(TRANSLATION_KEYS.BACK), []),
     required: required ?? false,
     longAnswer,
     logic,
@@ -151,8 +153,8 @@ export const buildRatingQuestion = ({
     headline: createI18nString(headline, []),
     scale,
     range,
-    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
-    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    buttonLabel: createI18nString(buttonLabel || t(TRANSLATION_KEYS.NEXT), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(TRANSLATION_KEYS.BACK), []),
     required: required ?? false,
     isColorCodingEnabled,
     lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
@@ -192,8 +194,8 @@ export const buildNPSQuestion = ({
     type: TSurveyQuestionTypeEnum.NPS,
     subheader: subheader ? createI18nString(subheader, []) : undefined,
     headline: createI18nString(headline, []),
-    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
-    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    buttonLabel: createI18nString(buttonLabel || t(TRANSLATION_KEYS.NEXT), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(TRANSLATION_KEYS.BACK), []),
     required: required ?? false,
     isColorCodingEnabled,
     lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
@@ -228,8 +230,8 @@ export const buildConsentQuestion = ({
     type: TSurveyQuestionTypeEnum.Consent,
     subheader: subheader ? createI18nString(subheader, []) : undefined,
     headline: createI18nString(headline, []),
-    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
-    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    buttonLabel: createI18nString(buttonLabel || t(TRANSLATION_KEYS.NEXT), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(TRANSLATION_KEYS.BACK), []),
     required: required ?? false,
     label: createI18nString(label, []),
     logic,
@@ -266,8 +268,8 @@ export const buildCTAQuestion = ({
     type: TSurveyQuestionTypeEnum.CTA,
     html: html ? createI18nString(html, []) : undefined,
     headline: createI18nString(headline, []),
-    buttonLabel: createI18nString(buttonLabel || t(defaultButtonLabel), []),
-    backButtonLabel: createI18nString(backButtonLabel || t(defaultBackButtonLabel), []),
+    buttonLabel: createI18nString(buttonLabel || t(TRANSLATION_KEYS.NEXT), []),
+    backButtonLabel: createI18nString(backButtonLabel || t(TRANSLATION_KEYS.BACK), []),
     dismissButtonLabel: dismissButtonLabel ? createI18nString(dismissButtonLabel, []) : undefined,
     required: required ?? false,
     buttonExternal,
