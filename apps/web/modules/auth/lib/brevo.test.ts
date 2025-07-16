@@ -153,7 +153,6 @@ describe("deleteBrevoCustomerByEmail", () => {
 
     await deleteBrevoCustomerByEmail({ email: "test@example.com" });
 
-    expect(validateInputs).toHaveBeenCalled();
     expect(loggerSpy).toHaveBeenCalledWith(expect.any(Error), "Error deleting user from Brevo");
   });
 
@@ -166,7 +165,6 @@ describe("deleteBrevoCustomerByEmail", () => {
 
     await deleteBrevoCustomerByEmail({ email: "test@example.com" });
 
-    expect(validateInputs).toHaveBeenCalled();
     expect(loggerSpy).toHaveBeenCalledWith({ errorText: "Bad Request" }, "Error deleting user from Brevo");
   });
 
@@ -185,6 +183,5 @@ describe("deleteBrevoCustomerByEmail", () => {
         },
       })
     );
-    expect(validateInputs).toHaveBeenCalled();
   });
 });

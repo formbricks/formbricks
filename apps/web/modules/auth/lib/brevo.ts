@@ -101,8 +101,6 @@ export const deleteBrevoCustomerByEmail = async ({ email }: { email: TUserEmail 
     return;
   }
 
-  validateInputs([email, ZUserEmail]);
-
   const encodedEmail = encodeURIComponent(email.toLowerCase());
 
   try {
