@@ -140,11 +140,11 @@ jobs:
         run: |
           # Use the first readable tag from metadata action output
           DOCKER_IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | head -n1 | xargs)
-          echo "DOCKER_IMAGE=\"$DOCKER_IMAGE\"" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_OUTPUT
 
           # Use the generated version for Sentry release
           RELEASE_VERSION="$VERSION"
-          echo "RELEASE_VERSION=\"$RELEASE_VERSION\"" >> $GITHUB_OUTPUT
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
 
           echo "Docker image: $DOCKER_IMAGE"
           echo "Release version: $RELEASE_VERSION"
