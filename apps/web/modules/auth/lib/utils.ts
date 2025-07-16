@@ -262,7 +262,7 @@ export const shouldLogAuthFailure = async (
     const recentEntries = await redis.zRange(rateLimitKey, -10, -1);
     if (recentEntries.length === 0) return true;
 
-    const lastLogTime = parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);
+    const lastLogTime = Number.parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);
     const timeSinceLastLog = now - lastLogTime;
 
     return currentCount % 10 === 0 || timeSinceLastLog > 60000;

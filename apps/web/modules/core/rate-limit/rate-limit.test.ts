@@ -175,7 +175,7 @@ describe("checkRateLimit", () => {
     await checkRateLimit(testConfig, "test-user");
 
     // TTL should be between 0 and 300 seconds (window interval)
-    const ttlUsed = parseInt(mockEval.mock.calls[0][1].arguments[1]);
+    const ttlUsed = Number.parseInt(mockEval.mock.calls[0][1].arguments[1]);
     expect(ttlUsed).toBeGreaterThan(0);
     expect(ttlUsed).toBeLessThanOrEqual(300);
   });

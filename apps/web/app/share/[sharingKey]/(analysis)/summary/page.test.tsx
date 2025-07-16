@@ -2,7 +2,8 @@ import { getSurveyIdByResultShareKey } from "@/lib/survey/service";
 // Import mocked functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock all dependencies to avoid server-side environment issues
 vi.mock("@/lib/constants", () => ({
@@ -46,6 +47,10 @@ vi.mock("@/lib/survey/service", () => ({
 describe("Share Summary Page Rate Limiting", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe("Rate Limiting Configuration", () => {

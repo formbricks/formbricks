@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock the logger
 vi.mock("@formbricks/logger", () => ({
@@ -50,11 +50,11 @@ describe("Redis module", () => {
 
   afterEach(() => {
     vi.resetModules();
-    delete process.env.REDIS_URL;
+    process.env.REDIS_URL = undefined;
   });
 
   describe("Module initialization", () => {
-    it("should create Redis client when REDIS_URL is set", async () => {
+    test("should create Redis client when REDIS_URL is set", async () => {
       const { createClient } = await import("redis");
 
       // Re-import the module to trigger initialization
@@ -68,7 +68,7 @@ describe("Redis module", () => {
       });
     });
 
-    it("should not create Redis client when REDIS_URL is not set", async () => {
+    test("should not create Redis client when REDIS_URL is not set", async () => {
       delete process.env.REDIS_URL;
 
       const { createClient } = await import("redis");
@@ -80,7 +80,7 @@ describe("Redis module", () => {
       expect(createClient).not.toHaveBeenCalled();
     });
 
-    it("should set up event listeners", async () => {
+    test("should set up event listeners", async () => {
       // Re-import the module to trigger initialization
       await import("./redis");
 
@@ -90,7 +90,7 @@ describe("Redis module", () => {
       expect(mockRedisClient.on).toHaveBeenCalledWith("ready", expect.any(Function));
     });
 
-    it("should attempt initial connection", async () => {
+    test("should attempt initial connection", async () => {
       // Re-import the module to trigger initialization
       await import("./redis");
 
@@ -99,7 +99,7 @@ describe("Redis module", () => {
   });
 
   describe("getRedisClient", () => {
-    it("should return client when ready", async () => {
+    test("should return client when ready", async () => {
       mockRedisClient.isReady = true;
 
       const { getRedisClient } = await import("./redis");
@@ -108,7 +108,7 @@ describe("Redis module", () => {
       expect(client).toBe(mockRedisClient);
     });
 
-    it("should return null when client is not ready", async () => {
+    test("should return null when client is not ready", async () => {
       mockRedisClient.isReady = false;
 
       const { getRedisClient } = await import("./redis");
@@ -117,7 +117,7 @@ describe("Redis module", () => {
       expect(client).toBeNull();
     });
 
-    it("should return null when no REDIS_URL is set", async () => {
+    test("should return null when no REDIS_URL is set", async () => {
       delete process.env.REDIS_URL;
 
       vi.resetModules();
@@ -129,7 +129,7 @@ describe("Redis module", () => {
   });
 
   describe("disconnectRedis", () => {
-    it("should disconnect the client", async () => {
+    test("should disconnect the client", async () => {
       const { disconnectRedis } = await import("./redis");
 
       await disconnectRedis();
@@ -137,7 +137,7 @@ describe("Redis module", () => {
       expect(mockRedisClient.disconnect).toHaveBeenCalled();
     });
 
-    it("should handle case when client is null", async () => {
+    test("should handle case when client is null", async () => {
       delete process.env.REDIS_URL;
 
       vi.resetModules();
@@ -148,7 +148,7 @@ describe("Redis module", () => {
   });
 
   describe("Reconnection strategy", () => {
-    it("should configure reconnection strategy properly", async () => {
+    test("should configure reconnection strategy properly", async () => {
       const { createClient } = await import("redis");
 
       // Re-import the module to trigger initialization
@@ -163,7 +163,7 @@ describe("Redis module", () => {
   });
 
   describe("Event handlers", () => {
-    it("should log error events", async () => {
+    test("should log error events", async () => {
       const { logger } = await import("@formbricks/logger");
 
       // Re-import the module to trigger initialization
@@ -179,7 +179,7 @@ describe("Redis module", () => {
       expect(logger.error).toHaveBeenCalledWith("Redis client error:", testError);
     });
 
-    it("should log connect events", async () => {
+    test("should log connect events", async () => {
       const { logger } = await import("@formbricks/logger");
 
       // Re-import the module to trigger initialization
@@ -194,7 +194,7 @@ describe("Redis module", () => {
       expect(logger.info).toHaveBeenCalledWith("Redis client connected");
     });
 
-    it("should log reconnecting events", async () => {
+    test("should log reconnecting events", async () => {
       const { logger } = await import("@formbricks/logger");
 
       // Re-import the module to trigger initialization
@@ -211,7 +211,7 @@ describe("Redis module", () => {
       expect(logger.info).toHaveBeenCalledWith("Redis client reconnecting");
     });
 
-    it("should log ready events", async () => {
+    test("should log ready events", async () => {
       const { logger } = await import("@formbricks/logger");
 
       // Re-import the module to trigger initialization
@@ -226,7 +226,7 @@ describe("Redis module", () => {
       expect(logger.info).toHaveBeenCalledWith("Redis client ready");
     });
 
-    it("should log end events", async () => {
+    test("should log end events", async () => {
       const { logger } = await import("@formbricks/logger");
 
       // Re-import the module to trigger initialization
@@ -243,7 +243,7 @@ describe("Redis module", () => {
   });
 
   describe("Connection failure handling", () => {
-    it("should handle initial connection failure", async () => {
+    test("should handle initial connection failure", async () => {
       const { logger } = await import("@formbricks/logger");
 
       const connectionError = new Error("Connection failed");

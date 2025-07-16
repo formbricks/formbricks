@@ -1,5 +1,4 @@
 import { getRedisClient } from "@/modules/cache/redis";
-import type { RedisClientType } from "redis";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
@@ -146,7 +145,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     console.log("🟢 Rate Limiter Load Tests: Redis available - tests will run");
 
     // Clear any existing test keys
-    const redis = getRedisClient() as RedisClientType | null;
+    const redis = getRedisClient();
     if (redis) {
       const testKeys = await redis.keys("fb:rate_limit:test:*");
       if (testKeys.length > 0) {
@@ -157,7 +156,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
 
   afterAll(async () => {
     // Clean up test keys
-    const redis = getRedisClient() as RedisClientType | null;
+    const redis = getRedisClient();
     if (redis) {
       const testKeys = await redis.keys("fb:rate_limit:test:*");
       if (testKeys.length > 0) {
@@ -205,7 +204,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     const wavesCount = 3;
     const requestsPerWave = 15; // More than allowed (10)
 
-    const allResults: any[] = [];
+    const allResults: Array<Awaited<ReturnType<typeof checkRateLimit>>> = [];
 
     // Send waves of concurrent requests (no delay to ensure same window)
     for (let wave = 0; wave < wavesCount; wave++) {
@@ -238,7 +237,8 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     const requestsPerIdentifier = 10;
 
     // Create promises for multiple identifiers concurrently
-    const allPromises: Promise<{ identifier: string; result: any }>[] = [];
+    const allPromises: Promise<{ identifier: string; result: Awaited<ReturnType<typeof checkRateLimit>> }>[] =
+      [];
     for (let i = 0; i < identifiersCount; i++) {
       const identifier = `race-test-different-${i}`;
       for (let j = 0; j < requestsPerIdentifier; j++) {
@@ -448,7 +448,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     const identifier = "ttl-test-user";
 
     // Clear any existing keys first
-    const redis = getRedisClient() as RedisClientType | null;
+    const redis = getRedisClient();
     if (redis) {
       const existingKeys = await redis.keys(`fb:rate_limit:${config.namespace}:*`);
       if (existingKeys.length > 0) {

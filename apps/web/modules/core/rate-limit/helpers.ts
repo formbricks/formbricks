@@ -16,8 +16,7 @@ export const getClientIdentifier = async (): Promise<string> => {
   const ip = await getClientIpFromHeaders();
 
   try {
-    const hashedIp = hashString(ip);
-    return hashedIp;
+    return hashString(ip);
   } catch (error) {
     const errorMessage = "Failed to hash IP";
     logger.error(errorMessage, { error });

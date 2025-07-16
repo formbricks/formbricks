@@ -1,3 +1,4 @@
+import "server-only";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
 import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
