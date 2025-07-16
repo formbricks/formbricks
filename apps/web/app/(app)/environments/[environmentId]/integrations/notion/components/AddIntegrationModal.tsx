@@ -1,15 +1,14 @@
 "use client";
 
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { buildQuestionItems } from "@/app/(app)/environments/[environmentId]/integrations/lib/questionItems";
 import {
   ERRORS,
   TYPE_MAPPING,
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -35,7 +34,7 @@ import {
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -118,47 +117,7 @@ export const AddIntegrationModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDatabase?.id]);
 
-  const questionItems = useMemo(() => {
-    const questions = selectedSurvey
-      ? replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((q) => ({
-          id: q.id,
-          name: getLocalizedValue(q.headline, "default"),
-          type: q.type,
-        }))
-      : [];
-
-    const variables =
-      selectedSurvey?.variables.map((variable) => ({
-        id: variable.id,
-        name: variable.name,
-        type: TSurveyQuestionTypeEnum.OpenText,
-      })) || [];
-
-    const hiddenFields = selectedSurvey?.hiddenFields.enabled
-      ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
-          id: fId,
-          name: `${t("common.hidden_field")} : ${fId}`,
-          type: TSurveyQuestionTypeEnum.OpenText,
-        })) || []
-      : [];
-    const Metadata = [
-      {
-        id: "metadata",
-        name: t("common.metadata"),
-        type: TSurveyQuestionTypeEnum.OpenText,
-      },
-    ];
-    const createdAt = [
-      {
-        id: "createdAt",
-        name: t("common.created_at"),
-        type: TSurveyQuestionTypeEnum.Date,
-      },
-    ];
-
-    return [...questions, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSurvey?.id]);
+  const questionItems = useMemo(() => buildQuestionItems(selectedSurvey, t), [selectedSurvey?.id, t]);
 
   useEffect(() => {
     if (selectedIntegration) {

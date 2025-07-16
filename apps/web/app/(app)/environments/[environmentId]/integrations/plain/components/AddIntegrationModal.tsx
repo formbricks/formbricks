@@ -1,10 +1,9 @@
 "use client";
 
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { buildQuestionItems } from "@/app/(app)/environments/[environmentId]/integrations/lib/questionItems";
 import PlainLogo from "@/images/plain.webp";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -81,46 +80,7 @@ export const AddIntegrationModal = ({
     },
   };
 
-  const questionItems = useMemo(() => {
-    const questions = selectedSurvey
-      ? replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((q) => ({
-          id: q.id,
-          name: getLocalizedValue(q.headline, "default"),
-          type: q.type,
-        }))
-      : [];
-
-    const variables =
-      selectedSurvey?.variables.map((variable) => ({
-        id: variable.id,
-        name: variable.name,
-        type: TSurveyQuestionTypeEnum.OpenText,
-      })) || [];
-
-    const hiddenFields = selectedSurvey?.hiddenFields.enabled
-      ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
-          id: fId,
-          name: `${t("common.hidden_field")} : ${fId}`,
-          type: TSurveyQuestionTypeEnum.OpenText,
-        })) || []
-      : [];
-    const Metadata = [
-      {
-        id: "metadata",
-        name: t("common.metadata"),
-        type: TSurveyQuestionTypeEnum.OpenText,
-      },
-    ];
-    const createdAt = [
-      {
-        id: "createdAt",
-        name: t("common.created_at"),
-        type: TSurveyQuestionTypeEnum.Date,
-      },
-    ];
-
-    return [...questions, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
-  }, [selectedSurvey?.id]);
+  const questionItems = useMemo(() => buildQuestionItems(selectedSurvey, t), [selectedSurvey?.id, t]);
 
   const checkContactInfoQuestion = (survey: TSurvey | null) => {
     if (!survey) return { hasContactInfo: false, missingFields: [] };
