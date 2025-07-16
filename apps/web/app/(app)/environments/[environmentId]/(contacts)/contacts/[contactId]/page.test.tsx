@@ -27,7 +27,7 @@ vi.mock("@/lib/constants", () => ({
   IS_POSTHOG_CONFIGURED: true,
   SESSION_MAX_AGE: 1000,
   AUDIT_LOG_ENABLED: 1,
-  REDIS_URL: "redis://localhost:6379",
+  REDIS_URL: undefined,
 }));
 
 vi.mock("@/lib/env", () => ({

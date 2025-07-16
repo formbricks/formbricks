@@ -39,7 +39,7 @@ vi.mock("@/lib/constants", () => ({
   FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
   IS_FORMBRICKS_ENABLED: true,
   SESSION_MAX_AGE: 1000,
-  REDIS_URL: "test-redis-url",
+  REDIS_URL: undefined,
   AUDIT_LOG_ENABLED: true,
 }));
 
