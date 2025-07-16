@@ -199,6 +199,8 @@
     "environment_not_found": "Environment not found",
     "environment_notice": "You're currently in the {environment} environment.",
     "error": "Error",
+    "error_component_description": "This resource doesn't exist or you don't have the necessary rights to access it.",
+    "error_component_title": "Error loading resources",
     "expand_rows": "Expand rows",
     "finish": "Finish",
     "follow_these": "Follow these",
