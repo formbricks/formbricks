@@ -205,128 +205,129 @@ export const AnonymousLinksTab = ({
 
   return (
     <>
-      <div className="flex h-full w-full grow flex-col gap-6">
-        <AdvancedOptionToggle
-          htmlId="multi-use-link-switch"
-          isChecked={isMultiUseLink}
-          onToggle={handleMultiUseToggle}
-          title={t("environments.surveys.share.anonymous_links.multi_use_link")}
-          description={t("environments.surveys.share.anonymous_links.multi_use_link_description")}
-          customContainerClass="p-0"
-          childBorder>
-          <div className="flex w-full flex-col gap-4 overflow-hidden bg-white p-4">
-            <ShareSurveyLink
-              survey={survey}
-              surveyUrl={surveyUrl}
-              publicDomain={publicDomain}
-              setSurveyUrl={setSurveyUrl}
-              locale={locale}
-            />
+      <div className="flex h-full flex-col justify-between space-y-4">
+        <div className="flex w-full grow flex-col gap-6">
+          <AdvancedOptionToggle
+            htmlId="multi-use-link-switch"
+            isChecked={isMultiUseLink}
+            onToggle={handleMultiUseToggle}
+            title={t("environments.surveys.share.anonymous_links.multi_use_link")}
+            description={t("environments.surveys.share.anonymous_links.multi_use_link_description")}
+            customContainerClass="pl-1 pr-0 py-0"
+            childBorder>
+            <div className="flex w-full flex-col gap-4 overflow-hidden bg-white p-4">
+              <ShareSurveyLink
+                survey={survey}
+                surveyUrl={surveyUrl}
+                publicDomain={publicDomain}
+                setSurveyUrl={setSurveyUrl}
+                locale={locale}
+              />
 
-            <div className="w-full">
-              <Alert variant="info" size="default">
-                <AlertTitle>
-                  {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
-                </AlertTitle>
-                <AlertDescription>
-                  {t(
-                    "environments.surveys.share.anonymous_links.multi_use_powers_other_channels_description"
-                  )}
-                </AlertDescription>
-              </Alert>
+              <div className="w-full">
+                <Alert variant="info" size="default">
+                  <AlertTitle>
+                    {t("environments.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {t(
+                      "environments.surveys.share.anonymous_links.multi_use_powers_other_channels_description"
+                    )}
+                  </AlertDescription>
+                </Alert>
+              </div>
             </div>
-          </div>
-        </AdvancedOptionToggle>
+          </AdvancedOptionToggle>
 
-        <AdvancedOptionToggle
-          htmlId="single-use-link-switch"
-          isChecked={isSingleUseLink}
-          onToggle={handleSingleUseToggle}
-          title={t("environments.surveys.share.anonymous_links.single_use_link")}
-          description={t("environments.surveys.share.anonymous_links.single_use_link_description")}
-          customContainerClass="p-0"
-          childBorder>
-          <div className="flex w-full flex-col gap-4 bg-white p-4">
-            <AdvancedOptionToggle
-              htmlId="single-use-encryption-switch"
-              isChecked={singleUseEncryption}
-              onToggle={handleSingleUseEncryptionToggle}
-              title={t("environments.surveys.share.anonymous_links.url_encryption_label")}
-              description={t("environments.surveys.share.anonymous_links.url_encryption_description")}
-              customContainerClass="p-0"
-            />
+          <AdvancedOptionToggle
+            htmlId="single-use-link-switch"
+            isChecked={isSingleUseLink}
+            onToggle={handleSingleUseToggle}
+            title={t("environments.surveys.share.anonymous_links.single_use_link")}
+            description={t("environments.surveys.share.anonymous_links.single_use_link_description")}
+            customContainerClass="pl-1 pr-0 py-0"
+            childBorder>
+            <div className="flex w-full flex-col gap-4 bg-white p-4">
+              <AdvancedOptionToggle
+                htmlId="single-use-encryption-switch"
+                isChecked={singleUseEncryption}
+                onToggle={handleSingleUseEncryptionToggle}
+                title={t("environments.surveys.share.anonymous_links.url_encryption_label")}
+                description={t("environments.surveys.share.anonymous_links.url_encryption_description")}
+                customContainerClass="pl-1 pr-0 py-0"
+              />
 
-            {!singleUseEncryption ? (
-              <Alert variant="info" size="default">
-                <AlertTitle>
-                  {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
-                </AlertTitle>
-                <AlertDescription>
-                  {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
-                </AlertDescription>
-              </Alert>
-            ) : null}
+              {!singleUseEncryption ? (
+                <Alert variant="info" size="default">
+                  <AlertTitle>
+                    {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
 
-            {singleUseEncryption && (
-              <div className="flex w-full flex-col gap-2">
-                <h3 className="text-sm font-medium text-slate-900">
-                  {t("environments.surveys.share.anonymous_links.number_of_links_label")}
-                </h3>
-
+              {singleUseEncryption && (
                 <div className="flex w-full flex-col gap-2">
-                  <div className="flex w-full items-center gap-2">
-                    <div className="w-32">
-                      <Input
-                        type="number"
-                        max={5000}
-                        min={1}
-                        className="bg-white focus:border focus:border-slate-900"
-                        value={numberOfLinks}
-                        onChange={handleNumberOfLinksChange}
-                      />
-                    </div>
+                  <h3 className="text-sm font-medium text-slate-900">
+                    {t("environments.surveys.share.anonymous_links.number_of_links_label")}
+                  </h3>
 
-                    <Button
-                      variant="default"
-                      onClick={() => handleGenerateLinks(Number(numberOfLinks) || 1)}
-                      disabled={Number(numberOfLinks) < 1 || Number(numberOfLinks) > 5000}>
-                      <div className="flex items-center gap-2">
-                        <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
+                  <div className="flex w-full flex-col gap-2">
+                    <div className="flex w-full items-center gap-2">
+                      <div className="w-32">
+                        <Input
+                          type="number"
+                          max={5000}
+                          min={1}
+                          className="bg-white focus:border focus:border-slate-900"
+                          value={numberOfLinks}
+                          onChange={handleNumberOfLinksChange}
+                        />
                       </div>
 
-                      <span className="text-sm text-slate-50">
-                        {t("environments.surveys.share.anonymous_links.generate_and_download_links")}
-                      </span>
-                    </Button>
+                      <Button
+                        variant="default"
+                        onClick={() => handleGenerateLinks(Number(numberOfLinks) || 1)}
+                        disabled={Number(numberOfLinks) < 1 || Number(numberOfLinks) > 5000}>
+                        <div className="flex items-center gap-2">
+                          <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
+                        </div>
+
+                        <span className="text-sm text-slate-50">
+                          {t("environments.surveys.share.anonymous_links.generate_and_download_links")}
+                        </span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </AdvancedOptionToggle>
+              )}
+            </div>
+          </AdvancedOptionToggle>
+        </div>
+
+        <DocumentationLinks
+          links={[
+            {
+              title: t("environments.surveys.share.anonymous_links.single_use_links"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
+            },
+            {
+              title: t("environments.surveys.share.anonymous_links.data_prefilling"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/data-prefilling",
+            },
+            {
+              title: t("environments.surveys.share.anonymous_links.source_tracking"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
+            },
+            {
+              title: t("environments.surveys.share.anonymous_links.custom_start_point"),
+              href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-question",
+            },
+          ]}
+        />
       </div>
-
-      <DocumentationLinks
-        links={[
-          {
-            title: t("environments.surveys.share.anonymous_links.single_use_links"),
-            href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
-          },
-          {
-            title: t("environments.surveys.share.anonymous_links.data_prefilling"),
-            href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/data-prefilling",
-          },
-          {
-            title: t("environments.surveys.share.anonymous_links.source_tracking"),
-            href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/source-tracking",
-          },
-          {
-            title: t("environments.surveys.share.anonymous_links.custom_start_point"),
-            href: "https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/start-at-question",
-          },
-        ]}
-      />
-
       {disableLinkModal && (
         <DisableLinkModal
           open={disableLinkModal.open}

@@ -7,22 +7,14 @@ import { EmailTab } from "@/app/(app)/environments/[environmentId]/surveys/[surv
 import { PersonalLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/personal-links-tab";
 import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
 import { SocialMediaTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/social-media-tab";
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { WebsiteEmbedTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/website-embed-tab";
 import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useTranslate } from "@tolgee/react";
-import {
-  Code2Icon,
-  LinkIcon,
-  MailIcon,
-  QrCodeIcon,
-  Share2Icon,
-  SmartphoneIcon,
-  SquareStack,
-  UserIcon,
-} from "lucide-react";
+import { Code2Icon, LinkIcon, MailIcon, QrCodeIcon, Share2Icon, SquareStack, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -161,17 +153,6 @@ export const ShareSurveyModal = ({
     ]
   );
 
-  const appTabs = [
-    {
-      id: ShareViewType.APP,
-      label: t("environments.surveys.share.embed_on_website.embed_in_app"),
-      icon: SmartphoneIcon,
-      title: t("environments.surveys.share.embed_on_website.embed_in_app"),
-      componentType: AppTab,
-      componentProps: {},
-    },
-  ];
-
   const [activeId, setActiveId] = useState(
     survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP
   );
@@ -183,10 +164,10 @@ export const ShareSurveyModal = ({
   }, [open, modalView]);
 
   const handleOpenChange = (open: boolean) => {
-    setActiveId(survey.type === "link" ? ShareViewType.ANON_LINKS : ShareViewType.APP);
     setOpen(open);
     if (!open) {
       setShowView("start");
+      setActiveId(ShareViewType.ANON_LINKS);
     }
   };
 
@@ -199,35 +180,48 @@ export const ShareSurveyModal = ({
     setActiveId(tabId);
   };
 
+  const renderContent = () => {
+    if (showView === "start") {
+      return (
+        <SuccessView
+          survey={survey}
+          surveyUrl={surveyUrl}
+          publicDomain={publicDomain}
+          setSurveyUrl={setSurveyUrl}
+          user={user}
+          tabs={linkTabs}
+          handleViewChange={handleViewChange}
+          handleEmbedViewWithTab={handleEmbedViewWithTab}
+        />
+      );
+    }
+
+    if (survey.type === "link") {
+      return <ShareView tabs={linkTabs} activeId={activeId} setActiveId={setActiveId} />;
+    }
+
+    return (
+      <div className={`h-full w-full rounded-lg bg-slate-50 p-6`}>
+        <TabContainer
+          title={t("environments.surveys.summary.in_app.title")}
+          description={t("environments.surveys.summary.in_app.description")}>
+          <AppTab />
+        </TabContainer>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <VisuallyHidden asChild>
         <DialogTitle />
       </VisuallyHidden>
       <DialogContent
-        className="w-full overflow-y-auto bg-white p-0 lg:h-[700px]"
-        width="wide"
+        className="w-full bg-white p-0 lg:h-[700px]"
+        width={survey.type === "link" ? "wide" : "default"}
         aria-describedby={undefined}
         unconstrained>
-        {showView === "start" ? (
-          <SuccessView
-            survey={survey}
-            surveyUrl={surveyUrl}
-            publicDomain={publicDomain}
-            setSurveyUrl={setSurveyUrl}
-            user={user}
-            tabs={linkTabs}
-            handleViewChange={handleViewChange}
-            handleEmbedViewWithTab={handleEmbedViewWithTab}
-          />
-        ) : (
-          <ShareView
-            tabs={survey.type === "link" ? linkTabs : appTabs}
-            activeId={activeId}
-            setActiveId={setActiveId}
-            survey={survey}
-          />
-        )}
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );

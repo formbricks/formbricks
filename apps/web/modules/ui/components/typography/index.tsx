@@ -143,6 +143,17 @@ const Small = forwardRef<HTMLParagraphElement, SmallProps>((props, ref) => {
 Small.displayName = "Small";
 export { Small };
 
+const InlineSmall = forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
+  return (
+    <span {...props} ref={ref} className={cn("text-sm font-normal", props.className)}>
+      {props.children}
+    </span>
+  );
+});
+
+InlineSmall.displayName = "InlineSmall";
+export { InlineSmall };
+
 const Muted = forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement>>((props, ref) => {
   return (
     <span {...props} ref={ref} className={cn("text-muted-foreground text-sm", props.className)}>
