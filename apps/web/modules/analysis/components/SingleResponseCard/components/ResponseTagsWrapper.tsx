@@ -93,7 +93,10 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
       return;
     }
 
-    if (createTagResponse?.data?.error?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
+    if (
+      createTagResponse?.data?.ok === false &&
+      createTagResponse?.data?.error?.code === TagError.TAG_NAME_ALREADY_EXISTS
+    ) {
       toast.error(t("environments.surveys.responses.tag_already_exists"), {
         duration: 2000,
         icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,

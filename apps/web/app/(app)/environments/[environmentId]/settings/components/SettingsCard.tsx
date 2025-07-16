@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
+import { H3, Small } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 
 export const SettingsCard = ({
@@ -31,7 +32,7 @@ export const SettingsCard = ({
       id={title}>
       <div className="border-b border-slate-200 px-4 pb-4">
         <div className="flex">
-          <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{title}</h3>
+          <H3 className="capitalize">{title}</H3>
           <div className="ml-2">
             {beta && <Badge size="normal" type="warning" text="Beta" />}
             {soon && (
@@ -39,7 +40,9 @@ export const SettingsCard = ({
             )}
           </div>
         </div>
-        <p className="mt-1 text-sm text-slate-500">{description}</p>
+        <Small color="muted" margin="headerDescription">
+          {description}
+        </Small>
       </div>
       <div className={cn(noPadding ? "" : "px-4 pt-4")}>{children}</div>
     </div>

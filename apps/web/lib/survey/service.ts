@@ -557,8 +557,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     return modifiedSurvey;
   } catch (error) {
+    logger.error(error, "Error updating survey");
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error updating survey");
       throw new DatabaseError(error.message);
     }
 
