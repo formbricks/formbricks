@@ -15,10 +15,15 @@ const tabsVariants = cva("bg-slate-100 rounded-lg p-1 inline-flex items-center j
       default: "h-9",
       big: "h-auto",
     },
+    width: {
+      fill: "w-full",
+      fit: "w-fit mx-auto",
+    },
   },
   defaultVariants: {
     variant: "default",
     size: "default",
+    width: "fit",
   },
 });
 
@@ -52,7 +57,7 @@ interface TabsProps
   extends React.ComponentProps<typeof TabsPrimitive.Root>,
     VariantProps<typeof tabsVariants> {}
 
-function Tabs({ className, variant, size, ...props }: TabsProps) {
+function Tabs({ className, variant, size, width, ...props }: TabsProps) {
   return <TabsPrimitive.Root data-slot="tabs" className={cn("flex flex-col gap-2", className)} {...props} />;
 }
 
