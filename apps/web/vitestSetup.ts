@@ -33,6 +33,11 @@ if (!global.ResizeObserver) {
   global.ResizeObserver = ResizeObserver;
 }
 
+// Mock useIsMobile hook that depends on window.matchMedia
+vi.mock("@/modules/ui/hooks/use-mobile", () => ({
+  useIsMobile: vi.fn().mockReturnValue(false),
+}));
+
 // mock react toast
 
 vi.mock("react-hot-toast", () => ({

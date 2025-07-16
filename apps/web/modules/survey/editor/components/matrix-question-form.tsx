@@ -8,9 +8,10 @@ import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import cuid2 from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
-import type { JSX } from "react";
+import { type JSX, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -39,6 +40,45 @@ export const MatrixQuestionForm = ({
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
+
+  // Refs to maintain stable CUIDs across renders
+  const cuidRefs = useRef<{
+    rows: string[];
+    columns: string[];
+  }>({
+    rows: [],
+    columns: [],
+  });
+
+  // Generic function to ensure CUIDs are synchronized with the current state
+  const ensureCuids = (type: "rows" | "columns", currentItems: TI18nString[]) => {
+    const currentCuids = cuidRefs.current[type];
+    if (currentCuids.length !== currentItems.length) {
+      if (currentItems.length > currentCuids.length) {
+        // Add new CUIDs for added items
+        const newCuids = Array(currentItems.length - currentCuids.length)
+          .fill(null)
+          .map(() => cuid2.createId());
+        cuidRefs.current[type] = [...currentCuids, ...newCuids];
+      } else {
+        // Remove CUIDs for deleted items (keep the remaining ones in order)
+        cuidRefs.current[type] = currentCuids.slice(0, currentItems.length);
+      }
+    }
+  };
+
+  // Generic function to get items with CUIDs
+  const getItemsWithCuid = (type: "rows" | "columns", items: TI18nString[]) => {
+    ensureCuids(type, items);
+    return items.map((item, index) => ({
+      ...item,
+      id: cuidRefs.current[type][index],
+    }));
+  };
+
+  const rowsWithCuid = useMemo(() => getItemsWithCuid("rows", question.rows), [question.rows]);
+  const columnsWithCuid = useMemo(() => getItemsWithCuid("columns", question.columns), [question.columns]);
+
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
@@ -79,6 +119,11 @@ export const MatrixQuestionForm = ({
     }
 
     const updatedLabels = labels.filter((_, idx) => idx !== index);
+
+    // Update the CUID arrays when deleting
+    const cuidType = type === "row" ? "rows" : "columns";
+    cuidRefs.current[cuidType] = cuidRefs.current[cuidType].filter((_, idx) => idx !== index);
+
     if (type === "row") {
       updateQuestion(questionIdx, { rows: updatedLabels });
     } else {
@@ -182,8 +227,8 @@ export const MatrixQuestionForm = ({
           {/* Rows section */}
           <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
           <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.rows.map((row, index) => (
-              <div className="flex items-center" key={`${row}-${index}`}>
+            {rowsWithCuid.map((row, index) => (
+              <div className="flex items-center" key={row.id}>
                 <QuestionFormInput
                   id={`row-${index}`}
                   label={""}
@@ -232,8 +277,8 @@ export const MatrixQuestionForm = ({
           {/* Columns section */}
           <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
           <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.columns.map((column, index) => (
-              <div className="flex items-center" key={`${column}-${index}`}>
+            {columnsWithCuid.map((column, index) => (
+              <div className="flex items-center" key={column.id}>
                 <QuestionFormInput
                   id={`column-${index}`}
                   label={""}

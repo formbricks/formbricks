@@ -20,7 +20,6 @@ const mockContact = {
   environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
-  attributes: [],
 };
 
 describe("contact lib", () => {
@@ -38,7 +37,9 @@ describe("contact lib", () => {
       const result = await getContact(mockContactId);
 
       expect(result).toEqual(mockContact);
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({ where: { id: mockContactId } });
+      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
+        where: { id: mockContactId },
+      });
     });
 
     test("should return null if contact not found", async () => {
@@ -46,7 +47,9 @@ describe("contact lib", () => {
       const result = await getContact(mockContactId);
 
       expect(result).toBeNull();
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({ where: { id: mockContactId } });
+      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
+        where: { id: mockContactId },
+      });
     });
 
     test("should throw DatabaseError if prisma throws PrismaClientKnownRequestError", async () => {

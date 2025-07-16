@@ -162,8 +162,6 @@ export const CardStylingSettings = ({
             )}
           />
 
-
-
           <FormField
             control={form.control}
             name={"cardArrangement"}

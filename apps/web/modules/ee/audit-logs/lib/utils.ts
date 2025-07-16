@@ -1,8 +1,3 @@
-import { AUDIT_LOG_ENABLED, ENCRYPTION_KEY } from "@/lib/constants";
-import { TAuditLogEvent } from "@/modules/ee/audit-logs/types/audit-log";
-import { createHash } from "crypto";
-import { logger } from "@formbricks/logger";
-
 const SENSITIVE_KEYS = [
   "email",
   "name",
@@ -40,31 +35,6 @@ const SENSITIVE_KEYS = [
   "resultShareKey",
   "fileName",
 ];
-
-/**
- * Computes the hash of the audit log event using the SHA256 algorithm.
- * @param event - The audit log event.
- * @param prevHash - The previous hash of the audit log event.
- * @returns The hash of the audit log event. The hash is computed by concatenating the secret, the previous hash, and the event and then hashing the result.
- */
-export const computeAuditLogHash = (
-  event: Omit<TAuditLogEvent, "integrityHash" | "previousHash" | "chainStart">,
-  prevHash: string | null
-): string => {
-  let secret = ENCRYPTION_KEY;
-
-  if (!secret) {
-    // Log an error but don't throw an error to avoid blocking the main request
-    logger.error(
-      "ENCRYPTION_KEY is not set, creating audit log hash without it. Please set ENCRYPTION_KEY in the environment variables to avoid security issues."
-    );
-    secret = "";
-  }
-
-  const hash = createHash("sha256");
-  hash.update(secret + (prevHash ?? "") + JSON.stringify(event));
-  return hash.digest("hex");
-};
 
 /**
  * Redacts sensitive data from the object by replacing the sensitive keys with "********".
@@ -120,9 +90,3 @@ export const deepDiff = (oldObj: any, newObj: any): any => {
   }
   return Object.keys(diff).length > 0 ? diff : undefined;
 };
-
-if (AUDIT_LOG_ENABLED && !ENCRYPTION_KEY) {
-  throw new Error(
-    "ENCRYPTION_KEY must be set when AUDIT_LOG_ENABLED is enabled. Refusing to start for security reasons."
-  );
-}
