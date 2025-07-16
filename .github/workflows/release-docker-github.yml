@@ -55,6 +55,11 @@ jobs:
           sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.RELEASE_TAG }}\"/" ./apps/web/package.json
           cat ./apps/web/package.json | grep version
 
+      - name: Set Sentry environment in .env
+        run: |
+          echo "SENTRY_ENVIRONMENT=production" >> .env
+          echo "Set SENTRY_ENVIRONMENT=production in .env file"
+
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
 
