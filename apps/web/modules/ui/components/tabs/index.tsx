@@ -5,27 +5,30 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { type VariantProps, cva } from "class-variance-authority";
 import * as React from "react";
 
-const tabsVariants = cva("bg-slate-100 rounded-lg p-1 inline-flex items-center justify-center", {
-  variants: {
-    variant: {
-      default: "",
-      disabled: "opacity-50 pointer-events-none",
+const tabsVariants = cva(
+  "bg-slate-100 rounded-lg p-1 inline-flex items-center overflow-x-auto [scrollbar-width:none]",
+  {
+    variants: {
+      variant: {
+        default: "",
+        disabled: "opacity-50 pointer-events-none",
+      },
+      size: {
+        default: "h-9",
+        big: "h-auto",
+      },
+      width: {
+        fill: "w-full",
+        fit: "w-fit max-w-full",
+      },
     },
-    size: {
-      default: "h-9",
-      big: "h-auto",
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+      width: "fit",
     },
-    width: {
-      fill: "w-full",
-      fit: "w-fit mx-auto",
-    },
-  },
-  defaultVariants: {
-    variant: "default",
-    size: "default",
-    width: "fit",
-  },
-});
+  }
+);
 
 const tabsTriggerVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -80,7 +83,7 @@ function TabsList({ className, variant, size, width, ...props }: TabsListProps) 
       data-slot="tabs-list"
       className={cn(
         tabsVariants({ variant, size, width }),
-        isGridLayout ? "grid grid-cols-[repeat(var(--tabs-count),1fr)]" : "flex [&>*]:flex-1",
+        isGridLayout ? "grid grid-cols-[repeat(var(--tabs-count),1fr)]" : "flex",
         className
       )}
       style={
