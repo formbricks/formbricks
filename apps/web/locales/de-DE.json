@@ -1733,7 +1733,6 @@
         "embed_on_website": {
           "description": "Formbricks-Umfragen können als statisches Element eingebettet werden.",
           "embed_code_copied_to_clipboard": "Einbettungscode in die Zwischenablage kopiert!",
-          "embed_in_app": "In App einbetten",
           "embed_mode": "Einbettungsmodus",
           "embed_mode_description": "Bette deine Umfrage mit einem minimalistischen Design ein, ohne Karten und Hintergrund.",
           "nav_title": "Auf Website einbetten"
@@ -1844,7 +1843,6 @@
         "last_quarter": "Letztes Quartal",
         "last_year": "Letztes Jahr",
         "link_to_public_results_copied": "Link zu öffentlichen Ergebnissen kopiert",
-        "mobile_app": "Mobile App",
         "no_responses_found": "Keine Antworten gefunden",
         "only_completed": "Nur vollständige Antworten",
         "other_values_found": "Andere Werte gefunden",
@@ -1857,10 +1855,6 @@
         "qr_code_download_failed": "QR-Code-Download fehlgeschlagen",
         "qr_code_download_with_start_soon": "QR Code-Download startet bald",
         "qr_code_generation_failed": "Es gab ein Problem beim Laden des QR-Codes für die Umfrage. Bitte versuchen Sie es erneut.",
-        "quickstart_mobile_apps": "Schnellstart: Mobile-Apps",
-        "quickstart_mobile_apps_description": "Um mit Umfragen in mobilen Apps zu beginnen, folge bitte der Schnellstartanleitung:",
-        "quickstart_web_apps": "Schnellstart: Web-Apps",
-        "quickstart_web_apps_description": "Bitte folge der Schnellstartanleitung, um loszulegen:",
         "results_are_public": "Ergebnisse sind öffentlich",
         "selected_responses_csv": "Ausgewählte Antworten (CSV)",
         "selected_responses_excel": "Ausgewählte Antworten (Excel)",
@@ -1883,7 +1877,6 @@
         "use_personal_links": "Nutze persönliche Links",
         "view_site": "Seite ansehen",
         "waiting_for_response": "Warte auf eine Antwort \uD83E\uDDD8‍♂️",
-        "web_app": "Web-App",
         "whats_next": "Was kommt als Nächstes?",
         "your_survey_is_public": "Deine Umfrage ist öffentlich",
         "youre_not_plugged_in_yet": "Du bist noch nicht verbunden!"

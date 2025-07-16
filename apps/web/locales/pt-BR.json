@@ -1733,7 +1733,6 @@
         "embed_on_website": {
           "description": "Os formulários Formbricks podem ser incorporados como um elemento estático.",
           "embed_code_copied_to_clipboard": "Código incorporado copiado para a área de transferência!",
-          "embed_in_app": "Integrar no app",
           "embed_mode": "Modo Embutido",
           "embed_mode_description": "Incorpore sua pesquisa com um design minimalista, sem preenchimento e fundo.",
           "nav_title": "Incorporar no site"
@@ -1844,7 +1843,6 @@
         "last_quarter": "Último trimestre",
         "last_year": "Último ano",
         "link_to_public_results_copied": "Link pros resultados públicos copiado",
-        "mobile_app": "app de celular",
         "no_responses_found": "Nenhuma resposta encontrada",
         "only_completed": "Somente concluído",
         "other_values_found": "Outros valores encontrados",
@@ -1857,10 +1855,6 @@
         "qr_code_download_failed": "falha no download do código QR",
         "qr_code_download_with_start_soon": "O download do código QR começará em breve",
         "qr_code_generation_failed": "Houve um problema ao carregar o Código QR do questionário. Por favor, tente novamente.",
-        "quickstart_mobile_apps": "Início rápido: Aplicativos móveis",
-        "quickstart_mobile_apps_description": "Para começar com pesquisas em aplicativos móveis, por favor, siga o guia de início rápido:",
-        "quickstart_web_apps": "Início rápido: Aplicativos web",
-        "quickstart_web_apps_description": "Por favor, siga o guia de início rápido para começar:",
         "results_are_public": "Os resultados são públicos",
         "selected_responses_csv": "Respostas selecionadas (CSV)",
         "selected_responses_excel": "Respostas selecionadas (Excel)",
@@ -1883,7 +1877,6 @@
         "use_personal_links": "Use links pessoais",
         "view_site": "Ver site",
         "waiting_for_response": "Aguardando uma resposta \uD83E\uDDD8‍♂️",
-        "web_app": "aplicativo web",
         "whats_next": "E agora?",
         "your_survey_is_public": "Sua pesquisa é pública",
         "youre_not_plugged_in_yet": "Você ainda não tá conectado!"

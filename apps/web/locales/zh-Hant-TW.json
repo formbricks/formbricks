@@ -1733,7 +1733,6 @@
         "embed_on_website": {
           "description": "Formbricks 調查可以 作為 靜態 元素 嵌入。",
           "embed_code_copied_to_clipboard": "嵌入程式碼已複製到剪貼簿！",
-          "embed_in_app": "嵌入應用程式",
           "embed_mode": "嵌入模式",
           "embed_mode_description": "以簡約設計嵌入您的問卷，捨棄邊距和背景。",
           "nav_title": "嵌入網站"
@@ -1844,7 +1843,6 @@
         "last_quarter": "上一季",
         "last_year": "去年",
         "link_to_public_results_copied": "已複製公開結果的連結",
-        "mobile_app": "行動應用程式",
         "no_responses_found": "找不到回應",
         "only_completed": "僅已完成",
         "other_values_found": "找到其他值",
@@ -1857,10 +1855,6 @@
         "qr_code_download_failed": "QR code 下載失敗",
         "qr_code_download_with_start_soon": "QR code 下載即將開始",
         "qr_code_generation_failed": "載入調查 QR Code 時發生問題。請再試一次。",
-        "quickstart_mobile_apps": "快速入門：Mobile apps",
-        "quickstart_mobile_apps_description": "要開始使用行動應用程式中的調查，請按照 Quickstart 指南：",
-        "quickstart_web_apps": "快速入門：Web apps",
-        "quickstart_web_apps_description": "請按照 Quickstart 指南開始：",
         "results_are_public": "結果是公開的",
         "selected_responses_csv": "選擇的回應 (CSV)",
         "selected_responses_excel": "選擇的回應 (Excel)",
@@ -1883,7 +1877,6 @@
         "use_personal_links": "使用 個人 連結",
         "view_site": "檢視網站",
         "waiting_for_response": "正在等待回應 \uD83E\uDDD8‍♂️",
-        "web_app": "Web 應用程式",
         "whats_next": "下一步是什麼？",
         "your_survey_is_public": "您的問卷是公開的",
         "youre_not_plugged_in_yet": "您尚未插入任何內容！"

@@ -1733,7 +1733,6 @@
         "embed_on_website": {
           "description": "Formbricks surveys can be embedded as a static element.",
           "embed_code_copied_to_clipboard": "Embed code copied to clipboard!",
-          "embed_in_app": "Embed in app",
           "embed_mode": "Embed Mode",
           "embed_mode_description": "Embed your survey with a minimalist design, discarding padding and background.",
           "nav_title": "Website embed"
@@ -1844,7 +1843,6 @@
         "last_quarter": "Last quarter",
         "last_year": "Last year",
         "link_to_public_results_copied": "Link to public results copied",
-        "mobile_app": "Mobile app",
         "no_responses_found": "No responses found",
         "only_completed": "Only completed",
         "other_values_found": "Other values found",
@@ -1857,10 +1855,6 @@
         "qr_code_download_failed": "QR code download failed",
         "qr_code_download_with_start_soon": "QR code download will start soon",
         "qr_code_generation_failed": "There was a problem, loading the survey QR Code. Please try again.",
-        "quickstart_mobile_apps": "Quickstart: Mobile apps",
-        "quickstart_mobile_apps_description": "To get started with surveys in mobile apps, please follow the Quickstart guide:",
-        "quickstart_web_apps": "Quickstart: Web apps",
-        "quickstart_web_apps_description": "Please follow the Quickstart guide to get started:",
         "results_are_public": "Results are public",
         "selected_responses_csv": "Selected responses (CSV)",
         "selected_responses_excel": "Selected responses (Excel)",
@@ -1883,7 +1877,6 @@
         "use_personal_links": "Use personal links",
         "view_site": "View site",
         "waiting_for_response": "Waiting for a response \uD83E\uDDD8‍♂️",
-        "web_app": "Web app",
         "whats_next": "What's next?",
         "your_survey_is_public": "Your survey is public",
         "youre_not_plugged_in_yet": "You're not plugged in yet!"
