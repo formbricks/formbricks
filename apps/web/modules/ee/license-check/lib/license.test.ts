@@ -364,7 +364,7 @@ describe("License Core Logic", () => {
         },
       }));
       // Import hashString to compute the expected cache key
-      const { hashString } = await import("@/lib/hashString");
+      const { hashString } = await import("@/lib/hash-string");
       const hashedKey = hashString("test-license-key");
       const detailsKey = `fb:license:${hashedKey}:status`;
       // Patch the cache mock to match the actual key logic
@@ -476,7 +476,7 @@ describe("License Core Logic", () => {
           HTTP_PROXY: undefined,
         },
       }));
-      const { hashString } = await import("@/lib/hashString");
+      const { hashString } = await import("@/lib/hash-string");
       const expectedHash = hashString(testLicenseKey);
       const { getEnterpriseLicense } = await import("./license");
       await getEnterpriseLicense();

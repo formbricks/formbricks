@@ -32,7 +32,7 @@ vi.mock("@/lib/constants", () => ({
   GOOGLE_SHEETS_CLIENT_SECRET: "test-client-secret",
   GOOGLE_SHEETS_REDIRECT_URL: "test-redirect-url",
   SESSION_MAX_AGE: 1000,
-  REDIS_URL: "mock-redis-url",
+  REDIS_URL: undefined,
   AUDIT_LOG_ENABLED: true,
 }));
 
