@@ -113,7 +113,7 @@ describe("ErrorBoundary", () => {
     });
 
     const originalLocation = window.location;
-    delete (window as any).location;
+    (window as any).location = undefined;
     (window as any).location = { href: "" };
     render(<ErrorBoundary error={{ ...dummyError }} reset={resetMock} />);
     const dashBtn = screen.getByRole("button", { name: "Go to Dashboard" });

@@ -12,19 +12,17 @@ import { type ClientErrorType, getClientErrorData } from "@formbricks/types/erro
  * All translation keys are directly visible to Tolgee's static analysis
  */
 const getErrorMessages = (type: ClientErrorType, t: (key: string) => string) => {
-  switch (type) {
-    case "rate_limit":
-      return {
-        title: t("common.error_rate_limit_title"),
-        description: t("common.error_rate_limit_description"),
-      };
-    case "general":
-    default:
-      return {
-        title: t("common.error_component_title"),
-        description: t("common.error_component_description"),
-      };
+  if (type === "rate_limit") {
+    return {
+      title: t("common.error_rate_limit_title"),
+      description: t("common.error_rate_limit_description"),
+    };
   }
+
+  return {
+    title: t("common.error_component_title"),
+    description: t("common.error_component_description"),
+  };
 };
 
 const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) => {
