@@ -41,5 +41,3 @@ export const ERRORS = {
   MAPPING: "Mapping Error",
   UNSUPPORTED_TYPE: "Unsupported type by Notion",
 };
-
-console.log("Hello");
