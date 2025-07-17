@@ -13,15 +13,15 @@ export async function NotificationFooter({
   return (
     <Tailwind>
       <Container className="w-full">
-        <Text className="mb-0 pt-4 font-medium">{t("emails.notification_footer_all_the_best")}</Text>
-        <Text className="mt-0">{t("emails.notification_footer_the_formbricks_team")}</Text>
+        <Text className="mb-0 pt-4 text-sm font-medium">{t("emails.notification_footer_all_the_best")}</Text>
+        <Text className="mt-0 text-sm">{t("emails.notification_footer_the_formbricks_team")}</Text>
         <Container
           className="mt-0 w-full rounded-md bg-slate-100 px-4 text-center text-xs leading-5"
           style={{ fontStyle: "italic" }}>
-          <Text>
+          <Text className="text-sm">
             {t("emails.notification_footer_to_halt_weekly_updates")}
             <Link
-              className="text-black underline"
+              className="text-sm text-black underline"
               href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications`}>
               {t("emails.notification_footer_please_turn_them_off")}
             </Link>{" "}

@@ -17,24 +17,24 @@ export async function NotificationInsight({
         <Row>
           <Column className="text-center">
             <Text className="text-sm">{t("emails.notification_insight_surveys")}</Text>
-            <Text className="text-lg font-bold">{insights.numLiveSurvey}</Text>
+            <Text className="text-sm font-medium">{insights.numLiveSurvey}</Text>
           </Column>
           <Column className="text-center">
             <Text className="text-sm">{t("emails.notification_insight_displays")}</Text>
-            <Text className="text-lg font-bold">{insights.totalDisplays}</Text>
+            <Text className="text-sm font-medium">{insights.totalDisplays}</Text>
           </Column>
           <Column className="text-center">
             <Text className="text-sm">{t("emails.notification_insight_responses")}</Text>
-            <Text className="text-lg font-bold">{insights.totalResponses}</Text>
+            <Text className="text-sm font-medium">{insights.totalResponses}</Text>
           </Column>
           <Column className="text-center">
             <Text className="text-sm">{t("emails.notification_insight_completed")}</Text>
-            <Text className="text-lg font-bold">{insights.totalCompletedResponses}</Text>
+            <Text className="text-sm font-medium">{insights.totalCompletedResponses}</Text>
           </Column>
           {insights.totalDisplays !== 0 ? (
             <Column className="text-center">
               <Text className="text-sm">{t("emails.notification_insight_completion_rate")}</Text>
-              <Text className="text-lg font-bold">{Math.round(insights.completionRate)}%</Text>
+              <Text className="text-sm font-medium">{Math.round(insights.completionRate)}%</Text>
             </Column>
           ) : (
             ""

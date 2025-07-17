@@ -3,8 +3,16 @@
 import { useTranslate } from "@tolgee/react";
 import { XCircleIcon } from "lucide-react";
 
-export const ErrorComponent: React.FC = () => {
+interface ErrorComponentProps {
+  /** Pre-translated title text. If not provided, uses default error title */
+  title?: string;
+  /** Pre-translated description text. If not provided, uses default error description */
+  description?: string;
+}
+
+export const ErrorComponent: React.FC<ErrorComponentProps> = ({ title, description }) => {
   const { t } = useTranslate();
+
   return (
     <div className="rounded-lg bg-red-50 p-4">
       <div className="flex">
@@ -13,10 +21,10 @@ export const ErrorComponent: React.FC = () => {
         </div>
         <div className="ml-3">
           <h3 className="text-sm font-medium text-red-800" data-testid="error-title">
-            {t("common.error_component_title")}
+            {title || t("common.error_component_title")}
           </h3>
           <div className="mt-2 text-sm text-red-700" data-testid="error-description">
-            <p>{t("common.error_component_description")}</p>
+            <p>{description || t("common.error_component_description")}</p>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { getQuestionResponseMapping } from "@/lib/responses";
 import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
 import { getTranslate } from "@/tolgee/server";
-import { Column, Container, Hr, Link, Row, Section, Text } from "@react-email/components";
+import { Column, Container, Heading, Hr, Link, Row, Section, Text } from "@react-email/components";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
@@ -34,8 +34,8 @@ export async function ResponseFinishedEmail({
       <Container>
         <Row>
           <Column>
-            <Text className="mb-4 text-xl font-bold"> {t("emails.survey_response_finished_email_hey")}</Text>
-            <Text className="mb-4 font-normal">
+            <Heading> {t("emails.survey_response_finished_email_hey")}</Heading>
+            <Text className="mb-4 text-sm">
               {t("emails.survey_response_finished_email_congrats", {
                 surveyName: survey.name,
               })}
@@ -45,8 +45,8 @@ export async function ResponseFinishedEmail({
               if (!question.response) return;
               return (
                 <Row key={question.question}>
-                  <Column className="w-full">
-                    <Text className="mb-2 font-medium">{question.question}</Text>
+                  <Column className="w-full font-medium">
+                    <Text className="mb-2 text-sm">{question.question}</Text>
                     {renderEmailResponseValue(question.response, question.type, t)}
                   </Column>
                 </Row>
@@ -57,8 +57,8 @@ export async function ResponseFinishedEmail({
               if (variableResponse && ["number", "string"].includes(typeof variable)) {
                 return (
                   <Row key={variable.id}>
-                    <Column className="w-full">
-                      <Text className="mb-2 flex items-center gap-2 font-medium">
+                    <Column className="w-full text-sm font-medium">
+                      <Text className="mb-1 flex items-center gap-2">
                         {variable.type === "number" ? (
                           <FileDigitIcon className="h-4 w-4" />
                         ) : (
@@ -66,7 +66,7 @@ export async function ResponseFinishedEmail({
                         )}
                         {variable.name}
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                      <Text className="mt-0 whitespace-pre-wrap break-words font-medium">
                         {variableResponse}
                       </Text>
                     </Column>
@@ -80,11 +80,11 @@ export async function ResponseFinishedEmail({
               if (hiddenFieldResponse && typeof hiddenFieldResponse === "string") {
                 return (
                   <Row key={hiddenFieldId}>
-                    <Column className="w-full">
-                      <Text className="mb-2 flex items-center gap-2 font-medium">
+                    <Column className="w-full font-medium">
+                      <Text className="mb-2 flex items-center gap-2 text-sm">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                      <Text className="mt-0 whitespace-pre-wrap break-words text-sm">
                         {hiddenFieldResponse}
                       </Text>
                     </Column>
@@ -105,19 +105,19 @@ export async function ResponseFinishedEmail({
             />
             <Hr />
             <Section className="mt-4 text-center text-sm">
-              <Text className="font-bold">
+              <Text className="text-sm font-medium">
                 {t("emails.survey_response_finished_email_dont_want_notifications")}
               </Text>
               <Text className="mb-0">
                 <Link
-                  className="text-black underline"
+                  className="text-sm text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
                   {t("emails.survey_response_finished_email_turn_off_notifications_for_this_form")}
                 </Link>
               </Text>
               <Text className="mt-0">
                 <Link
-                  className="text-black underline"
+                  className="text-sm text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
                   {t("emails.survey_response_finished_email_turn_off_notifications_for_all_new_forms")}
                 </Link>
