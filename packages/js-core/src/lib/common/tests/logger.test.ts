@@ -2,8 +2,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Logger } from "@/lib/common/logger";
 
-// adjust import path as needed
-
 describe("Logger", () => {
   let logger: Logger;
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
