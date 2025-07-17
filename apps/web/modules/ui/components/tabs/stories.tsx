@@ -197,7 +197,7 @@ export const FillWidth: Story = {
     width: "fill",
     showIcons: true,
     numberOfTabs: 2,
-    tabTexts: "Account,Password,Settings",
+    tabTexts: "Account,Password",
   },
   parameters: {
     docs: {
@@ -215,7 +215,7 @@ export const FitWidth: Story = {
     width: "fit",
     showIcons: true,
     numberOfTabs: 2,
-    tabTexts: "Account,Password,Settings",
+    tabTexts: "Account,Password",
   },
   parameters: {
     docs: {
@@ -252,7 +252,7 @@ export const Disabled: Story = {
     width: "fit",
     showIcons: true,
     numberOfTabs: 2,
-    tabTexts: "Account,Password,Settings",
+    tabTexts: "Account,Password",
   },
   parameters: {
     docs: {
