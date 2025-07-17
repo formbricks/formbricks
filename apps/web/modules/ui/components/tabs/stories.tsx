@@ -4,10 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./index";
 
 // Story options separate from component props
 interface StoryOptions {
-  size: "default" | "big";
-  showIcons: boolean;
-  numberOfTabs: number;
-  tabTexts: string;
+  size?: "default" | "big";
+  showIcons?: boolean;
+  numberOfTabs?: number;
+  tabTexts?: string;
+  width?: "fill" | "fit";
+  variant?: "default" | "disabled";
 }
 
 type StoryProps = React.ComponentProps<typeof Tabs> & StoryOptions;
@@ -83,7 +85,7 @@ const meta: Meta<StoryProps> = {
       order: 2,
     },
 
-    // Component Props - Behaviour Category
+    // Story Options - Behaviour Category
     variant: {
       control: "select",
       options: ["default", "disabled"],
@@ -100,7 +102,7 @@ const meta: Meta<StoryProps> = {
 
 export default meta;
 
-type Story = StoryObj<typeof Tabs> & { args: StoryOptions };
+type Story = StoryObj<StoryProps>;
 
 // Create a render function to handle dynamic tab generation
 const renderTabs = (args: StoryProps) => {
@@ -131,7 +133,7 @@ const renderTabs = (args: StoryProps) => {
 
   return (
     <div className="w-full max-w-sm">
-      <Tabs defaultValue={defaultValue || tabValues[0]} width={width} {...tabsProps}>
+      <Tabs defaultValue={defaultValue || tabValues[0]} {...tabsProps}>
         <TabsList variant={variant} size={size} width={width}>
           {finalTabLabels.map((label, index) => {
             const IconComponent = availableIcons[index % availableIcons.length];

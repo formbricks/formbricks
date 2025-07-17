@@ -22,6 +22,7 @@ const Nav: React.FC<NavProps> = ({ tabs, activeId, setActiveId, activeTabClassNa
     <nav className="flex h-full items-center space-x-3" aria-label="Tabs">
       {tabs.map((tab) => (
         <button
+          type="button"
           key={tab.id}
           onClick={() => setActiveId(tab.id)}
           className={cn(
