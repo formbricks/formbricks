@@ -5,6 +5,7 @@ import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surve
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -48,17 +49,20 @@ export const SurveyAnalysisCTA = ({
   isFormbricksCloud,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-
   const [modalState, setModalState] = useState<ModalState>({
     start: searchParams.get("share") === "true",
     share: false,
   });
 
-  const surveyUrl = useMemo(() => `${publicDomain}/s/${survey.id}`, [survey.id, publicDomain]);
+  const { refreshSingleUseId } = useSingleUseId(survey);
+
+  const surveyUrl = useMemo(() => {
+    return `${publicDomain}/s/${survey.id}`;
+  }, [publicDomain, survey.id]);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
@@ -102,8 +106,17 @@ export const SurveyAnalysisCTA = ({
     setLoading(false);
   };
 
-  const getPreviewUrl = () => {
+  const getPreviewUrl = async () => {
     const separator = surveyUrl.includes("?") ? "&" : "?";
+
+    // If single use is enabled, generate a single use ID
+    if (survey.singleUse?.enabled) {
+      const newId = await refreshSingleUseId();
+      if (newId) {
+        return `${surveyUrl}${separator}suId=${newId}&preview=true`;
+      }
+    }
+
     return `${surveyUrl}${separator}preview=true`;
   };
 
@@ -119,7 +132,10 @@ export const SurveyAnalysisCTA = ({
     {
       icon: Eye,
       tooltip: t("common.preview"),
-      onClick: () => window.open(getPreviewUrl(), "_blank"),
+      onClick: async () => {
+        const previewUrl = await getPreviewUrl();
+        window.open(previewUrl, "_blank");
+      },
       isVisible: survey.type === "link",
     },
     {
