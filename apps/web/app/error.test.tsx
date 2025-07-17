@@ -9,11 +9,32 @@ vi.mock("@/modules/ui/components/button", () => ({
 }));
 
 vi.mock("@/modules/ui/components/error-component", () => ({
-  ErrorComponent: () => <div data-testid="ErrorComponent">ErrorComponent</div>,
+  ErrorComponent: ({ title, description }: { title: string; description: string }) => (
+    <div data-testid="ErrorComponent">
+      <div data-testid="error-title">{title}</div>
+      <div data-testid="error-description">{description}</div>
+    </div>
+  ),
 }));
 
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
+}));
+
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        "common.error_rate_limit_title": "Too Many Requests",
+        "common.error_rate_limit_description": "You're making too many requests. Please slow down.",
+        "common.error_component_title": "Something went wrong",
+        "common.error_component_description": "An unexpected error occurred. Please try again.",
+        "common.try_again": "Try Again",
+        "common.go_to_dashboard": "Go to Dashboard",
+      };
+      return translations[key] || key;
+    },
+  }),
 }));
 
 vi.mock("@formbricks/types/errors", async (importOriginal) => {
@@ -40,8 +61,7 @@ describe("ErrorBoundary", () => {
 
     const { getClientErrorData } = await import("@formbricks/types/errors");
     vi.mocked(getClientErrorData).mockReturnValue({
-      title: "Something went wrong",
-      description: "An unexpected error occurred. Please try again.",
+      type: "general",
       showButtons: true,
     });
 
@@ -60,8 +80,7 @@ describe("ErrorBoundary", () => {
 
     const { getClientErrorData } = await import("@formbricks/types/errors");
     vi.mocked(getClientErrorData).mockReturnValue({
-      title: "Something went wrong",
-      description: "An unexpected error occurred. Please try again.",
+      type: "general",
       showButtons: true,
     });
 
@@ -76,13 +95,12 @@ describe("ErrorBoundary", () => {
   test("calls reset when try again button is clicked for general errors", async () => {
     const { getClientErrorData } = await import("@formbricks/types/errors");
     vi.mocked(getClientErrorData).mockReturnValue({
-      title: "Something went wrong",
-      description: "An unexpected error occurred. Please try again.",
+      type: "general",
       showButtons: true,
     });
 
     render(<ErrorBoundary error={{ ...dummyError }} reset={resetMock} />);
-    const tryAgainBtn = screen.getByRole("button", { name: "common.try_again" });
+    const tryAgainBtn = screen.getByRole("button", { name: "Try Again" });
     userEvent.click(tryAgainBtn);
     await waitFor(() => expect(resetMock).toHaveBeenCalled());
   });
@@ -90,16 +108,15 @@ describe("ErrorBoundary", () => {
   test("sets window.location.href to '/' when dashboard button is clicked for general errors", async () => {
     const { getClientErrorData } = await import("@formbricks/types/errors");
     vi.mocked(getClientErrorData).mockReturnValue({
-      title: "Something went wrong",
-      description: "An unexpected error occurred. Please try again.",
+      type: "general",
       showButtons: true,
     });
 
     const originalLocation = window.location;
-    delete (window as any).location;
+    (window as any).location = undefined;
     (window as any).location = { href: "" };
     render(<ErrorBoundary error={{ ...dummyError }} reset={resetMock} />);
-    const dashBtn = screen.getByRole("button", { name: "common.go_to_dashboard" });
+    const dashBtn = screen.getByRole("button", { name: "Go to Dashboard" });
     userEvent.click(dashBtn);
     await waitFor(() => {
       expect(window.location.href).toBe("/");
@@ -110,28 +127,60 @@ describe("ErrorBoundary", () => {
   test("does not show buttons for rate limit errors", async () => {
     const { getClientErrorData } = await import("@formbricks/types/errors");
     vi.mocked(getClientErrorData).mockReturnValue({
-      title: "common.error_rate_limit_title",
-      description: "common.error_rate_limit_description",
+      type: "rate_limit",
       showButtons: false,
     });
 
     render(<ErrorBoundary error={{ ...dummyError }} reset={resetMock} />);
 
-    expect(screen.queryByRole("button", { name: "common.try_again" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "common.go_to_dashboard" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try Again" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Go to Dashboard" })).not.toBeInTheDocument();
   });
 
-  test("shows error component with custom title and description for rate limit errors", async () => {
+  test("shows error component with rate limit messages for rate limit errors", async () => {
     const { getClientErrorData } = await import("@formbricks/types/errors");
     vi.mocked(getClientErrorData).mockReturnValue({
-      title: "common.error_rate_limit_title",
-      description: "common.error_rate_limit_description",
+      type: "rate_limit",
       showButtons: false,
     });
 
     render(<ErrorBoundary error={dummyError} reset={resetMock} />);
 
     expect(screen.getByTestId("ErrorComponent")).toBeInTheDocument();
+    expect(screen.getByTestId("error-title")).toHaveTextContent("Too Many Requests");
+    expect(screen.getByTestId("error-description")).toHaveTextContent(
+      "You're making too many requests. Please slow down."
+    );
     expect(getClientErrorData).toHaveBeenCalledWith(dummyError);
+  });
+
+  test("shows error component with general messages for general errors", async () => {
+    const { getClientErrorData } = await import("@formbricks/types/errors");
+    vi.mocked(getClientErrorData).mockReturnValue({
+      type: "general",
+      showButtons: true,
+    });
+
+    render(<ErrorBoundary error={dummyError} reset={resetMock} />);
+
+    expect(screen.getByTestId("ErrorComponent")).toBeInTheDocument();
+    expect(screen.getByTestId("error-title")).toHaveTextContent("Something went wrong");
+    expect(screen.getByTestId("error-description")).toHaveTextContent(
+      "An unexpected error occurred. Please try again."
+    );
+    expect(getClientErrorData).toHaveBeenCalledWith(dummyError);
+  });
+
+  test("shows buttons for general errors", async () => {
+    const { getClientErrorData } = await import("@formbricks/types/errors");
+    vi.mocked(getClientErrorData).mockReturnValue({
+      type: "general",
+      showButtons: true,
+    });
+
+    render(<ErrorBoundary error={dummyError} reset={resetMock} />);
+
+    expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Go to Dashboard" })).toBeInTheDocument();
   });
 });

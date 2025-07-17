@@ -5,11 +5,30 @@ import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
-import { getClientErrorData } from "@formbricks/types/errors";
+import { type ClientErrorType, getClientErrorData } from "@formbricks/types/errors";
+
+/**
+ * Get translated error messages based on error type
+ * All translation keys are directly visible to Tolgee's static analysis
+ */
+const getErrorMessages = (type: ClientErrorType, t: (key: string) => string) => {
+  if (type === "rate_limit") {
+    return {
+      title: t("common.error_rate_limit_title"),
+      description: t("common.error_rate_limit_description"),
+    };
+  }
+
+  return {
+    title: t("common.error_component_title"),
+    description: t("common.error_component_description"),
+  };
+};
 
 const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) => {
   const { t } = useTranslate();
   const errorData = getClientErrorData(error);
+  const { title, description } = getErrorMessages(errorData.type, t);
 
   if (process.env.NODE_ENV === "development") {
     console.error(error.message);
@@ -19,7 +38,7 @@ const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) =>
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
-      <ErrorComponent title={errorData.title} description={errorData.description} />
+      <ErrorComponent title={title} description={description} />
       {errorData.showButtons && (
         <div className="mt-2">
           <Button variant="secondary" onClick={() => reset()} className="mr-2">
