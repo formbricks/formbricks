@@ -147,7 +147,7 @@ export const Default: Story = {
     showSearch: true,
     searchPlaceholder: "Search...",
     options: commonOptions,
-    value: null,
+    value: commonOptions[0].value,
     onChangeValue: (value, option) => logger.debug({ value, option }, "onChangeValue"),
     clearable: false,
     withInput: false,
