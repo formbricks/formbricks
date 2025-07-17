@@ -273,7 +273,6 @@ export const AnonymousLinksTab = ({
 
                     <Button
                       variant="secondary"
-                      title={t("environments.surveys.share.anonymous_links.copy_link")}
                       onClick={() => {
                         navigator.clipboard.writeText(surveyUrlWithCustomSuid);
                         toast.success(t("common.copied_to_clipboard"));
