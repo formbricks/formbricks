@@ -19,6 +19,7 @@ import { Meta, StoryObj } from "@storybook/react-vite";
 import { ComponentName } from "./index";
 
 // For complex components with configurable options
+// consider this as an example the options need to reflect the props types
 interface StoryOptions {
   showIcon: boolean;
   numberOfElements: number;
@@ -159,6 +160,7 @@ export const Interactive: Story = {
 - Ensure no TypeScript errors
 - Use realistic prop values
 - Include at least 3-5 story variants
+- Example values need to be in the context of survey application
 
 ### 9. **Naming Conventions**
 - **Story titles**: "UI/ComponentName"
@@ -170,6 +172,6 @@ export const Interactive: Story = {
 - **Generic components**: Remove `component` from meta if type conflicts
 - **Form components**: Include Invalid, WithValue stories
 - **Navigation**: Include ManyItems stories
-- **Modals**: Include trigger and content structure
+- **Modals, Dropdowns and Popups **: Include trigger and content structure
 
-## Generate stories that are comprehensive, well-documented, and test all component states and edge cases. 
+## Generate stories that are comprehensive, well-documented, and reflect all component states and edge cases. 
