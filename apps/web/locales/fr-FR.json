@@ -201,6 +201,8 @@
     "error": "Erreur",
     "error_component_description": "Cette ressource n'existe pas ou vous n'avez pas les droits nécessaires pour y accéder.",
     "error_component_title": "Erreur de chargement des ressources",
+    "error_rate_limit_description": "Nombre maximal de demandes atteint. Veuillez réessayer plus tard.",
+    "error_rate_limit_title": "Limite de Taux Dépassée",
     "expand_rows": "Développer les lignes",
     "finish": "Terminer",
     "follow_these": "Suivez ceci",
