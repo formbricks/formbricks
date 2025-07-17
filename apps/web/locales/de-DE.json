@@ -201,6 +201,8 @@
     "error": "Fehler",
     "error_component_description": "Diese Ressource existiert nicht oder Du hast nicht die notwendigen Rechte, um darauf zuzugreifen.",
     "error_component_title": "Fehler beim Laden der Ressourcen",
+    "error_rate_limit_description": "Maximale Anzahl an Anfragen erreicht. Bitte später erneut versuchen.",
+    "error_rate_limit_title": "Rate Limit Überschritten",
     "expand_rows": "Zeilen erweitern",
     "finish": "Fertigstellen",
     "follow_these": "Folge diesen",
