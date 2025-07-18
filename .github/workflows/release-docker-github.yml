@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: 'production'
+      IS_PRERELEASE:
+        description: 'Whether this is a prerelease (affects latest tag)'
+        required: false
+        type: boolean
+        default: false
     outputs:
       VERSION:
         description: release version
@@ -110,6 +115,13 @@ jobs:
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Default semver tags (version, major.minor, major)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # Only tag as 'latest' for stable releases (not prereleases)
+            type=raw,value=latest,enable=${{ !inputs.IS_PRERELEASE }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
