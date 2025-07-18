@@ -19,7 +19,7 @@ jobs:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
 
   helm-chart-release:
-    name: Release Helm Chart  
+    name: Release Helm Chart
     uses: ./.github/workflows/release-helm-chart.yml
     secrets: inherit
     needs:
