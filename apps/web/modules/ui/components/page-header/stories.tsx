@@ -1,9 +1,9 @@
 import { Button } from "@/modules/ui/components/button";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Meta, StoryObj } from "@storybook/react-vite";
 
-const meta = {
-  title: "ui/PageHeader",
+const meta: Meta<typeof PageHeader> = {
+  title: "UI/PageHeader",
   component: PageHeader,
   tags: ["autodocs"],
   parameters: {
