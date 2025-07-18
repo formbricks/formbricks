@@ -51,19 +51,12 @@ jobs:
       - name: Get Release Tag
         id: extract_release_tag
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # Extract version from tag (e.g., refs/tags/v1.2.3 -> 1.2.3)
-            TAG=${{ github.ref }}
-            TAG=${TAG#refs/tags/v}
-            echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
-            echo "VERSION=$TAG" >> $GITHUB_OUTPUT
-            echo "Using tag-based version: $TAG"
-          else
-            # Workflow should only run for tags, not branches
-            echo "::error::This workflow should only be triggered from a tag reference, not from branch: ${{ github.ref }}"
-            echo "::error::Please create and push a tag to trigger this release workflow."
-            exit 1
-          fi
+          # Extract version from tag (e.g., refs/tags/v1.2.3 -> 1.2.3)
+          TAG=${{ github.ref }}
+          TAG=${TAG#refs/tags/v}
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+          echo "Using tag-based version: $TAG"
 
       - name: Update package.json version
         run: |
@@ -102,7 +95,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             # Only tag as 'latest' for stable releases (not prereleases)
-            type=raw,value=latest,enable=${{ !inputs.IS_PRERELEASE }}
+            type=raw,value=latest,enable=${{ inputs.IS_PRERELEASE == false }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
