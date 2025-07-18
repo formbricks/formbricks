@@ -1,5 +1,6 @@
 "use client";
 
+import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { Copy, SquareArrowOutUpRight } from "lucide-react";
@@ -32,6 +33,22 @@ export const ShareSurveyLink = ({
     setSurveyUrl(url);
   };
 
+  const { refreshSingleUseId } = useSingleUseId(survey);
+
+  const getPreviewUrl = async () => {
+    const previewUrl = new URL(surveyUrl);
+
+    if (survey.singleUse?.enabled) {
+      const newId = await refreshSingleUseId();
+      if (newId) {
+        previewUrl.searchParams.set("suId", newId);
+      }
+    }
+
+    previewUrl.searchParams.set("preview", "true");
+    return previewUrl.toString();
+  };
+
   return (
     <div className={"flex max-w-full flex-col items-center justify-center gap-2 md:flex-row"}>
       <SurveyLinkDisplay surveyUrl={surveyUrl} key={surveyUrl} />
@@ -53,14 +70,9 @@ export const ShareSurveyLink = ({
           title={t("environments.surveys.preview_survey_in_a_new_tab")}
           aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
           disabled={!surveyUrl}
-          onClick={() => {
-            let previewUrl = surveyUrl;
-            if (previewUrl.includes("?")) {
-              previewUrl += "&preview=true";
-            } else {
-              previewUrl += "?preview=true";
-            }
-            window.open(previewUrl, "_blank");
+          onClick={async () => {
+            const url = await getPreviewUrl();
+            window.open(url, "_blank");
           }}>
           {t("common.preview")}
           <SquareArrowOutUpRight />

@@ -5,6 +5,7 @@ import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surve
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -12,7 +13,7 @@ import { IconBar } from "@/modules/ui/components/iconbar";
 import { useTranslate } from "@tolgee/react";
 import { BellRing, Eye, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
@@ -48,17 +49,16 @@ export const SurveyAnalysisCTA = ({
   isFormbricksCloud,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-
   const [modalState, setModalState] = useState<ModalState>({
     start: searchParams.get("share") === "true",
     share: false,
   });
 
-  const surveyUrl = useMemo(() => `${publicDomain}/s/${survey.id}`, [survey.id, publicDomain]);
+  const { refreshSingleUseId } = useSingleUseId(survey);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
@@ -102,9 +102,18 @@ export const SurveyAnalysisCTA = ({
     setLoading(false);
   };
 
-  const getPreviewUrl = () => {
-    const separator = surveyUrl.includes("?") ? "&" : "?";
-    return `${surveyUrl}${separator}preview=true`;
+  const getPreviewUrl = async () => {
+    const surveyUrl = new URL(`${publicDomain}/s/${survey.id}`);
+
+    if (survey.singleUse?.enabled) {
+      const newId = await refreshSingleUseId();
+      if (newId) {
+        surveyUrl.searchParams.set("suId", newId);
+      }
+    }
+
+    surveyUrl.searchParams.set("preview", "true");
+    return surveyUrl.toString();
   };
 
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
@@ -119,7 +128,10 @@ export const SurveyAnalysisCTA = ({
     {
       icon: Eye,
       tooltip: t("common.preview"),
-      onClick: () => window.open(getPreviewUrl(), "_blank"),
+      onClick: async () => {
+        const previewUrl = await getPreviewUrl();
+        window.open(previewUrl, "_blank");
+      },
       isVisible: survey.type === "link",
     },
     {
