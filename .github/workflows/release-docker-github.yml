@@ -65,7 +65,7 @@ jobs:
         run: |
           # Create .env if it doesn't exist
           touch .env
-          
+
           # Replace if exists, otherwise append
           if grep -q "^SENTRY_ENVIRONMENT=" .env; then
             sed -i "s/^SENTRY_ENVIRONMENT=.*/SENTRY_ENVIRONMENT=${{ inputs.SENTRY_ENVIRONMENT }}/" .env
