@@ -154,15 +154,6 @@ export const SURVEY_BG_COLORS = [
 ];
 
 // Rate Limiting
-export const SIGNUP_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 30,
-};
-export const LOGIN_RATE_LIMIT = {
-  interval: 15 * 60, // 15 minutes
-  allowedPerInterval: 30,
-};
-
 export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 100,
@@ -170,23 +161,6 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
 export const MANAGEMENT_API_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 100,
-};
-
-export const SHARE_RATE_LIMIT = {
-  interval: 60 * 1, // 1 minutes
-  allowedPerInterval: 30,
-};
-export const FORGET_PASSWORD_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 5, // Limit to 5 requests per hour
-};
-export const RESET_PASSWORD_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 5, // Limit to 5 requests per hour
-};
-export const VERIFY_EMAIL_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 10, // Limit to 10 requests per hour
 };
 export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
   interval: 60, // 1 minute

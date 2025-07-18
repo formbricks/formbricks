@@ -338,7 +338,7 @@ export const handleSsoCallback = async ({
     );
 
     // send new user to brevo
-    createBrevoCustomer({ id: user.id, email: user.email });
+    createBrevoCustomer({ id: userProfile.id, email: userProfile.email });
 
     if (isMultiOrgEnabled) {
       logger.debug(

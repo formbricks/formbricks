@@ -27,6 +27,7 @@ vi.mock("crypto", () => ({
       digest: vi.fn(() => "a".repeat(32)), // Mock 64-char hex string
     })),
   })),
+  randomUUID: vi.fn(() => "test-uuid-123"),
 }));
 
 // Mock Sentry
@@ -42,8 +43,12 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 // Mock Redis client
+const { mockGetRedisClient } = vi.hoisted(() => ({
+  mockGetRedisClient: vi.fn(),
+}));
+
 vi.mock("@/modules/cache/redis", () => ({
-  default: null, // Intentionally simulate Redis unavailability to test fail-closed security behavior
+  getRedisClient: mockGetRedisClient,
 }));
 
 describe("Auth Utils", () => {
@@ -109,11 +114,17 @@ describe("Auth Utils", () => {
 
   describe("Rate Limiting", () => {
     test("should always allow successful authentication logging", async () => {
+      // This test doesn't need Redis to be available as it short-circuits for success
+      mockGetRedisClient.mockResolvedValue(null);
+
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
     });
 
     test("should implement fail-closed behavior when Redis is unavailable", async () => {
+      // Set Redis unavailable for this test
+      mockGetRedisClient.mockResolvedValue(null);
+
       const email = "rate-limit-test@example.com";
 
       // When Redis is unavailable (mocked as null), the system fails closed for security.
@@ -130,6 +141,254 @@ describe("Auth Utils", () => {
       expect(await shouldLogAuthFailure(email, false)).toBe(false); // 8th failure - blocked
       expect(await shouldLogAuthFailure(email, false)).toBe(false); // 9th failure - blocked
       expect(await shouldLogAuthFailure(email, false)).toBe(false); // 10th failure - blocked
+    });
+
+    describe("Redis Available - All Branch Coverage", () => {
+      let mockRedis: any;
+      let mockMulti: any;
+
+      beforeEach(() => {
+        // Clear mocks first
+        vi.clearAllMocks();
+
+        // Create comprehensive Redis mock
+        mockMulti = {
+          zRemRangeByScore: vi.fn().mockReturnThis(),
+          zCard: vi.fn().mockReturnThis(),
+          zAdd: vi.fn().mockReturnThis(),
+          expire: vi.fn().mockReturnThis(),
+          exec: vi.fn(),
+        };
+
+        mockRedis = {
+          multi: vi.fn().mockReturnValue(mockMulti),
+          zRange: vi.fn(),
+          isReady: true, // Add isReady property
+        };
+
+        // Reset the Redis mock for these specific tests
+        mockGetRedisClient.mockReset();
+        mockGetRedisClient.mockReturnValue(mockRedis); // Use mockReturnValue instead of mockResolvedValue
+      });
+
+      test("should handle Redis transaction failure - !results branch", async () => {
+        // Create fresh mock objects for this test
+        const testMockMulti = {
+          zRemRangeByScore: vi.fn().mockReturnThis(),
+          zCard: vi.fn().mockReturnThis(),
+          zAdd: vi.fn().mockReturnThis(),
+          expire: vi.fn().mockReturnThis(),
+          exec: vi.fn().mockResolvedValue(null), // Mock transaction returning null
+        };
+
+        const testMockRedis = {
+          multi: vi.fn().mockReturnValue(testMockMulti),
+          zRange: vi.fn(),
+          isReady: true,
+        };
+
+        // Reset and setup mock for this specific test
+        mockGetRedisClient.mockReset();
+        mockGetRedisClient.mockReturnValue(testMockRedis);
+
+        const email = "transaction-failure@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        // Function should return false when Redis transaction fails (fail-closed behavior)
+        expect(result).toBe(false);
+        expect(mockGetRedisClient).toHaveBeenCalled();
+        expect(testMockRedis.multi).toHaveBeenCalled();
+        expect(testMockMulti.zRemRangeByScore).toHaveBeenCalled();
+        expect(testMockMulti.zCard).toHaveBeenCalled();
+        expect(testMockMulti.zAdd).toHaveBeenCalled();
+        expect(testMockMulti.expire).toHaveBeenCalled();
+        expect(testMockMulti.exec).toHaveBeenCalled();
+      });
+
+      test("should allow logging when currentCount <= AGGREGATION_THRESHOLD", async () => {
+        // Mock Redis transaction returning count <= threshold (assuming threshold is 3)
+        mockMulti.exec.mockResolvedValue([
+          null, // zRemRangeByScore result
+          2, // zCard result - below threshold
+          null, // zAdd result
+          null, // expire result
+        ]);
+
+        const email = "below-threshold@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        expect(result).toBe(true);
+        expect(mockMulti.exec).toHaveBeenCalled();
+      });
+
+      test("should allow logging when recentEntries.length === 0", async () => {
+        // Mock Redis transaction returning count above threshold
+        mockMulti.exec.mockResolvedValue([
+          null, // zRemRangeByScore result
+          5, // zCard result - above threshold
+          null, // zAdd result
+          null, // expire result
+        ]);
+
+        // Mock zRange returning empty array
+        mockRedis.zRange.mockResolvedValue([]);
+
+        const email = "no-recent-entries@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        expect(result).toBe(true);
+        expect(mockRedis.zRange).toHaveBeenCalledWith(expect.stringContaining("rate_limit:auth:"), -10, -1);
+      });
+
+      test("should allow logging on every 10th attempt - currentCount % 10 === 0", async () => {
+        const now = Date.now();
+
+        // Mock Redis transaction returning count that is divisible by 10
+        mockMulti.exec.mockResolvedValue([
+          null, // zRemRangeByScore result
+          10, // zCard result - 10th attempt
+          null, // zAdd result
+          null, // expire result
+        ]);
+
+        // Mock zRange returning recent entries
+        mockRedis.zRange.mockResolvedValue([
+          `${now - 30000}:uuid1`, // 30 seconds ago
+        ]);
+
+        const email = "tenth-attempt@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        expect(result).toBe(true);
+        expect(mockRedis.zRange).toHaveBeenCalled();
+      });
+
+      test("should allow logging after 1 minute gap - timeSinceLastLog > 60000", async () => {
+        const now = Date.now();
+
+        // Mock Redis transaction returning count not divisible by 10
+        mockMulti.exec.mockResolvedValue([
+          null, // zRemRangeByScore result
+          7, // zCard result - 7th attempt (not divisible by 10)
+          null, // zAdd result
+          null, // expire result
+        ]);
+
+        // Mock zRange returning entry older than 1 minute
+        mockRedis.zRange.mockResolvedValue([
+          `${now - 120000}:uuid1`, // 2 minutes ago
+        ]);
+
+        const email = "one-minute-gap@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        expect(result).toBe(true);
+        expect(mockRedis.zRange).toHaveBeenCalled();
+      });
+
+      test("should block logging when neither condition is met", async () => {
+        const now = Date.now();
+
+        // Mock Redis transaction returning count not divisible by 10
+        mockMulti.exec.mockResolvedValue([
+          null, // zRemRangeByScore result
+          7, // zCard result - 7th attempt (not divisible by 10)
+          null, // zAdd result
+          null, // expire result
+        ]);
+
+        // Mock zRange returning recent entry (less than 1 minute)
+        mockRedis.zRange.mockResolvedValue([
+          `${now - 30000}:uuid1`, // 30 seconds ago
+        ]);
+
+        const email = "blocked-logging@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        expect(result).toBe(false);
+        expect(mockRedis.zRange).toHaveBeenCalled();
+      });
+
+      test("should handle Redis operation errors gracefully", async () => {
+        // Mock Redis multi throwing an error
+        mockMulti.exec.mockRejectedValue(new Error("Redis operation failed"));
+
+        const email = "redis-error@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        expect(result).toBe(false);
+        expect(mockMulti.exec).toHaveBeenCalled();
+      });
+
+      test("should handle zRange errors gracefully", async () => {
+        // Mock successful transaction but zRange failing
+        mockMulti.exec.mockResolvedValue([
+          null, // zRemRangeByScore result
+          5, // zCard result - above threshold
+          null, // zAdd result
+          null, // expire result
+        ]);
+
+        mockRedis.zRange.mockRejectedValue(new Error("zRange failed"));
+
+        const email = "zrange-error@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        expect(result).toBe(false);
+        expect(mockRedis.zRange).toHaveBeenCalled();
+      });
+
+      test("should handle malformed timestamp in recent entries", async () => {
+        // Mock Redis transaction returning count not divisible by 10
+        mockMulti.exec.mockResolvedValue([
+          null, // zRemRangeByScore result
+          7, // zCard result - 7th attempt
+          null, // zAdd result
+          null, // expire result
+        ]);
+
+        // Mock zRange returning entry with malformed timestamp
+        mockRedis.zRange.mockResolvedValue(["invalid-timestamp:uuid1"]);
+
+        const email = "malformed-timestamp@example.com";
+        const result = await shouldLogAuthFailure(email, false);
+
+        // Should handle parseInt(NaN) gracefully and still make a decision
+        expect(typeof result).toBe("boolean");
+        expect(mockRedis.zRange).toHaveBeenCalled();
+      });
+
+      test("should verify correct Redis key generation and operations", async () => {
+        mockMulti.exec.mockResolvedValue([
+          null, // zRemRangeByScore result
+          2, // zCard result - below threshold
+          null, // zAdd result
+          null, // expire result
+        ]);
+
+        const email = "key-generation@example.com";
+        await shouldLogAuthFailure(email, false);
+
+        // Verify correct Redis operations were called
+        expect(mockRedis.multi).toHaveBeenCalled();
+        expect(mockMulti.zRemRangeByScore).toHaveBeenCalledWith(
+          expect.stringContaining("rate_limit:auth:"),
+          0,
+          expect.any(Number)
+        );
+        expect(mockMulti.zCard).toHaveBeenCalledWith(expect.stringContaining("rate_limit:auth:"));
+        expect(mockMulti.zAdd).toHaveBeenCalledWith(
+          expect.stringContaining("rate_limit:auth:"),
+          expect.objectContaining({
+            score: expect.any(Number),
+            value: expect.stringMatching(/^\d+:.+$/),
+          })
+        );
+        expect(mockMulti.expire).toHaveBeenCalledWith(
+          expect.stringContaining("rate_limit:auth:"),
+          expect.any(Number)
+        );
+      });
     });
   });
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { AnonymousLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/anonymous-links-tab";
 import { AppTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/app-tab";
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
@@ -8,21 +7,14 @@ import { EmailTab } from "@/app/(app)/environments/[environmentId]/surveys/[surv
 import { PersonalLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/personal-links-tab";
 import { QRCodeTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab";
 import { SocialMediaTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/social-media-tab";
+import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import { WebsiteEmbedTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/website-embed-tab";
 import { ShareViewType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useTranslate } from "@tolgee/react";
-import {
-  Code2Icon,
-  LinkIcon,
-  MailIcon,
-  QrCodeIcon,
-  Share2Icon,
-  SquareStack,
-  UserIcon
-} from "lucide-react";
+import { Code2Icon, LinkIcon, MailIcon, QrCodeIcon, Share2Icon, SquareStack, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -205,17 +197,11 @@ export const ShareSurveyModal = ({
     }
 
     if (survey.type === "link") {
-      return (
-        <ShareView
-          tabs={linkTabs}
-          activeId={activeId}
-          setActiveId={setActiveId}
-        />
-      );
+      return <ShareView tabs={linkTabs} activeId={activeId} setActiveId={setActiveId} />;
     }
 
     return (
-      <div className={`h-full w-full bg-slate-50 p-6 rounded-lg`}>
+      <div className={`h-full w-full rounded-lg bg-slate-50 p-6`}>
         <TabContainer
           title={t("environments.surveys.summary.in_app.title")}
           description={t("environments.surveys.summary.in_app.description")}>
@@ -235,7 +221,7 @@ export const ShareSurveyModal = ({
         width={survey.type === "link" ? "wide" : "default"}
         aria-describedby={undefined}
         unconstrained>
-          {renderContent()}
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );

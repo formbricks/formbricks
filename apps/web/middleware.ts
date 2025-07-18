@@ -1,23 +1,10 @@
-import {
-  clientSideApiEndpointsLimiter,
-  forgotPasswordLimiter,
-  loginLimiter,
-  shareUrlLimiter,
-  signupLimiter,
-  syncUserIdentificationLimiter,
-  verifyEmailLimiter,
-} from "@/app/middleware/bucket";
+import { clientSideApiEndpointsLimiter, syncUserIdentificationLimiter } from "@/app/middleware/bucket";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import {
   isAuthProtectedRoute,
   isClientSideApiRoute,
-  isForgotPasswordRoute,
-  isLoginRoute,
   isRouteAllowedForDomain,
-  isShareUrlRoute,
-  isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
-  isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
 import { IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@/lib/constants";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -51,23 +38,13 @@ const handleAuth = async (request: NextRequest): Promise<Response | null> => {
 };
 
 const applyRateLimiting = async (request: NextRequest, ip: string) => {
-  if (isLoginRoute(request.nextUrl.pathname)) {
-    await loginLimiter(`login-${ip}`);
-  } else if (isSignupRoute(request.nextUrl.pathname)) {
-    await signupLimiter(`signup-${ip}`);
-  } else if (isVerifyEmailRoute(request.nextUrl.pathname)) {
-    await verifyEmailLimiter(`verify-email-${ip}`);
-  } else if (isForgotPasswordRoute(request.nextUrl.pathname)) {
-    await forgotPasswordLimiter(`forgot-password-${ip}`);
-  } else if (isClientSideApiRoute(request.nextUrl.pathname)) {
+  if (isClientSideApiRoute(request.nextUrl.pathname)) {
     await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
     const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
     if (envIdAndUserId) {
       const { environmentId, userId } = envIdAndUserId;
       await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
     }
-  } else if (isShareUrlRoute(request.nextUrl.pathname)) {
-    await shareUrlLimiter(`share-${ip}`);
   }
 };
 
@@ -134,7 +111,7 @@ export const middleware = async (originalRequest: NextRequest) => {
       await applyRateLimiting(request, ip);
       return nextResponseWithCustomHeader;
     } catch (e) {
-      // NOSONAR - This is a catch all for rate limiting errors
+      logger.error(e, "Error applying rate limiting");
       const apiError: ApiErrorResponseV2 = {
         type: "too_many_requests",
         details: [{ field: "", issue: "Too many requests. Please try again later." }],
