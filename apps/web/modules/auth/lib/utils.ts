@@ -1,5 +1,5 @@
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
-import redis from "@/modules/cache/redis";
+import { getRedisClient } from "@/modules/cache/redis";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
@@ -228,46 +228,47 @@ export const shouldLogAuthFailure = async (
   const rateLimitKey = `rate_limit:auth:${createAuditIdentifier(identifier, "ratelimit")}`;
   const now = Date.now();
 
-  if (redis) {
-    try {
-      // Use Redis for distributed rate limiting
-      const multi = redis.multi();
-      const windowStart = now - RATE_LIMIT_WINDOW;
-
-      // Remove expired entries and count recent failures
-      multi.zremrangebyscore(rateLimitKey, 0, windowStart);
-      multi.zcard(rateLimitKey);
-      multi.zadd(rateLimitKey, now, `${now}:${randomUUID()}`);
-      multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
-
-      const results = await multi.exec();
-      if (!results) {
-        throw new Error("Redis transaction failed");
-      }
-
-      const currentCount = results[1][1] as number;
-
-      // Apply throttling logic
-      if (currentCount <= AGGREGATION_THRESHOLD) {
-        return true;
-      }
-
-      // Check if we should log (every 10th or after 1 minute gap)
-      const recentEntries = await redis.zrange(rateLimitKey, -10, -1);
-      if (recentEntries.length === 0) return true;
-
-      const lastLogTime = parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);
-      const timeSinceLastLog = now - lastLogTime;
-
-      return currentCount % 10 === 0 || timeSinceLastLog > 60000;
-    } catch (error) {
-      logger.warn("Redis rate limiting failed, not logging due to Redis requirement", { error });
-      // If Redis fails, do not log as Redis is required for audit logs
+  try {
+    // Get Redis client
+    const redis = getRedisClient();
+    if (!redis) {
+      logger.warn("Redis not available for rate limiting, not logging due to Redis requirement");
       return false;
     }
-  } else {
-    logger.warn("Redis not available for rate limiting, not logging due to Redis requirement");
-    // If Redis not configured, do not log as Redis is required for audit logs
+
+    // Use Redis for distributed rate limiting
+    const multi = redis.multi();
+    const windowStart = now - RATE_LIMIT_WINDOW;
+
+    // Remove expired entries and count recent failures
+    multi.zRemRangeByScore(rateLimitKey, 0, windowStart);
+    multi.zCard(rateLimitKey);
+    multi.zAdd(rateLimitKey, { score: now, value: `${now}:${randomUUID()}` });
+    multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
+
+    const results = await multi.exec();
+    if (!results) {
+      throw new Error("Redis transaction failed");
+    }
+
+    const currentCount = results[1] as number;
+
+    // Apply throttling logic
+    if (currentCount <= AGGREGATION_THRESHOLD) {
+      return true;
+    }
+
+    // Check if we should log (every 10th or after 1 minute gap)
+    const recentEntries = await redis.zRange(rateLimitKey, -10, -1);
+    if (recentEntries.length === 0) return true;
+
+    const lastLogTime = Number.parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);
+    const timeSinceLastLog = now - lastLogTime;
+
+    return currentCount % 10 === 0 || timeSinceLastLog > 60000;
+  } catch (error) {
+    logger.warn("Redis rate limiting failed, not logging due to Redis requirement", { error });
+    // If Redis fails, do not log as Redis is required for audit logs
     return false;
   }
 };

@@ -38,7 +38,7 @@ vi.mock("@/lib/constants", () => ({
   SMTP_USERNAME: "user@example.com",
   SMTP_PASSWORD: "password",
   SESSION_MAX_AGE: 1000,
-  REDIS_URL: "test-redis-url",
+  REDIS_URL: undefined,
   AUDIT_LOG_ENABLED: true,
 }));
 
