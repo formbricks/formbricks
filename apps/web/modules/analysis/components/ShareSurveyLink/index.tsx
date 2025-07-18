@@ -36,16 +36,17 @@ export const ShareSurveyLink = ({
   const { refreshSingleUseId } = useSingleUseId(survey);
 
   const getPreviewUrl = async () => {
-    const separator = surveyUrl.includes("?") ? "&" : "?";
+    const previewUrl = new URL(surveyUrl);
 
     if (survey.singleUse?.enabled) {
-      const newId = await refreshSingleUseId();
+      const newId = await refreshSingleUseId({ encrypted: true });
       if (newId) {
-        return `${surveyUrl}${separator}suId=${newId}&preview=true`;
+        previewUrl.searchParams.set("suId", newId);
       }
     }
 
-    return `${surveyUrl}${separator}preview=true`;
+    previewUrl.searchParams.set("preview", "true");
+    return previewUrl.toString();
   };
 
   return (
