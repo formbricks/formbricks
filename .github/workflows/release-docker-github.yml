@@ -7,6 +7,12 @@ name: Docker Release to Github
 
 on:
   workflow_call:
+    inputs:
+      SENTRY_ENVIRONMENT:
+        description: 'Sentry environment (production or staging)'
+        required: false
+        type: string
+        default: 'production'
     outputs:
       VERSION:
         description: release version
@@ -57,8 +63,8 @@ jobs:
 
       - name: Set Sentry environment in .env
         run: |
-          echo "SENTRY_ENVIRONMENT=production" >> .env
-          echo "Set SENTRY_ENVIRONMENT=production in .env file"
+          echo "SENTRY_ENVIRONMENT=${{ inputs.SENTRY_ENVIRONMENT }}" >> .env
+          echo "Set SENTRY_ENVIRONMENT=${{ inputs.SENTRY_ENVIRONMENT }} in .env file"
 
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
