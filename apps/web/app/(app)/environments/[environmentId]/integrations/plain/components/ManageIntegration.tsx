@@ -100,7 +100,7 @@ export const ManageIntegration = ({
             render: (item: TIntegrationPlainConfigData) => item.surveyName,
           },
           {
-            header: t("environments.integrations.plain.survey_id"),
+            header: t("common.survey_id"),
             render: (item: TIntegrationPlainConfigData) => item.surveyId,
           },
           {
@@ -111,10 +111,12 @@ export const ManageIntegration = ({
         onRowClick={editIntegration}
         getRowKey={(item: TIntegrationPlainConfigData, idx) => `${idx}-${item.surveyId}`}
       />
-      <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
-        <Trash2Icon />
-        {t("environments.integrations.delete_integration")}
-      </Button>
+      <div className="mt-4 flex justify-center">
+        <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)}>
+          <Trash2Icon />
+          {t("environments.integrations.delete_integration")}
+        </Button>
+      </div>
 
       <AddKeyModal environmentId={environment.id} open={isKeyModalOpen} setOpen={setIsKeyModalOpen} />
 

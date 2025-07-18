@@ -115,10 +115,12 @@ export const ManageIntegration = ({
         onRowClick={editIntegration}
         getRowKey={(item: TIntegrationNotionConfigData, idx) => `${idx}-${item.databaseId}`}
       />
-      <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
-        <Trash2Icon />
-        {t("environments.integrations.delete_integration")}
-      </Button>
+      <div className="mt-4 flex justify-center">
+        <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)}>
+          <Trash2Icon />
+          {t("environments.integrations.delete_integration")}
+        </Button>
+      </div>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
