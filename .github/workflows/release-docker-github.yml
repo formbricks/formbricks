@@ -7,6 +7,12 @@ name: Docker Release to Github
 
 on:
   workflow_call:
+    inputs:
+      IS_PRERELEASE:
+        description: 'Whether this is a prerelease (affects latest tag)'
+        required: false
+        type: boolean
+        default: false
     outputs:
       VERSION:
         description: release version
@@ -45,20 +51,17 @@ jobs:
       - name: Get Release Tag
         id: extract_release_tag
         run: |
+          # Extract version from tag (e.g., refs/tags/v1.2.3 -> 1.2.3)
           TAG=${{ github.ref }}
           TAG=${TAG#refs/tags/v}
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
           echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+          echo "Using tag-based version: $TAG"
 
       - name: Update package.json version
         run: |
           sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.RELEASE_TAG }}\"/" ./apps/web/package.json
           cat ./apps/web/package.json | grep version
-
-      - name: Set Sentry environment in .env
-        run: |
-          echo "SENTRY_ENVIRONMENT=production" >> .env
-          echo "Set SENTRY_ENVIRONMENT=production in .env file"
 
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
@@ -86,6 +89,13 @@ jobs:
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Default semver tags (version, major.minor, major)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # Only tag as 'latest' for stable releases (not prereleases)
+            type=raw,value=latest,enable=${{ inputs.IS_PRERELEASE != 'true' }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
