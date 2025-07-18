@@ -266,8 +266,8 @@ export const AnonymousLinksTab = ({
                     </AlertDescription>
                   </Alert>
 
-                  <div className="flex w-full items-center gap-2">
-                    <div className="flex-1 rounded-md border border-slate-200 px-2 py-1">
+                  <div className="grid w-full grid-cols-6 items-center gap-2">
+                    <div className="col-span-5 truncate rounded-md border border-slate-200 px-2 py-1">
                       <span className="truncate text-sm text-slate-900">{surveyUrlWithCustomSuid}</span>
                     </div>
 
@@ -276,7 +276,8 @@ export const AnonymousLinksTab = ({
                       onClick={() => {
                         navigator.clipboard.writeText(surveyUrlWithCustomSuid);
                         toast.success(t("common.copied_to_clipboard"));
-                      }}>
+                      }}
+                      className="col-span-1 gap-1 text-sm">
                       {t("common.copy")}
                       <CopyIcon />
                     </Button>
