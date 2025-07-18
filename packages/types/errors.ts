@@ -147,9 +147,15 @@ export interface ApiErrorResponse {
   responseMessage?: string;
 }
 
+/**
+ * Error types for UI display
+ */
+export type ClientErrorType = "rate_limit" | "general";
+
 export interface ClientErrorData {
-  title: string;
-  description: string;
+  /** Error type to determine which translations to use */
+  type: ClientErrorType;
+  /** Whether to show action buttons */
   showButtons?: boolean;
 }
 
@@ -160,16 +166,14 @@ export const getClientErrorData = (error: Error): ClientErrorData => {
   // Check by error name as fallback (in case instanceof fails due to module loading issues)
   if (error.name === "TooManyRequestsError") {
     return {
-      title: "common.error_rate_limit_title",
-      description: "common.error_rate_limit_description",
+      type: "rate_limit",
       showButtons: false,
     };
   }
 
   // Default to general error for any other error
   return {
-    title: "common.error_component_title",
-    description: "common.error_component_description",
+    type: "general",
     showButtons: true,
   };
 };

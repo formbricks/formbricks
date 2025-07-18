@@ -4,14 +4,13 @@ import { updateSingleUseLinksAction } from "@/app/(app)/environments/[environmen
 import { DisableLinkModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
-import { getSurveyUrl } from "@/modules/analysis/utils";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
-import { CirclePlayIcon } from "lucide-react";
+import { CirclePlayIcon, CopyIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -33,6 +32,7 @@ export const AnonymousLinksTab = ({
   setSurveyUrl,
   locale,
 }: AnonymousLinksTabProps) => {
+  const surveyUrlWithCustomSuid = `${surveyUrl}?suId=CUSTOM-ID`;
   const router = useRouter();
   const { t } = useTranslate();
 
@@ -173,11 +173,9 @@ export const AnonymousLinksTab = ({
         count,
       });
 
-      const baseSurveyUrl = getSurveyUrl(survey, publicDomain, "default");
-
       if (!!response?.data?.length) {
         const singleUseIds = response.data;
-        const surveyLinks = singleUseIds.map((singleUseId) => `${baseSurveyUrl}?suId=${singleUseId}`);
+        const surveyLinks = singleUseIds.map((singleUseId) => `${surveyUrl}?suId=${singleUseId}`);
 
         // Create content with just the links
         const csvContent = surveyLinks.join("\n");
@@ -258,14 +256,33 @@ export const AnonymousLinksTab = ({
               />
 
               {!singleUseEncryption ? (
-                <Alert variant="info" size="default">
-                  <AlertTitle>
-                    {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
-                  </AlertTitle>
-                  <AlertDescription>
-                    {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
-                  </AlertDescription>
-                </Alert>
+                <div className="flex w-full flex-col gap-4">
+                  <Alert variant="info" size="default">
+                    <AlertTitle>
+                      {t("environments.surveys.share.anonymous_links.custom_single_use_id_title")}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {t("environments.surveys.share.anonymous_links.custom_single_use_id_description")}
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="grid w-full grid-cols-6 items-center gap-2">
+                    <div className="col-span-5 truncate rounded-md border border-slate-200 px-2 py-1">
+                      <span className="truncate text-sm text-slate-900">{surveyUrlWithCustomSuid}</span>
+                    </div>
+
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        navigator.clipboard.writeText(surveyUrlWithCustomSuid);
+                        toast.success(t("common.copied_to_clipboard"));
+                      }}
+                      className="col-span-1 gap-1 text-sm">
+                      {t("common.copy")}
+                      <CopyIcon />
+                    </Button>
+                  </div>
+                </div>
               ) : null}
 
               {singleUseEncryption && (
