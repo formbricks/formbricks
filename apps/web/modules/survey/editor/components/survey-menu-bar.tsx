@@ -214,6 +214,15 @@ export const SurveyMenuBar = ({
     }
 
     try {
+      if (localSurvey.pin !== null) {
+        const fourDigitPattern = /^\d{4}$/;
+
+        if (!fourDigitPattern.test(String(localSurvey.pin))) {
+          toast.error(t("environments.surveys.edit.pin_must_be_a_four_digit_number"));
+          setIsSurveySaving(false);
+          return false;
+        }
+      }
       const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
         setIsSurveySaving(false);
