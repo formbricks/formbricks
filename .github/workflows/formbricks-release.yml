@@ -1,7 +1,6 @@
 name: Build, release & deploy Formbricks images
 
 on:
-  workflow_dispatch:
   release:
     types: [published]
 
