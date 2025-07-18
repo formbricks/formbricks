@@ -12,7 +12,7 @@ export const useSingleUseId = (survey: TSurvey | TSurveyList) => {
 
   const refreshSingleUseId = useCallback(
     async ({ encrypted }: { encrypted?: boolean } = {}) => {
-      const isEncrypted = encrypted ?? !!survey.singleUse?.isEncrypted;
+      const isEncrypted = encrypted ?? Boolean(survey.singleUse?.isEncrypted);
 
       if (survey.singleUse?.enabled) {
         const response = await generateSingleUseIdsAction({
