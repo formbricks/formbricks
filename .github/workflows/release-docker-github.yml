@@ -51,10 +51,19 @@ jobs:
       - name: Get Release Tag
         id: extract_release_tag
         run: |
-          TAG=${{ github.ref }}
-          TAG=${TAG#refs/tags/v}
-          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
-          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # Extract version from tag (e.g., refs/tags/v1.2.3 -> 1.2.3)
+            TAG=${{ github.ref }}
+            TAG=${TAG#refs/tags/v}
+            echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+            echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+            echo "Using tag-based version: $TAG"
+          else
+            # Workflow should only run for tags, not branches
+            echo "::error::This workflow should only be triggered from a tag reference, not from branch: ${{ github.ref }}"
+            echo "::error::Please create and push a tag to trigger this release workflow."
+            exit 1
+          fi
 
       - name: Update package.json version
         run: |

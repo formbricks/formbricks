@@ -9,8 +9,8 @@ on:
         default: 'production'
         type: choice
         options:
-        - production
-        - staging
+          - production
+          - staging
   release:
     types: [published]
 
