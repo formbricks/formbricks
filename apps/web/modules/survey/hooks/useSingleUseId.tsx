@@ -10,32 +10,27 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 export const useSingleUseId = (survey: TSurvey | TSurveyList) => {
   const [singleUseId, setSingleUseId] = useState<string | undefined>(undefined);
 
-  const refreshSingleUseId = useCallback(
-    async ({ encrypted }: { encrypted?: boolean } = {}) => {
-      const isEncrypted = encrypted ?? Boolean(survey.singleUse?.isEncrypted);
+  const refreshSingleUseId = useCallback(async () => {
+    if (survey.singleUse?.enabled) {
+      const response = await generateSingleUseIdsAction({
+        surveyId: survey.id,
+        isEncrypted: Boolean(survey.singleUse?.isEncrypted),
+        count: 1,
+      });
 
-      if (survey.singleUse?.enabled) {
-        const response = await generateSingleUseIdsAction({
-          surveyId: survey.id,
-          isEncrypted,
-          count: 1,
-        });
-
-        if (!!response?.data?.length) {
-          setSingleUseId(response.data[0]);
-          return response.data[0];
-        } else {
-          const errorMessage = getFormattedErrorMessage(response);
-          toast.error(errorMessage);
-          return undefined;
-        }
+      if (!!response?.data?.length) {
+        setSingleUseId(response.data[0]);
+        return response.data[0];
       } else {
-        setSingleUseId(undefined);
+        const errorMessage = getFormattedErrorMessage(response);
+        toast.error(errorMessage);
         return undefined;
       }
-    },
-    [survey]
-  );
+    } else {
+      setSingleUseId(undefined);
+      return undefined;
+    }
+  }, [survey]);
 
   useEffect(() => {
     refreshSingleUseId();

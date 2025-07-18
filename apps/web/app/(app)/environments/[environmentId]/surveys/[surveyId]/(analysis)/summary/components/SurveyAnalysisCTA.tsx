@@ -106,7 +106,7 @@ export const SurveyAnalysisCTA = ({
     const surveyUrl = new URL(`${publicDomain}/s/${survey.id}`);
 
     if (survey.singleUse?.enabled) {
-      const newId = await refreshSingleUseId({ encrypted: true });
+      const newId = await refreshSingleUseId();
       if (newId) {
         surveyUrl.searchParams.set("suId", newId);
       }

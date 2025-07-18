@@ -39,7 +39,7 @@ export const ShareSurveyLink = ({
     const previewUrl = new URL(surveyUrl);
 
     if (survey.singleUse?.enabled) {
-      const newId = await refreshSingleUseId({ encrypted: true });
+      const newId = await refreshSingleUseId();
       if (newId) {
         previewUrl.searchParams.set("suId", newId);
       }
