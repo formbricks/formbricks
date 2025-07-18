@@ -134,6 +134,8 @@
     "and": "und",
     "and_response_limit_of": "und Antwortlimit von",
     "anonymous": "Anonym",
+    "api_key_label": "Plain-API-Schlüssel",
+    "api_key_label_placeholder": "plainApiKey_xxxx",
     "api_keys": "API-Schlüssel",
     "app": "App",
     "app_survey": "App-Umfrage",
@@ -701,6 +703,24 @@
         "update_connection_tooltip": "Verbinde die Integration erneut, um neu hinzugefügte Datenbanken einzuschließen. Deine bestehenden Integrationen bleiben erhalten."
       },
       "notion_integration_description": "Sende Daten an deine Notion Datenbank",
+      "plain": {
+        "add_key": "Plain-API-Schlüssel hinzufügen",
+        "add_key_description": "Fügen Sie Ihren Plain-API-Schlüssel hinzu, um sich mit Plain zu verbinden",
+        "api_key_label": "Plain-API-Schlüssel",
+        "configure_plain_integration": "Umfrage verknüpfen, um Plain-Threads zu erstellen",
+        "connect": "Link-Umfrage",
+        "connect_with_plain": "Mit Plain verbinden",
+        "connection_success": "Einfach verbunden",
+        "enter_label_id": "Geben Sie die Label-ID aus Plain ein",
+        "link_new_database": "Neue Umfrage verknüpfen",
+        "map_formbricks_fields_to_plain": "Formbricks-Antworten auf Plain-Felder abbilden",
+        "no_databases_found": "Keine Umfragen verbunden",
+        "plain_integration": "Plain Integration",
+        "plain_integration_description": "Threads auf Plain mit Formbricks-Antworten erstellen",
+        "select_a_survey_question": "Wähle eine Umfragefrage aus",
+        "update_connection": "Erneut mit Plain verbinden",
+        "update_connection_tooltip": "Plain-Verbindung aktualisieren"
+      },
       "please_select_a_survey_error": "Bitte wähle eine Umfrage aus",
       "select_at_least_one_question_error": "Bitte wähle mindestens eine Frage aus",
       "slack": {

@@ -6,6 +6,7 @@ import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";
 import notionLogo from "@/images/notion.png";
+import PlainCom from "@/images/plain.webp";
 import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
@@ -50,6 +51,7 @@ const Page = async (props) => {
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
+  const isPlainIntegrationConnected = isIntegrationConnected("plain");
   const isAirtableIntegrationConnected = isIntegrationConnected("airtable");
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
   const isSlackIntegrationConnected = isIntegrationConnected("slack");
@@ -205,6 +207,20 @@ const Page = async (props) => {
           : activePiecesWebhookCount === 0
             ? t("common.not_connected")
             : `${activePiecesWebhookCount} ${t("common.integrations")}`,
+      disabled: isReadOnly,
+    },
+    {
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/activepieces",
+      docsText: t("common.docs"),
+      docsNewTab: true,
+      connectHref: `/environments/${params.environmentId}/integrations/plain`,
+      connectText: `${isPlainIntegrationConnected ? t("common.manage") : t("common.connect")}`,
+      connectNewTab: false,
+      label: "Plain",
+      description: t("environments.integrations.plain.plain_integration_description"),
+      icon: <Image src={PlainCom} alt="Plain.com Logo" />,
+      connected: isPlainIntegrationConnected,
+      statusText: isPlainIntegrationConnected ? t("common.connected") : t("common.not_connected"),
       disabled: isReadOnly,
     },
   ];

@@ -10,45 +10,45 @@ import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { TIntegrationPlain, TIntegrationPlainConfigData } from "@formbricks/types/integration/plain";
 import { TUserLocale } from "@formbricks/types/user";
 import { IntegrationListPanel } from "../../components/IntegrationListPanel";
+import { AddKeyModal } from "./AddKeyModal";
 
 interface ManageIntegrationProps {
   environment: TEnvironment;
-  notionIntegration: TIntegrationNotion;
+  plainIntegration: TIntegrationPlain;
   setOpenAddIntegrationModal: React.Dispatch<React.SetStateAction<boolean>>;
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedIntegration: React.Dispatch<
-    React.SetStateAction<(TIntegrationNotionConfigData & { index: number }) | null>
+    React.SetStateAction<(TIntegrationPlainConfigData & { index: number }) | null>
   >;
   locale: TUserLocale;
-  handleNotionAuthorization: () => void;
 }
 
 export const ManageIntegration = ({
   environment,
-  notionIntegration,
+  plainIntegration,
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
   locale,
-  handleNotionAuthorization,
 }: ManageIntegrationProps) => {
   const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
 
-  let integrationArray: TIntegrationNotionConfigData[] = [];
-  if (notionIntegration?.config.data) {
-    integrationArray = notionIntegration.config.data;
+  let integrationArray: TIntegrationPlainConfigData[] = [];
+  if (plainIntegration?.config.data) {
+    integrationArray = plainIntegration.config.data;
   }
 
   const handleDeleteIntegration = async () => {
     setisDeleting(true);
 
     const deleteIntegrationActionResult = await deleteIntegrationAction({
-      integrationId: notionIntegration.id,
+      integrationId: plainIntegration.id,
     });
 
     if (deleteIntegrationActionResult?.data) {
@@ -64,7 +64,7 @@ export const ManageIntegration = ({
   };
 
   const editIntegration = (index: number) => {
-    setSelectedIntegration({ ...notionIntegration.config.data[index], index });
+    setSelectedIntegration({ ...plainIntegration.config.data[index], index });
     setOpenAddIntegrationModal(true);
   };
 
@@ -75,55 +75,53 @@ export const ManageIntegration = ({
         statusNode={
           <>
             <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
-            <span className="text-slate-500">
-              {t("environments.integrations.notion.connected_with_workspace", {
-                workspace: notionIntegration.config.key.workspace_name,
-              })}
-            </span>
+            <span className="text-slate-500">{t("common.connected")}</span>
           </>
         }
         reconnectAction={{
-          label: t("environments.integrations.notion.update_connection"),
-          onClick: handleNotionAuthorization,
+          label: t("environments.integrations.plain.update_connection"),
+          onClick: () => setIsKeyModalOpen(true),
           icon: <RefreshCcwIcon className="mr-2 h-4 w-4" />,
-          tooltip: t("environments.integrations.notion.update_connection_tooltip"),
+          tooltip: t("environments.integrations.plain.update_connection_tooltip"),
           variant: "outline",
         }}
         addNewAction={{
-          label: t("environments.integrations.notion.link_new_database"),
+          label: t("environments.integrations.plain.link_new_database"),
           onClick: () => {
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           },
         }}
-        emptyMessage={t("environments.integrations.notion.no_databases_found")}
+        emptyMessage={t("environments.integrations.plain.no_databases_found")}
         items={integrationArray}
         columns={[
           {
             header: t("common.survey"),
-            render: (item: TIntegrationNotionConfigData) => item.surveyName,
+            render: (item: TIntegrationPlainConfigData) => item.surveyName,
           },
           {
-            header: t("environments.integrations.notion.database_name"),
-            render: (item: TIntegrationNotionConfigData) => item.databaseName,
+            header: t("environments.integrations.plain.survey_id"),
+            render: (item: TIntegrationPlainConfigData) => item.surveyId,
           },
           {
             header: t("common.updated_at"),
-            render: (item: TIntegrationNotionConfigData) => timeSince(item.createdAt.toString(), locale),
+            render: (item: TIntegrationPlainConfigData) => timeSince(item.createdAt.toString(), locale),
           },
         ]}
         onRowClick={editIntegration}
-        getRowKey={(item: TIntegrationNotionConfigData, idx) => `${idx}-${item.databaseId}`}
+        getRowKey={(item: TIntegrationPlainConfigData, idx) => `${idx}-${item.surveyId}`}
       />
       <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
         <Trash2Icon />
         {t("environments.integrations.delete_integration")}
       </Button>
 
+      <AddKeyModal environmentId={environment.id} open={isKeyModalOpen} setOpen={setIsKeyModalOpen} />
+
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
         setOpen={setIsDeleteIntegrationModalOpen}
-        deleteWhat={t("environments.integrations.notion.notion_integration")}
+        deleteWhat={t("environments.integrations.plain.plain_integration")}
         onDelete={handleDeleteIntegration}
         text={t("environments.integrations.delete_integration_confirmation")}
         isDeleting={isDeleting}

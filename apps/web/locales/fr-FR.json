@@ -134,6 +134,8 @@
     "and": "Et",
     "and_response_limit_of": "et limite de réponse de",
     "anonymous": "Anonyme",
+    "api_key_label": "Clé API Plain",
+    "api_key_label_placeholder": "plainApiKey_xxxx",
     "api_keys": "Clés API",
     "app": "Application",
     "app_survey": "Sondage d'application",
@@ -701,6 +703,24 @@
         "update_connection_tooltip": "Reconnectez l'intégration pour inclure les nouvelles bases de données ajoutées. Vos intégrations existantes resteront intactes."
       },
       "notion_integration_description": "Envoyer des données à votre base de données Notion",
+      "plain": {
+        "add_key": "Ajouter une clé API Plain",
+        "add_key_description": "Ajoutez votre clé API Plain pour vous connecter avec Plain",
+        "api_key_label": "Clé API Plain",
+        "configure_plain_integration": "Lier l'enquête pour créer des fils Plain",
+        "connect": "Lier enquête",
+        "connect_with_plain": "Se connecter avec Plain",
+        "connection_success": "Connexion simple réussie",
+        "enter_label_id": "Saisissez l'ID de l'étiquette de Plain",
+        "link_new_database": "Lier nouvelle enquête",
+        "map_formbricks_fields_to_plain": "Mapper les réponses de Formbricks aux champs Plain",
+        "no_databases_found": "Aucune enquête connectée",
+        "plain_integration": "Intégration Plain",
+        "plain_integration_description": "Créer des fils sur Plain en utilisant les réponses de Formbricks",
+        "select_a_survey_question": "Sélectionnez une question d'enquête",
+        "update_connection": "Reconnecter Plain",
+        "update_connection_tooltip": "Mettre à jour la connexion Plain"
+      },
       "please_select_a_survey_error": "Veuillez sélectionner une enquête.",
       "select_at_least_one_question_error": "Veuillez sélectionner au moins une question.",
       "slack": {

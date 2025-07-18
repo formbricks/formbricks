@@ -134,6 +134,8 @@
     "and": "E",
     "and_response_limit_of": "e limite de resposta de",
     "anonymous": "Anônimo",
+    "api_key_label": "Chave API do Plain",
+    "api_key_label_placeholder": "plainApiKey_xxxx",
     "api_keys": "Chaves de API",
     "app": "app",
     "app_survey": "Pesquisa de App",
@@ -701,6 +703,24 @@
         "update_connection_tooltip": "Reconecte a integração para incluir os novos bancos de dados adicionados. Suas integrações existentes permanecerão intactas."
       },
       "notion_integration_description": "Enviar dados para seu banco de dados do Notion",
+      "plain": {
+        "add_key": "Adicionar Chave API do Plain",
+        "add_key_description": "Adicione sua chave API do Plain para conectar com o Plain",
+        "api_key_label": "Chave API do Plain",
+        "configure_plain_integration": "Vincule a pesquisa para criar tópicos Plain",
+        "connect": "Pesquisa de Link",
+        "connect_with_plain": "Conectar com o Plain",
+        "connection_success": "Conexão realizada com sucesso",
+        "enter_label_id": "Insira o ID da etiqueta do Plain",
+        "link_new_database": "Link de nova pesquisa",
+        "map_formbricks_fields_to_plain": "Mapear respostas do Formbricks para campos Plain",
+        "no_databases_found": "Nenhuma pesquisa conectada",
+        "plain_integration": "Integração com o Plain",
+        "plain_integration_description": "Criar threads no Plain usando respostas do Formbricks",
+        "select_a_survey_question": "Escolha uma pergunta da pesquisa",
+        "update_connection": "Reconectar Plain",
+        "update_connection_tooltip": "Atualizar conexão Plain"
+      },
       "please_select_a_survey_error": "Por favor, escolha uma pesquisa",
       "select_at_least_one_question_error": "Por favor, selecione pelo menos uma pergunta",
       "slack": {
