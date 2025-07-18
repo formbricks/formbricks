@@ -32,14 +32,14 @@ export const handleSsoCallback = async ({
   account: Account;
   callbackUrl: string;
 }) => {
-  const debugContext = {
+  const contextLogger = logger.withContext({
     correlationId: crypto.randomUUID(),
-    ...redactPII({ user, account, callbackUrl, component: "sso_handler" }),
     name: "formbricks",
-  };
+  });
 
-  logger.withContext(debugContext).debug(
+  contextLogger.debug(
     {
+      ...redactPII({ user, account, callbackUrl }),
       hasEmail: !!user.email,
       hasName: !!user.name,
     },
@@ -48,12 +48,12 @@ export const handleSsoCallback = async ({
 
   const isSsoEnabled = await getIsSsoEnabled();
   if (!isSsoEnabled) {
-    logger.debug({ isSsoEnabled }, "SSO not enabled");
+    contextLogger.debug({ isSsoEnabled }, "SSO not enabled");
     return false;
   }
 
   if (!user.email || account.type !== "oauth") {
-    logger.debug(
+    contextLogger.debug(
       {
         hasEmail: !!user.email,
         accountType: account.type,
@@ -70,14 +70,17 @@ export const handleSsoCallback = async ({
   if (provider === "saml") {
     const isSamlSsoEnabled = await getIsSamlSsoEnabled();
     if (!isSamlSsoEnabled) {
-      logger.debug({ provider: "saml" }, "SSO callback rejected: SAML not enabled in license");
+      contextLogger.debug({ provider: "saml" }, "SSO callback rejected: SAML not enabled in license");
       return false;
     }
   }
 
   if (account.provider) {
     // check if accounts for this provider / account Id already exists
-    logger.debug({ lookupType: "sso_provider_account" }, "Checking for existing user with SSO provider");
+    contextLogger.debug(
+      { lookupType: "sso_provider_account" },
+      "Checking for existing user with SSO provider"
+    );
 
     const existingUserWithAccount = await prisma.user.findFirst({
       include: {
@@ -94,7 +97,7 @@ export const handleSsoCallback = async ({
     });
 
     if (existingUserWithAccount) {
-      logger.debug(
+      contextLogger.debug(
         {
           existingUserId: existingUserWithAccount.id,
           emailMatches: existingUserWithAccount.email === user.email,
@@ -105,14 +108,14 @@ export const handleSsoCallback = async ({
       // User with this provider found
       // check if email still the same
       if (existingUserWithAccount.email === user.email) {
-        logger.debug(
+        contextLogger.debug(
           { existingUserId: existingUserWithAccount.id },
           "SSO callback successful: existing user, email matches"
         );
         return true;
       }
 
-      logger.debug(
+      contextLogger.debug(
         { existingUserId: existingUserWithAccount.id },
         "Email changed in SSO provider, checking for conflicts"
       );
@@ -124,7 +127,7 @@ export const handleSsoCallback = async ({
       const otherUserWithEmail = await getUserByEmail(user.email);
 
       if (!otherUserWithEmail) {
-        logger.debug(
+        contextLogger.debug(
           { existingUserId: existingUserWithAccount.id, action: "email_update" },
           "No other user with this email found, updating user email after SSO provider change"
         );
@@ -133,7 +136,7 @@ export const handleSsoCallback = async ({
         return true;
       }
 
-      logger.debug(
+      contextLogger.debug(
         { existingUserId: existingUserWithAccount.id, conflictingUserId: otherUserWithEmail.id },
         "SSO callback failed: email conflict after provider change"
       );
@@ -146,12 +149,12 @@ export const handleSsoCallback = async ({
     // There is no existing account for this identity provider / account id
     // check if user account with this email already exists
     // if user already exists throw error and request password login
-    logger.debug({ lookupType: "email" }, "No existing SSO account found, checking for user by email");
+    contextLogger.debug({ lookupType: "email" }, "No existing SSO account found, checking for user by email");
 
     const existingUserWithEmail = await getUserByEmail(user.email);
 
     if (existingUserWithEmail) {
-      logger.debug(
+      contextLogger.debug(
         { existingUserId: existingUserWithEmail.id, action: "existing_user_login" },
         "SSO callback successful: existing user found by email"
       );
@@ -159,7 +162,7 @@ export const handleSsoCallback = async ({
       return true;
     }
 
-    logger.debug(
+    contextLogger.debug(
       { action: "new_user_creation" },
       "No existing user found, proceeding with new user creation"
     );
@@ -176,7 +179,7 @@ export const handleSsoCallback = async ({
         userName = oidcUser.preferred_username;
       }
 
-      logger.debug(
+      contextLogger.debug(
         {
           hasName: !!oidcUser.name,
           hasGivenName: !!oidcUser.given_name,
@@ -194,7 +197,7 @@ export const handleSsoCallback = async ({
       } else if (samlUser.firstName || samlUser.lastName) {
         userName = `${samlUser.firstName} ${samlUser.lastName}`;
       }
-      logger.debug(
+      contextLogger.debug(
         {
           hasName: !!samlUser.name,
           hasFirstName: !!samlUser.firstName,
@@ -209,7 +212,7 @@ export const handleSsoCallback = async ({
 
     const isFirstUser = await getIsFreshInstance();
 
-    logger.debug(
+    contextLogger.debug(
       {
         isMultiOrgEnabled,
         isFirstUser,
@@ -222,7 +225,7 @@ export const handleSsoCallback = async ({
     // Additional security checks for self-hosted instances without auto-provisioning and no multi-org enabled
     if (!isFirstUser && !SKIP_INVITE_FOR_SSO && !isMultiOrgEnabled) {
       if (!callbackUrl) {
-        logger.debug(
+        contextLogger.debug(
           { reason: "missing_callback_url" },
           "SSO callback rejected: missing callback URL for invite validation"
         );
@@ -238,7 +241,7 @@ export const handleSsoCallback = async ({
 
         // Allow sign-in if multi-org is enabled, otherwise check for invite token
         if (source === "signin" && !inviteToken) {
-          logger.debug(
+          contextLogger.debug(
             { reason: "signin_without_invite_token" },
             "SSO callback rejected: signin without invite token"
           );
@@ -249,7 +252,7 @@ export const handleSsoCallback = async ({
         // Verify invite token and check email match
         const { email, inviteId } = verifyInviteToken(inviteToken);
         if (email !== user.email) {
-          logger.debug(
+          contextLogger.debug(
             { reason: "invite_email_mismatch", inviteId },
             "SSO callback rejected: invite token email mismatch"
           );
@@ -258,15 +261,15 @@ export const handleSsoCallback = async ({
         // Check if invite token is still valid
         const isValidInviteToken = await getIsValidInviteToken(inviteId);
         if (!isValidInviteToken) {
-          logger.debug(
+          contextLogger.debug(
             { reason: "invalid_invite_token", inviteId },
             "SSO callback rejected: invalid or expired invite token"
           );
           return false;
         }
-        logger.debug({ inviteId }, "Invite token validation successful");
+        contextLogger.debug({ inviteId }, "Invite token validation successful");
       } catch (err) {
-        logger.debug(
+        contextLogger.debug(
           {
             reason: "invite_token_validation_error",
             error: err instanceof Error ? err.message : "unknown_error",
@@ -274,7 +277,7 @@ export const handleSsoCallback = async ({
           "SSO callback rejected: invite token validation failed"
         );
         // Log and reject on any validation errors
-        logger.error(err, "Invalid callbackUrl");
+        contextLogger.error(err, "Invalid callbackUrl");
         return false;
       }
     }
@@ -282,7 +285,7 @@ export const handleSsoCallback = async ({
     let organization: Organization | null = null;
 
     if (!isFirstUser && !isMultiOrgEnabled) {
-      logger.debug(
+      contextLogger.debug(
         {
           assignmentStrategy: SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID ? "default_team" : "first_organization",
         },
@@ -295,7 +298,7 @@ export const handleSsoCallback = async ({
       }
 
       if (!organization) {
-        logger.debug(
+        contextLogger.debug(
           { reason: "no_organization_found" },
           "SSO callback rejected: no organization found for assignment"
         );
@@ -304,7 +307,7 @@ export const handleSsoCallback = async ({
 
       const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
       if (!canDoRoleManagement && !callbackUrl) {
-        logger.debug(
+        contextLogger.debug(
           {
             reason: "insufficient_role_permissions",
             organizationId: organization.id,
@@ -316,7 +319,7 @@ export const handleSsoCallback = async ({
       }
     }
 
-    logger.debug({ hasUserName: !!userName, identityProvider: provider }, "Creating new SSO user");
+    contextLogger.debug({ hasUserName: !!userName, identityProvider: provider }, "Creating new SSO user");
 
     const userProfile = await createUser({
       name:
@@ -332,7 +335,7 @@ export const handleSsoCallback = async ({
       locale: await findMatchingLocale(),
     });
 
-    logger.debug(
+    contextLogger.debug(
       { newUserId: userProfile.id, identityProvider: provider },
       "New SSO user created successfully"
     );
@@ -341,7 +344,7 @@ export const handleSsoCallback = async ({
     createBrevoCustomer({ id: userProfile.id, email: userProfile.email });
 
     if (isMultiOrgEnabled) {
-      logger.debug(
+      contextLogger.debug(
         { isMultiOrgEnabled, newUserId: userProfile.id },
         "Multi-org enabled, skipping organization assignment"
       );
@@ -350,7 +353,7 @@ export const handleSsoCallback = async ({
 
     // Default organization assignment if env variable is set
     if (organization) {
-      logger.debug(
+      contextLogger.debug(
         { newUserId: userProfile.id, organizationId: organization.id, role: "member" },
         "Assigning user to organization"
       );
@@ -361,7 +364,7 @@ export const handleSsoCallback = async ({
       });
 
       if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
-        logger.debug(
+        contextLogger.debug(
           { newUserId: userProfile.id, defaultTeamId: DEFAULT_TEAM_ID },
           "Creating default team membership"
         );
@@ -389,7 +392,7 @@ export const handleSsoCallback = async ({
     // Without default organization assignment
     return true;
   }
-  logger.debug("SSO callback successful: default return");
+  contextLogger.debug("SSO callback successful: default return");
 
   return true;
 };
