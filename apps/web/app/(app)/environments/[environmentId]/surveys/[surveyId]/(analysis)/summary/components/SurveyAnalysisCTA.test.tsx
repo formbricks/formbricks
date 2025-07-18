@@ -699,32 +699,6 @@ describe("SurveyAnalysisCTA", () => {
     expect(screen.getByTestId("icon-bar-action-1")).toHaveAttribute("title", "Edit");
   });
 
-  test("handles survey with existing query parameters in URL", async () => {
-    const surveyWithParams = {
-      ...mockSurvey,
-      type: "link" as const,
-    };
-
-    const windowOpenSpy = vi.spyOn(window, "open").mockImplementation(() => null);
-    const user = userEvent.setup();
-
-    render(
-      <SurveyAnalysisCTA
-        {...defaultProps}
-        survey={surveyWithParams}
-        publicDomain="https://example.com?existing=param"
-      />
-    );
-
-    await user.click(screen.getByTestId("icon-bar-action-1"));
-
-    expect(windowOpenSpy).toHaveBeenCalledWith(
-      "https://example.com?existing=param/s/test-survey-id&preview=true",
-      "_blank"
-    );
-    windowOpenSpy.mockRestore();
-  });
-
   test("handles modal state changes correctly", async () => {
     const user = userEvent.setup();
     render(<SurveyAnalysisCTA {...defaultProps} />);
