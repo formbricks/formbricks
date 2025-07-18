@@ -52,24 +52,18 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:github
-          args: --accept-routes
+
+      - name: Set Exit Node for VPC Access
+        run: |
+          echo "Setting exit node to route through AWS VPC..."
+          tailscale set --exit-node=100.75.161.87
+          echo "Verifying exit node is set..."
+          tailscale status | grep -i exit
 
       - name: Debug Tailscale Connection and Routing
         run: |
           echo "=== Tailscale Status ==="
           tailscale status
-          echo ""
-          echo "=== Tailscale IP ==="
-          tailscale ip -4
-          echo ""
-          echo "=== Available Routes ==="
-          tailscale status --json | jq -r '.Peer[] | select(.PrimaryRoutes != null) | "Peer: \(.HostName) Routes: \(.PrimaryRoutes | join(", "))"'
-          echo ""
-          echo "=== Current IP Routes ==="
-          ip route | grep -E "(10\.0\.|100\.)" || echo "No 10.0.0.0 or 100.x routes found"
-          echo ""
-          echo "=== Test DNS Resolution ==="
-          nslookup 25E8458B1EDCBDA00D938BB1EB9D298E.gr7.eu-central-1.eks.amazonaws.com || echo "DNS failed"
           echo ""
           echo "=== Test Ping to EKS ==="
           ping -c 2 10.0.53.49 || echo "Cannot ping EKS IP"
