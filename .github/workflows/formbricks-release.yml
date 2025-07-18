@@ -11,7 +11,7 @@ jobs:
     uses: ./.github/workflows/release-docker-github.yml
     secrets: inherit
     with:
-      SENTRY_ENVIRONMENT: ${{ github.event.release.prerelease == true && 'staging' || 'production' }}
+      SENTRY_ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
 
   helm-chart-release:
     name: Release Helm Chart
@@ -31,7 +31,7 @@ jobs:
       - helm-chart-release
     with:
       VERSION: v${{ needs.docker-build.outputs.VERSION }}
-      ENVIRONMENT: ${{ github.event.release.prerelease == true && 'stage' || 'prod' }}
+      ENVIRONMENT: ${{ github.event.release.prerelease && 'stage' || 'prod' }}
 
   upload-sentry-sourcemaps:
     name: Upload Sentry Sourcemaps
@@ -54,4 +54,4 @@ jobs:
           docker_image: ghcr.io/formbricks/formbricks:v${{ needs.docker-build.outputs.VERSION }}
           release_version: v${{ needs.docker-build.outputs.VERSION }}
           sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          environment: ${{ github.event.release.prerelease == true && 'staging' || 'production' }}
+          environment: ${{ github.event.release.prerelease && 'staging' || 'production' }}

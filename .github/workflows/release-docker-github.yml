@@ -63,8 +63,17 @@ jobs:
 
       - name: Set Sentry environment in .env
         run: |
-          echo "SENTRY_ENVIRONMENT=${{ inputs.SENTRY_ENVIRONMENT }}" >> .env
-          echo "Set SENTRY_ENVIRONMENT=${{ inputs.SENTRY_ENVIRONMENT }} in .env file"
+          # Create .env if it doesn't exist
+          touch .env
+          
+          # Replace if exists, otherwise append
+          if grep -q "^SENTRY_ENVIRONMENT=" .env; then
+            sed -i "s/^SENTRY_ENVIRONMENT=.*/SENTRY_ENVIRONMENT=${{ inputs.SENTRY_ENVIRONMENT }}/" .env
+            echo "Updated existing SENTRY_ENVIRONMENT to ${{ inputs.SENTRY_ENVIRONMENT }} in .env file"
+          else
+            echo "SENTRY_ENVIRONMENT=${{ inputs.SENTRY_ENVIRONMENT }}" >> .env
+            echo "Added SENTRY_ENVIRONMENT=${{ inputs.SENTRY_ENVIRONMENT }} to .env file"
+          fi
 
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
