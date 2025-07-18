@@ -131,7 +131,15 @@ export function FileInput({
     return () => {
       window.removeEventListener(FILE_PICK_EVENT, handleNativeFileUpload as unknown as EventListener);
     };
-  }, [allowedFileExtensions, fileUrls, maxSizeInMB, onFileUpload, onUploadCallback, surveyId]);
+  }, [
+    allowedFileExtensions,
+    fileUrls,
+    maxSizeInMB,
+    onFileUpload,
+    onUploadCallback,
+    surveyId,
+    filterDuplicateFiles,
+  ]);
 
   const validateFileSize = async (file: File): Promise<boolean> => {
     if (maxSizeInMB) {

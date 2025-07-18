@@ -27,7 +27,7 @@ export function ProgressBar({ survey, questionId }: ProgressBarProps) {
       const elementIdx = calculateElementIdx(survey, idx, totalCards);
       return elementIdx / totalCards;
     },
-    [survey]
+    [survey, endingCardIds.length]
   );
 
   const progressArray = useMemo(() => {

@@ -1,5 +1,5 @@
-import { checkSetup, getIsSetup, setIsSetup } from "@/lib/common/status";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { checkSetup, getIsSetup, setIsSetup } from "@/lib/common/status";
 
 describe("checkSetup()", () => {
   beforeEach(() => {

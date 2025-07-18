@@ -11,30 +11,30 @@ interface TriggerCheckboxGroupProps {
   allowChanges: boolean;
 }
 
-const triggers: {
-  title: string;
-  value: PipelineTriggers;
-}[] = [
-  {
-    title: "environments.integrations.webhooks.response_created",
-    value: "responseCreated",
-  },
-  {
-    title: "environments.integrations.webhooks.response_updated",
-    value: "responseUpdated",
-  },
-  {
-    title: "environments.integrations.webhooks.response_finished",
-    value: "responseFinished",
-  },
-];
-
 export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
   selectedTriggers,
   onCheckboxChange,
   allowChanges,
 }) => {
   const { t } = useTranslate();
+
+  const triggers: {
+    title: string;
+    value: PipelineTriggers;
+  }[] = [
+    {
+      title: t("environments.integrations.webhooks.response_created"),
+      value: "responseCreated",
+    },
+    {
+      title: t("environments.integrations.webhooks.response_updated"),
+      value: "responseUpdated",
+    },
+    {
+      title: t("environments.integrations.webhooks.response_finished"),
+      value: "responseFinished",
+    },
+  ];
   return (
     <div className="mt-1 rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
@@ -58,7 +58,7 @@ export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
                 }}
                 disabled={!allowChanges}
               />
-              <span className="ml-2">{t(trigger.title)}</span>
+              <span className="ml-2">{trigger.title}</span>
             </label>
           </div>
         ))}

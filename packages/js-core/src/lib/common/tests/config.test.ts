@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/unbound-method -- required for mocking */
 // config.test.ts
-import { mockConfig } from "./__mocks__/config.mock";
+import { type Mock, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import type { TConfig, TConfigUpdateInput } from "@/types/config";
-import { type Mock, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { mockConfig } from "./__mocks__/config.mock";
 
 // Define mocks outside of any describe block
 const getItemMock = localStorage.getItem as unknown as Mock;

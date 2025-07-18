@@ -42,7 +42,7 @@ export const Placement = ({
             <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
               <RadioGroupItem id={placement.value} value={placement.value} disabled={placement.disabled} />
               <Label htmlFor={placement.value} className="text-slate-900">
-                {t(placement.name)}
+                {placement.name}
               </Label>
             </div>
           ))}

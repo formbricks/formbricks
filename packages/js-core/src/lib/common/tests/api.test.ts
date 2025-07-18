@@ -1,7 +1,7 @@
 // api.test.ts
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiClient, makeRequest } from "@/lib/common/api";
 import type { TEnvironmentState } from "@/types/config";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock fetch
 const mockFetch = vi.fn();

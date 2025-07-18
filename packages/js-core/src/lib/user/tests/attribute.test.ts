@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { setAttributes } from "@/lib/user/attribute";
 import { UpdateQueue } from "@/lib/user/update-queue";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 
 export const mockAttributes = {
   name: "John Doe",

@@ -71,7 +71,7 @@ export const PricingCard = ({
             window.open(plan.href, "_blank", "noopener,noreferrer");
           }}
           className="flex justify-center bg-white">
-          {t(plan.CTA ?? "common.request_pricing")}
+          {plan.CTA ?? t("common.request_pricing")}
         </Button>
       );
     }
@@ -88,7 +88,7 @@ export const PricingCard = ({
               setLoading(false);
             }}
             className="flex justify-center">
-            {t(plan.CTA ?? "common.start_free_trial")}
+            {plan.CTA ?? t("common.start_free_trial")}
           </Button>
         );
       }
@@ -138,7 +138,7 @@ export const PricingCard = ({
               plan.featured ? "text-slate-900" : "text-slate-800",
               "text-sm font-semibold leading-6"
             )}>
-            {t(plan.name)}
+            {plan.name}
           </h2>
           {isCurrentPlan && (
             <Badge type="success" size="normal" text={t("environments.settings.billing.current_plan")} />
@@ -155,7 +155,7 @@ export const PricingCard = ({
                 ? planPeriod === "monthly"
                   ? plan.price.monthly
                   : plan.price.yearly
-                : t(plan.price.monthly)}
+                : plan.price.monthly}
             </p>
             {plan.id !== projectFeatureKeys.ENTERPRISE && (
               <div className="text-sm leading-5">
@@ -196,7 +196,7 @@ export const PricingCard = ({
                   className={cn(plan.featured ? "text-brand-dark" : "text-slate-500", "h-6 w-5 flex-none")}
                   aria-hidden="true"
                 />
-                {t(mainFeature)}
+                {mainFeature}
               </li>
             ))}
           </ul>
@@ -215,7 +215,7 @@ export const PricingCard = ({
         open={upgradeModalOpen}
         setOpen={setUpgradeModalOpen}
         text={t("environments.settings.billing.switch_plan_confirmation_text", {
-          plan: t(plan.name),
+          plan: plan.name,
           price: planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly,
           period:
             planPeriod === "monthly"
