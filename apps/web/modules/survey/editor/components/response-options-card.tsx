@@ -7,12 +7,10 @@ import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Slider } from "@/modules/ui/components/slider";
-import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
-import { ArrowUpRight, CheckIcon } from "lucide-react";
-import Link from "next/link";
+import { CheckIcon } from "lucide-react";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -47,12 +45,6 @@ export const ResponseOptionsCard = ({
     subheading: t("environments.surveys.edit.survey_completed_subheading"),
   });
 
-  const [singleUseMessage, setSingleUseMessage] = useState({
-    heading: t("environments.surveys.edit.survey_already_answered_heading"),
-    subheading: t("environments.surveys.edit.survey_already_answered_subheading"),
-  });
-
-  const [singleUseEncryption, setSingleUseEncryption] = useState(true);
   const [runOnDate, setRunOnDate] = useState<Date | null>(null);
   const [closeOnDate, setCloseOnDate] = useState<Date | null>(null);
   const [recaptchaThreshold, setRecaptchaThreshold] = useState<number>(localSurvey.recaptcha?.threshold ?? 0);
@@ -163,53 +155,6 @@ export const ResponseOptionsCard = ({
     setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
   };
 
-  const handleSingleUseSurveyToggle = () => {
-    if (!localSurvey.singleUse?.enabled) {
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: singleUseEncryption },
-      });
-    } else {
-      setLocalSurvey({ ...localSurvey, singleUse: { enabled: false, isEncrypted: false } });
-    }
-  };
-
-  const handleSingleUseSurveyMessageChange = ({
-    heading,
-    subheading,
-  }: {
-    heading?: string;
-    subheading?: string;
-  }) => {
-    const message = {
-      heading: heading ?? singleUseMessage.heading,
-      subheading: subheading ?? singleUseMessage.subheading,
-    };
-
-    const localSurveySingleUseEnabled = localSurvey.singleUse?.enabled ?? false;
-    setSingleUseMessage(message);
-    setLocalSurvey({
-      ...localSurvey,
-      singleUse: { enabled: localSurveySingleUseEnabled, ...message, isEncrypted: singleUseEncryption },
-    });
-  };
-
-  const hangleSingleUseEncryptionToggle = () => {
-    if (!singleUseEncryption) {
-      setSingleUseEncryption(true);
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: true },
-      });
-    } else {
-      setSingleUseEncryption(false);
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: false },
-      });
-    }
-  };
-
   const handleHideBackButtonToggle = () => {
     setLocalSurvey({ ...localSurvey, isBackButtonHidden: !localSurvey.isBackButtonHidden });
   };
@@ -223,14 +168,6 @@ export const ResponseOptionsCard = ({
       setSurveyClosedMessageToggle(true);
     }
 
-    if (localSurvey.singleUse?.enabled) {
-      setSingleUseMessage({
-        heading: localSurvey.singleUse.heading ?? singleUseMessage.heading,
-        subheading: localSurvey.singleUse.subheading ?? singleUseMessage.subheading,
-      });
-      setSingleUseEncryption(localSurvey.singleUse.isEncrypted);
-    }
-
     if (localSurvey.runOnDate) {
       setRunOnDate(localSurvey.runOnDate);
       setRunOnDateToggle(true);
@@ -240,13 +177,7 @@ export const ResponseOptionsCard = ({
       setCloseOnDate(localSurvey.closeOnDate);
       setCloseOnDateToggle(true);
     }
-  }, [
-    localSurvey,
-    singleUseMessage.heading,
-    singleUseMessage.subheading,
-    surveyClosedMessage.heading,
-    surveyClosedMessage.subheading,
-  ]);
+  }, [localSurvey, surveyClosedMessage.heading, surveyClosedMessage.subheading]);
 
   const toggleAutocomplete = () => {
     if (autoComplete) {
@@ -467,80 +398,6 @@ export const ResponseOptionsCard = ({
                       defaultValue={surveyClosedMessage.subheading}
                       onChange={(e) => handleClosedSurveyMessageChange({ subheading: e.target.value })}
                     />
-                  </div>
-                </div>
-              </AdvancedOptionToggle>
-
-              {/* Single User Survey Options */}
-              <AdvancedOptionToggle
-                htmlId="singleUserSurveyOptions"
-                isChecked={!!localSurvey.singleUse?.enabled}
-                onToggle={handleSingleUseSurveyToggle}
-                title={t("environments.surveys.edit.single_use_survey_links")}
-                description={t("environments.surveys.edit.single_use_survey_links_description")}
-                childBorder={true}>
-                <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <div className="row mb-2 flex cursor-default items-center space-x-2">
-                      <Label htmlFor="howItWorks">{t("environments.surveys.edit.how_it_works")}</Label>
-                    </div>
-                    <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
-                      <li className="text-sm text-slate-600">
-                        {t(
-                          "environments.surveys.edit.blocks_survey_if_the_survey_url_has_no_single_use_id_suid"
-                        )}
-                      </li>
-                      <li className="text-sm text-slate-600">
-                        {t(
-                          "environments.surveys.edit.blocks_survey_if_a_submission_with_the_single_use_id_suid_exists_already"
-                        )}
-                      </li>
-                      <li className="text-sm text-slate-600">
-                        <Link
-                          href="https://formbricks.com/docs/link-surveys/single-use-links"
-                          target="_blank"
-                          className="underline">
-                          {t("common.read_docs")} <ArrowUpRight className="inline" size={16} />
-                        </Link>
-                      </li>
-                    </ul>
-                    <Label htmlFor="headline">{t("environments.surveys.edit.link_used_message")}</Label>
-                    <Input
-                      autoFocus
-                      id="heading"
-                      className="mb-4 mt-2 bg-white"
-                      name="heading"
-                      value={singleUseMessage.heading}
-                      onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
-                    />
-
-                    <Label htmlFor="headline">{t("environments.surveys.edit.subheading")}</Label>
-                    <Input
-                      className="mb-4 mt-2 bg-white"
-                      id="subheading"
-                      name="subheading"
-                      value={singleUseMessage.subheading}
-                      onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
-                    />
-                    <Label htmlFor="headline">{t("environments.surveys.edit.url_encryption")}</Label>
-                    <div>
-                      <div className="mt-2 flex items-center space-x-1">
-                        <Switch
-                          id="encryption-switch"
-                          checked={singleUseEncryption}
-                          onCheckedChange={hangleSingleUseEncryptionToggle}
-                        />
-                        <Label htmlFor="encryption-label">
-                          <div className="ml-2">
-                            <p className="text-sm font-normal text-slate-600">
-                              {t(
-                                "environments.surveys.edit.enable_encryption_of_single_use_id_suid_in_survey_url"
-                              )}
-                            </p>
-                          </div>
-                        </Label>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </AdvancedOptionToggle>
