@@ -11,20 +11,20 @@ locals {
   tags = {
     Project     = local.project
     Environment = local.environment
-    MangedBy    = "Terraform"
+    ManagedBy   = "Terraform"
     Blueprint   = local.name
   }
   tags_map = {
     prod = {
       Project     = local.project
       Environment = "prod"
-      MangedBy    = "Terraform"
+      ManagedBy   = "Terraform"
       Blueprint   = "${local.project}-prod"
     }
     stage = {
       Project     = local.project
       Environment = "stage"
-      MangedBy    = "Terraform"
+      ManagedBy   = "Terraform"
       Blueprint   = "${local.project}-stage"
     }
   }
@@ -137,7 +137,8 @@ module "eks" {
   cluster_version = "1.32"
 
   enable_cluster_creator_admin_permissions = false
-  cluster_endpoint_public_access           = false
+  cluster_endpoint_public_access           = true  # TEMPORARY: Enable for deployments until Tailscale is fixed by new DevOps engineer
+  cluster_endpoint_public_access_cidrs     = ["0.0.0.0/0"]  # TEMPORARY: Will revert to private + Tailscale access
   cloudwatch_log_group_retention_in_days   = 365
 
   cluster_addons = {
