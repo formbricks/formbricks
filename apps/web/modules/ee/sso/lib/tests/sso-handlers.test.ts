@@ -85,6 +85,13 @@ vi.mock("@formbricks/lib/jwt", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    debug: vi.fn(),
+    withContext: (context: Record<string, any>) => {
+      return {
+        ...context,
+        debug: vi.fn(),
+      };
+    },
   },
 }));
 

@@ -1,3 +1,5 @@
+import { isStringUrl, sanitizeUrlForLogging } from "@/lib/utils/url";
+
 const SENSITIVE_KEYS = [
   "email",
   "name",
@@ -34,6 +36,7 @@ const SENSITIVE_KEYS = [
   "stripeCustomerId",
   "resultShareKey",
   "fileName",
+  "state",
 ];
 
 /**
@@ -44,6 +47,10 @@ const SENSITIVE_KEYS = [
 export const redactPII = (obj: any, seen: WeakSet<any> = new WeakSet()): any => {
   if (obj instanceof Date) {
     return obj.toISOString();
+  }
+
+  if (typeof obj === "string" && isStringUrl(obj)) {
+    return sanitizeUrlForLogging(obj);
   }
 
   if (obj && typeof obj === "object") {
