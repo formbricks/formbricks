@@ -10,7 +10,11 @@ import { getShuffledRowIndices } from "@/lib/utils";
 import { type JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import type {
+  TSurveyMatrixQuestion,
+  TSurveyMatrixQuestionChoice,
+  TSurveyQuestionId,
+} from "@formbricks/types/surveys/types";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -71,8 +75,8 @@ export function MatrixQuestion({
       let responseValue =
         Object.entries(value).length !== 0
           ? { ...value }
-          : question.rows.reduce((obj: Record<string, string>, key: TI18nString) => {
-              obj[getLocalizedValue(key, languageCode)] = ""; // Initialize each row key with an empty string
+          : question.rows.reduce((obj: Record<string, string>, value: TSurveyMatrixQuestionChoice) => {
+              obj[getLocalizedValue(value.label, languageCode)] = ""; // Initialize each row key with an empty string
               return obj;
             }, {});
 
@@ -112,7 +116,7 @@ export function MatrixQuestion({
           scope="col"
           className="fb-text-heading fb-max-w-40 fb-break-words fb-px-4 fb-py-2 fb-font-normal"
           dir="auto">
-          {getLocalizedValue(column, languageCode)}
+          {getLocalizedValue(column.label, languageCode)}
         </th>
       )),
     [question.columns, languageCode]
@@ -144,32 +148,30 @@ export function MatrixQuestion({
               </thead>
               <tbody>
                 {questionRows.map((row, rowIndex) => (
-                  <tr
-                    key={`row-${rowIndex.toString()}`}
-                    className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
+                  <tr key={row.id} className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
                     <th
                       scope="row"
                       className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
                       dir="auto">
-                      {getLocalizedValue(row, languageCode)}
+                      {getLocalizedValue(row.label, languageCode)}
                     </th>
                     {question.columns.map((column, columnIndex) => (
                       <td
-                        key={`column-${columnIndex.toString()}`}
+                        key={column.id}
                         tabIndex={isCurrent ? 0 : -1}
                         className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
                         onClick={() => {
                           handleSelect(
-                            getLocalizedValue(column, languageCode),
-                            getLocalizedValue(row, languageCode)
+                            getLocalizedValue(column.label, languageCode),
+                            getLocalizedValue(row.label, languageCode)
                           );
                         }}
                         onKeyDown={(e) => {
                           if (e.key === " ") {
                             e.preventDefault();
                             handleSelect(
-                              getLocalizedValue(column, languageCode),
-                              getLocalizedValue(row, languageCode)
+                              getLocalizedValue(column.label, languageCode),
+                              getLocalizedValue(row.label, languageCode)
                             );
                           }
                         }}
@@ -180,20 +182,20 @@ export function MatrixQuestion({
                             type="radio"
                             tabIndex={-1}
                             required={question.required}
-                            id={`row${rowIndex.toString()}-column${columnIndex.toString()}`}
-                            name={getLocalizedValue(row, languageCode)}
-                            value={getLocalizedValue(column, languageCode)}
+                            id={`${row.id}-${column.id}`}
+                            name={getLocalizedValue(row.label, languageCode)}
+                            value={getLocalizedValue(column.label, languageCode)}
                             checked={
                               typeof value === "object" && !Array.isArray(value)
-                                ? value[getLocalizedValue(row, languageCode)] ===
-                                  getLocalizedValue(column, languageCode)
+                                ? value[getLocalizedValue(row.label, languageCode)] ===
+                                  getLocalizedValue(column.label, languageCode)
                                 : false
                             }
                             aria-label={`${getLocalizedValue(
                               question.headline,
                               languageCode
-                            )}: ${getLocalizedValue(row, languageCode)} – ${getLocalizedValue(
-                              column,
+                            )}: ${getLocalizedValue(row.label, languageCode)} – ${getLocalizedValue(
+                              column.label,
                               languageCode
                             )}`}
                             className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"

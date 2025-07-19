@@ -6,11 +6,16 @@ import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TI18nString,
   TSurvey,
+  TSurveyAddressQuestion,
+  TSurveyCTAQuestion,
   TSurveyConsentQuestion,
+  TSurveyContactInfoQuestion,
   TSurveyEndScreenCard,
   TSurveyLanguage,
+  TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,
   TSurveyOpenTextQuestion,
+  TSurveyPictureSelectionQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
@@ -365,6 +370,34 @@ describe("validation.validateQuestion", () => {
     });
   });
 
+  // Test MultipleChoiceMulti Question
+  describe("MultipleChoiceMulti Question", () => {
+    const mcMultiQuestionBase: TSurveyMultipleChoiceQuestion = {
+      ...baseQuestionFields,
+      type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+      headline: { default: "Multi Choice", en: "Multi Choice", de: "Mehrfachauswahl" },
+      choices: [
+        { id: "c1", label: { default: "Option 1", en: "Option 1", de: "Option 1" } },
+        { id: "c2", label: { default: "Option 2", en: "Option 2", de: "Option 2" } },
+      ],
+    };
+
+    test("should return true for a valid MultipleChoiceMulti question", () => {
+      expect(validation.validateQuestion(mcMultiQuestionBase, surveyLanguagesEnabled, false)).toBe(true);
+    });
+
+    test("should return false if a choice label is invalid", () => {
+      const q = {
+        ...mcMultiQuestionBase,
+        choices: [
+          { id: "c1", label: { default: "Option 1", en: "Option 1", de: "Option 1" } },
+          { id: "c2", label: { default: "Option 2", en: "Option 2", de: "" } },
+        ],
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+    });
+  });
+
   // Test Consent Question
   describe("Consent Question", () => {
     const consentQuestionBase: TSurveyConsentQuestion = {
@@ -382,6 +415,214 @@ describe("validation.validateQuestion", () => {
     test("should return false if consent label is invalid", () => {
       const q = { ...consentQuestionBase, label: { default: "I agree", en: "I agree", de: "" } };
       expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+    });
+  });
+
+  // Test Matrix Question
+  describe("Matrix Question", () => {
+    const matrixQuestionBase = {
+      ...baseQuestionFields,
+      type: TSurveyQuestionTypeEnum.Matrix,
+      headline: { default: "Matrix", en: "Matrix", de: "Matrix" },
+      rows: [
+        { id: "r1", label: { default: "Row 1", en: "Row 1", de: "Zeile 1" } },
+        { id: "r2", label: { default: "Row 2", en: "Row 2", de: "Zeile 2" } },
+      ],
+      columns: [
+        { id: "c1", label: { default: "Column 1", en: "Column 1", de: "Spalte 1" } },
+        { id: "c2", label: { default: "Column 2", en: "Column 2", de: "Spalte 2" } },
+      ],
+    } as unknown as TSurveyMatrixQuestion;
+
+    test("should return true for a valid Matrix question", () => {
+      expect(validation.validateQuestion(matrixQuestionBase, surveyLanguagesEnabled, false)).toBe(true);
+    });
+
+    test("should return false if a row label is invalid", () => {
+      const q = {
+        ...matrixQuestionBase,
+        rows: [
+          { id: "r1", label: { default: "Row 1", en: "Row 1", de: "Zeile 1" } },
+          { id: "r2", label: { default: "Row 2", en: "Row 2", de: "" } },
+        ],
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+    });
+
+    test("should return false if a column label is invalid", () => {
+      const q = {
+        ...matrixQuestionBase,
+        columns: [
+          { id: "c1", label: { default: "Column 1", en: "Column 1", de: "Spalte 1" } },
+          { id: "c2", label: { default: "Column 2", en: "Column 2", de: "" } },
+        ],
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+    });
+  });
+
+  // Test ContactInfo Question
+  describe("ContactInfo Question", () => {
+    const contactInfoQuestionBase = {
+      ...baseQuestionFields,
+      type: TSurveyQuestionTypeEnum.ContactInfo,
+      headline: { default: "Contact Info", en: "Contact Info", de: "Kontaktinformationen" },
+      firstName: {
+        show: true,
+        required: false,
+        placeholder: { default: "First Name", en: "First Name", de: "Vorname" },
+      },
+      lastName: {
+        show: true,
+        required: false,
+        placeholder: { default: "Last Name", en: "Last Name", de: "Nachname" },
+      },
+      email: { show: true, required: false, placeholder: { default: "Email", en: "Email", de: "E-Mail" } },
+      phone: { show: false, required: false, placeholder: { default: "Phone", en: "Phone", de: "Telefon" } },
+      company: {
+        show: false,
+        required: false,
+        placeholder: { default: "Company", en: "Company", de: "Unternehmen" },
+      },
+    } as unknown as TSurveyContactInfoQuestion;
+
+    test("should return true for a valid ContactInfo question", () => {
+      expect(validation.validateQuestion(contactInfoQuestionBase, surveyLanguagesEnabled, false)).toBe(true);
+    });
+
+    test("should return false if an enabled field has an invalid placeholder", () => {
+      const q = {
+        ...contactInfoQuestionBase,
+        firstName: {
+          show: true,
+          required: false,
+          placeholder: { default: "First Name", en: "First Name", de: "" },
+        },
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+    });
+
+    test("should return true if a disabled field has an invalid placeholder", () => {
+      const q = {
+        ...contactInfoQuestionBase,
+        phone: { show: false, required: false, placeholder: { default: "Phone", en: "Phone", de: "" } },
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(true);
+    });
+  });
+
+  // Test Address Question
+  describe("Address Question", () => {
+    const addressQuestionBase = {
+      ...baseQuestionFields,
+      type: TSurveyQuestionTypeEnum.Address,
+      headline: { default: "Address", en: "Address", de: "Adresse" },
+      addressLine1: {
+        show: true,
+        required: false,
+        placeholder: { default: "Address Line 1", en: "Address Line 1", de: "Adresszeile 1" },
+      },
+      addressLine2: {
+        show: false,
+        required: false,
+        placeholder: { default: "Address Line 2", en: "Address Line 2", de: "Adresszeile 2" },
+      },
+      city: { show: true, required: false, placeholder: { default: "City", en: "City", de: "Stadt" } },
+      state: {
+        show: true,
+        required: false,
+        placeholder: { default: "State", en: "State", de: "Bundesland" },
+      },
+      zip: { show: true, required: false, placeholder: { default: "ZIP", en: "ZIP", de: "PLZ" } },
+      country: {
+        show: true,
+        required: false,
+        placeholder: { default: "Country", en: "Country", de: "Land" },
+      },
+    } as unknown as TSurveyAddressQuestion;
+
+    test("should return true for a valid Address question", () => {
+      expect(validation.validateQuestion(addressQuestionBase, surveyLanguagesEnabled, false)).toBe(true);
+    });
+
+    test("should return false if an enabled field has an invalid placeholder", () => {
+      const q = {
+        ...addressQuestionBase,
+        city: { show: true, required: false, placeholder: { default: "City", en: "City", de: "" } },
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+    });
+
+    test("should return true if a disabled field has an invalid placeholder", () => {
+      const q = {
+        ...addressQuestionBase,
+        addressLine2: {
+          show: false,
+          required: false,
+          placeholder: { default: "Address Line 2", en: "Address Line 2", de: "" },
+        },
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(true);
+    });
+  });
+
+  // Test PictureSelection Question
+  describe("PictureSelection Question", () => {
+    const pictureSelectionQuestionBase = {
+      ...baseQuestionFields,
+      type: TSurveyQuestionTypeEnum.PictureSelection,
+      headline: { default: "Picture Selection", en: "Picture Selection", de: "Bildauswahl" },
+      choices: [
+        { id: "p1", imageUrl: "https://example.com/image1.jpg" },
+        { id: "p2", imageUrl: "https://example.com/image2.jpg" },
+      ],
+    } as unknown as TSurveyPictureSelectionQuestion;
+
+    test("should return true for a valid PictureSelection question with at least 2 choices", () => {
+      expect(validation.validateQuestion(pictureSelectionQuestionBase, surveyLanguagesEnabled, false)).toBe(
+        true
+      );
+    });
+
+    test("should return false for a PictureSelection question with less than 2 choices", () => {
+      const q = {
+        ...pictureSelectionQuestionBase,
+        choices: [{ id: "p1", imageUrl: "https://example.com/image1.jpg" }],
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+    });
+  });
+
+  // Test CTA Question
+  describe("CTA Question", () => {
+    const ctaQuestionBase = {
+      ...baseQuestionFields,
+      type: TSurveyQuestionTypeEnum.CTA,
+      headline: { default: "CTA", en: "CTA", de: "CTA" },
+      buttonLabel: { default: "Click Me", en: "Click Me", de: "Klick Mich" },
+      buttonUrl: "https://example.com",
+      dismissButtonLabel: { default: "No Thanks", en: "No Thanks", de: "Nein Danke" },
+    } as unknown as TSurveyCTAQuestion;
+
+    test("should return true for a valid CTA question", () => {
+      expect(validation.validateQuestion(ctaQuestionBase, surveyLanguagesEnabled, false)).toBe(true);
+    });
+
+    test("should return false if dismissButtonLabel is invalid", () => {
+      const q = {
+        ...ctaQuestionBase,
+        dismissButtonLabel: { default: "No Thanks", en: "No Thanks", de: "" },
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(false);
+    });
+
+    test("should return true if dismissButtonLabel is not required (required=true)", () => {
+      const q = {
+        ...ctaQuestionBase,
+        required: true,
+        dismissButtonLabel: undefined,
+      };
+      expect(validation.validateQuestion(q, surveyLanguagesEnabled, false)).toBe(true);
     });
   });
 });
