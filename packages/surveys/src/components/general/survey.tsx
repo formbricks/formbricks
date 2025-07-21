@@ -132,9 +132,24 @@ export function Survey({
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
+  // Track original required state for questions to handle logic-based required changes
+  const [originalRequiredState, setOriginalRequiredState] = useState<Record<string, boolean>>(() => {
+    return survey.questions.reduce<Record<string, boolean>>((acc, question) => {
+      acc[question.id] = question.required;
+      return acc;
+    }, {});
+  });
+
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {
     setlocalSurvey(survey);
+    // Also update the original required state when survey changes
+    setOriginalRequiredState(
+      survey.questions.reduce<Record<string, boolean>>((acc, question) => {
+        acc[question.id] = question.required;
+        return acc;
+      }, {})
+    );
   }, [survey]);
 
   useEffect(() => {
@@ -337,6 +352,47 @@ export function Survey({
     }));
   };
 
+  const resetQuestionsToOriginalState = (): void => {
+    setlocalSurvey((prevSurvey) => ({
+      ...prevSurvey,
+      questions: prevSurvey.questions.map((question) => ({
+        ...question,
+        required: originalRequiredState[question.id] ?? question.required,
+      })),
+    }));
+  };
+
+  const reevaluateAllLogicForCurrentResponses = (): void => {
+    // Reset to original state first
+    resetQuestionsToOriginalState();
+
+    // Then apply logic based on current responses for all questions
+    const allRequiredQuestionIds: string[] = [];
+
+    survey.questions.forEach((question) => {
+      if (question.logic && question.logic.length > 0) {
+        for (const logic of question.logic) {
+          if (
+            evaluateLogic(localSurvey, responseData, currentVariables, logic.conditions, selectedLanguage)
+          ) {
+            const { requiredQuestionIds } = performActions(
+              localSurvey,
+              logic.actions,
+              responseData,
+              currentVariables
+            );
+            allRequiredQuestionIds.push(...requiredQuestionIds);
+          }
+        }
+      }
+    });
+
+    // Apply all required question changes
+    if (allRequiredQuestionIds.length > 0) {
+      makeQuestionsRequired(allRequiredQuestionIds);
+    }
+  };
+
   const pushVariableState = (currentQuestionId: TSurveyQuestionId) => {
     setVariableStack((prevStack) => [
       ...prevStack,
@@ -366,41 +422,49 @@ export function Survey({
 
     if (!currentQuestion) throw new Error("Question not found");
 
+    // Reset all questions to their original required state before applying logic
+    resetQuestionsToOriginalState();
+
     let firstJumpTarget: string | undefined;
     const allRequiredQuestionIds: string[] = [];
 
     let calculationResults = { ...currentVariables };
     const localResponseData = { ...responseData, ...data };
 
-    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
-      for (const logic of currentQuestion.logic) {
-        if (
-          evaluateLogic(
-            localSurvey,
-            localResponseData,
-            calculationResults,
-            logic.conditions,
-            selectedLanguage
-          )
-        ) {
-          const { jumpTarget, requiredQuestionIds, calculations } = performActions(
-            localSurvey,
-            logic.actions,
-            localResponseData,
-            calculationResults
-          );
+    // Evaluate logic for ALL questions, not just the current one
+    // This ensures that conditions like "if question 1 is submitted, make question 3 required" work
+    survey.questions.forEach((question) => {
+      if (question.logic && question.logic.length > 0) {
+        for (const logic of question.logic) {
+          if (
+            evaluateLogic(
+              localSurvey,
+              localResponseData,
+              calculationResults,
+              logic.conditions,
+              selectedLanguage
+            )
+          ) {
+            const { jumpTarget, requiredQuestionIds, calculations } = performActions(
+              localSurvey,
+              logic.actions,
+              localResponseData,
+              calculationResults
+            );
 
-          if (jumpTarget && !firstJumpTarget) {
-            firstJumpTarget = jumpTarget;
+            // Only set jump target if it comes from the current question being submitted
+            if (jumpTarget && !firstJumpTarget && question.id === currentQuestion.id) {
+              firstJumpTarget = jumpTarget;
+            }
+
+            allRequiredQuestionIds.push(...requiredQuestionIds);
+            calculationResults = { ...calculationResults, ...calculations };
           }
-
-          allRequiredQuestionIds.push(...requiredQuestionIds);
-          calculationResults = { ...calculationResults, ...calculations };
         }
       }
-    }
+    });
 
-    // Use logicFallback if no jump target was set
+    // Use logicFallback if no jump target was set from current question
     if (!firstJumpTarget && currentQuestion.logicFallback) {
       firstJumpTarget = currentQuestion.logicFallback;
     }
@@ -582,6 +646,10 @@ export function Survey({
     popVariableState();
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
+
+    // Re-evaluate logic for all questions to maintain correct required state
+    // based on current response data
+    reevaluateAllLogicForCurrentResponses();
   };
 
   const getQuestionPrefillData = (
