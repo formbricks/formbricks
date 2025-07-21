@@ -132,9 +132,23 @@ export function Survey({
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
+  // state to keep track of the original required states of the questions
+  const originalQuestionRequiredStates = useRef<Record<string, boolean>>({});
+
+  // state to keep track of the questions that were made required by each specific question's logic
+  const questionRequiredByMap = useRef<Record<string, string[]>>({});
+
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {
     setlocalSurvey(survey);
+    // Update original required states when survey changes
+    originalQuestionRequiredStates.current = survey.questions.reduce<Record<string, boolean>>(
+      (acc, question) => {
+        acc[question.id] = question.required;
+        return acc;
+      },
+      {}
+    );
   }, [survey]);
 
   useEffect(() => {
@@ -337,6 +351,28 @@ export function Survey({
     }));
   };
 
+  const revertRequiredChangesByQuestion = (questionId: string): void => {
+    const questionsToRevert = questionRequiredByMap.current[questionId] || [];
+
+    if (questionsToRevert.length > 0) {
+      setlocalSurvey((prevSurvey) => ({
+        ...prevSurvey,
+        questions: prevSurvey.questions.map((question) => {
+          if (questionsToRevert.includes(question.id)) {
+            return {
+              ...question,
+              required: originalQuestionRequiredStates.current[question.id] ?? question.required,
+            };
+          }
+          return question;
+        }),
+      }));
+
+      // remove the question from the map
+      delete questionRequiredByMap.current[questionId];
+    }
+  };
+
   const pushVariableState = (currentQuestionId: TSurveyQuestionId) => {
     setVariableStack((prevStack) => [
       ...prevStack,
@@ -405,8 +441,10 @@ export function Survey({
       firstJumpTarget = currentQuestion.logicFallback;
     }
 
-    // Make all collected questions required
     if (allRequiredQuestionIds.length > 0) {
+      // Track which questions are being made required by this question
+      questionRequiredByMap.current[currentQuestion.id] = allRequiredQuestionIds;
+
       makeQuestionsRequired(allRequiredQuestionIds);
     }
 
@@ -581,6 +619,8 @@ export function Survey({
     }
     popVariableState();
     if (!prevQuestionId) throw new Error("Question not found");
+
+    revertRequiredChangesByQuestion(prevQuestionId);
     setQuestionId(prevQuestionId);
   };
 
