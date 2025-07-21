@@ -147,6 +147,7 @@ vi.mock("lucide-react", () => ({
   Bold: () => <span data-testid="bold-icon">Bold</span>,
   Italic: () => <span data-testid="italic-icon">Italic</span>,
   Link: () => <span data-testid="link-icon">Link</span>,
+  Underline: () => <span data-testid="underline-icon">Underline</span>,
   ChevronDownIcon: () => <span data-testid="chevron-icon">ChevronDown</span>,
 }));
 
@@ -186,6 +187,7 @@ describe("ToolbarPlugin", () => {
     expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
     expect(screen.getByTestId("bold-icon")).toBeInTheDocument();
     expect(screen.getByTestId("italic-icon")).toBeInTheDocument();
+    expect(screen.getByTestId("underline-icon")).toBeInTheDocument();
     expect(screen.getByTestId("link-icon")).toBeInTheDocument();
   });
 
@@ -224,13 +226,14 @@ describe("ToolbarPlugin", () => {
         setText={vi.fn()}
         editable={true}
         container={document.createElement("div")}
-        excludedToolbarItems={["bold", "italic"]}
+        excludedToolbarItems={["bold", "italic", "underline"]}
       />
     );
 
     // Should not render bold and italic buttons but should render link
     expect(screen.queryByTestId("bold-icon")).not.toBeInTheDocument();
     expect(screen.queryByTestId("italic-icon")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("underline-icon")).not.toBeInTheDocument();
     expect(screen.getByTestId("link-icon")).toBeInTheDocument();
   });
 
