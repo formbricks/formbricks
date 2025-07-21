@@ -1,5 +1,4 @@
 import { ApiAuditLog } from "@/app/lib/api/with-api-logging";
-import { responses } from "@/modules/api/v2/lib/response";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
