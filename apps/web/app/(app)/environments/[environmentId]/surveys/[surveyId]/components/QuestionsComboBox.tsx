@@ -135,10 +135,17 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
       return "bg-amber-500";
     }
   };
+
+  const getLabelStyle = () => {
+    if (type !== OptionsType.META) return;
+    if (label === "os") return "uppercase";
+    return "capitalize";
+  };
+
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className={clsx("ml-3 truncate text-sm text-slate-600", type === OptionsType.META && "capitalize")}>
+      <p className={clsx("ml-3 truncate text-sm text-slate-600", getLabelStyle())}>
         {typeof label === "string" ? label : getLocalizedValue(label, "default")}
       </p>
     </div>
