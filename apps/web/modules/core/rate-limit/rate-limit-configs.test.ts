@@ -137,7 +137,7 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.auth.signup, identifier: "user-signup" },
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
-        { config: rateLimitConfigs.actions.profileUpdate, identifier: "user-profile" },
+        { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
         { config: rateLimitConfigs.share.url, identifier: "share-url" },
       ];
 

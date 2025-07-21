@@ -16,7 +16,7 @@ export const rateLimitConfigs = {
 
   // Server actions - varies by action type
   actions: {
-    profileUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:profile" }, // 3 per hour
+    emailUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:email" }, // 3 per hour
     surveyFollowUp: { interval: 3600, allowedPerInterval: 50, namespace: "action:followup" }, // 50 per hour
   },
 

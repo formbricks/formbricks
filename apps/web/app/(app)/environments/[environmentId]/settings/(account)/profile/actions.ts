@@ -10,8 +10,9 @@ import { getFileNameWithIdFromUrl } from "@/lib/storage/utils";
 import { getUser, updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { rateLimit } from "@/lib/utils/rate-limit";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendForgotPasswordEmail, sendVerificationNewEmail } from "@/modules/email";
 import { z } from "zod";
@@ -22,12 +23,11 @@ import {
   OperationNotAllowedError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
-import { TUserUpdateInput, ZUserPassword, ZUserUpdateInput } from "@formbricks/types/user";
-
-const limiter = rateLimit({
-  interval: 60 * 60, // 1 hour
-  allowedPerInterval: 3, // max 3 calls for email verification per hour
-});
+import {
+  TUserPersonalInfoUpdateInput,
+  TUserUpdateInput,
+  ZUserPersonalInfoUpdateInput,
+} from "@formbricks/types/user";
 
 function buildUserUpdatePayload(parsedInput: any): TUserUpdateInput {
   return {
@@ -41,15 +41,15 @@ async function handleEmailUpdate({
   parsedInput,
   payload,
 }: {
-  ctx: any;
-  parsedInput: any;
+  ctx: AuthenticatedActionClientCtx;
+  parsedInput: TUserPersonalInfoUpdateInput;
   payload: TUserUpdateInput;
 }) {
   const inputEmail = parsedInput.email?.trim().toLowerCase();
   if (!inputEmail || ctx.user.email === inputEmail) return payload;
 
   try {
-    await limiter(ctx.user.id);
+    await applyRateLimit(rateLimitConfigs.actions.emailUpdate, ctx.user.id);
   } catch {
     throw new TooManyRequestsError("Too many requests");
   }
@@ -75,41 +75,35 @@ async function handleEmailUpdate({
   return payload;
 }
 
-export const updateUserAction = authenticatedActionClient
-  .schema(
-    ZUserUpdateInput.pick({ name: true, email: true, locale: true }).extend({
-      password: ZUserPassword.optional(),
-    })
-  )
-  .action(
-    withAuditLogging(
-      "updated",
-      "user",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: Record<string, any>;
-      }) => {
-        const oldObject = await getUser(ctx.user.id);
-        let payload = buildUserUpdatePayload(parsedInput);
-        payload = await handleEmailUpdate({ ctx, parsedInput, payload });
+export const updateUserAction = authenticatedActionClient.schema(ZUserPersonalInfoUpdateInput).action(
+  withAuditLogging(
+    "updated",
+    "user",
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: TUserPersonalInfoUpdateInput;
+    }) => {
+      const oldObject = await getUser(ctx.user.id);
+      let payload = buildUserUpdatePayload(parsedInput);
+      payload = await handleEmailUpdate({ ctx, parsedInput, payload });
 
-        // Only proceed with updateUser if we have actual changes to make
-        let newObject = oldObject;
-        if (Object.keys(payload).length > 0) {
-          newObject = await updateUser(ctx.user.id, payload);
-        }
-
-        ctx.auditLoggingCtx.userId = ctx.user.id;
-        ctx.auditLoggingCtx.oldObject = oldObject;
-        ctx.auditLoggingCtx.newObject = newObject;
-
-        return true;
+      // Only proceed with updateUser if we have actual changes to make
+      let newObject = oldObject;
+      if (Object.keys(payload).length > 0) {
+        newObject = await updateUser(ctx.user.id, payload);
       }
-    )
-  );
+
+      ctx.auditLoggingCtx.userId = ctx.user.id;
+      ctx.auditLoggingCtx.oldObject = oldObject;
+      ctx.auditLoggingCtx.newObject = newObject;
+
+      return true;
+    }
+  )
+);
 
 const ZUpdateAvatarAction = z.object({
   avatarUrl: z.string(),
