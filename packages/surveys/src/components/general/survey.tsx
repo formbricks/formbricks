@@ -132,13 +132,12 @@ export function Survey({
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
-  // state to keep track of the original required states of the questions
-  const originalQuestionRequiredStates = useRef<Record<string, boolean>>(
-    survey.questions.reduce<Record<string, boolean>>((acc, question) => {
+  const originalQuestionRequiredStates = useMemo(() => {
+    return survey.questions.reduce<Record<string, boolean>>((acc, question) => {
       acc[question.id] = question.required;
       return acc;
-    }, {})
-  );
+    }, {});
+  }, [survey.questions]);
 
   // state to keep track of the questions that were made required by each specific question's logic
   const questionRequiredByMap = useRef<Record<string, string[]>>({});
@@ -358,7 +357,7 @@ export function Survey({
           if (questionsToRevert.includes(question.id)) {
             return {
               ...question,
-              required: originalQuestionRequiredStates.current[question.id] ?? question.required,
+              required: originalQuestionRequiredStates[question.id] ?? question.required,
             };
           }
           return question;
