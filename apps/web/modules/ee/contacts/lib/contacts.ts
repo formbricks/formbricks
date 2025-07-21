@@ -501,7 +501,7 @@ export const generatePersonalLinks = async (surveyId: string, segmentId: string,
   }
 
   // Generate survey links for each contact
-  const contactLinks = Promise.all(
+  const contactLinks = await Promise.all(
     contactsResult
       .map(async (contact) => {
         const { contactId, attributes } = contact;
