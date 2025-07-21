@@ -1,4 +1,4 @@
-import { isStringUrl, sanitizeUrlForLogging } from "@/lib/utils/url";
+import { isStringUrl } from "@/lib/utils/url";
 
 const SENSITIVE_KEYS = [
   "email",
@@ -38,6 +38,8 @@ const SENSITIVE_KEYS = [
   "fileName",
   "state",
 ];
+
+const URL_SENSITIVE_KEYS = ["token", "code", "state"];
 
 /**
  * Redacts sensitive data from the object by replacing the sensitive keys with "********".
@@ -96,4 +98,25 @@ export const deepDiff = (oldObj: any, newObj: any): any => {
     }
   }
   return Object.keys(diff).length > 0 ? diff : undefined;
+};
+
+/**
+ * Sanitizes a URL for logging by redacting sensitive parameters.
+ * @param url - The URL to sanitize.
+ * @returns The sanitized URL.
+ */
+export const sanitizeUrlForLogging = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+
+    URL_SENSITIVE_KEYS.forEach((key) => {
+      if (urlObj.searchParams.has(key)) {
+        urlObj.searchParams.set(key, "********");
+      }
+    });
+
+    return urlObj.origin + urlObj.pathname + (urlObj.search ? `${urlObj.search}` : "");
+  } catch {
+    return "[invalid-url]";
+  }
 };

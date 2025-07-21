@@ -1,7 +1,7 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import { TActionClassPageUrlRule } from "@formbricks/types/action-classes";
-import { isStringUrl, isValidCallbackUrl, sanitizeUrlForLogging, testURLmatch } from "./url";
+import { isStringUrl, isValidCallbackUrl, testURLmatch } from "./url";
 
 afterEach(() => {
   cleanup();
@@ -61,39 +61,5 @@ describe("isStringUrl", () => {
 
   test("returns false for invalid URL", () => {
     expect(isStringUrl("not-a-valid-url")).toBe(false);
-  });
-});
-
-describe("sanitizeUrlForLogging", () => {
-  test("returns sanitized URL with token", () => {
-    expect(sanitizeUrlForLogging("https://example.com?token=1234567890")).toBe(
-      "https://example.com/?token=********"
-    );
-  });
-
-  test("returns sanitized URL with code", () => {
-    expect(sanitizeUrlForLogging("https://example.com?code=1234567890")).toBe(
-      "https://example.com/?code=********"
-    );
-  });
-
-  test("returns sanitized URL with state", () => {
-    expect(sanitizeUrlForLogging("https://example.com?state=1234567890")).toBe(
-      "https://example.com/?state=********"
-    );
-  });
-
-  test("returns sanitized URL with multiple keys", () => {
-    expect(
-      sanitizeUrlForLogging("https://example.com?token=1234567890&code=1234567890&state=1234567890")
-    ).toBe("https://example.com/?token=********&code=********&state=********");
-  });
-
-  test("returns sanitized URL without query params", () => {
-    expect(sanitizeUrlForLogging("https://example.com")).toBe("https://example.com/");
-  });
-
-  test("returns sanitized URL with invalid URL", () => {
-    expect(sanitizeUrlForLogging("not-a-valid-url")).toBe("[invalid-url]");
   });
 });

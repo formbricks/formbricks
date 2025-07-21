@@ -4,11 +4,11 @@ import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { redactPII } from "@/lib/utils/logger-helpers";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
-import { redactPII } from "@/modules/ee/audit-logs/lib/utils";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
