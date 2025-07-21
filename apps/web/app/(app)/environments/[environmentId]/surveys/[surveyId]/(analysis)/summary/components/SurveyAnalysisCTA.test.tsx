@@ -859,6 +859,7 @@ describe("SurveyAnalysisCTA", () => {
     const iconActions = screen.getAllByTestId(/icon-bar-action-/);
     const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
 
+    expect(resetButton).toBeDefined();
     await user.click(resetButton!);
 
     expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-open", "true");
@@ -886,6 +887,7 @@ describe("SurveyAnalysisCTA", () => {
     // Open reset modal
     const iconActions = screen.getAllByTestId(/icon-bar-action-/);
     const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
     await user.click(resetButton!);
 
     // Confirm reset
@@ -914,6 +916,7 @@ describe("SurveyAnalysisCTA", () => {
     // Open reset modal
     const iconActions = screen.getAllByTestId(/icon-bar-action-/);
     const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
     await user.click(resetButton!);
 
     // Confirm reset
@@ -949,6 +952,7 @@ describe("SurveyAnalysisCTA", () => {
     // Open reset modal
     const iconActions = screen.getAllByTestId(/icon-bar-action-/);
     const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
     await user.click(resetButton!);
 
     // Confirm reset
@@ -974,6 +978,7 @@ describe("SurveyAnalysisCTA", () => {
     // Open reset modal
     const iconActions = screen.getAllByTestId(/icon-bar-action-/);
     const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
     await user.click(resetButton!);
     expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-open", "true");
 
@@ -993,6 +998,7 @@ describe("SurveyAnalysisCTA", () => {
     // Open reset modal
     const iconActions = screen.getAllByTestId(/icon-bar-action-/);
     const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
     await user.click(resetButton!);
     expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-open", "true");
 
@@ -1010,6 +1016,7 @@ describe("SurveyAnalysisCTA", () => {
     // Open reset modal
     const iconActions = screen.getAllByTestId(/icon-bar-action-/);
     const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
     await user.click(resetButton!);
 
     expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-variant", "destructive");
@@ -1032,6 +1039,7 @@ describe("SurveyAnalysisCTA", () => {
     // Open reset modal
     const iconActions = screen.getAllByTestId(/icon-bar-action-/);
     const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
     await user.click(resetButton!);
 
     // Confirm reset
