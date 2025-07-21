@@ -19,9 +19,13 @@ const meta: Meta<StoryProps> = {
   component: Alert,
   tags: ["autodocs"],
   parameters: {
-    controls: {
-      sort: "requiredFirst",
-      exclude: [],
+    layout: "centered",
+    controls: { sort: "alpha", exclude: [] },
+    docs: {
+      description: {
+        component:
+          "The **Alert** component displays important messages to users with various styles and optional actions. It supports different variants for different message types and can include icons and buttons.",
+      },
     },
   },
   // These argTypes are for story controls, not component props
@@ -61,10 +65,10 @@ const meta: Meta<StoryProps> = {
       control: "boolean",
       description: "Whether to show action buttons",
       table: {
-        category: "Appearance",
+        category: "Behavior",
         type: { summary: "boolean" },
       },
-      order: 4,
+      order: 1,
     },
     title: {
       control: "text",
@@ -91,7 +95,7 @@ const meta: Meta<StoryProps> = {
         category: "Content",
         type: { summary: "string" },
       },
-      order: 2,
+      order: 3,
     },
   },
 };
@@ -160,7 +164,7 @@ export const Small: Story = {
 };
 
 // With custom icon
-export const withButtonAndIcon: Story = {
+export const WithButtonAndIcon: Story = {
   render: renderAlert,
   args: {
     variant: "default",
@@ -169,6 +173,13 @@ export const withButtonAndIcon: Story = {
     showIcon: true,
     showButton: true,
     actionButtonText: "Learn more",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Use when you need both visual emphasis and actionable content.",
+      },
+    },
   },
 };
 
@@ -186,7 +197,7 @@ export const Destructive: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Only use if the user needs to take immediate action or there is a critical error.",
+        story: "Use for critical errors that need immediate attention or action.",
       },
     },
   },
@@ -206,7 +217,7 @@ export const Warning: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Use this to make the user aware of potential issues.",
+        story: "Use to make the user aware of potential issues or risks.",
       },
     },
   },
@@ -226,7 +237,7 @@ export const Info: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Use this to give contextual information and support the user.",
+        story: "Use to give contextual information and support the user.",
       },
     },
   },
@@ -246,7 +257,46 @@ export const Success: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Use this to give positive feedback.",
+        story: "Use to give positive feedback and confirm successful actions.",
+      },
+    },
+  },
+};
+
+export const WithIcon: Story = {
+  render: renderAlert,
+  args: {
+    variant: "info",
+    title: "Information",
+    description: "This alert has an icon for better visual hierarchy.",
+    showIcon: true,
+    showButton: false,
+    actionButtonText: "",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Use icons to improve visual hierarchy and message clarity.",
+      },
+    },
+  },
+};
+
+export const LongContent: Story = {
+  render: renderAlert,
+  args: {
+    variant: "warning",
+    title: "Long Alert Title That Might Wrap to Multiple Lines",
+    description:
+      "This is a very long alert description that demonstrates how the alert component handles longer content. It should wrap gracefully and maintain proper spacing and readability even with extensive text content.",
+    showIcon: true,
+    showButton: true,
+    actionButtonText: "Acknowledge",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Shows how the alert handles longer content with proper text wrapping.",
       },
     },
   },
