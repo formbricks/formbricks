@@ -136,10 +136,9 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
     }
   };
 
-  const getLabelStyle = () => {
-    if (type !== OptionsType.META) return;
-    if (label === "os") return "uppercase";
-    return "capitalize";
+  const getLabelStyle = (): string | undefined => {
+    if (type !== OptionsType.META) return undefined;
+    return label === "os" ? "uppercase" : "capitalize";
   };
 
   return (
