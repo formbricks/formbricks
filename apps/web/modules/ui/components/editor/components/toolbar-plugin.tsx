@@ -29,11 +29,12 @@ import {
   $getSelection,
   $insertNodes,
   $isRangeSelection,
+  COMMAND_PRIORITY_CRITICAL,
   FORMAT_TEXT_COMMAND,
+  PASTE_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
-import { COMMAND_PRIORITY_CRITICAL, PASTE_COMMAND } from "lexical";
-import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
+import { Bold, ChevronDownIcon, Italic, Link, Underline } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AddVariablesDropdown } from "./add-variables-dropdown";
@@ -235,6 +236,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
   const [isLink, setIsLink] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
+  const [isUnderline, setIsUnderline] = useState(false);
 
   // save ref to setText to use it in event listeners safely
   const setText = useRef<any>(props.setText);
@@ -334,7 +336,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
       }
       setIsBold(selection.hasFormat("bold"));
       setIsItalic(selection.hasFormat("italic"));
-
+      setIsUnderline(selection.hasFormat("underline"));
       const node = getSelectedNode(selection);
       const parent = node.getParent();
       if ($isLinkNode(parent) || $isLinkNode(node)) {
@@ -461,93 +463,98 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
 
   return (
     <div className="toolbar flex" ref={toolbarRef}>
-      <>
-        {!props.excludedToolbarItems?.includes("blockType") && supportedBlockTypes.has(blockType) && (
-          <>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-subtle">
-                <>
-                  <span className={"icon" + blockType} />
-                  <span className="text text-default hidden sm:flex">
-                    {blockTypeToBlockName[blockType as keyof BlockType]}
-                  </span>
-                  <ChevronDownIcon className="text-default ml-2 h-4 w-4" />
-                </>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {Object.keys(blockTypeToBlockName).map((key) => {
-                  return (
-                    <DropdownMenuItem key={key}>
-                      <Button
-                        type="button"
-                        onClick={() => format(key)}
-                        className={cn(
-                          "w-full rounded-none focus:ring-0",
-                          blockType === key ? "bg-subtle w-full" : ""
-                        )}>
-                        <>
-                          <span className={"icon block-type " + key} />
-                          <span>{blockTypeToBlockName[key]}</span>
-                        </>
-                      </Button>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
-
-        <>
-          {!props.excludedToolbarItems?.includes("bold") && (
-            <Button
-              variant="ghost"
-              type="button"
-              onClick={() => {
-                editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-              }}
-              className={isBold ? "bg-subtle active-button" : "inactive-button"}>
-              <Bold />
-            </Button>
-          )}
-          {!props.excludedToolbarItems?.includes("italic") && (
-            <Button
-              variant="ghost"
-              type="button"
-              onClick={() => {
-                editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-              }}
-              className={isItalic ? "bg-subtle active-button" : "inactive-button"}>
-              <Italic />
-            </Button>
-          )}
-          {!props.excludedToolbarItems?.includes("link") && (
+      {!props.excludedToolbarItems?.includes("blockType") && supportedBlockTypes.has(blockType) && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className="text-subtle">
             <>
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={insertLink}
-                className={isLink ? "bg-subtle active-button" : "inactive-button"}>
-                <Link />
-              </Button>
-              {isLink ? (
-                createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)
-              ) : (
-                <></>
-              )}
+              <span className={"icon" + blockType} />
+              <span className="text text-default hidden sm:flex">
+                {blockTypeToBlockName[blockType as keyof BlockType]}
+              </span>
+              <ChevronDownIcon className="text-default ml-2 h-4 w-4" />
             </>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {Object.keys(blockTypeToBlockName).map((key) => {
+              return (
+                <DropdownMenuItem key={key}>
+                  <Button
+                    type="button"
+                    onClick={() => format(key)}
+                    className={cn(
+                      "w-full rounded-none focus:ring-0",
+                      blockType === key ? "bg-subtle w-full" : ""
+                    )}>
+                    <>
+                      <span className={"icon block-type " + key} />
+                      <span>{blockTypeToBlockName[key]}</span>
+                    </>
+                  </Button>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {!props.excludedToolbarItems?.includes("bold") && (
+        <Button
+          variant="ghost"
+          type="button"
+          onClick={() => {
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+          }}
+          className={isBold ? "bg-subtle active-button" : "inactive-button"}>
+          <Bold />
+        </Button>
+      )}
+      {!props.excludedToolbarItems?.includes("italic") && (
+        <Button
+          variant="ghost"
+          type="button"
+          onClick={() => {
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+          }}
+          className={isItalic ? "bg-subtle active-button" : "inactive-button"}>
+          <Italic />
+        </Button>
+      )}
+      {!props.excludedToolbarItems?.includes("link") && (
+        <>
+          <Button
+            variant="ghost"
+            type="button"
+            onClick={insertLink}
+            className={isLink ? "bg-subtle active-button" : "inactive-button"}>
+            <Link />
+          </Button>
+          {isLink ? (
+            createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)
+          ) : (
+            <></>
           )}
         </>
-        {props.variables && (
-          <div className="ml-auto">
-            <AddVariablesDropdown
-              addVariable={addVariable}
-              isTextEditor={true}
-              variables={props.variables || []}
-            />
-          </div>
-        )}
-      </>
+      )}
+      {!props.excludedToolbarItems?.includes("underline") && (
+        <Button
+          variant="ghost"
+          type="button"
+          onClick={() => {
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+          }}
+          className={isUnderline ? "bg-subtle active-button" : "inactive-button"}>
+          <Underline />
+        </Button>
+      )}
+      {props.variables && (
+        <div className="ml-auto">
+          <AddVariablesDropdown
+            addVariable={addVariable}
+            isTextEditor={true}
+            variables={props.variables || []}
+          />
+        </div>
+      )}
     </div>
   );
 };
