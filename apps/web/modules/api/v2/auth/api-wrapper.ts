@@ -112,7 +112,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     if (!rateLimitResult.ok) {
       logger.error("V2 API rate limit check failed", { error: rateLimitResult.error });
     } else if (!rateLimitResult.data.allowed) {
-      return responses.tooManyRequestsResponse();
+      return handleApiError(request, { type: "too_many_requests" });
     }
   }
 
