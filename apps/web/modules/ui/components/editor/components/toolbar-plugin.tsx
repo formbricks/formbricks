@@ -467,7 +467,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         <DropdownMenu>
           <DropdownMenuTrigger className="text-subtle">
             <>
-              <span className={"icon" + blockType} />
+              <span className={cn("icon", blockType)} />
               <span className="text text-default hidden sm:flex">
                 {blockTypeToBlockName[blockType as keyof BlockType]}
               </span>
@@ -486,7 +486,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
                       blockType === key ? "bg-subtle w-full" : ""
                     )}>
                     <>
-                      <span className={"icon block-type " + key} />
+                      <span className={cn("icon block-type", key)} />
                       <span>{blockTypeToBlockName[key]}</span>
                     </>
                   </Button>
