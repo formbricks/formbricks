@@ -83,36 +83,35 @@ export const GET = async (
 
       // Generate survey links for each contact
       const contactLinks = await Promise.all(
-        contacts
-          .map(async (contact) => {
-            const { contactId, attributes } = contact;
+        contacts.map(async (contact) => {
+          const { contactId, attributes } = contact;
 
-            const surveyUrlResult = await getContactSurveyLink(
-              contactId,
-              params.surveyId,
-              query?.expirationDays || undefined
+          const surveyUrlResult = await getContactSurveyLink(
+            contactId,
+            params.surveyId,
+            query?.expirationDays || undefined
+          );
+
+          if (!surveyUrlResult.ok) {
+            logger.error(
+              { error: surveyUrlResult.error, contactId: contactId, surveyId: params.surveyId },
+              "Failed to generate survey URL for contact"
             );
+            return null;
+          }
 
-            if (!surveyUrlResult.ok) {
-              logger.error(
-                { error: surveyUrlResult.error, contactId: contactId, surveyId: params.surveyId },
-                "Failed to generate survey URL for contact"
-              );
-              return null;
-            }
-
-            return {
-              contactId,
-              attributes,
-              surveyUrl: surveyUrlResult.data,
-              expiresAt,
-            };
-          })
-          .filter(Boolean)
+          return {
+            contactId,
+            attributes,
+            surveyUrl: surveyUrlResult.data,
+            expiresAt,
+          };
+        })
       );
 
+      const filteredContactLinks = contactLinks.filter(Boolean);
       return responses.successResponse({
-        data: contactLinks,
+        data: filteredContactLinks,
         meta,
       });
     },
