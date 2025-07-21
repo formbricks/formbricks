@@ -9,9 +9,10 @@ import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { useTranslate } from "@tolgee/react";
-import { BellRing, Eye, SquarePenIcon } from "lucide-react";
+import { BellRing, Eye, ListRestart, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -19,6 +20,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
+import { resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
   survey: TSurvey;
@@ -27,6 +29,7 @@ interface SurveyAnalysisCTAProps {
   user: TUser;
   publicDomain: string;
   responseCount: number;
+  displayCount: number;
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
@@ -44,6 +47,7 @@ export const SurveyAnalysisCTA = ({
   user,
   publicDomain,
   responseCount,
+  displayCount,
   segments,
   isContactsEnabled,
   isFormbricksCloud,
@@ -57,6 +61,8 @@ export const SurveyAnalysisCTA = ({
     start: searchParams.get("share") === "true",
     share: false,
   });
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const { refreshSingleUseId } = useSingleUseId(survey);
 
@@ -118,6 +124,25 @@ export const SurveyAnalysisCTA = ({
 
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
+  const handleResetSurvey = async () => {
+    setIsResetting(true);
+    const result = await resetSurveyAction({ surveyId: survey.id });
+    if (result?.data) {
+      toast.success(
+        t("environments.surveys.summary.survey_reset_successfully", {
+          responseCount: result.data.deletedResponsesCount,
+          displayCount: result.data.deletedDisplaysCount,
+        })
+      );
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage);
+    }
+    setIsResetting(false);
+    setIsResetModalOpen(false);
+  };
+
   const iconActions = [
     {
       icon: BellRing,
@@ -133,6 +158,12 @@ export const SurveyAnalysisCTA = ({
         window.open(previewUrl, "_blank");
       },
       isVisible: survey.type === "link",
+    },
+    {
+      icon: ListRestart,
+      tooltip: t("environments.surveys.summary.reset_survey"),
+      onClick: () => setIsResetModalOpen(true),
+      isVisible: !isReadOnly && (responseCount > 0 || displayCount > 0),
     },
     {
       icon: SquarePenIcon,
@@ -202,6 +233,17 @@ export const SurveyAnalysisCTA = ({
           secondaryButtonText={t("common.edit")}
         />
       )}
+
+      <ConfirmationModal
+        open={isResetModalOpen}
+        setOpen={setIsResetModalOpen}
+        title={t("environments.surveys.summary.delete_all_existing_responses_and_displays")}
+        text={t("environments.surveys.summary.reset_survey_warning")}
+        buttonText={t("environments.surveys.summary.reset_survey")}
+        onConfirm={handleResetSurvey}
+        buttonVariant="destructive"
+        buttonLoading={isResetting}
+      />
     </div>
   );
 };
