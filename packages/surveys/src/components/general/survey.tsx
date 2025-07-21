@@ -133,7 +133,12 @@ export function Survey({
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
   // state to keep track of the original required states of the questions
-  const originalQuestionRequiredStates = useRef<Record<string, boolean>>({});
+  const originalQuestionRequiredStates = useRef<Record<string, boolean>>(
+    survey.questions.reduce<Record<string, boolean>>((acc, question) => {
+      acc[question.id] = question.required;
+      return acc;
+    }, {})
+  );
 
   // state to keep track of the questions that were made required by each specific question's logic
   const questionRequiredByMap = useRef<Record<string, string[]>>({});
@@ -141,14 +146,6 @@ export function Survey({
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {
     setlocalSurvey(survey);
-    // Update original required states when survey changes
-    originalQuestionRequiredStates.current = survey.questions.reduce<Record<string, boolean>>(
-      (acc, question) => {
-        acc[question.id] = question.required;
-        return acc;
-      },
-      {}
-    );
   }, [survey]);
 
   useEffect(() => {
