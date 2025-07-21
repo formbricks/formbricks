@@ -72,7 +72,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all action configurations", () => {
       const actionConfigs = Object.keys(rateLimitConfigs.actions);
-      expect(actionConfigs).toEqual(["profileUpdate", "surveyFollowUp"]);
+      expect(actionConfigs).toEqual(["emailUpdate", "surveyFollowUp"]);
     });
 
     test("should have all share configurations", () => {
