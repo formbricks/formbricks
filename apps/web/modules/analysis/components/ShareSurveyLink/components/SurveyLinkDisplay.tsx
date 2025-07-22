@@ -13,6 +13,7 @@ export const SurveyLinkDisplay = ({ surveyUrl }: SurveyLinkDisplayProps) => {
           className="h-9 w-full min-w-96 text-ellipsis rounded-lg border bg-white px-3 py-1 text-slate-800 caret-transparent"
           value={surveyUrl}
           readOnly
+          aria-label="Survey URL"
         />
       ) : (
         //loading state
