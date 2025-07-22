@@ -1035,7 +1035,7 @@ export const ZSurvey = z
         }
 
         if (question.buttonExternal) {
-          const parsedButtonUrl = z.string().url().safeParse(question.buttonUrl);
+          const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
           if (!parsedButtonUrl.success) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
