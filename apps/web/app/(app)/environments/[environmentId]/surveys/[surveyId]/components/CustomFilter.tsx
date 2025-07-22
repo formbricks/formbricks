@@ -281,7 +281,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
                         dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
                       }`
-                    : t(filterRange)}
+                    : filterRange}
                 </span>
                 {isFilterDropDownOpen ? (
                   <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
@@ -296,28 +296,28 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setFilterRange(getFilterDropDownLabels(t).ALL_TIME);
                   setDateRange({ from: undefined, to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).ALL_TIME)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).ALL_TIME}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).LAST_7_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_7_DAYS)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_7_DAYS}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).LAST_30_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_30_DAYS)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_30_DAYS}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).THIS_MONTH);
                   setDateRange({ from: startOfMonth(new Date()), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).THIS_MONTH)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_MONTH}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -327,14 +327,14 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     to: endOfMonth(subMonths(getTodayDate(), 1)),
                   });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_MONTH)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_MONTH}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).THIS_QUARTER);
                   setDateRange({ from: startOfQuarter(new Date()), to: endOfQuarter(getTodayDate()) });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).THIS_QUARTER)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_QUARTER}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -344,7 +344,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     to: endOfQuarter(subQuarters(getTodayDate(), 1)),
                   });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_QUARTER)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_QUARTER}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -354,14 +354,14 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     to: endOfMonth(getTodayDate()),
                   });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_6_MONTHS)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_6_MONTHS}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).THIS_YEAR);
                   setDateRange({ from: startOfYear(new Date()), to: endOfYear(getTodayDate()) });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).THIS_YEAR)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_YEAR}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -371,7 +371,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     to: endOfYear(subYears(getTodayDate(), 1)),
                   });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_YEAR)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_YEAR}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -380,7 +380,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setSelectingDate(DateSelected.FROM);
                 }}>
                 <p className="text-sm text-slate-700 hover:ring-0">
-                  {t(getFilterDropDownLabels(t).CUSTOM_RANGE)}
+                  {getFilterDropDownLabels(t).CUSTOM_RANGE}
                 </p>
               </DropdownMenuItem>
             </DropdownMenuContent>

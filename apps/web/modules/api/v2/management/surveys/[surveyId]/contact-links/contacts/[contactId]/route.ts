@@ -92,7 +92,7 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
         });
       }
 
-      const surveyUrlResult = getContactSurveyLink(params.contactId, params.surveyId, 7);
+      const surveyUrlResult = await getContactSurveyLink(params.contactId, params.surveyId, 7);
 
       if (!surveyUrlResult.ok) {
         return handleApiError(request, surveyUrlResult.error);
