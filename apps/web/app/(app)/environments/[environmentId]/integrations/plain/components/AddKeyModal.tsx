@@ -3,6 +3,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { useTranslate } from "@tolgee/react";
 import { KeyIcon } from "lucide-react";
 import { useState } from "react";
@@ -44,7 +45,7 @@ export const AddKeyModal = ({
             </div>
           </DialogTitle>
         </DialogHeader>
-        <div className="p-6">
+        <div>
           <div className="mb-4">
             <label htmlFor="keyLabel" className="mb-2 block text-sm font-medium text-slate-700">
               {t("environments.integrations.plain.api_key_label")}
@@ -80,7 +81,7 @@ export const AddKeyModal = ({
                   setIsSubmitting(false);
                 }
               }}>
-              {t("common.connect")}
+              {isSubmitting ? <LoadingSpinner className="h-4 w-4" /> : t("common.connect")}
             </Button>
           </div>
         </div>

@@ -86,15 +86,13 @@ export function IntegrationListPanel<T>({
       ) : (
         <div className="mt-4 flex w-full flex-col items-center justify-center">
           <div className="mt-6 w-full rounded-lg border border-slate-200">
-            {/* Header */}
             <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-              {columns.map((col, idx) => (
-                <div key={`hdr-${idx}`} className="col-span-2 hidden text-center sm:block">
+              {columns.map((col) => (
+                <div key={`hdr-${String(col.header)}`} className="col-span-2 hidden text-center sm:block">
                   {col.header}
                 </div>
               ))}
             </div>
-            {/* Rows */}
             {items.map((item, index) => {
               const key = getRowKey ? getRowKey(item, index) : index;
               return (
@@ -102,8 +100,8 @@ export function IntegrationListPanel<T>({
                   key={key}
                   className="grid h-16 w-full cursor-pointer grid-cols-6 content-center rounded-lg p-2 hover:bg-slate-100"
                   onClick={() => onRowClick(index)}>
-                  {columns.map((col, idx) => (
-                    <div key={`cell-${idx}`} className="col-span-2 text-center">
+                  {columns.map((col) => (
+                    <div key={`cell-${String(col.header)}`} className="col-span-2 text-center">
                       {col.render(item)}
                     </div>
                   ))}

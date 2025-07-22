@@ -139,7 +139,14 @@ export const AddIntegrationModal = ({
           return survey.id === selectedIntegration.surveyId;
         })!
       );
-      setMapping(selectedIntegration.mapping);
+      // Ensure mandatory fields remain protected from deletion when editing
+      setMapping(
+        selectedIntegration.mapping.map((m) => ({
+          ...m,
+          // Re-apply mandatory flag based on field id
+          isMandatory: m.plainField.id === "threadTitle" || m.plainField.id === "componentText",
+        }))
+      );
 
       // Initialize labelIdValues from existing mapping
       const newLabelIdValues: Record<string, string> = {};
@@ -481,30 +488,84 @@ export const AddIntegrationModal = ({
                     {surveys.length === 0 && t("environments.integrations.create_survey_warning")}
                   </p>
 
-                  {/* Contact Info Warning */}
-                  {contactInfoValidation.hasContactInfo && contactInfoValidation.partialMatch && (
-                    <div className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-800">
-                      <p className="font-medium">
-                        {t("environments.integrations.plain.contact_info_warning")}
-                      </p>
-                      <p className="mt-1">
-                        {t("environments.integrations.plain.contact_info_missing_fields_description")}:
-                        {contactInfoValidation.missingFields
-                          .map((field) => {
-                            switch (field) {
-                              case "firstName":
-                                return t("common.first_name");
-                              case "lastName":
-                                return t("common.last_name");
-                              case "email":
-                                return t("common.email");
-                              default:
-                                return field;
-                            }
-                          })
-                          .join(", ")}
-                      </p>
-                    </div>
+                  {/* Contact Info Validation Alerts */}
+                  {selectedSurvey && (
+                    <>
+                      {/* Success – all required fields present */}
+                      {contactInfoValidation.hasContactInfo &&
+                        contactInfoValidation.missingFields.length === 0 && (
+                          <div className="my-4 rounded-md bg-green-50 p-3 text-sm text-green-800">
+                            <p className="font-medium">
+                              {t("environments.integrations.plain.contact_info_success_title", {
+                                defaultValue: "Contact-Info question found",
+                              })}
+                            </p>
+                            <p className="mt-1">
+                              {t("environments.integrations.plain.contact_info_all_present", {
+                                defaultValue:
+                                  "This survey contains a complete Contact-Info question (first name, last name & email).",
+                              })}
+                            </p>
+                          </div>
+                        )}
+
+                      {/* Error – no contact info question */}
+                      {!contactInfoValidation.hasContactInfo && (
+                        <div className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-800">
+                          <p className="font-medium">
+                            {t("environments.integrations.plain.contact_info_missing_title", {
+                              defaultValue: "No Contact-Info question",
+                            })}
+                          </p>
+                          <p className="mt-1">
+                            {t("environments.integrations.plain.no_contact_info_question", {
+                              defaultValue:
+                                "This survey does not include a Contact-Info question. Please add one with first name, last name and email enabled to use Plain.",
+                            })}
+                          </p>
+                          <a
+                            href="https://formbricks.com/docs/integrations/plain#contact-info"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-block text-xs font-medium underline">
+                            {t("common.learn_more", { defaultValue: "Learn more" })}
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Warning – partial match (retain existing implementation) */}
+                      {contactInfoValidation.hasContactInfo && contactInfoValidation.partialMatch && (
+                        <div className="mt-2 rounded-md bg-red-50 p-3 text-sm text-red-800">
+                          <p className="font-medium">
+                            {t("environments.integrations.plain.contact_info_warning")}
+                          </p>
+                          <p className="mt-1">
+                            {t("environments.integrations.plain.contact_info_missing_fields_description")}:{" "}
+                            {contactInfoValidation.missingFields
+                              .map((field) => {
+                                switch (field) {
+                                  case "firstName":
+                                    return t("common.first_name");
+                                  case "lastName":
+                                    return t("common.last_name");
+                                  case "email":
+                                    return t("common.email");
+                                  default:
+                                    return field;
+                                }
+                              })
+                              .join(", ")}
+                          </p>
+                          <a
+                            href="https://docs.formbricks.com/integrations/plain#contact-info"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-block text-xs font-medium underline">
+                            {t("common.learn_more", { defaultValue: "Learn more" })}
+                          </a>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -512,6 +573,12 @@ export const AddIntegrationModal = ({
                   <div className="space-y-4">
                     <div>
                       <Label>{t("environments.integrations.plain.map_formbricks_fields_to_plain")}</Label>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {t("environments.integrations.plain.mandatory_mapping_note", {
+                          defaultValue:
+                            "Thread Title and Component Text are mandatory mappings and cannot be removed.",
+                        })}
+                      </p>
                       <div className="mt-1 space-y-2 overflow-y-auto">
                         {mapping.map((_, idx) => (
                           <MappingRow idx={idx} key={idx} />
