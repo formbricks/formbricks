@@ -461,6 +461,33 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
 
   if (!props.editable) return <></>;
 
+  const items = [
+    {
+      key: "bold",
+      icon: Bold,
+      onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"),
+      active: isBold,
+    },
+    {
+      key: "italic",
+      icon: Italic,
+      onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"),
+      active: isItalic,
+    },
+    {
+      key: "underline",
+      icon: Underline,
+      onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
+      active: isUnderline,
+    },
+    {
+      key: "link",
+      icon: Link,
+      onClick: insertLink,
+      active: isLink,
+    },
+  ];
+
   return (
     <div className="toolbar flex" ref={toolbarRef}>
       {!props.excludedToolbarItems?.includes("blockType") && supportedBlockTypes.has(blockType) && (
@@ -497,55 +524,22 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         </DropdownMenu>
       )}
 
-      {!props.excludedToolbarItems?.includes("bold") && (
-        <Button
-          variant="ghost"
-          type="button"
-          onClick={() => {
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-          }}
-          className={isBold ? "bg-subtle active-button" : "inactive-button"}>
-          <Bold />
-        </Button>
-      )}
-      {!props.excludedToolbarItems?.includes("italic") && (
-        <Button
-          variant="ghost"
-          type="button"
-          onClick={() => {
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-          }}
-          className={isItalic ? "bg-subtle active-button" : "inactive-button"}>
-          <Italic />
-        </Button>
-      )}
-      {!props.excludedToolbarItems?.includes("link") && (
-        <>
+      {items.map(({ key, icon: Icon, onClick, active }) =>
+        !props.excludedToolbarItems?.includes(key) ? (
           <Button
+            key={key}
             variant="ghost"
             type="button"
-            onClick={insertLink}
-            className={isLink ? "bg-subtle active-button" : "inactive-button"}>
-            <Link />
+            onClick={onClick}
+            className={active ? "bg-subtle active-button" : "inactive-button"}>
+            <Icon />
           </Button>
-          {isLink ? (
-            createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)
-          ) : (
-            <></>
-          )}
-        </>
+        ) : null
       )}
-      {!props.excludedToolbarItems?.includes("underline") && (
-        <Button
-          variant="ghost"
-          type="button"
-          onClick={() => {
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
-          }}
-          className={isUnderline ? "bg-subtle active-button" : "inactive-button"}>
-          <Underline />
-        </Button>
-      )}
+      {isLink &&
+        !props.excludedToolbarItems?.includes("link") &&
+        createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)}
+
       {props.variables && (
         <div className="ml-auto">
           <AddVariablesDropdown
