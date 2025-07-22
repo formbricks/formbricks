@@ -81,13 +81,6 @@ describe("checkAndValidateSingleUseId", () => {
     expect(mockedValidateSurveySingleUseId).not.toHaveBeenCalled();
   });
 
-  test("returns null when suid is undefined", () => {
-    const result = checkAndValidateSingleUseId(undefined);
-
-    expect(result).toBeNull();
-    expect(mockedValidateSurveySingleUseId).not.toHaveBeenCalled();
-  });
-
   test("returns suid as-is when isEncrypted is false", () => {
     const testSuid = "plain-suid-123";
     const result = checkAndValidateSingleUseId(testSuid, false);

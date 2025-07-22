@@ -28,7 +28,7 @@ export const getEmailVerificationDetails = async (
 };
 
 export const checkAndValidateSingleUseId = (suid?: string, isEncrypted = false): string | null => {
-  if (!suid) return null;
+  if (!suid?.trim()) return null;
 
   if (isEncrypted) {
     const validatedSingleUseId = validateSurveySingleUseId(suid);
