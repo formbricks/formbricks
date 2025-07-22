@@ -62,7 +62,7 @@ export const TemplateFilters = ({
                     : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
                   "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
                 )}>
-                {t(filter.label)}
+                {filter.label}
               </button>
             ))}
           </div>

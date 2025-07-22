@@ -4,11 +4,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TFilterOption } from "@formbricks/types/surveys/types";
 import { SurveyFilterDropdown } from "./survey-filter-dropdown";
 
-// Mock dependencies
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
-
 // Mock UI components
 vi.mock("@/modules/ui/components/checkbox", () => ({
   Checkbox: ({ checked, className }) => (

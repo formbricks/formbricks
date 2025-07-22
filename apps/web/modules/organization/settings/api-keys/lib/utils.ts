@@ -47,6 +47,6 @@ export const getOrganizationAccessKeyDisplayName = (key: string, t: TFnType) => 
     case "accessControl":
       return t("environments.project.api_keys.access_control");
     default:
-      return t(key);
+      return key;
   }
 };

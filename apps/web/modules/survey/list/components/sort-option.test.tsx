@@ -1,8 +1,7 @@
-import { DropdownMenuItem } from "@/modules/ui/components/dropdown-menu";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
+import { TSortOption } from "@formbricks/types/surveys/types";
 import { SortOption } from "./sort-option";
 
 // Mock dependencies
@@ -21,7 +20,7 @@ vi.mock("@tolgee/react", () => ({
 describe("SortOption", () => {
   const mockOption: TSortOption = {
     label: "test.sort.option",
-    value: "testValue",
+    value: "createdAt",
   };
 
   const mockHandleSortChange = vi.fn();
@@ -32,14 +31,14 @@ describe("SortOption", () => {
   });
 
   test("renders correctly with the option label", () => {
-    render(<SortOption option={mockOption} sortBy="otherValue" handleSortChange={mockHandleSortChange} />);
+    render(<SortOption option={mockOption} sortBy="createdAt" handleSortChange={mockHandleSortChange} />);
 
     expect(screen.getByText("test.sort.option")).toBeInTheDocument();
     expect(screen.getByTestId("dropdown-menu-item")).toBeInTheDocument();
   });
 
   test("applies correct styling when option is selected", () => {
-    render(<SortOption option={mockOption} sortBy="testValue" handleSortChange={mockHandleSortChange} />);
+    render(<SortOption option={mockOption} sortBy="createdAt" handleSortChange={mockHandleSortChange} />);
 
     const circleIndicator = screen.getByTestId("dropdown-menu-item").querySelector("span");
     expect(circleIndicator).toHaveClass("bg-brand-dark");
@@ -47,11 +46,10 @@ describe("SortOption", () => {
   });
 
   test("applies correct styling when option is not selected", () => {
-    render(
-      <SortOption option={mockOption} sortBy="differentValue" handleSortChange={mockHandleSortChange} />
-    );
+    render(<SortOption option={mockOption} sortBy="updatedAt" handleSortChange={mockHandleSortChange} />);
 
     const circleIndicator = screen.getByTestId("dropdown-menu-item").querySelector("span");
+    expect(circleIndicator).toHaveClass("border-white");
     expect(circleIndicator).not.toHaveClass("bg-brand-dark");
     expect(circleIndicator).not.toHaveClass("outline-brand-dark");
   });
@@ -59,7 +57,7 @@ describe("SortOption", () => {
   test("calls handleSortChange when clicked", async () => {
     const user = userEvent.setup();
 
-    render(<SortOption option={mockOption} sortBy="otherValue" handleSortChange={mockHandleSortChange} />);
+    render(<SortOption option={mockOption} sortBy="createdAt" handleSortChange={mockHandleSortChange} />);
 
     await user.click(screen.getByTestId("dropdown-menu-item"));
     expect(mockHandleSortChange).toHaveBeenCalledTimes(1);
@@ -67,7 +65,7 @@ describe("SortOption", () => {
   });
 
   test("translates the option label", () => {
-    render(<SortOption option={mockOption} sortBy="otherValue" handleSortChange={mockHandleSortChange} />);
+    render(<SortOption option={mockOption} sortBy="createdAt" handleSortChange={mockHandleSortChange} />);
 
     // The mock for useTranslate returns the key itself, so we're checking if translation was attempted
     expect(screen.getByText(mockOption.label)).toBeInTheDocument();
