@@ -46,10 +46,12 @@ describe("SortOption", () => {
   });
 
   test("applies correct styling when option is not selected", () => {
-    render(<SortOption option={mockOption} sortBy="createdAt" handleSortChange={mockHandleSortChange} />);
+    render(<SortOption option={mockOption} sortBy="updatedAt" handleSortChange={mockHandleSortChange} />);
 
     const circleIndicator = screen.getByTestId("dropdown-menu-item").querySelector("span");
-    expect(circleIndicator).not.toHaveClass("border-white");
+    expect(circleIndicator).toHaveClass("border-white");
+    expect(circleIndicator).not.toHaveClass("bg-brand-dark");
+    expect(circleIndicator).not.toHaveClass("outline-brand-dark");
   });
 
   test("calls handleSortChange when clicked", async () => {
