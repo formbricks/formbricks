@@ -130,7 +130,7 @@ export const mockUser: TUser = {
   objective: "improve_user_retention",
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
+
     unsubscribedOrganizationIds: [],
   },
   role: "other",

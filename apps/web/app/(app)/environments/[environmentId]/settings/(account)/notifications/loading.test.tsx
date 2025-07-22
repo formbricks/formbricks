@@ -34,17 +34,5 @@ describe("Loading Notifications Settings", () => {
       .getByText("environments.settings.notifications.email_alerts_surveys")
       .closest("div[class*='rounded-xl']"); // Find parent card
     expect(alertsCard).toBeInTheDocument();
-
-    // Check for Weekly Summary LoadingCard
-    expect(
-      screen.getByText("environments.settings.notifications.weekly_summary_projects")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday")
-    ).toBeInTheDocument();
-    const weeklySummaryCard = screen
-      .getByText("environments.settings.notifications.weekly_summary_projects")
-      .closest("div[class*='rounded-xl']"); // Find parent card
-    expect(weeklySummaryCard).toBeInTheDocument();
   });
 });
