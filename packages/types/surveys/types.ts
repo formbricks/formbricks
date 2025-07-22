@@ -1268,20 +1268,20 @@ export const ZSurvey = z
               message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
               path: ["endings", index, "buttonLabel"],
             });
+          } else {
+            const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
+              "endingCardButtonLabel",
+              ending.buttonLabel,
+              languages,
+              "end",
+              index
+            );
+            if (multiLangIssueInButtonLabel) {
+              ctx.addIssue(multiLangIssueInButtonLabel);
+            }
           }
 
-          const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
-            "endingCardButtonLabel",
-            ending.buttonLabel ?? {},
-            languages,
-            "end",
-            index
-          );
-          if (multiLangIssueInButtonLabel) {
-            ctx.addIssue(multiLangIssueInButtonLabel);
-          }
-
-          if (ending.buttonLink?.trim() === "") {
+          if (!ending.buttonLink || ending.buttonLink.trim() === "") {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: `Ending card ${String(index + 1)}: Button link cannot be empty`,
