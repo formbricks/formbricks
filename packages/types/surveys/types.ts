@@ -1,4 +1,3 @@
-/* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
@@ -1261,7 +1260,7 @@ export const ZSurvey = z
           }
         }
 
-        if (ending.buttonLabel || ending.buttonLink) {
+        if (ending.buttonLabel !== undefined || ending.buttonLink !== undefined) {
           if (!ending.buttonLabel) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
@@ -2421,7 +2420,11 @@ export const ZSurveyUpdateInput = ZSurvey.innerType()
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => undefined);
 
 // Helper function to make all properties of a Zod object schema optional
-const makeSchemaOptional = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
+const makeSchemaOptional = <T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>
+): z.ZodObject<{
+  [K in keyof T]: z.ZodOptional<T[K]>;
+}> => {
   return schema.extend(
     Object.fromEntries(Object.entries(schema.shape).map(([key, value]) => [key, value.optional()])) as {
       [K in keyof T]: z.ZodOptional<T[K]>;
