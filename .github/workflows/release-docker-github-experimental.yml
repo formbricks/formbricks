@@ -76,12 +76,9 @@ jobs:
           echo "Generated SemVer version: $VERSION"
 
       - name: Update package.json version
-        env:
-          VERSION: ${{ env.VERSION }}
         run: |
-          cd ./apps/web
-          npm version $VERSION --no-git-tag-version
-          echo "Updated version to: $(npm pkg get version)"
+          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.VERSION }}\"/" ./apps/web/package.json
+          cat ./apps/web/package.json | grep version
 
       - name: Set Sentry environment in .env
         run: |
