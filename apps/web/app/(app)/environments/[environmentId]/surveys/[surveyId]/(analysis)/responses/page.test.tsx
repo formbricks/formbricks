@@ -3,6 +3,7 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import Page from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/page";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
+import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -71,6 +72,10 @@ vi.mock("@/lib/getPublicUrl", () => ({
 
 vi.mock("@/lib/response/service", () => ({
   getResponseCountBySurveyId: vi.fn(),
+}));
+
+vi.mock("@/lib/display/service", () => ({
+  getDisplayCountBySurveyId: vi.fn(),
 }));
 
 vi.mock("@/lib/survey/service", () => ({
@@ -178,6 +183,7 @@ describe("ResponsesPage", () => {
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getTagsByEnvironmentId).mockResolvedValue(mockTags);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);
+    vi.mocked(getDisplayCountBySurveyId).mockResolvedValue(5);
     vi.mocked(findMatchingLocale).mockResolvedValue(mockLocale);
     vi.mocked(getPublicDomain).mockReturnValue(mockPublicDomain);
   });
@@ -206,6 +212,8 @@ describe("ResponsesPage", () => {
         isReadOnly: false,
         user: mockUser,
         publicDomain: mockPublicDomain,
+        responseCount: 10,
+        displayCount: 5,
       }),
       undefined
     );

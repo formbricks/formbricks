@@ -18,6 +18,7 @@ import { customAlphabet } from "nanoid";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
+import { deleteResponsesAndDisplaysForSurvey } from "./lib/survey";
 
 const ZSendEmbedSurveyPreviewEmailAction = z.object({
   surveyId: ZId,
@@ -201,6 +202,61 @@ export const deleteResultShareUrlAction = authenticatedActionClient
       }
     )
   );
+
+const ZResetSurveyAction = z.object({
+  surveyId: ZId,
+  organizationId: ZId,
+  projectId: ZId,
+});
+
+export const resetSurveyAction = authenticatedActionClient.schema(ZResetSurveyAction).action(
+  withAuditLogging(
+    "updated",
+    "survey",
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZResetSurveyAction>;
+    }) => {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            minPermission: "readWrite",
+            projectId: parsedInput.projectId,
+          },
+        ],
+      });
+
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+      ctx.auditLoggingCtx.oldObject = null;
+
+      const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
+        parsedInput.surveyId
+      );
+
+      ctx.auditLoggingCtx.newObject = {
+        deletedResponsesCount: deletedResponsesCount,
+        deletedDisplaysCount: deletedDisplaysCount,
+      };
+
+      return {
+        success: true,
+        deletedResponsesCount: deletedResponsesCount,
+        deletedDisplaysCount: deletedDisplaysCount,
+      };
+    }
+  )
+);
 
 const ZGetEmailHtmlAction = z.object({
   surveyId: ZId,
