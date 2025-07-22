@@ -116,7 +116,7 @@ export const env = createEnv({
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
-    UNKEY_ROOT_KEY: z.string().optional(),
+
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
@@ -218,7 +218,6 @@ export const env = createEnv({
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
-    UNKEY_ROOT_KEY: process.env.UNKEY_ROOT_KEY,
     NODE_ENV: process.env.NODE_ENV,
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
