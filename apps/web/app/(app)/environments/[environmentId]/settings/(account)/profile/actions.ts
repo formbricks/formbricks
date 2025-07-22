@@ -17,12 +17,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendForgotPasswordEmail, sendVerificationNewEmail } from "@/modules/email";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import {
-  AuthenticationError,
-  AuthorizationError,
-  OperationNotAllowedError,
-  TooManyRequestsError,
-} from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import {
   TUserPersonalInfoUpdateInput,
   TUserUpdateInput,
@@ -48,11 +43,8 @@ async function handleEmailUpdate({
   const inputEmail = parsedInput.email?.trim().toLowerCase();
   if (!inputEmail || ctx.user.email === inputEmail) return payload;
 
-  try {
-    await applyRateLimit(rateLimitConfigs.actions.emailUpdate, ctx.user.id);
-  } catch {
-    throw new TooManyRequestsError("Too many requests");
-  }
+  await applyRateLimit(rateLimitConfigs.actions.emailUpdate, ctx.user.id);
+
   if (ctx.user.identityProvider !== "email") {
     throw new OperationNotAllowedError("Email update is not allowed for non-credential users.");
   }
