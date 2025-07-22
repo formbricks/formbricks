@@ -304,9 +304,10 @@ describe("ToolbarPlugin", () => {
         />
       );
 
-      const boldButton = screen.getByTestId("bold-icon").parentElement;
+      const boldIcon = screen.getByTestId("bold-icon");
+      const boldButton = boldIcon.parentElement;
       expect(boldButton).toBeInTheDocument();
-
+      expect(boldButton).not.toBeNull();
       await userEvent.click(boldButton!);
 
       expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("formatText", "bold");
@@ -322,9 +323,10 @@ describe("ToolbarPlugin", () => {
         />
       );
 
-      const italicButton = screen.getByTestId("italic-icon").parentElement;
+      const italicIcon = screen.getByTestId("italic-icon");
+      const italicButton = italicIcon.parentElement;
       expect(italicButton).toBeInTheDocument();
-
+      expect(italicButton).not.toBeNull();
       await userEvent.click(italicButton!);
 
       expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("formatText", "italic");
@@ -340,9 +342,10 @@ describe("ToolbarPlugin", () => {
         />
       );
 
-      const underlineButton = screen.getByTestId("underline-icon").parentElement;
+      const underlineIcon = screen.getByTestId("underline-icon");
+      const underlineButton = underlineIcon.parentElement;
       expect(underlineButton).toBeInTheDocument();
-
+      expect(underlineButton).not.toBeNull();
       await userEvent.click(underlineButton!);
 
       expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("formatText", "underline");
@@ -358,9 +361,10 @@ describe("ToolbarPlugin", () => {
         />
       );
 
-      const linkButton = screen.getByTestId("link-icon").parentElement;
+      const linkIcon = screen.getByTestId("link-icon");
+      const linkButton = linkIcon.parentElement;
       expect(linkButton).toBeInTheDocument();
-
+      expect(linkButton).not.toBeNull();
       await userEvent.click(linkButton!);
 
       expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("toggleLink", {
