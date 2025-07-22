@@ -15,11 +15,13 @@ import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import {
   AirplayIcon,
+  ArrowUpFromDotIcon,
   CheckIcon,
   ChevronDown,
   ChevronUp,
   ContactIcon,
   EyeOff,
+  FlagIcon,
   GlobeIcon,
   GridIcon,
   HashIcon,
@@ -89,8 +91,9 @@ const questionIcons = {
   device: SmartphoneIcon,
   os: AirplayIcon,
   browser: GlobeIcon,
-  source: GlobeIcon,
+  source: ArrowUpFromDotIcon,
   action: MousePointerClickIcon,
+  country: FlagIcon,
 
   // others
   Language: LanguagesIcon,
@@ -132,10 +135,16 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
       return "bg-amber-500";
     }
   };
+
+  const getLabelStyle = (): string | undefined => {
+    if (type !== OptionsType.META) return undefined;
+    return label === "os" ? "uppercase" : "capitalize";
+  };
+
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className="ml-3 truncate text-sm text-slate-600">
+      <p className={clsx("ml-3 truncate text-sm text-slate-600", getLabelStyle())}>
         {typeof label === "string" ? label : getLocalizedValue(label, "default")}
       </p>
     </div>
