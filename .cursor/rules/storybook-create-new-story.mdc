@@ -1,0 +1,177 @@
+---
+description: Create a story in Storybook for a given component
+globs:
+alwaysApply: false
+---
+
+# Formbricks Storybook Stories
+
+## When generating Storybook stories for Formbricks components:
+
+### 1. **File Structure**
+- Create `stories.tsx` (not `.stories.tsx`) in component directory
+- Use exact import: `import { Meta, StoryObj } from "@storybook/react-vite";`
+- Import component from `"./index"`
+
+### 2. **Story Structure Template**
+```tsx
+import { Meta, StoryObj } from "@storybook/react-vite";
+import { ComponentName } from "./index";
+
+// For complex components with configurable options
+// consider this as an example the options need to reflect the props types
+interface StoryOptions {
+  showIcon: boolean;
+  numberOfElements: number;
+  customLabels: string[];
+}
+
+type StoryProps = React.ComponentProps<typeof ComponentName> & StoryOptions;
+
+const meta: Meta<StoryProps> = {
+  title: "UI/ComponentName",
+  component: ComponentName,
+  tags: ["autodocs"],
+  parameters: {
+    layout: "centered",
+    controls: { sort: "alpha", exclude: [] },
+    docs: {
+      description: {
+        component: "The **ComponentName** component provides [description].",
+      },
+    },
+  },
+  argTypes: {
+    // Organize in exactly these categories: Behavior, Appearance, Content
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof ComponentName> & { args: StoryOptions };
+```
+
+### 3. **ArgTypes Organization**
+Organize ALL argTypes into exactly three categories:
+- **Behavior**: disabled, variant, onChange, etc.
+- **Appearance**: size, color, layout, styling, etc.  
+- **Content**: text, icons, numberOfElements, etc.
+
+Format:
+```tsx
+argTypes: {
+  propName: {
+    control: "select" | "boolean" | "text" | "number",
+    options: ["option1", "option2"], // for select
+    description: "Clear description",
+    table: {
+      category: "Behavior" | "Appearance" | "Content",
+      type: { summary: "string" },
+      defaultValue: { summary: "default" },
+    },
+    order: 1,
+  },
+}
+```
+
+### 4. **Required Stories**
+Every component must include:
+- `Default`: Most common use case
+- `Disabled`: If component supports disabled state
+- `WithIcon`: If component supports icons
+- Variant stories for each variant (Primary, Secondary, Error, etc.)
+- Edge case stories (ManyElements, LongText, CustomStyling)
+
+### 5. **Story Format**
+```tsx
+export const Default: Story = {
+  args: {
+    // Props with realistic values
+  },
+};
+
+export const EdgeCase: Story = {
+  args: { /* ... */ },
+  parameters: {
+    docs: {
+      description: {
+        story: "Use this when [specific scenario].",
+      },
+    },
+  },
+};
+```
+
+### 6. **Dynamic Content Pattern**
+For components with dynamic content, create render function:
+```tsx
+const renderComponent = (args: StoryProps) => {
+  const { numberOfElements, showIcon, customLabels } = args;
+  
+  // Generate dynamic content
+  const elements = Array.from({ length: numberOfElements }, (_, i) => ({
+    id: `element-${i}`,
+    label: customLabels[i] || `Element ${i + 1}`,
+    icon: showIcon ? <IconComponent /> : undefined,
+  }));
+  
+  return <ComponentName {...args} elements={elements} />;
+};
+
+export const Dynamic: Story = {
+  render: renderComponent,
+  args: {
+    numberOfElements: 3,
+    showIcon: true,
+    customLabels: ["First", "Second", "Third"],
+  },
+};
+```
+
+### 7. **State Management**
+For interactive components:
+```tsx
+import { useState } from "react";
+
+const ComponentWithState = (args: any) => {
+  const [value, setValue] = useState(args.defaultValue);
+  
+  return (
+    <ComponentName
+      {...args}
+      value={value}
+      onChange={(newValue) => {
+        setValue(newValue);
+        args.onChange?.(newValue);
+      }}
+    />
+  );
+};
+
+export const Interactive: Story = {
+  render: ComponentWithState,
+  args: { defaultValue: "initial" },
+};
+```
+
+### 8. **Quality Requirements**
+- Include component description in parameters.docs
+- Add story documentation for non-obvious use cases
+- Test edge cases (overflow, empty states, many elements)
+- Ensure no TypeScript errors
+- Use realistic prop values
+- Include at least 3-5 story variants
+- Example values need to be in the context of survey application
+
+### 9. **Naming Conventions**
+- **Story titles**: "UI/ComponentName"
+- **Story exports**: PascalCase (Default, WithIcon, ManyElements)
+- **Categories**: "Behavior", "Appearance", "Content" (exact spelling)
+- **Props**: camelCase matching component props
+
+### 10. **Special Cases**
+- **Generic components**: Remove `component` from meta if type conflicts
+- **Form components**: Include Invalid, WithValue stories
+- **Navigation**: Include ManyItems stories
+- **Modals, Dropdowns and Popups **: Include trigger and content structure
+
+## Generate stories that are comprehensive, well-documented, and reflect all component states and edge cases. 

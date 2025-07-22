@@ -1,5 +1,5 @@
 ---
-description: 
+description: Migrate deprecated UI components to a unified component
 globs: 
 alwaysApply: false
 ---
