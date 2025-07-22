@@ -31,7 +31,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: getZSafeUrl.optional(),
+  buttonLink: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -40,7 +40,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: getZSafeUrl.optional(),
+  url: z.string().optional(),
   label: z.string().optional(),
 });
 
@@ -1035,14 +1035,22 @@ export const ZSurvey = z
         }
 
         if (question.buttonExternal) {
-          const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
-          if (!parsedButtonUrl.success) {
-            const errorMessage = parsedButtonUrl.error.issues[0].message;
+          if (!question.buttonUrl || question.buttonUrl.trim() === "") {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `Question ${String(questionIndex + 1)}: ${errorMessage}`,
+              message: `Question ${String(questionIndex + 1)}: Button URL is required when external button is enabled`,
               path: ["questions", questionIndex, "buttonUrl"],
             });
+          } else {
+            const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
+            if (!parsedButtonUrl.success) {
+              const errorMessage = parsedButtonUrl.error.issues[0].message;
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Question ${String(questionIndex + 1)}: ${errorMessage}`,
+                path: ["questions", questionIndex, "buttonUrl"],
+              });
+            }
           }
         }
       }
@@ -1253,16 +1261,42 @@ export const ZSurvey = z
           }
         }
 
-        if (ending.buttonLabel) {
+        if (ending.buttonLabel || ending.buttonLink) {
+          if (!ending.buttonLabel) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
+              path: ["endings", index, "buttonLabel"],
+            });
+          }
+
           const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
             "endingCardButtonLabel",
-            ending.buttonLabel,
+            ending.buttonLabel ?? {},
             languages,
             "end",
             index
           );
           if (multiLangIssueInButtonLabel) {
             ctx.addIssue(multiLangIssueInButtonLabel);
+          }
+
+          if (ending.buttonLink?.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: Button link cannot be empty`,
+              path: ["endings", index, "buttonLink"],
+            });
+          } else {
+            const parsedButtonLink = getZSafeUrl.safeParse(ending.buttonLink);
+            if (!parsedButtonLink.success) {
+              const errorMessage = parsedButtonLink.error.issues[0].message;
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+                path: ["endings", index, "buttonLink"],
+              });
+            }
           }
         }
       }
@@ -1273,6 +1307,25 @@ export const ZSurvey = z
             message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
             path: ["endings", index, "label"],
           });
+        }
+
+        // Validate redirect URL
+        if (!ending.url || ending.url.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Ending card ${String(index + 1)}: Redirect URL cannot be empty`,
+            path: ["endings", index, "url"],
+          });
+        } else {
+          const parsedUrl = getZSafeUrl.safeParse(ending.url);
+          if (!parsedUrl.success) {
+            const errorMessage = parsedUrl.error.issues[0].message;
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+              path: ["endings", index, "url"],
+            });
+          }
         }
       }
     });
