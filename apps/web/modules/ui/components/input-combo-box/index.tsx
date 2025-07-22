@@ -89,6 +89,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   emptyDropdownText,
 }) => {
   const { t } = useTranslate();
+  const [isClearing, setIsClearing] = useState(false);
   const [open, setOpen] = useState(false);
   const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
   const [localValue, setLocalValue] = useState<string | number | string[] | null>(null);
@@ -187,8 +188,9 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
 
   const handleClear = () => {
     setInputType(null);
-    setLocalValue(null);
     onChangeValue("");
+    setLocalValue(null);
+    setIsClearing(false);
   };
 
   const isSelected = (option: TComboboxOption) =>
@@ -211,7 +213,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
       )}
 
       <DropdownMenu open={open} onOpenChange={setOpen}>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild className="z-10">
           <div
             id={id}
             role="combobox"
@@ -219,12 +221,23 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             aria-expanded={open}
             className={cn("flex h-10 w-full cursor-pointer items-center justify-end bg-white pr-2", {
               "w-10 justify-center pr-0": withInput && inputType !== "dropdown",
+              "pointer-events-none": isClearing,
             })}>
             {inputType === "dropdown" && (
               <div className="ellipsis flex w-full gap-2 truncate px-2">{getDisplayValue}</div>
             )}
             {clearable && inputType === "dropdown" ? (
-              <XIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" onClick={handleClear} />
+              <XIcon
+                className={cn("h-5 w-5 text-slate-300 hover:text-slate-400", {
+                  "pointer-events-auto": isClearing,
+                })}
+                onMouseEnter={() => setIsClearing(true)}
+                onMouseLeave={() => setIsClearing(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClear();
+                }}
+              />
             ) : (
               <ChevronDownIcon className="h-5 w-5 text-slate-300 group-hover/icon:text-slate-400" />
             )}
@@ -270,9 +283,9 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
 
               {groupedOptions?.map((group, gi) => (
                 <Fragment key={gi}>
-                  {gi > 0 && <CommandSeparator className="bg-slate-300" />}
+                  {gi > 0 && <CommandSeparator className="my-1 bg-slate-200" />}
                   <CommandGroup className="p-0" tabIndex={0}>
-                    <div className="px-2 pb-2 text-sm font-medium text-slate-500">{group.label}</div>
+                    <div className="px-2 pb-2 text-xs font-medium text-slate-500">{group.label}</div>
                     {group.options.map((opt) =>
                       opt.children ? (
                         <CommandItem key={opt.value} className="flex w-full items-center justify-center p-0">
