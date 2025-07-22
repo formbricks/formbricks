@@ -579,7 +579,7 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
   html: ZI18nString.optional(),
-  buttonUrl: getZSafeUrl.optional(),
+  buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
 });
@@ -1031,6 +1031,18 @@ export const ZSurvey = z
           );
           if (multiLangIssue) {
             ctx.addIssue(multiLangIssue);
+          }
+        }
+
+        if (question.buttonExternal) {
+          const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
+          if (!parsedButtonUrl.success) {
+            const errorMessage = parsedButtonUrl.error.issues[0].message;
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Question ${String(questionIndex + 1)}: ${errorMessage}`,
+              path: ["questions", questionIndex, "buttonUrl"],
+            });
           }
         }
       }
