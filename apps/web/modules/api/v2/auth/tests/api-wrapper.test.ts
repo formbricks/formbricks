@@ -270,7 +270,8 @@ describe("apiWrapper", () => {
     });
 
     vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
-    vi.mocked(checkRateLimit).mockResolvedValue(err("Redis connection failed"));
+    // When rate limiting fails (e.g., Redis connection issues), checkRateLimit fails open by returning allowed: true
+    vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
     const handler = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
     const response = await apiWrapper({
