@@ -85,7 +85,7 @@ To configure SAML SSO in Formbricks, follow these steps:
   </Step>
 
   <Step title="Metadata Setup">
-    Create a file called `connection.xml` in your self-hosted Formbricks instance's `formbricks/saml-connection` directory and paste the XML metadata from your IdP into it. Please create the directory if it doesn't exist. Your metadata file should start with a tag like this: `<?xml version="1.0" encoding="UTF-8"?><...>` or `<md:EntityDescriptor entityID="...">`. Please remove any extra text from the metadata.
+    Create a file called `connection.xml` in your self-hosted Formbricks instance's `formbricks/saml-connection` (use `formbricks/apps/web/saml-connection` for development) directory and paste the XML metadata from your IdP into it. Please create the directory if it doesn't exist. Your metadata file should start with a tag like this: `<?xml version="1.0" encoding="UTF-8"?><...>` or `<md:EntityDescriptor entityID="...">`. Please remove any extra text from the metadata.
   </Step>
 
   <Step title="Restart Formbricks">

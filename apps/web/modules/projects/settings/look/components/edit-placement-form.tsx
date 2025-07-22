@@ -16,14 +16,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 
-const placements = [
-  { name: "common.bottom_right", value: "bottomRight", disabled: false },
-  { name: "common.top_right", value: "topRight", disabled: false },
-  { name: "common.top_left", value: "topLeft", disabled: false },
-  { name: "common.bottom_left", value: "bottomLeft", disabled: false },
-  { name: "common.centered_modal", value: "center", disabled: false },
-];
-
 interface EditPlacementProps {
   project: Project;
   environmentId: string;
@@ -40,6 +32,14 @@ type EditPlacementFormValues = z.infer<typeof ZProjectPlacementInput>;
 
 export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) => {
   const { t } = useTranslate();
+
+  const placements = [
+    { name: t("common.bottom_right"), value: "bottomRight", disabled: false },
+    { name: t("common.top_right"), value: "topRight", disabled: false },
+    { name: t("common.top_left"), value: "topLeft", disabled: false },
+    { name: t("common.bottom_left"), value: "bottomLeft", disabled: false },
+    { name: t("common.centered_modal"), value: "center", disabled: false },
+  ];
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
       placement: project.placement,
@@ -102,7 +102,7 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
                           <Label
                             htmlFor={placement.value}
                             className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
-                            {t(placement.name)}
+                            {placement.name}
                           </Label>
                         </div>
                       ))}
