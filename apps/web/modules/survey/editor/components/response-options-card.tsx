@@ -420,6 +420,8 @@ export const ResponseOptionsCard = ({
                   />
                 </div>
               </AdvancedOptionToggle>
+
+              {/* Protect Survey with Pin */}
               <AdvancedOptionToggle
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}
@@ -442,6 +444,7 @@ export const ResponseOptionsCard = ({
                     defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
                     onKeyDown={handleSurveyPinInputKeyDown}
                     onChange={(e) => handleProtectSurveyPinChange(e.target.value)}
+                    maxLength={4}
                   />
                   {verifyProtectWithPinError && (
                     <p className="pt-1 text-sm text-red-700">{verifyProtectWithPinError}</p>
