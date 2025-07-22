@@ -228,6 +228,13 @@ vi.mock("lucide-react", () => ({
   SquarePenIcon: () => <svg data-testid="square-pen-icon" />,
 }));
 
+vi.mock("@/app/(app)/environments/[environmentId]/context/environment-context", () => ({
+  useEnvironment: vi.fn(() => ({
+    organizationId: "test-organization-id",
+    project: { id: "test-project-id" },
+  })),
+}));
+
 // Mock data
 const mockEnvironment: TEnvironment = {
   id: "test-env-id",
@@ -893,7 +900,11 @@ describe("SurveyAnalysisCTA", () => {
     // Confirm reset
     await user.click(screen.getByTestId("confirm-button"));
 
-    expect(mockResetSurveyAction).toHaveBeenCalledWith({ surveyId: "test-survey-id" });
+    expect(mockResetSurveyAction).toHaveBeenCalledWith({
+      surveyId: "test-survey-id",
+      organizationId: "test-organization-id",
+      projectId: "test-project-id",
+    });
     expect(toast.default.success).toHaveBeenCalledWith(
       "Survey reset successfully! 5 responses and 3 displays were deleted."
     );

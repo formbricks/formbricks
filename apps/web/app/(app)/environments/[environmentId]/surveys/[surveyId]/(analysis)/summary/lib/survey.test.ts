@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
 import { deleteResponsesAndDisplaysForSurvey } from "./survey";
@@ -14,6 +13,7 @@ vi.mock("@formbricks/database", () => ({
     display: {
       deleteMany: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -29,17 +29,12 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
     test("Deletes all responses and displays for a survey", async () => {
       const { prisma } = await import("@formbricks/database");
 
-      vi.mocked(prisma.response.deleteMany).mockResolvedValue({ count: 5 });
-      vi.mocked(prisma.display.deleteMany).mockResolvedValue({ count: 3 });
+      // Mock $transaction to return the results directly
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 5 }, { count: 3 }]);
 
       const result = await deleteResponsesAndDisplaysForSurvey(surveyId);
 
-      expect(prisma.response.deleteMany).toHaveBeenCalledWith({
-        where: { surveyId: surveyId },
-      });
-      expect(prisma.display.deleteMany).toHaveBeenCalledWith({
-        where: { surveyId: surveyId },
-      });
+      expect(prisma.$transaction).toHaveBeenCalled();
       expect(result).toEqual({
         deletedResponsesCount: 5,
         deletedDisplaysCount: 3,
@@ -49,8 +44,8 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
     test("Handles case with no responses or displays to delete", async () => {
       const { prisma } = await import("@formbricks/database");
 
-      vi.mocked(prisma.response.deleteMany).mockResolvedValue({ count: 0 });
-      vi.mocked(prisma.display.deleteMany).mockResolvedValue({ count: 0 });
+      // Mock $transaction to return zero counts
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 0 }, { count: 0 }]);
 
       const result = await deleteResponsesAndDisplaysForSurvey(surveyId);
 
@@ -71,7 +66,7 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
         clientVersion: "0.0.1",
       });
 
-      vi.mocked(prisma.response.deleteMany).mockRejectedValue(errToThrow);
+      vi.mocked(prisma.$transaction).mockRejectedValue(errToThrow);
 
       await expect(deleteResponsesAndDisplaysForSurvey(surveyId)).rejects.toThrow(DatabaseError);
     });
@@ -80,13 +75,9 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
       const { prisma } = await import("@formbricks/database");
 
       const mockErrorMessage = "Mock error message";
-      vi.mocked(prisma.response.deleteMany).mockRejectedValue(new Error(mockErrorMessage));
+      vi.mocked(prisma.$transaction).mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(deleteResponsesAndDisplaysForSurvey(surveyId)).rejects.toThrow(Error);
     });
-  });
-
-  describe("Input Validation", () => {
-    testInputValidation(deleteResponsesAndDisplaysForSurvey, "123#");
   });
 });

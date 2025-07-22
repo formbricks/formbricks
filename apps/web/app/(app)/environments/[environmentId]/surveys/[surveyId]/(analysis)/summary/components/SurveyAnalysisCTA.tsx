@@ -1,5 +1,6 @@
 "use client";
 
+import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
@@ -64,6 +65,7 @@ export const SurveyAnalysisCTA = ({
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
+  const { organizationId, project } = useEnvironment();
   const { refreshSingleUseId } = useSingleUseId(survey);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
@@ -126,7 +128,11 @@ export const SurveyAnalysisCTA = ({
 
   const handleResetSurvey = async () => {
     setIsResetting(true);
-    const result = await resetSurveyAction({ surveyId: survey.id });
+    const result = await resetSurveyAction({
+      surveyId: survey.id,
+      organizationId: organizationId,
+      projectId: project.id,
+    });
     if (result?.data) {
       toast.success(
         t("environments.surveys.summary.survey_reset_successfully", {

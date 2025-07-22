@@ -205,17 +205,24 @@ export const deleteResultShareUrlAction = authenticatedActionClient
 
 const ZResetSurveyAction = z.object({
   surveyId: ZId,
+  organizationId: ZId,
+  projectId: ZId,
 });
 
 export const resetSurveyAction = authenticatedActionClient.schema(ZResetSurveyAction).action(
   withAuditLogging(
     "updated",
     "survey",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZResetSurveyAction>;
+    }) => {
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
-        organizationId: organizationId,
+        organizationId: parsedInput.organizationId,
         access: [
           {
             type: "organization",
@@ -224,26 +231,20 @@ export const resetSurveyAction = authenticatedActionClient.schema(ZResetSurveyAc
           {
             type: "projectTeam",
             minPermission: "readWrite",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            projectId: parsedInput.projectId,
           },
         ],
       });
 
-      const survey = await getSurvey(parsedInput.surveyId);
-      if (!survey) {
-        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-      }
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
       ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-      ctx.auditLoggingCtx.oldObject = survey;
+      ctx.auditLoggingCtx.oldObject = null;
 
       const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
         parsedInput.surveyId
       );
 
       ctx.auditLoggingCtx.newObject = {
-        ...survey,
         deletedResponsesCount: deletedResponsesCount,
         deletedDisplaysCount: deletedDisplaysCount,
       };
