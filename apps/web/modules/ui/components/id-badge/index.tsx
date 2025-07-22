@@ -6,6 +6,7 @@ import { useTranslate } from "@tolgee/react";
 import { Check, Copy } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { logger } from "@formbricks/logger";
 
 interface IdBadgeProps {
   id: string | number;
@@ -31,14 +32,17 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
     e.stopPropagation();
 
     try {
-      navigator.clipboard.writeText(String(id));
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(String(id));
+      } else {
+        logger.error("Clipboard API not supported");
+        throw new Error("Clipboard API not supported");
+      }
       toast.success(t("common.copied_to_clipboard"));
       setIsCopied(true);
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
     } catch (error) {
-      toast.error("Failed to copy ID");
+      logger.error(error);
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
 
@@ -49,6 +53,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
       <Tooltip delayDuration={0} open={isHovered}>
         <TooltipTrigger asChild>
           <div
+            role="button"
             className={cn(
               "inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-500 hover:border-transparent hover:bg-slate-900 hover:text-slate-50",
               className
@@ -62,10 +67,11 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
 
             {shouldShowIcon && (
               <button
+                type="button"
                 onClick={handleCopy}
                 className="flex h-4 w-4 items-center justify-center rounded transition-colors"
                 title={t("common.copy")}
-                aria-label={`Copy ${prefix ? `${prefix} ` : ""}${id}`}>
+                aria-label={`Copy ${id}`}>
                 {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </button>
             )}
