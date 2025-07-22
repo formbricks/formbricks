@@ -108,7 +108,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     try {
       await applyRateLimit(rateLimitConfigs.api.v2, authentication.data.hashedApiKey);
     } catch (error) {
-      return handleApiError(request, { type: "too_many_requests" });
+      return handleApiError(request, { type: "too_many_requests", details: error.message });
     }
   }
 
