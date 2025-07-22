@@ -21,7 +21,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
   showCopyIcon = true,
   showCopyIconOnHover = false,
   className,
-  prefix,
+  prefix = "",
 }) => {
   const { t } = useTranslate();
   const [isHovered, setIsHovered] = useState(false);
@@ -68,10 +68,11 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
             {shouldShowIcon && (
               <button
                 type="button"
+                data-testid="copy-button"
                 onClick={handleCopy}
                 className="flex h-4 w-4 items-center justify-center rounded transition-colors"
                 title={t("common.copy")}
-                aria-label={`Copy ${id}`}>
+                aria-label={`Copy ${prefix} ${id}`}>
                 {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </button>
             )}

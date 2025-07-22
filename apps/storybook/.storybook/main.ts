@@ -1,6 +1,6 @@
 import type { StorybookConfig } from "@storybook/react-vite";
+import { fileURLToPath } from "node:url";
 import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 
 /**
  * This function is used to resolve the absolute path of a package.

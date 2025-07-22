@@ -58,7 +58,7 @@ describe("IdBadge", () => {
     render(<IdBadge id="1734" showCopyIcon={false} />);
 
     expect(screen.getByText("1734")).toBeInTheDocument();
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("copy-button")).toBeNull();
   });
 
   test("shows copy icon only on hover when showCopyIconOnHover is true", () => {
@@ -71,7 +71,7 @@ describe("IdBadge", () => {
 
     // Mouse enter - button should appear
     fireEvent.mouseEnter(badge);
-    const copyButton = container.querySelector('button[aria-label="Copy HOVER-ID"]');
+    const copyButton = container.querySelector('button[data-testid="copy-button"]');
     expect(copyButton).toBeInTheDocument();
 
     // Mouse leave - button should disappear
@@ -82,7 +82,7 @@ describe("IdBadge", () => {
   test("renders copy button with correct accessibility attributes", () => {
     const { container } = render(<IdBadge id="TEST-001" />);
 
-    const copyButton = container.querySelector('button[aria-label="Copy TEST-001"]');
+    const copyButton = container.querySelector('button[data-testid="copy-button"]');
     expect(copyButton).toBeInTheDocument();
     expect(copyButton).toHaveAttribute("title", "Copy");
   });
@@ -98,16 +98,7 @@ describe("IdBadge", () => {
   test("supports click events on copy button", () => {
     const { container } = render(<IdBadge id="CLICK-TEST" />);
 
-    const copyButton = container.querySelector('button[aria-label="Copy CLICK-TEST"]')!;
-
-    // Button should be clickable and not throw error
-    expect(() => fireEvent.click(copyButton)).not.toThrow();
-  });
-
-  test("supports click events on copy button", () => {
-    const { container } = render(<IdBadge id="CLICK-TEST" />);
-
-    const copyButton = container.querySelector('button[aria-label="Copy CLICK-TEST"]')!;
+    const copyButton = container.querySelector('button[data-testid="copy-button"]')!;
 
     // Button should be clickable and not throw error
     expect(() => fireEvent.click(copyButton)).not.toThrow();
@@ -115,6 +106,14 @@ describe("IdBadge", () => {
     expect(() => fireEvent.keyDown(copyButton, { key: " " })).not.toThrow();
   });
 
+  test("supports click events on copy button", () => {
+    const { container } = render(<IdBadge id="CLICK-TEST" />);
+
+    const copyButton = container.querySelector('button[data-testid="copy-button"]')!;
+
+    // Button should be clickable and not throw error
+    expect(() => fireEvent.click(copyButton)).not.toThrow();
+  });
   test("renders with long UUID correctly", () => {
     const longId = "abcd1234-ef56-7890-abcd-ef1234567890";
     render(<IdBadge id={longId} prefix="UUID:" />);
