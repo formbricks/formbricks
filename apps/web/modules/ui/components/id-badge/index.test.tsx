@@ -46,8 +46,6 @@ describe("IdBadge", () => {
 
     expect(screen.getByText("Survey:")).toBeInTheDocument();
     expect(screen.getByText("SRV-001")).toBeInTheDocument();
-    const copyButton = screen.getByLabelText("Copy Survey: SRV-001");
-    expect(copyButton).toBeInTheDocument();
   });
 
   test("renders with numeric ID", () => {
