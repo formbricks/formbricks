@@ -44,43 +44,6 @@ vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/
   }),
 }));
 
-vi.mock("@/app/share/[sharingKey]/actions", () => ({
-  getResponseCountBySurveySharingKeyAction: vi.fn().mockResolvedValue({ data: 42 }),
-  getSummaryBySurveySharingKeyAction: vi.fn().mockResolvedValue({
-    data: {
-      meta: {
-        completedPercentage: 80,
-        completedResponses: 40,
-        displayCount: 50,
-        dropOffPercentage: 20,
-        dropOffCount: 10,
-        startsPercentage: 100,
-        totalResponses: 50,
-        ttcAverage: 120,
-      },
-      dropOff: [
-        {
-          questionId: "q1",
-          headline: "Question 1",
-          questionType: "openText",
-          ttc: 20000,
-          impressions: 50,
-          dropOffCount: 5,
-          dropOffPercentage: 10,
-        },
-      ],
-      summary: [
-        {
-          question: { id: "q1", headline: "Question 1", type: "openText", required: true },
-          responseCount: 45,
-          type: "openText",
-          samples: [],
-        },
-      ],
-    },
-  }),
-}));
-
 // Mock components
 vi.mock(
   "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs",
@@ -172,7 +135,6 @@ describe("SummaryPage", () => {
     webAppUrl: "https://app.example.com",
     totalResponseCount: 50,
     locale,
-    isReadOnly: false,
   };
 
   test("renders loading state initially", () => {
@@ -191,7 +153,6 @@ describe("SummaryPage", () => {
     });
 
     expect(screen.getByTestId("custom-filter")).toBeInTheDocument();
-    expect(screen.getByTestId("results-share-button")).toBeInTheDocument();
     expect(screen.getByTestId("scroll-to-top")).toBeInTheDocument();
     expect(screen.getByTestId("summary-list")).toBeInTheDocument();
   });
@@ -213,16 +174,5 @@ describe("SummaryPage", () => {
 
     // Drop-offs should now be visible
     expect(screen.getByTestId("summary-drop-offs")).toBeInTheDocument();
-  });
-
-  test("doesn't show share button in read-only mode", async () => {
-    render(<SummaryPage {...defaultProps} isReadOnly={true} />);
-
-    // Wait for loading to complete
-    await waitFor(() => {
-      expect(screen.getByText("Is Loading: false")).toBeInTheDocument();
-    });
-
-    expect(screen.queryByTestId("results-share-button")).not.toBeInTheDocument();
   });
 });

@@ -705,34 +705,6 @@ export const createSurvey = async (
   }
 };
 
-export const getSurveyIdByResultShareKey = reactCache(
-  async (resultShareKey: string): Promise<string | null> => {
-    try {
-      const survey = await prisma.survey.findFirst({
-        where: {
-          resultShareKey,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (!survey) {
-        return null;
-      }
-
-      return survey.id;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error getting survey id by result share key");
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
-
 export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: string): Promise<TSurvey> => {
   validateInputs([surveyId, ZId], [newSegmentId, ZId]);
   try {

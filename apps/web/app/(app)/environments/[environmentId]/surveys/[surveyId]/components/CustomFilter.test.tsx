@@ -157,16 +157,6 @@ describe("CustomFilter", () => {
     expect(screen.getByText(`Select first date - ${format(mockDateToday, "dd LLL")}`)).toBeInTheDocument();
   });
 
-  test("does not render download button on sharing page", () => {
-    vi.mocked(useParams).mockReturnValue({
-      environmentId: "test-env",
-      surveyId: "test-survey",
-      sharingKey: "test-share-key",
-    });
-    render(<CustomFilter survey={mockSurvey} />);
-    expect(screen.queryByText("common.download")).not.toBeInTheDocument();
-  });
-
   test("useEffect logic for resetState and firstMountRef (as per current component code)", () => {
     // This test verifies the current behavior of the useEffects related to firstMountRef.
     // Based on the component's code, resetState() is not expected to be called by these effects,

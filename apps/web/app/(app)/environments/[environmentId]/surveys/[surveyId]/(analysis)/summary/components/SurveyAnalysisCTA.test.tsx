@@ -379,14 +379,6 @@ describe("SurveyAnalysisCTA", () => {
     expect(screen.getByTestId("icon-bar-action-1")).toHaveAttribute("title", "Preview");
   });
 
-  test("shows public results badge when resultShareKey exists", () => {
-    const surveyWithShareKey = { ...mockSurvey, resultShareKey: "share-key" };
-    render(<SurveyAnalysisCTA {...defaultProps} survey={surveyWithShareKey} />);
-
-    expect(screen.getByTestId("badge")).toBeInTheDocument();
-    expect(screen.getByText("Results are public")).toBeInTheDocument();
-  });
-
   test("opens share modal when share button is clicked", async () => {
     const user = userEvent.setup();
     render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
