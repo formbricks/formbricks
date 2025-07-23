@@ -261,8 +261,8 @@ export function ConditionsEditor({
     <div ref={parent} className="flex flex-col gap-y-4">
       {/* Dropdown for changing the connector */}
       {conditions.conditions.length > 1 && (
-        <div className="flex items-center text-sm">
-          <p className="mr-2 font-medium text-slate-900">When</p>
+        <div className="flex items-center gap-x-2 text-sm">
+          <p className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">When</p>
           <Select
             value={conditions.connector}
             onValueChange={() => {
