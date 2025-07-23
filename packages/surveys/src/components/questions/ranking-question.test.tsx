@@ -35,10 +35,19 @@ vi.mock("@/components/general/question-media", () => ({
   QuestionMedia: () => <div data-testid="question-media"></div>,
 }));
 
+// Create a mock implementation that handles refs properly
+const mockScrollToBottom = vi.fn();
+
 vi.mock("@/components/wrappers/scrollable-container", () => ({
-  ScrollableContainer: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="scrollable-container">{children}</div>
-  ),
+  ScrollableContainer: ({ children, ref }: { children: React.ReactNode; ref?: any }) => {
+    // Immediately set up the ref if it's passed
+    if (ref && typeof ref === "object" && "current" in ref) {
+      ref.current = {
+        scrollToBottom: mockScrollToBottom,
+      };
+    }
+    return <div data-testid="scrollable-container">{children}</div>;
+  },
 }));
 
 vi.mock("@formkit/auto-animate/react", () => ({
@@ -62,6 +71,7 @@ vi.mock("@/lib/utils", () => ({
 describe("RankingQuestion", () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
   });
 
   const mockQuestion: TSurveyRankingQuestion = {
