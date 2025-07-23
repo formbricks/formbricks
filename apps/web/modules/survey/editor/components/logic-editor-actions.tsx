@@ -111,7 +111,7 @@ export function LogicEditorActions({
 
       <div className="flex grow flex-col gap-y-2 border-b border-slate-200 last:pb-3">
         {actions?.map((action, idx) => (
-          <div className="flex items-center gap-x-2">
+          <div className="flex items-center gap-x-2" key={action.id}>
             <div className="flex w-10 shrink-0 items-center justify-end">
               <CornerDownRightIcon className="h-4 w-4 shrink-0 text-slate-500" />
             </div>

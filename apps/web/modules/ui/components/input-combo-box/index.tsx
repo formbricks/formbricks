@@ -217,6 +217,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           <div
             id={id}
             role="combobox"
+            tabIndex={0}
             aria-controls="options"
             aria-expanded={open}
             className={cn("flex h-10 w-full cursor-pointer items-center justify-end bg-white pr-2", {
@@ -316,7 +317,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent alignOffset={4} className="w-48 p-1">
                               {opt.children.map((child) => (
-                                <div className="flex flex-col">
+                                <div className="flex flex-col" key={child.value}>
                                   {child.children && child.children.length > 0 ? (
                                     <p className="mb-2 px-2 text-sm font-medium text-slate-500">
                                       {child.label}
