@@ -7,10 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
-export const useSingleUseId = (survey: TSurvey | TSurveyList, isReadOnly: boolean) => {
-  // We cannot call hooks conditionally hence we return a dummy function if the permission is read only
-  if (isReadOnly) return { singleUseId: undefined, refreshSingleUseId: () => Promise.resolve(undefined) };
-
+export const useSingleUseId = (survey: TSurvey | TSurveyList) => {
   const [singleUseId, setSingleUseId] = useState<string | undefined>(undefined);
 
   const refreshSingleUseId = useCallback(async () => {
