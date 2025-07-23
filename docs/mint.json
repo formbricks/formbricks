@@ -450,11 +450,6 @@
       "source": "/docs/link-surveys/global/recall"
     },
     {
-      "destination": "/docs/xm-and-surveys/surveys/general-features/shareable-dashboards",
-      "permanent": true,
-      "source": "/docs/link-surveys/global/shareable-dashboards"
-    },
-    {
       "destination": "/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
       "permanent": true,
       "source": "/docs/link-surveys/single-use-links"
