@@ -1,7 +1,7 @@
-import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import type { Metadata } from "next";
@@ -60,23 +60,13 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   let singleUseId: string | undefined = undefined;
 
   if (isSingleUseSurvey) {
-    // check if the single use id is present for single use surveys
-    if (!suId) {
+    const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
+    if (!validatedSingleUseId) {
       const project = await getProjectByEnvironmentId(survey.environmentId);
       return <SurveyInactive status="link invalid" project={project ?? undefined} />;
     }
 
-    // if encryption is enabled, validate the single use id
-    let validatedSingleUseId: string | undefined = undefined;
-    if (isSingleUseSurveyEncrypted) {
-      validatedSingleUseId = validateSurveySingleUseId(suId);
-      if (!validatedSingleUseId) {
-        const project = await getProjectByEnvironmentId(survey.environmentId);
-        return <SurveyInactive status="link invalid" project={project ?? undefined} />;
-      }
-    }
-    // if encryption is disabled, use the suId as is
-    singleUseId = validatedSingleUseId ?? suId;
+    singleUseId = validatedSingleUseId;
   }
 
   let singleUseResponse;

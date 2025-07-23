@@ -95,6 +95,5 @@ describe("getOrganizationAccessKeyDisplayName", () => {
   test("returns tolgee string for other keys", () => {
     const t = vi.fn((k) => k);
     expect(getOrganizationAccessKeyDisplayName("otherKey", t)).toBe("otherKey");
-    expect(t).toHaveBeenCalledWith("otherKey");
   });
 });

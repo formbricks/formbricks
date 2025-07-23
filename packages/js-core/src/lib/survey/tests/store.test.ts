@@ -1,7 +1,7 @@
-import { mockSurveyId, mockSurveyName } from "@/lib/survey/tests/__mocks__/store.mock";
-import { SurveyStore } from "@/lib/survey/store";
-import type { TEnvironmentStateSurvey } from "@/types/config";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SurveyStore } from "@/lib/survey/store";
+import { mockSurveyId, mockSurveyName } from "@/lib/survey/tests/__mocks__/store.mock";
+import type { TEnvironmentStateSurvey } from "@/types/config";
 
 describe("SurveyStore", () => {
   let store: SurveyStore;

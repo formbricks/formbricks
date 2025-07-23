@@ -58,6 +58,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             user={user}
             publicDomain={publicDomain}
             responseCount={initialSurveySummary?.meta.totalResponses ?? 0}
+            displayCount={initialSurveySummary?.meta.displayCount ?? 0}
             segments={segments}
             isContactsEnabled={isContactsEnabled}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}

@@ -30,16 +30,16 @@ interface ManageIntegrationProps {
   locale: TUserLocale;
 }
 
-const tableHeaders = [
-  "common.survey",
-  "environments.integrations.airtable.table_name",
-  "common.questions",
-  "common.updated_at",
-];
-
 export const ManageIntegration = (props: ManageIntegrationProps) => {
   const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
   const { t } = useTranslate();
+
+  const tableHeaders = [
+    t("common.survey"),
+    t("environments.integrations.airtable.table_name"),
+    t("common.questions"),
+    t("common.updated_at"),
+  ];
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState<(IntegrationModalInputs & { index: number }) | null>(
@@ -100,7 +100,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           <div className="grid h-12 grid-cols-8 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
             {tableHeaders.map((header) => (
               <div key={header} className={`col-span-2 hidden text-center sm:block`}>
-                {t(header)}
+                {header}
               </div>
             ))}
           </div>

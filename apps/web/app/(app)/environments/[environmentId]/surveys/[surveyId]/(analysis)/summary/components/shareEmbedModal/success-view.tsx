@@ -43,6 +43,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({
             publicDomain={publicDomain}
             setSurveyUrl={setSurveyUrl}
             locale={user.locale}
+            enforceSurveyUrlWidth
           />
         </div>
       )}

@@ -7,6 +7,7 @@ import { TProject } from "@formbricks/types/project";
 export interface EnvironmentContextType {
   environment: TEnvironment;
   project: TProject;
+  organizationId: string;
 }
 
 const EnvironmentContext = createContext<EnvironmentContextType | null>(null);
@@ -35,6 +36,7 @@ export const EnvironmentContextWrapper = ({
     () => ({
       environment,
       project,
+      organizationId: project.organizationId,
     }),
     [environment, project]
   );

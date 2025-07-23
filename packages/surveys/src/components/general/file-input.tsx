@@ -2,7 +2,7 @@ import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getOriginalFileNameFromUrl } from "@/lib/storage";
 import { getMimeType, isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
 import { type TAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
@@ -36,34 +36,39 @@ export function FileInput({
   const [parent] = useAutoAnimate();
 
   // Helper function to filter duplicate files
-  const filterDuplicateFiles = <T extends { name: string }>(
-    files: T[],
-    checkAgainstSelected: boolean = true
-  ): {
-    filteredFiles: T[];
-    duplicateFiles: T[];
-  } => {
-    const existingFileNames = fileUrls ? fileUrls.map(getOriginalFileNameFromUrl) : [];
+  const filterDuplicateFiles = useCallback(
+    <T extends { name: string }>(
+      files: T[],
+      checkAgainstSelected: boolean = true
+    ): {
+      filteredFiles: T[];
+      duplicateFiles: T[];
+    } => {
+      const existingFileNames = fileUrls ? fileUrls.map(getOriginalFileNameFromUrl) : [];
 
-    const duplicateFiles = files.filter(
-      (file) =>
-        existingFileNames.includes(file.name) ||
-        (checkAgainstSelected && selectedFiles.some((selectedFile) => selectedFile.name === file.name))
-    );
+      const duplicateFiles = files.filter(
+        (file) =>
+          existingFileNames.includes(file.name) ||
+          (checkAgainstSelected && selectedFiles.some((selectedFile) => selectedFile.name === file.name))
+      );
 
-    const filteredFiles = files.filter(
-      (file) =>
-        !existingFileNames.includes(file.name) &&
-        (!checkAgainstSelected || !selectedFiles.some((selectedFile) => selectedFile.name === file.name))
-    );
+      const filteredFiles = files.filter(
+        (file) =>
+          !existingFileNames.includes(file.name) &&
+          (!checkAgainstSelected || !selectedFiles.some((selectedFile) => selectedFile.name === file.name))
+      );
 
-    if (duplicateFiles.length > 0) {
-      const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
-      alert(`The following files are already uploaded: ${duplicateNames}. Duplicate files are not allowed.`);
-    }
+      if (duplicateFiles.length > 0) {
+        const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
+        alert(
+          `The following files are already uploaded: ${duplicateNames}. Duplicate files are not allowed.`
+        );
+      }
 
-    return { filteredFiles, duplicateFiles };
-  };
+      return { filteredFiles, duplicateFiles };
+    },
+    [fileUrls, selectedFiles]
+  );
 
   // Listen for the native file-upload event dispatched via window.formbricksSurveys.onFilePick
   useEffect(() => {
@@ -131,7 +136,15 @@ export function FileInput({
     return () => {
       window.removeEventListener(FILE_PICK_EVENT, handleNativeFileUpload as unknown as EventListener);
     };
-  }, [allowedFileExtensions, fileUrls, maxSizeInMB, onFileUpload, onUploadCallback, surveyId]);
+  }, [
+    allowedFileExtensions,
+    fileUrls,
+    maxSizeInMB,
+    onFileUpload,
+    onUploadCallback,
+    surveyId,
+    filterDuplicateFiles,
+  ]);
 
   const validateFileSize = async (file: File): Promise<boolean> => {
     if (maxSizeInMB) {
