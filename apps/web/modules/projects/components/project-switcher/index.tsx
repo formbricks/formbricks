@@ -2,6 +2,8 @@
 
 import { cn } from "@/lib/cn";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import {
   DropdownMenu,
@@ -31,6 +33,8 @@ interface ProjectSwitcherProps {
   isLicenseActive: boolean;
   environmentId: string;
   isOwnerOrManager: boolean;
+  organizationTeams: TOrganizationTeam[];
+  canDoRoleManagement: boolean;
 }
 
 export const ProjectSwitcher = ({
@@ -44,8 +48,11 @@ export const ProjectSwitcher = ({
   isLicenseActive,
   environmentId,
   isOwnerOrManager,
+  organizationTeams,
+  canDoRoleManagement,
 }: ProjectSwitcherProps) => {
   const [openLimitModal, setOpenLimitModal] = useState(false);
+  const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
 
   const router = useRouter();
 
@@ -60,7 +67,15 @@ export const ProjectSwitcher = ({
       setOpenLimitModal(true);
       return;
     }
-    router.push(`/organizations/${organizationId}/projects/new/mode`);
+
+    // If this is the first project, use the onboarding flow
+    if (projects.length === 0) {
+      router.push(`/organizations/${organizationId}/projects/new/mode`);
+      return;
+    }
+
+    // For subsequent projects, open the simple modal
+    setOpenCreateProjectModal(true);
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
@@ -217,6 +232,15 @@ export const ProjectSwitcher = ({
           setOpen={setOpenLimitModal}
           buttons={LimitModalButtons()}
           projectLimit={organizationProjectsLimit}
+        />
+      )}
+      {openCreateProjectModal && (
+        <CreateProjectModal
+          open={openCreateProjectModal}
+          setOpen={setOpenCreateProjectModal}
+          organizationId={organization.id}
+          organizationTeams={organizationTeams}
+          canDoRoleManagement={canDoRoleManagement}
         />
       )}
     </>

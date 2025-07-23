@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProjectSwitcher } from "@/modules/projects/components/project-switcher";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
@@ -66,6 +67,8 @@ interface NavigationProps {
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
   isLicenseActive: boolean;
+  organizationTeams: TOrganizationTeam[];
+  canDoRoleManagement: boolean;
 }
 
 export const MainNavigation = ({
@@ -80,6 +83,8 @@ export const MainNavigation = ({
   organizationProjectsLimit,
   isLicenseActive,
   isDevelopment,
+  organizationTeams,
+  canDoRoleManagement,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -323,6 +328,8 @@ export const MainNavigation = ({
                 isTextVisible={isTextVisible}
                 organization={organization}
                 organizationProjectsLimit={organizationProjectsLimit}
+                organizationTeams={organizationTeams}
+                canDoRoleManagement={canDoRoleManagement}
               />
             )}
 
