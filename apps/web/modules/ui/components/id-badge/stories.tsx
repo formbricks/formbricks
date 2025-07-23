@@ -11,7 +11,7 @@ const meta: Meta<typeof IdBadge> = {
     docs: {
       description: {
         component:
-          "The **IdBadge** component displays an ID value with an optional copy-to-clipboard functionality. Use it to show identifiers like survey IDs, response IDs, or other reference numbers that users might need to copy.",
+          "The **IdBadge** component displays an ID value with copy-to-clipboard functionality that can be controlled or disabled. Use it to show identifiers like survey IDs, response IDs, or other reference numbers. The label appears outside the badge and supports both row and column layouts. Copy functionality is enabled by default but can be disabled with `copyDisabled` or controlled with hover behavior using `showCopyIconOnHover`.",
       },
     },
   },
@@ -25,35 +25,46 @@ const meta: Meta<typeof IdBadge> = {
       },
       order: 1,
     },
-    prefix: {
+    label: {
       control: "text",
-      description: "Custom prefix text before the ID",
+      description: "Optional label text that appears outside the badge",
       table: {
         category: "Content",
         type: { summary: "string" },
-        defaultValue: { summary: "ID:" },
       },
       order: 2,
     },
-    showCopyIcon: {
-      control: "boolean",
-      description: "Whether to show the copy icon",
+    variant: {
+      control: "select",
+      options: ["row", "column"],
+      description: "Layout variant - row (horizontal) or column (vertical)",
       table: {
-        category: "Behavior",
-        type: { summary: "boolean" },
-        defaultValue: { summary: "true" },
+        category: "Appearance",
+        type: { summary: "string" },
+        defaultValue: { summary: "row" },
       },
       order: 3,
     },
-    showCopyIconOnHover: {
+    copyDisabled: {
       control: "boolean",
-      description: "Show copy icon only when hovering over the badge",
+      description: "Whether to disable the copy functionality entirely",
       table: {
         category: "Behavior",
         type: { summary: "boolean" },
         defaultValue: { summary: "false" },
       },
       order: 4,
+    },
+    showCopyIconOnHover: {
+      control: "boolean",
+      description:
+        "Show copy icon only when hovering over the badge. When enabled, this overrides copyDisabled.",
+      table: {
+        category: "Behavior",
+        type: { summary: "boolean" },
+        defaultValue: { summary: "false" },
+      },
+      order: 5,
     },
     className: {
       control: "text",
@@ -62,7 +73,7 @@ const meta: Meta<typeof IdBadge> = {
         category: "Appearance",
         type: { summary: "string" },
       },
-      order: 7,
+      order: 6,
     },
   },
 };
@@ -78,21 +89,66 @@ export const Default: Story = {
     docs: {
       description: {
         story:
-          "The default ID badge with a visible copy icon. Click the icon to copy the ID to your clipboard.",
+          "The default ID badge with a visible copy icon. Click the icon to copy the ID to your clipboard. The copied state will reset after 10 seconds.",
       },
     },
   },
 };
 
-export const HiddenIcon: Story = {
+export const WithLabel: Story = {
   args: {
     id: "1734",
-    showCopyIcon: false,
+    label: "ID",
   },
   parameters: {
     docs: {
       description: {
-        story: "ID badge without a copy icon. Useful when copy functionality is not needed.",
+        story: "ID badge with a label displayed outside the badge in row layout (default).",
+      },
+    },
+  },
+};
+
+export const ColumnLayout: Story = {
+  args: {
+    id: "1734",
+    label: "ID",
+    variant: "column",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "ID badge with label in column layout - label appears above the badge.",
+      },
+    },
+  },
+};
+
+export const RowLayout: Story = {
+  args: {
+    id: "1734",
+    label: "ID",
+    variant: "row",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "ID badge with label in row layout - label appears beside the badge.",
+      },
+    },
+  },
+};
+
+export const DisabledCopy: Story = {
+  args: {
+    id: "1734",
+    label: "ID",
+    copyDisabled: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "ID badge with copy functionality disabled. Useful when copy functionality is not needed.",
       },
     },
   },
@@ -101,27 +157,45 @@ export const HiddenIcon: Story = {
 export const ShowOnHover: Story = {
   args: {
     id: "1734",
+    label: "ID",
     showCopyIconOnHover: true,
   },
   parameters: {
     docs: {
       description: {
         story:
-          "Copy icon appears only when hovering over the badge. Perfect for table rows where you want to reduce visual clutter.",
+          "Copy icon appears only when hovering over the badge. Perfect for table rows where you want to reduce visual clutter. Note: The hover state also makes the badge background slightly less dark (alpha-80).",
       },
     },
   },
 };
 
-export const CustomPrefix: Story = {
+export const HoverOverridesDisabled: Story = {
   args: {
-    id: "SRV-001",
-    prefix: "Survey:",
+    id: "1734",
+    label: "Override Demo",
+    copyDisabled: true,
+    showCopyIconOnHover: true,
   },
   parameters: {
     docs: {
       description: {
-        story: "Use custom prefixes to clarify what type of ID is being displayed.",
+        story:
+          "When showCopyIconOnHover is enabled, it overrides the copyDisabled setting. Even though copyDisabled is true, the copy icon will still appear on hover.",
+      },
+    },
+  },
+};
+
+export const CustomLabel: Story = {
+  args: {
+    id: "SRV-001",
+    label: "Survey:",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Use custom labels to clarify what type of ID is being displayed.",
       },
     },
   },
@@ -130,7 +204,7 @@ export const CustomPrefix: Story = {
 export const NumericId: Story = {
   args: {
     id: 123456789,
-    prefix: "Response:",
+    label: "Response:",
   },
   parameters: {
     docs: {
@@ -144,7 +218,7 @@ export const NumericId: Story = {
 export const LongId: Story = {
   args: {
     id: "abcd1234-ef56-7890-abcd-ef1234567890",
-    prefix: "UUID:",
+    label: "UUID:",
   },
   parameters: {
     docs: {
@@ -158,6 +232,7 @@ export const LongId: Story = {
 export const CustomStyling: Story = {
   args: {
     id: "1734",
+    label: "Custom",
     className: "bg-blue-50 text-blue-700 border-blue-200",
   },
   parameters: {
@@ -193,7 +268,43 @@ export const InTable: Story = {
     docs: {
       description: {
         story:
-          "Example of using ID badges in a table-like layout with hover-only copy icons to reduce visual clutter.",
+          "Example of using ID badges in a table-like layout with hover-only copy icons to reduce visual clutter. Notice the improved hover state with alpha-80 background.",
+      },
+    },
+  },
+};
+
+export const VariantsComparison: Story = {
+  render: () => (
+    <div className="space-y-6">
+      <div className="mb-3 text-sm font-medium text-slate-700">Layout Variants:</div>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-600">Row Layout (Default)</h4>
+          <div className="flex flex-wrap gap-4">
+            <IdBadge id="1734" label="Survey:" variant="row" />
+            <IdBadge id="RSP-001" label="Response:" variant="row" />
+            <IdBadge id="USR-456" label="User:" variant="row" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-600">Column Layout</h4>
+          <div className="flex flex-wrap gap-4">
+            <IdBadge id="1734" label="Survey:" variant="column" />
+            <IdBadge id="RSP-001" label="Response:" variant="column" />
+            <IdBadge id="USR-456" label="User:" variant="column" />
+          </div>
+        </div>
+      </div>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Comparison of row and column layout variants. Use row layout for space-efficient display and column layout when you want clear separation between label and badge.",
       },
     },
   },
@@ -204,11 +315,11 @@ export const MultipleVariants: Story = {
     <div className="space-y-4">
       <div className="mb-3 text-sm font-medium text-slate-700">Different ID Types:</div>
       <div className="flex flex-wrap gap-3">
-        <IdBadge id="1734" prefix="Survey:" />
-        <IdBadge id="RSP-001" prefix="Response:" />
-        <IdBadge id="USR-456" prefix="User:" />
-        <IdBadge id="PRJ-789" prefix="Project:" />
-        <IdBadge id="ENV-123" prefix="Environment:" />
+        <IdBadge id="1734" label="Survey:" />
+        <IdBadge id="RSP-001" label="Response:" />
+        <IdBadge id="USR-456" label="User:" />
+        <IdBadge id="PRJ-789" label="Project:" />
+        <IdBadge id="ENV-123" label="Environment:" />
       </div>
     </div>
   ),
@@ -216,7 +327,7 @@ export const MultipleVariants: Story = {
     docs: {
       description: {
         story:
-          "Various examples showing different types of IDs that might be used throughout the Formbricks application.",
+          "Various examples showing different types of IDs that might be used throughout the Formbricks application with the new label system.",
       },
     },
   },
