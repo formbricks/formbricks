@@ -1,4 +1,3 @@
-/* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
@@ -31,7 +30,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: getZSafeUrl.optional(),
+  buttonLink: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -40,7 +39,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: getZSafeUrl.optional(),
+  url: z.string().optional(),
   label: z.string().optional(),
 });
 
@@ -1035,13 +1034,22 @@ export const ZSurvey = z
         }
 
         if (question.buttonExternal) {
-          const parsedButtonUrl = z.string().url().safeParse(question.buttonUrl);
-          if (!parsedButtonUrl.success) {
+          if (!question.buttonUrl || question.buttonUrl.trim() === "") {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `Question ${String(questionIndex + 1)} has an invalid button URL`,
+              message: `Question ${String(questionIndex + 1)}: Button URL is required when external button is enabled`,
               path: ["questions", questionIndex, "buttonUrl"],
             });
+          } else {
+            const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
+            if (!parsedButtonUrl.success) {
+              const errorMessage = parsedButtonUrl.error.issues[0].message;
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Question ${String(questionIndex + 1)}: ${errorMessage}`,
+                path: ["questions", questionIndex, "buttonUrl"],
+              });
+            }
           }
         }
       }
@@ -1252,16 +1260,42 @@ export const ZSurvey = z
           }
         }
 
-        if (ending.buttonLabel) {
-          const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
-            "endingCardButtonLabel",
-            ending.buttonLabel,
-            languages,
-            "end",
-            index
-          );
-          if (multiLangIssueInButtonLabel) {
-            ctx.addIssue(multiLangIssueInButtonLabel);
+        if (ending.buttonLabel !== undefined || ending.buttonLink !== undefined) {
+          if (!ending.buttonLabel) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
+              path: ["endings", index, "buttonLabel"],
+            });
+          } else {
+            const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
+              "endingCardButtonLabel",
+              ending.buttonLabel,
+              languages,
+              "end",
+              index
+            );
+            if (multiLangIssueInButtonLabel) {
+              ctx.addIssue(multiLangIssueInButtonLabel);
+            }
+          }
+
+          if (!ending.buttonLink || ending.buttonLink.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: Button link cannot be empty`,
+              path: ["endings", index, "buttonLink"],
+            });
+          } else {
+            const parsedButtonLink = getZSafeUrl.safeParse(ending.buttonLink);
+            if (!parsedButtonLink.success) {
+              const errorMessage = parsedButtonLink.error.issues[0].message;
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+                path: ["endings", index, "buttonLink"],
+              });
+            }
           }
         }
       }
@@ -1272,6 +1306,25 @@ export const ZSurvey = z
             message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
             path: ["endings", index, "label"],
           });
+        }
+
+        // Validate redirect URL
+        if (!ending.url || ending.url.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Ending card ${String(index + 1)}: Redirect URL cannot be empty`,
+            path: ["endings", index, "url"],
+          });
+        } else {
+          const parsedUrl = getZSafeUrl.safeParse(ending.url);
+          if (!parsedUrl.success) {
+            const errorMessage = parsedUrl.error.issues[0].message;
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+              path: ["endings", index, "url"],
+            });
+          }
         }
       }
     });
@@ -2367,7 +2420,11 @@ export const ZSurveyUpdateInput = ZSurvey.innerType()
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => undefined);
 
 // Helper function to make all properties of a Zod object schema optional
-const makeSchemaOptional = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
+const makeSchemaOptional = <T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>
+): z.ZodObject<{
+  [K in keyof T]: z.ZodOptional<T[K]>;
+}> => {
   return schema.extend(
     Object.fromEntries(Object.entries(schema.shape).map(([key, value]) => [key, value.optional()])) as {
       [K in keyof T]: z.ZodOptional<T[K]>;

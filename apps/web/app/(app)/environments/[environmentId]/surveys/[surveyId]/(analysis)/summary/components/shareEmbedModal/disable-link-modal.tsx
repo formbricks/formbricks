@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 
@@ -21,10 +22,12 @@ export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: Disabl
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent width="narrow" className="flex flex-col" hideCloseButton disableCloseOnOutsideClick>
-        <DialogHeader className="text-sm font-medium text-slate-900">
-          {type === "multi-use"
-            ? t("environments.surveys.share.anonymous_links.disable_multi_use_link_modal_title")
-            : t("common.are_you_sure")}
+        <DialogHeader>
+          <DialogTitle className="text-sm font-medium text-slate-900">
+            {type === "multi-use"
+              ? t("environments.surveys.share.anonymous_links.disable_multi_use_link_modal_title")
+              : t("common.are_you_sure")}
+          </DialogTitle>
         </DialogHeader>
 
         <DialogBody>

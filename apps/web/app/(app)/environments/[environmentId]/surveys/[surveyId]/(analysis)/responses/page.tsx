@@ -2,6 +2,7 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
+import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -40,6 +41,7 @@ const Page = async (props) => {
 
   // Get response count for the CTA component
   const responseCount = await getResponseCountBySurveyId(params.surveyId);
+  const displayCount = await getDisplayCountBySurveyId(params.surveyId);
 
   const locale = await findMatchingLocale();
   const publicDomain = getPublicDomain();
@@ -56,6 +58,7 @@ const Page = async (props) => {
             user={user}
             publicDomain={publicDomain}
             responseCount={responseCount}
+            displayCount={displayCount}
             segments={segments}
             isContactsEnabled={isContactsEnabled}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}

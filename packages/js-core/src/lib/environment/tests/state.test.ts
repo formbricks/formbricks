@@ -1,4 +1,5 @@
 // state.test.ts
+import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiClient } from "@/lib/common/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
@@ -9,7 +10,6 @@ import {
   fetchEnvironmentState,
 } from "@/lib/environment/state";
 import type { TEnvironmentState } from "@/types/config";
-import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock the ApiClient so we can control environment.getEnvironmentState
 vi.mock("@/lib/common/api", () => ({

@@ -91,7 +91,7 @@ export const SelectedRowSettings = <T,>({
     <>
       <div className="bg-primary flex items-center gap-x-2 rounded-md p-1 px-2 text-xs text-white">
         <div className="lowercase">
-          {selectedRowCount} {t(`common.${type}s`)} {t("common.selected")}
+          {`${selectedRowCount} ${type === "response" ? t("common.responses") : t("common.contacts")} ${t("common.selected")}`}
         </div>
         <Separator />
         <Button
@@ -146,7 +146,7 @@ export const SelectedRowSettings = <T,>({
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
-        deleteWhat={t(`common.${type}`)}
+        deleteWhat={type === "response" ? t("common.responses") : t("common.contacts")}
         onDelete={handleDelete}
         isDeleting={isDeleting}
         text={deleteDialogText}

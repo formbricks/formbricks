@@ -1,4 +1,5 @@
 import "server-only";
+import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { verifyTokenForLinkSurvey } from "@/lib/jwt";
 
 interface emailVerificationDetails {
@@ -24,4 +25,16 @@ export const getEmailVerificationDetails = async (
       return { status: "not-verified" };
     }
   }
+};
+
+export const checkAndValidateSingleUseId = (suid?: string, isEncrypted = false): string | null => {
+  if (!suid?.trim()) return null;
+
+  if (isEncrypted) {
+    const validatedSingleUseId = validateSurveySingleUseId(suid);
+    if (!validatedSingleUseId) return null;
+    return validatedSingleUseId;
+  }
+
+  return suid;
 };

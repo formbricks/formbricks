@@ -33,6 +33,18 @@ vi.mock("@tolgee/react", () => ({
       if (key === "environments.surveys.edit.caution_edit_duplicate") {
         return "Duplicate & Edit";
       }
+      if (key === "environments.surveys.summary.reset_survey") {
+        return "Reset survey";
+      }
+      if (key === "environments.surveys.summary.delete_all_existing_responses_and_displays") {
+        return "Delete all existing responses and displays";
+      }
+      if (key === "environments.surveys.summary.reset_survey_warning") {
+        return "Resetting a survey removes all responses and metadata of this survey. This cannot be undone.";
+      }
+      if (key === "environments.surveys.summary.survey_reset_successfully") {
+        return "Survey reset successfully! 5 responses and 3 displays were deleted.";
+      }
       return key;
     },
   }),
@@ -40,12 +52,14 @@ vi.mock("@tolgee/react", () => ({
 
 // Mock Next.js hooks
 const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 const mockPathname = "/environments/test-env-id/surveys/test-survey-id/summary";
 const mockSearchParams = new URLSearchParams();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
+    refresh: mockRefresh,
   }),
   usePathname: () => mockPathname,
   useSearchParams: () => mockSearchParams,
@@ -67,6 +81,10 @@ vi.mock("@/lib/utils/helper", () => ({
 // Mock actions
 vi.mock("@/modules/survey/list/actions", () => ({
   copySurveyToOtherEnvironmentAction: vi.fn(),
+}));
+
+vi.mock("../actions", () => ({
+  resetSurveyAction: vi.fn(),
 }));
 
 // Mock the useSingleUseId hook
@@ -147,6 +165,34 @@ vi.mock("@/modules/ui/components/badge", () => ({
   ),
 }));
 
+vi.mock("@/modules/ui/components/confirmation-modal", () => ({
+  ConfirmationModal: ({
+    open,
+    setOpen,
+    title,
+    text,
+    buttonText,
+    onConfirm,
+    buttonVariant,
+    buttonLoading,
+  }: any) => (
+    <div
+      data-testid="confirmation-modal"
+      data-open={open}
+      data-loading={buttonLoading}
+      data-variant={buttonVariant}>
+      <div data-testid="modal-title">{title}</div>
+      <div data-testid="modal-text">{text}</div>
+      <button type="button" onClick={onConfirm} data-testid="confirm-button">
+        {buttonText}
+      </button>
+      <button type="button" onClick={() => setOpen(false)} data-testid="cancel-button">
+        Cancel
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock("@/modules/ui/components/button", () => ({
   Button: ({ children, onClick, className }: any) => (
     <button type="button" data-testid="button" onClick={onClick} className={className}>
@@ -178,7 +224,15 @@ vi.mock("@/modules/ui/components/iconbar", () => ({
 vi.mock("lucide-react", () => ({
   BellRing: () => <svg data-testid="bell-ring-icon" />,
   Eye: () => <svg data-testid="eye-icon" />,
+  ListRestart: () => <svg data-testid="list-restart-icon" />,
   SquarePenIcon: () => <svg data-testid="square-pen-icon" />,
+}));
+
+vi.mock("@/app/(app)/environments/[environmentId]/context/environment-context", () => ({
+  useEnvironment: vi.fn(() => ({
+    organizationId: "test-organization-id",
+    project: { id: "test-project-id" },
+  })),
 }));
 
 // Mock data
@@ -270,6 +324,7 @@ const defaultProps = {
   user: mockUser,
   publicDomain: "https://example.com",
   responseCount: 0,
+  displayCount: 0,
   segments: mockSegments,
   isContactsEnabled: true,
   isFormbricksCloud: false,
@@ -286,19 +341,19 @@ describe("SurveyAnalysisCTA", () => {
   });
 
   test("renders share survey button", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     expect(screen.getByText("Share survey")).toBeInTheDocument();
   });
 
   test("renders success message component", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     expect(screen.getByTestId("success-message")).toBeInTheDocument();
   });
 
   test("renders survey status dropdown when app setup is completed", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     expect(screen.getByTestId("survey-status-dropdown")).toBeInTheDocument();
   });
@@ -310,7 +365,7 @@ describe("SurveyAnalysisCTA", () => {
   });
 
   test("renders icon bar with correct actions", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     expect(screen.getByTestId("icon-bar")).toBeInTheDocument();
     expect(screen.getByTestId("icon-bar-action-0")).toBeInTheDocument(); // Bell ring
@@ -334,7 +389,7 @@ describe("SurveyAnalysisCTA", () => {
 
   test("opens share modal when share button is clicked", async () => {
     const user = userEvent.setup();
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     await user.click(screen.getByText("Share survey"));
 
@@ -344,7 +399,7 @@ describe("SurveyAnalysisCTA", () => {
 
   test("opens share modal when share param is true", () => {
     mockSearchParams.set("share", "true");
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-open", "true");
     expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-modal-view", "start");
@@ -352,7 +407,7 @@ describe("SurveyAnalysisCTA", () => {
 
   test("navigates to edit when edit button is clicked and no responses", async () => {
     const user = userEvent.setup();
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     await user.click(screen.getByTestId("icon-bar-action-1"));
 
@@ -363,14 +418,15 @@ describe("SurveyAnalysisCTA", () => {
     const user = userEvent.setup();
     render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
 
-    await user.click(screen.getByTestId("icon-bar-action-1"));
+    // With responseCount > 0, the edit button should be at icon-bar-action-2 (after reset button)
+    await user.click(screen.getByTestId("icon-bar-action-2"));
 
     expect(screen.getByTestId("edit-public-survey-alert-dialog")).toHaveAttribute("data-open", "true");
   });
 
   test("navigates to notifications when bell icon is clicked", async () => {
     const user = userEvent.setup();
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     await user.click(screen.getByTestId("icon-bar-action-0"));
 
@@ -391,7 +447,7 @@ describe("SurveyAnalysisCTA", () => {
   });
 
   test("does not show icon bar actions when read-only", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} isReadOnly={true} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} isReadOnly={true} />);
 
     const iconBar = screen.getByTestId("icon-bar");
     expect(iconBar).toBeInTheDocument();
@@ -402,7 +458,7 @@ describe("SurveyAnalysisCTA", () => {
   test("handles modal close correctly", async () => {
     mockSearchParams.set("share", "true");
     const user = userEvent.setup();
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     // Verify modal is open initially
     expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-open", "true");
@@ -429,13 +485,13 @@ describe("SurveyAnalysisCTA", () => {
 
   test("does not show status dropdown when app setup is not completed", () => {
     const environmentWithoutAppSetup = { ...mockEnvironment, appSetupCompleted: false };
-    render(<SurveyAnalysisCTA {...defaultProps} environment={environmentWithoutAppSetup} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} environment={environmentWithoutAppSetup} />);
 
     expect(screen.queryByTestId("survey-status-dropdown")).not.toBeInTheDocument();
   });
 
   test("renders correctly with all props", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     expect(screen.getByTestId("icon-bar")).toBeInTheDocument();
     expect(screen.getByText("Share survey")).toBeInTheDocument();
@@ -579,8 +635,8 @@ describe("SurveyAnalysisCTA", () => {
 
     render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
 
-    // Click edit button to open dialog
-    await user.click(screen.getByTestId("icon-bar-action-1"));
+    // Click edit button to open dialog (should be icon-bar-action-2 with responses)
+    await user.click(screen.getByTestId("icon-bar-action-2"));
     expect(screen.getByTestId("edit-public-survey-alert-dialog")).toHaveAttribute("data-open", "true");
 
     // Click primary button (duplicate & edit)
@@ -647,7 +703,7 @@ describe("SurveyAnalysisCTA", () => {
 
   test("opens share modal with correct modal view when share button clicked", async () => {
     const user = userEvent.setup();
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     await user.click(screen.getByText("Share survey"));
 
@@ -669,24 +725,28 @@ describe("SurveyAnalysisCTA", () => {
   });
 
   test("does not render share modal when user is null", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} user={null as any} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} user={null as any} />);
 
     expect(screen.queryByTestId("share-survey-modal")).not.toBeInTheDocument();
   });
 
   test("renders with different isFormbricksCloud values", () => {
-    const { rerender } = render(<SurveyAnalysisCTA {...defaultProps} isFormbricksCloud={true} />);
+    const { rerender } = render(
+      <SurveyAnalysisCTA {...defaultProps} displayCount={0} isFormbricksCloud={true} />
+    );
     expect(screen.getByTestId("share-survey-modal")).toBeInTheDocument();
 
-    rerender(<SurveyAnalysisCTA {...defaultProps} isFormbricksCloud={false} />);
+    rerender(<SurveyAnalysisCTA {...defaultProps} displayCount={0} isFormbricksCloud={false} />);
     expect(screen.getByTestId("share-survey-modal")).toBeInTheDocument();
   });
 
   test("renders with different isContactsEnabled values", () => {
-    const { rerender } = render(<SurveyAnalysisCTA {...defaultProps} isContactsEnabled={true} />);
+    const { rerender } = render(
+      <SurveyAnalysisCTA {...defaultProps} displayCount={0} isContactsEnabled={true} />
+    );
     expect(screen.getByTestId("share-survey-modal")).toBeInTheDocument();
 
-    rerender(<SurveyAnalysisCTA {...defaultProps} isContactsEnabled={false} />);
+    rerender(<SurveyAnalysisCTA {...defaultProps} displayCount={0} isContactsEnabled={false} />);
     expect(screen.getByTestId("share-survey-modal")).toBeInTheDocument();
   });
 
@@ -701,7 +761,7 @@ describe("SurveyAnalysisCTA", () => {
 
   test("handles modal state changes correctly", async () => {
     const user = userEvent.setup();
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     // Open modal via share button
     await user.click(screen.getByText("Share survey"));
@@ -714,7 +774,7 @@ describe("SurveyAnalysisCTA", () => {
 
   test("opens share modal via share button", async () => {
     const user = userEvent.setup();
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     await user.click(screen.getByText("Share survey"));
 
@@ -726,7 +786,7 @@ describe("SurveyAnalysisCTA", () => {
   test("closes share modal and updates modal state", async () => {
     mockSearchParams.set("share", "true");
     const user = userEvent.setup();
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     // Modal should be open initially due to share param
     expect(screen.getByTestId("share-survey-modal")).toHaveAttribute("data-open", "true");
@@ -738,19 +798,19 @@ describe("SurveyAnalysisCTA", () => {
   });
 
   test("handles empty segments array", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} segments={[]} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} segments={[]} />);
 
     expect(screen.getByTestId("share-survey-modal")).toBeInTheDocument();
   });
 
   test("handles zero response count", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} responseCount={0} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} responseCount={0} />);
 
     expect(screen.queryByTestId("edit-public-survey-alert-dialog")).not.toBeInTheDocument();
   });
 
   test("shows all icon actions for non-readonly app survey", () => {
-    render(<SurveyAnalysisCTA {...defaultProps} />);
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={0} />);
 
     // Should show bell (notifications) and edit actions
     expect(screen.getByTestId("icon-bar-action-0")).toHaveAttribute("title", "Configure alerts");
@@ -765,5 +825,237 @@ describe("SurveyAnalysisCTA", () => {
     expect(screen.getByTestId("icon-bar-action-0")).toHaveAttribute("title", "Configure alerts");
     expect(screen.getByTestId("icon-bar-action-1")).toHaveAttribute("title", "Preview");
     expect(screen.getByTestId("icon-bar-action-2")).toHaveAttribute("title", "Edit");
+  });
+
+  // Reset Survey Feature Tests
+  test("shows reset survey button when responses exist", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeInTheDocument();
+  });
+
+  test("shows reset survey button when displays exist", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} displayCount={3} />);
+
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeInTheDocument();
+  });
+
+  test("hides reset survey button when no responses or displays exist", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={0} displayCount={0} />);
+
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeUndefined();
+  });
+
+  test("hides reset survey button for read-only users", () => {
+    render(<SurveyAnalysisCTA {...defaultProps} isReadOnly={true} responseCount={5} displayCount={3} />);
+
+    // For read-only users, there should be no icon bar actions
+    expect(screen.queryAllByTestId(/icon-bar-action-/)).toHaveLength(0);
+  });
+
+  test("opens reset confirmation modal when reset button is clicked", async () => {
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+
+    expect(resetButton).toBeDefined();
+    await user.click(resetButton!);
+
+    expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-open", "true");
+    expect(screen.getByTestId("modal-title")).toHaveTextContent("Delete all existing responses and displays");
+    expect(screen.getByTestId("modal-text")).toHaveTextContent(
+      "Resetting a survey removes all responses and metadata of this survey. This cannot be undone."
+    );
+  });
+
+  test("executes reset survey action when confirmed", async () => {
+    const mockResetSurveyAction = vi.mocked(await import("../actions")).resetSurveyAction;
+    mockResetSurveyAction.mockResolvedValue({
+      data: {
+        success: true,
+        deletedResponsesCount: 5,
+        deletedDisplaysCount: 3,
+      },
+    });
+
+    const toast = await import("react-hot-toast");
+    const user = userEvent.setup();
+
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    // Open reset modal
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
+    await user.click(resetButton!);
+
+    // Confirm reset
+    await user.click(screen.getByTestId("confirm-button"));
+
+    expect(mockResetSurveyAction).toHaveBeenCalledWith({
+      surveyId: "test-survey-id",
+      organizationId: "test-organization-id",
+      projectId: "test-project-id",
+    });
+    expect(toast.default.success).toHaveBeenCalledWith(
+      "Survey reset successfully! 5 responses and 3 displays were deleted."
+    );
+  });
+
+  test("handles reset survey action error", async () => {
+    const mockResetSurveyAction = vi.mocked(await import("../actions")).resetSurveyAction;
+    mockResetSurveyAction.mockResolvedValue({
+      data: undefined,
+      serverError: "Reset failed",
+      validationErrors: undefined,
+      bindArgsValidationErrors: [],
+    });
+
+    const toast = await import("react-hot-toast");
+    const user = userEvent.setup();
+
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    // Open reset modal
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
+    await user.click(resetButton!);
+
+    // Confirm reset
+    await user.click(screen.getByTestId("confirm-button"));
+
+    expect(toast.default.error).toHaveBeenCalledWith("Error message");
+  });
+
+  test("shows loading state during reset operation", async () => {
+    const mockResetSurveyAction = vi.mocked(await import("../actions")).resetSurveyAction;
+
+    // Mock a delayed response
+    mockResetSurveyAction.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                data: {
+                  success: true,
+                  deletedResponsesCount: 5,
+                  deletedDisplaysCount: 3,
+                },
+              }),
+            100
+          )
+        )
+    );
+
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    // Open reset modal
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
+    await user.click(resetButton!);
+
+    // Confirm reset
+    await user.click(screen.getByTestId("confirm-button"));
+
+    // Check loading state
+    expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-loading", "true");
+  });
+
+  test("closes reset modal after successful reset", async () => {
+    const mockResetSurveyAction = vi.mocked(await import("../actions")).resetSurveyAction;
+    mockResetSurveyAction.mockResolvedValue({
+      data: {
+        success: true,
+        deletedResponsesCount: 5,
+        deletedDisplaysCount: 3,
+      },
+    });
+
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    // Open reset modal
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
+    await user.click(resetButton!);
+    expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-open", "true");
+
+    // Confirm reset - wait for the action to complete
+    await user.click(screen.getByTestId("confirm-button"));
+
+    // Wait for the action to complete and the modal to close
+    await vi.waitFor(() => {
+      expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-open", "false");
+    });
+  });
+
+  test("cancels reset operation when cancel button is clicked", async () => {
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    // Open reset modal
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
+    await user.click(resetButton!);
+    expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-open", "true");
+
+    // Cancel reset
+    await user.click(screen.getByTestId("cancel-button"));
+
+    // Modal should be closed
+    expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-open", "false");
+  });
+
+  test("shows destructive button variant for reset confirmation", async () => {
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    // Open reset modal
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
+    await user.click(resetButton!);
+
+    expect(screen.getByTestId("confirmation-modal")).toHaveAttribute("data-variant", "destructive");
+  });
+
+  test("refreshes page after successful reset", async () => {
+    const mockResetSurveyAction = vi.mocked(await import("../actions")).resetSurveyAction;
+
+    mockResetSurveyAction.mockResolvedValue({
+      data: {
+        success: true,
+        deletedResponsesCount: 5,
+        deletedDisplaysCount: 3,
+      },
+    });
+
+    const user = userEvent.setup();
+    render(<SurveyAnalysisCTA {...defaultProps} responseCount={5} />);
+
+    // Open reset modal
+    const iconActions = screen.getAllByTestId(/icon-bar-action-/);
+    const resetButton = iconActions.find((button) => button.getAttribute("title") === "Reset survey");
+    expect(resetButton).toBeDefined();
+    await user.click(resetButton!);
+
+    // Confirm reset
+    await user.click(screen.getByTestId("confirm-button"));
+
+    expect(mockRefresh).toHaveBeenCalled();
   });
 });
