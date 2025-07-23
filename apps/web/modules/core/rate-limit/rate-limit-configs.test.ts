@@ -72,7 +72,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all action configurations", () => {
       const actionConfigs = Object.keys(rateLimitConfigs.actions);
-      expect(actionConfigs).toEqual(["profileUpdate", "surveyFollowUp"]);
+      expect(actionConfigs).toEqual(["emailUpdate", "surveyFollowUp"]);
     });
 
     test("should have all share configurations", () => {
@@ -137,7 +137,7 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.auth.signup, identifier: "user-signup" },
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
-        { config: rateLimitConfigs.actions.profileUpdate, identifier: "user-profile" },
+        { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
         { config: rateLimitConfigs.share.url, identifier: "share-url" },
       ];
 

@@ -274,7 +274,7 @@ export const InputCombobox = ({
             )}
             <CommandList className="m-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
-                {emptyDropdownText ? t(emptyDropdownText) : t("environments.surveys.edit.no_option_found")}
+                {emptyDropdownText ?? t("environments.surveys.edit.no_option_found")}
               </CommandEmpty>
               {options && options.length > 0 && (
                 <CommandGroup>
