@@ -17,6 +17,7 @@ interface ShareSurveyLinkProps {
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
+  enforceSurveyUrlWidth?: boolean;
 }
 
 export const ShareSurveyLink = ({
@@ -25,6 +26,7 @@ export const ShareSurveyLink = ({
   publicDomain,
   setSurveyUrl,
   locale,
+  enforceSurveyUrlWidth = false,
 }: ShareSurveyLinkProps) => {
   const { t } = useTranslate();
 
@@ -50,8 +52,12 @@ export const ShareSurveyLink = ({
   };
 
   return (
-    <div className={"flex max-w-full flex-col items-center justify-center gap-2 md:flex-row"}>
-      <SurveyLinkDisplay surveyUrl={surveyUrl} key={surveyUrl} />
+    <div className={"flex max-w-full items-center justify-center gap-2"}>
+      <SurveyLinkDisplay
+        surveyUrl={surveyUrl}
+        key={surveyUrl}
+        enforceSurveyUrlWidth={enforceSurveyUrlWidth}
+      />
       <div className="flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={handleLanguageChange} locale={locale} />
         <Button
