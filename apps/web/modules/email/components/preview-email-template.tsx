@@ -313,32 +313,32 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.PictureSelection:
-      return (
-        <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
-          <Section className="mx-0">
-            {firstQuestion.choices.map((choice) =>
-              firstQuestion.allowMulti ? (
-                <Img
-                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
-                  key={choice.id}
-                  src={choice.imageUrl}
-                />
-              ) : (
-                <Link
-                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
-                  href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
-                  key={choice.id}
-                  target="_blank">
-                  <Img className="rounded-custom h-full w-full" src={choice.imageUrl} />
-                </Link>
-              )
-            )}
-          </Section>
-          <EmailFooter />
-        </EmailTemplateWrapper>
-      );
+      case TSurveyQuestionTypeEnum.PictureSelection:
+        return (
+          <EmailTemplateWrapper styling={styling} surveyUrl={url}>
+            <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
+            <Section className="mx-0 mt-4">
+              {firstQuestion.choices.map((choice) =>
+                firstQuestion.allowMulti ? (
+                  <Img
+                    className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
+                    key={choice.id}
+                    src={choice.imageUrl}
+                  />
+                ) : (
+                  <Link
+                    className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
+                    href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
+                    key={choice.id}
+                    target="_blank">
+                    <Img className="rounded-custom h-full w-full" src={choice.imageUrl} />
+                  </Link>
+                )
+              )}
+            </Section>
+            <EmailFooter />
+          </EmailTemplateWrapper>
+        );
     case TSurveyQuestionTypeEnum.Cal:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>

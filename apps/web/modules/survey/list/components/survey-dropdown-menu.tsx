@@ -219,16 +219,18 @@ export const SurveyDropDownMenu = ({
                     {t("common.preview_survey")}
                   </button>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <button
-                    type="button"
-                    data-testid="copy-link"
-                    className="flex w-full items-center"
-                    onClick={async (e) => handleCopyLink(e)}>
-                    <LinkIcon className="mr-2 h-4 w-4" />
-                    {t("common.copy_link")}
-                  </button>
-                </DropdownMenuItem>
+                {!survey.singleUse?.enabled && (
+                  <DropdownMenuItem>
+                    <button
+                      type="button"
+                      data-testid="copy-link"
+                      className="flex w-full items-center"
+                      onClick={async (e) => handleCopyLink(e)}>
+                      <LinkIcon className="mr-2 h-4 w-4" />
+                      {t("common.copy_link")}
+                    </button>
+                  </DropdownMenuItem>
+                )}
               </>
             )}
             {!isSurveyCreationDeletionDisabled && (

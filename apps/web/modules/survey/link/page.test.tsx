@@ -13,6 +13,16 @@ import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { LinkSurveyPage, generateMetadata } from "./page";
 
+// Mock server-side constants to prevent client-side access
+vi.mock("@/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: false,
+  IS_RECAPTCHA_CONFIGURED: false,
+  RECAPTCHA_SITE_KEY: "test-key",
+  IMPRINT_URL: "https://example.com/imprint",
+  PRIVACY_URL: "https://example.com/privacy",
+  ENCRYPTION_KEY: "0".repeat(32),
+}));
+
 // Mock dependencies
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
