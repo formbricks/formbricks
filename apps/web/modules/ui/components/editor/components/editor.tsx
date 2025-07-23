@@ -28,6 +28,7 @@ import { ToolbarPlugin } from "./toolbar-plugin";
   - bold
   - italic
   - link
+  - underline
 */
 export type TextEditorProps = {
   getText: () => string;
