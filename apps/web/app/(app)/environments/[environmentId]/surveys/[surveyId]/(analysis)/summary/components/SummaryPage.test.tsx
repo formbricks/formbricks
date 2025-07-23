@@ -88,10 +88,6 @@ vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/
   CustomFilter: () => <div data-testid="custom-filter">Custom Filter</div>,
 }));
 
-vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton", () => ({
-  ResultsShareButton: () => <div data-testid="results-share-button">Share Results</div>,
-}));
-
 // Mock context
 vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext", () => ({
   useResponseFilter: () => ({
