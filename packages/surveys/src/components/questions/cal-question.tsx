@@ -65,7 +65,11 @@ export function CalQuestion({
         if (question.required && !value) {
           setErrorMessage("Please book an appointment");
           // Scroll to bottom to show the error message
-          scrollableRef.current?.scrollToBottom();
+          setTimeout(() => {
+            if (scrollableRef.current?.scrollToBottom) {
+              scrollableRef.current.scrollToBottom();
+            }
+          }, 100);
           return;
         }
 

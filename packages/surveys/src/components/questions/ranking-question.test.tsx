@@ -38,17 +38,29 @@ vi.mock("@/components/general/question-media", () => ({
 // Create a mock implementation that handles refs properly
 const mockScrollToBottom = vi.fn();
 
-vi.mock("@/components/wrappers/scrollable-container", () => ({
-  ScrollableContainer: ({ children, ref }: { children: React.ReactNode; ref?: any }) => {
-    // Immediately set up the ref if it's passed
-    if (ref && typeof ref === "object" && "current" in ref) {
-      ref.current = {
-        scrollToBottom: mockScrollToBottom,
-      };
+vi.mock("@/components/wrappers/scrollable-container", () => {
+  const { forwardRef } = require("preact/compat");
+
+  const MockScrollableContainer = forwardRef(({ children }: { children: React.ReactNode }, ref: any) => {
+    // Use useImperativeHandle equivalent for mock
+    if (ref) {
+      if (typeof ref === "function") {
+        ref({
+          scrollToBottom: mockScrollToBottom,
+        });
+      } else if (typeof ref === "object" && ref !== null) {
+        ref.current = {
+          scrollToBottom: mockScrollToBottom,
+        };
+      }
     }
     return <div data-testid="scrollable-container">{children}</div>;
-  },
-}));
+  });
+
+  return {
+    ScrollableContainer: MockScrollableContainer,
+  };
+});
 
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [null],

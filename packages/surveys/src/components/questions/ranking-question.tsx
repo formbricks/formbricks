@@ -124,7 +124,12 @@ export function RankingQuestion({
     if (hasIncompleteRanking) {
       setError("Please rank all items before submitting.");
       // Scroll to bottom to show the error message
-      scrollableRef.current?.scrollToBottom();
+      setTimeout(() => {
+        if (scrollableRef.current?.scrollToBottom) {
+          scrollableRef.current.scrollToBottom();
+        }
+      }, 100);
+
       return;
     }
 
