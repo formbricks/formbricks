@@ -110,18 +110,18 @@ export const LinkSurvey = ({
   }, [searchParams, survey.hiddenFields.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
-    if (survey.isVerifyEmailEnabled && verifiedEmail) {
+    if (survey.isVerifyEmailEnabled && verifiedEmail && !isPreview) {
       return { verifiedEmail: verifiedEmail };
     } else {
       return null;
     }
-  }, [survey.isVerifyEmailEnabled, verifiedEmail]);
+  }, [survey.isVerifyEmailEnabled, verifiedEmail, isPreview]);
 
   if (hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} project={project} />;
   }
 
-  if (survey.isVerifyEmailEnabled && emailVerificationStatus !== "verified") {
+  if (survey.isVerifyEmailEnabled && emailVerificationStatus !== "verified" && !isPreview) {
     if (emailVerificationStatus === "fishy") {
       return (
         <VerifyEmail

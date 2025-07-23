@@ -74,7 +74,7 @@ export const renderSurvey = async ({
   let emailVerificationStatus = "";
   let verifiedEmail: string | undefined = undefined;
 
-  if (survey.isVerifyEmailEnabled) {
+  if (survey.isVerifyEmailEnabled && !isPreview) {
     const token = searchParams.verify;
 
     if (token) {
