@@ -68,7 +68,6 @@ describe("SurveyLayout", () => {
     surveyClosedMessage: null,
     singleUse: null,
     pin: null,
-    resultShareKey: null,
     showLanguageSwitch: false,
     recaptcha: null,
     languages: [],

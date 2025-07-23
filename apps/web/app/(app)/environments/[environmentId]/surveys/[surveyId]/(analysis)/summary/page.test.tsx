@@ -144,7 +144,6 @@ const mockSurvey = {
   delay: 0,
   displayPercentage: null,
   languages: [],
-  resultShareKey: null,
   runOnDate: null,
   singleUse: null,
   surveyClosedMessage: null,

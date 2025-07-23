@@ -108,7 +108,6 @@ const mockSurveys: TSurvey[] = [
     triggers: [],
     languages: [],
     pin: null,
-    resultShareKey: null,
     segment: null,
     styling: null,
     surveyClosedMessage: null,

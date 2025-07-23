@@ -102,7 +102,6 @@ const mockSurvey = {
   autoComplete: null,
   surveyClosedMessage: null,
   singleUse: null,
-  resultShareKey: null,
   displayPercentage: null,
   languages: [],
   triggers: [],

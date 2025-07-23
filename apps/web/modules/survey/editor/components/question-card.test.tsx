@@ -138,7 +138,6 @@ const baseSurvey = {
   autoClose: null,
   delay: 0,
   displayLimit: null,
-  resultShareKey: null,
   inlineTriggers: null,
   pinResponses: false,
   productOverwrites: null,

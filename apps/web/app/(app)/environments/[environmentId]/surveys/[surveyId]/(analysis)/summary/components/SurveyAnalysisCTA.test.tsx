@@ -284,7 +284,6 @@ const mockSurvey: TSurvey = {
   recaptcha: null,
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
-  resultShareKey: null,
 };
 
 const mockUser: TUser = {
@@ -502,7 +501,6 @@ describe("SurveyAnalysisCTA", () => {
         environmentId: "test-env-id",
         triggers: [],
         segment: null,
-        resultShareKey: null,
         languages: [],
       },
     });
@@ -584,7 +582,6 @@ describe("SurveyAnalysisCTA", () => {
                   environmentId: "test-env-id",
                   triggers: [],
                   segment: null,
-                  resultShareKey: null,
                   languages: [],
                 },
               }),
@@ -618,7 +615,6 @@ describe("SurveyAnalysisCTA", () => {
         environmentId: "test-env-id",
         triggers: [],
         segment: null,
-        resultShareKey: null,
         languages: [],
       },
     });

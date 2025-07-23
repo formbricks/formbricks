@@ -32,7 +32,6 @@ const SENSITIVE_KEYS = [
   "pin",
   "image",
   "stripeCustomerId",
-  "resultShareKey",
   "fileName",
 ];
 
