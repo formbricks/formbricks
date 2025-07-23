@@ -17,6 +17,7 @@ export const ZActionClassPageUrlRule = z.union([
   z.literal("endsWith"),
   z.literal("notMatch"),
   z.literal("notContains"),
+  z.literal("matchesRegex"),
 ]);
 
 export type TActionClassPageUrlRule = z.infer<typeof ZActionClassPageUrlRule>;
