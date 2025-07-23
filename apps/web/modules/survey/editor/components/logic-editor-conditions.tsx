@@ -176,13 +176,5 @@ export function LogicEditorConditions({
     },
   };
 
-  return (
-    <ConditionsEditor
-      conditions={conditions}
-      config={config}
-      callbacks={callbacks}
-      depth={depth}
-      canRemoveLastCondition={false}
-    />
-  );
+  return <ConditionsEditor conditions={conditions} config={config} callbacks={callbacks} depth={depth} />;
 }

@@ -32,16 +32,9 @@ interface ConditionsEditorProps {
   config: TConditionsEditorConfig;
   callbacks: TConditionsEditorCallbacks;
   depth?: number;
-  canRemoveLastCondition?: boolean;
 }
 
-export function ConditionsEditor({
-  conditions,
-  config,
-  callbacks,
-  depth = 0,
-  canRemoveLastCondition = true,
-}: ConditionsEditorProps) {
+export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: ConditionsEditorProps) {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
 
@@ -109,7 +102,6 @@ export function ConditionsEditor({
                 config={config}
                 callbacks={callbacks}
                 depth={depth + 1}
-                canRemoveLastCondition={canRemoveLastCondition}
               />
             </div>
 
@@ -132,7 +124,6 @@ export function ConditionsEditor({
                       {t("environments.surveys.edit.add_condition_below")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      disabled={depth === 0 && conditions.conditions.length === 1 && !canRemoveLastCondition}
                       onClick={() => callbacks.onRemoveCondition(condition.id)}
                       icon={<TrashIcon className="h-4 w-4" />}>
                       {t("common.remove")}
