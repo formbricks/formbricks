@@ -23,6 +23,7 @@ import {
   UseFieldArrayRemove,
   UseFormReturn,
   useFieldArray,
+  useWatch,
 } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TActionClassInput } from "@formbricks/types/action-classes";
@@ -165,6 +166,12 @@ const UrlInput = ({
   disabled: boolean;
 }) => {
   const { t } = useTranslate();
+
+  // Watch all rule values to determine placeholders
+  const ruleValues = useWatch({
+    control,
+    name: "noCodeConfig.urlFilters",
+  });
   return (
     <div className="flex w-full flex-col gap-2">
       {fields.map((field, index) => (
@@ -201,21 +208,29 @@ const UrlInput = ({
           <FormField
             control={control}
             name={`noCodeConfig.urlFilters.${index}.value`}
-            render={({ field, fieldState: { error } }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <Input
-                    type="text"
-                    className="bg-white"
-                    disabled={disabled}
-                    {...field}
-                    placeholder="e.g. https://app.com/dashboard"
-                    autoComplete="off"
-                    isInvalid={!!error?.message}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+            render={({ field, fieldState: { error } }) => {
+              const ruleValue = ruleValues?.[index]?.rule;
+
+              return (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input
+                      type="text"
+                      className="bg-white"
+                      disabled={disabled}
+                      {...field}
+                      placeholder={
+                        ruleValue === "matchesRegex"
+                          ? t("environments.actions.add_regular_expression_here")
+                          : t("environments.actions.enter_url")
+                      }
+                      autoComplete="off"
+                      isInvalid={!!error?.message}
+                    />
+                  </FormControl>
+                </FormItem>
+              );
+            }}
           />
 
           {fields.length > 1 && (
