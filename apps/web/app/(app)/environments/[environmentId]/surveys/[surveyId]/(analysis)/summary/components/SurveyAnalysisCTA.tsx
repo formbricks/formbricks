@@ -66,7 +66,7 @@ export const SurveyAnalysisCTA = ({
   const [isResetting, setIsResetting] = useState(false);
 
   const { organizationId, project } = useEnvironment();
-  const { refreshSingleUseId } = useSingleUseId(survey);
+  const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 

@@ -35,7 +35,7 @@ export const ShareSurveyLink = ({
     setSurveyUrl(url);
   };
 
-  const { refreshSingleUseId } = useSingleUseId(survey);
+  const { refreshSingleUseId } = useSingleUseId(survey, false);
 
   const getPreviewUrl = async () => {
     const previewUrl = new URL(surveyUrl);
