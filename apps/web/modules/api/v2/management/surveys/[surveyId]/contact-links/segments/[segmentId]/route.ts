@@ -82,11 +82,11 @@ export const GET = async (
       }
 
       // Generate survey links for each contact
-      const contactLinks = contacts
-        .map((contact) => {
+      const contactLinks = await Promise.all(
+        contacts.map(async (contact) => {
           const { contactId, attributes } = contact;
 
-          const surveyUrlResult = getContactSurveyLink(
+          const surveyUrlResult = await getContactSurveyLink(
             contactId,
             params.surveyId,
             query?.expirationDays || undefined
@@ -107,10 +107,11 @@ export const GET = async (
             expiresAt,
           };
         })
-        .filter(Boolean);
+      );
 
+      const filteredContactLinks = contactLinks.filter(Boolean);
       return responses.successResponse({
-        data: contactLinks,
+        data: filteredContactLinks,
         meta,
       });
     },

@@ -40,7 +40,7 @@ const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFnType): s
   const labels = channels
     .map((channel) => {
       const label = getLabel(channel);
-      if (label) return t(label);
+      if (label) return label;
       return undefined;
     })
     .filter((label): label is string => !!label)
@@ -78,12 +78,12 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
     // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
     if (selectedFilter[1] !== null) {
       const industry = getIndustryMapping(t).find((industry) => industry.value === selectedFilter[1]);
-      if (industry) return t(industry.label);
+      if (industry) return industry.label;
     }
     if (!industries || industries.length === 0) return undefined;
     return industries.length > 1
       ? t("environments.surveys.templates.multiple_industries")
-      : t(getIndustryMapping(t).find((industry) => industry.value === industries[0])?.label ?? "");
+      : getIndustryMapping(t).find((industry) => industry.value === industries[0])?.label;
   };
 
   const industryTag = useMemo(
@@ -93,7 +93,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{t(roleTag ?? "")}</div>
+      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
       {industryTag && (
         <div
           className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>

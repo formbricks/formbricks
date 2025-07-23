@@ -183,7 +183,7 @@ export const SurveyFilters = ({
                 <span className="text-sm">
                   {t("common.sort_by")}:{" "}
                   {getSortOptions(t).find((option) => option.value === sortBy)
-                    ? t(getSortOptions(t).find((option) => option.value === sortBy)?.label ?? "")
+                    ? getSortOptions(t).find((option) => option.value === sortBy)?.label
                     : ""}
                 </span>
                 <ChevronDownIcon className="ml-2 h-4 w-4" />
