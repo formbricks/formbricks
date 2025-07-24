@@ -315,7 +315,7 @@ describe("EnvironmentLayout", () => {
     expect(screen.getByTestId("downgrade-banner")).toBeInTheDocument();
   });
 
-  test("passes organizationTeams and canDoRoleManagement props to MainNavigation", async () => {
+  test("passes canDoRoleManagement props to MainNavigation", async () => {
     vi.resetModules();
     await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({
@@ -337,7 +337,6 @@ describe("EnvironmentLayout", () => {
       })
     );
 
-    expect(screen.getByTestId("organization-teams")).toHaveTextContent("[]");
     expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("true");
     expect(vi.mocked(getRoleManagementPermission)).toHaveBeenCalledWith(mockOrganization.billing.plan);
   });

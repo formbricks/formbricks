@@ -165,7 +165,6 @@ describe("ProjectSwitcher", () => {
     render(<ProjectSwitcher {...defaultProps} projects={[project]} canDoRoleManagement={false} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
-    expect(screen.getByTestId("modal-organization-teams")).toHaveTextContent("0");
     expect(screen.getByTestId("modal-can-do-role-management")).toHaveTextContent("false");
   });
 });
