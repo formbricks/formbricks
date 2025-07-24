@@ -786,7 +786,10 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Create group" }).click();
   await page.locator("#condition-1-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
-  await page.getByText("and").nth(4).click();
+
+  await page.getByRole("combobox").filter({ hasText: "all are true" }).nth(1).click();
+  await page.getByText("any is true").click();
+
   await page.locator("#condition-1-1-conditionValue").click();
   await page
     .getByRole("option")
