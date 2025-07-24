@@ -118,28 +118,27 @@ export function ConsentQuestion({
               </span>
             </label>
           </div>
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+            <SubmitButton
+              tabIndex={isCurrent ? 0 : -1}
+              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              isLastQuestion={isLastQuestion}
+            />
+            <div />
+            {!isFirstQuestion && !isBackButtonHidden && (
+              <BackButton
+                tabIndex={isCurrent ? 0 : -1}
+                backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+                onClick={() => {
+                  const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                  setTtc(updatedTtcObj);
+                  onBack();
+                }}
+              />
+            )}
+          </div>
         </div>
       </ScrollableContainer>
-
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
-        <div />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            tabIndex={isCurrent ? 0 : -1}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedTtcObj);
-              onBack();
-            }}
-          />
-        )}
-      </div>
     </form>
   );
 }

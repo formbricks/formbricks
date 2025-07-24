@@ -178,27 +178,26 @@ export function ContactInfoQuestion({
               );
             })}
           </div>
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+            <SubmitButton
+              tabIndex={isCurrent ? 0 : -1}
+              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              isLastQuestion={isLastQuestion}
+            />
+            {!isFirstQuestion && !isBackButtonHidden && (
+              <BackButton
+                tabIndex={isCurrent ? 0 : -1}
+                backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+                onClick={() => {
+                  const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                  setTtc(updatedttc);
+                  onBack();
+                }}
+              />
+            )}
+          </div>
         </div>
       </ScrollableContainer>
-
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            tabIndex={isCurrent ? 0 : -1}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedttc);
-              onBack();
-            }}
-          />
-        )}
-      </div>
     </form>
   );
 }

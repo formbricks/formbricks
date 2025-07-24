@@ -250,25 +250,25 @@ export function MultipleChoiceSingleQuestion({
             </fieldset>
           </div>
         </div>
-      </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-py-4">
+          <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
-            onClick={() => {
-              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedTtcObj);
-              onBack();
-            }}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
           />
-        )}
-      </div>
+          {!isFirstQuestion && !isBackButtonHidden && (
+            <BackButton
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              tabIndex={isCurrent ? 0 : -1}
+              onClick={() => {
+                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedTtcObj);
+                onBack();
+              }}
+            />
+          )}
+        </div>
+      </ScrollableContainer>
     </form>
   );
 }

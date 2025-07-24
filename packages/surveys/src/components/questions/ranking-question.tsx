@@ -273,23 +273,22 @@ export function RankingQuestion({
             </fieldset>
           </div>
           {error ? <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div> : null}
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-py-4">
+            <SubmitButton
+              tabIndex={isCurrent ? 0 : -1}
+              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              isLastQuestion={isLastQuestion}
+            />
+            {!isFirstQuestion && !isBackButtonHidden && (
+              <BackButton
+                backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+                tabIndex={isCurrent ? 0 : -1}
+                onClick={handleBack}
+              />
+            )}
+          </div>
         </div>
       </ScrollableContainer>
-
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            tabIndex={isCurrent ? 0 : -1}
-            onClick={handleBack}
-          />
-        )}
-      </div>
     </form>
   );
 }

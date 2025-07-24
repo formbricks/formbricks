@@ -206,22 +206,22 @@ export function MatrixQuestion({
               </tbody>
             </table>
           </div>
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-py-4">
+            <SubmitButton
+              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              isLastQuestion={isLastQuestion}
+              tabIndex={isCurrent ? 0 : -1}
+            />
+            {!isFirstQuestion && !isBackButtonHidden && (
+              <BackButton
+                backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+                onClick={handleBackButtonClick}
+                tabIndex={isCurrent ? 0 : -1}
+              />
+            )}
+          </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-          tabIndex={isCurrent ? 0 : -1}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={handleBackButtonClick}
-            tabIndex={isCurrent ? 0 : -1}
-          />
-        )}
-      </div>
     </form>
   );
 }
