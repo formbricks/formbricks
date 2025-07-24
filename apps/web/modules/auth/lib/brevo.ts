@@ -95,3 +95,28 @@ export const updateBrevoCustomer = async ({ id, email }: { id: string; email: TU
     logger.error(error, "Error updating user in Brevo");
   }
 };
+
+export const deleteBrevoCustomerByEmail = async ({ email }: { email: TUserEmail }) => {
+  if (!BREVO_API_KEY) {
+    return;
+  }
+
+  const encodedEmail = encodeURIComponent(email.toLowerCase());
+
+  try {
+    const res = await fetch(`https://api.brevo.com/v3/contacts/${encodedEmail}?identifierType=email_id`, {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        "api-key": BREVO_API_KEY,
+      },
+    });
+
+    if (res.status !== 204) {
+      const errorText = await res.text();
+      logger.error({ errorText }, "Error deleting user from Brevo");
+    }
+  } catch (error) {
+    logger.error(error, "Error deleting user from Brevo");
+  }
+};

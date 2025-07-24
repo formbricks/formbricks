@@ -93,3 +93,13 @@ export const ZUserCreateInput = z.object({
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
+
+export const ZUserPersonalInfoUpdateInput = ZUserUpdateInput.pick({
+  name: true,
+  email: true,
+  locale: true,
+}).extend({
+  password: ZUserPassword.optional(),
+});
+
+export type TUserPersonalInfoUpdateInput = z.infer<typeof ZUserPersonalInfoUpdateInput>;

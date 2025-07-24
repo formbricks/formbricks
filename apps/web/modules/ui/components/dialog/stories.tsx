@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Meta, StoryObj } from "@storybook/react-vite";
 import { AlertCircle } from "lucide-react";
 import { Button } from "../button";
 import {
@@ -44,14 +44,17 @@ const DefaultBodyContent = (elementCount: number): React.ReactNode => {
 };
 
 const meta: Meta<StoryProps> = {
-  title: "UI/Modal",
+  title: "UI/Dialog",
   component: DialogContent,
   tags: ["autodocs"],
   parameters: {
     layout: "centered",
-    controls: {
-      sort: "requiredFirst",
-      exclude: [],
+    controls: { sort: "alpha", exclude: [] },
+    docs: {
+      description: {
+        component:
+          "The **Dialog** component provides modal dialogs for displaying content over the main interface. It supports customizable headers, body content, footers, and various interaction patterns.",
+      },
     },
   },
   argTypes: {

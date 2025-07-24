@@ -14,7 +14,7 @@ export const useSingleUseId = (survey: TSurvey | TSurveyList) => {
     if (survey.singleUse?.enabled) {
       const response = await generateSingleUseIdsAction({
         surveyId: survey.id,
-        isEncrypted: !!survey.singleUse?.isEncrypted,
+        isEncrypted: Boolean(survey.singleUse?.isEncrypted),
         count: 1,
       });
 

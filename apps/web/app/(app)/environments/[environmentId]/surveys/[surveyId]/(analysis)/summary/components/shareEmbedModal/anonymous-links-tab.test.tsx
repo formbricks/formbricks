@@ -378,4 +378,56 @@ describe("AnonymousLinksTab", () => {
       screen.getByText("environments.surveys.share.anonymous_links.data_prefilling")
     ).toBeInTheDocument();
   });
+
+  test("shows read-only input with copy button when encryption is disabled", async () => {
+    // surveyWithSingleUse has encryption disabled
+    render(<AnonymousLinksTab {...defaultProps} survey={surveyWithSingleUse} />);
+
+    // Check if single-use link is enabled
+    expect(screen.getByTestId("toggle-single-use-link-switch")).toHaveAttribute("data-checked", "true");
+
+    // Check if encryption is disabled
+    expect(screen.getByTestId("toggle-single-use-encryption-switch")).toHaveAttribute(
+      "data-checked",
+      "false"
+    );
+
+    // Check for the custom URL display
+    const surveyUrlWithCustomSuid = `${defaultProps.surveyUrl}?suId=CUSTOM-ID`;
+    expect(screen.getByText(surveyUrlWithCustomSuid)).toBeInTheDocument();
+
+    // Check for the copy button and try to click it
+    const copyButton = screen.getByText("common.copy");
+    expect(copyButton).toBeInTheDocument();
+    await userEvent.click(copyButton);
+
+    // check if toast is called
+    expect(toast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
+
+    // Check for the alert
+    expect(
+      screen.getByText("environments.surveys.share.anonymous_links.custom_single_use_id_title")
+    ).toBeInTheDocument();
+
+    // Ensure the number of links input is not visible
+    expect(
+      screen.queryByText("environments.surveys.share.anonymous_links.number_of_links_label")
+    ).not.toBeInTheDocument();
+  });
+
+  test("hides read-only input with copy button when encryption is enabled", async () => {
+    // surveyWithEncryption has encryption enabled
+    render(<AnonymousLinksTab {...defaultProps} survey={surveyWithEncryption} />);
+
+    // Check if single-use link is enabled
+    expect(screen.getByTestId("toggle-single-use-link-switch")).toHaveAttribute("data-checked", "true");
+
+    // Check if encryption is enabled
+    expect(screen.getByTestId("toggle-single-use-encryption-switch")).toHaveAttribute("data-checked", "true");
+
+    // Ensure the number of links input is visible
+    expect(
+      screen.getByText("environments.surveys.share.anonymous_links.number_of_links_label")
+    ).toBeInTheDocument();
+  });
 });

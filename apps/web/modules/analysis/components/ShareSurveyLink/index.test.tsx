@@ -4,11 +4,30 @@ import { toast } from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { getSurveyUrl } from "../../utils";
 
 vi.mock("react-hot-toast", () => ({
   toast: {
     success: vi.fn(),
   },
+}));
+
+// Mock the useSingleUseId hook
+vi.mock("@/modules/survey/hooks/useSingleUseId", () => ({
+  useSingleUseId: vi.fn(() => ({
+    singleUseId: "test-single-use-id",
+    refreshSingleUseId: vi.fn().mockResolvedValue("test-single-use-id"),
+  })),
+}));
+
+// Mock the survey utils
+vi.mock("../../utils", () => ({
+  getSurveyUrl: vi.fn((survey, publicDomain, language) => {
+    if (language && language !== "en") {
+      return `${publicDomain}/s/${survey.id}?lang=${language}`;
+    }
+    return `${publicDomain}/s/${survey.id}`;
+  }),
 }));
 
 const survey: TSurvey = {
@@ -161,7 +180,7 @@ describe("ShareSurveyLink", () => {
     expect(toast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
   });
 
-  test("opens the preview link in a new tab when preview button is clicked (no query params)", () => {
+  test("opens the preview link in a new tab when preview button is clicked (no query params)", async () => {
     render(
       <ShareSurveyLink
         survey={survey}
@@ -175,10 +194,13 @@ describe("ShareSurveyLink", () => {
     const previewButton = screen.getByLabelText("environments.surveys.preview_survey_in_a_new_tab");
     fireEvent.click(previewButton);
 
+    // Wait for the async function to complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     expect(global.open).toHaveBeenCalledWith(`${surveyUrl}?preview=true`, "_blank");
   });
 
-  test("opens the preview link in a new tab when preview button is clicked (with query params)", () => {
+  test("opens the preview link in a new tab when preview button is clicked (with query params)", async () => {
     const surveyWithParamsUrl = `${publicDomain}/s/survey-id?foo=bar`;
     render(
       <ShareSurveyLink
@@ -192,6 +214,9 @@ describe("ShareSurveyLink", () => {
 
     const previewButton = screen.getByLabelText("environments.surveys.preview_survey_in_a_new_tab");
     fireEvent.click(previewButton);
+
+    // Wait for the async function to complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(global.open).toHaveBeenCalledWith(`${surveyWithParamsUrl}&preview=true`, "_blank");
   });
@@ -215,7 +240,9 @@ describe("ShareSurveyLink", () => {
   });
 
   test("updates the survey URL when the language is changed", () => {
-    const { rerender } = render(
+    const mockGetSurveyUrl = vi.mocked(getSurveyUrl);
+
+    render(
       <ShareSurveyLink
         survey={survey}
         publicDomain={publicDomain}
@@ -231,16 +258,7 @@ describe("ShareSurveyLink", () => {
     const germanOption = screen.getByText("German");
     fireEvent.click(germanOption);
 
-    rerender(
-      <ShareSurveyLink
-        survey={survey}
-        publicDomain={publicDomain}
-        surveyUrl={surveyUrl}
-        setSurveyUrl={setSurveyUrl}
-        locale={locale}
-      />
-    );
-    expect(setSurveyUrl).toHaveBeenCalled();
-    expect(surveyUrl).toContain("lang=de");
+    expect(mockGetSurveyUrl).toHaveBeenCalledWith(survey, publicDomain, "de");
+    expect(setSurveyUrl).toHaveBeenCalledWith(`${publicDomain}/s/${survey.id}?lang=de`);
   });
 });
