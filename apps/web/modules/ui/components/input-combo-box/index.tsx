@@ -205,7 +205,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
       {withInput && inputType !== "dropdown" && (
         <Input
           id={`${id}-input`}
-          className="min-w-0 rounded-none border-0 border-r border-slate-300"
+          className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400"
           {...inputProps}
           value={localValue ?? ""}
           onChange={onInputChange}

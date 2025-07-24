@@ -5,7 +5,7 @@ export interface TGenericCondition {
   leftOperand: {
     value: string;
     type: string;
-    meta?: Record<string, any>;
+    meta?: Record<string, unknown>;
   };
   operator: string;
   rightOperand?: {

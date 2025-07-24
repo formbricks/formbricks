@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import { isConditionGroup } from "@/modules/ui/components/conditions-editor/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,12 +38,6 @@ interface ConditionsEditorProps {
 export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: ConditionsEditorProps) {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
-
-  const isConditionGroup = (
-    condition: TGenericCondition | TGenericConditionGroup
-  ): condition is TGenericConditionGroup => {
-    return "conditions" in condition && Array.isArray((condition as TGenericConditionGroup).conditions);
-  };
 
   const handleLeftOperandChange = (condition: TGenericCondition, value: string, option?: TComboboxOption) => {
     const type = option?.meta?.type || "static";
