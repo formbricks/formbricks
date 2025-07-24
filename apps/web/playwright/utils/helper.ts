@@ -638,6 +638,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[1] }).click();
+  await page.locator("html").click();
   await page.locator("#action-0-objective").click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
@@ -667,6 +668,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: params.multiSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[1] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[2] }).click();
+  await page.locator("html").click();
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-0-1-conditionValue").click();
