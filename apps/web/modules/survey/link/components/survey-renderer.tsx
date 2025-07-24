@@ -64,7 +64,7 @@ export const renderSurvey = async ({
     return (
       <SurveyInactive
         status={survey.status}
-        surveyClosedMessage={survey.surveyClosedMessage ? survey.surveyClosedMessage : undefined}
+        surveyClosedMessage={survey.surveyClosedMessage ?? undefined}
         project={project || undefined}
       />
     );
@@ -74,7 +74,7 @@ export const renderSurvey = async ({
   let emailVerificationStatus = "";
   let verifiedEmail: string | undefined = undefined;
 
-  if (survey.isVerifyEmailEnabled && !isPreview) {
+  if (survey.isVerifyEmailEnabled) {
     const token = searchParams.verify;
 
     if (token) {
