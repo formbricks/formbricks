@@ -3,15 +3,12 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import {
-  ScrollableContainer,
-  type ScrollableContainerHandle,
-} from "@/components/wrappers/scrollable-container";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useMemo, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type {
   TSurveyQuestionChoice,
@@ -61,7 +58,6 @@ export function RankingQuestion({
   }, [question.shuffleOption, question.choices.length]);
 
   const [parent] = useAutoAnimate();
-  const scrollableRef = useRef<ScrollableContainerHandle>(null);
 
   const [error, setError] = useState<string | null>(null);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -123,8 +119,6 @@ export function RankingQuestion({
 
     if (hasIncompleteRanking) {
       setError("Please rank all items before submitting.");
-      // Scroll to bottom to show the error message
-      scrollableRef.current?.scrollToBottom();
       return;
     }
 
@@ -150,7 +144,7 @@ export function RankingQuestion({
 
   return (
     <form onSubmit={handleSubmit} className="fb-w-full">
-      <ScrollableContainer ref={scrollableRef}>
+      <ScrollableContainer>
         <div>
           {isMediaAvailable ? (
             <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />

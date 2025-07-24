@@ -1,8 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
-import { createRef } from "preact";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { ScrollableContainer, type ScrollableContainerHandle } from "./scrollable-container";
+import { ScrollableContainer } from "./scrollable-container";
 
 // Mock cn utility
 vi.mock("@/lib/utils", () => ({
@@ -34,38 +33,6 @@ describe("ScrollableContainer", () => {
       </ScrollableContainer>
     );
     expect(screen.getByText("Test Content")).toBeInTheDocument();
-  });
-
-  test("scrollToBottom functionality works correctly", async () => {
-    const ref = createRef<ScrollableContainerHandle>();
-    const { container } = render(
-      <ScrollableContainer ref={ref}>
-        <div style={{ height: "200px" }}>Tall Content</div>
-      </ScrollableContainer>
-    );
-
-    const scrollableDiv = container.querySelector<HTMLElement>(".fb-overflow-auto");
-    expect(scrollableDiv).toBeInTheDocument();
-
-    if (scrollableDiv) {
-      setScrollProps(scrollableDiv, 200, 100, 0); // Start at top
-
-      // Mock scrollTop setter
-      let currentScrollTop = 0;
-      Object.defineProperty(scrollableDiv, "scrollTop", {
-        get: () => currentScrollTop,
-        set: (value) => {
-          currentScrollTop = value;
-        },
-        configurable: true,
-      });
-
-      // Call scrollToBottom
-      ref.current?.scrollToBottom();
-
-      // Check that scrollTop was set to scrollHeight
-      expect(currentScrollTop).toBe(200);
-    }
   });
 
   test("initial state with short content (not scrollable)", async () => {
