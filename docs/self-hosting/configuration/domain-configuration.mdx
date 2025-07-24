@@ -35,6 +35,10 @@ Formbricks supports a powerful domain separation feature that allows you to serv
 - Restrict admin functionality to the private domain
 - Ensure authentication and sensitive operations only occur on the private domain
 
+<Warning>
+Publicly available images uploaded before the domain split (logos, images in Picture Select questions, etc.) will continue to be served from the Private Domain. **To protect your Private Domain, please reupload public images after the successful setup of the domain split.**
+</Warning>
+
 ### Why Use Domain Split?
 
 - **Enhanced Security**: Separate public-facing surveys from your admin interface
@@ -144,5 +148,14 @@ If `PUBLIC_URL` is not set:
 - All content (admin and public) is served from `WEBAPP_URL`
 - The system behaves as a single domain setup
 - No domain separation occurs
+
+### Reverting to a Single Domain
+While it's possible to revert to a Single Domain setup, please take into account the following:
+
+1. All image links and uploaded files are stored in the database, so they will continue to link to the Public Domain **hence the links will break.** You'll need to reupload the images, like you did when you set up the domain split. 
+2. Any survey link shared to with the Public Domain **will break.**
+3. API calls to the Public Domain **will break**, unless updated.
+
+As of now, Formbricks does not provide an automated migration between domain setups.
 
 If you have any questions or require help, feel free to reach out to us on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
