@@ -227,7 +227,6 @@ const mockSurvey: TSurvey = {
   recaptcha: null,
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
-  resultShareKey: null,
 };
 
 const mockAppSurvey: TSurvey = {

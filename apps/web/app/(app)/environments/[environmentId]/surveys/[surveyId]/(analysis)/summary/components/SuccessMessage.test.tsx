@@ -74,7 +74,6 @@ describe("SuccessMessage", () => {
     surveyClosedMessage: null,
     hiddenFields: { enabled: false, fieldIds: [] },
     variables: [],
-    resultShareKey: null,
     displayPercentage: null,
   } as unknown as TSurvey;
 

@@ -44,7 +44,6 @@
             "xm-and-surveys/surveys/general-features/multi-language-surveys",
             "xm-and-surveys/surveys/general-features/partial-submissions",
             "xm-and-surveys/surveys/general-features/recall",
-            "xm-and-surveys/surveys/general-features/shareable-dashboards",
             "xm-and-surveys/surveys/general-features/schedule-start-end-dates",
             "xm-and-surveys/surveys/general-features/metadata",
             "xm-and-surveys/surveys/general-features/variables",
@@ -449,11 +448,6 @@
       "destination": "/docs/xm-and-surveys/surveys/general-features/recall",
       "permanent": true,
       "source": "/docs/link-surveys/global/recall"
-    },
-    {
-      "destination": "/docs/xm-and-surveys/surveys/general-features/shareable-dashboards",
-      "permanent": true,
-      "source": "/docs/link-surveys/global/shareable-dashboards"
     },
     {
       "destination": "/docs/xm-and-surveys/surveys/link-surveys/single-use-links",
