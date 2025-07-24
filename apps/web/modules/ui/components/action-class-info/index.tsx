@@ -8,12 +8,12 @@ interface ActionClassInfoProps {
   className?: string;
 }
 
+const InfoItem = ({ children }: { children: React.ReactNode }) => (
+  <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">{children}</span>
+);
+
 export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfoProps) => {
   const { t } = useTranslate();
-
-  const InfoItem = ({ children }: { children: React.ReactNode }) => (
-    <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">{children}</span>
-  );
 
   const renderUrlFilters = () => {
     const urlFilters = actionClass.noCodeConfig?.urlFilters;

@@ -134,7 +134,7 @@ describe("ActionClassInfo", () => {
     render(<ActionClassInfo actionClass={mockCodeActionClass} />);
 
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.key"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.key"))
     ).toBeInTheDocument();
     expect(screen.getByText("test-key")).toBeInTheDocument();
   });
@@ -143,7 +143,7 @@ describe("ActionClassInfo", () => {
     render(<ActionClassInfo actionClass={mockNoCodeClickActionClass} />);
 
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.css_selector"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.css_selector"))
     ).toBeInTheDocument();
     expect(screen.getByText(".button-class")).toBeInTheDocument();
   });
@@ -152,7 +152,7 @@ describe("ActionClassInfo", () => {
     render(<ActionClassInfo actionClass={mockNoCodeClickActionClass} />);
 
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.inner_text"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.inner_text"))
     ).toBeInTheDocument();
     expect(screen.getByText("Click me")).toBeInTheDocument();
   });
@@ -161,7 +161,7 @@ describe("ActionClassInfo", () => {
     const { container } = render(<ActionClassInfo actionClass={mockNoCodeClickActionClass} />);
 
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.url_filters"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.url_filters"))
     ).toBeInTheDocument();
     expect(container).toHaveTextContent("exactMatch");
     expect(container).toHaveTextContent("https://example.com");
@@ -183,17 +183,17 @@ describe("ActionClassInfo", () => {
 
     expect(screen.getByText("Test nocode pageview action description")).toBeInTheDocument();
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.url_filters"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.url_filters"))
     ).toBeInTheDocument();
     expect(screen.getByText("startsWith")).toBeInTheDocument();
     expect(screen.getByText("https://app.example.com")).toBeInTheDocument();
 
     // Should not render CSS selector or inner HTML for pageView
     expect(
-      screen.queryByText((content, element) => content.includes("environments.surveys.edit.css_selector"))
+      screen.queryByText((content) => content.includes("environments.surveys.edit.css_selector"))
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText((content, element) => content.includes("environments.surveys.edit.inner_text"))
+      screen.queryByText((content) => content.includes("environments.surveys.edit.inner_text"))
     ).not.toBeInTheDocument();
   });
 
@@ -230,10 +230,10 @@ describe("ActionClassInfo", () => {
     render(<ActionClassInfo actionClass={actionWithoutCssSelector} />);
 
     expect(
-      screen.queryByText((content, element) => content.includes("environments.surveys.edit.css_selector"))
+      screen.queryByText((content) => content.includes("environments.surveys.edit.css_selector"))
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.inner_text"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.inner_text"))
     ).toBeInTheDocument();
   });
 
@@ -252,10 +252,10 @@ describe("ActionClassInfo", () => {
     render(<ActionClassInfo actionClass={actionWithoutInnerHtml} />);
 
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.css_selector"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.css_selector"))
     ).toBeInTheDocument();
     expect(
-      screen.queryByText((content, element) => content.includes("environments.surveys.edit.inner_text"))
+      screen.queryByText((content) => content.includes("environments.surveys.edit.inner_text"))
     ).not.toBeInTheDocument();
   });
 
@@ -299,7 +299,7 @@ describe("ActionClassInfo", () => {
     const { container } = render(<ActionClassInfo actionClass={mockRegexActionClass} />);
 
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.url_filters"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.url_filters"))
     ).toBeInTheDocument();
     expect(container).toHaveTextContent("matchesRegex");
     expect(container).toHaveTextContent("^https://app\\.example\\.com/user/\\d+$");
@@ -311,7 +311,7 @@ describe("ActionClassInfo", () => {
     const { container } = render(<ActionClassInfo actionClass={mockMixedFilterActionClass} />);
 
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.url_filters"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.url_filters"))
     ).toBeInTheDocument();
 
     // Check all filter types are displayed
@@ -324,11 +324,11 @@ describe("ActionClassInfo", () => {
 
     // Check element selector is also displayed
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.css_selector"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.css_selector"))
     ).toBeInTheDocument();
     expect(screen.getByText(".submit-btn")).toBeInTheDocument();
     expect(
-      screen.getByText((content, element) => content.includes("environments.surveys.edit.inner_text"))
+      screen.getByText((content) => content.includes("environments.surveys.edit.inner_text"))
     ).toBeInTheDocument();
     expect(screen.getByText("Submit")).toBeInTheDocument();
   });
