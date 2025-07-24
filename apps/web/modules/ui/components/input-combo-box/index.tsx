@@ -257,7 +257,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 />
               </div>
             ) : (
-              <button autoFocus className="sr-only" aria-hidden />
+              <button autoFocus className="sr-only" aria-hidden type="button" />
             )}
 
             <CommandList className="p-1">
