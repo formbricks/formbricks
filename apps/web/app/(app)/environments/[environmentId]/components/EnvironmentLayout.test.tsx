@@ -104,7 +104,7 @@ const mockUser = {
   identityProvider: "email",
   createdAt: new Date(),
   updatedAt: new Date(),
-  notificationSettings: { alert: {}, weeklySummary: {} },
+  notificationSettings: { alert: {} },
 } as unknown as TUser;
 
 const mockOrganization = {

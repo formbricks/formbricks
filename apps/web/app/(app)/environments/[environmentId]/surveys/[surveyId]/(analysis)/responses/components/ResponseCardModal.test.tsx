@@ -139,7 +139,7 @@ const mockUser = {
   updatedAt: new Date(),
   role: "project_manager",
   objective: "increase_conversion",
-  notificationSettings: { alert: {}, weeklySummary: {}, unsubscribedOrganizationIds: [] },
+  notificationSettings: { alert: {}, unsubscribedOrganizationIds: [] },
 } as unknown as TUser;
 
 const mockEnvironmentTags: TTag[] = [

@@ -253,7 +253,6 @@ const mockUser: TUser = {
   isActive: true,
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
     unsubscribedOrganizationIds: [],
   },
 };

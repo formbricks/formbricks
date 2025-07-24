@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TUser } from "@formbricks/types/user";
 import { EditAlerts } from "./components/EditAlerts";
-import { EditWeeklySummary } from "./components/EditWeeklySummary";
 import Page from "./page";
 import { Membership } from "./types";
 
@@ -58,9 +57,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("./components/EditAlerts", () => ({
   EditAlerts: vi.fn(() => <div>EditAlertsComponent</div>),
 }));
-vi.mock("./components/EditWeeklySummary", () => ({
-  EditWeeklySummary: vi.fn(() => <div>EditWeeklySummaryComponent</div>),
-}));
+
 vi.mock("./components/IntegrationsTip", () => ({
   IntegrationsTip: () => <div>IntegrationsTipComponent</div>,
 }));
@@ -71,7 +68,6 @@ const mockUser: Partial<TUser> = {
   email: "test@example.com",
   notificationSettings: {
     alert: { "survey-old": true },
-    weeklySummary: { "project-old": true },
     unsubscribedOrganizationIds: ["org-unsubscribed"],
   },
 };
@@ -137,13 +133,6 @@ describe("NotificationsPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("EditAlertsComponent")).toBeInTheDocument();
     expect(screen.getByText("IntegrationsTipComponent")).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.settings.notifications.weekly_summary_projects")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday")
-    ).toBeInTheDocument();
-    expect(screen.getByText("EditWeeklySummaryComponent")).toBeInTheDocument();
 
     // The actual `user.notificationSettings` passed to EditAlerts will be a new object
     // after `setCompleteNotificationSettings` processes it.
@@ -157,15 +146,11 @@ describe("NotificationsPage", () => {
     // It iterates memberships, then projects, then environments, then surveys.
     // `newNotificationSettings.alert[survey.id] = notificationSettings[survey.id]?.responseFinished || (notificationSettings.alert && notificationSettings.alert[survey.id]) || false;`
     // This means only survey IDs found in memberships will be in the new `alert` object.
-    // `newNotificationSettings.weeklySummary[project.id]` also only adds project IDs from memberships.
 
     const finalExpectedSettings = {
       alert: {
         "survey-1": false,
         "survey-2": false,
-      },
-      weeklySummary: {
-        "project-1": false,
       },
       unsubscribedOrganizationIds: ["org-unsubscribed"],
     };
@@ -175,11 +160,6 @@ describe("NotificationsPage", () => {
     expect(editAlertsCall.environmentId).toBe(mockParams.environmentId);
     expect(editAlertsCall.autoDisableNotificationType).toBe(mockSearchParams.type);
     expect(editAlertsCall.autoDisableNotificationElementId).toBe(mockSearchParams.elementId);
-
-    const editWeeklySummaryCall = vi.mocked(EditWeeklySummary).mock.calls[0][0];
-    expect(editWeeklySummaryCall.user.notificationSettings).toEqual(finalExpectedSettings);
-    expect(editWeeklySummaryCall.memberships).toEqual(mockMemberships);
-    expect(editWeeklySummaryCall.environmentId).toBe(mockParams.environmentId);
   });
 
   test("throws error if session is not found", async () => {
@@ -207,21 +187,15 @@ describe("NotificationsPage", () => {
     render(PageComponent);
 
     expect(screen.getByText("EditAlertsComponent")).toBeInTheDocument();
-    expect(screen.getByText("EditWeeklySummaryComponent")).toBeInTheDocument();
 
     const expectedEmptySettings = {
       alert: {},
-      weeklySummary: {},
       unsubscribedOrganizationIds: [],
     };
 
     const editAlertsCall = vi.mocked(EditAlerts).mock.calls[0][0];
     expect(editAlertsCall.user.notificationSettings).toEqual(expectedEmptySettings);
     expect(editAlertsCall.memberships).toEqual([]);
-
-    const editWeeklySummaryCall = vi.mocked(EditWeeklySummary).mock.calls[0][0];
-    expect(editWeeklySummaryCall.user.notificationSettings).toEqual(expectedEmptySettings);
-    expect(editWeeklySummaryCall.memberships).toEqual([]);
   });
 
   test("handles legacy notification settings correctly", async () => {
@@ -229,7 +203,6 @@ describe("NotificationsPage", () => {
       id: "user-legacy",
       notificationSettings: {
         "survey-1": { responseFinished: true }, // Legacy alert for survey-1
-        weeklySummary: { "project-1": true },
         unsubscribedOrganizationIds: [],
       } as any, // To allow legacy structure
     };
@@ -245,9 +218,6 @@ describe("NotificationsPage", () => {
       alert: {
         "survey-1": true, // Should be true due to legacy setting
         "survey-2": false, // Default for other surveys in membership
-      },
-      weeklySummary: {
-        "project-1": true, // From user's weeklySummary
       },
       unsubscribedOrganizationIds: [],
     };
