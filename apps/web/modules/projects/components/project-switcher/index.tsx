@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/cn";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import {
@@ -33,7 +32,6 @@ interface ProjectSwitcherProps {
   isLicenseActive: boolean;
   environmentId: string;
   isOwnerOrManager: boolean;
-  organizationTeams: TOrganizationTeam[];
   canDoRoleManagement: boolean;
 }
 
@@ -48,7 +46,6 @@ export const ProjectSwitcher = ({
   isLicenseActive,
   environmentId,
   isOwnerOrManager,
-  organizationTeams,
   canDoRoleManagement,
 }: ProjectSwitcherProps) => {
   const [openLimitModal, setOpenLimitModal] = useState(false);
@@ -62,19 +59,13 @@ export const ProjectSwitcher = ({
     router.push(`/projects/${projectId}/`);
   };
 
-  const handleAddProject = (organizationId: string) => {
+  const handleAddProject = () => {
     if (projects.length >= organizationProjectsLimit) {
       setOpenLimitModal(true);
       return;
     }
+    console.log("projects", projects);
 
-    // If this is the first project, use the onboarding flow
-    if (projects.length === 0) {
-      router.push(`/organizations/${organizationId}/projects/new/mode`);
-      return;
-    }
-
-    // For subsequent projects, open the simple modal
     setOpenCreateProjectModal(true);
   };
 
@@ -217,9 +208,7 @@ export const ProjectSwitcher = ({
           {isOwnerOrManager && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleAddProject(organization.id)}
-                icon={<PlusIcon className="mr-2 h-4 w-4" />}>
+              <DropdownMenuItem onClick={handleAddProject} icon={<PlusIcon className="mr-2 h-4 w-4" />}>
                 <span>{t("common.add_project")}</span>
               </DropdownMenuItem>
             </>
@@ -239,7 +228,6 @@ export const ProjectSwitcher = ({
           open={openCreateProjectModal}
           setOpen={setOpenCreateProjectModal}
           organizationId={organization.id}
-          organizationTeams={organizationTeams}
           canDoRoleManagement={canDoRoleManagement}
         />
       )}

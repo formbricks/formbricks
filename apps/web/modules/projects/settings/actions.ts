@@ -1,5 +1,6 @@
 "use server";
 
+import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getOrganization } from "@/lib/organization/service";
 import { getProject } from "@/lib/project/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -79,3 +80,14 @@ export const updateProjectAction = authenticatedActionClient.schema(ZUpdateProje
     }
   )
 );
+
+const ZGetTeamsByOrganizationIdAction = z.object({
+  organizationId: ZId,
+});
+
+export const getTeamsByOrganizationIdAction = authenticatedActionClient
+  .schema(ZGetTeamsByOrganizationIdAction)
+  .action(async ({ parsedInput }: { parsedInput: { organizationId: string } }) => {
+    const teams = await getTeamsByOrganizationId(parsedInput.organizationId);
+    return teams;
+  });

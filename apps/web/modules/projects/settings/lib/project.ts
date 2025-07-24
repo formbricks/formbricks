@@ -125,13 +125,6 @@ export const createProject = async (
     ) {
       throw new InvalidInputError("A project with this name already exists in your organization");
     }
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A project with this name already exists in this organization");
-      }
-      throw new DatabaseError(error.message);
-    }
     throw error;
   }
 };

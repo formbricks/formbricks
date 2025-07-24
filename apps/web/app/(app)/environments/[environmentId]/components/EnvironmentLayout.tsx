@@ -18,7 +18,6 @@ import {
   getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -52,10 +51,10 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     throw new Error(t("common.environment_not_found"));
   }
 
-  const [projects, environments, organizationTeams] = await Promise.all([
+  const [projects, environments, canDoRoleManagement] = await Promise.all([
     getUserProjects(user.id, organization.id),
     getEnvironments(environment.projectId),
-    getTeamsByOrganizationId(organization.id),
+    getRoleManagementPermission(organization.billing.plan),
   ]);
 
   if (!projects || !environments || !organizations) {
@@ -75,7 +74,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
-  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   let peopleCount = 0;
   let responseCount = 0;
@@ -123,7 +121,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isLicenseActive={active}
-          organizationTeams={organizationTeams ?? []}
           canDoRoleManagement={canDoRoleManagement}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">

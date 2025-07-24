@@ -1,8 +1,9 @@
 "use client";
 
+import { TOrganizationTeam } from "@/app/(app)/(onboarding)/types/onboarding";
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/team";
+import { getTeamsByOrganizationIdAction } from "@/modules/projects/settings/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -26,6 +27,7 @@ import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
@@ -42,7 +44,6 @@ interface CreateProjectModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   organizationId: string;
-  organizationTeams: TOrganizationTeam[];
   canDoRoleManagement: boolean;
 }
 
@@ -50,11 +51,25 @@ export const CreateProjectModal = ({
   open,
   setOpen,
   organizationId,
-  organizationTeams,
   canDoRoleManagement,
 }: CreateProjectModalProps) => {
   const { t } = useTranslate();
   const router = useRouter();
+
+  const [organizationTeams, setOrganizationTeams] = useState<TOrganizationTeam[]>([]);
+
+  useEffect(() => {
+    const fetchOrganizationTeams = async () => {
+      const response = await getTeamsByOrganizationIdAction({ organizationId });
+      if (response?.data) {
+        setOrganizationTeams(response.data);
+      } else {
+        const errorMessage = getFormattedErrorMessage(response);
+        toast.error(errorMessage);
+      }
+    };
+    fetchOrganizationTeams();
+  }, [organizationId]);
 
   const form = useForm<TCreateProjectForm>({
     resolver: zodResolver(ZCreateProjectForm),
@@ -72,35 +87,30 @@ export const CreateProjectModal = ({
   }));
 
   const onSubmit = async (data: TCreateProjectForm) => {
-    try {
-      const createProjectResponse = await createProjectAction({
-        organizationId,
-        data: {
-          name: data.name,
-          teamIds: data.teamIds || [],
-        },
-      });
+    const createProjectResponse = await createProjectAction({
+      organizationId,
+      data: {
+        name: data.name,
+        teamIds: data.teamIds || [],
+      },
+    });
 
-      if (createProjectResponse?.data) {
-        // Get production environment
-        const productionEnvironment = createProjectResponse.data.environments.find(
-          (environment) => environment.type === "production"
-        );
+    if (createProjectResponse?.data) {
+      // Get production environment
+      const productionEnvironment = createProjectResponse.data.environments.find(
+        (environment) => environment.type === "production"
+      );
 
-        if (productionEnvironment) {
-          toast.success("Project created successfully");
-          setOpen(false);
-          form.reset();
-          // Redirect to the new project's surveys page
-          router.push(`/environments/${productionEnvironment.id}/surveys`);
-        }
-      } else {
-        const errorMessage = getFormattedErrorMessage(createProjectResponse);
-        toast.error(errorMessage);
+      if (productionEnvironment) {
+        toast.success("Project created successfully");
+        setOpen(false);
+        form.reset();
+        // Redirect to the new project's surveys page
+        router.push(`/environments/${productionEnvironment.id}/surveys`);
       }
-    } catch (error) {
-      toast.error(t("organizations.projects.new.settings.project_creation_failed"));
-      console.error(error);
+    } else {
+      const errorMessage = getFormattedErrorMessage(createProjectResponse);
+      toast.error(errorMessage);
     }
   };
 
@@ -127,7 +137,7 @@ export const CreateProjectModal = ({
                   <FormItem>
                     <FormLabel>{t("common.project_name")}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g. Formbricks" autoFocus />
+                      <Input {...field} placeholder={t("common.project_name_placeholder")} autoFocus />
                     </FormControl>
                     {error?.message && <FormError className="text-left">{error.message}</FormError>}
                   </FormItem>
@@ -146,7 +156,7 @@ export const CreateProjectModal = ({
                           value={field.value || []}
                           options={organizationTeamsOptions}
                           onChange={(teamIds) => field.onChange(teamIds)}
-                          placeholder="Select teams"
+                          placeholder={t("common.select_teams")}
                         />
                       </FormControl>
                       {error?.message && <FormError className="text-left">{error.message}</FormError>}
