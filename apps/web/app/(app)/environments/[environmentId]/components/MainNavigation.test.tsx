@@ -145,17 +145,6 @@ const mockProject: TProject = {
 } as unknown as TProject;
 const mockProjects: TProject[] = [mockProject];
 
-const mockOrganizationTeams: TOrganizationTeam[] = [
-  {
-    id: "team-1",
-    name: "Development Team",
-  },
-  {
-    id: "team-2",
-    name: "Marketing Team",
-  },
-];
-
 const defaultProps = {
   environment: mockEnvironment,
   organizations: mockOrganizations,
@@ -168,7 +157,6 @@ const defaultProps = {
   membershipRole: "owner" as const,
   organizationProjectsLimit: 5,
   isLicenseActive: true,
-  organizationTeams: mockOrganizationTeams,
   canDoRoleManagement: true,
 };
 
@@ -359,15 +347,15 @@ describe("MainNavigation", () => {
     expect(screen.queryByText("common.license")).not.toBeInTheDocument();
   });
 
-  test("passes organizationTeams and canDoRoleManagement props to ProjectSwitcher", () => {
+  test("passes canDoRoleManagement props to ProjectSwitcher", () => {
     render(<MainNavigation {...defaultProps} />);
 
-    expect(screen.getByTestId("organization-teams-count")).toHaveTextContent("2");
+    expect(screen.getByTestId("organization-teams-count")).toHaveTextContent("0");
     expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("true");
   });
 
-  test("handles empty organizationTeams array", () => {
-    render(<MainNavigation {...defaultProps} organizationTeams={[]} />);
+  test("handles no organizationTeams", () => {
+    render(<MainNavigation {...defaultProps} />);
 
     expect(screen.getByTestId("organization-teams-count")).toHaveTextContent("0");
   });

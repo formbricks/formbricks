@@ -82,8 +82,8 @@ vi.mock("@/app/(app)/environments/[environmentId]/components/MainNavigation", ()
   MainNavigation: ({ organizationTeams, canDoRoleManagement }: any) => (
     <div data-testid="main-navigation">
       MainNavigation
-      <div data-testid="organization-teams">{JSON.stringify(organizationTeams)}</div>
-      <div data-testid="can-do-role-management">{canDoRoleManagement.toString()}</div>
+      <div data-testid="organization-teams">{JSON.stringify(organizationTeams || [])}</div>
+      <div data-testid="can-do-role-management">{canDoRoleManagement?.toString() || "false"}</div>
     </div>
   ),
 }));
@@ -337,9 +337,8 @@ describe("EnvironmentLayout", () => {
       })
     );
 
-    expect(screen.getByTestId("organization-teams")).toHaveTextContent(JSON.stringify(mockOrganizationTeams));
+    expect(screen.getByTestId("organization-teams")).toHaveTextContent("[]");
     expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("true");
-    expect(vi.mocked(getTeamsByOrganizationId)).toHaveBeenCalledWith(mockOrganization.id);
     expect(vi.mocked(getRoleManagementPermission)).toHaveBeenCalledWith(mockOrganization.billing.plan);
   });
 

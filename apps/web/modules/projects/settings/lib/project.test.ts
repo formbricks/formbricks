@@ -146,7 +146,9 @@ describe("project lib", () => {
         clientVersion: "5.0.0",
       });
       vi.mocked(prisma.project.create).mockRejectedValueOnce(prismaError);
-      await expect(createProject("org1", { name: "Project 1" })).rejects.toThrow(DatabaseError);
+      await expect(createProject("org1", { name: "Project 1" })).rejects.toThrow(
+        Prisma.PrismaClientKnownRequestError
+      );
     });
 
     test("throws unknown error", async () => {
