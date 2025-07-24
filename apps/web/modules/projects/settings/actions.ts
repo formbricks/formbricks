@@ -87,7 +87,25 @@ const ZGetTeamsByOrganizationIdAction = z.object({
 
 export const getTeamsByOrganizationIdAction = authenticatedActionClient
   .schema(ZGetTeamsByOrganizationIdAction)
-  .action(async ({ parsedInput }: { parsedInput: { organizationId: string } }) => {
-    const teams = await getTeamsByOrganizationId(parsedInput.organizationId);
-    return teams;
-  });
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: { organizationId: string };
+    }) => {
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: parsedInput.organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
+      const teams = await getTeamsByOrganizationId(parsedInput.organizationId);
+      return teams;
+    }
+  );

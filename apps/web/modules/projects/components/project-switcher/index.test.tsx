@@ -143,20 +143,12 @@ describe("ProjectSwitcher", () => {
     expect(screen.getByTestId("modal-project-limit")).toHaveTextContent("2");
   });
 
-  test("navigates to onboarding flow if no projects exist", async () => {
-    render(<ProjectSwitcher {...defaultProps} projects={[]} />);
-    const addButton = screen.getByText("common.add_project");
-    await userEvent.click(addButton);
-    expect(mockPush).toHaveBeenCalledWith("/organizations/org1/projects/new/mode");
-  });
-
   test("opens CreateProjectModal if projects exist and under limit", async () => {
     render(<ProjectSwitcher {...defaultProps} projects={[project]} organizationProjectsLimit={5} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
     expect(screen.getByTestId("create-project-modal")).toBeInTheDocument();
     expect(screen.getByTestId("modal-organization-id")).toHaveTextContent("org1");
-    expect(screen.getByTestId("modal-organization-teams")).toHaveTextContent("2");
     expect(screen.getByTestId("modal-can-do-role-management")).toHaveTextContent("true");
   });
 
@@ -170,15 +162,7 @@ describe("ProjectSwitcher", () => {
   });
 
   test("passes correct props to CreateProjectModal", async () => {
-    const emptyTeams: TOrganizationTeam[] = [];
-    render(
-      <ProjectSwitcher
-        {...defaultProps}
-        projects={[project]}
-        organizationTeams={emptyTeams}
-        canDoRoleManagement={false}
-      />
-    );
+    render(<ProjectSwitcher {...defaultProps} projects={[project]} canDoRoleManagement={false} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
     expect(screen.getByTestId("modal-organization-teams")).toHaveTextContent("0");

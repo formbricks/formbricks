@@ -64,7 +64,6 @@ export const ProjectSwitcher = ({
       setOpenLimitModal(true);
       return;
     }
-    console.log("projects", projects);
 
     setOpenCreateProjectModal(true);
   };
