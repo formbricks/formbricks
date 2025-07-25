@@ -114,7 +114,6 @@ const mockSurveys: TSurvey[] = [
     languages: [],
     styling: null,
     segment: null,
-    resultShareKey: null,
     displayPercentage: null,
     closeOnDate: null,
     runOnDate: null,

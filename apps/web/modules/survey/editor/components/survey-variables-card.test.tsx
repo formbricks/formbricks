@@ -36,7 +36,6 @@ const mockSurvey = {
   surveyClosedMessage: null,
   singleUse: null,
   pin: null,
-  resultShareKey: null,
   displayPercentage: null,
   welcomeCard: { enabled: false } as TSurvey["welcomeCard"],
   endings: [],

@@ -36,7 +36,7 @@ export const createOrganizationAction = authenticatedActionClient.schema(ZCreate
         accepted: true,
       });
 
-      const project = await createProject(newOrganization.id, {
+      await createProject(newOrganization.id, {
         name: "My Project",
       });
 
@@ -45,10 +45,7 @@ export const createOrganizationAction = authenticatedActionClient.schema(ZCreate
         alert: {
           ...ctx.user.notificationSettings?.alert,
         },
-        weeklySummary: {
-          ...ctx.user.notificationSettings?.weeklySummary,
-          [project.id]: true,
-        },
+
         unsubscribedOrganizationIds: Array.from(
           new Set([...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id]) // NOSONAR // We want to check for empty strings too
         ),

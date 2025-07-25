@@ -30,7 +30,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
             {enabledLanguages.map((surveyLanguage) => (
               <button
                 key={surveyLanguage.language.code}
-                className="rounded-md p-2 hover:cursor-pointer hover:bg-slate-700"
+                className="w-full rounded-md p-2 text-start hover:cursor-pointer hover:bg-slate-700"
                 onClick={() => {
                   setLanguage(surveyLanguage.language.code);
                   setShowLanguageSelect(false);

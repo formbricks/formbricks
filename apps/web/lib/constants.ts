@@ -154,15 +154,6 @@ export const SURVEY_BG_COLORS = [
 ];
 
 // Rate Limiting
-export const SIGNUP_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 30,
-};
-export const LOGIN_RATE_LIMIT = {
-  interval: 15 * 60, // 15 minutes
-  allowedPerInterval: 30,
-};
-
 export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 100,
@@ -170,23 +161,6 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
 export const MANAGEMENT_API_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 100,
-};
-
-export const SHARE_RATE_LIMIT = {
-  interval: 60 * 1, // 1 minutes
-  allowedPerInterval: 30,
-};
-export const FORGET_PASSWORD_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 5, // Limit to 5 requests per hour
-};
-export const RESET_PASSWORD_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 5, // Limit to 5 requests per hour
-};
-export const VERIFY_EMAIL_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 10, // Limit to 10 requests per hour
 };
 export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
   interval: 60, // 1 minute
@@ -201,7 +175,6 @@ export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
-export const UNKEY_ROOT_KEY = env.UNKEY_ROOT_KEY;
 
 export const BREVO_API_KEY = env.BREVO_API_KEY;
 export const BREVO_LIST_ID = env.BREVO_LIST_ID;
@@ -297,11 +270,6 @@ export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
 export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? "manager";
 
-export const AUDIT_LOG_ENABLED =
-  env.AUDIT_LOG_ENABLED === "1" &&
-  env.REDIS_URL &&
-  env.REDIS_URL !== "" &&
-  env.ENCRYPTION_KEY &&
-  env.ENCRYPTION_KEY !== ""; // The audit log requires Redis to be configured
+export const AUDIT_LOG_ENABLED = env.AUDIT_LOG_ENABLED === "1";
 export const AUDIT_LOG_GET_USER_IP = env.AUDIT_LOG_GET_USER_IP === "1";
 export const SESSION_MAX_AGE = Number(env.SESSION_MAX_AGE) || 86400;

@@ -1,4 +1,6 @@
 import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
+import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
@@ -11,7 +13,6 @@ const EnvLayout = async (props: {
   children: React.ReactNode;
 }) => {
   const params = await props.params;
-
   const { children } = props;
 
   const { t, session, user, organization } = await environmentIdLayoutChecks(params.environmentId);
@@ -24,9 +25,17 @@ const EnvLayout = async (props: {
     throw new Error(t("common.user_not_found"));
   }
 
-  const project = await getProjectByEnvironmentId(params.environmentId);
+  const [project, environment] = await Promise.all([
+    getProjectByEnvironmentId(params.environmentId),
+    getEnvironment(params.environmentId),
+  ]);
+
   if (!project) {
     throw new Error(t("common.project_not_found"));
+  }
+
+  if (!environment) {
+    throw new Error(t("common.environment_not_found"));
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
@@ -42,9 +51,11 @@ const EnvLayout = async (props: {
       user={user}
       organization={organization}>
       <EnvironmentStorageHandler environmentId={params.environmentId} />
-      <EnvironmentLayout environmentId={params.environmentId} session={session}>
-        {children}
-      </EnvironmentLayout>
+      <EnvironmentContextWrapper environment={environment} project={project}>
+        <EnvironmentLayout environmentId={params.environmentId} session={session}>
+          {children}
+        </EnvironmentLayout>
+      </EnvironmentContextWrapper>
     </EnvironmentIdBaseLayout>
   );
 };

@@ -49,7 +49,6 @@ const mockUser = {
   email: "test@example.com",
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
     unsubscribedOrganizationIds: [],
   },
   role: "project_manager",

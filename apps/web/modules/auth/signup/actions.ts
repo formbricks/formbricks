@@ -11,6 +11,8 @@ import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
+import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
@@ -122,7 +124,7 @@ async function handleInviteAcceptance(
   await updateUser(user.id, {
     notificationSettings: {
       alert: {},
-      weeklySummary: {},
+
       unsubscribedOrganizationIds: [invite.organizationId],
     },
   });
@@ -147,7 +149,7 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     notificationSettings: {
       ...user.notificationSettings,
       alert: { ...user.notificationSettings?.alert },
-      weeklySummary: { ...user.notificationSettings?.weeklySummary },
+
       unsubscribedOrganizationIds: Array.from(
         new Set([...(user.notificationSettings?.unsubscribedOrganizationIds ?? []), organization.id])
       ),
@@ -177,6 +179,7 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(
     "created",
     "user",
     async ({ ctx, parsedInput }: { ctx: ActionClientCtx; parsedInput: Record<string, any> }) => {
+      await applyIPRateLimit(rateLimitConfigs.auth.signup);
       await verifyTurnstileIfConfigured(parsedInput.turnstileToken, parsedInput.email, parsedInput.name);
 
       const hashedPassword = await hashPassword(parsedInput.password);

@@ -106,7 +106,7 @@ const mockUser = {
   identityProvider: "email",
   createdAt: new Date(),
   updatedAt: new Date(),
-  notificationSettings: { alert: {}, weeklySummary: {} },
+  notificationSettings: { alert: {} },
   role: "project_manager",
   objective: "other",
 } as unknown as TUser;

@@ -109,14 +109,14 @@ export function Survey({
             setErrorType(errorCode);
 
             if (getSetIsError) {
-              getSetIsError((_prev) => { });
+              getSetIsError((_prev) => {});
             }
           },
           onResponseSendingFinished: () => {
             setIsResponseSendingFinished(true);
 
             if (getSetIsResponseSendingFinished) {
-              getSetIsResponseSendingFinished((_prev) => { });
+              getSetIsResponseSendingFinished((_prev) => {});
             }
           },
         },
@@ -131,6 +131,16 @@ export function Survey({
 
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
+
+  const originalQuestionRequiredStates = useMemo(() => {
+    return survey.questions.reduce<Record<string, boolean>>((acc, question) => {
+      acc[question.id] = question.required;
+      return acc;
+    }, {});
+  }, [survey.questions]);
+
+  // state to keep track of the questions that were made required by each specific question's logic
+  const questionRequiredByMap = useRef<Record<string, string[]>>({});
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {
@@ -337,6 +347,28 @@ export function Survey({
     }));
   };
 
+  const revertRequiredChangesByQuestion = (questionId: string): void => {
+    const questionsToRevert = questionRequiredByMap.current[questionId] || [];
+
+    if (questionsToRevert.length > 0) {
+      setlocalSurvey((prevSurvey) => ({
+        ...prevSurvey,
+        questions: prevSurvey.questions.map((question) => {
+          if (questionsToRevert.includes(question.id)) {
+            return {
+              ...question,
+              required: originalQuestionRequiredStates[question.id] ?? question.required,
+            };
+          }
+          return question;
+        }),
+      }));
+
+      // remove the question from the map
+      delete questionRequiredByMap.current[questionId];
+    }
+  };
+
   const pushVariableState = (currentQuestionId: TSurveyQuestionId) => {
     setVariableStack((prevStack) => [
       ...prevStack,
@@ -405,8 +437,10 @@ export function Survey({
       firstJumpTarget = currentQuestion.logicFallback;
     }
 
-    // Make all collected questions required
     if (allRequiredQuestionIds.length > 0) {
+      // Track which questions are being made required by this question
+      questionRequiredByMap.current[currentQuestion.id] = allRequiredQuestionIds;
+
       makeQuestionsRequired(allRequiredQuestionIds);
     }
 
@@ -415,6 +449,18 @@ export function Survey({
 
     return { nextQuestionId, calculatedVariables: calculationResults };
   };
+
+  const getWebSurveyMeta = useCallback(() => {
+    if (!isWebEnvironment) return {};
+
+    const url = new URL(window.location.href);
+    const source = url.searchParams.get("source");
+
+    return {
+      url: url.href,
+      ...(source ? { source } : {}),
+    };
+  }, [isWebEnvironment]);
 
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
@@ -459,7 +505,7 @@ export function Survey({
           language:
             responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
-            ...(isWebEnvironment && { url: window.location.href }),
+            ...getWebSurveyMeta(),
             action,
           },
           variables: responseUpdate.variables,
@@ -482,9 +528,9 @@ export function Survey({
       contactId,
       userId,
       survey,
-      isWebEnvironment,
       action,
       hiddenFieldsRecord,
+      getWebSurveyMeta,
     ]
   );
 
@@ -569,6 +615,8 @@ export function Survey({
     }
     popVariableState();
     if (!prevQuestionId) throw new Error("Question not found");
+
+    revertRequiredChangesByQuestion(prevQuestionId);
     setQuestionId(prevQuestionId);
   };
 

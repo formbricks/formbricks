@@ -166,9 +166,9 @@ export const RecontactOptionsCard = ({
                     className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                   />
                   <div>
-                    <p className="font-semibold text-slate-700">{t(option.name)}</p>
+                    <p className="font-semibold text-slate-700">{option.name}</p>
 
-                    <p className="mt-2 text-xs font-normal text-slate-600">{t(option.description)}</p>
+                    <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                   </div>
                 </Label>
                 {option.id === "displaySome" && localSurvey.displayOption === "displaySome" && (

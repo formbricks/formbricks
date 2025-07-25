@@ -13,7 +13,7 @@ const mockUser = {
   locale: "en-US",
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
+
     unsubscribedOrganizationIds: [],
   },
   twoFactorEnabled: false,

@@ -1,6 +1,7 @@
 import { ApiAuditLog } from "@/app/lib/api/with-api-logging";
-import { checkRateLimitAndThrowError } from "@/modules/api/v2/lib/rate-limit";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { ZodRawShape, z } from "zod";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "./authenticate-request";
@@ -104,11 +105,10 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   }
 
   if (rateLimit) {
-    const rateLimitResponse = await checkRateLimitAndThrowError({
-      identifier: authentication.data.hashedApiKey,
-    });
-    if (!rateLimitResponse.ok) {
-      return handleApiError(request, rateLimitResponse.error);
+    try {
+      await applyRateLimit(rateLimitConfigs.api.v2, authentication.data.hashedApiKey);
+    } catch (error) {
+      return handleApiError(request, { type: "too_many_requests", details: error.message });
     }
   }
 

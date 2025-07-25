@@ -192,7 +192,7 @@ export const handleSsoCallback = async ({
     });
 
     // send new user to brevo
-    createBrevoCustomer({ id: user.id, email: user.email });
+    createBrevoCustomer({ id: userProfile.id, email: userProfile.email });
 
     if (isMultiOrgEnabled) return true;
 
@@ -216,9 +216,6 @@ export const handleSsoCallback = async ({
         unsubscribedOrganizationIds: Array.from(
           new Set([...(userProfile.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
         ),
-        weeklySummary: {
-          ...userProfile.notificationSettings?.weeklySummary,
-        },
       };
 
       await updateUser(userProfile.id, {

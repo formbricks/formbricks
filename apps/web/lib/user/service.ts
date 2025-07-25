@@ -1,6 +1,7 @@
 import "server-only";
 import { isValidImageFile } from "@/lib/fileValidation";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
@@ -133,6 +134,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
     }
 
     const deletedUser = await deleteUserById(id);
+    await deleteBrevoCustomerByEmail({ email: deletedUser.email });
 
     return deletedUser;
   } catch (error) {

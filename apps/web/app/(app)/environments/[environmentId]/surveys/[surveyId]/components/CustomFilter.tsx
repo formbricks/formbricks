@@ -32,7 +32,6 @@ import {
   subYears,
 } from "date-fns";
 import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -125,8 +124,6 @@ const getDateRangeLabel = (from: Date, to: Date, t: TFnType) => {
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
-  const params = useParams();
-  const isSharingPage = !!params.sharingKey;
   const { t } = useTranslate();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
@@ -281,7 +278,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
                         dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
                       }`
-                    : t(filterRange)}
+                    : filterRange}
                 </span>
                 {isFilterDropDownOpen ? (
                   <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
@@ -296,28 +293,28 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setFilterRange(getFilterDropDownLabels(t).ALL_TIME);
                   setDateRange({ from: undefined, to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).ALL_TIME)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).ALL_TIME}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).LAST_7_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_7_DAYS)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_7_DAYS}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).LAST_30_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_30_DAYS)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_30_DAYS}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).THIS_MONTH);
                   setDateRange({ from: startOfMonth(new Date()), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).THIS_MONTH)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_MONTH}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -327,14 +324,14 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     to: endOfMonth(subMonths(getTodayDate(), 1)),
                   });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_MONTH)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_MONTH}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).THIS_QUARTER);
                   setDateRange({ from: startOfQuarter(new Date()), to: endOfQuarter(getTodayDate()) });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).THIS_QUARTER)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_QUARTER}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -344,7 +341,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     to: endOfQuarter(subQuarters(getTodayDate(), 1)),
                   });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_QUARTER)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_QUARTER}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -354,14 +351,14 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     to: endOfMonth(getTodayDate()),
                   });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_6_MONTHS)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_6_MONTHS}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(getFilterDropDownLabels(t).THIS_YEAR);
                   setDateRange({ from: startOfYear(new Date()), to: endOfYear(getTodayDate()) });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).THIS_YEAR)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_YEAR}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -371,7 +368,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     to: endOfYear(subYears(getTodayDate(), 1)),
                   });
                 }}>
-                <p className="text-slate-700">{t(getFilterDropDownLabels(t).LAST_YEAR)}</p>
+                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_YEAR}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -380,56 +377,52 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setSelectingDate(DateSelected.FROM);
                 }}>
                 <p className="text-sm text-slate-700 hover:ring-0">
-                  {t(getFilterDropDownLabels(t).CUSTOM_RANGE)}
+                  {getFilterDropDownLabels(t).CUSTOM_RANGE}
                 </p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {!isSharingPage && (
-            <DropdownMenu
-              onOpenChange={(value) => {
-                value && handleDatePickerClose();
-              }}>
-              <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-                <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
-                  <div className="hidden w-full items-center justify-between sm:flex">
-                    <span className="text-sm text-slate-700">{t("common.download")}</span>
-                    <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
-                  </div>
-                  <DownloadIcon className="block h-4 sm:hidden" />
+          <DropdownMenu
+            onOpenChange={(value) => {
+              value && handleDatePickerClose();
+            }}>
+            <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
+              <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
+                <div className="hidden w-full items-center justify-between sm:flex">
+                  <span className="text-sm text-slate-700">{t("common.download")}</span>
+                  <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
                 </div>
-              </DropdownMenuTrigger>
+                <DownloadIcon className="block h-4 sm:hidden" />
+              </div>
+            </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleDowndloadResponses(FilterDownload.ALL, "csv");
-                  }}>
-                  <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleDowndloadResponses(FilterDownload.ALL, "xlsx");
-                  }}>
-                  <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleDowndloadResponses(FilterDownload.FILTER, "csv");
-                  }}>
-                  <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
-                  }}>
-                  <p className="text-slate-700">
-                    {t("environments.surveys.summary.filtered_responses_excel")}
-                  </p>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDowndloadResponses(FilterDownload.ALL, "csv");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDowndloadResponses(FilterDownload.ALL, "xlsx");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDowndloadResponses(FilterDownload.FILTER, "csv");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_excel")}</p>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         {isDatePickerOpen && (
           <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">

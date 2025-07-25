@@ -26,18 +26,14 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserEmail, TUserLocale } from "@formbricks/types/user";
-import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
 import { VerificationEmail } from "./emails/auth/verification-email";
 import { InviteAcceptedEmail } from "./emails/invite/invite-accepted-email";
 import { InviteEmail } from "./emails/invite/invite-email";
-import { OnboardingInviteEmail } from "./emails/invite/onboarding-invite-email";
 import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
 import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
-import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
-import { WeeklySummaryNotificationEmail } from "./emails/weekly-summary/weekly-summary-notification-email";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
@@ -166,9 +162,7 @@ export const sendInviteMemberEmail = async (
   inviteId: string,
   email: string,
   inviterName: string,
-  inviteeName: string,
-  isOnboardingInvite?: boolean,
-  inviteMessage?: string
+  inviteeName: string
 ): Promise<boolean> => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
@@ -177,26 +171,12 @@ export const sendInviteMemberEmail = async (
 
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
-  if (isOnboardingInvite && inviteMessage) {
-    const html = await render(
-      await OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName, inviteeName })
-    );
-    return await sendEmail({
-      to: email,
-      subject: t("emails.onboarding_invite_email_subject", {
-        inviterName,
-      }),
-      html,
-    });
-  } else {
-    const t = await getTranslate();
-    const html = await render(await InviteEmail({ inviteeName, inviterName, verifyLink }));
-    return await sendEmail({
-      to: email,
-      subject: t("emails.invite_member_email_subject"),
-      html,
-    });
-  }
+  const html = await render(await InviteEmail({ inviteeName, inviterName, verifyLink }));
+  return await sendEmail({
+    to: email,
+    subject: t("emails.invite_member_email_subject"),
+    html,
+  });
 };
 
 export const sendInviteAcceptedEmail = async (
@@ -304,73 +284,6 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   return await sendEmail({
     to: data.email,
     subject: t("emails.verified_link_survey_email_subject"),
-    html,
-  });
-};
-
-export const sendWeeklySummaryNotificationEmail = async (
-  email: string,
-  notificationData: TWeeklySummaryNotificationResponse
-): Promise<void> => {
-  const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
-    "default",
-    { month: "short" }
-  )}`;
-  const endDate = `${notificationData.currentDate.getDate().toString()} ${notificationData.currentDate.toLocaleString(
-    "default",
-    { month: "short" }
-  )}`;
-  const startYear = notificationData.lastWeekDate.getFullYear();
-  const endYear = notificationData.currentDate.getFullYear();
-  const t = await getTranslate();
-  const html = await render(
-    WeeklySummaryNotificationEmail({
-      notificationData,
-      startDate,
-      endDate,
-      startYear,
-      endYear,
-      t,
-    })
-  );
-  await sendEmail({
-    to: email,
-    subject: t("emails.weekly_summary_email_subject", {
-      projectName: notificationData.projectName,
-    }),
-    html,
-  });
-};
-
-export const sendNoLiveSurveyNotificationEmail = async (
-  email: string,
-  notificationData: TWeeklySummaryNotificationResponse
-): Promise<void> => {
-  const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
-    "default",
-    { month: "short" }
-  )}`;
-  const endDate = `${notificationData.currentDate.getDate().toString()} ${notificationData.currentDate.toLocaleString(
-    "default",
-    { month: "short" }
-  )}`;
-  const startYear = notificationData.lastWeekDate.getFullYear();
-  const endYear = notificationData.currentDate.getFullYear();
-  const t = await getTranslate();
-  const html = await render(
-    NoLiveSurveyNotificationEmail({
-      notificationData,
-      startDate,
-      endDate,
-      startYear,
-      endYear,
-    })
-  );
-  await sendEmail({
-    to: email,
-    subject: t("emails.weekly_summary_email_subject", {
-      projectName: notificationData.projectName,
-    }),
     html,
   });
 };

@@ -501,11 +501,11 @@ export const generatePersonalLinks = async (surveyId: string, segmentId: string,
   }
 
   // Generate survey links for each contact
-  const contactLinks = contactsResult
-    .map((contact) => {
+  const contactLinks = await Promise.all(
+    contactsResult.map(async (contact) => {
       const { contactId, attributes } = contact;
 
-      const surveyUrlResult = getContactSurveyLink(contactId, surveyId, expirationDays);
+      const surveyUrlResult = await getContactSurveyLink(contactId, surveyId, expirationDays);
 
       if (!surveyUrlResult.ok) {
         logger.error(
@@ -522,7 +522,8 @@ export const generatePersonalLinks = async (surveyId: string, segmentId: string,
         expirationDays,
       };
     })
-    .filter(Boolean);
+  );
 
-  return contactLinks;
+  const filteredContactLinks = contactLinks.filter(Boolean);
+  return filteredContactLinks;
 };

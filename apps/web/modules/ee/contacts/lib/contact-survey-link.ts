@@ -1,17 +1,19 @@
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { getSurvey } from "@/modules/survey/lib/survey";
 import jwt from "jsonwebtoken";
 import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 // Creates an encrypted personalized survey link for a contact
-export const getContactSurveyLink = (
+export const getContactSurveyLink = async (
   contactId: string,
   surveyId: string,
   expirationDays?: number
-): Result<string, ApiErrorResponseV2> => {
+): Promise<Result<string, ApiErrorResponseV2>> => {
   if (!ENCRYPTION_KEY) {
     return err({
       type: "internal_server_error",
@@ -19,9 +21,26 @@ export const getContactSurveyLink = (
     });
   }
 
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    return err({
+      type: "not_found",
+      message: "Survey not found",
+      details: [{ field: "surveyId", issue: "not_found" }],
+    });
+  }
+
+  const { enabled: isSingleUseEnabled, isEncrypted: isSingleUseEncrypted } = survey.singleUse ?? {};
+
   // Encrypt the contact and survey IDs
   const encryptedContactId = symmetricEncrypt(contactId, ENCRYPTION_KEY);
   const encryptedSurveyId = symmetricEncrypt(surveyId, ENCRYPTION_KEY);
+
+  let singleUseId: string | undefined;
+
+  if (isSingleUseEnabled) {
+    singleUseId = generateSurveySingleUseId(isSingleUseEncrypted ?? false);
+  }
 
   // Create JWT payload with encrypted IDs
   const payload = {
@@ -43,7 +62,9 @@ export const getContactSurveyLink = (
   const token = jwt.sign(payload, ENCRYPTION_KEY, tokenOptions);
 
   // Return the personalized URL
-  return ok(`${getPublicDomain()}/c/${token}`);
+  return singleUseId
+    ? ok(`${getPublicDomain()}/c/${token}?suId=${singleUseId}`)
+    : ok(`${getPublicDomain()}/c/${token}`);
 };
 
 // Validates and decrypts a contact survey JWT token
@@ -59,7 +80,10 @@ export const verifyContactSurveyToken = (
 
   try {
     // Verify the token
-    const decoded = jwt.verify(token, ENCRYPTION_KEY) as { contactId: string; surveyId: string };
+    const decoded = jwt.verify(token, ENCRYPTION_KEY) as {
+      contactId: string;
+      surveyId: string;
+    };
 
     if (!decoded || !decoded.contactId || !decoded.surveyId) {
       throw err("Invalid token format");

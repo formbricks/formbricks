@@ -13,11 +13,6 @@ const PUBLIC_ROUTES = {
   API_ROUTES: [
     /^\/api\/v[12]\/client\//, // /api/v1/client/** and /api/v2/client/**
   ],
-
-  // Share routes
-  SHARE_ROUTES: [
-    /^\/share\//, // /share/** - shared survey results
-  ],
 } as const;
 
 const COMMON_ROUTES = {

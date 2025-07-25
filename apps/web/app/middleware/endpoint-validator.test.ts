@@ -3,63 +3,13 @@ import {
   isAdminDomainRoute,
   isAuthProtectedRoute,
   isClientSideApiRoute,
-  isForgotPasswordRoute,
-  isLoginRoute,
   isManagementApiRoute,
   isPublicDomainRoute,
   isRouteAllowedForDomain,
-  isShareUrlRoute,
-  isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
-  isVerifyEmailRoute,
 } from "./endpoint-validator";
 
 describe("endpoint-validator", () => {
-  describe("isLoginRoute", () => {
-    test("should return true for login routes", () => {
-      expect(isLoginRoute("/api/auth/callback/credentials")).toBe(true);
-      expect(isLoginRoute("/auth/login")).toBe(true);
-    });
-
-    test("should return false for non-login routes", () => {
-      expect(isLoginRoute("/auth/signup")).toBe(false);
-      expect(isLoginRoute("/api/something")).toBe(false);
-    });
-  });
-
-  describe("isSignupRoute", () => {
-    test("should return true for signup route", () => {
-      expect(isSignupRoute("/auth/signup")).toBe(true);
-    });
-
-    test("should return false for non-signup routes", () => {
-      expect(isSignupRoute("/auth/login")).toBe(false);
-      expect(isSignupRoute("/api/something")).toBe(false);
-    });
-  });
-
-  describe("isVerifyEmailRoute", () => {
-    test("should return true for verify email route", () => {
-      expect(isVerifyEmailRoute("/auth/verify-email")).toBe(true);
-    });
-
-    test("should return false for non-verify email routes", () => {
-      expect(isVerifyEmailRoute("/auth/login")).toBe(false);
-      expect(isVerifyEmailRoute("/api/something")).toBe(false);
-    });
-  });
-
-  describe("isForgotPasswordRoute", () => {
-    test("should return true for forgot password route", () => {
-      expect(isForgotPasswordRoute("/auth/forgot-password")).toBe(true);
-    });
-
-    test("should return false for non-forgot password routes", () => {
-      expect(isForgotPasswordRoute("/auth/login")).toBe(false);
-      expect(isForgotPasswordRoute("/api/something")).toBe(false);
-    });
-  });
-
   describe("isClientSideApiRoute", () => {
     test("should return true for client-side API routes", () => {
       expect(isClientSideApiRoute("/api/v1/js/actions")).toBe(true);
@@ -88,20 +38,6 @@ describe("endpoint-validator", () => {
       expect(isManagementApiRoute("/api/v1/client/something")).toBe(false);
       expect(isManagementApiRoute("/api/something")).toBe(false);
       expect(isManagementApiRoute("/auth/login")).toBe(false);
-    });
-  });
-
-  describe("isShareUrlRoute", () => {
-    test("should return true for share URL routes", () => {
-      expect(isShareUrlRoute("/share/abc123/summary")).toBe(true);
-      expect(isShareUrlRoute("/share/abc123/responses")).toBe(true);
-      expect(isShareUrlRoute("/share/abc123def456/summary")).toBe(true);
-    });
-
-    test("should return false for non-share URL routes", () => {
-      expect(isShareUrlRoute("/share/abc123")).toBe(false);
-      expect(isShareUrlRoute("/share/abc123/other")).toBe(false);
-      expect(isShareUrlRoute("/api/something")).toBe(false);
     });
   });
 
@@ -165,12 +101,6 @@ describe("endpoint-validator", () => {
       expect(isPublicDomainRoute("/api/v2/client/other")).toBe(true);
     });
 
-    test("should return true for share routes", () => {
-      expect(isPublicDomainRoute("/share/abc123/summary")).toBe(true);
-      expect(isPublicDomainRoute("/share/xyz789/responses")).toBe(true);
-      expect(isPublicDomainRoute("/share/anything")).toBe(true);
-    });
-
     test("should return false for admin-only routes", () => {
       expect(isPublicDomainRoute("/")).toBe(false);
       expect(isPublicDomainRoute("/environments/123")).toBe(false);
@@ -219,7 +149,6 @@ describe("endpoint-validator", () => {
       expect(isRouteAllowedForDomain("/s/survey123", true)).toBe(true);
       expect(isRouteAllowedForDomain("/c/jwt-token", true)).toBe(true);
       expect(isRouteAllowedForDomain("/api/v1/client/test", true)).toBe(true);
-      expect(isRouteAllowedForDomain("/share/abc/summary", true)).toBe(true);
       expect(isRouteAllowedForDomain("/health", true)).toBe(true);
       // Static assets not tested - middleware doesn't run on them
     });
@@ -245,7 +174,6 @@ describe("endpoint-validator", () => {
       expect(isRouteAllowedForDomain("/s/survey123", false)).toBe(false);
       expect(isRouteAllowedForDomain("/c/jwt-token", false)).toBe(false);
       expect(isRouteAllowedForDomain("/api/v1/client/test", false)).toBe(false);
-      expect(isRouteAllowedForDomain("/share/abc/summary", false)).toBe(false);
     });
   });
 

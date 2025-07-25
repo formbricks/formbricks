@@ -63,7 +63,6 @@ const mockUser = {
   updatedAt: new Date(),
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
   },
   role: "other",
 } as TUser;
