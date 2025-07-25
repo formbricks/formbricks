@@ -15,7 +15,7 @@ const mockUser = {
   id: "user1",
   name: "Test User",
   email: "test@example.com",
-  notificationSettings: { alert: {}, weeklySummary: {}, unsubscribedOrganizationIds: [] },
+  notificationSettings: { alert: {}, unsubscribedOrganizationIds: [] },
   twoFactorEnabled: false,
   identityProvider: "email",
   createdAt: new Date(),

@@ -57,7 +57,6 @@ describe("rateLimitConfigs", () => {
       expect(rateLimitConfigs).toHaveProperty("auth");
       expect(rateLimitConfigs).toHaveProperty("api");
       expect(rateLimitConfigs).toHaveProperty("actions");
-      expect(rateLimitConfigs).toHaveProperty("share");
     });
 
     test("should have all auth configurations", () => {
@@ -74,11 +73,6 @@ describe("rateLimitConfigs", () => {
       const actionConfigs = Object.keys(rateLimitConfigs.actions);
       expect(actionConfigs).toEqual(["emailUpdate", "surveyFollowUp"]);
     });
-
-    test("should have all share configurations", () => {
-      const shareConfigs = Object.keys(rateLimitConfigs.share);
-      expect(shareConfigs).toEqual(["url"]);
-    });
   });
 
   describe("Zod Validation", () => {
@@ -87,7 +81,6 @@ describe("rateLimitConfigs", () => {
         ...Object.values(rateLimitConfigs.auth),
         ...Object.values(rateLimitConfigs.api),
         ...Object.values(rateLimitConfigs.actions),
-        ...Object.values(rateLimitConfigs.share),
       ];
 
       allConfigs.forEach((config) => {
@@ -104,7 +97,6 @@ describe("rateLimitConfigs", () => {
       Object.values(rateLimitConfigs.auth).forEach((config) => allNamespaces.push(config.namespace));
       Object.values(rateLimitConfigs.api).forEach((config) => allNamespaces.push(config.namespace));
       Object.values(rateLimitConfigs.actions).forEach((config) => allNamespaces.push(config.namespace));
-      Object.values(rateLimitConfigs.share).forEach((config) => allNamespaces.push(config.namespace));
 
       const uniqueNamespaces = new Set(allNamespaces);
       expect(uniqueNamespaces.size).toBe(allNamespaces.length);
@@ -138,7 +130,6 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
-        { config: rateLimitConfigs.share.url, identifier: "share-url" },
       ];
 
       const testAllowedRequest = async (config: any, identifier: string) => {

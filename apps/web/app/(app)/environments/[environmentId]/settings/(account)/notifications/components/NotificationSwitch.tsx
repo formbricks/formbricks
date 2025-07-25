@@ -12,7 +12,7 @@ import { updateNotificationSettingsAction } from "../actions";
 interface NotificationSwitchProps {
   surveyOrProjectOrOrganizationId: string;
   notificationSettings: TUserNotificationSettings;
-  notificationType: "alert" | "weeklySummary" | "unsubscribedOrganizationIds";
+  notificationType: "alert" | "unsubscribedOrganizationIds";
   autoDisableNotificationType?: string;
   autoDisableNotificationElementId?: string;
 }

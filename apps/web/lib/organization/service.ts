@@ -296,7 +296,7 @@ export const subscribeOrganizationMembersToSurveyResponses = async (
       return;
     }
 
-    const defaultSettings = { alert: {}, weeklySummary: {} };
+    const defaultSettings = { alert: {} };
     const updatedNotificationSettings: TUserNotificationSettings = {
       ...defaultSettings,
       ...surveyCreator.notificationSettings,

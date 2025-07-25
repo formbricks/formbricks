@@ -87,7 +87,6 @@ const baseSurvey: TSurvey = {
   isSingleUse: false,
   segment: null,
   surveyClosedMessage: null,
-  resultShareKey: null,
   singleUse: null,
   verifyEmail: null,
   pin: null,

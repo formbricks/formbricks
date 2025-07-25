@@ -293,7 +293,6 @@ const mockSurvey = {
     enabled: false,
     isEncrypted: false,
   },
-  resultShareKey: null,
   endings: [
     {
       id: "ending_1",
