@@ -150,8 +150,6 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
 
       const newSurvey = await updateSurvey(parsedInput);
 
-      revalidatePath(`/environments/${newSurvey.environmentId}/surveys/${newSurvey.id}`);
-
       ctx.auditLoggingCtx.newObject = newSurvey;
 
       return newSurvey;
