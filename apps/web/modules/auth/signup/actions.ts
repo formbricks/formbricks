@@ -124,7 +124,7 @@ async function handleInviteAcceptance(
   await updateUser(user.id, {
     notificationSettings: {
       alert: {},
-      weeklySummary: {},
+
       unsubscribedOrganizationIds: [invite.organizationId],
     },
   });
@@ -149,7 +149,7 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     notificationSettings: {
       ...user.notificationSettings,
       alert: { ...user.notificationSettings?.alert },
-      weeklySummary: { ...user.notificationSettings?.weeklySummary },
+
       unsubscribedOrganizationIds: Array.from(
         new Set([...(user.notificationSettings?.unsubscribedOrganizationIds ?? []), organization.id])
       ),

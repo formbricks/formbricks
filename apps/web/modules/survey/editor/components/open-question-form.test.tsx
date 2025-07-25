@@ -141,7 +141,6 @@ const mockSurvey = {
   displayPercentage: null,
   inlineTriggers: null,
   pin: null,
-  resultShareKey: null,
   segment: null,
   surveyClosedMessage: null,
   redirectUrl: null,

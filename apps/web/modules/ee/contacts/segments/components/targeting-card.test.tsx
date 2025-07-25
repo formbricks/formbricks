@@ -57,7 +57,6 @@ const mockSurvey = {
   languages: [],
   triggers: [],
   pin: null,
-  resultShareKey: null,
   welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
   singleUse: null,
   styling: null,

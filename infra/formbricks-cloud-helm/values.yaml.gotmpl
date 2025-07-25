@@ -47,29 +47,7 @@ cronJob:
         tag: latest
       schedule: 0 0 * * *
       successfulJobsHistoryLimit: 0
-    weekely-summary:
-      args:
-        - /bin/sh
-        - -c
-        - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET"
-        "$WEBAPP_URL/api/cron/weekly-summary"'
-      env:
-        CRON_SECRET:
-          valueFrom:
-            secretKeyRef:
-              key: CRON_SECRET
-              name: formbricks-app-env
-        WEBAPP_URL:
-          valueFrom:
-            secretKeyRef:
-              key: WEBAPP_URL
-              name: formbricks-app-env
-      image:
-        imagePullPolicy: IfNotPresent
-        repository: quay.io/curl/curl
-        tag: latest
-      schedule: 0 8 * * 1
-      successfulJobsHistoryLimit: 0
+
 
 ## Deployment & Autoscaling
 deployment:

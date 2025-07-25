@@ -291,11 +291,6 @@ test("handles different modes", async () => {
     expect(vi.mocked(regularApi)).toHaveBeenCalled();
   });
   
-  // Test sharing mode
-  vi.mocked(useParams).mockReturnValue({ 
-    surveyId: "123", 
-    sharingKey: "share-123" 
-  });
   rerender();
   
   await waitFor(() => {

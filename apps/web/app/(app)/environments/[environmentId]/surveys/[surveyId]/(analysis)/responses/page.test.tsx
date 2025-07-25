@@ -120,7 +120,6 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({
     environmentId: "test-env-id",
     surveyId: "test-survey-id",
-    sharingKey: null,
   }),
 }));
 
@@ -232,12 +231,10 @@ describe("ResponsesPage", () => {
         environment: mockEnvironment,
         survey: mockSurvey,
         surveyId: mockSurveyId,
-        publicDomain: mockPublicDomain,
         environmentTags: mockTags,
         user: mockUser,
         responsesPerPage: 10,
         locale: mockLocale,
-        isReadOnly: false,
       }),
       undefined
     );

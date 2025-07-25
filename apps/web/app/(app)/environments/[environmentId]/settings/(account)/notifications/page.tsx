@@ -9,7 +9,6 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { EditAlerts } from "./components/EditAlerts";
-import { EditWeeklySummary } from "./components/EditWeeklySummary";
 import { IntegrationsTip } from "./components/IntegrationsTip";
 import type { Membership } from "./types";
 
@@ -19,14 +18,10 @@ const setCompleteNotificationSettings = (
 ): TUserNotificationSettings => {
   const newNotificationSettings = {
     alert: {},
-    weeklySummary: {},
     unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
   };
   for (const membership of memberships) {
     for (const project of membership.organization.projects) {
-      // set default values for weekly summary
-      newNotificationSettings.weeklySummary[project.id] =
-        (notificationSettings.weeklySummary && notificationSettings.weeklySummary[project.id]) || false;
       // set default values for alerts
       for (const environment of project.environments) {
         for (const survey of environment.surveys) {
@@ -183,11 +178,6 @@ const Page = async (props) => {
         />
       </SettingsCard>
       <IntegrationsTip environmentId={params.environmentId} />
-      <SettingsCard
-        title={t("environments.settings.notifications.weekly_summary_projects")}
-        description={t("environments.settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday")}>
-        <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />
-      </SettingsCard>
     </PageContentWrapper>
   );
 };
