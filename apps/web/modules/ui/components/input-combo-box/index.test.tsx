@@ -6,36 +6,61 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { InputCombobox, TComboboxOption } from "./index";
 
 // Mock components used by InputCombobox
-vi.mock("@/modules/ui/components/command", () => ({
-  Command: ({ children, className }: any) => (
-    <div data-testid="command" className={className}>
-      {children}
-    </div>
-  ),
-  CommandInput: ({ placeholder, className }: any) => (
-    <input data-testid="command-input" placeholder={placeholder} className={className} />
-  ),
-  CommandList: ({ children, className }: any) => (
-    <div data-testid="command-list" className={className}>
-      {children}
-    </div>
-  ),
-  CommandEmpty: ({ children, className }: any) => (
-    <div data-testid="command-empty" className={className}>
-      {children}
-    </div>
-  ),
-  CommandGroup: ({ children, heading }: any) => (
-    <div data-testid="command-group" data-heading={heading}>
-      {children}
-    </div>
-  ),
-  CommandItem: ({ children, onSelect, className }: any) => (
-    <div data-testid="command-item" className={className} onClick={onSelect}>
-      {children}
-    </div>
-  ),
-  CommandSeparator: ({ className }: any) => <hr data-testid="command-separator" className={className} />,
+vi.mock("@/modules/ui/components/command", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ui/components/command")>();
+  return {
+    ...actual,
+    Command: ({ children, ...props }) => <div {...props}>{children}</div>,
+    CommandInput: ({ ...props }) => <input data-testid="command-input" {...props} />,
+    CommandList: ({ children, ...props }) => <div {...props}>{children}</div>,
+    CommandEmpty: ({ children, ...props }) => (
+      <div data-testid="command-empty" {...props}>
+        {children}
+      </div>
+    ),
+    CommandGroup: ({ children, ...props }) => (
+      <div data-testid="command-group" {...props}>
+        {children}
+      </div>
+    ),
+    CommandItem: ({ children, onSelect, ...props }) => (
+      <div data-testid="command-item" onClick={onSelect} {...props}>
+        {children}
+      </div>
+    ),
+    CommandSeparator: ({ ...props }) => <hr data-testid="command-separator" {...props} />,
+  };
+});
+
+vi.mock("@/modules/ui/components/dropdown-menu", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ui/components/dropdown-menu")>();
+  return {
+    ...actual,
+    DropdownMenu: ({ children }) => <>{children}</>,
+    DropdownMenuTrigger: ({ children }) => <div data-testid="toggle-popover">{children}</div>,
+    DropdownMenuContent: ({ children }) => <div data-testid="popover">{children}</div>,
+    DropdownMenuSub: ({ children }) => <div>{children}</div>,
+    DropdownMenuSubTrigger: ({ children }) => <div>{children}</div>,
+    DropdownMenuSubContent: ({ children }) => <div>{children}</div>,
+  };
+});
+
+// Mock Lucide icons
+vi.mock("lucide-react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("lucide-react")>();
+  return {
+    ...actual,
+    CheckIcon: (props) => <div data-testid="check-icon" {...props} />,
+    ChevronDownIcon: (props) => <div data-testid="chevron-down-icon" {...props} />,
+    XIcon: (props) => <div data-testid="clear-button" {...props} />,
+  };
+});
+
+// Mock Tolgee provider
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => key,
+  }),
 }));
 
 vi.mock("@/modules/ui/components/popover", () => ({
@@ -76,12 +101,6 @@ vi.mock("next/image", () => ({
   default: ({ src, alt, width, height, className }: any) => (
     <img data-testid="next-image" src={src} alt={alt} width={width} height={height} className={className} />
   ),
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 describe("InputCombobox", () => {
@@ -217,19 +236,10 @@ describe("InputCombobox", () => {
     const items = screen.getAllByTestId("command-item");
     await user.click(items[0]);
 
-    // Rerender with the selected value
-    rerender(
-      <InputCombobox
-        id="test-combo"
-        options={mockOptions}
-        value="opt1"
-        onChangeValue={onChangeValue}
-        clearable={true}
-      />
-    );
+    // Now the clear button should be visible
+    const clearButton = screen.getByTestId("clear-button");
+    expect(clearButton).toBeInTheDocument();
 
-    // Find and click the X icon (simulated)
-    const clearButton = screen.getByText("Toggle Popover");
     await user.click(clearButton);
 
     // Verify onChangeValue was called
