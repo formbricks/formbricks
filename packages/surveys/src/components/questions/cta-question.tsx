@@ -60,7 +60,7 @@ export function CTAQuestion({
             required={question.required}
           />
           <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-py-4">
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
             <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
               <SubmitButton
                 buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

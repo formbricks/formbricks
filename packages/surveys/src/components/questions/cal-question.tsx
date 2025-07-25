@@ -86,7 +86,7 @@ export function CalQuestion({
           />
           {errorMessage ? <span className="fb-text-red-500">{errorMessage}</span> : null}
           <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-py-4">
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
             {!question.required && (
               <SubmitButton
                 buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}

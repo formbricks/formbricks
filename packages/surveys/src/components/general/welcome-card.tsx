@@ -156,7 +156,7 @@ export function WelcomeCard({
             htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), responseData, variablesData)}
             questionId="welcomeCard"
           />
-          <div className="fb-mt-4 fb-flex fb-gap-4 fb-py-4">
+          <div className="fb-mt-4 fb-flex fb-gap-4 fb-pt-4">
             <SubmitButton
               buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
               isLastQuestion={false}

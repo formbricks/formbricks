@@ -206,7 +206,7 @@ export function MatrixQuestion({
               </tbody>
             </table>
           </div>
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-py-4">
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
             <SubmitButton
               buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
               isLastQuestion={isLastQuestion}

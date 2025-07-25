@@ -267,7 +267,7 @@ export function DateQuestion({
               />
             </div>
           </div>
-          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-py-4">
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
             <SubmitButton
               tabIndex={isCurrent ? 0 : -1}
               isLastQuestion={isLastQuestion}

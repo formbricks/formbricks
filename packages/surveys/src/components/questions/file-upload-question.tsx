@@ -104,22 +104,22 @@ export function FileUploadQuestion({
               : {})}
             {...(question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
           />
-        </div>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-py-4">
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
-          />
-          {!isFirstQuestion && !isBackButtonHidden && (
-            <BackButton
+          <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+            <SubmitButton
               tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-              onClick={() => {
-                onBack();
-              }}
+              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              isLastQuestion={isLastQuestion}
             />
-          )}
+            {!isFirstQuestion && !isBackButtonHidden && (
+              <BackButton
+                tabIndex={isCurrent ? 0 : -1}
+                backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+                onClick={() => {
+                  onBack();
+                }}
+              />
+            )}
+          </div>
         </div>
       </ScrollableContainer>
     </form>
