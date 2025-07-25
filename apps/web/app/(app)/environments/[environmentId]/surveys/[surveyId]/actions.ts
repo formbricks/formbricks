@@ -12,6 +12,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -148,6 +149,8 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
       ctx.auditLoggingCtx.oldObject = oldSurvey;
 
       const newSurvey = await updateSurvey(parsedInput);
+
+      revalidatePath(`/environments/${newSurvey.environmentId}/surveys/${newSurvey.id}`);
 
       ctx.auditLoggingCtx.newObject = newSurvey;
 
