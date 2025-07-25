@@ -53,7 +53,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     return responses.successResponse(response, true);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
-      return responses.badRequestResponse(error.message);
+      return responses.notFoundResponse("Survey", inputValidation.data.surveyId);
     } else {
       logger.error({ error, url: request.url }, "Error creating display");
       return responses.internalServerErrorResponse("Something went wrong. Please try again.");
