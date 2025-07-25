@@ -41,7 +41,6 @@ vi.mock("@/modules/survey/lib/survey", () => ({
     type: true,
     status: true,
     environmentId: true,
-    resultShareKey: true,
     segment: true,
   },
 }));
@@ -90,7 +89,6 @@ describe("survey module", () => {
         id: "survey-123",
         environmentId,
         type: "app",
-        resultShareKey: "key-123",
         segment: {
           surveys: [{ id: "survey-123" }],
         },

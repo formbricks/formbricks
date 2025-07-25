@@ -61,7 +61,6 @@ const baseSurvey = {
   hiddenFields: { enabled: true },
   variables: [],
   pin: null,
-  resultShareKey: null,
   displayPercentage: null,
   createdAt: new Date(),
   updatedAt: new Date(),

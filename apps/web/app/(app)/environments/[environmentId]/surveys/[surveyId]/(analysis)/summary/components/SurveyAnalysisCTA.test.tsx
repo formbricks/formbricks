@@ -284,7 +284,6 @@ const mockSurvey: TSurvey = {
   recaptcha: null,
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
-  resultShareKey: null,
 };
 
 const mockUser: TUser = {
@@ -305,11 +304,7 @@ const mockUser: TUser = {
   isActive: true,
   notificationSettings: {
     alert: {
-      weeklySummary: true,
       responseFinished: true,
-    },
-    weeklySummary: {
-      test: true,
     },
     unsubscribedOrganizationIds: [],
   },
@@ -377,14 +372,6 @@ describe("SurveyAnalysisCTA", () => {
     render(<SurveyAnalysisCTA {...defaultProps} survey={linkSurvey} />);
 
     expect(screen.getByTestId("icon-bar-action-1")).toHaveAttribute("title", "Preview");
-  });
-
-  test("shows public results badge when resultShareKey exists", () => {
-    const surveyWithShareKey = { ...mockSurvey, resultShareKey: "share-key" };
-    render(<SurveyAnalysisCTA {...defaultProps} survey={surveyWithShareKey} />);
-
-    expect(screen.getByTestId("badge")).toBeInTheDocument();
-    expect(screen.getByText("Results are public")).toBeInTheDocument();
   });
 
   test("opens share modal when share button is clicked", async () => {
@@ -510,7 +497,6 @@ describe("SurveyAnalysisCTA", () => {
         environmentId: "test-env-id",
         triggers: [],
         segment: null,
-        resultShareKey: null,
         languages: [],
       },
     });
@@ -592,7 +578,6 @@ describe("SurveyAnalysisCTA", () => {
                   environmentId: "test-env-id",
                   triggers: [],
                   segment: null,
-                  resultShareKey: null,
                   languages: [],
                 },
               }),
@@ -626,7 +611,6 @@ describe("SurveyAnalysisCTA", () => {
         environmentId: "test-env-id",
         triggers: [],
         segment: null,
-        resultShareKey: null,
         languages: [],
       },
     });
