@@ -4,7 +4,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { createDisplay } from "./lib/display";
 
 interface Context {
@@ -52,7 +52,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     await capturePosthogEnvironmentEvent(inputValidation.data.environmentId, "display created");
     return responses.successResponse(response, true);
   } catch (error) {
-    if (error instanceof InvalidInputError) {
+    if (error instanceof ResourceNotFoundError) {
       return responses.badRequestResponse(error.message);
     } else {
       logger.error({ error, url: request.url }, "Error creating display");

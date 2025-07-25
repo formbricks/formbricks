@@ -5,7 +5,7 @@ import {
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { doesContactExist } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promise<{ id: string }> => {
@@ -23,9 +23,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promis
       },
     });
     if (!survey) {
-      throw new InvalidInputError(
-        `The survey with id ${surveyId} and environmentId ${environmentId} does not exist.`
-      );
+      throw new ResourceNotFoundError("Survey", surveyId);
     }
 
     const display = await prisma.display.create({

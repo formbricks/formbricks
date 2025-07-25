@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TDisplayCreateInput } from "@formbricks/types/displays";
-import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { getContactByUserId } from "./contact";
 import { createDisplay } from "./display";
 
@@ -169,11 +169,7 @@ describe("createDisplay", () => {
     vi.mocked(getContactByUserId).mockResolvedValue(mockContact);
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
-    await expect(createDisplay(displayInput)).rejects.toThrow(
-      new InvalidInputError(
-        `The survey with id ${surveyId} and environmentId ${environmentId} does not exist.`
-      )
-    );
+    await expect(createDisplay(displayInput)).rejects.toThrow(new ResourceNotFoundError("Survey", surveyId));
     expect(getContactByUserId).toHaveBeenCalledWith(environmentId, userId);
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: surveyId, environmentId },
