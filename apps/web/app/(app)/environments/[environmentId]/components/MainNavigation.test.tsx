@@ -1,4 +1,5 @@
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { usePathname, useRouter } from "next/navigation";
@@ -52,9 +53,19 @@ vi.mock("@/modules/organization/components/CreateOrganizationModal", () => ({
     open ? <div data-testid="create-org-modal">Create Org Modal</div> : null,
 }));
 vi.mock("@/modules/projects/components/project-switcher", () => ({
-  ProjectSwitcher: ({ isCollapsed }: { isCollapsed: boolean }) => (
+  ProjectSwitcher: ({
+    isCollapsed,
+    organizationTeams,
+    canDoRoleManagement,
+  }: {
+    isCollapsed: boolean;
+    organizationTeams: TOrganizationTeam[];
+    canDoRoleManagement: boolean;
+  }) => (
     <div data-testid="project-switcher" data-collapsed={isCollapsed}>
       Project Switcher
+      <div data-testid="organization-teams-count">{organizationTeams?.length || 0}</div>
+      <div data-testid="can-do-role-management">{canDoRoleManagement.toString()}</div>
     </div>
   ),
 }));
@@ -146,6 +157,7 @@ const defaultProps = {
   membershipRole: "owner" as const,
   organizationProjectsLimit: 5,
   isLicenseActive: true,
+  canDoRoleManagement: true,
 };
 
 describe("MainNavigation", () => {
@@ -333,5 +345,24 @@ describe("MainNavigation", () => {
       expect(screen.getByText("common.billing")).toBeInTheDocument();
     });
     expect(screen.queryByText("common.license")).not.toBeInTheDocument();
+  });
+
+  test("passes canDoRoleManagement props to ProjectSwitcher", () => {
+    render(<MainNavigation {...defaultProps} />);
+
+    expect(screen.getByTestId("organization-teams-count")).toHaveTextContent("0");
+    expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("true");
+  });
+
+  test("handles no organizationTeams", () => {
+    render(<MainNavigation {...defaultProps} />);
+
+    expect(screen.getByTestId("organization-teams-count")).toHaveTextContent("0");
+  });
+
+  test("handles canDoRoleManagement false", () => {
+    render(<MainNavigation {...defaultProps} canDoRoleManagement={false} />);
+
+    expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("false");
   });
 });
