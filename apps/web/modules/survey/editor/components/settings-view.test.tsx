@@ -94,7 +94,6 @@ const baseSurvey = {
   surveyClosedMessage: null,
   singleUse: null,
   pin: null,
-  resultShareKey: null,
   segment: null,
   createdAt: new Date(),
   updatedAt: new Date(),

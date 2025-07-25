@@ -273,7 +273,6 @@ describe("Organization Service", () => {
         id: "user-123",
         notificationSettings: {
           alert: { "existing-survey-id": true },
-          weeklySummary: {},
           unsubscribedOrganizationIds: [], // User is subscribed to all organizations
         },
       } as any;
@@ -296,7 +295,7 @@ describe("Organization Service", () => {
             "existing-survey-id": true,
             "survey-123": true,
           },
-          weeklySummary: {},
+
           unsubscribedOrganizationIds: [],
         },
       });
@@ -307,7 +306,6 @@ describe("Organization Service", () => {
         id: "user-123",
         notificationSettings: {
           alert: { "existing-survey-id": true },
-          weeklySummary: {},
           unsubscribedOrganizationIds: ["org-123"], // User has unsubscribed from this organization
         },
       } as any;

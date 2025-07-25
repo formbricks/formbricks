@@ -107,7 +107,6 @@ const mockSurvey: TSurvey = {
   createdAt: new Date(),
   updatedAt: new Date(),
   pin: null,
-  resultShareKey: null,
   displayPercentage: null,
   segment: null,
   closeOnDate: null,

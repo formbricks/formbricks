@@ -48,7 +48,7 @@ describe("User Service", () => {
     objective: Objective.increase_conversion,
     notificationSettings: {
       alert: {},
-      weeklySummary: {},
+
       unsubscribedOrganizationIds: [],
     },
     locale: "en-US" as TUserLocale,

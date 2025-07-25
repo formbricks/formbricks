@@ -9,7 +9,7 @@ export const mockUser: TUser = {
   name: "Test User",
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
+
     unsubscribedOrganizationIds: [],
   },
   emailVerified: new Date(),

@@ -1,7 +1,6 @@
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
-import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -17,10 +16,6 @@ vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterConte
 
 vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions", () => ({
   getSurveyFilterDataAction: vi.fn(),
-}));
-
-vi.mock("@/app/share/[sharingKey]/actions", () => ({
-  getSurveyFilterDataBySurveySharingKeyAction: vi.fn(),
 }));
 
 vi.mock("@/app/lib/surveys/surveys", () => ({
@@ -234,30 +229,5 @@ describe("ResponseFilter", () => {
     await userEvent.click(screen.getByText("common.clear_all"));
 
     expect(mockSetSelectedFilter).toHaveBeenCalledWith({ filter: [], onlyComplete: false });
-  });
-
-  test("uses sharing key action when on sharing page", async () => {
-    vi.mocked(useParams).mockReturnValue({
-      environmentId: "env1",
-      surveyId: "survey1",
-      sharingKey: "share123",
-    });
-    vi.mocked(getSurveyFilterDataBySurveySharingKeyAction).mockResolvedValue({
-      data: {
-        attributes: [],
-        meta: {},
-        environmentTags: [],
-        hiddenFields: [],
-      } as any,
-    });
-
-    render(<ResponseFilter survey={mockSurvey} />);
-
-    await userEvent.click(screen.getByText("Filter"));
-
-    expect(getSurveyFilterDataBySurveySharingKeyAction).toHaveBeenCalledWith({
-      sharingKey: "share123",
-      environmentId: "env1",
-    });
   });
 });

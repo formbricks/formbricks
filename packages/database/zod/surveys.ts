@@ -78,9 +78,6 @@ const ZSurveyBase = z.object({
   displayProgressBar: z.boolean().nullable().openapi({
     description: "Whether to display the progress bar",
   }),
-  resultShareKey: z.string().nullable().openapi({
-    description: "The result share key of the survey",
-  }),
   pin: z.string().nullable().openapi({
     description: "The pin of the survey",
   }),

@@ -66,7 +66,6 @@ describe("Utils Tests", () => {
       singleUse: null,
       styling: null,
       surveyClosedMessage: null,
-      resultShareKey: null,
       displayOption: "displayOnce",
       welcomeCard: { enabled: false } as TSurvey["welcomeCard"],
       createdAt: new Date(),

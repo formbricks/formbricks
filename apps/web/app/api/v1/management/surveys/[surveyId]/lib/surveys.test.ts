@@ -37,7 +37,6 @@ const mockDeletedSurveyAppPrivateSegment = {
   type: "app",
   segment: { id: segmentId, isPrivate: true },
   triggers: [{ actionClass: { id: actionClassId1 } }, { actionClass: { id: actionClassId2 } }],
-  resultShareKey: "shareKey123",
 };
 
 const mockDeletedSurveyLink = {
@@ -46,7 +45,6 @@ const mockDeletedSurveyLink = {
   type: "link",
   segment: null,
   triggers: [],
-  resultShareKey: null,
 };
 
 describe("deleteSurvey", () => {
