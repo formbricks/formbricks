@@ -147,6 +147,7 @@ vi.mock("lucide-react", () => ({
   Bold: () => <span data-testid="bold-icon">Bold</span>,
   Italic: () => <span data-testid="italic-icon">Italic</span>,
   Link: () => <span data-testid="link-icon">Link</span>,
+  Underline: () => <span data-testid="underline-icon">Underline</span>,
   ChevronDownIcon: () => <span data-testid="chevron-icon">ChevronDown</span>,
 }));
 
@@ -186,6 +187,7 @@ describe("ToolbarPlugin", () => {
     expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
     expect(screen.getByTestId("bold-icon")).toBeInTheDocument();
     expect(screen.getByTestId("italic-icon")).toBeInTheDocument();
+    expect(screen.getByTestId("underline-icon")).toBeInTheDocument();
     expect(screen.getByTestId("link-icon")).toBeInTheDocument();
   });
 
@@ -218,20 +220,57 @@ describe("ToolbarPlugin", () => {
   });
 
   test("excludes toolbar items when specified", () => {
-    render(
+    const { rerender } = render(
       <ToolbarPlugin
         getText={() => "Sample text"}
         setText={vi.fn()}
         editable={true}
         container={document.createElement("div")}
-        excludedToolbarItems={["bold", "italic"]}
+        excludedToolbarItems={["bold", "italic", "underline"]}
       />
     );
 
     // Should not render bold and italic buttons but should render link
     expect(screen.queryByTestId("bold-icon")).not.toBeInTheDocument();
     expect(screen.queryByTestId("italic-icon")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("underline-icon")).not.toBeInTheDocument();
     expect(screen.getByTestId("link-icon")).toBeInTheDocument();
+    expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
+
+    // Rerender with different excluded items
+    rerender(
+      <ToolbarPlugin
+        getText={() => "Sample text"}
+        setText={vi.fn()}
+        editable={true}
+        container={document.createElement("div")}
+        excludedToolbarItems={["blockType", "link"]}
+      />
+    );
+
+    expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("link-icon")).not.toBeInTheDocument();
+    expect(screen.getByTestId("bold-icon")).toBeInTheDocument();
+    expect(screen.getByTestId("italic-icon")).toBeInTheDocument();
+    expect(screen.getByTestId("underline-icon")).toBeInTheDocument();
+  });
+
+  test("excludes all toolbar items when specified", () => {
+    render(
+      <ToolbarPlugin
+        getText={() => "Sample text"}
+        setText={vi.fn()}
+        editable={true}
+        container={document.createElement("div")}
+        excludedToolbarItems={["blockType", "bold", "italic", "underline", "link"]}
+      />
+    );
+
+    expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("bold-icon")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("italic-icon")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("underline-icon")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("link-icon")).not.toBeInTheDocument();
   });
 
   test("handles firstRender and updateTemplate props", () => {
@@ -252,5 +291,123 @@ describe("ToolbarPlugin", () => {
     // Since we've mocked most Lexical functions, we're primarily checking that
     // the component renders without errors when these props are provided
     expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
+  });
+
+  describe("User Interactions", () => {
+    test("dispatches bold format command on click", async () => {
+      render(
+        <ToolbarPlugin
+          getText={() => "Sample text"}
+          setText={vi.fn()}
+          editable={true}
+          container={document.createElement("div")}
+        />
+      );
+
+      const boldIcon = screen.getByTestId("bold-icon");
+      const boldButton = boldIcon.parentElement;
+      expect(boldButton).toBeInTheDocument();
+      expect(boldButton).not.toBeNull();
+      await userEvent.click(boldButton!);
+
+      expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("formatText", "bold");
+    });
+
+    test("dispatches italic format command on click", async () => {
+      render(
+        <ToolbarPlugin
+          getText={() => "Sample text"}
+          setText={vi.fn()}
+          editable={true}
+          container={document.createElement("div")}
+        />
+      );
+
+      const italicIcon = screen.getByTestId("italic-icon");
+      const italicButton = italicIcon.parentElement;
+      expect(italicButton).toBeInTheDocument();
+      expect(italicButton).not.toBeNull();
+      await userEvent.click(italicButton!);
+
+      expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("formatText", "italic");
+    });
+
+    test("dispatches underline format command on click", async () => {
+      render(
+        <ToolbarPlugin
+          getText={() => "Sample text"}
+          setText={vi.fn()}
+          editable={true}
+          container={document.createElement("div")}
+        />
+      );
+
+      const underlineIcon = screen.getByTestId("underline-icon");
+      const underlineButton = underlineIcon.parentElement;
+      expect(underlineButton).toBeInTheDocument();
+      expect(underlineButton).not.toBeNull();
+      await userEvent.click(underlineButton!);
+
+      expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("formatText", "underline");
+    });
+
+    test("dispatches link command on click", async () => {
+      render(
+        <ToolbarPlugin
+          getText={() => "Sample text"}
+          setText={vi.fn()}
+          editable={true}
+          container={document.createElement("div")}
+        />
+      );
+
+      const linkIcon = screen.getByTestId("link-icon");
+      const linkButton = linkIcon.parentElement;
+      expect(linkButton).toBeInTheDocument();
+      expect(linkButton).not.toBeNull();
+      await userEvent.click(linkButton!);
+
+      expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("toggleLink", {
+        url: "https://",
+      });
+    });
+
+    test("dispatches numbered list command on click", async () => {
+      render(
+        <ToolbarPlugin
+          getText={() => "Sample text"}
+          setText={vi.fn()}
+          editable={true}
+          container={document.createElement("div")}
+        />
+      );
+
+      const dropdownTrigger = screen.getByTestId("dropdown-menu-trigger");
+      await userEvent.click(dropdownTrigger);
+
+      const numberedListButton = screen.getAllByTestId("button")[1]; // ol
+      await userEvent.click(numberedListButton);
+
+      expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("insertOrderedList", undefined);
+    });
+
+    test("dispatches bulleted list command on click", async () => {
+      render(
+        <ToolbarPlugin
+          getText={() => "Sample text"}
+          setText={vi.fn()}
+          editable={true}
+          container={document.createElement("div")}
+        />
+      );
+
+      const dropdownTrigger = screen.getByTestId("dropdown-menu-trigger");
+      await userEvent.click(dropdownTrigger);
+
+      const bulletedListButton = screen.getAllByTestId("button")[2]; // ul
+      await userEvent.click(bulletedListButton);
+
+      expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("insertUnorderedList", undefined);
+    });
   });
 });

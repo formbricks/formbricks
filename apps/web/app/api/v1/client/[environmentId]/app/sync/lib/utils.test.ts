@@ -64,7 +64,6 @@ const baseSurvey: TSurvey = {
   autoComplete: null,
   segment: null,
   pin: null,
-  resultShareKey: null,
 };
 
 const attributes: TAttributes = {

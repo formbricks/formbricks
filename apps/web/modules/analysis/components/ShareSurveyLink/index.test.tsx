@@ -98,7 +98,6 @@ const survey: TSurvey = {
   surveyClosedMessage: null,
   singleUse: null,
   productOverwrites: null,
-  resultShareKey: null,
   pin: null,
   verifyEmail: null,
   attributeFilters: [],

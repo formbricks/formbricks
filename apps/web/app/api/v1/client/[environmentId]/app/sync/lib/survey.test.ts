@@ -89,7 +89,6 @@ const baseSurvey: TSurvey = {
   singleUse: null,
   styling: null,
   pin: null,
-  resultShareKey: null,
   displayLimit: null,
   welcomeCard: { enabled: false } as TSurvey["welcomeCard"],
   endings: [],

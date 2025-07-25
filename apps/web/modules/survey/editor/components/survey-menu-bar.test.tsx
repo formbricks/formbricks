@@ -124,7 +124,6 @@ const baseSurvey = {
   surveyClosedMessage: null,
   singleUse: null,
   pin: null,
-  resultShareKey: null,
   segment: null,
   languages: [],
   runOnDate: null,

@@ -18,6 +18,7 @@ interface ShareSurveyLinkProps {
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
   enforceSurveyUrlWidth?: boolean;
+  isReadOnly: boolean;
 }
 
 export const ShareSurveyLink = ({
@@ -27,6 +28,7 @@ export const ShareSurveyLink = ({
   setSurveyUrl,
   locale,
   enforceSurveyUrlWidth = false,
+  isReadOnly,
 }: ShareSurveyLinkProps) => {
   const { t } = useTranslate();
 
@@ -35,7 +37,7 @@ export const ShareSurveyLink = ({
     setSurveyUrl(url);
   };
 
-  const { refreshSingleUseId } = useSingleUseId(survey);
+  const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
   const getPreviewUrl = async () => {
     const previewUrl = new URL(surveyUrl);
