@@ -245,7 +245,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           </div>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent side="bottom" align="start" className="p-0">
+        <DropdownMenuContent side="bottom" align="start" className="p-0" data-testid="dropdown-menu-content">
           <Command className="h-full max-h-[400px] overflow-y-auto">
             {showSearch ? (
               <div className="border-b border-slate-100 px-3">
