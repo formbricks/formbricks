@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
+import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ interface ProjectSwitcherProps {
   isLicenseActive: boolean;
   environmentId: string;
   isOwnerOrManager: boolean;
+  canDoRoleManagement: boolean;
 }
 
 export const ProjectSwitcher = ({
@@ -44,8 +46,10 @@ export const ProjectSwitcher = ({
   isLicenseActive,
   environmentId,
   isOwnerOrManager,
+  canDoRoleManagement,
 }: ProjectSwitcherProps) => {
   const [openLimitModal, setOpenLimitModal] = useState(false);
+  const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
 
   const router = useRouter();
 
@@ -55,12 +59,13 @@ export const ProjectSwitcher = ({
     router.push(`/projects/${projectId}/`);
   };
 
-  const handleAddProject = (organizationId: string) => {
+  const handleAddProject = () => {
     if (projects.length >= organizationProjectsLimit) {
       setOpenLimitModal(true);
       return;
     }
-    router.push(`/organizations/${organizationId}/projects/new/mode`);
+
+    setOpenCreateProjectModal(true);
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
@@ -202,9 +207,7 @@ export const ProjectSwitcher = ({
           {isOwnerOrManager && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleAddProject(organization.id)}
-                icon={<PlusIcon className="mr-2 h-4 w-4" />}>
+              <DropdownMenuItem onClick={handleAddProject} icon={<PlusIcon className="mr-2 h-4 w-4" />}>
                 <span>{t("common.add_project")}</span>
               </DropdownMenuItem>
             </>
@@ -217,6 +220,14 @@ export const ProjectSwitcher = ({
           setOpen={setOpenLimitModal}
           buttons={LimitModalButtons()}
           projectLimit={organizationProjectsLimit}
+        />
+      )}
+      {openCreateProjectModal && (
+        <CreateProjectModal
+          open={openCreateProjectModal}
+          setOpen={setOpenCreateProjectModal}
+          organizationId={organization.id}
+          canDoRoleManagement={canDoRoleManagement}
         />
       )}
     </>

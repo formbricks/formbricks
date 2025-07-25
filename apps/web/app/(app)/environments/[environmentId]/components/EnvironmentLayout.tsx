@@ -13,7 +13,10 @@ import {
 import { getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
-import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import {
+  getOrganizationProjectsLimit,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
@@ -48,9 +51,10 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     throw new Error(t("common.environment_not_found"));
   }
 
-  const [projects, environments] = await Promise.all([
+  const [projects, environments, canDoRoleManagement] = await Promise.all([
     getUserProjects(user.id, organization.id),
     getEnvironments(environment.projectId),
+    getRoleManagementPermission(organization.billing.plan),
   ]);
 
   if (!projects || !environments || !organizations) {
@@ -117,6 +121,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isLicenseActive={active}
+          canDoRoleManagement={canDoRoleManagement}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
