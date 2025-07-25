@@ -212,6 +212,7 @@ export const SurveyAnalysisCTA = ({
           segments={segments}
           isContactsEnabled={isContactsEnabled}
           isFormbricksCloud={isFormbricksCloud}
+          isReadOnly={isReadOnly}
         />
       )}
       <SuccessMessage environment={environment} survey={survey} />
