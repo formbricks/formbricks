@@ -33,6 +33,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
       }
     };
 
+    // Expose only the `scrollToBottom` method to parent components via the forwarded ref
     useImperativeHandle(ref, () => ({
       scrollToBottom,
     }));
