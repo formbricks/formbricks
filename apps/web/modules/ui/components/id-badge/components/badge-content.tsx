@@ -38,7 +38,7 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
 
   const getButtonClasses = () => {
     const baseClasses =
-      "inline-flex cursor-default items-center gap-2 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-500";
+      "inline-flex cursor-default items-center gap-2 rounded-md border border-slate-200 px-2 py-1 text-xs font-regular text-slate-500";
     const interactiveClasses = "cursor-pointer hover:border-transparent hover:text-slate-50";
     const hoverBg = isCopied ? "hover:bg-slate-900" : "hover:bg-slate-900/80";
 
@@ -86,7 +86,7 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
     <TooltipProvider>
       <Tooltip delayDuration={0} open={isHovered}>
         <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent className="bg-slate-900 text-xs text-slate-50">
+        <TooltipContent className="translate-y-[2px] border-none bg-slate-900 text-xs text-slate-50">
           <p>{getTooltipContent()}</p>
         </TooltipContent>
       </Tooltip>

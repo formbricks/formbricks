@@ -95,20 +95,6 @@ export const Default: Story = {
   },
 };
 
-export const WithLabel: Story = {
-  args: {
-    id: "1734",
-    label: "ID",
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "ID badge with a label displayed outside the badge in row layout (default).",
-      },
-    },
-  },
-};
-
 export const ColumnLayout: Story = {
   args: {
     id: "1734",
@@ -182,48 +168,6 @@ export const HoverOverridesDisabled: Story = {
       description: {
         story:
           "When showCopyIconOnHover is enabled, it overrides the copyDisabled setting. Even though copyDisabled is true, the copy icon will still appear on hover.",
-      },
-    },
-  },
-};
-
-export const CustomLabel: Story = {
-  args: {
-    id: "SRV-001",
-    label: "Survey:",
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "Use custom labels to clarify what type of ID is being displayed.",
-      },
-    },
-  },
-};
-
-export const NumericId: Story = {
-  args: {
-    id: 123456789,
-    label: "Response:",
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "The component works with both string and numeric ID values.",
-      },
-    },
-  },
-};
-
-export const LongId: Story = {
-  args: {
-    id: "abcd1234-ef56-7890-abcd-ef1234567890",
-    label: "UUID:",
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "Handles long IDs like UUIDs gracefully while maintaining readable layout.",
       },
     },
   },
@@ -305,29 +249,6 @@ export const VariantsComparison: Story = {
       description: {
         story:
           "Comparison of row and column layout variants. Use row layout for space-efficient display and column layout when you want clear separation between label and badge.",
-      },
-    },
-  },
-};
-
-export const MultipleVariants: Story = {
-  render: () => (
-    <div className="space-y-4">
-      <div className="mb-3 text-sm font-medium text-slate-700">Different ID Types:</div>
-      <div className="flex flex-wrap gap-3">
-        <IdBadge id="1734" label="Survey:" />
-        <IdBadge id="RSP-001" label="Response:" />
-        <IdBadge id="USR-456" label="User:" />
-        <IdBadge id="PRJ-789" label="Project:" />
-        <IdBadge id="ENV-123" label="Environment:" />
-      </div>
-    </div>
-  ),
-  parameters: {
-    docs: {
-      description: {
-        story:
-          "Various examples showing different types of IDs that might be used throughout the Formbricks application with the new label system.",
       },
     },
   },

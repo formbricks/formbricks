@@ -27,13 +27,13 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  const handleCopy = (e: React.MouseEvent) => {
+  const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     try {
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(String(id));
+        await navigator.clipboard.writeText(String(id));
       } else {
         logger.error("Clipboard API not supported");
         throw new Error("Clipboard API not supported");
@@ -46,12 +46,12 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
     }
   };
 
-  // Add cooldown for copied state (10 seconds)
+  // Add cooldown for copied state (5 seconds)
   useEffect(() => {
     if (isCopied) {
       const timer = setTimeout(() => {
         setIsCopied(false);
-      }, 10000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [isCopied]);
@@ -77,7 +77,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
   if (variant === "column") {
     return (
       <div className="flex flex-col items-start gap-1">
-        <span className="text-xs font-medium text-slate-700">{label}</span>
+        <span className="font-regular text-xs text-slate-700">{label}</span>
         <BadgeContent
           id={id}
           isCopyEnabled={isCopyEnabled}
