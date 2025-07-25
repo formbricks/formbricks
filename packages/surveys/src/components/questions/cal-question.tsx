@@ -95,6 +95,7 @@ export function CalQuestion({
             questionId={question.id}
           />
           <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
+          {errorMessage ? <span className="fb-text-red-500">{errorMessage}</span> : null}
           <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
             {!question.required && (
               <SubmitButton
