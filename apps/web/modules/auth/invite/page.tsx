@@ -107,7 +107,6 @@ export const InvitePage = async (props: InvitePageProps) => {
         notificationSettings: {
           ...user.notificationSettings,
           alert: user.notificationSettings.alert ?? {},
-          weeklySummary: user.notificationSettings.weeklySummary ?? {},
           unsubscribedOrganizationIds: Array.from(
             new Set([
               ...(user.notificationSettings?.unsubscribedOrganizationIds || []),

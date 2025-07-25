@@ -18,7 +18,6 @@ export type TUserObjective = z.infer<typeof ZUserObjective>;
 
 export const ZUserNotificationSettings = z.object({
   alert: z.record(z.boolean()),
-  weeklySummary: z.record(z.boolean()),
   unsubscribedOrganizationIds: z.array(z.string()).optional(),
 });
 

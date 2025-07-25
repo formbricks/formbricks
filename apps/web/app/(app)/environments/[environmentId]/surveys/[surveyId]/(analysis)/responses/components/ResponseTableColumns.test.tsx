@@ -156,7 +156,6 @@ const mockSurvey = {
   projectOverwrites: null,
   singleUse: null,
   pin: null,
-  resultShareKey: null,
   surveyClosedMessage: null,
   welcomeCard: {
     enabled: false,

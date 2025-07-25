@@ -88,7 +88,6 @@ const mockSurvey = {
   surveyClosedMessage: null,
   triggers: [],
   languages: [],
-  resultShareKey: null,
   displayPercentage: null,
 } as unknown as TSurvey;
 

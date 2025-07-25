@@ -26,7 +26,6 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserEmail, TUserLocale } from "@formbricks/types/user";
-import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
 import { VerificationEmail } from "./emails/auth/verification-email";
@@ -35,8 +34,6 @@ import { InviteEmail } from "./emails/invite/invite-email";
 import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
 import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
-import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
-import { WeeklySummaryNotificationEmail } from "./emails/weekly-summary/weekly-summary-notification-email";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
@@ -287,73 +284,6 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   return await sendEmail({
     to: data.email,
     subject: t("emails.verified_link_survey_email_subject"),
-    html,
-  });
-};
-
-export const sendWeeklySummaryNotificationEmail = async (
-  email: string,
-  notificationData: TWeeklySummaryNotificationResponse
-): Promise<void> => {
-  const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
-    "default",
-    { month: "short" }
-  )}`;
-  const endDate = `${notificationData.currentDate.getDate().toString()} ${notificationData.currentDate.toLocaleString(
-    "default",
-    { month: "short" }
-  )}`;
-  const startYear = notificationData.lastWeekDate.getFullYear();
-  const endYear = notificationData.currentDate.getFullYear();
-  const t = await getTranslate();
-  const html = await render(
-    WeeklySummaryNotificationEmail({
-      notificationData,
-      startDate,
-      endDate,
-      startYear,
-      endYear,
-      t,
-    })
-  );
-  await sendEmail({
-    to: email,
-    subject: t("emails.weekly_summary_email_subject", {
-      projectName: notificationData.projectName,
-    }),
-    html,
-  });
-};
-
-export const sendNoLiveSurveyNotificationEmail = async (
-  email: string,
-  notificationData: TWeeklySummaryNotificationResponse
-): Promise<void> => {
-  const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
-    "default",
-    { month: "short" }
-  )}`;
-  const endDate = `${notificationData.currentDate.getDate().toString()} ${notificationData.currentDate.toLocaleString(
-    "default",
-    { month: "short" }
-  )}`;
-  const startYear = notificationData.lastWeekDate.getFullYear();
-  const endYear = notificationData.currentDate.getFullYear();
-  const t = await getTranslate();
-  const html = await render(
-    NoLiveSurveyNotificationEmail({
-      notificationData,
-      startDate,
-      endDate,
-      startYear,
-      endYear,
-    })
-  );
-  await sendEmail({
-    to: email,
-    subject: t("emails.weekly_summary_email_subject", {
-      projectName: notificationData.projectName,
-    }),
     html,
   });
 };

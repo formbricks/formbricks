@@ -4037,11 +4037,6 @@ components:
             - boolean
             - "null"
           description: Whether to display the progress bar
-        resultShareKey:
-          type:
-            - string
-            - "null"
-          description: The result share key of the survey
         pin:
           type:
             - string
@@ -4506,7 +4501,6 @@ components:
         - showThankYouMessage
         - welcomeCard
         - displayProgressBar
-        - resultShareKey
         - pin
         - createdBy
         - environmentId
