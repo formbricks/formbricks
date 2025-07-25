@@ -50,11 +50,11 @@ export function ScrollableContainer({ children }: Readonly<ScrollableContainerPr
           scrollbarGutter: "stable both-edges",
           maxHeight: isSurveyPreview ? "42dvh" : "60dvh",
         }}
-        className={cn("fb-overflow-auto fb-px-4 fb-pb-1 fb-mb-2 fb-bg-survey-bg")}>
+        className={cn("fb-overflow-auto fb-px-4 fb-pb-1 fb-mb-3 fb-bg-survey-bg")}>
         {children}
       </div>
       {!isAtBottom && (
-        <div className="fb-from-survey-bg fb-absolute fb-bottom-0 fb-left-4 fb-right-4 fb-h-4 fb-bg-gradient-to-t fb-to-transparent"></div>
+        <div className="fb-from-survey-bg fb-absolute fb-bottom-0 fb-left-4 fb-right-4 fb-h-4 fb-bg-gradient-to-t fb-to-transparent" />
       )}
     </div>
   );
