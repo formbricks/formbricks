@@ -158,7 +158,7 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
         </div>
 
         <div className="grid w-full flex-1 grid-cols-12 gap-x-2">
-          <div className="col-span-5">
+          <div className="col-span-4">
             <InputCombobox
               id={`condition-${depth}-${index}-conditionValue`}
               key="conditionValue"
@@ -170,7 +170,7 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
               }}
             />
           </div>
-          <div className={cn(show && "col-span-3", !show && "col-span-7")}>
+          <div className="col-span-4">
             <InputCombobox
               id={`condition-${depth}-${index}-conditionOperator`}
               key="conditionOperator"
