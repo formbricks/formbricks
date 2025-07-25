@@ -99,7 +99,6 @@ const mockSurveyAppBase = {
   languages: [],
   styling: null,
   variables: [],
-  resultShareKey: null,
   displayLimit: null,
   singleUse: null,
   surveyClosedMessage: null,

@@ -235,7 +235,6 @@ const mockSurvey = {
   surveyClosedMessage: null,
   singleUse: null,
   pin: null,
-  resultShareKey: null,
   displayPercentage: null,
   welcomeCard: { enabled: true, headline: { default: "Welcome" } } as unknown as TSurvey["welcomeCard"],
   variables: [],

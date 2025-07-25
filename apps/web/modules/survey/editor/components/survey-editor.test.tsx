@@ -91,7 +91,6 @@ const mockSurvey = {
   styling: null,
   surveyClosedMessage: null,
   singleUse: null,
-  resultShareKey: null,
   displayPercentage: null,
   createdAt: new Date(),
   updatedAt: new Date(),

@@ -34,6 +34,7 @@ interface ShareSurveyModalProps {
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
+  isReadOnly: boolean;
 }
 
 export const ShareSurveyModal = ({
@@ -46,6 +47,7 @@ export const ShareSurveyModal = ({
   segments,
   isContactsEnabled,
   isFormbricksCloud,
+  isReadOnly,
 }: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
@@ -75,6 +77,7 @@ export const ShareSurveyModal = ({
           setSurveyUrl,
           locale: user.locale,
           surveyUrl,
+          isReadOnly,
         },
       },
       {
@@ -192,6 +195,7 @@ export const ShareSurveyModal = ({
           tabs={linkTabs}
           handleViewChange={handleViewChange}
           handleEmbedViewWithTab={handleEmbedViewWithTab}
+          isReadOnly={isReadOnly}
         />
       );
     }

@@ -38,7 +38,6 @@ describe("ResponseTimeline", () => {
     isActive: true,
     notificationSettings: {
       alert: {},
-      weeklySummary: {},
     },
     locale: "en-US",
     lastLoginAt: new Date(),
