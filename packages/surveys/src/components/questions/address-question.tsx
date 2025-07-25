@@ -120,8 +120,8 @@ export function AddressQuestion({
   );
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
-      <ScrollableContainer>
+    <ScrollableContainer>
+      <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
         <div>
           {isMediaAvailable ? (
             <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
@@ -196,7 +196,7 @@ export function AddressQuestion({
             )}
           </div>
         </div>
-      </ScrollableContainer>
-    </form>
+      </form>
+    </ScrollableContainer>
   );
 }
