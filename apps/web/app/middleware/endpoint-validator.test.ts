@@ -101,12 +101,6 @@ describe("endpoint-validator", () => {
       expect(isPublicDomainRoute("/api/v2/client/other")).toBe(true);
     });
 
-    test("should return true for share routes", () => {
-      expect(isPublicDomainRoute("/share/abc123/summary")).toBe(true);
-      expect(isPublicDomainRoute("/share/xyz789/responses")).toBe(true);
-      expect(isPublicDomainRoute("/share/anything")).toBe(true);
-    });
-
     test("should return false for admin-only routes", () => {
       expect(isPublicDomainRoute("/")).toBe(false);
       expect(isPublicDomainRoute("/environments/123")).toBe(false);
@@ -155,7 +149,6 @@ describe("endpoint-validator", () => {
       expect(isRouteAllowedForDomain("/s/survey123", true)).toBe(true);
       expect(isRouteAllowedForDomain("/c/jwt-token", true)).toBe(true);
       expect(isRouteAllowedForDomain("/api/v1/client/test", true)).toBe(true);
-      expect(isRouteAllowedForDomain("/share/abc/summary", true)).toBe(true);
       expect(isRouteAllowedForDomain("/health", true)).toBe(true);
       // Static assets not tested - middleware doesn't run on them
     });
@@ -181,7 +174,6 @@ describe("endpoint-validator", () => {
       expect(isRouteAllowedForDomain("/s/survey123", false)).toBe(false);
       expect(isRouteAllowedForDomain("/c/jwt-token", false)).toBe(false);
       expect(isRouteAllowedForDomain("/api/v1/client/test", false)).toBe(false);
-      expect(isRouteAllowedForDomain("/share/abc/summary", false)).toBe(false);
     });
   });
 

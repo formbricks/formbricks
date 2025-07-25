@@ -15,11 +15,11 @@ Webhooks are configured to send notifications based on trigger events. The avail
 
 ---
 
-### **Creating Webhooks**
+## **Creating Webhooks**
 
 You can create webhooks either through the **Formbricks App UI** or programmatically via the **Webhook API**.
 
-#### **Creating Webhooks via UI**
+## **Creating Webhooks via UI**
 
 - **Log in to Formbricks**
   Navigate to the **Integrations** Tab after logging in.
@@ -38,6 +38,156 @@ You can create webhooks either through the **Formbricks App UI** or programmatic
 
 - That’s it! Your webhooks will not start receiving data as soon as it arrives!
 
-![Step five](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094816/image_xvrel1.jpg)**API**: Use our documented methods on the **Creation**, **List**, and **Deletion** endpoints of the Webhook API mentioned in our [API v2 playground](https://formbricks.com/docs/api-v2-reference/management-api-%3E-webhooks/get-webhooks).
+![Step five](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094816/image_xvrel1.jpg)
 
-If you encounter any issues or need help setting up webhooks, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃
+## **Creating Webhooks via API**
+
+Use our documented methods on the **Creation**, **List**, and **Deletion** endpoints of the Webhook API mentioned in our [API v2 playground](https://formbricks.com/docs/api-v2-reference/management-api-%3E-webhooks/get-webhooks).
+
+If you encounter any issues or need help setting up webhooks, feel free to reach out to us on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions). 😃
+
+---
+
+## Example Webhook Payloads
+
+We provide the following webhook payloads, `responseCreated`, `responseUpdated`, and `responseFinished`.
+
+### Response Created
+
+Example of Response Created webhook payload:
+
+```json
+[
+    {
+        "webhookId": "webhookId",
+        "event": "responseCreated",
+        "data": {
+            "id": "responseId",
+            "createdAt": "2025-07-24T07:47:29.507Z",
+            "updatedAt": "2025-07-24T07:47:29.507Z",
+            "surveyId": "surveyId",
+            "displayId": "displayId",
+            "contact": null,
+            "contactAttributes": null,
+            "finished": false,
+            "endingId": null,
+            "data": {
+                "q1": "clicked"
+            },
+            "variables": {},
+            "ttc": {
+                "q1": 2154.700000047684
+            },
+            "notes": [],
+            "tags": [],
+            "meta": {
+                "url": "https://app.formbricks.com/s/surveyId",
+                "userAgent": {
+                    "browser": "Chrome",
+                    "os": "macOS",
+                    "device": "desktop"
+                },
+                "country": "DE"
+            },
+            "singleUseId": null,
+            "language": "en"
+        }
+    }
+]
+```
+
+
+
+### Response Updated
+
+Example of Response Updated webhook payload:
+
+```json
+[
+    {
+        "webhookId": "webhookId",
+        "event": "responseUpdated",
+        "data": {
+            "id": "responseId",
+            "createdAt": "2025-07-24T07:47:29.507Z",
+            "updatedAt": "2025-07-24T07:47:33.696Z",
+            "surveyId": "surveyId",
+            "displayId": "displayId",
+            "contact": null,
+            "contactAttributes": null,
+            "finished": false,
+            "endingId": null,
+            "data": {
+                "q1": "clicked",
+                "q2": "Just browsing"
+            },
+            "variables": {},
+            "ttc": {
+                "q1": 2154.700000047684,
+                "q2": 3855.799999952316
+            },
+            "notes": [],
+            "tags": [],
+            "meta": {
+                "url": "https://app.formbricks.com/s/surveyId",
+                "userAgent": {
+                    "browser": "Chrome",
+                    "os": "macOS",
+                    "device": "desktop"
+                },
+                "country": "DE"
+            },
+            "singleUseId": null,
+            "language": "en"
+        }
+    }
+]
+```
+
+
+### Response Finished
+
+Example of Response Finished webhook payload:
+
+```json
+[
+    {
+        "webhookId": "webhookId",
+        "event": "responseFinished",
+        "data": {
+            "id": "responseId",
+            "createdAt": "2025-07-24T07:47:29.507Z",
+            "updatedAt": "2025-07-24T07:47:56.116Z",
+            "surveyId": "surveyId",
+            "displayId": "displayId",
+            "contact": null,
+            "contactAttributes": null,
+            "finished": true,
+            "endingId": "endingId",
+            "data": {
+                "q1": "clicked",
+                "q2": "accepted"
+            },
+            "variables": {},
+            "ttc": {
+                "_total": 4947.899999035763,
+                "q1": 2154.700000047684,
+                "q2": 2793.199999988079
+            },
+            "notes": [],
+            "tags": [],
+            "meta": {
+                "url": "https://app.formbricks.com/s/surveyId",
+                "userAgent": {
+                    "browser": "Chrome",
+                    "os": "macOS",
+                    "device": "desktop"
+                },
+                "country": "DE"
+            },
+            "singleUseId": null,
+            "language": "en"
+        }
+    }
+]
+```

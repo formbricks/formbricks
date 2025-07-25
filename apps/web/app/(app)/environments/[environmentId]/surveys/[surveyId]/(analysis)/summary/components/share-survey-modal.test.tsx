@@ -227,7 +227,6 @@ const mockSurvey: TSurvey = {
   recaptcha: null,
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
-  resultShareKey: null,
 };
 
 const mockAppSurvey: TSurvey = {
@@ -253,7 +252,6 @@ const mockUser: TUser = {
   isActive: true,
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
     unsubscribedOrganizationIds: [],
   },
 };

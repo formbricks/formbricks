@@ -28,17 +28,8 @@ vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/
   CustomFilter: vi.fn(() => <div data-testid="custom-filter">CustomFilter</div>),
 }));
 
-vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton", () => ({
-  ResultsShareButton: vi.fn(() => <div data-testid="results-share-button">ResultsShareButton</div>),
-}));
-
 vi.mock("@/app/lib/surveys/surveys", () => ({
   getFormattedFilters: vi.fn(),
-}));
-
-vi.mock("@/app/share/[sharingKey]/actions", () => ({
-  getResponseCountBySurveySharingKeyAction: vi.fn(),
-  getResponsesBySurveySharingKeyAction: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/recall", () => ({
@@ -63,12 +54,6 @@ const mockGetResponsesAction = vi.mocked(
 const mockGetResponseCountAction = vi.mocked(
   (await import("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions"))
     .getResponseCountAction
-);
-const mockGetResponsesBySurveySharingKeyAction = vi.mocked(
-  (await import("@/app/share/[sharingKey]/actions")).getResponsesBySurveySharingKeyAction
-);
-const mockGetResponseCountBySurveySharingKeyAction = vi.mocked(
-  (await import("@/app/share/[sharingKey]/actions")).getResponseCountBySurveySharingKeyAction
 );
 const mockUseParams = vi.mocked((await import("next/navigation")).useParams);
 const mockUseSearchParams = vi.mocked((await import("next/navigation")).useSearchParams);
@@ -150,8 +135,6 @@ describe("ResponsePage", () => {
     mockUseResponseFilter.mockReturnValue(mockResponseFilterState);
     mockGetResponsesAction.mockResolvedValue({ data: mockResponses });
     mockGetResponseCountAction.mockResolvedValue({ data: 20 });
-    mockGetResponsesBySurveySharingKeyAction.mockResolvedValue({ data: mockResponses });
-    mockGetResponseCountBySurveySharingKeyAction.mockResolvedValue({ data: 20 });
     mockGetFormattedFilters.mockReturnValue({});
   });
 
@@ -159,26 +142,9 @@ describe("ResponsePage", () => {
     render(<ResponsePage {...defaultProps} />);
     await waitFor(() => {
       expect(screen.getByTestId("custom-filter")).toBeInTheDocument();
-      expect(screen.getByTestId("results-share-button")).toBeInTheDocument();
       expect(screen.getByTestId("response-data-view")).toBeInTheDocument();
     });
     expect(mockGetResponsesAction).toHaveBeenCalled();
-  });
-
-  test("does not render ResultsShareButton when isReadOnly is true", async () => {
-    render(<ResponsePage {...defaultProps} isReadOnly={true} />);
-    await waitFor(() => {
-      expect(screen.queryByTestId("results-share-button")).not.toBeInTheDocument();
-    });
-  });
-
-  test("does not render ResultsShareButton when on sharing page", async () => {
-    mockUseParams.mockReturnValue({ sharingKey: "share123" });
-    render(<ResponsePage {...defaultProps} />);
-    await waitFor(() => {
-      expect(screen.queryByTestId("results-share-button")).not.toBeInTheDocument();
-    });
-    expect(mockGetResponsesBySurveySharingKeyAction).toHaveBeenCalled();
   });
 
   test("fetches next page of responses", async () => {

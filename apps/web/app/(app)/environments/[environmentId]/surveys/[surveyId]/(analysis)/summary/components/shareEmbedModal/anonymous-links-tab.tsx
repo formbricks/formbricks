@@ -23,6 +23,7 @@ interface AnonymousLinksTabProps {
   publicDomain: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
 export const AnonymousLinksTab = ({
@@ -31,6 +32,7 @@ export const AnonymousLinksTab = ({
   publicDomain,
   setSurveyUrl,
   locale,
+  isReadOnly,
 }: AnonymousLinksTabProps) => {
   const surveyUrlWithCustomSuid = `${surveyUrl}?suId=CUSTOM-ID`;
   const router = useRouter();
@@ -220,6 +222,7 @@ export const AnonymousLinksTab = ({
                 publicDomain={publicDomain}
                 setSurveyUrl={setSurveyUrl}
                 locale={locale}
+                isReadOnly={isReadOnly}
               />
 
               <div className="w-full">

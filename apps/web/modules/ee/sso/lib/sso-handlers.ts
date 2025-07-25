@@ -216,9 +216,6 @@ export const handleSsoCallback = async ({
         unsubscribedOrganizationIds: Array.from(
           new Set([...(userProfile.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
         ),
-        weeklySummary: {
-          ...userProfile.notificationSettings?.weeklySummary,
-        },
       };
 
       await updateUser(userProfile.id, {

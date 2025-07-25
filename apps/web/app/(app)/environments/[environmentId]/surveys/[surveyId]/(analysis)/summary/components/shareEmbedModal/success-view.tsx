@@ -16,6 +16,7 @@ interface SuccessViewProps {
   tabs: { id: string; label: string; icon: React.ElementType }[];
   handleViewChange: (view: string) => void;
   handleEmbedViewWithTab: (tabId: string) => void;
+  isReadOnly: boolean;
 }
 
 export const SuccessView: React.FC<SuccessViewProps> = ({
@@ -27,6 +28,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({
   tabs,
   handleViewChange,
   handleEmbedViewWithTab,
+  isReadOnly,
 }) => {
   const { t } = useTranslate();
   const environmentId = survey.environmentId;
@@ -44,6 +46,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({
             setSurveyUrl={setSurveyUrl}
             locale={user.locale}
             enforceSurveyUrlWidth
+            isReadOnly={isReadOnly}
           />
         </div>
       )}
