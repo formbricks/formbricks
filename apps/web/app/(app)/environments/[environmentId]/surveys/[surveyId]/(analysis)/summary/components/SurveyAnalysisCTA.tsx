@@ -8,7 +8,6 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
-import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
@@ -66,7 +65,7 @@ export const SurveyAnalysisCTA = ({
   const [isResetting, setIsResetting] = useState(false);
 
   const { organizationId, project } = useEnvironment();
-  const { refreshSingleUseId } = useSingleUseId(survey);
+  const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
@@ -185,15 +184,6 @@ export const SurveyAnalysisCTA = ({
 
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
-      {survey.resultShareKey && (
-        <Badge
-          type="warning"
-          size="normal"
-          className="rounded-lg"
-          text={t("environments.surveys.summary.results_are_public")}
-        />
-      )}
-
       {!isReadOnly && (widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
@@ -222,6 +212,7 @@ export const SurveyAnalysisCTA = ({
           segments={segments}
           isContactsEnabled={isContactsEnabled}
           isFormbricksCloud={isFormbricksCloud}
+          isReadOnly={isReadOnly}
         />
       )}
       <SuccessMessage environment={environment} survey={survey} />

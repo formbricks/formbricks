@@ -7,7 +7,6 @@ import {
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
-import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
@@ -15,7 +14,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
-import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
@@ -33,10 +31,7 @@ interface ResponseFilterProps {
 
 export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   const { t } = useTranslate();
-  const params = useParams();
   const [parent] = useAutoAnimate();
-  const sharingKey = params.sharingKey as string;
-  const isSharingPage = !!sharingKey;
 
   const { selectedFilter, setSelectedFilter, selectedOptions, setSelectedOptions } = useResponseFilter();
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -46,12 +41,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
       if (isOpen) {
-        const surveyFilterData = isSharingPage
-          ? await getSurveyFilterDataBySurveySharingKeyAction({
-              sharingKey,
-              environmentId: survey.environmentId,
-            })
-          : await getSurveyFilterDataAction({ surveyId: survey.id });
+        const surveyFilterData = await getSurveyFilterDataAction({ surveyId: survey.id });
 
         if (!surveyFilterData?.data) return;
 
@@ -68,7 +58,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     };
 
     handleInitialData();
-  }, [isOpen, isSharingPage, setSelectedOptions, sharingKey, survey]);
+  }, [isOpen, setSelectedOptions, survey]);
 
   const handleOnChangeQuestionComboBoxValue = (value: QuestionOption, index: number) => {
     if (filterValue.filter[index].questionType) {

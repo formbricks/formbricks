@@ -70,7 +70,6 @@ const Page = async (props) => {
         environment={environment}
         survey={survey}
         surveyId={params.surveyId}
-        publicDomain={publicDomain}
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}

@@ -18,7 +18,6 @@ apps/web/
 │   ├── (app)/             # Main application routes
 │   ├── (auth)/            # Authentication routes
 │   ├── api/               # API routes
-│   └── share/             # Public sharing routes
 ├── components/            # Shared components
 ├── lib/                   # Utility functions and services
 └── modules/               # Feature-specific modules
@@ -43,7 +42,6 @@ The application uses Next.js 13+ app router with route groups:
 ### Dynamic Routes
 - `[environmentId]` - Environment-specific routes
 - `[surveyId]` - Survey-specific routes
-- `[sharingKey]` - Public sharing routes
 
 ## Service Layer Pattern
 

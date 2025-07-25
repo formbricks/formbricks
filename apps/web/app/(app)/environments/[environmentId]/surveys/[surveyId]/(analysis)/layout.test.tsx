@@ -50,7 +50,6 @@ const mockSurvey = {
   isBackButtonHidden: false,
   pin: null,
   recontactDays: null,
-  resultShareKey: null,
   runOnDate: null,
   showLanguageSwitch: false,
   singleUse: null,

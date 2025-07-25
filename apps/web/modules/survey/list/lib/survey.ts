@@ -193,7 +193,6 @@ export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
           },
         },
         type: true,
-        resultShareKey: true,
         triggers: {
           select: {
             actionClass: {
@@ -558,7 +557,6 @@ export const copySurveyToOtherEnvironment = async (
             },
           },
         },
-        resultShareKey: true,
       },
     });
 

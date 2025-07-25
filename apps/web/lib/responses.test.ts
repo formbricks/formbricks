@@ -258,7 +258,6 @@ describe("Response Processing", () => {
         enabled: false,
         isEncrypted: false,
       },
-      resultShareKey: null,
     };
 
     const mockResponse = {

@@ -111,7 +111,6 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({
     environmentId: "test-environment-id",
     surveyId: "test-survey-id",
-    sharingKey: null,
   }),
 }));
 
@@ -145,7 +144,6 @@ const mockSurvey = {
   delay: 0,
   displayPercentage: null,
   languages: [],
-  resultShareKey: null,
   runOnDate: null,
   singleUse: null,
   surveyClosedMessage: null,
@@ -249,8 +247,6 @@ describe("SurveyPage", () => {
         environment: mockEnvironment,
         survey: mockSurvey,
         surveyId: mockSurveyId,
-        publicDomain: "http://localhost:3000",
-        isReadOnly: false,
         locale: mockUser.locale ?? DEFAULT_LOCALE,
         initialSurveySummary: mockSurveySummary,
       })

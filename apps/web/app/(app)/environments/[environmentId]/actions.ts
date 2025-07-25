@@ -71,10 +71,6 @@ export const createProjectAction = authenticatedActionClient.schema(ZCreateProje
         alert: {
           ...user.notificationSettings?.alert,
         },
-        weeklySummary: {
-          ...user.notificationSettings?.weeklySummary,
-          [project.id]: true,
-        },
       };
 
       await updateUser(user.id, {
