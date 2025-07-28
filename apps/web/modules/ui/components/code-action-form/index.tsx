@@ -15,7 +15,7 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
   const { control, watch } = form;
   const { t } = useTranslate();
   return (
-    <>
+    <div data-testid="code-action-form">
       <div className="col-span-1">
         <FormField
           control={control}
@@ -55,6 +55,6 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
           .
         </AlertDescription>
       </Alert>
-    </>
+    </div>
   );
 };

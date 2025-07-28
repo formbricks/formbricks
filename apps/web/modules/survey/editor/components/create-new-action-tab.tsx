@@ -1,6 +1,5 @@
 "use client";
 
-import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { Button } from "@/modules/ui/components/button";
 import { CodeActionForm } from "@/modules/ui/components/code-action-form";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -23,6 +22,8 @@ import {
 } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { createActionClassAction } from "../actions";
+import { buildActionObject } from "../lib/action-builder";
+import { validateActionData } from "../lib/action-validation";
 
 interface CreateNewActionTabProps {
   actionClasses: ActionClass[];
@@ -85,112 +86,19 @@ export const CreateNewActionTab = ({
       (actionClass) => actionClass.type === "code"
     ) as TActionClassInputCode[];
 
-    return codeActionClasses.map((actionClass) => actionClass.key);
+    return codeActionClasses
+      .map((actionClass) => actionClass.key)
+      .filter((key): key is string => key !== null);
   }, [actionClasses]);
 
   const submitHandler = async (data: TActionClassInput) => {
     try {
-      await validateActionData(data);
+      await validateActionData(data, isReadOnly, actionClassNames, actionClassKeys, t);
       const updatedAction = buildActionObject(data, environmentId);
       await createAndHandleAction(updatedAction);
     } catch (e: any) {
       toast.error(e.message);
     }
-  };
-
-  const validateActionData = async (data: TActionClassInput) => {
-    validatePermissions();
-    validateActionNames(data);
-    validateActionKeys(data);
-    validateCssSelector(data);
-    validateRegexPatterns(data);
-  };
-
-  const validatePermissions = () => {
-    if (isReadOnly) {
-      throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
-    }
-  };
-
-  const validateActionNames = (data: TActionClassInput) => {
-    if (data.name && actionClassNames.includes(data.name)) {
-      throw new Error(t("environments.actions.action_with_name_already_exists", { name: data.name }));
-    }
-  };
-
-  const validateActionKeys = (data: TActionClassInput) => {
-    if (data.type === "code" && data.key && actionClassKeys.includes(data.key)) {
-      throw new Error(t("environments.actions.action_with_key_already_exists", { key: data.key }));
-    }
-  };
-
-  const validateCssSelector = (data: TActionClassInput) => {
-    if (
-      data.type === "noCode" &&
-      data.noCodeConfig?.type === "click" &&
-      data.noCodeConfig.elementSelector.cssSelector &&
-      !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
-    ) {
-      throw new Error(t("environments.actions.invalid_css_selector"));
-    }
-  };
-
-  const validateRegexPatterns = (data: TActionClassInput) => {
-    if (data.type === "noCode" && data.noCodeConfig?.urlFilters) {
-      for (const urlFilter of data.noCodeConfig.urlFilters) {
-        if (urlFilter.rule === "matchesRegex") {
-          try {
-            new RegExp(urlFilter.value);
-          } catch {
-            throw new Error(t("environments.actions.invalid_regex"));
-          }
-        }
-      }
-    }
-  };
-
-  const buildActionObject = (data: TActionClassInput, environmentId: string) => {
-    if (data.type === "noCode") {
-      return buildNoCodeAction(data, environmentId);
-    }
-    return buildCodeAction(data, environmentId);
-  };
-
-  const buildNoCodeAction = (data: TActionClassInput, environmentId: string) => {
-    const noCodeData = data as Extract<TActionClassInput, { type: "noCode" }>;
-    const baseAction = {
-      name: noCodeData.name.trim(),
-      description: noCodeData.description,
-      environmentId,
-      type: "noCode" as const,
-      noCodeConfig: noCodeData.noCodeConfig,
-    };
-
-    if (noCodeData.noCodeConfig?.type === "click") {
-      return {
-        ...baseAction,
-        noCodeConfig: {
-          ...noCodeData.noCodeConfig,
-          elementSelector: {
-            cssSelector: noCodeData.noCodeConfig.elementSelector.cssSelector,
-            innerHtml: noCodeData.noCodeConfig.elementSelector.innerHtml,
-          },
-        },
-      };
-    }
-
-    return baseAction;
-  };
-
-  const buildCodeAction = (data: TActionClassInput, environmentId: string) => {
-    const codeData = data as Extract<TActionClassInput, { type: "code" }>;
-    return {
-      name: codeData.name.trim(),
-      description: codeData.description,
-      environmentId,
-      type: "code" as const,
-      key: codeData.key,
-    };
   };
 
   const createAndHandleAction = async (updatedAction: TActionClassInput) => {
@@ -227,7 +135,7 @@ export const CreateNewActionTab = ({
   return (
     <div>
       <FormProvider {...form}>
-        <form onSubmit={handleSubmit(submitHandler)}>
+        <form onSubmit={handleSubmit(submitHandler)} aria-label="create-action-form">
           <div className="w-full space-y-4">
             <div className="w-3/5">
               <FormField
