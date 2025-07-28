@@ -95,7 +95,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
   // Row variant (default)
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-medium text-slate-700">{label}</span>
+      <span className="font-regular text-xs text-slate-700">{label}</span>
       <BadgeContent
         id={id}
         isCopyEnabled={isCopyEnabled}
