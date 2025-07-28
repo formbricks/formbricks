@@ -1,4 +1,3 @@
-import "server-only";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { Prisma } from "@prisma/client";
 import {
@@ -9,11 +8,66 @@ import {
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
 import { getFormattedDateTimeString } from "../utils/datetime";
 import { sanitizeString } from "../utils/strings";
+
+/**
+ * Extracts choice IDs from response values for multiple choice questions
+ * @param responseValue - The response value (string for single choice, array for multi choice)
+ * @param question - The survey question containing choices
+ * @param language - The language to match against (defaults to "default")
+ * @returns Array of choice IDs
+ */
+export const extractChoiceIdsFromResponse = (
+  responseValue: string | string[] | any,
+  question: TSurveyQuestion,
+  language: string = "default"
+): string[] => {
+  // Type guard to ensure the question has choices
+  if (question.type !== "multipleChoiceMulti" && question.type !== "multipleChoiceSingle") {
+    return [];
+  }
+
+  if (!responseValue) {
+    return [];
+  }
+
+  const defaultLanguage = language ?? "default";
+
+  if (Array.isArray(responseValue)) {
+    // Multiple choice case - response is an array of selected choice labels
+    return responseValue
+      .map((choiceLabel) => {
+        // First try exact language match, then fall back to checking all language values
+        const targetChoice = question.choices.find((c) => {
+          // Try exact language match first
+          if (c.label[defaultLanguage] === choiceLabel) {
+            return true;
+          }
+          // Fall back to checking all language values
+          return Object.values(c.label).includes(choiceLabel);
+        });
+        return targetChoice?.id || null;
+      })
+      .filter((choiceId): choiceId is string => choiceId !== null);
+  } else if (typeof responseValue === "string") {
+    // Single choice case - response is a single choice label
+    const targetChoice = question.choices.find((c) => {
+      // Try exact language match first
+      if (c.label[defaultLanguage] === responseValue) {
+        return true;
+      }
+      // Fall back to checking all language values
+      return Object.values(c.label).includes(responseValue);
+    });
+    return targetChoice ? [targetChoice.id] : [];
+  }
+
+  return [];
+};
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
   const result = { ...ttc };
@@ -490,10 +544,13 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
       return question.rows.map((row) => {
         return `${idx + 1}. ${headline} - ${getLocalizedValue(row, "default")}`;
       });
+    } else if (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") {
+      return [`${idx + 1}. ${headline}`, `${idx + 1}. ${headline} - Option ID`];
     } else {
       return [`${idx + 1}. ${headline}`];
     }
   });
+
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
   const userAttributes =
     survey.type === "app"
@@ -556,6 +613,15 @@ export const getResponsesJson = (
             }
           }
         });
+      } else if (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") {
+        // Set the main response value
+        jsonData[idx][questionHeadline[0]] = processResponseData(answer);
+
+        // Set the option IDs using the reusable function
+        if (questionHeadline[1]) {
+          const choiceIds = extractChoiceIdsFromResponse(answer, question, response.language || "default");
+          jsonData[idx][questionHeadline[1]] = choiceIds.join(", ");
+        }
       } else {
         jsonData[idx][questionHeadline[0]] = processResponseData(answer);
       }
