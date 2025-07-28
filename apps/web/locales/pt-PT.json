@@ -1596,7 +1596,6 @@
         "wait_a_few_seconds_after_the_trigger_before_showing_the_survey": "Aguarde alguns segundos após o gatilho antes de mostrar o inquérito",
         "waiting_period": "período de espera",
         "welcome_message": "Mensagem de boas-vindas",
-        "when": "Quando",
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "Quando as condições corresponderem, o tempo de espera será ignorado e o inquérito será mostrado.",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Sem um filtro, todos os seus utilizadores podem ser pesquisados.",
         "you_have_not_created_a_segment_yet": "Ainda não criou um segmento",

@@ -1596,7 +1596,6 @@
         "wait_a_few_seconds_after_the_trigger_before_showing_the_survey": "Wait a few seconds after the trigger before showing the survey",
         "waiting_period": "waiting period",
         "welcome_message": "Welcome message",
-        "when": "When",
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "When conditions match, waiting time will be ignored and survey shown.",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Without a filter, all of your users can be surveyed.",
         "you_have_not_created_a_segment_yet": "You have not created a segment yet",

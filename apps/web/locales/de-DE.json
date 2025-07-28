@@ -1596,7 +1596,6 @@
         "wait_a_few_seconds_after_the_trigger_before_showing_the_survey": "Warte ein paar Sekunden nach dem Auslöser, bevor Du die Umfrage anzeigst",
         "waiting_period": "Wartezeit",
         "welcome_message": "Willkommensnachricht",
-        "when": "Wenn",
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "Wenn die Bedingungen übereinstimmen, wird die Wartezeit ignoriert und die Umfrage angezeigt.",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Ohne Filter können alle deine Nutzer befragt werden.",
         "you_have_not_created_a_segment_yet": "Du hast noch keinen Segment erstellt.",
