@@ -89,97 +89,134 @@ export const CreateNewActionTab = ({
   }, [actionClasses]);
 
   const submitHandler = async (data: TActionClassInput) => {
-    const { type } = data;
     try {
-      if (isReadOnly) {
-        throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
-      }
-
-      if (data.name && actionClassNames.includes(data.name)) {
-        throw new Error(t("environments.actions.action_with_name_already_exists", { name: data.name }));
-      }
-
-      if (type === "code" && data.key && actionClassKeys.includes(data.key)) {
-        throw new Error(t("environments.actions.action_with_key_already_exists", { key: data.key }));
-      }
-
-      if (
-        data.type === "noCode" &&
-        data.noCodeConfig?.type === "click" &&
-        data.noCodeConfig.elementSelector.cssSelector &&
-        !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
-      ) {
-        throw new Error("Invalid CSS Selector");
-      }
-
-      let updatedAction = {};
-
-      if (type === "noCode") {
-        // Validate regex patterns in URL filters
-        if (data.noCodeConfig?.urlFilters) {
-          for (const urlFilter of data.noCodeConfig.urlFilters) {
-            if (urlFilter.rule === "matchesRegex") {
-              try {
-                new RegExp(urlFilter.value);
-              } catch {
-                throw new Error(t("environments.actions.invalid_regex"));
-              }
-            }
-          }
-        }
-
-        updatedAction = {
-          name: data.name.trim(),
-          description: data.description,
-          environmentId,
-          type: "noCode",
-          noCodeConfig: {
-            ...data.noCodeConfig,
-            ...(data.type === "noCode" &&
-              data.noCodeConfig?.type === "click" && {
-                elementSelector: {
-                  cssSelector: data.noCodeConfig.elementSelector.cssSelector,
-                  innerHtml: data.noCodeConfig.elementSelector.innerHtml,
-                },
-              }),
-          },
-        };
-      } else if (type === "code") {
-        updatedAction = {
-          name: data.name.trim(),
-          description: data.description,
-          environmentId,
-          type: "code",
-          key: data.key,
-        };
-      }
-
-      // const newActionClass: TActionClass =
-      const createActionClassResposne = await createActionClassAction({
-        action: updatedAction as TActionClassInput,
-      });
-
-      if (!createActionClassResposne?.data) return;
-
-      const newActionClass = createActionClassResposne.data;
-      if (setActionClasses) {
-        setActionClasses((prevActionClasses: ActionClass[]) => [...prevActionClasses, newActionClass]);
-      }
-
-      if (setLocalSurvey) {
-        setLocalSurvey((prev) => ({
-          ...prev,
-          triggers: prev.triggers.concat({ actionClass: newActionClass }),
-        }));
-      }
-
-      reset();
-      resetAllStates();
-      router.refresh();
-      toast.success(t("environments.actions.action_created_successfully"));
+      await validateActionData(data);
+      const updatedAction = buildActionObject(data, environmentId);
+      await createAndHandleAction(updatedAction);
     } catch (e: any) {
       toast.error(e.message);
     }
+  };
+
+  const validateActionData = async (data: TActionClassInput) => {
+    validatePermissions();
+    validateActionNames(data);
+    validateActionKeys(data);
+    validateCssSelector(data);
+    validateRegexPatterns(data);
+  };
+
+  const validatePermissions = () => {
+    if (isReadOnly) {
+      throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
+    }
+  };
+
+  const validateActionNames = (data: TActionClassInput) => {
+    if (data.name && actionClassNames.includes(data.name)) {
+      throw new Error(t("environments.actions.action_with_name_already_exists", { name: data.name }));
+    }
+  };
+
+  const validateActionKeys = (data: TActionClassInput) => {
+    if (data.type === "code" && data.key && actionClassKeys.includes(data.key)) {
+      throw new Error(t("environments.actions.action_with_key_already_exists", { key: data.key }));
+    }
+  };
+
+  const validateCssSelector = (data: TActionClassInput) => {
+    if (
+      data.type === "noCode" &&
+      data.noCodeConfig?.type === "click" &&
+      data.noCodeConfig.elementSelector.cssSelector &&
+      !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
+    ) {
+      throw new Error(t("environments.actions.invalid_css_selector"));
+    }
+  };
+
+  const validateRegexPatterns = (data: TActionClassInput) => {
+    if (data.type === "noCode" && data.noCodeConfig?.urlFilters) {
+      for (const urlFilter of data.noCodeConfig.urlFilters) {
+        if (urlFilter.rule === "matchesRegex") {
+          try {
+            new RegExp(urlFilter.value);
+          } catch {
+            throw new Error(t("environments.actions.invalid_regex"));
+          }
+        }
+      }
+    }
+  };
+
+  const buildActionObject = (data: TActionClassInput, environmentId: string) => {
+    if (data.type === "noCode") {
+      return buildNoCodeAction(data, environmentId);
+    }
+    return buildCodeAction(data, environmentId);
+  };
+
+  const buildNoCodeAction = (data: TActionClassInput, environmentId: string) => {
+    const noCodeData = data as Extract<TActionClassInput, { type: "noCode" }>;
+    const baseAction = {
+      name: noCodeData.name.trim(),
+      description: noCodeData.description,
+      environmentId,
+      type: "noCode" as const,
+      noCodeConfig: noCodeData.noCodeConfig,
+    };
+
+    if (noCodeData.noCodeConfig?.type === "click") {
+      return {
+        ...baseAction,
+        noCodeConfig: {
+          ...noCodeData.noCodeConfig,
+          elementSelector: {
+            cssSelector: noCodeData.noCodeConfig.elementSelector.cssSelector,
+            innerHtml: noCodeData.noCodeConfig.elementSelector.innerHtml,
+          },
+        },
+      };
+    }
+
+    return baseAction;
+  };
+
+  const buildCodeAction = (data: TActionClassInput, environmentId: string) => {
+    const codeData = data as Extract<TActionClassInput, { type: "code" }>;
+    return {
+      name: codeData.name.trim(),
+      description: codeData.description,
+      environmentId,
+      type: "code" as const,
+      key: codeData.key,
+    };
+  };
+
+  const createAndHandleAction = async (updatedAction: TActionClassInput) => {
+    const createActionClassResposne = await createActionClassAction({
+      action: updatedAction,
+    });
+
+    if (!createActionClassResposne?.data) return;
+
+    const newActionClass = createActionClassResposne.data;
+
+    if (setActionClasses) {
+      setActionClasses((prevActionClasses: ActionClass[]) => [...prevActionClasses, newActionClass]);
+    }
+
+    if (setLocalSurvey) {
+      setLocalSurvey((prev) => ({
+        ...prev,
+        triggers: prev.triggers.concat({ actionClass: newActionClass }),
+      }));
+    }
+
+    reset();
+    resetAllStates();
+    router.refresh();
+    toast.success(t("environments.actions.action_created_successfully"));
   };
 
   const resetAllStates = () => {

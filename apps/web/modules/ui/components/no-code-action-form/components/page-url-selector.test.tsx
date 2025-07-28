@@ -1,6 +1,8 @@
+import { Select, SelectContent, SelectItem } from "@/modules/ui/components/select";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { ACTION_CLASS_PAGE_URL_RULES, TActionClassInput } from "@formbricks/types/action-classes";
@@ -103,28 +105,41 @@ vi.mock("@/modules/ui/components/button", () => ({
 }));
 
 // Mock the Select component
-vi.mock("@/modules/ui/components/select", () => ({
-  Select: ({ children, value, name, disabled, onValueChange }: any) => (
-    <div data-testid={`select-${name}`} data-value={value} data-disabled={disabled}>
-      <button onClick={() => onValueChange?.("exactMatch")} data-testid="select-trigger-button">
-        Select
-      </button>
-      {children}
-    </div>
-  ),
-  SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
-  SelectItem: ({ children, value }: any) => (
-    <div data-testid={`select-item-${value}`} data-value={value}>
-      {children}
-    </div>
-  ),
-  SelectTrigger: ({ children, className }: any) => (
-    <div data-testid="select-trigger" className={className}>
-      {children}
-    </div>
-  ),
-  SelectValue: ({ placeholder }: any) => <div data-testid="select-value">{placeholder}</div>,
-}));
+vi.mock("@/modules/ui/components/select", () => {
+  const SelectContext = React.createContext<{ onValueChange?: (value: string) => void }>({});
+
+  return {
+    Select: ({ children, value, name, disabled, onValueChange }: any) => {
+      const contextValue = React.useMemo(() => ({ onValueChange }), [onValueChange]);
+      return (
+        <SelectContext.Provider value={contextValue}>
+          <div data-testid={`select-${name}`} data-value={value} data-disabled={disabled}>
+            {children}
+          </div>
+        </SelectContext.Provider>
+      );
+    },
+    SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
+    SelectItem: ({ children, value }: any) => {
+      const context = React.useContext(SelectContext);
+      return (
+        <div // NOSONAR // This is a mocked component to test the logic
+          data-testid={`select-item-${value}`}
+          data-value={value}
+          onClick={() => context.onValueChange?.(value)}
+          style={{ cursor: "pointer" }}>
+          {children}
+        </div>
+      );
+    },
+    SelectTrigger: ({ children, className }: any) => (
+      <div data-testid="select-trigger" className={className}>
+        {children}
+      </div>
+    ),
+    SelectValue: ({ placeholder }: any) => <div data-testid="select-value">{placeholder}</div>,
+  };
+});
 
 // Mock the Label component
 vi.mock("@/modules/ui/components/label", () => ({
@@ -471,5 +486,41 @@ describe("PageUrlSelector", () => {
 
     // The styling should reset to default while typing
     expect(testInput).toHaveClass("border-slate-200");
+  });
+
+  test("Select mock properly handles different selection values", async () => {
+    const mockOnValueChange = vi.fn();
+
+    render(
+      <div>
+        <Select name="test-select" onValueChange={mockOnValueChange}>
+          <SelectContent>
+            <SelectItem value="exactMatch">Exact Match</SelectItem>
+            <SelectItem value="contains">Contains</SelectItem>
+            <SelectItem value="startsWith">Starts With</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    );
+
+    // Test clicking different select items
+    const exactMatchItem = screen.getByTestId("select-item-exactMatch");
+    const containsItem = screen.getByTestId("select-item-contains");
+    const startsWithItem = screen.getByTestId("select-item-startsWith");
+
+    // Click exactMatch
+    await userEvent.click(exactMatchItem);
+    expect(mockOnValueChange).toHaveBeenCalledWith("exactMatch");
+
+    // Click contains
+    await userEvent.click(containsItem);
+    expect(mockOnValueChange).toHaveBeenCalledWith("contains");
+
+    // Click startsWith
+    await userEvent.click(startsWithItem);
+    expect(mockOnValueChange).toHaveBeenCalledWith("startsWith");
+
+    // Verify each call was made with the correct value
+    expect(mockOnValueChange).toHaveBeenCalledTimes(3);
   });
 });
