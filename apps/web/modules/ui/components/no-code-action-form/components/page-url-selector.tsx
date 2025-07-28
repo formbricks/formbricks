@@ -16,7 +16,7 @@ import {
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Control,
   FieldArrayWithId,
@@ -26,7 +26,32 @@ import {
   useWatch,
 } from "react-hook-form";
 import toast from "react-hot-toast";
-import { TActionClassInput } from "@formbricks/types/action-classes";
+import {
+  ACTION_CLASS_PAGE_URL_RULES,
+  TActionClassInput,
+  TActionClassPageUrlRule,
+} from "@formbricks/types/action-classes";
+
+const getRuleLabel = (rule: TActionClassPageUrlRule, t: (key: string) => string): string => {
+  switch (rule) {
+    case "exactMatch":
+      return t("environments.actions.exactly_matches");
+    case "contains":
+      return t("environments.actions.contains");
+    case "startsWith":
+      return t("environments.actions.starts_with");
+    case "endsWith":
+      return t("environments.actions.ends_with");
+    case "notMatch":
+      return t("environments.actions.does_not_exactly_match");
+    case "notContains":
+      return t("environments.actions.does_not_contain");
+    case "matchesRegex":
+      return t("environments.actions.matches_regex");
+    default:
+      return rule;
+  }
+};
 
 interface PageUrlSelectorProps {
   form: UseFormReturn<TActionClassInput>;
@@ -59,7 +84,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
     }
   };
 
-  const isMatchClass = useCallback(() => {
+  const matchClass = useMemo(() => {
     if (isMatch === null) return "border-slate-200";
     return isMatch ? "border-green-500 bg-green-50" : "border-red-200 bg-red-50";
   }, [isMatch]);
@@ -119,11 +144,11 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
             {t("environments.actions.add_url")}
           </Button>
           <div className="mt-4">
-            <div className="text-sm text-slate-900">{t("environments.actions.test_your_url")}</div>
-            <div className="text-xs text-slate-400">
+            <Label className="font-semibold">{t("environments.actions.test_your_url")}</Label>
+            <p className="text-sm font-normal text-slate-500">
               {t("environments.actions.enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked")}
-            </div>
-            <div className="rounded bg-slate-50">
+            </p>
+            <div className="rounded">
               <div className="mt-1 flex items-end">
                 <Input
                   type="text"
@@ -133,7 +158,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
                     setTestUrl(e.target.value);
                     setIsMatch(null);
                   }}
-                  className={cn(isMatchClass())}
+                  className={cn(matchClass)}
                   placeholder="e.g. https://app.com/dashboard"
                 />
                 <Button
@@ -188,17 +213,11 @@ const UrlInput = ({
                       <SelectValue placeholder={t("environments.actions.select_match_type")} />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
-                      <SelectItem value="exactMatch">{t("environments.actions.exactly_matches")}</SelectItem>
-                      <SelectItem value="contains">{t("environments.actions.contains")}</SelectItem>
-                      <SelectItem value="startsWith">{t("environments.actions.starts_with")}</SelectItem>
-                      <SelectItem value="endsWith">{t("environments.actions.ends_with")}</SelectItem>
-                      <SelectItem value="notMatch">
-                        {t("environments.actions.does_not_exactly_match")}
-                      </SelectItem>
-                      <SelectItem value="notContains">
-                        {t("environments.actions.does_not_contain")}
-                      </SelectItem>
-                      <SelectItem value="matchesRegex">{t("environments.actions.matches_regex")}</SelectItem>
+                      {ACTION_CLASS_PAGE_URL_RULES.map((rule) => (
+                        <SelectItem key={rule} value={rule}>
+                          {getRuleLabel(rule, t)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormControl>
@@ -209,7 +228,7 @@ const UrlInput = ({
             control={control}
             name={`noCodeConfig.urlFilters.${index}.value`}
             render={({ field, fieldState: { error } }) => {
-              const ruleValue = ruleValues?.[index]?.rule;
+              const ruleValue = ruleValues[index]?.rule;
 
               return (
                 <FormItem className="flex-1">

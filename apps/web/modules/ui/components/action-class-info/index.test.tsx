@@ -4,13 +4,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ActionClassInfo } from "./index";
 
-// Mock the tolgee translation
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("ActionClassInfo", () => {
   afterEach(() => {
     cleanup();

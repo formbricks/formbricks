@@ -115,6 +115,19 @@ export const CreateNewActionTab = ({
       let updatedAction = {};
 
       if (type === "noCode") {
+        // Validate regex patterns in URL filters
+        if (data.noCodeConfig?.urlFilters) {
+          for (const urlFilter of data.noCodeConfig.urlFilters) {
+            if (urlFilter.rule === "matchesRegex") {
+              try {
+                new RegExp(urlFilter.value);
+              } catch {
+                throw new Error(t("environments.actions.invalid_regex"));
+              }
+            }
+          }
+        }
+
         updatedAction = {
           name: data.name.trim(),
           description: data.description,

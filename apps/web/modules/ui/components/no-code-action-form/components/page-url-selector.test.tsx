@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TActionClassInput } from "@formbricks/types/action-classes";
+import { ACTION_CLASS_PAGE_URL_RULES, TActionClassInput } from "@formbricks/types/action-classes";
 import { PageUrlSelector } from "./page-url-selector";
 
 // Mock testURLmatch function
@@ -104,8 +104,11 @@ vi.mock("@/modules/ui/components/button", () => ({
 
 // Mock the Select component
 vi.mock("@/modules/ui/components/select", () => ({
-  Select: ({ children, value, name, disabled }: any) => (
+  Select: ({ children, value, name, disabled, onValueChange }: any) => (
     <div data-testid={`select-${name}`} data-value={value} data-disabled={disabled}>
+      <button onClick={() => onValueChange?.("exactMatch")} data-testid="select-trigger-button">
+        Select
+      </button>
       {children}
     </div>
   ),
@@ -369,5 +372,104 @@ describe("PageUrlSelector", () => {
 
     const input = screen.getByTestId("input-noCodeConfig.urlFilters.0.value");
     expect(input).toHaveAttribute("placeholder", "environments.actions.enter_url");
+  });
+
+  test("renders all available rule options from ACTION_CLASS_PAGE_URL_RULES", () => {
+    render(<TestWrapper urlFilters={[{ rule: "exactMatch", value: "https://example.com" }]} />);
+
+    // Check that all rule options are rendered
+    ACTION_CLASS_PAGE_URL_RULES.forEach((rule) => {
+      expect(screen.getByTestId(`select-item-${rule}`)).toBeInTheDocument();
+    });
+  });
+
+  test("displays correct translated labels for each rule type", () => {
+    render(<TestWrapper urlFilters={[{ rule: "exactMatch", value: "https://example.com" }]} />);
+
+    // Test that each rule has the correct translated label
+    expect(screen.getByTestId("select-item-exactMatch")).toHaveTextContent(
+      "environments.actions.exactly_matches"
+    );
+    expect(screen.getByTestId("select-item-contains")).toHaveTextContent("environments.actions.contains");
+    expect(screen.getByTestId("select-item-startsWith")).toHaveTextContent(
+      "environments.actions.starts_with"
+    );
+    expect(screen.getByTestId("select-item-endsWith")).toHaveTextContent("environments.actions.ends_with");
+    expect(screen.getByTestId("select-item-notMatch")).toHaveTextContent(
+      "environments.actions.does_not_exactly_match"
+    );
+    expect(screen.getByTestId("select-item-notContains")).toHaveTextContent(
+      "environments.actions.does_not_contain"
+    );
+    expect(screen.getByTestId("select-item-matchesRegex")).toHaveTextContent(
+      "environments.actions.matches_regex"
+    );
+  });
+
+  test("test input styling changes based on match result", async () => {
+    const testUrl = "https://example.com/pricing";
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    // Test URL that should match
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // The input should have success styling (this tests the useMemo matchClass logic)
+    expect(testInput).toHaveClass("border-green-500", "bg-green-50");
+  });
+
+  test("test input styling for no match", async () => {
+    const testUrl = "https://example.com/dashboard";
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // The input should have error styling
+    expect(testInput).toHaveClass("border-red-200", "bg-red-50");
+  });
+
+  test("test input has default styling before any test", () => {
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+
+    // The input should have default styling
+    expect(testInput).toHaveClass("border-slate-200");
+  });
+
+  test("resets match state when test URL is changed", async () => {
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    // First, perform a test that matches
+    await userEvent.type(testInput, "https://example.com/pricing");
+    await userEvent.click(testButton);
+
+    // Verify the input has success styling
+    expect(testInput).toHaveClass("border-green-500", "bg-green-50");
+
+    // Clear and type new URL
+    await userEvent.clear(testInput);
+    await userEvent.type(testInput, "https://example.com/dashboard");
+
+    // The styling should reset to default while typing
+    expect(testInput).toHaveClass("border-slate-200");
   });
 });
