@@ -171,6 +171,7 @@ export function DateQuestion({
                   setDatePickerOpen(true);
                 }}
                 tabIndex={isCurrent ? 0 : -1}
+                type="button"
                 onKeyDown={(e) => {
                   if (e.key === " ") setDatePickerOpen(true);
                 }}

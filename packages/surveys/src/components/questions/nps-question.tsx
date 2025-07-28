@@ -102,6 +102,12 @@ export function NPSQuestion({
                     onMouseLeave={() => {
                       setHoveredNumber(-1);
                     }}
+                    onFocus={() => {
+                      setHoveredNumber(number);
+                    }}
+                    onBlur={() => {
+                      setHoveredNumber(-1);
+                    }}
                     onKeyDown={(e) => {
                       // Accessibility: if spacebar was pressed pass this down to the input
                       if (e.key === " ") {
