@@ -60,6 +60,7 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
 
   const content = (
     <button
+      type="button"
       role={isCopyEnabled ? "button" : undefined}
       className={getButtonClasses()}
       onClick={handleCopy}
