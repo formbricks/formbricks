@@ -4510,7 +4510,7 @@
             }
           },
           {
-            "description": "The surveyId to fetch responses for",
+            "description": "The ID of the survey to fetch responses for",
             "example": "{{surveyId}}",
             "in": "query",
             "name": "surveyId",
@@ -4524,7 +4524,8 @@
             "in": "query",
             "name": "limit",
             "schema": {
-              "type": "number"
+              "minimum": 0,
+              "type": "integer"
             }
           },
           {
@@ -4533,7 +4534,8 @@
             "in": "query",
             "name": "skip",
             "schema": {
-              "type": "number"
+              "minimum": 0,
+              "type": "integer"
             }
           }
         ],
