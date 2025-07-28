@@ -105,7 +105,8 @@ vi.mock("@/modules/ui/components/button", () => ({
 }));
 
 // Mock the Select component
-vi.mock("@/modules/ui/components/select", () => {
+vi.mock("@/modules/ui/components/select", async () => {
+  const React = await import("react");
   const SelectContext = React.createContext<{ onValueChange?: (value: string) => void }>({});
 
   return {
@@ -123,13 +124,14 @@ vi.mock("@/modules/ui/components/select", () => {
     SelectItem: ({ children, value }: any) => {
       const context = React.useContext(SelectContext);
       return (
-        <div // NOSONAR // This is a mocked component to test the logic
+        <button // NOSONAR // This is a mocked component to test the logic
+          type="button"
           data-testid={`select-item-${value}`}
           data-value={value}
           onClick={() => context.onValueChange?.(value)}
           style={{ cursor: "pointer" }}>
           {children}
-        </div>
+        </button>
       );
     },
     SelectTrigger: ({ children, className }: any) => (
