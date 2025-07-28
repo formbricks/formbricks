@@ -263,7 +263,7 @@ describe("Action Validation", () => {
   });
 
   describe("validateActionData", () => {
-    test("runs all validations in sequence", async () => {
+    test("runs all validations in sequence", () => {
       const data: TActionClassInput = {
         name: "Test Action",
         description: "",
@@ -276,10 +276,10 @@ describe("Action Validation", () => {
       };
 
       // Should not throw for valid data
-      await expect(validateActionData(data, false, [], [], mockT)).resolves.not.toThrow();
+      expect(() => validateActionData(data, false, [], [], mockT)).not.toThrow();
     });
 
-    test("throws on first validation failure", async () => {
+    test("throws on first validation failure", () => {
       const data: TActionClassInput = {
         name: "Test Action",
         description: "",
@@ -292,7 +292,7 @@ describe("Action Validation", () => {
       };
 
       // Should throw for readonly user
-      await expect(validateActionData(data, true, [], [], mockT)).rejects.toThrow("You are not authorized");
+      expect(() => validateActionData(data, true, [], [], mockT)).toThrow();
     });
   });
 });

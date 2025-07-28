@@ -44,7 +44,7 @@ export const validateRegexPatterns = (data: TActionClassInput, t: any) => {
   }
 };
 
-export const validateActionData = async (
+export const validateActionData = (
   data: TActionClassInput,
   isReadOnly: boolean,
   actionClassNames: string[],

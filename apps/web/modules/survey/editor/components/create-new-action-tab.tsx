@@ -93,7 +93,7 @@ export const CreateNewActionTab = ({
 
   const submitHandler = async (data: TActionClassInput) => {
     try {
-      await validateActionData(data, isReadOnly, actionClassNames, actionClassKeys, t);
+      validateActionData(data, isReadOnly, actionClassNames, actionClassKeys, t);
       const updatedAction = buildActionObject(data, environmentId);
       await createAndHandleAction(updatedAction);
     } catch (e: any) {
