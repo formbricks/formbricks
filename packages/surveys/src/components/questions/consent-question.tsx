@@ -113,7 +113,7 @@ export function ConsentQuestion({
             {getLocalizedValue(question.label, languageCode)}
           </span>
         </label>
-        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-pt-4">
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
