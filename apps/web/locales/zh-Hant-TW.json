@@ -1596,7 +1596,6 @@
         "wait_a_few_seconds_after_the_trigger_before_showing_the_survey": "在觸發後等待幾秒鐘再顯示問卷",
         "waiting_period": "等待時間",
         "welcome_message": "歡迎訊息",
-        "when": "何時",
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "當條件符合時，等待時間將被忽略且顯示問卷。",
         "without_a_filter_all_of_your_users_can_be_surveyed": "如果沒有篩選器，則可以調查您的所有使用者。",
         "you_have_not_created_a_segment_yet": "您尚未建立區隔",

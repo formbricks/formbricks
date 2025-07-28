@@ -1596,7 +1596,6 @@
         "wait_a_few_seconds_after_the_trigger_before_showing_the_survey": "Attendez quelques secondes après le déclencheur avant de montrer l'enquête.",
         "waiting_period": "période d'attente",
         "welcome_message": "Message de bienvenue",
-        "when": "Quand",
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "Lorsque les conditions correspondent, le temps d'attente sera ignoré et l'enquête sera affichée.",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Sans filtre, tous vos utilisateurs peuvent être sondés.",
         "you_have_not_created_a_segment_yet": "Tu n'as pas encore créé de segment.",
