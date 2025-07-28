@@ -167,7 +167,7 @@ export function WelcomeCard({
           />
         </div>
         {timeToFinish && !showResponseCount ? (
-          <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
+          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <TimerIcon />
             <p className="fb-pt-1 fb-text-xs">
               <span> Takes {calculateTimeToComplete()} </span>
@@ -175,7 +175,7 @@ export function WelcomeCard({
           </div>
         ) : null}
         {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-          <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
+          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <UsersIcon />
             <p className="fb-pt-1 fb-text-xs">
               <span>{`${responseCount.toString()} people responded`}</span>
@@ -183,7 +183,7 @@ export function WelcomeCard({
           </div>
         ) : null}
         {timeToFinish && showResponseCount ? (
-          <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
+          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <TimerIcon />
             <p className="fb-pt-1 fb-text-xs">
               <span> Takes {calculateTimeToComplete()} </span>
