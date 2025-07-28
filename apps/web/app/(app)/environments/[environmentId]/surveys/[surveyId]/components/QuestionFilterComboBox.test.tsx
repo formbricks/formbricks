@@ -21,7 +21,7 @@ describe("QuestionFilterComboBox", () => {
 
   test("renders select placeholders", () => {
     render(<QuestionFilterComboBox {...defaultProps} />);
-    expect(screen.getAllByText(/common.select\.../).length).toBe(2);
+    expect(screen.getAllByText("common.select...").length).toBe(2);
   });
 
   test("calls onChangeFilterValue when selecting filter", async () => {
@@ -72,17 +72,21 @@ describe("QuestionFilterComboBox", () => {
     expect(props.onChangeFilterComboBoxValue).toHaveBeenCalledWith(["Obj1"]);
   });
 
-  test("prevent combo-box opening when filterValue is Submitted", async () => {
-    const props = { ...defaultProps, type: "NPS", filterValue: "Submitted" } as any;
+  test("combobox is disabled when filterValue is 'Submitted' for NPS questions", async () => {
+    const props = { ...defaultProps, type: "nps", filterValue: "Submitted" } as any;
     render(<QuestionFilterComboBox {...props} />);
-    await userEvent.click(screen.getAllByRole("button")[1]);
-    expect(screen.queryByText("X")).toHaveClass("data-[disabled='true']:opacity-50");
+    const comboBoxOpenerButton = screen.getAllByRole("button")[1];
+    expect(comboBoxOpenerButton).toBeDisabled();
+    await userEvent.click(comboBoxOpenerButton);
+    expect(screen.queryByText("X")).not.toBeInTheDocument();
   });
 
-  test("prevent combo-box opening when filterValue is Skipped", async () => {
-    const props = { ...defaultProps, type: "Rating", filterValue: "Skipped" } as any;
+  test("combobox is disabled when filterValue is 'Skipped' for rating questions", async () => {
+    const props = { ...defaultProps, type: "rating", filterValue: "Skipped" } as any;
     render(<QuestionFilterComboBox {...props} />);
-    await userEvent.click(screen.getAllByRole("button")[1]);
-    expect(screen.queryByText("X")).toHaveClass("data-[disabled='true']:opacity-50");
+    const comboBoxOpenerButton = screen.getAllByRole("button")[1];
+    expect(comboBoxOpenerButton).toBeDisabled();
+    await userEvent.click(comboBoxOpenerButton);
+    expect(screen.queryByText("X")).not.toBeInTheDocument();
   });
 });
