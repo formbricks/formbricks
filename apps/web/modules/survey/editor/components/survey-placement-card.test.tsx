@@ -53,7 +53,6 @@ const mockSurvey = {
   styling: null,
   surveyClosedMessage: null,
   singleUse: null,
-  resultShareKey: null,
   displayPercentage: null,
   languages: [],
   createdAt: new Date(),

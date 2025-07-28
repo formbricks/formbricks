@@ -130,7 +130,7 @@ export const mockUser: TUser = {
   objective: "improve_user_retention",
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
+
     unsubscribedOrganizationIds: [],
   },
   role: "other",
@@ -259,7 +259,6 @@ export const mockSyncSurveyOutput: SurveyMock = {
   pin: null,
   segment: null,
   segmentId: null,
-  resultShareKey: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
   ...baseSurveyProperties,
@@ -284,7 +283,6 @@ export const mockSurveyOutput: SurveyMock = {
   pin: null,
   segment: null,
   segmentId: null,
-  resultShareKey: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
   followUps: [],
@@ -314,7 +312,6 @@ export const updateSurveyInput: TSurvey = {
   createdBy: null,
   pin: null,
   recaptcha: null,
-  resultShareKey: null,
   segment: null,
   languages: [],
   showLanguageSwitch: null,

@@ -48,7 +48,6 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         isSingleResponsePerEmailEnabled: true,
         redirectUrl: true,
         pin: true,
-        resultShareKey: true,
         isBackButtonHidden: true,
 
         // Single use configuration

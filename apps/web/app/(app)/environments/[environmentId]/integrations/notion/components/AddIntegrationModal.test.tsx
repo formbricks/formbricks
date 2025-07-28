@@ -236,7 +236,6 @@ const surveys: TSurvey[] = [
     languages: [],
     welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
     pin: null,
-    resultShareKey: null,
     displayLimit: null,
   } as unknown as TSurvey,
   {
@@ -272,7 +271,6 @@ const surveys: TSurvey[] = [
     languages: [],
     welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
     pin: null,
-    resultShareKey: null,
     displayLimit: null,
   } as unknown as TSurvey,
 ];

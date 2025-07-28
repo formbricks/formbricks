@@ -4,11 +4,9 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/comp
 import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
-import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import { getResponsesBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { useParams, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
@@ -20,7 +18,6 @@ interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
-  publicDomain: string;
   user?: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
@@ -32,17 +29,12 @@ export const ResponsePage = ({
   environment,
   survey,
   surveyId,
-  publicDomain,
   user,
   environmentTags,
   responsesPerPage,
   locale,
   isReadOnly,
 }: ResponsePageProps) => {
-  const params = useParams();
-  const sharingKey = params.sharingKey as string;
-  const isSharingPage = !!sharingKey;
-
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -63,30 +55,20 @@ export const ResponsePage = ({
 
     let newResponses: TResponse[] = [];
 
-    if (isSharingPage) {
-      const getResponsesActionResponse = await getResponsesBySurveySharingKeyAction({
-        sharingKey: sharingKey,
-        limit: responsesPerPage,
-        offset: (newPage - 1) * responsesPerPage,
-        filterCriteria: filters,
-      });
-      newResponses = getResponsesActionResponse?.data || [];
-    } else {
-      const getResponsesActionResponse = await getResponsesAction({
-        surveyId,
-        limit: responsesPerPage,
-        offset: (newPage - 1) * responsesPerPage,
-        filterCriteria: filters,
-      });
-      newResponses = getResponsesActionResponse?.data || [];
-    }
+    const getResponsesActionResponse = await getResponsesAction({
+      surveyId,
+      limit: responsesPerPage,
+      offset: (newPage - 1) * responsesPerPage,
+      filterCriteria: filters,
+    });
+    newResponses = getResponsesActionResponse?.data || [];
 
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
       setHasMore(false);
     }
     setResponses([...responses, ...newResponses]);
     setPage(newPage);
-  }, [filters, isSharingPage, page, responses, responsesPerPage, sharingKey, surveyId]);
+  }, [filters, page, responses, responsesPerPage, surveyId]);
 
   const deleteResponses = (responseIds: string[]) => {
     setResponses(responses.filter((response) => !responseIds.includes(response.id)));
@@ -114,25 +96,14 @@ export const ResponsePage = ({
         setFetchingFirstPage(true);
         let responses: TResponse[] = [];
 
-        if (isSharingPage) {
-          const getResponsesActionResponse = await getResponsesBySurveySharingKeyAction({
-            sharingKey,
-            limit: responsesPerPage,
-            offset: 0,
-            filterCriteria: filters,
-          });
+        const getResponsesActionResponse = await getResponsesAction({
+          surveyId,
+          limit: responsesPerPage,
+          offset: 0,
+          filterCriteria: filters,
+        });
 
-          responses = getResponsesActionResponse?.data || [];
-        } else {
-          const getResponsesActionResponse = await getResponsesAction({
-            surveyId,
-            limit: responsesPerPage,
-            offset: 0,
-            filterCriteria: filters,
-          });
-
-          responses = getResponsesActionResponse?.data || [];
-        }
+        responses = getResponsesActionResponse?.data || [];
 
         if (responses.length < responsesPerPage) {
           setHasMore(false);
@@ -143,7 +114,7 @@ export const ResponsePage = ({
       }
     };
     fetchInitialResponses();
-  }, [surveyId, filters, responsesPerPage, sharingKey, isSharingPage]);
+  }, [surveyId, filters, responsesPerPage]);
 
   useEffect(() => {
     setPage(1);
@@ -155,7 +126,6 @@ export const ResponsePage = ({
     <>
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
-        {!isReadOnly && !isSharingPage && <ResultsShareButton survey={survey} publicDomain={publicDomain} />}
       </div>
       <ResponseDataView
         survey={survey}

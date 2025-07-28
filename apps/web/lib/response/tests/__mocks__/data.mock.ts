@@ -520,7 +520,6 @@ export const mockSurvey: TSurvey = {
     isEncrypted: true,
   },
   pin: null,
-  resultShareKey: null,
   triggers: [],
   languages: [],
   segment: [],

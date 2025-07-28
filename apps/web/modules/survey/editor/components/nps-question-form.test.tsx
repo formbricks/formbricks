@@ -69,7 +69,6 @@ const baseSurvey = {
   surveyClosedMessage: null,
   singleUse: null,
   pin: null,
-  resultShareKey: null,
   displayPercentage: null,
   welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
   endings: [],

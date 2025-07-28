@@ -177,7 +177,6 @@ const mockSurvey = {
   autoClose: null,
   triggers: [],
   languages: [],
-  resultShareKey: null,
   singleUse: null,
   styling: null,
   surveyClosedMessage: null,

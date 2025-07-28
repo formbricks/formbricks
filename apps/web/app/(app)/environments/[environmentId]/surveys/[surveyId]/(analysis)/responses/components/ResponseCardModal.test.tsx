@@ -113,7 +113,6 @@ const mockSurvey = {
   singleUse: null,
   triggers: [],
   languages: [],
-  resultShareKey: null,
   displayPercentage: null,
   welcomeCard: { enabled: false, headline: { default: "Welcome!" } } as unknown as TSurvey["welcomeCard"],
   styling: null,
@@ -139,7 +138,7 @@ const mockUser = {
   updatedAt: new Date(),
   role: "project_manager",
   objective: "increase_conversion",
-  notificationSettings: { alert: {}, weeklySummary: {}, unsubscribedOrganizationIds: [] },
+  notificationSettings: { alert: {}, unsubscribedOrganizationIds: [] },
 } as unknown as TUser;
 
 const mockEnvironmentTags: TTag[] = [

@@ -1,3 +1,4 @@
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -49,6 +50,20 @@ vi.mock("@/modules/projects/components/project-limit-modal", () => ({
     ) : null,
 }));
 
+vi.mock("@/modules/projects/components/create-project-modal", () => ({
+  CreateProjectModal: ({ open, setOpen, organizationId, organizationTeams, canDoRoleManagement }: any) =>
+    open ? (
+      <div data-testid="create-project-modal">
+        <button onClick={() => setOpen(false)} data-testid="close-create-modal">
+          Close Create Modal
+        </button>
+        <div data-testid="modal-organization-id">{organizationId}</div>
+        <div data-testid="modal-organization-teams">{organizationTeams?.length || 0}</div>
+        <div data-testid="modal-can-do-role-management">{canDoRoleManagement.toString()}</div>
+      </div>
+    ) : null,
+}));
+
 describe("ProjectSwitcher", () => {
   afterEach(() => {
     cleanup();
@@ -66,21 +81,34 @@ describe("ProjectSwitcher", () => {
   } as TProject;
   const projects: TProject[] = [project, { ...project, id: "proj2", name: "Project 2" }];
 
+  const mockOrganizationTeams: TOrganizationTeam[] = [
+    {
+      id: "team-1",
+      name: "Development Team",
+    },
+    {
+      id: "team-2",
+      name: "Marketing Team",
+    },
+  ];
+
+  const defaultProps = {
+    isCollapsed: false,
+    isTextVisible: false,
+    organization,
+    project,
+    projects,
+    organizationProjectsLimit: 5,
+    isFormbricksCloud: false,
+    isLicenseActive: false,
+    environmentId: "env1",
+    isOwnerOrManager: true,
+    organizationTeams: mockOrganizationTeams,
+    canDoRoleManagement: true,
+  };
+
   test("renders dropdown and project name", () => {
-    render(
-      <ProjectSwitcher
-        isCollapsed={false}
-        isTextVisible={false}
-        organization={organization}
-        project={project}
-        projects={projects}
-        organizationProjectsLimit={2}
-        isFormbricksCloud={false}
-        isLicenseActive={false}
-        environmentId="env1"
-        isOwnerOrManager={true}
-      />
-    );
+    render(<ProjectSwitcher {...defaultProps} />);
     expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
     expect(screen.getByTitle("Project 1")).toBeInTheDocument();
     expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
@@ -90,40 +118,14 @@ describe("ProjectSwitcher", () => {
   });
 
   test("opens ProjectLimitModal when project limit reached and add project is clicked", async () => {
-    render(
-      <ProjectSwitcher
-        isCollapsed={false}
-        isTextVisible={false}
-        organization={organization}
-        project={project}
-        projects={projects}
-        organizationProjectsLimit={2}
-        isFormbricksCloud={false}
-        isLicenseActive={false}
-        environmentId="env1"
-        isOwnerOrManager={true}
-      />
-    );
+    render(<ProjectSwitcher {...defaultProps} organizationProjectsLimit={2} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
     expect(screen.getByTestId("project-limit-modal")).toBeInTheDocument();
   });
 
   test("closes ProjectLimitModal when close button is clicked", async () => {
-    render(
-      <ProjectSwitcher
-        isCollapsed={false}
-        isTextVisible={false}
-        organization={organization}
-        project={project}
-        projects={projects}
-        organizationProjectsLimit={2}
-        isFormbricksCloud={false}
-        isLicenseActive={false}
-        environmentId="env1"
-        isOwnerOrManager={true}
-      />
-    );
+    render(<ProjectSwitcher {...defaultProps} organizationProjectsLimit={2} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
     const closeButton = screen.getByTestId("close-modal");
@@ -132,20 +134,7 @@ describe("ProjectSwitcher", () => {
   });
 
   test("renders correct modal buttons and project limit", async () => {
-    render(
-      <ProjectSwitcher
-        isCollapsed={false}
-        isTextVisible={false}
-        organization={organization}
-        project={project}
-        projects={projects}
-        organizationProjectsLimit={2}
-        isFormbricksCloud={true}
-        isLicenseActive={false}
-        environmentId="env1"
-        isOwnerOrManager={true}
-      />
-    );
+    render(<ProjectSwitcher {...defaultProps} organizationProjectsLimit={2} isFormbricksCloud={true} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
     expect(screen.getByTestId("modal-buttons")).toHaveTextContent(
@@ -154,24 +143,28 @@ describe("ProjectSwitcher", () => {
     expect(screen.getByTestId("modal-project-limit")).toHaveTextContent("2");
   });
 
-  test("handleAddProject navigates if under limit", async () => {
-    render(
-      <ProjectSwitcher
-        isCollapsed={false}
-        isTextVisible={false}
-        organization={organization}
-        project={project}
-        projects={projects.slice(0, 1)}
-        organizationProjectsLimit={2}
-        isFormbricksCloud={false}
-        isLicenseActive={false}
-        environmentId="env1"
-        isOwnerOrManager={true}
-      />
-    );
+  test("opens CreateProjectModal if projects exist and under limit", async () => {
+    render(<ProjectSwitcher {...defaultProps} projects={[project]} organizationProjectsLimit={5} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
-    expect(mockPush).toHaveBeenCalled();
-    expect(mockPush).toHaveBeenCalledWith("/organizations/org1/projects/new/mode");
+    expect(screen.getByTestId("create-project-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("modal-organization-id")).toHaveTextContent("org1");
+    expect(screen.getByTestId("modal-can-do-role-management")).toHaveTextContent("true");
+  });
+
+  test("closes CreateProjectModal when close button is clicked", async () => {
+    render(<ProjectSwitcher {...defaultProps} projects={[project]} organizationProjectsLimit={5} />);
+    const addButton = screen.getByText("common.add_project");
+    await userEvent.click(addButton);
+    const closeButton = screen.getByTestId("close-create-modal");
+    await userEvent.click(closeButton);
+    expect(screen.queryByTestId("create-project-modal")).not.toBeInTheDocument();
+  });
+
+  test("passes correct props to CreateProjectModal", async () => {
+    render(<ProjectSwitcher {...defaultProps} projects={[project]} canDoRoleManagement={false} />);
+    const addButton = screen.getByText("common.add_project");
+    await userEvent.click(addButton);
+    expect(screen.getByTestId("modal-can-do-role-management")).toHaveTextContent("false");
   });
 });

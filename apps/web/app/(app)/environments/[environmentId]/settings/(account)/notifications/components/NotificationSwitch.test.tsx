@@ -29,7 +29,6 @@ const organizationId = "org1";
 
 const baseNotificationSettings: TUserNotificationSettings = {
   alert: {},
-  weeklySummary: {},
   unsubscribedOrganizationIds: [],
 };
 
@@ -66,19 +65,6 @@ describe("NotificationSwitch", () => {
     renderSwitch({ notificationSettings: settings, notificationType: "alert" });
     const switchInput = screen.getByLabelText("toggle notification settings for alert") as HTMLInputElement;
     expect(switchInput.checked).toBe(false);
-  });
-
-  test("renders with initial checked state for 'weeklySummary' (true)", () => {
-    const settings = { ...baseNotificationSettings, weeklySummary: { [projectId]: true } };
-    renderSwitch({
-      surveyOrProjectOrOrganizationId: projectId,
-      notificationSettings: settings,
-      notificationType: "weeklySummary",
-    });
-    const switchInput = screen.getByLabelText(
-      "toggle notification settings for weeklySummary"
-    ) as HTMLInputElement;
-    expect(switchInput.checked).toBe(true);
   });
 
   test("renders with initial checked state for 'unsubscribedOrganizationIds' (subscribed initially, so checked is true)", () => {
@@ -263,31 +249,6 @@ describe("NotificationSwitch", () => {
       notificationSettings: { ...initialSettings, alert: { [surveyId]: true } },
     });
     expect(toast.error).toHaveBeenCalledWith("Failed to update notification settings", {
-      id: "notification-switch",
-    });
-    expect(toast.success).not.toHaveBeenCalled();
-  });
-
-  test("shows error toast when updateNotificationSettingsAction fails for 'weeklySummary' type", async () => {
-    const mockErrorResponse = { serverError: "Database connection failed" };
-    vi.mocked(updateNotificationSettingsAction).mockResolvedValueOnce(mockErrorResponse);
-
-    const initialSettings = { ...baseNotificationSettings, weeklySummary: { [projectId]: true } };
-    renderSwitch({
-      surveyOrProjectOrOrganizationId: projectId,
-      notificationSettings: initialSettings,
-      notificationType: "weeklySummary",
-    });
-    const switchInput = screen.getByLabelText("toggle notification settings for weeklySummary");
-
-    await act(async () => {
-      await user.click(switchInput);
-    });
-
-    expect(updateNotificationSettingsAction).toHaveBeenCalledWith({
-      notificationSettings: { ...initialSettings, weeklySummary: { [projectId]: false } },
-    });
-    expect(toast.error).toHaveBeenCalledWith("Database connection failed", {
       id: "notification-switch",
     });
     expect(toast.success).not.toHaveBeenCalled();
