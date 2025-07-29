@@ -29,8 +29,8 @@ RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
 RUN chmod +x /tmp/read-secrets.sh
 
-# Increase Node.js memory limit as a regular build argument
-ARG NODE_OPTIONS="--max_old_space_size=4096"
+# Increase Node.js memory limit as a regular build argument (extra memory for Sentry plugin)
+ARG NODE_OPTIONS="--max_old_space_size=6144"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
 
 # Set the working directory
