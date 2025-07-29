@@ -61,7 +61,7 @@ extends: [
      2. Server-only imports
      3. Third-party modules
      4. Internal `@formbricks/*` modules
-     5. Local aliases (`~/\*)
+     5. Local aliases (`~/*`)
      6. Relative imports
 
 3. **Error Handling**
@@ -116,10 +116,10 @@ The iOS SDK requires the following:
 **Package.swift Configuration:**
 
 ```swift
+// swift-tools-version:5.7
 platforms: [
   .iOS(.v16)
 ],
-swift_version: "5.7"
 ```
 
 **CocoaPods Configuration:**
