@@ -65,6 +65,11 @@
   "engines": {
     "node": ">=16.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "form-data": "4.0.4"
+    }
+  },
   "packageManager": "pnpm@9.15.9",
   "nextBundleAnalysis": {
     "budget": 358400,
