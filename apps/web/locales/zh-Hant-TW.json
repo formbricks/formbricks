@@ -528,6 +528,8 @@
       "if_a_user_clicks_a_button_with_a_specific_text": "如果使用者點擊具有特定文字的按鈕",
       "in_your_code_read_more_in_our": "在您的程式碼中。在我們的文件中閱讀更多內容",
       "inner_text": "內部文字",
+      "invalid_action_type_code": "對程式碼操作的操作類型無效",
+      "invalid_action_type_no_code": "使用無程式碼操作的操作類型無效",
       "invalid_css_selector": "無效的 CSS 選取器",
       "invalid_match_type": "所選擇的選項不適用。",
       "invalid_regex": "請使用有效的正規表示式。",

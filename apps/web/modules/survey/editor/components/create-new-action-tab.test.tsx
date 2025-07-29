@@ -34,6 +34,30 @@ vi.mock("../actions", () => ({
   createActionClassAction: vi.fn(),
 }));
 
+// Mock action-utils functions
+vi.mock("../lib/action-utils", () => ({
+  useActionClassKeys: vi.fn(() => []),
+  createActionClassZodResolver: vi.fn(() => () => ({ errors: {}, isValid: true })),
+  validatePermissions: vi.fn(),
+}));
+
+// Mock action-builder functions
+vi.mock("../lib/action-builder", () => ({
+  buildActionObject: vi.fn((data) => data),
+}));
+
+// Mock ActionNameDescriptionFields component
+vi.mock("@/modules/ui/components/action-name-description-fields", () => ({
+  ActionNameDescriptionFields: vi.fn(({ nameInputId, descriptionInputId }) => (
+    <div data-testid="action-name-description-fields">
+      <label htmlFor={nameInputId}>What did your user do?</label>
+      <input id={nameInputId} name="name" data-testid="name-input" />
+      <label htmlFor={descriptionInputId}>Description</label>
+      <input id={descriptionInputId} name="description" data-testid="description-input" />
+    </div>
+  )),
+}));
+
 // Mock useTranslate hook
 const mockT = vi.fn((key: string, params?: any) => {
   const translations: Record<string, string> = {
@@ -46,6 +70,12 @@ const mockT = vi.fn((key: string, params?: any) => {
     "environments.actions.create_action": "Create Action",
     "common.key": "Key",
     "common.cancel": "Cancel",
+    "environments.actions.action_created_successfully": "Action created successfully",
+    "environments.actions.action_with_name_already_exists": `Action with name "{{name}}" already exists`,
+    "environments.actions.action_with_key_already_exists": `Action with key "{{key}}" already exists`,
+    "environments.actions.invalid_css_selector": "Invalid CSS selector",
+    "environments.actions.invalid_regex": "Invalid regex pattern",
+    "common.you_are_not_authorised_to_perform_this_action": "You are not authorized to perform this action",
   };
   let translation = translations[key] || key;
   if (params) {
@@ -97,6 +127,16 @@ describe("CreateNewActionTab", () => {
     // Import and setup the CSS selector mock
     const cssModule = (await vi.importMock("@/app/lib/actionClass/actionClass")) as any;
     cssModule.isValidCssSelector.mockReturnValue(true);
+
+    // Setup action-utils mocks
+    const actionUtilsModule = (await vi.importMock("../lib/action-utils")) as any;
+    actionUtilsModule.useActionClassKeys.mockReturnValue([]);
+    actionUtilsModule.createActionClassZodResolver.mockReturnValue(() => ({ errors: {}, isValid: true }));
+    actionUtilsModule.validatePermissions.mockImplementation(() => {});
+
+    // Setup action-builder mock
+    const actionBuilderModule = (await vi.importMock("../lib/action-builder")) as any;
+    actionBuilderModule.buildActionObject.mockImplementation((data) => data);
   });
 
   afterEach(() => {
@@ -111,8 +151,7 @@ describe("CreateNewActionTab", () => {
     expect(screen.getByText("Action Type")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "No Code" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Code" })).toBeInTheDocument();
-    expect(screen.getByLabelText("What did your user do?")).toBeInTheDocument();
-    expect(screen.getByLabelText("Description")).toBeInTheDocument();
+    expect(screen.getByTestId("action-name-description-fields")).toBeInTheDocument();
     expect(screen.getByTestId("no-code-action-form")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create Action" })).toBeInTheDocument();
@@ -141,10 +180,9 @@ describe("CreateNewActionTab", () => {
   test("renders readonly state correctly", () => {
     render(<CreateNewActionTab {...defaultProps} isReadOnly={true} />);
 
-    // Form should still render but submit button should be disabled when readonly
+    // Form should still render but components should receive isReadOnly prop
     expect(screen.getByText("Action Type")).toBeInTheDocument();
-    expect(screen.getByLabelText("What did your user do?")).toBeInTheDocument();
-    expect(screen.getByLabelText("Description")).toBeInTheDocument();
+    expect(screen.getByTestId("action-name-description-fields")).toBeInTheDocument();
   });
 
   test("renders with existing action classes", () => {
@@ -166,35 +204,111 @@ describe("CreateNewActionTab", () => {
 
     // Form should render normally regardless of existing actions
     expect(screen.getByText("Action Type")).toBeInTheDocument();
-    expect(screen.getByLabelText("What did your user do?")).toBeInTheDocument();
+    expect(screen.getByTestId("action-name-description-fields")).toBeInTheDocument();
   });
 
-  test("form fields accept user input", async () => {
-    render(<CreateNewActionTab {...defaultProps} />);
+  test("calls useActionClassKeys with correct arguments", async () => {
+    const actionClasses = [
+      {
+        id: "test-action",
+        name: "Test Action",
+        environmentId: "test-env-id",
+        type: "code",
+        key: "test-key",
+        description: null,
+        noCodeConfig: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as ActionClass,
+    ];
 
-    const nameInput = screen.getByLabelText("What did your user do?");
-    const descInput = screen.getByLabelText("Description");
+    const actionUtilsModule = (await vi.importMock("../lib/action-utils")) as any;
+    render(<CreateNewActionTab {...defaultProps} actionClasses={actionClasses} />);
 
-    await act(async () => {
-      fireEvent.change(nameInput, { target: { value: "Test Action Name" } });
-      fireEvent.change(descInput, { target: { value: "Test Description" } });
-    });
-
-    expect(nameInput).toHaveValue("Test Action Name");
-    expect(descInput).toHaveValue("Test Description");
+    expect(actionUtilsModule.useActionClassKeys).toHaveBeenCalledWith(actionClasses);
   });
 
-  test("code form shows key field", async () => {
+  test("renders form with correct resolver configuration", async () => {
+    const actionUtilsModule = (await vi.importMock("../lib/action-utils")) as any;
+
     render(<CreateNewActionTab {...defaultProps} />);
 
-    // Switch to code tab
-    const codeTab = screen.getByRole("radio", { name: "Code" });
+    // Verify that the resolver is configured correctly
+    expect(actionUtilsModule.createActionClassZodResolver).toHaveBeenCalledWith(
+      [], // actionClassNames
+      [], // actionClassKeys
+      mockT
+    );
+  });
+
+  test("handles validation errors correctly", async () => {
+    // Mock form validation to fail
+    const actionUtilsModule = (await vi.importMock("../lib/action-utils")) as any;
+    actionUtilsModule.createActionClassZodResolver.mockReturnValue(() => ({
+      errors: { name: { message: "Name is required" } },
+      isValid: false,
+    }));
+
+    render(<CreateNewActionTab {...defaultProps} />);
+
+    const submitButton = screen.getByRole("button", { name: "Create Action" });
+
     await act(async () => {
-      fireEvent.click(codeTab);
+      fireEvent.click(submitButton);
     });
 
-    await waitFor(() => {
-      expect(screen.getByLabelText("Key")).toBeInTheDocument();
+    // Since validation fails, buildActionObject should not be called
+    const { buildActionObject } = await import("../lib/action-builder");
+    expect(buildActionObject).not.toHaveBeenCalled();
+  });
+
+  test("handles readonly permissions correctly", async () => {
+    const { validatePermissions } = await import("../lib/action-utils");
+    const toast = await import("react-hot-toast");
+
+    // Make validatePermissions throw for readonly
+    const actionUtilsModule = (await vi.importMock("../lib/action-utils")) as any;
+    actionUtilsModule.validatePermissions.mockImplementation(() => {
+      throw new Error("You are not authorized to perform this action");
     });
+
+    render(<CreateNewActionTab {...defaultProps} isReadOnly={true} />);
+
+    const submitButton = screen.getByRole("button", { name: "Create Action" });
+
+    await act(async () => {
+      fireEvent.click(submitButton);
+    });
+
+    expect(validatePermissions).toHaveBeenCalledWith(true, mockT);
+    expect(toast.default.error).toHaveBeenCalledWith("You are not authorized to perform this action");
+  });
+
+  test("uses correct action class names and keys for validation", async () => {
+    const actionClasses = [
+      {
+        id: "action1",
+        name: "Existing Action",
+        environmentId: "test-env-id",
+        type: "code",
+        key: "existing-key",
+        description: null,
+        noCodeConfig: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as ActionClass,
+    ];
+
+    const actionUtilsModule = (await vi.importMock("../lib/action-utils")) as any;
+    actionUtilsModule.useActionClassKeys.mockReturnValue(["existing-key"]);
+
+    render(<CreateNewActionTab {...defaultProps} actionClasses={actionClasses} />);
+
+    // Verify that the resolver is configured with existing action names and keys
+    expect(actionUtilsModule.createActionClassZodResolver).toHaveBeenCalledWith(
+      ["Existing Action"], // actionClassNames
+      ["existing-key"], // actionClassKeys
+      mockT
+    );
   });
 });

@@ -1,15 +1,16 @@
+import { TFnType } from "@tolgee/react";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 
-export const buildActionObject = (data: TActionClassInput, environmentId: string) => {
+export const buildActionObject = (data: TActionClassInput, environmentId: string, t: TFnType) => {
   if (data.type === "noCode") {
-    return buildNoCodeAction(data, environmentId);
+    return buildNoCodeAction(data, environmentId, t);
   }
-  return buildCodeAction(data, environmentId);
+  return buildCodeAction(data, environmentId, t);
 };
 
-export const buildNoCodeAction = (data: TActionClassInput, environmentId: string) => {
+export const buildNoCodeAction = (data: TActionClassInput, environmentId: string, t: TFnType) => {
   if (data.type !== "noCode") {
-    throw new Error("Invalid action type for noCode action");
+    throw new Error(t("environments.actions.invalid_action_type_no_code"));
   }
 
   const baseAction = {
@@ -36,9 +37,9 @@ export const buildNoCodeAction = (data: TActionClassInput, environmentId: string
   return baseAction;
 };
 
-export const buildCodeAction = (data: TActionClassInput, environmentId: string) => {
+export const buildCodeAction = (data: TActionClassInput, environmentId: string, t: TFnType) => {
   if (data.type !== "code") {
-    throw new Error("Invalid action type for code action");
+    throw new Error(t("environments.actions.invalid_action_type_code"));
   }
 
   return {

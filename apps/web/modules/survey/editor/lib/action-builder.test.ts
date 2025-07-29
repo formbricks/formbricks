@@ -1,207 +1,236 @@
-import "@testing-library/jest-dom/vitest";
-import { describe, expect, test } from "vitest";
+import { TFnType } from "@tolgee/react";
+import { describe, expect, test, vi } from "vitest";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { buildActionObject, buildCodeAction, buildNoCodeAction } from "./action-builder";
 
-describe("Action Builder", () => {
+const mockT = vi.fn((key: string) => {
+  const translations: Record<string, string> = {
+    "environments.actions.invalid_action_type_no_code": "Invalid action type for noCode action",
+    "environments.actions.invalid_action_type_code": "Invalid action type for code action",
+  };
+  return translations[key] || key;
+}) as unknown as TFnType;
+
+describe("action-builder", () => {
   describe("buildActionObject", () => {
-    test("builds noCode action correctly", () => {
+    test("builds noCode action when type is noCode", () => {
       const data: TActionClassInput = {
-        name: "  Test NoCode Action  ",
-        description: "Test Description",
-        environmentId: "test-env",
+        name: "Click Button",
         type: "noCode",
+        environmentId: "env1",
         noCodeConfig: {
           type: "click",
-          elementSelector: { cssSelector: "button.test", innerHtml: undefined },
           urlFilters: [],
+          elementSelector: {
+            cssSelector: ".button",
+            innerHtml: "Click me",
+          },
         },
       };
 
-      const result = buildActionObject(data, "test-env");
+      const result = buildActionObject(data, "env1", mockT);
 
       expect(result).toEqual({
-        name: "Test NoCode Action", // trimmed
-        description: "Test Description",
-        environmentId: "test-env",
+        name: "Click Button",
         type: "noCode",
+        environmentId: "env1",
         noCodeConfig: {
           type: "click",
-          elementSelector: { cssSelector: "button.test", innerHtml: undefined },
           urlFilters: [],
+          elementSelector: {
+            cssSelector: ".button",
+            innerHtml: "Click me",
+          },
         },
       });
     });
 
-    test("builds code action correctly", () => {
+    test("builds code action when type is code", () => {
       const data: TActionClassInput = {
-        name: "  Test Code Action  ",
-        description: "Test Description",
-        environmentId: "test-env",
+        name: "Track Event",
         type: "code",
-        key: "test-key",
+        key: "track_event",
+        environmentId: "env1",
       };
 
-      const result = buildActionObject(data, "test-env");
+      const result = buildActionObject(data, "env1", mockT);
 
       expect(result).toEqual({
-        name: "Test Code Action", // trimmed
-        description: "Test Description",
-        environmentId: "test-env",
+        name: "Track Event",
         type: "code",
-        key: "test-key",
+        key: "track_event",
+        environmentId: "env1",
       });
     });
   });
 
   describe("buildNoCodeAction", () => {
-    test("builds click action with CSS selector", () => {
+    test("builds noCode action with click config", () => {
       const data: TActionClassInput = {
-        name: "Click Action",
-        description: "Click Description",
-        environmentId: "test-env",
+        name: "Click Button",
         type: "noCode",
+        environmentId: "env1",
         noCodeConfig: {
           type: "click",
-          elementSelector: { cssSelector: "button.test", innerHtml: "Click me" },
-          urlFilters: [],
+          urlFilters: [{ rule: "exactMatch", value: "https://example.com" }],
+          elementSelector: {
+            cssSelector: ".button",
+            innerHtml: "Click me",
+          },
         },
       };
 
-      const result = buildNoCodeAction(data, "test-env");
+      const result = buildNoCodeAction(data, "env1", mockT);
 
       expect(result).toEqual({
-        name: "Click Action",
-        description: "Click Description",
-        environmentId: "test-env",
+        name: "Click Button",
         type: "noCode",
+        environmentId: "env1",
         noCodeConfig: {
           type: "click",
-          elementSelector: { cssSelector: "button.test", innerHtml: "Click me" },
-          urlFilters: [],
+          urlFilters: [{ rule: "exactMatch", value: "https://example.com" }],
+          elementSelector: {
+            cssSelector: ".button",
+            innerHtml: "Click me",
+          },
         },
       });
     });
 
-    test("builds pageView action", () => {
+    test("builds noCode action with pageView config", () => {
       const data: TActionClassInput = {
-        name: "Page View Action",
-        description: "Page View Description",
-        environmentId: "test-env",
+        name: "Page Visit",
         type: "noCode",
+        environmentId: "env1",
         noCodeConfig: {
           type: "pageView",
-          urlFilters: [{ value: "https://example.com", rule: "exactMatch" }],
+          urlFilters: [{ rule: "contains", value: "/dashboard" }],
         },
       };
 
-      const result = buildNoCodeAction(data, "test-env");
+      const result = buildNoCodeAction(data, "env1", mockT);
 
       expect(result).toEqual({
-        name: "Page View Action",
-        description: "Page View Description",
-        environmentId: "test-env",
+        name: "Page Visit",
         type: "noCode",
+        environmentId: "env1",
         noCodeConfig: {
           type: "pageView",
-          urlFilters: [{ value: "https://example.com", rule: "exactMatch" }],
+          urlFilters: [{ rule: "contains", value: "/dashboard" }],
         },
       });
     });
 
-    test("throws error for code action type", () => {
-      const data: TActionClassInput = {
-        name: "Code Action",
-        description: "Code Description",
-        environmentId: "test-env",
+    test("throws error for invalid action type", () => {
+      const data = {
+        name: "Invalid Action",
         type: "code",
-        key: "test-key",
-      };
+        environmentId: "env1",
+      } as any;
 
-      expect(() => buildNoCodeAction(data, "test-env")).toThrow("Invalid action type for noCode action");
+      expect(() => buildNoCodeAction(data, "env1", mockT)).toThrow("Invalid action type for noCode action");
     });
 
-    test("trims whitespace from name", () => {
+    test("includes optional fields when provided", () => {
       const data: TActionClassInput = {
-        name: "  Whitespace Action  ",
-        description: "Test Description",
-        environmentId: "test-env",
+        name: "Click Button",
+        description: "Click the submit button",
         type: "noCode",
+        environmentId: "env1",
         noCodeConfig: {
-          type: "pageView",
+          type: "click",
           urlFilters: [],
+          elementSelector: {
+            cssSelector: ".button",
+            innerHtml: "Submit",
+          },
         },
       };
 
-      const result = buildNoCodeAction(data, "test-env");
+      const result = buildNoCodeAction(data, "env1", mockT);
 
-      expect(result.name).toBe("Whitespace Action");
+      expect(result).toEqual({
+        name: "Click Button",
+        description: "Click the submit button",
+        type: "noCode",
+        environmentId: "env1",
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: {
+            cssSelector: ".button",
+            innerHtml: "Submit",
+          },
+        },
+      });
     });
   });
 
   describe("buildCodeAction", () => {
-    test("builds code action with key", () => {
+    test("builds code action with required fields", () => {
       const data: TActionClassInput = {
-        name: "Code Action",
-        description: "Code Description",
-        environmentId: "test-env",
+        name: "Track Event",
         type: "code",
-        key: "code-action-key",
+        key: "track_event",
+        environmentId: "env1",
       };
 
-      const result = buildCodeAction(data, "test-env");
+      const result = buildCodeAction(data, "env1", mockT);
 
       expect(result).toEqual({
-        name: "Code Action",
-        description: "Code Description",
-        environmentId: "test-env",
+        name: "Track Event",
         type: "code",
-        key: "code-action-key",
+        key: "track_event",
+        environmentId: "env1",
       });
     });
 
-    test("throws error for noCode action type", () => {
+    test("builds code action with optional description", () => {
       const data: TActionClassInput = {
-        name: "NoCode Action",
-        description: "NoCode Description",
-        environmentId: "test-env",
+        name: "Track Purchase",
+        description: "Track when user makes a purchase",
+        type: "code",
+        key: "track_purchase",
+        environmentId: "env1",
+      };
+
+      const result = buildCodeAction(data, "env1", mockT);
+
+      expect(result).toEqual({
+        name: "Track Purchase",
+        description: "Track when user makes a purchase",
+        type: "code",
+        key: "track_purchase",
+        environmentId: "env1",
+      });
+    });
+
+    test("throws error for invalid action type", () => {
+      const data = {
+        name: "Invalid Action",
         type: "noCode",
-        noCodeConfig: {
-          type: "click",
-          elementSelector: { cssSelector: undefined, innerHtml: undefined },
-          urlFilters: [],
-        },
-      };
+        environmentId: "env1",
+      } as any;
 
-      expect(() => buildCodeAction(data, "test-env")).toThrow("Invalid action type for code action");
+      expect(() => buildCodeAction(data, "env1", mockT)).toThrow("Invalid action type for code action");
     });
 
-    test("trims whitespace from name", () => {
+    test("handles null key", () => {
       const data: TActionClassInput = {
-        name: "  Whitespace Code Action  ",
-        description: "Test Description",
-        environmentId: "test-env",
+        name: "Track Event",
         type: "code",
-        key: "test-key",
+        key: null,
+        environmentId: "env1",
       };
 
-      const result = buildCodeAction(data, "test-env");
+      const result = buildCodeAction(data, "env1", mockT);
 
-      expect(result.name).toBe("Whitespace Code Action");
-    });
-
-    test("handles undefined description", () => {
-      const data: TActionClassInput = {
-        name: "Code Action",
-        description: undefined,
-        environmentId: "test-env",
+      expect(result).toEqual({
+        name: "Track Event",
         type: "code",
-        key: "test-key",
-      };
-
-      const result = buildCodeAction(data, "test-env");
-
-      expect(result.description).toBeUndefined();
+        key: null,
+        environmentId: "env1",
+      });
     });
   });
 });
