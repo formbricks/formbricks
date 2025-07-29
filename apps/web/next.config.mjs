@@ -437,6 +437,9 @@ const sentryOptions = {
   autoUploadSourceMaps: false,
   hideSourceMaps: false,
 
+  // Disable telemetry to prevent data collection
+  telemetry: false,
+
   // Don't automatically create releases - we handle this in GitHub Actions
   release: {
     create: false,
