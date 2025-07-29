@@ -43,7 +43,13 @@ vi.mock("@/modules/ui/components/select", () => ({
     );
   },
   SelectTrigger: ({ children, className }) => (
-    <div role="combobox" className={className} data-testid="select-trigger">
+    <div
+      role="combobox"
+      className={className}
+      data-testid="select-trigger"
+      tabIndex={0}
+      aria-expanded="false"
+      aria-haspopup="listbox">
       {children}
     </div>
   ),
@@ -54,6 +60,9 @@ vi.mock("@/modules/ui/components/select", () => ({
       data-testid={`select-item-${value}`}
       data-value={value}
       onClick={() => mockOnValueChange(value)}
+      onKeyDown={(e) => e.key === "Enter" && mockOnValueChange(value)}
+      role="option"
+      tabIndex={0}
       {...props}>
       {children}
     </div>
