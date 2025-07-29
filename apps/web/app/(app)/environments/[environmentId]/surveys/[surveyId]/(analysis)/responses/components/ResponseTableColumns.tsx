@@ -184,7 +184,7 @@ const getQuestionColumnsData = (
       });
 
     case "multipleChoiceMulti":
-    case "multipleChoiceSingle":
+    case "multipleChoiceSingle": {
       const questionHeadline = getQuestionHeadline(question, survey);
 
       return [
@@ -227,6 +227,7 @@ const getQuestionColumnsData = (
           },
         },
       ];
+    }
 
     default:
       return [

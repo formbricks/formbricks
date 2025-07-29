@@ -2,6 +2,7 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { Prisma } from "@prisma/client";
 import {
   TResponse,
+  TResponseDataValue,
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
   TResponseTtc,
@@ -22,7 +23,7 @@ import { sanitizeString } from "../utils/strings";
  * @returns Array of choice IDs
  */
 export const extractChoiceIdsFromResponse = (
-  responseValue: string | string[] | any,
+  responseValue: TResponseDataValue,
   question: TSurveyQuestion,
   language: string = "default"
 ): string[] => {

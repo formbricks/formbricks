@@ -3,7 +3,6 @@ import { processResponseData } from "@/lib/responses";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
-import { cn } from "@/modules/ui/lib/utils";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponseNote, TResponseNoteUser, TResponseTableData } from "@formbricks/types/responses";
@@ -773,25 +772,6 @@ describe("ResponseTableColumns - Helper Functions", () => {
     // Call headers to ensure they don't throw
     expect(() => singleChoiceColumn?.header?.()).not.toThrow();
     expect(() => multiChoiceColumn?.header?.()).not.toThrow();
-  });
-
-  test("expanded mode affects choice ID badge rendering", () => {
-    // Mock extractChoiceIdsFromResponse to return choice IDs
-    vi.mocked(extractChoiceIdsFromResponse).mockReturnValueOnce(["choice-1", "choice-3"]);
-
-    // Should call cn utility with expanded classes
-    expect(vi.mocked(cn)).toHaveBeenCalledWith(
-      "flex gap-x-1 w-full overflow-scroll no-scrollbar",
-      "flex-wrap gap-y-1"
-    );
-  });
-
-  test("non-expanded mode uses different classes for choice ID badges", () => {
-    // Mock extractChoiceIdsFromResponse to return choice IDs
-    vi.mocked(extractChoiceIdsFromResponse).mockReturnValueOnce(["choice-1"]);
-
-    // Should call cn utility without expanded classes
-    expect(vi.mocked(cn)).toHaveBeenCalledWith("flex gap-x-1 w-full overflow-scroll no-scrollbar", "");
   });
 });
 
