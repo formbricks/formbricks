@@ -71,7 +71,6 @@ const TestWrapper = ({
       isReadOnly={isReadOnly}
       nameInputId={nameInputId}
       descriptionInputId={descriptionInputId}
-      showSeparator={showSeparator}
     />
   );
 };

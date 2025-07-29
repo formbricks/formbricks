@@ -9,7 +9,6 @@ interface ActionNameDescriptionFieldsProps {
   isReadOnly?: boolean;
   nameInputId?: string;
   descriptionInputId?: string;
-  showSeparator?: boolean;
 }
 
 export const ActionNameDescriptionFields = ({
