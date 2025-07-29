@@ -4510,11 +4510,32 @@
             }
           },
           {
+            "description": "The ID of the survey to fetch responses for",
             "example": "{{surveyId}}",
             "in": "query",
             "name": "surveyId",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "description": "Number of items to return",
+            "example": "{{limit}}",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items to skip",
+            "example": "{{skip}}",
+            "in": "query",
+            "name": "skip",
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
             }
           }
         ],
