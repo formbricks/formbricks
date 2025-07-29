@@ -22,9 +22,14 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
       if (!containerRef.current) return;
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
 
-      setIsAtBottom(Math.round(scrollTop) + clientHeight >= scrollHeight);
+      // Use a small tolerance to account for zoom-related precision issues
+      const tolerance = 1;
 
-      setIsAtTop(scrollTop === 0);
+      // Check if at bottom with tolerance
+      setIsAtBottom(scrollTop + clientHeight >= scrollHeight - tolerance);
+
+      // Check if at top with tolerance
+      setIsAtTop(scrollTop <= tolerance);
     };
 
     const scrollToBottom = () => {
