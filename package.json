@@ -71,5 +71,10 @@
     "budgetPercentIncreaseRed": 20,
     "minimumChangeThreshold": 0,
     "showDetails": true
+  },
+  "pnpm": {
+    "overrides": {
+      "compression": "1.8.1"
+    }
   }
 }
