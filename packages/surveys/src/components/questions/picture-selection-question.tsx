@@ -171,7 +171,7 @@ export function PictureSelectionQuestion({
                           "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
                           value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
                         )}
-                        required={question.required && value.length ? false : question.required}
+                        required={question.required && value.length === 0}
                       />
                     ) : (
                       <input
@@ -198,6 +198,7 @@ export function PictureSelectionQuestion({
                       e.stopPropagation();
                     }}
                     className="fb-absolute fb-bottom-4 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100 fb-z-20">
+                    <span className="fb-sr-only">Open in new tab</span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="24"
