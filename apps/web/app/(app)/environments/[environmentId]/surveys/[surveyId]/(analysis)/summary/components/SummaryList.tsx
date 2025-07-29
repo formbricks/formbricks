@@ -92,7 +92,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
 
     setSelectedFilter({
       filter: [...filterObject.filter],
-      onlyComplete: filterObject.onlyComplete,
+      responseStatus: filterObject.responseStatus,
     });
   };
 
