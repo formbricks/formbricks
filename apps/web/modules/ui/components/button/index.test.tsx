@@ -35,7 +35,7 @@ describe("Button", () => {
   });
 
   test("applies correct size classes", () => {
-    const { rerender } = render(<Button size="default">Default Size</Button>);
+    const { rerender } = render(<Button>Default</Button>);
     expect(screen.getByRole("button")).toHaveClass("h-9", "px-4", "py-2");
 
     rerender(<Button size="sm">Small</Button>);
@@ -46,6 +46,9 @@ describe("Button", () => {
 
     rerender(<Button size="icon">Icon</Button>);
     expect(screen.getByRole("button")).toHaveClass("h-9", "w-9");
+
+    rerender(<Button size="tall">Tall</Button>);
+    expect(screen.getByRole("button")).toHaveClass("h-10", "px-3", "text-xs");
   });
 
   test("renders as a different element when asChild is true", () => {

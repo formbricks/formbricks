@@ -257,7 +257,7 @@ const UrlInput = ({
           {fields.length > 1 && (
             <Button
               variant="secondary"
-              size="lg"
+              size="tall"
               type="button"
               onClick={() => {
                 removeUrlRule(index);
