@@ -423,10 +423,6 @@ const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: "formbricks",
-  project: "formbricks-cloud",
-  environment: process.env.SENTRY_ENVIRONMENT,
-
   // Only print logs for uploading source maps in CI
   silent: true,
 
@@ -440,18 +436,20 @@ const sentryOptions = {
   automaticVercelMonitors: false,
   autoUploadSourceMaps: false,
   hideSourceMaps: false,
-  
+
   // Don't automatically create releases - we handle this in GitHub Actions
   release: {
     create: false,
     deploy: false,
     setCommits: false,
   },
+
+  // Inject Debug IDs even without DSN for later sourcemap correlation
+  injectBuildInformation: true,
 };
 
-const exportConfig =
-  (process.env.SENTRY_DSN && process.env.NODE_ENV === "production")
-    ? withSentryConfig(nextConfig, sentryOptions) :
-    nextConfig;
+// Always enable Sentry plugin to inject Debug IDs
+// Runtime Sentry reporting still depends on DSN being set via environment variables
+const exportConfig = withSentryConfig(nextConfig, sentryOptions);
 
 export default exportConfig;
