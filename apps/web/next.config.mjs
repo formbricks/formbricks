@@ -423,8 +423,8 @@ const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  // Only print logs for uploading source maps in CI
-  silent: true,
+  // Enable logging to debug sourcemap generation issues
+  silent: false,
 
   // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,

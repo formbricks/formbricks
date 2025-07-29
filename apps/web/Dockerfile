@@ -59,6 +59,11 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
+# Debug: List generated files to verify sourcemaps exist
+RUN echo "🔍 Checking for generated sourcemaps..." && \
+    find apps/web/.next -name "*.map" -type f | head -10 && \
+    echo "📊 Total .map files: $(find apps/web/.next -name "*.map" -type f | wc -l)"
+
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
 
