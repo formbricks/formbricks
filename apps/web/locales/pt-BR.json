@@ -1607,6 +1607,11 @@
         "zip": "Fecho éclair"
       },
       "error_deleting_survey": "Ocorreu um erro ao deletar a pesquisa",
+      "filter": {
+        "complete_and_partial_responses": "Respostas completas e parciais",
+        "complete_responses": "Respostas completas",
+        "partial_responses": "Respostas parciais"
+      },
       "new_survey": "Nova Pesquisa",
       "no_surveys_created_yet": "Ainda não foram criadas pesquisas",
       "open_options": "Abre opções",

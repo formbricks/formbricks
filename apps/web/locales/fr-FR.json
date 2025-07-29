@@ -1607,6 +1607,11 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "Une erreur est survenue lors de la suppression de l'enquête.",
+      "filter": {
+        "complete_and_partial_responses": "Réponses complètes et partielles",
+        "complete_responses": "Réponses complètes",
+        "partial_responses": "Réponses partielles"
+      },
       "new_survey": "Nouveau Sondage",
       "no_surveys_created_yet": "Aucun sondage créé pour le moment",
       "open_options": "Ouvrir les options",

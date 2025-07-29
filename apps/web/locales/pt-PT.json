@@ -1607,6 +1607,11 @@
         "zip": "Comprimir"
       },
       "error_deleting_survey": "Ocorreu um erro ao eliminar o questionário",
+      "filter": {
+        "complete_and_partial_responses": "Respostas completas e parciais",
+        "complete_responses": "Respostas completas",
+        "partial_responses": "Respostas parciais"
+      },
       "new_survey": "Novo inquérito",
       "no_surveys_created_yet": "Ainda não foram criados questionários",
       "open_options": "Abrir opções",
