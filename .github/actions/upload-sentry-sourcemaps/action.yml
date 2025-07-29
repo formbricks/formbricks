@@ -1,59 +1,28 @@
-name: 'Upload Sentry Sourcemaps'
-description: 'Extract sourcemaps from Docker image and upload to Sentry'
+name: "Upload Sentry Sourcemaps"
+description: "Extract sourcemaps from Docker image and upload to Sentry"
 
 inputs:
   docker_image:
-    description: 'Docker image to extract sourcemaps from'
+    description: "Docker image to extract sourcemaps from"
     required: true
   release_version:
-    description: 'Sentry release version (e.g., v1.2.3)'
+    description: "Sentry release version (e.g., v1.2.3)"
     required: true
   sentry_auth_token:
-    description: 'Sentry authentication token'
+    description: "Sentry authentication token"
     required: true
   environment:
-    description: 'Sentry environment (e.g., production, staging)'
+    description: "Sentry environment (e.g., production, staging)"
     required: false
-    default: 'staging'
+    default: "staging"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
-    - name: Validate Sentry auth token
-      shell: bash
-      run: |
-        set -euo pipefail
-        echo "🔐 Validating Sentry authentication token..."
-
-        # Assign token to local variable for secure handling
-        SENTRY_TOKEN="${{ inputs.sentry_auth_token }}"
-
-        # Test the token by making a simple API call to Sentry
-        response=$(curl -s -w "%{http_code}" -o /tmp/sentry_response.json \
-          -H "Authorization: Bearer $SENTRY_TOKEN" \
-          "https://sentry.io/api/0/organizations/formbricks/")
-
-        http_code=$(echo "$response" | tail -n1)
-
-        if [ "$http_code" != "200" ]; then
-          echo "❌ Error: Invalid Sentry auth token (HTTP $http_code)"
-          echo "Please check your SENTRY_AUTH_TOKEN is correct and has the necessary permissions."
-          if [ -f /tmp/sentry_response.json ]; then
-            echo "Response body:"
-            cat /tmp/sentry_response.json
-          fi
-          exit 1
-        fi
-
-        echo "✅ Sentry auth token validated successfully"
-
-        # Clean up temp file
-        rm -f /tmp/sentry_response.json
 
     - name: Extract sourcemaps from Docker image
       shell: bash
@@ -82,7 +51,7 @@ runs:
           # Exit with the original exit code to preserve script success/failure status
           exit $original_exit_code
         }
-        
+
         # Register cleanup function to run on script exit (success or failure)
         trap cleanup_container EXIT
 
@@ -113,7 +82,7 @@ runs:
       with:
         environment: ${{ inputs.environment }}
         version: ${{ inputs.release_version }}
-        sourcemaps: './extracted-next/'
+        sourcemaps: "./extracted-next/"
 
     - name: Clean up extracted files
       shell: bash
