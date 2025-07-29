@@ -521,6 +521,121 @@ const earnedAdvocacyScore = (t: TFnType): TTemplate => {
   );
 };
 
+const usabilityScoreRatingSurvey = (t: TFnType): TTemplate => {
+  return buildSurvey(
+    {
+      name: t("templates.usability_score_name"),
+      role: "customerSuccess",
+      industries: ["saas"],
+      channels: ["app", "link"],
+      description: t("templates.usability_rating_description"),
+      questions: [
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_1_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_2_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_3_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_4_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_5_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_6_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_7_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_8_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_9_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+        buildRatingQuestion({
+          range: 5,
+          scale: "number",
+          headline: t("templates.usability_question_10_headline"),
+          required: true,
+          lowerLabel: t("templates.strongly_disagree"),
+          upperLabel: t("templates.strongly_agree"),
+          isColorCodingEnabled: false,
+          t,
+        }),
+      ],
+    },
+    t
+  );
+};
+
 const improveTrialConversion = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [
@@ -3428,6 +3543,7 @@ export const templates = (t: TFnType): TTemplate[] => [
   onboardingSegmentation(t),
   churnSurvey(t),
   earnedAdvocacyScore(t),
+  usabilityScoreRatingSurvey(t),
   improveTrialConversion(t),
   reviewPrompt(t),
   interviewPrompt(t),
