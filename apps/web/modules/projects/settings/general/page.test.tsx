@@ -19,10 +19,11 @@ vi.mock("@/modules/ui/components/page-header", () => ({
     </div>
   ),
 }));
-vi.mock("@/modules/ui/components/settings-id", () => ({
-  SettingsId: ({ title, id }: any) => (
-    <div data-testid="settings-id">
-      <p>{title}</p>:<p>{id}</p>
+vi.mock("@/modules/ui/components/id-badge", () => ({
+  IdBadge: ({ id, label, variant }: any) => (
+    <div data-testid="id-badge" data-variant={variant}>
+      <span data-testid="id-badge-label">{label}</span>
+      <span data-testid="id-badge-id">{id}</span>
     </div>
   ),
 }));
@@ -104,7 +105,7 @@ describe("GeneralSettingsPage", () => {
     expect(screen.getByTestId("page-content-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("page-header")).toBeInTheDocument();
     expect(screen.getByTestId("project-config-navigation")).toBeInTheDocument();
-    expect(screen.getAllByTestId("settings-id").length).toBe(2);
+    expect(screen.getAllByTestId("id-badge").length).toBe(2);
     expect(screen.getByTestId("edit-project-name-form")).toBeInTheDocument();
     expect(screen.getByTestId("edit-waiting-time-form")).toBeInTheDocument();
     expect(screen.getByTestId("delete-project")).toBeInTheDocument();

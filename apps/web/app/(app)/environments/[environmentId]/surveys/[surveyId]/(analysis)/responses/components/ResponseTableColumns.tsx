@@ -66,9 +66,13 @@ const getQuestionColumnsData = (
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
 
   // Helper function to create consistent column headers
-  const createQuestionHeader = (questionType: string, headline: string, suffix?: string) => {
+  const createQuestionHeaderForMultipleChoiceQuestion = (
+    questionType: string,
+    headline: string,
+    suffix?: string
+  ) => {
     const title = suffix ? `${headline} - ${suffix}` : headline;
-    return () => (
+    const QuestionHeader = () => (
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 overflow-hidden">
           <span className="h-4 w-4">{QUESTIONS_ICON_MAP[questionType]}</span>
@@ -76,6 +80,8 @@ const getQuestionColumnsData = (
         </div>
       </div>
     );
+    QuestionHeader.displayName = "QuestionHeader";
+    return QuestionHeader;
   };
 
   // Helper function to get localized question headline
@@ -184,7 +190,7 @@ const getQuestionColumnsData = (
       return [
         {
           accessorKey: question.id,
-          header: createQuestionHeader(question.type, questionHeadline),
+          header: createQuestionHeaderForMultipleChoiceQuestion(question.type, questionHeadline),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[question.id];
             const language = row.original.language;
@@ -201,7 +207,11 @@ const getQuestionColumnsData = (
         },
         {
           accessorKey: question.id + "optionIds",
-          header: createQuestionHeader(question.type, questionHeadline, t("common.option_id")),
+          header: createQuestionHeaderForMultipleChoiceQuestion(
+            question.type,
+            questionHeadline,
+            t("common.option_id")
+          ),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[question.id];
             // Type guard to ensure responseValue is the correct type

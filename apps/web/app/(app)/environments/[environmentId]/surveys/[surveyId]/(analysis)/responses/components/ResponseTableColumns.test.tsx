@@ -2,9 +2,7 @@ import { processResponseData } from "@/lib/responses";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
-import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { cleanup } from "@testing-library/react";
-import { AnyActionArg } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponseNote, TResponseNoteUser, TResponseTableData } from "@formbricks/types/responses";
 import {
