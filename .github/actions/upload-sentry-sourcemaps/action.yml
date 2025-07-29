@@ -58,18 +58,27 @@ runs:
         # Extract .next directory containing sourcemaps
         docker cp "$CONTAINER_ID:/home/nextjs/apps/web/.next" ./extracted-next
 
-        # Verify sourcemaps exist
-        if [ ! -d "./extracted-next/static/chunks" ]; then
-          echo "❌ Error: .next/static/chunks directory not found in Docker image"
-          echo "Expected structure: /home/nextjs/apps/web/.next/static/chunks/"
+        # Verify .next directory structure exists (sourcemaps could be in static or server)
+        if [ ! -d "./extracted-next" ]; then
+          echo "❌ Error: .next directory not found in Docker image"
+          echo "Expected structure: /home/nextjs/apps/web/.next/"
           exit 1
         fi
 
-        sourcemap_count=$(find ./extracted-next/static/chunks -name "*.map" | wc -l)
-        echo "✅ Found $sourcemap_count sourcemap files"
+        echo "🔍 Scanning for sourcemaps in both client (/static) and server (/server) directories..."
 
-        if [ "$sourcemap_count" -eq 0 ]; then
-          echo "❌ Error: No sourcemap files found. Check that productionBrowserSourceMaps is enabled."
+        # Count sourcemaps in both locations
+        client_sourcemap_count=$(find ./extracted-next/static -name "*.map" 2>/dev/null | wc -l || echo "0")
+        server_sourcemap_count=$(find ./extracted-next/server -name "*.map" 2>/dev/null | wc -l || echo "0")
+        total_sourcemap_count=$((client_sourcemap_count + server_sourcemap_count))
+
+        echo "✅ Found $client_sourcemap_count client sourcemap files in /static"
+        echo "✅ Found $server_sourcemap_count server sourcemap files in /server"
+        echo "✅ Total sourcemap files: $total_sourcemap_count"
+
+        if [ "$total_sourcemap_count" -eq 0 ]; then
+          echo "❌ Error: No sourcemap files found in either /static or /server directories."
+          echo "Check that productionBrowserSourceMaps is enabled and Sentry plugin is configured correctly."
           exit 1
         fi
 
