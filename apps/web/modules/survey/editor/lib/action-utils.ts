@@ -3,7 +3,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TFnType } from "@tolgee/react";
 import { useMemo } from "react";
 import { z } from "zod";
-import { TActionClass, TActionClassInputCode, ZActionClassInput } from "@formbricks/types/action-classes";
+import {
+  TActionClass,
+  TActionClassInput,
+  TActionClassInputCode,
+  ZActionClassInput,
+} from "@formbricks/types/action-classes";
 
 /**
  * Extract action class keys from code-type action classes
@@ -24,7 +29,7 @@ export const useActionClassKeys = (actionClasses: TActionClass[]) => {
  * Validate action name uniqueness
  */
 export const validateActionNameUniqueness = (
-  data: any,
+  data: TActionClassInput,
   actionClassNames: string[],
   ctx: z.RefinementCtx,
   t: TFnType
@@ -42,7 +47,7 @@ export const validateActionNameUniqueness = (
  * Validate action key uniqueness for code actions
  */
 export const validateActionKeyUniqueness = (
-  data: any,
+  data: TActionClassInput,
   actionClassKeys: string[],
   ctx: z.RefinementCtx,
   t: TFnType
@@ -59,7 +64,7 @@ export const validateActionKeyUniqueness = (
 /**
  * Validate CSS selector for noCode click actions
  */
-export const validateCssSelector = (data: any, ctx: z.RefinementCtx, t: TFnType) => {
+export const validateCssSelector = (data: TActionClassInput, ctx: z.RefinementCtx, t: TFnType) => {
   if (
     data.type === "noCode" &&
     data.noCodeConfig?.type === "click" &&
@@ -77,7 +82,7 @@ export const validateCssSelector = (data: any, ctx: z.RefinementCtx, t: TFnType)
 /**
  * Validate regex patterns in URL filters
  */
-export const validateUrlFilterRegex = (data: any, ctx: z.RefinementCtx, t: TFnType) => {
+export const validateUrlFilterRegex = (data: TActionClassInput, ctx: z.RefinementCtx, t: TFnType) => {
   if (data.type === "noCode" && data.noCodeConfig?.urlFilters) {
     for (let i = 0; i < data.noCodeConfig.urlFilters.length; i++) {
       const urlFilter = data.noCodeConfig.urlFilters[i];
