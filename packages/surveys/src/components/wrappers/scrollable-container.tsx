@@ -72,7 +72,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
             scrollbarGutter: "stable both-edges",
             maxHeight: isSurveyPreview ? "42dvh" : "60dvh",
           }}
-          className={cn("fb-overflow-auto fb-px-4 fb-pb-1 fb-mb-3 fb-bg-survey-bg")}>
+          className={cn("fb-overflow-auto fb-px-4 fb-pb-1 fb-bg-survey-bg")}>
           {children}
         </div>
         {!isAtBottom && (
