@@ -56,16 +56,16 @@ vi.mock("@/modules/projects/components/project-switcher", () => ({
   ProjectSwitcher: ({
     isCollapsed,
     organizationTeams,
-    canDoRoleManagement,
+    isAccessControlAllowed,
   }: {
     isCollapsed: boolean;
     organizationTeams: TOrganizationTeam[];
-    canDoRoleManagement: boolean;
+    isAccessControlAllowed: boolean;
   }) => (
     <div data-testid="project-switcher" data-collapsed={isCollapsed}>
       Project Switcher
       <div data-testid="organization-teams-count">{organizationTeams?.length || 0}</div>
-      <div data-testid="can-do-role-management">{canDoRoleManagement.toString()}</div>
+      <div data-testid="can-do-role-management">{isAccessControlAllowed.toString()}</div>
     </div>
   ),
 }));
@@ -157,7 +157,7 @@ const defaultProps = {
   membershipRole: "owner" as const,
   organizationProjectsLimit: 5,
   isLicenseActive: true,
-  canDoRoleManagement: true,
+  isAccessControlAllowed: true,
 };
 
 describe("MainNavigation", () => {
@@ -347,7 +347,7 @@ describe("MainNavigation", () => {
     expect(screen.queryByText("common.license")).not.toBeInTheDocument();
   });
 
-  test("passes canDoRoleManagement props to ProjectSwitcher", () => {
+  test("passes isAccessControlAllowed props to ProjectSwitcher", () => {
     render(<MainNavigation {...defaultProps} />);
 
     expect(screen.getByTestId("organization-teams-count")).toHaveTextContent("0");
@@ -360,8 +360,8 @@ describe("MainNavigation", () => {
     expect(screen.getByTestId("organization-teams-count")).toHaveTextContent("0");
   });
 
-  test("handles canDoRoleManagement false", () => {
-    render(<MainNavigation {...defaultProps} canDoRoleManagement={false} />);
+  test("handles isAccessControlAllowed false", () => {
+    render(<MainNavigation {...defaultProps} isAccessControlAllowed={false} />);
 
     expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("false");
   });

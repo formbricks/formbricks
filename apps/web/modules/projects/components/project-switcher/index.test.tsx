@@ -51,7 +51,7 @@ vi.mock("@/modules/projects/components/project-limit-modal", () => ({
 }));
 
 vi.mock("@/modules/projects/components/create-project-modal", () => ({
-  CreateProjectModal: ({ open, setOpen, organizationId, organizationTeams, canDoRoleManagement }: any) =>
+  CreateProjectModal: ({ open, setOpen, organizationId, organizationTeams, isAccessControlAllowed }: any) =>
     open ? (
       <div data-testid="create-project-modal">
         <button onClick={() => setOpen(false)} data-testid="close-create-modal">
@@ -59,7 +59,7 @@ vi.mock("@/modules/projects/components/create-project-modal", () => ({
         </button>
         <div data-testid="modal-organization-id">{organizationId}</div>
         <div data-testid="modal-organization-teams">{organizationTeams?.length || 0}</div>
-        <div data-testid="modal-can-do-role-management">{canDoRoleManagement.toString()}</div>
+        <div data-testid="modal-can-do-role-management">{isAccessControlAllowed.toString()}</div>
       </div>
     ) : null,
 }));
@@ -104,7 +104,7 @@ describe("ProjectSwitcher", () => {
     environmentId: "env1",
     isOwnerOrManager: true,
     organizationTeams: mockOrganizationTeams,
-    canDoRoleManagement: true,
+    isAccessControlAllowed: true,
   };
 
   test("renders dropdown and project name", () => {
@@ -162,7 +162,7 @@ describe("ProjectSwitcher", () => {
   });
 
   test("passes correct props to CreateProjectModal", async () => {
-    render(<ProjectSwitcher {...defaultProps} projects={[project]} canDoRoleManagement={false} />);
+    render(<ProjectSwitcher {...defaultProps} projects={[project]} isAccessControlAllowed={false} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
     expect(screen.getByTestId("modal-can-do-role-management")).toHaveTextContent("false");

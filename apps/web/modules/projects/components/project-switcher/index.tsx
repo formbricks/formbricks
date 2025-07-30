@@ -32,7 +32,7 @@ interface ProjectSwitcherProps {
   isLicenseActive: boolean;
   environmentId: string;
   isOwnerOrManager: boolean;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
 }
 
 export const ProjectSwitcher = ({
@@ -46,7 +46,7 @@ export const ProjectSwitcher = ({
   isLicenseActive,
   environmentId,
   isOwnerOrManager,
-  canDoRoleManagement,
+  isAccessControlAllowed,
 }: ProjectSwitcherProps) => {
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
@@ -227,7 +227,7 @@ export const ProjectSwitcher = ({
           open={openCreateProjectModal}
           setOpen={setOpenCreateProjectModal}
           organizationId={organization.id}
-          canDoRoleManagement={canDoRoleManagement}
+          isAccessControlAllowed={isAccessControlAllowed}
         />
       )}
     </>

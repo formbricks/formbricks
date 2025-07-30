@@ -18,7 +18,7 @@ interface MembersInfoProps {
   invites: TInvite[];
   currentUserRole: TOrganizationRole;
   currentUserId: string;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isUserManagementDisabledFromUi: boolean;
 }
@@ -34,7 +34,7 @@ export const MembersInfo = ({
   currentUserRole,
   members,
   currentUserId,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isFormbricksCloud,
   isUserManagementDisabledFromUi,
 }: MembersInfoProps) => {
@@ -105,7 +105,7 @@ export const MembersInfo = ({
             <p className="w-full truncate"> {member.email}</p>
           </div>
 
-          {canDoRoleManagement && allMembers?.length > 0 && (
+          {isAccessControlAllowed && allMembers?.length > 0 && (
             <div className="ph-no-capture min-w-[100px]">
               <EditMembershipRole
                 currentUserRole={currentUserRole}
