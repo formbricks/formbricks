@@ -5,15 +5,14 @@ export NODE_ENV=production
 
 # Function to run command with timeout if available, or without timeout as fallback
 run_with_timeout() {
-  local timeout_duration="$1"
-  local timeout_name="$2"
+  timeout_duration="$1"
+  timeout_name="$2"
   shift 2
-  local command="$*"
   
   if command -v timeout >/dev/null 2>&1; then
     # timeout command is available, use it
     echo "Using timeout ($timeout_duration seconds) for $timeout_name"
-    if ! timeout "$timeout_duration" sh -c "$command"; then
+    if ! timeout "$timeout_duration" "$@"; then
       echo "❌ $timeout_name timed out after $timeout_duration seconds"
       echo "📋 This might indicate database connectivity issues"
       exit 1
@@ -31,14 +30,14 @@ run_with_timeout() {
     # Run the command (either with newly installed timeout or without timeout)
     if command -v timeout >/dev/null 2>&1; then
       echo "✅ timeout installed, using timeout ($timeout_duration seconds) for $timeout_name"
-      if ! timeout "$timeout_duration" sh -c "$command"; then
+      if ! timeout "$timeout_duration" "$@"; then
         echo "❌ $timeout_name timed out after $timeout_duration seconds"
         echo "📋 This might indicate database connectivity issues"
         exit 1
       fi
     else
       echo "Running $timeout_name without timeout protection..."
-      if ! sh -c "$command"; then
+      if ! "$@"; then
         echo "❌ $timeout_name failed"
         echo "📋 This might indicate database connectivity issues"
         exit 1
@@ -56,10 +55,10 @@ else
 fi
 
 echo "🗃️ Running database migrations..."
-run_with_timeout 300 "database migration" "(cd packages/database && npm run db:migrate:deploy)"
+run_with_timeout 300 "database migration" sh -c '(cd packages/database && npm run db:migrate:deploy)'
 
 echo "🗃️ Running SAML database setup..."
-run_with_timeout 60 "SAML database setup" "(cd packages/database && npm run db:create-saml-database:deploy)"
+run_with_timeout 60 "SAML database setup" sh -c '(cd packages/database && npm run db:create-saml-database:deploy)'
 
 echo "✅ Database setup completed"
 echo "🚀 Starting Next.js server..."

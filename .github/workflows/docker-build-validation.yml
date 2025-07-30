@@ -130,17 +130,11 @@ jobs:
             fi
             
             # Try health endpoint with shorter timeout for faster polling
-            HTTP_OUTPUT=$(curl -s -m 10 http://localhost:3000/health 2>&1)
-            CURL_EXIT_CODE=$?
-            
-            if [ $CURL_EXIT_CODE -eq 0 ]; then
-              STATUS_CODE=$(echo "$HTTP_OUTPUT" | grep -oP "HTTP/\d(\.\d)? \K\d+" | head -1)
-              
-              if [ "$STATUS_CODE" = "200" ]; then
-                echo "✅ Health check successful after $((RETRY_COUNT * 5)) seconds!"
-                HEALTH_CHECK_SUCCESS=true
-                break
-              fi
+            # Use -f flag to make curl fail on HTTP error status codes (4xx, 5xx)
+            if curl -f -s -m 10 http://localhost:3000/health >/dev/null 2>&1; then
+              echo "✅ Health check successful after $((RETRY_COUNT * 5)) seconds!"
+              HEALTH_CHECK_SUCCESS=true
+              break
             fi
             
             # Wait 5 seconds before next attempt
