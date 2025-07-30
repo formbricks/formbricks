@@ -67,12 +67,10 @@ jobs:
 
           # Test connection using psql with timeout and proper error handling
           echo "Testing PostgreSQL connection with 30 second timeout..."
-          timeout 30 bash -c 'until PGPASSWORD=test psql -h localhost -U test -d formbricks -c "\dt" >/dev/null 2>&1; do
+          if timeout 30 bash -c 'until PGPASSWORD=test psql -h localhost -U test -d formbricks -c "\dt" >/dev/null 2>&1; do
             echo "Waiting for PostgreSQL to be ready..."
             sleep 2
-          done'
-          
-          if [ $? -eq 0 ]; then
+          done'; then
             echo "✅ PostgreSQL connection successful"
             PGPASSWORD=test psql -h localhost -U test -d formbricks -c "SELECT version();"
             
@@ -105,37 +103,9 @@ jobs:
             -e ENCRYPTION_KEY="${{ secrets.DUMMY_ENCRYPTION_KEY }}" \
             -d formbricks-test:${{ github.sha }}
 
-          # Give it time to start up but check container status periodically
-          # Increased timeout to account for database migrations
-          echo "Waiting for application to start (checking every 15 seconds for up to 5 minutes)..."
-          CONTAINER_WAIT_COUNT=0
-          while [ $CONTAINER_WAIT_COUNT -lt 20 ]; do
-            sleep 15
-            CONTAINER_WAIT_COUNT=$((CONTAINER_WAIT_COUNT + 1))
-            
-            # Check if container is still running
-            if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test 2>/dev/null)" != "true" ]; then
-              echo "❌ Container stopped running after $((CONTAINER_WAIT_COUNT * 15)) seconds!"
-              echo "📋 Container logs:"
-              docker logs formbricks-test
-              exit 1
-            fi
-            
-            echo "Container still running after $((CONTAINER_WAIT_COUNT * 15)) seconds..."
-            
-            # Show recent container logs for debugging
-            echo "📋 Recent container logs:"
-            docker logs --tail 10 formbricks-test
-          done
-
-          echo "✅ Container has been running for 5 minutes!"
-
-          # PostgreSQL connectivity was already verified from host before container startup
-          echo "✅ Skipping redundant PostgreSQL test from inside container (already verified from host)"
-
-          # Try to access the health endpoint
-          echo "🏥 Testing /health endpoint..."
-          MAX_RETRIES=8
+          # Start health check polling immediately (every 5 seconds for up to 5 minutes)
+          echo "🏥 Polling /health endpoint every 5 seconds for up to 5 minutes..."
+          MAX_RETRIES=60  # 60 attempts × 5 seconds = 5 minutes
           RETRY_COUNT=0
           HEALTH_CHECK_SUCCESS=false
 
@@ -143,38 +113,38 @@ jobs:
 
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "Attempt $RETRY_COUNT of $MAX_RETRIES..."
             
-            # Show container logs before each attempt to help debugging
-            if [ $RETRY_COUNT -gt 1 ]; then
-              echo "📋 Current container logs:"
-              docker logs --tail 20 formbricks-test
+            # Check if container is still running
+            if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test 2>/dev/null)" != "true" ]; then
+              echo "❌ Container stopped running after $((RETRY_COUNT * 5)) seconds!"
+              echo "📋 Container logs:"
+              docker logs formbricks-test
+              exit 1
             fi
             
-            # Get detailed curl output for debugging
-            HTTP_OUTPUT=$(curl -v -s -m 30 http://localhost:3000/health 2>&1)
+            # Show progress and diagnostic info every 12 attempts (1 minute intervals)
+            if [ $((RETRY_COUNT % 12)) -eq 0 ] || [ $RETRY_COUNT -eq 1 ]; then
+              echo "Health check attempt $RETRY_COUNT of $MAX_RETRIES ($(($RETRY_COUNT * 5)) seconds elapsed)..."
+              echo "📋 Recent container logs:"
+              docker logs --tail 10 formbricks-test
+            fi
+            
+            # Try health endpoint with shorter timeout for faster polling
+            HTTP_OUTPUT=$(curl -s -m 10 http://localhost:3000/health 2>&1)
             CURL_EXIT_CODE=$?
             
-            echo "Curl exit code: $CURL_EXIT_CODE"
-            echo "Curl output: $HTTP_OUTPUT"
-            
             if [ $CURL_EXIT_CODE -eq 0 ]; then
-              STATUS_CODE=$(echo "$HTTP_OUTPUT" | grep -oP "HTTP/\d(\.\d)? \K\d+")
-              echo "Status code detected: $STATUS_CODE"
+              STATUS_CODE=$(echo "$HTTP_OUTPUT" | grep -oP "HTTP/\d(\.\d)? \K\d+" | head -1)
               
               if [ "$STATUS_CODE" = "200" ]; then
-                echo "✅ Health check successful!"
+                echo "✅ Health check successful after $((RETRY_COUNT * 5)) seconds!"
                 HEALTH_CHECK_SUCCESS=true
                 break
-              else
-                echo "❌ Health check returned non-200 status code: $STATUS_CODE"
               fi
-            else
-              echo "❌ Curl command failed with exit code: $CURL_EXIT_CODE"
             fi
             
-            echo "Waiting 15 seconds before next attempt..."
-            sleep 15
+            # Wait 5 seconds before next attempt
+            sleep 5
           done
 
           # Show full container logs for debugging
@@ -187,7 +157,7 @@ jobs:
 
           # Exit with failure if health check did not succeed
           if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
-            echo "❌ Health check failed after $MAX_RETRIES attempts"
+            echo "❌ Health check failed after $((MAX_RETRIES * 5)) seconds (5 minutes)"
             exit 1
           fi
 
