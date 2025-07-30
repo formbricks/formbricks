@@ -137,8 +137,7 @@ module "eks" {
   cluster_version = "1.32"
 
   enable_cluster_creator_admin_permissions = false
-  cluster_endpoint_public_access           = true  # TEMPORARY: Enable for deployments until Tailscale is fixed by new DevOps engineer
-  cluster_endpoint_public_access_cidrs     = ["0.0.0.0/0"]  # TEMPORARY: Will revert to private + Tailscale access
+  cluster_endpoint_public_access           = false
   cloudwatch_log_group_retention_in_days   = 365
 
   cluster_addons = {
