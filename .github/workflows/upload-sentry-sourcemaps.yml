@@ -45,7 +45,7 @@ jobs:
           echo "Tag version check result: ${{ inputs.tag_version != '' && inputs.tag_version || inputs.release_version }}"
           echo ""
           echo "🛑 TESTING MODE: Exiting before any mutations (sourcemap upload)"
-          exit 0
+          exit 1
 
       - name: Upload Sourcemaps to Sentry
         uses: ./.github/actions/upload-sentry-sourcemaps
