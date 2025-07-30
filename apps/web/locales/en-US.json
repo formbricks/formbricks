@@ -2771,6 +2771,8 @@
     "star_rating_survey_question_3_placeholder": "Type your answer here...",
     "star_rating_survey_question_3_subheader": "Help us improve your experience.",
     "statement_call_to_action": "Statement (Call to Action)",
+    "strongly_agree": "Strongly Agree",
+    "strongly_disagree": "Strongly Disagree",
     "supportive_work_culture_survey_description": "Assess employee perceptions of leadership support, communication, and the overall work environment.",
     "supportive_work_culture_survey_name": "Supportive Work Culture",
     "supportive_work_culture_survey_question_1_headline": "My manager provides me with the support I need to complete my work.",
@@ -2826,6 +2828,18 @@
     "understand_purchase_intention_question_2_headline": "Got it. What's your primary reason for visiting today?",
     "understand_purchase_intention_question_2_placeholder": "Type your answer here...",
     "understand_purchase_intention_question_3_headline": "What, if anything, is holding you back from making a purchase today?",
-    "understand_purchase_intention_question_3_placeholder": "Type your answer here..."
+    "understand_purchase_intention_question_3_placeholder": "Type your answer here...",
+    "usability_question_10_headline": " I had to learn a lot before I could start using the system properly.",
+    "usability_question_1_headline": "I’d probably use this system often.",
+    "usability_question_2_headline": "The system felt more complicated than it needed to be.",
+    "usability_question_3_headline": "The system was easy to figure out.",
+    "usability_question_4_headline": "I think I’d need help from a tech expert to use this system.",
+    "usability_question_5_headline": "Everything in the system seemed to work well together.",
+    "usability_question_6_headline": "The system felt inconsistent in how things worked.",
+    "usability_question_7_headline": "I think most people could learn to use this system quickly.",
+    "usability_question_8_headline": "Using the system felt like a hassle.",
+    "usability_question_9_headline": "I felt confident while using the system.",
+    "usability_rating_description": "Measure perceived usability by asking users to rate their experience with your product using a standardized 10-question survey.",
+    "usability_score_name": "System Usability Scale (SUS)"
   }
 }

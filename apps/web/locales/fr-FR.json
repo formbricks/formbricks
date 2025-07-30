@@ -2771,6 +2771,8 @@
     "star_rating_survey_question_3_placeholder": "Tapez votre réponse ici...",
     "star_rating_survey_question_3_subheader": "Aidez-nous à améliorer votre expérience.",
     "statement_call_to_action": "Déclaration (Appel à l'action)",
+    "strongly_agree": "Tout à fait d'accord",
+    "strongly_disagree": "Fortement en désaccord",
     "supportive_work_culture_survey_description": "Évaluer les perceptions des employés concernant le soutien des dirigeants, la communication et l'environnement de travail global.",
     "supportive_work_culture_survey_name": "Culture de travail bienveillante",
     "supportive_work_culture_survey_question_1_headline": "Mon manager me fournit le soutien dont j'ai besoin pour accomplir mon travail.",
@@ -2826,6 +2828,18 @@
     "understand_purchase_intention_question_2_headline": "Compris. Quelle est votre raison principale de visite aujourd'hui ?",
     "understand_purchase_intention_question_2_placeholder": "Entrez votre réponse ici...",
     "understand_purchase_intention_question_3_headline": "Qu'est-ce qui vous empêche de faire un achat aujourd'hui, s'il y a quelque chose ?",
-    "understand_purchase_intention_question_3_placeholder": "Entrez votre réponse ici..."
+    "understand_purchase_intention_question_3_placeholder": "Entrez votre réponse ici...",
+    "usability_question_10_headline": "J'ai dû beaucoup apprendre avant de pouvoir utiliser correctement le système.",
+    "usability_question_1_headline": "Je pourrais probablement utiliser ce système souvent.",
+    "usability_question_2_headline": "Le système semblait plus compliqué qu'il ne devait l'être.",
+    "usability_question_3_headline": "Le système était facile à comprendre.",
+    "usability_question_4_headline": "Je pense que j'aurais besoin de l'aide d'un expert en technologie pour utiliser ce système.",
+    "usability_question_5_headline": "Tout dans le système semblait bien fonctionner ensemble.",
+    "usability_question_6_headline": "Le système semblait incohérent dans la façon dont les choses fonctionnaient.",
+    "usability_question_7_headline": "Je pense que la plupart des gens pourraient apprendre à utiliser ce système rapidement.",
+    "usability_question_8_headline": "Utiliser le système semblait être une corvée.",
+    "usability_question_9_headline": "Je me suis senti confiant en utilisant le système.",
+    "usability_rating_description": "Mesurez la convivialité perçue en demandant aux utilisateurs d'évaluer leur expérience avec votre produit via un sondage standardisé de 10 questions.",
+    "usability_score_name": "Score d'Utilisabilité du Système (SUS)"
   }
 }
