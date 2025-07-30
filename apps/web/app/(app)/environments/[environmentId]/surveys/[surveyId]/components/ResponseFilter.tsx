@@ -209,8 +209,9 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
-        <div className="mb-8 flex flex-wrap items-start justify-between">
+        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]"
+        onOpenAutoFocus={(event) => event.preventDefault()}>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-2">
           <p className="text-slate800 hidden text-lg font-semibold sm:block">
             {t("environments.surveys.summary.show_all_responses_that_match")}
           </p>
@@ -219,7 +220,6 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           </p>
           <div className="flex items-center space-x-2">
             <Select
-              required
               onValueChange={(val) => {
                 handleResponseStatusChange(val as TResponseStatus);
               }}
