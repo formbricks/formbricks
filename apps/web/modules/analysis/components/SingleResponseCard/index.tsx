@@ -113,7 +113,7 @@ export const SingleResponseCard = ({
   };
 
   return (
-    <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
+    <div className={clsx("group relative", isOpen && "min-h-[300px] overflow-clip")}>
       <div
         className={clsx(
           "relative z-20 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all",
@@ -122,7 +122,7 @@ export const SingleResponseCard = ({
               ? "w-3/4"
               : user && response.notes.length
                 ? "w-[96.5%]"
-                : cn("w-full", user ? "group-hover:w-[96.5%]" : ""))
+                : cn("w-full", user ? "group-hover:w-[74%]" : ""))
         )}>
         <SingleResponseCardHeader
           pageType="response"
