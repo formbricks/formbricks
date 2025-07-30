@@ -83,7 +83,7 @@ vi.mock("@/app/(app)/environments/[environmentId]/components/MainNavigation", ()
     <div data-testid="main-navigation">
       MainNavigation
       <div data-testid="organization-teams">{JSON.stringify(organizationTeams || [])}</div>
-      <div data-testid="can-do-role-management">{isAccessControlAllowed?.toString() || "false"}</div>
+      <div data-testid="is-access-control-allowed">{isAccessControlAllowed?.toString() || "false"}</div>
     </div>
   ),
 }));
@@ -337,7 +337,7 @@ describe("EnvironmentLayout", () => {
       })
     );
 
-    expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("true");
+    expect(screen.getByTestId("is-access-control-allowed")).toHaveTextContent("true");
     expect(vi.mocked(getAccessControlPermission)).toHaveBeenCalledWith(mockOrganization.billing.plan);
   });
 
@@ -416,7 +416,7 @@ describe("EnvironmentLayout", () => {
       })
     );
 
-    expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("false");
+    expect(screen.getByTestId("is-access-control-allowed")).toHaveTextContent("false");
   });
 
   test("throws error if user not found", async () => {

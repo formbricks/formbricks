@@ -112,7 +112,7 @@ export const getIsSpamProtectionEnabled = async (
 
 const featureFlagFallback = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
   const license = await getEnterpriseLicense();
-
+  console.log("license", license);
   if (IS_FORMBRICKS_CLOUD)
     return (
       license.active &&
@@ -137,6 +137,7 @@ export const getAccessControlPermission = async (
   billingPlan: Organization["billing"]["plan"]
 ): Promise<boolean> => {
   const isEnabled = await getSpecificFeatureFlag("accessControl");
+  console.log("isEnabled", isEnabled);
   // If the feature is enabled in the license, return true
   if (isEnabled) return true;
 

@@ -65,7 +65,7 @@ vi.mock("@/modules/projects/components/project-switcher", () => ({
     <div data-testid="project-switcher" data-collapsed={isCollapsed}>
       Project Switcher
       <div data-testid="organization-teams-count">{organizationTeams?.length || 0}</div>
-      <div data-testid="can-do-role-management">{isAccessControlAllowed.toString()}</div>
+      <div data-testid="is-access-control-allowed">{isAccessControlAllowed.toString()}</div>
     </div>
   ),
 }));
@@ -351,7 +351,7 @@ describe("MainNavigation", () => {
     render(<MainNavigation {...defaultProps} />);
 
     expect(screen.getByTestId("organization-teams-count")).toHaveTextContent("0");
-    expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("true");
+    expect(screen.getByTestId("is-access-control-allowed")).toHaveTextContent("true");
   });
 
   test("handles no organizationTeams", () => {
@@ -363,6 +363,6 @@ describe("MainNavigation", () => {
   test("handles isAccessControlAllowed false", () => {
     render(<MainNavigation {...defaultProps} isAccessControlAllowed={false} />);
 
-    expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("false");
+    expect(screen.getByTestId("is-access-control-allowed")).toHaveTextContent("false");
   });
 });

@@ -59,7 +59,7 @@ vi.mock("@/modules/projects/components/create-project-modal", () => ({
         </button>
         <div data-testid="modal-organization-id">{organizationId}</div>
         <div data-testid="modal-organization-teams">{organizationTeams?.length || 0}</div>
-        <div data-testid="modal-can-do-role-management">{isAccessControlAllowed.toString()}</div>
+        <div data-testid="modal-is-access-control-allowed">{isAccessControlAllowed.toString()}</div>
       </div>
     ) : null,
 }));
@@ -149,7 +149,7 @@ describe("ProjectSwitcher", () => {
     await userEvent.click(addButton);
     expect(screen.getByTestId("create-project-modal")).toBeInTheDocument();
     expect(screen.getByTestId("modal-organization-id")).toHaveTextContent("org1");
-    expect(screen.getByTestId("modal-can-do-role-management")).toHaveTextContent("true");
+    expect(screen.getByTestId("modal-is-access-control-allowed")).toHaveTextContent("true");
   });
 
   test("closes CreateProjectModal when close button is clicked", async () => {
@@ -165,6 +165,6 @@ describe("ProjectSwitcher", () => {
     render(<ProjectSwitcher {...defaultProps} projects={[project]} isAccessControlAllowed={false} />);
     const addButton = screen.getByText("common.add_project");
     await userEvent.click(addButton);
-    expect(screen.getByTestId("modal-can-do-role-management")).toHaveTextContent("false");
+    expect(screen.getByTestId("modal-is-access-control-allowed")).toHaveTextContent("false");
   });
 });
