@@ -64,7 +64,7 @@ export const renderSurvey = async ({
     return (
       <SurveyInactive
         status={survey.status}
-        surveyClosedMessage={survey.surveyClosedMessage ? survey.surveyClosedMessage : undefined}
+        surveyClosedMessage={survey.surveyClosedMessage}
         project={project || undefined}
       />
     );

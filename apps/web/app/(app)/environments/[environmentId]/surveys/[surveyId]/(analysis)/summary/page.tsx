@@ -70,8 +70,6 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         environment={environment}
         survey={survey}
         surveyId={params.surveyId}
-        publicDomain={publicDomain}
-        isReadOnly={isReadOnly}
         locale={user.locale ?? DEFAULT_LOCALE}
         initialSurveySummary={initialSurveySummary}
       />

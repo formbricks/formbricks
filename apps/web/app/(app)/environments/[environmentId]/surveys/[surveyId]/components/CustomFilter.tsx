@@ -32,7 +32,6 @@ import {
   subYears,
 } from "date-fns";
 import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -125,8 +124,6 @@ const getDateRangeLabel = (from: Date, to: Date, t: TFnType) => {
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
-  const params = useParams();
-  const isSharingPage = !!params.sharingKey;
   const { t } = useTranslate();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
@@ -385,51 +382,47 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {!isSharingPage && (
-            <DropdownMenu
-              onOpenChange={(value) => {
-                value && handleDatePickerClose();
-              }}>
-              <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-                <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
-                  <div className="hidden w-full items-center justify-between sm:flex">
-                    <span className="text-sm text-slate-700">{t("common.download")}</span>
-                    <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
-                  </div>
-                  <DownloadIcon className="block h-4 sm:hidden" />
+          <DropdownMenu
+            onOpenChange={(value) => {
+              value && handleDatePickerClose();
+            }}>
+            <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
+              <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
+                <div className="hidden w-full items-center justify-between sm:flex">
+                  <span className="text-sm text-slate-700">{t("common.download")}</span>
+                  <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
                 </div>
-              </DropdownMenuTrigger>
+                <DownloadIcon className="block h-4 sm:hidden" />
+              </div>
+            </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleDowndloadResponses(FilterDownload.ALL, "csv");
-                  }}>
-                  <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleDowndloadResponses(FilterDownload.ALL, "xlsx");
-                  }}>
-                  <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleDowndloadResponses(FilterDownload.FILTER, "csv");
-                  }}>
-                  <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
-                  }}>
-                  <p className="text-slate-700">
-                    {t("environments.surveys.summary.filtered_responses_excel")}
-                  </p>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDowndloadResponses(FilterDownload.ALL, "csv");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDowndloadResponses(FilterDownload.ALL, "xlsx");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDowndloadResponses(FilterDownload.FILTER, "csv");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
+                }}>
+                <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_excel")}</p>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         {isDatePickerOpen && (
           <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">

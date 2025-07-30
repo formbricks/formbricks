@@ -638,6 +638,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[1] }).click();
+  await page.locator("html").click();
+  await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
   await page.locator("#action-0-objective").click();
   await page.getByRole("option", { name: "Calculate" }).click();
   await page.locator("#action-0-variableId").click();
@@ -667,6 +669,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: params.multiSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[1] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[2] }).click();
+  await page.locator("html").click();
+  await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
   await page.locator("#condition-0-1-conditionValue").click();
@@ -784,7 +788,10 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Create group" }).click();
   await page.locator("#condition-1-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
-  await page.getByText("and").nth(4).click();
+
+  await page.getByRole("combobox").filter({ hasText: "all are true" }).nth(1).click();
+  await page.getByText("any is true").click();
+
   await page.locator("#condition-1-1-conditionValue").click();
   await page
     .getByRole("option")
@@ -877,7 +884,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is skipped" }).click();
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
-  await page.getByText("and", { exact: true }).click();
+  await page.getByRole("combobox").filter({ hasText: "all are true" }).first().click();
+  await page.getByText("any is true").click();
   await page.locator("#condition-0-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Create group" }).click();
   await page.locator("#condition-1-0-dropdown").click();

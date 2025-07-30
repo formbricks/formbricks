@@ -36,7 +36,6 @@ export const selectSurvey = {
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
-  resultShareKey: true,
   showLanguageSwitch: true,
   recaptcha: true,
   isBackButtonHidden: true,

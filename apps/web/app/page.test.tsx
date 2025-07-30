@@ -127,7 +127,6 @@ describe("Page", () => {
       objective: null,
       notificationSettings: {
         alert: {},
-        weeklySummary: {},
         unsubscribedOrganizationIds: [],
       },
       locale: "en-US",
@@ -171,7 +170,6 @@ describe("Page", () => {
       objective: null,
       notificationSettings: {
         alert: {},
-        weeklySummary: {},
         unsubscribedOrganizationIds: [],
       },
       locale: "en-US",
@@ -261,7 +259,6 @@ describe("Page", () => {
       objective: null,
       notificationSettings: {
         alert: {},
-        weeklySummary: {},
         unsubscribedOrganizationIds: [],
       },
       locale: "en-US",
@@ -351,7 +348,6 @@ describe("Page", () => {
       objective: null,
       notificationSettings: {
         alert: {},
-        weeklySummary: {},
         unsubscribedOrganizationIds: [],
       },
       locale: "en-US",

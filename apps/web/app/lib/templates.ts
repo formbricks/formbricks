@@ -3608,7 +3608,6 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
       isEncrypted: true,
     },
     pin: null,
-    resultShareKey: null,
     languages: [],
     triggers: [],
     showLanguageSwitch: false,

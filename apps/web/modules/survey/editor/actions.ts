@@ -18,6 +18,7 @@ import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -84,6 +85,9 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
       const result = await updateSurvey(parsedInput);
       ctx.auditLoggingCtx.oldObject = oldObject;
       ctx.auditLoggingCtx.newObject = result;
+
+      revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+
       return result;
     }
   )

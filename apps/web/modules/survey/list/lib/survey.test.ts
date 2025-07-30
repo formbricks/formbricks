@@ -361,7 +361,6 @@ describe("deleteSurvey", () => {
     environmentId,
     segment: null,
     type: "web" as any,
-    resultShareKey: "sharekey1",
     triggers: [{ actionClass: { id: "action_1" } }],
   };
 
@@ -467,7 +466,6 @@ describe("copySurveyToOtherEnvironment", () => {
       { actionClass: { id: "new_ac2", name: "No-Code Action", environmentId: targetEnvironmentId } },
     ],
     languages: [{ language: { code: "en" } }],
-    resultShareKey: null,
   };
 
   beforeEach(() => {

@@ -102,7 +102,6 @@ const mockSurvey = {
   autoComplete: null,
   surveyClosedMessage: null,
   singleUse: null,
-  resultShareKey: null,
   displayPercentage: null,
   languages: [],
   triggers: [],
@@ -155,16 +154,6 @@ describe("CustomFilter", () => {
 
     expect(screen.getByTestId("calendar-mock")).toBeVisible();
     expect(screen.getByText(`Select first date - ${format(mockDateToday, "dd LLL")}`)).toBeInTheDocument();
-  });
-
-  test("does not render download button on sharing page", () => {
-    vi.mocked(useParams).mockReturnValue({
-      environmentId: "test-env",
-      surveyId: "test-survey",
-      sharingKey: "test-share-key",
-    });
-    render(<CustomFilter survey={mockSurvey} />);
-    expect(screen.queryByText("common.download")).not.toBeInTheDocument();
   });
 
   test("useEffect logic for resetState and firstMountRef (as per current component code)", () => {

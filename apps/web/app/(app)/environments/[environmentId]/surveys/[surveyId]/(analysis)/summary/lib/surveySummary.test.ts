@@ -93,7 +93,6 @@ const mockBaseSurvey: TSurvey = {
   environmentId: "env_123",
   singleUse: null,
   surveyClosedMessage: null,
-  resultShareKey: null,
   pin: null,
   createdBy: "user_123",
   isSingleResponsePerEmailEnabled: false,

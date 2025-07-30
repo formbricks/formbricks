@@ -115,7 +115,20 @@ describe("ConditionalLogic", () => {
       conditions: {
         id: "conditionGroupId",
         connector: "and",
-        conditions: [],
+        conditions: [
+          {
+            id: "conditionId",
+            leftOperand: { value: "testQuestionId", type: "question" },
+            operator: "equals",
+            rightOperand: { value: "value2", type: "static" },
+          },
+          {
+            id: "conditionId2",
+            leftOperand: { value: "testQuestionId2", type: "question" },
+            operator: "equals",
+            rightOperand: { value: "value2", type: "static" },
+          },
+        ],
       },
       actions: [],
     };
@@ -152,9 +165,7 @@ describe("ConditionalLogic", () => {
     );
 
     // First click the ellipsis menu button to open the dropdown
-    const menuButton = screen.getByRole("button", {
-      name: "", // The button has no text content, just an icon
-    });
+    const menuButton = screen.getByLabelText("More options");
     await userEvent.click(menuButton);
 
     // Now look for the duplicate option in the dropdown menu that appears

@@ -76,7 +76,7 @@ const mockUser = {
   imageUrl: "http://example.com/avatar.png",
   twoFactorEnabled: false,
   identityProvider: "email",
-  notificationSettings: { alert: {}, weeklySummary: {}, unsubscribedOrganizationIds: [] },
+  notificationSettings: { alert: {}, unsubscribedOrganizationIds: [] },
   createdAt: new Date(),
   updatedAt: new Date(),
   role: "project_manager",

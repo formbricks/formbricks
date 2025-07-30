@@ -50,7 +50,7 @@ export const SurveyCard = ({
 
   const isSurveyCreationDeletionDisabled = isReadOnly;
 
-  const { refreshSingleUseId } = useSingleUseId(survey);
+  const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
   const linkHref = useMemo(() => {
     return survey.status === "draft"

@@ -4,7 +4,7 @@ import { revalidateSurveyIdPath } from "@/app/(app)/environments/[environmentId]
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon, PresentationIcon } from "lucide-react";
-import { useParams, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyAnalysisNavigationProps {
@@ -20,11 +20,8 @@ export const SurveyAnalysisNavigation = ({
 }: SurveyAnalysisNavigationProps) => {
   const pathname = usePathname();
   const { t } = useTranslate();
-  const params = useParams();
-  const sharingKey = params.sharingKey as string;
-  const isSharingPage = !!sharingKey;
 
-  const url = isSharingPage ? `/share/${sharingKey}` : `/environments/${environmentId}/surveys/${survey.id}`;
+  const url = `/environments/${environmentId}/surveys/${survey.id}`;
 
   const navigation = [
     {

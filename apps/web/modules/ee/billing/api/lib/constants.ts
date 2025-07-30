@@ -74,7 +74,6 @@ export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
       t("environments.settings.billing.custom_project_limit"),
       t("environments.settings.billing.team_access_roles"),
       t("environments.project.languages.multi_language_surveys"),
-      t("environments.settings.enterprise.saml_sso"),
       t("environments.settings.billing.uptime_sla_99"),
       t("environments.settings.billing.premium_support_with_slas"),
     ],
