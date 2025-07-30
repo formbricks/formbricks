@@ -528,6 +528,8 @@
       "if_a_user_clicks_a_button_with_a_specific_text": "Si un utilisateur clique sur un bouton avec un texte spécifique",
       "in_your_code_read_more_in_our": "dans votre code. En savoir plus dans notre",
       "inner_text": "Texte interne",
+      "invalid_action_type_code": "Type d'action invalide pour action code",
+      "invalid_action_type_no_code": "Type d'action invalide pour action noCode",
       "invalid_css_selector": "Sélecteur CSS invalide",
       "invalid_match_type": "L'option sélectionnée n'est pas disponible.",
       "invalid_regex": "Veuillez utiliser une expression régulière valide.",

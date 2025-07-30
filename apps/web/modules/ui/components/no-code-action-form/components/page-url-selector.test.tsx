@@ -182,6 +182,7 @@ vi.mock("@/modules/ui/components/form", () => ({
       fieldState: { error: null },
     }),
   FormItem: ({ children, className }: any) => <div className={className}>{children}</div>,
+  FormError: () => <div>Form Error</div>,
 }));
 
 // Mock the tolgee translation

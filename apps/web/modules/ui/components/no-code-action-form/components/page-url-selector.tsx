@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { testURLmatch } from "@/lib/utils/url";
 import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
-import { useTranslate } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -32,7 +32,7 @@ import {
   TActionClassPageUrlRule,
 } from "@formbricks/types/action-classes";
 
-const getRuleLabel = (rule: TActionClassPageUrlRule, t: (key: string) => string): string => {
+const getRuleLabel = (rule: TActionClassPageUrlRule, t: TFnType): string => {
   switch (rule) {
     case "exactMatch":
       return t("environments.actions.exactly_matches");
@@ -200,7 +200,7 @@ const UrlInput = ({
   return (
     <div className="flex w-full flex-col gap-2">
       {fields.map((field, index) => (
-        <div key={field.id} className="ml-1 flex items-center space-x-2">
+        <div key={field.id} className="ml-1 flex items-start space-x-2">
           {index !== 0 && <p className="ml-1 text-sm font-bold text-slate-700">or</p>}
           <FormField
             name={`noCodeConfig.urlFilters.${index}.rule`}
@@ -209,7 +209,7 @@ const UrlInput = ({
               <FormItem>
                 <FormControl>
                   <Select onValueChange={onChange} value={value} name={name} disabled={disabled}>
-                    <SelectTrigger className="w-[250px] bg-white">
+                    <SelectTrigger className="h-[40px] w-[250px] bg-white">
                       <SelectValue placeholder={t("environments.actions.select_match_type")} />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -247,6 +247,8 @@ const UrlInput = ({
                       isInvalid={!!error?.message}
                     />
                   </FormControl>
+
+                  <FormError />
                 </FormItem>
               );
             }}
@@ -255,7 +257,7 @@ const UrlInput = ({
           {fields.length > 1 && (
             <Button
               variant="secondary"
-              size="sm"
+              size="tall"
               type="button"
               onClick={() => {
                 removeUrlRule(index);
