@@ -79,7 +79,7 @@ export const LinkSurvey = ({
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
 
-  const [autoFocus, setAutofocus] = useState(false);
+  const [autoFocus, setAutoFocus] = useState(false);
   const hasFinishedSingleUseResponse = useMemo(() => {
     if (singleUseResponse?.finished) {
       return true;
@@ -91,7 +91,7 @@ export const LinkSurvey = ({
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
     if (window.self === window.top) {
-      setAutofocus(true);
+      setAutoFocus(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once
   }, []);
@@ -121,7 +121,7 @@ export const LinkSurvey = ({
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} project={project} />;
   }
 
-  if (survey.isVerifyEmailEnabled && emailVerificationStatus !== "verified") {
+  if (survey.isVerifyEmailEnabled && emailVerificationStatus !== "verified" && !isPreview) {
     if (emailVerificationStatus === "fishy") {
       return (
         <VerifyEmail
