@@ -5,13 +5,13 @@ export NODE_ENV=production
 
 # Function to run command with timeout if available, or without timeout as fallback
 run_with_timeout() {
-  timeout_duration="$1"
-  timeout_name="$2"
+  _timeout_duration="$1"
+  _timeout_name="$2"
   shift 2
   
   if command -v timeout >/dev/null 2>&1; then
     # timeout command is available, use it
-    echo "Using timeout ($timeout_duration seconds) for $timeout_name"
+    echo "Using timeout ($_timeout_duration seconds) for $_timeout_name"
     if ! timeout "$timeout_duration" "$@"; then
       echo "❌ $timeout_name timed out after $timeout_duration seconds"
       echo "📋 This might indicate database connectivity issues"
@@ -22,16 +22,16 @@ run_with_timeout() {
     echo "⚠️ timeout command not found, attempting to install..."
     if command -v apk >/dev/null 2>&1; then
       apk add --no-cache coreutils >/dev/null 2>&1 || {
-        echo "⚠️ Could not install timeout, running $timeout_name without timeout protection"
+        echo "⚠️ Could not install timeout, running $_timeout_name without timeout protection"
         echo "📋 Note: Process may hang indefinitely if there are connectivity issues"
       }
     fi
     
     # Run the command (either with newly installed timeout or without timeout)
-    if command -v timeout >/dev/null 2>&1; then
-      echo "✅ timeout installed, using timeout ($timeout_duration seconds) for $timeout_name"
-      if ! timeout "$timeout_duration" "$@"; then
-        echo "❌ $timeout_name timed out after $timeout_duration seconds"
+    if command -v timeout >/dev/null 2>&1; 
+      echo "✅ timeout installed, using timeout ($_timeout_duration seconds) for $_timeout_name"
+      if ! timeout "$_timeout_duration" "$@"; then
+        echo "❌ $_timeout_name timed out after $_timeout_duration seconds"
         echo "📋 This might indicate database connectivity issues"
         exit 1
       fi
