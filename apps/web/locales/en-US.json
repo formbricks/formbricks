@@ -1,5 +1,4 @@
 {
-  "Strongly Agree": "Strongly Agree",
   "auth": {
     "continue_with_azure": "Continue with Microsoft",
     "continue_with_email": "Continue with Email",
@@ -2772,6 +2771,7 @@
     "star_rating_survey_question_3_placeholder": "Type your answer here...",
     "star_rating_survey_question_3_subheader": "Help us improve your experience.",
     "statement_call_to_action": "Statement (Call to Action)",
+    "strongly_agree": "Strongly Agree",
     "strongly_disagree": "Strongly Disagree",
     "supportive_work_culture_survey_description": "Assess employee perceptions of leadership support, communication, and the overall work environment.",
     "supportive_work_culture_survey_name": "Supportive Work Culture",

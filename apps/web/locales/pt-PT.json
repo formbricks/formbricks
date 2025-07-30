@@ -1,5 +1,4 @@
 {
-  "Strongly Agree": "Concordo totalmente",
   "auth": {
     "continue_with_azure": "Continuar com Microsoft",
     "continue_with_email": "Continuar com Email",
@@ -2772,6 +2771,7 @@
     "star_rating_survey_question_3_placeholder": "Escreva a sua resposta aqui...",
     "star_rating_survey_question_3_subheader": "Ajude-nos a melhorar a sua experiência.",
     "statement_call_to_action": "Declaração (Chamada para Ação)",
+    "strongly_agree": "Concordo totalmente",
     "strongly_disagree": "Discordo totalmente",
     "supportive_work_culture_survey_description": "Avaliar as perceções dos funcionários sobre o apoio da liderança, comunicação e o ambiente de trabalho geral.",
     "supportive_work_culture_survey_name": "Cultura de Trabalho de Apoio",
