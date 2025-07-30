@@ -80,7 +80,7 @@ jobs:
           echo ""
           echo "🛑 TESTING MODE: Exiting before any mutations (package.json update, Docker build/push)"
           echo "This would normally update package.json and build/push Docker images, but we're preventing mutations."
-          exit 0
+          exit 1
 
       - name: Update package.json version
         run: |

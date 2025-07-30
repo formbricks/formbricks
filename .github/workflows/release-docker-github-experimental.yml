@@ -57,7 +57,7 @@ jobs:
           echo "github.ref_name: ${{ github.ref_name }}"echo ""
           echo "🛑 TESTING MODE: Exiting before any mutations (package.json update, Sentry env, Docker build/push)"
           echo "This would normally update package.json, set Sentry environment, and build/push Docker images, but we're preventing mutations."
-          exit 0
+          exit 1
 
           if [[ "$REF_TYPE" == "tag" ]]; then
             # If running from a tag, use the tag name
