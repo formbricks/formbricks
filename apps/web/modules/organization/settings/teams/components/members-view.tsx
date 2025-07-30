@@ -35,7 +35,7 @@ export const MembersView = async ({
   organization,
   currentUserId,
   environmentId,
-  isAccessControlAllowed: isAccessControlAllowed,
+  isAccessControlAllowed,
   isUserManagementDisabledFromUi,
 }: MembersViewProps) => {
   const t = await getTranslate();
