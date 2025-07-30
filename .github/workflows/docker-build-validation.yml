@@ -105,18 +105,30 @@ jobs:
             -e ENCRYPTION_KEY="${{ secrets.DUMMY_ENCRYPTION_KEY }}" \
             -d formbricks-test:${{ github.sha }}
 
-          # Give it more time to start up
-          echo "Waiting 45 seconds for application to start..."
-          sleep 45
+          # Give it time to start up but check container status periodically
+          # Increased timeout to account for database migrations
+          echo "Waiting for application to start (checking every 15 seconds for up to 5 minutes)..."
+          CONTAINER_WAIT_COUNT=0
+          while [ $CONTAINER_WAIT_COUNT -lt 20 ]; do
+            sleep 15
+            CONTAINER_WAIT_COUNT=$((CONTAINER_WAIT_COUNT + 1))
+            
+            # Check if container is still running
+            if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test 2>/dev/null)" != "true" ]; then
+              echo "❌ Container stopped running after $((CONTAINER_WAIT_COUNT * 15)) seconds!"
+              echo "📋 Container logs:"
+              docker logs formbricks-test
+              exit 1
+            fi
+            
+            echo "Container still running after $((CONTAINER_WAIT_COUNT * 15)) seconds..."
+            
+            # Show recent container logs for debugging
+            echo "📋 Recent container logs:"
+            docker logs --tail 10 formbricks-test
+          done
 
-          # Check if the container is running
-          if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test)" != "true" ]; then
-            echo "❌ Container failed to start properly!"
-            docker logs formbricks-test
-            exit 1
-          else
-            echo "✅ Container started successfully!"
-          fi
+          echo "✅ Container has been running for 5 minutes!"
 
           # PostgreSQL connectivity was already verified from host before container startup
           echo "✅ Skipping redundant PostgreSQL test from inside container (already verified from host)"
