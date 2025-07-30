@@ -197,7 +197,7 @@ export const QuestionFilterComboBox = ({
         </div>
         <div className="relative mt-2 h-full">
           {open && (
-            <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
+            <div className="animate-in absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
               <CommandList>
                 <div className="p-2">
                   <Input
