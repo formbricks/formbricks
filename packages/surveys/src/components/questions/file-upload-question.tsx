@@ -53,75 +53,71 @@ export function FileUploadQuestion({
   const isCurrent = question.id === currentQuestionId;
 
   return (
-    <form
-      key={question.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-        setTtc(updatedTtcObj);
-        if (question.required) {
-          if (value && value.length > 0) {
+    <ScrollableContainer>
+      <form
+        key={question.id}
+        onSubmit={(e) => {
+          e.preventDefault();
+          const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+          setTtc(updatedTtcObj);
+          if (question.required) {
+            if (value && value.length > 0) {
+              onSubmit({ [question.id]: value }, updatedTtcObj);
+            } else {
+              alert("Please upload a file");
+            }
+          } else if (value) {
             onSubmit({ [question.id]: value }, updatedTtcObj);
           } else {
-            alert("Please upload a file");
+            onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
           }
-        } else if (value) {
-          onSubmit({ [question.id]: value }, updatedTtcObj);
-        } else {
-          onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
-        }
-      }}
-      className="fb-w-full">
-      <ScrollableContainer>
-        <div>
-          {isMediaAvailable ? (
-            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-          ) : null}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
-          <FileInput
-            htmlFor={question.id}
-            surveyId={surveyId}
-            onFileUpload={onFileUpload}
-            onUploadCallback={(urls: string[]) => {
-              if (urls) {
-                onChange({ [question.id]: urls });
-              } else {
-                onChange({ [question.id]: "skipped" });
-              }
-            }}
-            fileUrls={value}
-            allowMultipleFiles={question.allowMultipleFiles}
-            {...(question.allowedFileExtensions
-              ? { allowedFileExtensions: question.allowedFileExtensions }
-              : {})}
-            {...(question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
-          />
-        </div>
-      </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
+        }}
+        className="fb-w-full">
+        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
         />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <FileInput
+          htmlFor={question.id}
+          surveyId={surveyId}
+          onFileUpload={onFileUpload}
+          onUploadCallback={(urls: string[]) => {
+            if (urls) {
+              onChange({ [question.id]: urls });
+            } else {
+              onChange({ [question.id]: "skipped" });
+            }
+          }}
+          fileUrls={value}
+          allowMultipleFiles={question.allowMultipleFiles}
+          {...(question.allowedFileExtensions
+            ? { allowedFileExtensions: question.allowedFileExtensions }
+            : {})}
+          {...(question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
+        />
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+          <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              onBack();
-            }}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
           />
-        )}
-      </div>
-    </form>
+          {!isFirstQuestion && !isBackButtonHidden && (
+            <BackButton
+              tabIndex={isCurrent ? 0 : -1}
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              onClick={() => {
+                onBack();
+              }}
+            />
+          )}
+        </div>
+      </form>
+    </ScrollableContainer>
   );
 }
