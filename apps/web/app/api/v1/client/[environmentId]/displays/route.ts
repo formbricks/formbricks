@@ -4,7 +4,7 @@ import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { createDisplay } from "./lib/display";
 
 interface Context {
@@ -52,11 +52,11 @@ export const POST = async (request: Request, context: Context): Promise<Response
     await capturePosthogEnvironmentEvent(inputValidation.data.environmentId, "display created");
     return responses.successResponse(response, true);
   } catch (error) {
-    if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
+    if (error instanceof ResourceNotFoundError) {
+      return responses.notFoundResponse("Survey", inputValidation.data.surveyId);
     } else {
       logger.error({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/displays");
-      return responses.internalServerErrorResponse(error.message);
+      return responses.internalServerErrorResponse("Something went wrong. Please try again.");
     }
   }
 };

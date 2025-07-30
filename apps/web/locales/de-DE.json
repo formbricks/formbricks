@@ -2771,6 +2771,8 @@
     "star_rating_survey_question_3_placeholder": "Schreib hier deine Antwort...",
     "star_rating_survey_question_3_subheader": "Hilf uns, deine Erfahrung zu verbessern.",
     "statement_call_to_action": "Aussage (Call-to-Action)",
+    "strongly_agree": "Stimme voll und ganz zu",
+    "strongly_disagree": "Stimme überhaupt nicht zu",
     "supportive_work_culture_survey_description": "Bewerte die Wahrnehmung der Mitarbeiter bezüglich Führungsunterstützung, Kommunikation und des gesamten Arbeitsumfelds.",
     "supportive_work_culture_survey_name": "Unterstützende Arbeitskultur",
     "supportive_work_culture_survey_question_1_headline": "Mein Vorgesetzter bietet mir die Unterstützung, die ich zur Erledigung meiner Arbeit benötige.",
@@ -2826,6 +2828,18 @@
     "understand_purchase_intention_question_2_headline": "Verstanden. Was ist dein Hauptgrund für den heutigen Besuch?",
     "understand_purchase_intention_question_2_placeholder": "Tippe deine Antwort hier...",
     "understand_purchase_intention_question_3_headline": "Was, wenn überhaupt, hält Dich heute davon ab, einen Kauf zu tätigen?",
-    "understand_purchase_intention_question_3_placeholder": "Tippe deine Antwort hier..."
+    "understand_purchase_intention_question_3_placeholder": "Tippe deine Antwort hier...",
+    "usability_question_10_headline": "Ich musste viel lernen, bevor ich das System richtig benutzen konnte.",
+    "usability_question_1_headline": "Ich würde dieses System wahrscheinlich häufig verwenden.",
+    "usability_question_2_headline": "Das System wirkte komplizierter als nötig.",
+    "usability_question_3_headline": "Das System war leicht zu verstehen.",
+    "usability_question_4_headline": "Ich glaube, ich bräuchte Unterstützung von einem Technik-Experten, um dieses System zu nutzen.",
+    "usability_question_5_headline": "Alles im System schien gut zusammenzuarbeiten.",
+    "usability_question_6_headline": "Das System fühlte sich inkonsistent an, wie die Dinge funktionierten.",
+    "usability_question_7_headline": "Ich glaube, die meisten Menschen könnten schnell lernen, dieses System zu benutzen.",
+    "usability_question_8_headline": "Die Nutzung des Systems fühlte sich wie eine Belastung an.",
+    "usability_question_9_headline": "Ich fühlte mich beim Benutzen des Systems sicher.",
+    "usability_rating_description": "Bewerte die wahrgenommene Benutzerfreundlichkeit, indem du die Nutzer bittest, ihre Erfahrung mit deinem Produkt mittels eines standardisierten 10-Fragen-Fragebogens zu bewerten.",
+    "usability_score_name": "System Usability Scale Survey (SUS)"
   }
 }
