@@ -115,90 +115,85 @@ export function ContactInfoQuestion({
   );
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
-      <ScrollableContainer>
-        <div>
-          {isMediaAvailable ? (
-            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-          ) : null}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
+    <ScrollableContainer>
+      <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
+        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
 
-          <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
-            {fields.map((field, index) => {
-              const isFieldRequired = () => {
-                if (field.required) {
-                  return true;
-                }
-
-                // if all fields are optional and the question is required, then the fields should be required
-                if (
-                  fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
-                  question.required
-                ) {
-                  return true;
-                }
-
-                return false;
-              };
-
-              let inputType = "text";
-              if (field.id === "email") {
-                inputType = "email";
-              } else if (field.id === "phone") {
-                inputType = "number";
+        <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
+          {fields.map((field, index) => {
+            const isFieldRequired = () => {
+              if (field.required) {
+                return true;
               }
 
-              return (
-                field.show && (
-                  <div className="fb-space-y-1">
-                    <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
-                    <Input
-                      id={field.id}
-                      ref={index === 0 ? contactInfoRef : null}
-                      key={field.id}
-                      required={isFieldRequired()}
-                      value={safeValue[index] || ""}
-                      type={inputType}
-                      onChange={(e) => {
-                        handleChange(field.id, e.currentTarget.value);
-                      }}
-                      tabIndex={isCurrent ? 0 : -1}
-                      aria-label={field.label}
-                    />
-                  </div>
-                )
-              );
-            })}
-          </div>
-        </div>
-      </ScrollableContainer>
+              // if all fields are optional and the question is required, then the fields should be required
+              if (
+                fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
+                question.required
+              ) {
+                return true;
+              }
 
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
+              return false;
+            };
+
+            let inputType = "text";
+            if (field.id === "email") {
+              inputType = "email";
+            } else if (field.id === "phone") {
+              inputType = "number";
+            }
+
+            return (
+              field.show && (
+                <div className="fb-space-y-1">
+                  <Label htmlForId={field.id} text={isFieldRequired() ? `${field.label}*` : field.label} />
+                  <Input
+                    id={field.id}
+                    ref={index === 0 ? contactInfoRef : null}
+                    key={field.id}
+                    required={isFieldRequired()}
+                    value={safeValue[index] || ""}
+                    type={inputType}
+                    onChange={(e) => {
+                      handleChange(field.id, e.currentTarget.value);
+                    }}
+                    tabIndex={isCurrent ? 0 : -1}
+                    aria-label={field.label}
+                  />
+                </div>
+              )
+            );
+          })}
+        </div>
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+          <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedttc);
-              onBack();
-            }}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
           />
-        )}
-      </div>
-    </form>
+          {!isFirstQuestion && !isBackButtonHidden && (
+            <BackButton
+              tabIndex={isCurrent ? 0 : -1}
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              onClick={() => {
+                const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedttc);
+                onBack();
+              }}
+            />
+          )}
+        </div>
+      </form>
+    </ScrollableContainer>
   );
 }
