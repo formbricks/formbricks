@@ -113,7 +113,7 @@ jobs:
 
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             RETRY_COUNT=$((RETRY_COUNT + 1))
-            
+
             # Check if container is still running
             if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test 2>/dev/null)" != "true" ]; then
               echo "❌ Container stopped running after $((RETRY_COUNT * 5)) seconds!"
@@ -121,14 +121,14 @@ jobs:
               docker logs formbricks-test
               exit 1
             fi
-            
+
             # Show progress and diagnostic info every 12 attempts (1 minute intervals)
             if [ $((RETRY_COUNT % 12)) -eq 0 ] || [ $RETRY_COUNT -eq 1 ]; then
               echo "Health check attempt $RETRY_COUNT of $MAX_RETRIES ($(($RETRY_COUNT * 5)) seconds elapsed)..."
               echo "📋 Recent container logs:"
               docker logs --tail 10 formbricks-test
             fi
-            
+
             # Try health endpoint with shorter timeout for faster polling
             # Use -f flag to make curl fail on HTTP error status codes (4xx, 5xx)
             if curl -f -s -m 10 http://localhost:3000/health >/dev/null 2>&1; then
@@ -136,7 +136,7 @@ jobs:
               HEALTH_CHECK_SUCCESS=true
               break
             fi
-            
+
             # Wait 5 seconds before next attempt
             sleep 5
           done

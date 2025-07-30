@@ -12,8 +12,8 @@ run_with_timeout() {
   if command -v timeout >/dev/null 2>&1; then
     # timeout command is available, use it
     echo "Using timeout ($_timeout_duration seconds) for $_timeout_name"
-    if ! timeout "$timeout_duration" "$@"; then
-      echo "❌ $timeout_name timed out after $timeout_duration seconds"
+    if ! timeout "$_timeout_duration" "$@"; then
+      echo "❌ $_timeout_name timed out after $_timeout_duration seconds"
       echo "📋 This might indicate database connectivity issues"
       exit 1
     fi
@@ -28,7 +28,7 @@ run_with_timeout() {
     fi
     
     # Run the command (either with newly installed timeout or without timeout)
-    if command -v timeout >/dev/null 2>&1; 
+    if command -v timeout >/dev/null 2>&1; then
       echo "✅ timeout installed, using timeout ($_timeout_duration seconds) for $_timeout_name"
       if ! timeout "$_timeout_duration" "$@"; then
         echo "❌ $_timeout_name timed out after $_timeout_duration seconds"
@@ -36,9 +36,9 @@ run_with_timeout() {
         exit 1
       fi
     else
-      echo "Running $timeout_name without timeout protection..."
+      echo "Running $_timeout_name without timeout protection..."
       if ! "$@"; then
-        echo "❌ $timeout_name failed"
+        echo "❌ $_timeout_name failed"
         echo "📋 This might indicate database connectivity issues"
         exit 1
       fi
