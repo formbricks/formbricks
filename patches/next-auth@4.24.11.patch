@@ -14,7 +14,7 @@ index 52c51eb6ff422dc0899ccec31baf3fa39e42eeae..d33754cb23f5fb949b367b4ed159e53c
 +  if (provider.httpOptions) httpOptions = { ...provider.httpOptions };
 +  const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.https_proxy || process.env.http_proxy;
 +  if(proxyUrl) {
-+    let agent = new httpProxyAgent.HttpsProxyAgent(proxyUrl);
++    const agent = new httpProxyAgent.HttpsProxyAgent(proxyUrl);
 +    httpOptions.agent = agent;
 +  }
 +  _openidClient.custom.setHttpOptionsDefaults(httpOptions);
