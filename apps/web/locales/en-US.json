@@ -2840,6 +2840,6 @@
     "usability_question_8_headline": "Using the system felt like a hassle.",
     "usability_question_9_headline": "I felt confident while using the system.",
     "usability_rating_description": "Measure perceived usability by asking users to rate their experience with your product using a standardized 10-question survey.",
-    "usability_score_name": "System Usability Scale (SUS)"
+    "usability_score_name": "System Usability Score (SUS)"
   }
 }

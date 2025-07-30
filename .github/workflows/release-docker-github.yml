@@ -53,9 +53,14 @@ jobs:
         env:
           GITHUB_REF: ${{ github.ref }}
         run: |
+          echo "🔍 Testing tag extraction:"
+          echo "Original GITHUB_REF: $GITHUB_REF"
+
           # Extract version from tag (e.g., refs/tags/v1.2.3 -> 1.2.3)
           TAG="$GITHUB_REF"
+          echo "Before extraction: $TAG"
           TAG=${TAG#refs/tags/v}
+          echo "After extraction: $TAG"
 
           # Validate the extracted tag format
           if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
@@ -72,6 +77,10 @@ jobs:
 
           echo "VERSION=$TAG" >> $GITHUB_OUTPUT
           echo "Using tag-based version: $TAG"
+          echo ""
+          echo "🛑 TESTING MODE: Exiting before any mutations (package.json update, Docker build/push)"
+          echo "This would normally update package.json and build/push Docker images, but we're preventing mutations."
+          exit 0
 
       - name: Update package.json version
         run: |

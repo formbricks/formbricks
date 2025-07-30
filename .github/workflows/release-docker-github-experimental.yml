@@ -49,8 +49,15 @@ jobs:
           REF_TYPE: ${{ github.ref_type }}
         run: |
           # Get reference name and type from environment variables
-          echo "Reference type: $REF_TYPE"
-          echo "Reference name: $REF_NAME"
+          echo "🔍 Testing environment variables:"
+          echo "REF_TYPE: $REF_TYPE"
+          echo "REF_NAME: $REF_NAME"
+          echo "Original github context values:"
+          echo "github.ref_type: ${{ github.ref_type }}"
+          echo "github.ref_name: ${{ github.ref_name }}"echo ""
+          echo "🛑 TESTING MODE: Exiting before any mutations (package.json update, Sentry env, Docker build/push)"
+          echo "This would normally update package.json, set Sentry environment, and build/push Docker images, but we're preventing mutations."
+          exit 0
 
           if [[ "$REF_TYPE" == "tag" ]]; then
             # If running from a tag, use the tag name

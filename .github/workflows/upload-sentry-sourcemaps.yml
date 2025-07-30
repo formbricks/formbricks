@@ -35,6 +35,18 @@ jobs:
         env:
           DOCKER_IMAGE: ${{ inputs.docker_image }}:${{ inputs.tag_version != '' && inputs.tag_version || inputs.release_version }}
 
+      - name: Log Environment Variables (Testing)
+        run: |
+          echo "🔍 Testing workflow variables:"
+          echo "Input docker_image: ${{ inputs.docker_image }}"
+          echo "Input release_version: ${{ inputs.release_version }}"
+          echo "Input tag_version: ${{ inputs.tag_version }}"
+          echo "Computed DOCKER_IMAGE: ${DOCKER_IMAGE}"
+          echo "Tag version check result: ${{ inputs.tag_version != '' && inputs.tag_version || inputs.release_version }}"
+          echo ""
+          echo "🛑 TESTING MODE: Exiting before any mutations (sourcemap upload)"
+          exit 0
+
       - name: Upload Sourcemaps to Sentry
         uses: ./.github/actions/upload-sentry-sourcemaps
         with:
