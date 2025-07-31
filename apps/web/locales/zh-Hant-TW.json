@@ -2771,6 +2771,8 @@
     "star_rating_survey_question_3_placeholder": "在此輸入您的答案...",
     "star_rating_survey_question_3_subheader": "協助我們改善您的體驗。",
     "statement_call_to_action": "陳述（行動呼籲）",
+    "strongly_agree": "非常同意",
+    "strongly_disagree": "非常不同意",
     "supportive_work_culture_survey_description": "評估員工對領導層支援、溝通和整體工作環境的看法。",
     "supportive_work_culture_survey_name": "支援性工作文化",
     "supportive_work_culture_survey_question_1_headline": "我的經理為我提供了完成工作所需的支援。",
@@ -2826,6 +2828,18 @@
     "understand_purchase_intention_question_2_headline": "瞭解了。您今天來訪的主要原因是什麼？",
     "understand_purchase_intention_question_2_placeholder": "在此輸入您的答案...",
     "understand_purchase_intention_question_3_headline": "有什麼阻礙您今天進行購買嗎？",
-    "understand_purchase_intention_question_3_placeholder": "在此輸入您的答案..."
+    "understand_purchase_intention_question_3_placeholder": "在此輸入您的答案...",
+    "usability_question_10_headline": "我 必須 學習 很多 東西 才能 正確 使用 該 系統。",
+    "usability_question_1_headline": "我可能會經常使用這個系統。",
+    "usability_question_2_headline": "系統感覺起來比實際需要的更複雜。",
+    "usability_question_3_headline": "系統很容易理解。",
+    "usability_question_4_headline": "我 認為 我 需要 技術 專家 的 幫助 才能 使用 這個 系統。",
+    "usability_question_5_headline": "系統中 的 所有 元素 看起來 都能 很好 地 運作。",
+    "usability_question_6_headline": "系統在運作上給人不一致的感覺。",
+    "usability_question_7_headline": "我認為大多數人可以快速 學會 使用 這個 系統。",
+    "usability_question_8_headline": "使用系統 感覺 令人 困擾。",
+    "usability_question_9_headline": "使用 系統 時，我 感到 有 信心。",
+    "usability_rating_description": "透過使用標準化的 十個問題 問卷，要求使用者評估他們對 您 產品的使用體驗，來衡量感知的 可用性。",
+    "usability_score_name": "系統 可用性 分數 (SUS)"
   }
 }

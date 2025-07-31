@@ -58,29 +58,29 @@ export function CalQuestion({
   }, [onChange, onSubmit, question.id, setTtc, startTime, ttc]);
 
   return (
-    <form
-      key={question.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (question.required && !value) {
-          setErrorMessage("Please book an appointment");
-          // Scroll to bottom to show the error message
-          setTimeout(() => {
-            if (scrollableRef.current?.scrollToBottom) {
-              scrollableRef.current.scrollToBottom();
-            }
-          }, 100);
-          return;
-        }
+    <ScrollableContainer ref={scrollableRef}>
+      <form
+        key={question.id}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (question.required && !value) {
+            setErrorMessage("Please book an appointment");
+            // Scroll to bottom to show the error message
+            setTimeout(() => {
+              if (scrollableRef.current?.scrollToBottom) {
+                scrollableRef.current.scrollToBottom();
+              }
+            }, 100);
+            return;
+          }
 
-        const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-        setTtc(updatedttc);
+          const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+          setTtc(updatedttc);
 
-        onChange({ [question.id]: value });
-        onSubmit({ [question.id]: value }, updatedttc);
-      }}
-      className="fb-w-full">
-      <ScrollableContainer ref={scrollableRef}>
+          onChange({ [question.id]: value });
+          onSubmit({ [question.id]: value }, updatedttc);
+        }}
+        className="fb-w-full">
         <div>
           {isMediaAvailable ? (
             <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
@@ -97,25 +97,25 @@ export function CalQuestion({
           <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
           {errorMessage ? <span className="fb-text-red-500">{errorMessage}</span> : null}
         </div>
-      </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-          tabIndex={isCurrent ? 0 : -1}
-        />
-
-        <div />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              onBack();
-            }}
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+          <SubmitButton
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
             tabIndex={isCurrent ? 0 : -1}
           />
-        )}
-      </div>
-    </form>
+
+          <div />
+          {!isFirstQuestion && !isBackButtonHidden && (
+            <BackButton
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              onClick={() => {
+                onBack();
+              }}
+              tabIndex={isCurrent ? 0 : -1}
+            />
+          )}
+        </div>
+      </form>
+    </ScrollableContainer>
   );
 }
