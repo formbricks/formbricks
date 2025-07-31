@@ -556,7 +556,12 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
       return question.rows.map((row) => {
         return `${idx + 1}. ${headline} - ${getLocalizedValue(row, "default")}`;
       });
-    } else if (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") {
+    } else if (
+      question.type === "multipleChoiceMulti" ||
+      question.type === "multipleChoiceSingle" ||
+      question.type === "ranking" ||
+      question.type === "pictureSelection"
+    ) {
       return [`${idx + 1}. ${headline}`, `${idx + 1}. ${headline} - Option ID`];
     } else {
       return [`${idx + 1}. ${headline}`];
