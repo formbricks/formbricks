@@ -94,6 +94,7 @@ export const MultipleChoiceSummary = ({
           return (
             <Fragment key={result.value}>
               <button
+                type="button"
                 className="group w-full cursor-pointer"
                 onClick={() =>
                   setFilter(

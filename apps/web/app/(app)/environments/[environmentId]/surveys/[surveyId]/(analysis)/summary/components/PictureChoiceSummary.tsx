@@ -54,6 +54,7 @@ export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: Pic
           const choiceId = getChoiceIdByValue(result.imageUrl);
           return (
             <button
+              type="button"
               className="w-full cursor-pointer hover:opacity-80"
               key={result.id}
               onClick={() =>

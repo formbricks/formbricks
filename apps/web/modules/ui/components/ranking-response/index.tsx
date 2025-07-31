@@ -15,7 +15,7 @@ export const RankingResponse = ({ value, isExpanded, showId }: RankingResponsePr
       {value.map(
         (item, index) =>
           item.value && (
-            <div key={index} className="flex items-center gap-2 space-y-2">
+            <div key={item.value} className="flex items-center gap-2 space-y-2">
               <span className="text-slate-400">#{index + 1}</span>
               <div className="rounded bg-slate-100 px-2 py-1 font-semibold">{item.value}</div>
               {item.id && showId && <IdBadge id={item.id} />}

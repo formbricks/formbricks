@@ -66,9 +66,7 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
 
   return (
     <div className="space-y-3">
-      <Label htmlFor="optionIds" className="text-sm font-medium text-gray-700">
-        {t("common.option_ids")}
-      </Label>
+      <Label className="text-sm font-medium text-gray-700">{t("common.option_ids")}</Label>
       <div className="w-full">{choiceIds}</div>
     </div>
   );
