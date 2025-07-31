@@ -90,7 +90,7 @@ When testing hooks that use React Context:
 vi.mocked(useResponseFilter).mockReturnValue({
   selectedFilter: {
     filter: [],
-    onlyComplete: false,
+    responseStatus: "all",
   },
   setSelectedFilter: vi.fn(),
   selectedOptions: {
