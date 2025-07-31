@@ -59,18 +59,32 @@ jobs:
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
 
-      - name: Verify PostgreSQL Connection
+      - name: Verify and Initialize PostgreSQL
         run: |
           echo "Verifying PostgreSQL connection..."
           # Install PostgreSQL client to test connection
           sudo apt-get update && sudo apt-get install -y postgresql-client
 
-          # Test connection using psql
-          PGPASSWORD=test psql -h localhost -U test -d formbricks -c "\dt" || echo "Failed to connect to PostgreSQL"
+          # Test connection using psql with timeout and proper error handling
+          echo "Testing PostgreSQL connection with 30 second timeout..."
+          if timeout 30 bash -c 'until PGPASSWORD=test psql -h localhost -U test -d formbricks -c "\dt" >/dev/null 2>&1; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 2
+          done'; then
+            echo "✅ PostgreSQL connection successful"
+            PGPASSWORD=test psql -h localhost -U test -d formbricks -c "SELECT version();"
+
+            # Enable necessary extensions that might be required by migrations
+            echo "Enabling required PostgreSQL extensions..."
+            PGPASSWORD=test psql -h localhost -U test -d formbricks -c "CREATE EXTENSION IF NOT EXISTS vector;" || echo "Vector extension already exists or not available"
+
+          else
+            echo "❌ PostgreSQL connection failed after 30 seconds"
+            exit 1
+          fi
 
           # Show network configuration
           echo "Network configuration:"
-          ip addr show
           netstat -tulpn | grep 5432 || echo "No process listening on port 5432"
 
       - name: Test Docker Image with Health Check
@@ -89,26 +103,9 @@ jobs:
             -e ENCRYPTION_KEY="${{ secrets.DUMMY_ENCRYPTION_KEY }}" \
             -d formbricks-test:${{ github.sha }}
 
-          # Give it more time to start up
-          echo "Waiting 45 seconds for application to start..."
-          sleep 45
-
-          # Check if the container is running
-          if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test)" != "true" ]; then
-            echo "❌ Container failed to start properly!"
-            docker logs formbricks-test
-            exit 1
-          else
-            echo "✅ Container started successfully!"
-          fi
-
-          # Try connecting to PostgreSQL from inside the container
-          echo "Testing PostgreSQL connection from inside container..."
-          docker exec formbricks-test sh -c 'apt-get update && apt-get install -y postgresql-client && PGPASSWORD=test psql -h host.docker.internal -U test -d formbricks -c "\dt" || echo "Failed to connect to PostgreSQL from container"'
-
-          # Try to access the health endpoint
-          echo "🏥 Testing /health endpoint..."
-          MAX_RETRIES=10
+          # Start health check polling immediately (every 5 seconds for up to 5 minutes)
+          echo "🏥 Polling /health endpoint every 5 seconds for up to 5 minutes..."
+          MAX_RETRIES=60  # 60 attempts × 5 seconds = 5 minutes
           RETRY_COUNT=0
           HEALTH_CHECK_SUCCESS=false
 
@@ -116,38 +113,32 @@ jobs:
 
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "Attempt $RETRY_COUNT of $MAX_RETRIES..."
-            
-            # Show container logs before each attempt to help debugging
-            if [ $RETRY_COUNT -gt 1 ]; then
-              echo "📋 Current container logs:"
-              docker logs --tail 20 formbricks-test
+
+            # Check if container is still running
+            if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test 2>/dev/null)" != "true" ]; then
+              echo "❌ Container stopped running after $((RETRY_COUNT * 5)) seconds!"
+              echo "📋 Container logs:"
+              docker logs formbricks-test
+              exit 1
             fi
-            
-            # Get detailed curl output for debugging
-            HTTP_OUTPUT=$(curl -v -s -m 30 http://localhost:3000/health 2>&1)
-            CURL_EXIT_CODE=$?
-            
-            echo "Curl exit code: $CURL_EXIT_CODE"
-            echo "Curl output: $HTTP_OUTPUT"
-            
-            if [ $CURL_EXIT_CODE -eq 0 ]; then
-              STATUS_CODE=$(echo "$HTTP_OUTPUT" | grep -oP "HTTP/\d(\.\d)? \K\d+")
-              echo "Status code detected: $STATUS_CODE"
-              
-              if [ "$STATUS_CODE" = "200" ]; then
-                echo "✅ Health check successful!"
-                HEALTH_CHECK_SUCCESS=true
-                break
-              else
-                echo "❌ Health check returned non-200 status code: $STATUS_CODE"
-              fi
-            else
-              echo "❌ Curl command failed with exit code: $CURL_EXIT_CODE"
+
+            # Show progress and diagnostic info every 12 attempts (1 minute intervals)
+            if [ $((RETRY_COUNT % 12)) -eq 0 ] || [ $RETRY_COUNT -eq 1 ]; then
+              echo "Health check attempt $RETRY_COUNT of $MAX_RETRIES ($(($RETRY_COUNT * 5)) seconds elapsed)..."
+              echo "📋 Recent container logs:"
+              docker logs --tail 10 formbricks-test
             fi
-            
-            echo "Waiting 15 seconds before next attempt..."
-            sleep 15
+
+            # Try health endpoint with shorter timeout for faster polling
+            # Use -f flag to make curl fail on HTTP error status codes (4xx, 5xx)
+            if curl -f -s -m 10 http://localhost:3000/health >/dev/null 2>&1; then
+              echo "✅ Health check successful after $((RETRY_COUNT * 5)) seconds!"
+              HEALTH_CHECK_SUCCESS=true
+              break
+            fi
+
+            # Wait 5 seconds before next attempt
+            sleep 5
           done
 
           # Show full container logs for debugging
@@ -160,7 +151,7 @@ jobs:
 
           # Exit with failure if health check did not succeed
           if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
-            echo "❌ Health check failed after $MAX_RETRIES attempts"
+            echo "❌ Health check failed after $((MAX_RETRIES * 5)) seconds (5 minutes)"
             exit 1
           fi
 

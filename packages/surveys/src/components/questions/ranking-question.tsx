@@ -154,153 +154,148 @@ export function RankingQuestion({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="fb-w-full">
-      <ScrollableContainer ref={scrollableRef}>
-        <div>
-          {isMediaAvailable ? (
-            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-          ) : null}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
-          <div className="fb-mt-4">
-            <fieldset>
-              <legend className="fb-sr-only">Ranking Items</legend>
-              <div className="fb-relative" ref={parent}>
-                {[...sortedItems, ...unsortedItems].map((item, idx) => {
-                  if (!item) return null;
-                  const isSorted = sortedItems.includes(item);
-                  const isFirst = isSorted && idx === 0;
-                  const isLast = isSorted && idx === sortedItems.length - 1;
+    <ScrollableContainer ref={scrollableRef}>
+      <form onSubmit={handleSubmit} className="fb-w-full">
+        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <div className="fb-mt-4">
+          <fieldset>
+            <legend className="fb-sr-only">Ranking Items</legend>
+            <div className="fb-relative" ref={parent}>
+              {[...sortedItems, ...unsortedItems].map((item, idx) => {
+                if (!item) return null;
+                const isSorted = sortedItems.includes(item);
+                const isFirst = isSorted && idx === 0;
+                const isLast = isSorted && idx === sortedItems.length - 1;
 
-                  return (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading hover:fb-bg-input-bg-selected focus-within:fb-border-brand focus-within:fb-shadow-outline focus-within:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer w-full focus:outline-none",
-                        isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
-                      )}>
-                      <button
-                        autoFocus={idx === 0 && autoFocusEnabled}
-                        tabIndex={isCurrent ? 0 : -1}
-                        onKeyDown={(e) => {
-                          if (e.key === " ") {
-                            e.preventDefault();
-                            handleItemClick(item);
-                          }
-                        }}
-                        onClick={(e) => {
+                return (
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading hover:fb-bg-input-bg-selected focus-within:fb-border-brand focus-within:fb-shadow-outline focus-within:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer w-full focus:outline-none",
+                      isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
+                    )}>
+                    <button
+                      autoFocus={idx === 0 && autoFocusEnabled}
+                      tabIndex={isCurrent ? 0 : -1}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
                           e.preventDefault();
                           handleItemClick(item);
-                        }}
-                        type="button"
-                        aria-label={`Select ${getLocalizedValue(item.label, languageCode)} for ranking`}
-                        className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
-                        <span
+                        }
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleItemClick(item);
+                      }}
+                      type="button"
+                      aria-label={`Select ${getLocalizedValue(item.label, languageCode)} for ranking`}
+                      className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
+                      <span
+                        className={cn(
+                          "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
+                          isSorted
+                            ? "fb-bg-brand fb-text-white fb-border"
+                            : "fb-border-dashed group-hover:fb-bg-white fb-text-transparent group-hover:fb-text-heading"
+                        )}>
+                        {(idx + 1).toString()}
+                      </span>
+                      <div className="fb-grow fb-shrink fb-font-medium fb-text-sm fb-text-start" dir="auto">
+                        {getLocalizedValue(item.label, languageCode)}
+                      </div>
+                    </button>
+                    {isSorted ? (
+                      <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
+                        <button
+                          tabIndex={isFirst ? -1 : 0}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleMove(item.id, "up");
+                          }}
+                          aria-label={`Move ${getLocalizedValue(item.label, languageCode)} up`}
                           className={cn(
-                            "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
-                            isSorted
-                              ? "fb-bg-brand fb-text-white fb-border"
-                              : "fb-border-dashed group-hover:fb-bg-white fb-text-transparent group-hover:fb-text-heading"
-                          )}>
-                          {(idx + 1).toString()}
-                        </span>
-                        <div className="fb-grow fb-shrink fb-font-medium fb-text-sm fb-text-start" dir="auto">
-                          {getLocalizedValue(item.label, languageCode)}
-                        </div>
-                      </button>
-                      {isSorted ? (
-                        <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
-                          <button
-                            tabIndex={isFirst ? -1 : 0}
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleMove(item.id, "up");
-                            }}
-                            aria-label={`Move ${getLocalizedValue(item.label, languageCode)} up`}
-                            className={cn(
-                              "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
-                              isFirst
-                                ? "fb-opacity-30 fb-cursor-not-allowed"
-                                : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
-                            )}
-                            disabled={isFirst}>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-chevron-up">
-                              <path d="m18 15-6-6-6 6" />
-                            </svg>
-                          </button>
-                          <button
-                            tabIndex={isLast ? -1 : 0}
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleMove(item.id, "down");
-                            }}
-                            className={cn(
-                              "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
-                              isLast
-                                ? "fb-opacity-30 fb-cursor-not-allowed"
-                                : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
-                            )}
-                            aria-label={`Move ${getLocalizedValue(item.label, languageCode)} down`}
-                            disabled={isLast}>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-chevron-down">
-                              <path d="m6 9 6 6 6-6" />
-                            </svg>
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </fieldset>
-          </div>
-          {error ? <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div> : null}
+                            "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
+                            isFirst
+                              ? "fb-opacity-30 fb-cursor-not-allowed"
+                              : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
+                          )}
+                          disabled={isFirst}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-chevron-up">
+                            <path d="m18 15-6-6-6 6" />
+                          </svg>
+                        </button>
+                        <button
+                          tabIndex={isLast ? -1 : 0}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleMove(item.id, "down");
+                          }}
+                          className={cn(
+                            "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
+                            isLast
+                              ? "fb-opacity-30 fb-cursor-not-allowed"
+                              : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
+                          )}
+                          aria-label={`Move ${getLocalizedValue(item.label, languageCode)} down`}
+                          disabled={isLast}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-chevron-down">
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </fieldset>
         </div>
-      </ScrollableContainer>
-
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          tabIndex={isCurrent ? 0 : -1}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+        {error ? <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div> : null}
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+          <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
-            onClick={handleBack}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
           />
-        )}
-      </div>
-    </form>
+          {!isFirstQuestion && !isBackButtonHidden && (
+            <BackButton
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              tabIndex={isCurrent ? 0 : -1}
+              onClick={handleBack}
+            />
+          )}
+        </div>
+      </form>
+    </ScrollableContainer>
   );
 }

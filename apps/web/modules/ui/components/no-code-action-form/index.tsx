@@ -21,7 +21,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
   const { control, watch } = form;
   const { t } = useTranslate();
   return (
-    <>
+    <div data-testid="no-code-action-form">
       <FormField
         name={`noCodeConfig.type`}
         control={control}
@@ -97,6 +97,6 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
         )}
         <PageUrlSelector form={form} isReadOnly={isReadOnly} />
       </div>
-    </>
+    </div>
   );
 };
