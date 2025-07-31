@@ -52,7 +52,7 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
       <div className="space-y-2">
         <IdBadge id={project.id} label={t("common.project_id")} variant="column" />
         {!IS_FORMBRICKS_CLOUD && !IS_DEVELOPMENT && (
-          <IdBadge id={packageJson.version} label={t("common.formbricks_version")} />
+          <IdBadge id={packageJson.version} label={t("common.formbricks_version")} variant="column" />
         )}
       </div>
     </PageContentWrapper>

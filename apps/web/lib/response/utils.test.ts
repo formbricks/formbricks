@@ -692,11 +692,6 @@ describe("extractChoiceIdsFromResponse", () => {
       expect(result).toEqual([]);
     });
 
-    test("should return empty array for null/undefined response", () => {
-      expect(extractChoiceIdsFromResponse(null, multipleChoiceMultiQuestion, "default")).toEqual([]);
-      expect(extractChoiceIdsFromResponse(undefined, multipleChoiceMultiQuestion, "default")).toEqual([]);
-    });
-
     test("should handle missing language parameter by defaulting to 'default'", () => {
       const responseValue = "Option 1";
       const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion);

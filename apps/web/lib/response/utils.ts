@@ -28,43 +28,54 @@ export const extractChoiceIdsFromResponse = (
   language: string = "default"
 ): string[] => {
   // Type guard to ensure the question has choices
-  if (question.type !== "multipleChoiceMulti" && question.type !== "multipleChoiceSingle") {
+  if (
+    question.type !== "multipleChoiceMulti" &&
+    question.type !== "multipleChoiceSingle" &&
+    question.type !== "ranking" &&
+    question.type !== "pictureSelection"
+  ) {
     return [];
   }
+  const isPictureSelection = question.type === "pictureSelection";
 
   if (!responseValue) {
     return [];
   }
 
+  // For picture selection questions, the response value is already choice ID(s)
+  if (isPictureSelection) {
+    if (Array.isArray(responseValue)) {
+      // Multi-selection: array of choice IDs
+      return responseValue.filter((id): id is string => typeof id === "string");
+    } else if (typeof responseValue === "string") {
+      // Single selection: single choice ID
+      return [responseValue];
+    }
+    return [];
+  }
+
   const defaultLanguage = language ?? "default";
 
-  if (Array.isArray(responseValue)) {
-    // Multiple choice case - response is an array of selected choice labels
-    return responseValue
-      .map((choiceLabel) => {
-        // First try exact language match, then fall back to checking all language values
-        const targetChoice = question.choices.find((c) => {
-          // Try exact language match first
-          if (c.label[defaultLanguage] === choiceLabel) {
-            return true;
-          }
-          // Fall back to checking all language values
-          return Object.values(c.label).includes(choiceLabel);
-        });
-        return targetChoice?.id || null;
-      })
-      .filter((choiceId): choiceId is string => choiceId !== null);
-  } else if (typeof responseValue === "string") {
-    // Single choice case - response is a single choice label
+  // Helper function to find choice by label - eliminates duplication
+  const findChoiceByLabel = (choiceLabel: string): string | null => {
     const targetChoice = question.choices.find((c) => {
       // Try exact language match first
-      if (c.label[defaultLanguage] === responseValue) {
+      if (c.label[defaultLanguage] === choiceLabel) {
         return true;
       }
       // Fall back to checking all language values
-      return Object.values(c.label).includes(responseValue);
+      return Object.values(c.label).includes(choiceLabel);
     });
-    return targetChoice ? [targetChoice.id] : [];
+    return targetChoice?.id || null;
+  };
+
+  if (Array.isArray(responseValue)) {
+    // Multiple choice case - response is an array of selected choice labels
+    return responseValue.map(findChoiceByLabel).filter((choiceId): choiceId is string => choiceId !== null);
+  } else if (typeof responseValue === "string") {
+    // Single choice case - response is a single choice label
+    const choiceId = findChoiceByLabel(responseValue);
+    return choiceId ? [choiceId] : [];
   }
 
   return [];
@@ -614,7 +625,12 @@ export const getResponsesJson = (
             }
           }
         });
-      } else if (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") {
+      } else if (
+        question.type === "multipleChoiceMulti" ||
+        question.type === "multipleChoiceSingle" ||
+        question.type === "ranking" ||
+        question.type === "pictureSelection"
+      ) {
         // Set the main response value
         jsonData[idx][questionHeadline[0]] = processResponseData(answer);
 

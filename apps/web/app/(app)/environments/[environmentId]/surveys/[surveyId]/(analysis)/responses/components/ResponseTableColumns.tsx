@@ -66,11 +66,7 @@ const getQuestionColumnsData = (
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
 
   // Helper function to create consistent column headers
-  const createQuestionHeaderForMultipleChoiceQuestion = (
-    questionType: string,
-    headline: string,
-    suffix?: string
-  ) => {
+  const createQuestionHeader = (questionType: string, headline: string, suffix?: string) => {
     const title = suffix ? `${headline} - ${suffix}` : headline;
     const QuestionHeader = () => (
       <div className="flex items-center justify-between">
@@ -184,13 +180,14 @@ const getQuestionColumnsData = (
       });
 
     case "multipleChoiceMulti":
-    case "multipleChoiceSingle": {
+    case "multipleChoiceSingle":
+    case "ranking":
+    case "pictureSelection": {
       const questionHeadline = getQuestionHeadline(question, survey);
-
       return [
         {
           accessorKey: question.id,
-          header: createQuestionHeaderForMultipleChoiceQuestion(question.type, questionHeadline),
+          header: createQuestionHeader(question.type, questionHeadline),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[question.id];
             const language = row.original.language;
@@ -207,11 +204,7 @@ const getQuestionColumnsData = (
         },
         {
           accessorKey: question.id + "optionIds",
-          header: createQuestionHeaderForMultipleChoiceQuestion(
-            question.type,
-            questionHeadline,
-            t("common.option_id")
-          ),
+          header: createQuestionHeader(question.type, questionHeadline, t("common.option_id")),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[question.id];
             // Type guard to ensure responseValue is the correct type
@@ -409,7 +402,6 @@ export const generateResponseTableColumns = (
   };
 
   // Combine the selection column with the dynamic question columns
-
   const baseColumns = [
     personColumn,
     dateColumn,
