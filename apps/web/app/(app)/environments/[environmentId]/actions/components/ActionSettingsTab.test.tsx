@@ -11,6 +11,21 @@ vi.mock("@/app/(app)/environments/[environmentId]/actions/actions", () => ({
   updateActionClassAction: vi.fn(),
 }));
 
+// Mock action utils
+vi.mock("@/modules/survey/editor/lib/action-utils", () => ({
+  useActionClassKeys: vi.fn(() => ["existing-key"]),
+  createActionClassZodResolver: vi.fn(() => vi.fn()),
+  validatePermissions: vi.fn(),
+}));
+
+// Mock action builder
+vi.mock("@/modules/survey/editor/lib/action-builder", () => ({
+  buildActionObject: vi.fn((data, environmentId, t) => ({
+    ...data,
+    environmentId,
+  })),
+}));
+
 // Mock utils
 vi.mock("@/app/lib/actionClass/actionClass", () => ({
   isValidCssSelector: vi.fn((selector) => selector !== "invalid-selector"),
@@ -24,6 +39,7 @@ vi.mock("@/modules/ui/components/button", () => ({
     </button>
   ),
 }));
+
 vi.mock("@/modules/ui/components/code-action-form", () => ({
   CodeActionForm: ({ isReadOnly }: { isReadOnly: boolean }) => (
     <div data-testid="code-action-form" data-readonly={isReadOnly}>
@@ -31,6 +47,7 @@ vi.mock("@/modules/ui/components/code-action-form", () => ({
     </div>
   ),
 }));
+
 vi.mock("@/modules/ui/components/delete-dialog", () => ({
   DeleteDialog: ({ open, setOpen, isDeleting, onDelete }: any) =>
     open ? (
@@ -43,6 +60,26 @@ vi.mock("@/modules/ui/components/delete-dialog", () => ({
       </div>
     ) : null,
 }));
+
+vi.mock("@/modules/ui/components/action-name-description-fields", () => ({
+  ActionNameDescriptionFields: ({ isReadOnly, nameInputId, descriptionInputId }: any) => (
+    <div data-testid="action-name-description-fields">
+      <input
+        data-testid={`name-input-${nameInputId}`}
+        placeholder="environments.actions.eg_clicked_download"
+        disabled={isReadOnly}
+        defaultValue="Test Action"
+      />
+      <input
+        data-testid={`description-input-${descriptionInputId}`}
+        placeholder="environments.actions.user_clicked_download_button"
+        disabled={isReadOnly}
+        defaultValue="Test Description"
+      />
+    </div>
+  ),
+}));
+
 vi.mock("@/modules/ui/components/no-code-action-form", () => ({
   NoCodeActionForm: ({ isReadOnly }: { isReadOnly: boolean }) => (
     <div data-testid="no-code-action-form" data-readonly={isReadOnly}>
@@ -55,6 +92,23 @@ vi.mock("@/modules/ui/components/no-code-action-form", () => ({
 vi.mock("lucide-react", () => ({
   TrashIcon: () => <div data-testid="trash-icon">Trash</div>,
 }));
+
+// Mock react-hook-form
+const mockHandleSubmit = vi.fn();
+const mockForm = {
+  handleSubmit: mockHandleSubmit,
+  control: {},
+  formState: { errors: {} },
+};
+
+vi.mock("react-hook-form", async () => {
+  const actual = await vi.importActual("react-hook-form");
+  return {
+    ...actual,
+    useForm: vi.fn(() => mockForm),
+    FormProvider: ({ children }: any) => <div>{children}</div>,
+  };
+});
 
 const mockSetOpen = vi.fn();
 const mockActionClasses: TActionClass[] = [
@@ -88,6 +142,7 @@ const createMockActionClass = (id: string, type: TActionClassType, name: string)
 describe("ActionSettingsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHandleSubmit.mockImplementation((fn) => fn);
   });
 
   afterEach(() => {
@@ -105,13 +160,9 @@ describe("ActionSettingsTab", () => {
       />
     );
 
-    // Use getByPlaceholderText or getByLabelText now that Input isn't mocked
-    expect(screen.getByPlaceholderText("environments.actions.eg_clicked_download")).toHaveValue(
-      actionClass.name
-    );
-    expect(screen.getByPlaceholderText("environments.actions.user_clicked_download_button")).toHaveValue(
-      actionClass.description
-    );
+    expect(screen.getByTestId("action-name-description-fields")).toBeInTheDocument();
+    expect(screen.getByTestId("name-input-actionNameSettingsInput")).toBeInTheDocument();
+    expect(screen.getByTestId("description-input-actionDescriptionSettingsInput")).toBeInTheDocument();
     expect(screen.getByTestId("code-action-form")).toBeInTheDocument();
     expect(
       screen.getByText("environments.actions.this_is_a_code_action_please_make_changes_in_your_code_base")
@@ -131,16 +182,102 @@ describe("ActionSettingsTab", () => {
       />
     );
 
-    // Use getByPlaceholderText or getByLabelText now that Input isn't mocked
-    expect(screen.getByPlaceholderText("environments.actions.eg_clicked_download")).toHaveValue(
-      actionClass.name
-    );
-    expect(screen.getByPlaceholderText("environments.actions.user_clicked_download_button")).toHaveValue(
-      actionClass.description
-    );
+    expect(screen.getByTestId("action-name-description-fields")).toBeInTheDocument();
     expect(screen.getByTestId("no-code-action-form")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "common.save_changes" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /common.delete/ })).toBeInTheDocument();
+  });
+
+  test("renders correctly for other action types (fallback)", () => {
+    const actionClass = {
+      ...createMockActionClass("auto1", "noCode", "Auto Action"),
+      type: "automatic" as any,
+    };
+    render(
+      <ActionSettingsTab
+        actionClass={actionClass}
+        actionClasses={mockActionClasses}
+        setOpen={mockSetOpen}
+        isReadOnly={false}
+      />
+    );
+
+    expect(screen.getByTestId("action-name-description-fields")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "environments.actions.this_action_was_created_automatically_you_cannot_make_changes_to_it"
+      )
+    ).toBeInTheDocument();
+  });
+
+  test("calls utility functions on initialization", async () => {
+    const actionUtilsMock = await import("@/modules/survey/editor/lib/action-utils");
+
+    const actionClass = createMockActionClass("noCode1", "noCode", "No Code Action");
+    render(
+      <ActionSettingsTab
+        actionClass={actionClass}
+        actionClasses={mockActionClasses}
+        setOpen={mockSetOpen}
+        isReadOnly={false}
+      />
+    );
+
+    expect(actionUtilsMock.useActionClassKeys).toHaveBeenCalledWith(mockActionClasses);
+    expect(actionUtilsMock.createActionClassZodResolver).toHaveBeenCalled();
+  });
+
+  test("handles successful form submission", async () => {
+    const { updateActionClassAction } = await import(
+      "@/app/(app)/environments/[environmentId]/actions/actions"
+    );
+    const actionUtilsMock = await import("@/modules/survey/editor/lib/action-utils");
+
+    vi.mocked(updateActionClassAction).mockResolvedValue({ data: {} } as any);
+
+    const actionClass = createMockActionClass("noCode1", "noCode", "No Code Action");
+    render(
+      <ActionSettingsTab
+        actionClass={actionClass}
+        actionClasses={mockActionClasses}
+        setOpen={mockSetOpen}
+        isReadOnly={false}
+      />
+    );
+
+    // Check that utility functions were called during component initialization
+    expect(actionUtilsMock.useActionClassKeys).toHaveBeenCalledWith(mockActionClasses);
+    expect(actionUtilsMock.createActionClassZodResolver).toHaveBeenCalled();
+  });
+
+  test("handles permission validation error", async () => {
+    const actionUtilsMock = await import("@/modules/survey/editor/lib/action-utils");
+    vi.mocked(actionUtilsMock.validatePermissions).mockImplementation(() => {
+      throw new Error("Not authorized");
+    });
+
+    const actionClass = createMockActionClass("noCode1", "noCode", "No Code Action");
+    render(
+      <ActionSettingsTab
+        actionClass={actionClass}
+        actionClasses={mockActionClasses}
+        setOpen={mockSetOpen}
+        isReadOnly={false}
+      />
+    );
+
+    const submitButton = screen.getByRole("button", { name: "common.save_changes" });
+
+    mockHandleSubmit.mockImplementation((fn) => (e) => {
+      e.preventDefault();
+      return fn({ name: "Test", type: "noCode" });
+    });
+
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Not authorized");
+    });
   });
 
   test("handles successful deletion", async () => {
@@ -209,17 +346,16 @@ describe("ActionSettingsTab", () => {
         actionClass={actionClass}
         actionClasses={mockActionClasses}
         setOpen={mockSetOpen}
-        isReadOnly={true} // Set to read-only
+        isReadOnly={true}
       />
     );
 
-    // Use getByPlaceholderText or getByLabelText now that Input isn't mocked
-    expect(screen.getByPlaceholderText("environments.actions.eg_clicked_download")).toBeDisabled();
-    expect(screen.getByPlaceholderText("environments.actions.user_clicked_download_button")).toBeDisabled();
+    expect(screen.getByTestId("name-input-actionNameSettingsInput")).toBeDisabled();
+    expect(screen.getByTestId("description-input-actionDescriptionSettingsInput")).toBeDisabled();
     expect(screen.getByTestId("no-code-action-form")).toHaveAttribute("data-readonly", "true");
     expect(screen.queryByRole("button", { name: "common.save_changes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /common.delete/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "common.read_docs" })).toBeInTheDocument(); // Docs link still visible
+    expect(screen.getByRole("link", { name: "common.read_docs" })).toBeInTheDocument();
   });
 
   test("prevents delete when read-only", async () => {
@@ -228,7 +364,6 @@ describe("ActionSettingsTab", () => {
       "@/app/(app)/environments/[environmentId]/actions/actions"
     );
 
-    // Render with isReadOnly=true, but simulate a delete attempt
     render(
       <ActionSettingsTab
         actionClass={actionClass}
@@ -238,12 +373,6 @@ describe("ActionSettingsTab", () => {
       />
     );
 
-    // Try to open and confirm delete dialog (buttons won't exist, so we simulate the flow)
-    // This test primarily checks the logic within handleDeleteAction if it were called.
-    // A better approach might be to export handleDeleteAction for direct testing,
-    // but for now, we assume the UI prevents calling it.
-
-    // We can assert that the delete button isn't there to prevent the flow
     expect(screen.queryByRole("button", { name: /common.delete/ })).not.toBeInTheDocument();
     expect(deleteActionClassAction).not.toHaveBeenCalled();
   });
@@ -261,5 +390,20 @@ describe("ActionSettingsTab", () => {
     const docsLink = screen.getByRole("link", { name: "common.read_docs" });
     expect(docsLink).toHaveAttribute("href", "https://formbricks.com/docs/actions/no-code");
     expect(docsLink).toHaveAttribute("target", "_blank");
+  });
+
+  test("uses correct input IDs for ActionNameDescriptionFields", () => {
+    const actionClass = createMockActionClass("noCode1", "noCode", "No Code Action");
+    render(
+      <ActionSettingsTab
+        actionClass={actionClass}
+        actionClasses={mockActionClasses}
+        setOpen={mockSetOpen}
+        isReadOnly={false}
+      />
+    );
+
+    expect(screen.getByTestId("name-input-actionNameSettingsInput")).toBeInTheDocument();
+    expect(screen.getByTestId("description-input-actionDescriptionSettingsInput")).toBeInTheDocument();
   });
 });
