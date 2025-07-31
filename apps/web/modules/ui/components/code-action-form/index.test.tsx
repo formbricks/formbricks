@@ -31,6 +31,7 @@ vi.mock("@/modules/ui/components/form", () => ({
   },
   FormItem: ({ children }: { children: React.ReactNode }) => <div data-testid="form-item">{children}</div>,
   FormLabel: ({ children }: { children: React.ReactNode }) => <div data-testid="form-label">{children}</div>,
+  FormError: () => <div data-testid="form-error">Form Error</div>,
 }));
 
 vi.mock("@/modules/ui/components/input", () => ({

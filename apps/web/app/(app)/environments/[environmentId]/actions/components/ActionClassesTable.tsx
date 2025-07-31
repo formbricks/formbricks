@@ -24,14 +24,17 @@ export const ActionClassesTable = ({
   otherEnvActionClasses,
   otherEnvironment,
 }: ActionClassesTableProps) => {
-  const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
+  const [isActionDetailModalOpen, setIsActionDetailModalOpen] = useState(false);
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>();
 
-  const handleOpenActionDetailModalClick = (e, actionClass: TActionClass) => {
+  const handleOpenActionDetailModalClick = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    actionClass: TActionClass
+  ) => {
     e.preventDefault();
     setActiveActionClass(actionClass);
-    setActionDetailModalOpen(true);
+    setIsActionDetailModalOpen(true);
   };
 
   return (
@@ -42,7 +45,7 @@ export const ActionClassesTable = ({
           {actionClasses.length > 0 ? (
             actionClasses.map((actionClass, index) => (
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   handleOpenActionDetailModalClick(e, actionClass);
                 }}
                 className="w-full"
@@ -63,7 +66,7 @@ export const ActionClassesTable = ({
           environmentId={environmentId}
           environment={environment}
           open={isActionDetailModalOpen}
-          setOpen={setActionDetailModalOpen}
+          setOpen={setIsActionDetailModalOpen}
           actionClasses={actionClasses}
           actionClass={activeActionClass}
           isReadOnly={isReadOnly}

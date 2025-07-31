@@ -10,14 +10,19 @@ export const ZActionClassMatchType = z.union([
   z.literal("notContains"),
 ]);
 
-export const ZActionClassPageUrlRule = z.union([
-  z.literal("exactMatch"),
-  z.literal("contains"),
-  z.literal("startsWith"),
-  z.literal("endsWith"),
-  z.literal("notMatch"),
-  z.literal("notContains"),
-]);
+// Define the rule values as a const array to avoid duplication
+export const ACTION_CLASS_PAGE_URL_RULES = [
+  "exactMatch",
+  "contains",
+  "startsWith",
+  "endsWith",
+  "notMatch",
+  "notContains",
+  "matchesRegex",
+] as const;
+
+// Create Zod schema from the const array
+export const ZActionClassPageUrlRule = z.enum(ACTION_CLASS_PAGE_URL_RULES);
 
 export type TActionClassPageUrlRule = z.infer<typeof ZActionClassPageUrlRule>;
 
