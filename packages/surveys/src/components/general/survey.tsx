@@ -787,7 +787,7 @@ export function Survey({
               {content()}
             </div>
 
-            <div className="fb-gap-y-2 fb-min-h-8 fb-mb-8 fb-flex fb-flex-col fb-justify-end">
+            <div className="fb-gap-y-2 fb-min-h-8 fb-flex fb-flex-col fb-justify-end">
               <div className="fb-px-4 fb-space-y-2">
                 {isBrandingEnabled ? <FormbricksBranding /> : null}
                 {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
