@@ -122,7 +122,17 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
-        <div className="p-3">
+        <div className="space-y-3 p-3">
+          {localSurvey.status === "inProgress" && (
+            <Alert variant="warning" className="mb-3">
+              <AlertTitle>{t("environments.surveys.edit.change_survey_type")}</AlertTitle>
+              <AlertDescription>
+                {t(
+                  "environments.surveys.edit.changing_survey_type_will_remove_existing_distribution_channels"
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
           <RadioGroup
             defaultValue="app"
             value={localSurvey.type}

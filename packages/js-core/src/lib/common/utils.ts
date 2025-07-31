@@ -205,6 +205,8 @@ export const checkUrlMatch = (
   pageUrlValue: string,
   pageUrlRule: TActionClassPageUrlRule
 ): boolean => {
+  let regex: RegExp;
+
   switch (pageUrlRule) {
     case "exactMatch":
       return url === pageUrlValue;
@@ -218,6 +220,15 @@ export const checkUrlMatch = (
       return url !== pageUrlValue;
     case "notContains":
       return !url.includes(pageUrlValue);
+    case "matchesRegex":
+      try {
+        regex = new RegExp(pageUrlValue);
+      } catch {
+        // edge case: fail closed if the regex expression is invalid
+        return false;
+      }
+
+      return regex.test(url);
     default:
       return false;
   }

@@ -242,8 +242,10 @@ export const getFormattedFilters = (
   });
 
   // for completed responses
-  if (selectedFilter.onlyComplete) {
+  if (selectedFilter.responseStatus === "complete") {
     filters["finished"] = true;
+  } else if (selectedFilter.responseStatus === "partial") {
+    filters["finished"] = false;
   }
 
   // for date range responses

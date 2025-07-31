@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { FormControl, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import { Terminal } from "lucide-react";
@@ -15,7 +15,7 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
   const { control, watch } = form;
   const { t } = useTranslate();
   return (
-    <>
+    <div data-testid="code-action-form" className="space-y-4">
       <div className="col-span-1">
         <FormField
           control={control}
@@ -36,6 +36,7 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
                   disabled={isReadOnly}
                 />
               </FormControl>
+              <FormError />
             </FormItem>
           )}
         />
@@ -52,9 +53,9 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
           <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
             {t("common.docs")}
           </a>
-          .
+          {"."}
         </AlertDescription>
       </Alert>
-    </>
+    </div>
   );
 };
