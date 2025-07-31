@@ -1,8 +1,9 @@
 import { responses } from "@/app/lib/api/response";
-import { CRON_SECRET } from "@/lib/constants";
+import { CRON_SECRET, SMTP_HOST } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@/modules/email";
 import { headers } from "next/headers";
+import { logger } from "@formbricks/logger";
 import { getNotificationResponse } from "./lib/notificationResponse";
 import { getOrganizationIds } from "./lib/organization";
 import { getProjectsByOrganizationId } from "./lib/project";
@@ -14,6 +15,11 @@ export const POST = async (): Promise<Response> => {
   // Check authentication
   if (headersList.get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
+  }
+
+  if (!SMTP_HOST) {
+    logger.info("SMTP_HOST is not configured, skipping weekly summary email");
+    return responses.successResponse({}, true);
   }
 
   const emailSendingPromises: Promise<void>[] = [];
