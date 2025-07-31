@@ -191,7 +191,7 @@ const mockSurvey = {
   variables: [],
 } as unknown as TSurvey;
 
-const mockSelectedFilter = { filter: [], onlyComplete: false };
+const mockSelectedFilter = { filter: [], responseStatus: "all" };
 const mockSetSelectedFilter = vi.fn();
 
 const defaultProps = {
@@ -309,17 +309,13 @@ describe("SummaryList", () => {
 
   test("renders EmptySpaceFiller when responseCount is 0 and summary is not empty (no responses match filter)", () => {
     const summaryWithItem = [createMockQuestionSummary("q1", TSurveyQuestionTypeEnum.OpenText)];
-    render(
-      <SummaryList {...defaultProps} summary={summaryWithItem} responseCount={0} totalResponseCount={10} />
-    );
+    render(<SummaryList {...defaultProps} summary={summaryWithItem} responseCount={0} />);
     expect(screen.getByText("Mocked EmptySpaceFiller")).toBeInTheDocument();
   });
 
   test("renders EmptySpaceFiller when responseCount is 0 and totalResponseCount is 0 (no responses at all)", () => {
     const summaryWithItem = [createMockQuestionSummary("q1", TSurveyQuestionTypeEnum.OpenText)];
-    render(
-      <SummaryList {...defaultProps} summary={summaryWithItem} responseCount={0} totalResponseCount={0} />
-    );
+    render(<SummaryList {...defaultProps} summary={summaryWithItem} responseCount={0} />);
     expect(screen.getByText("Mocked EmptySpaceFiller")).toBeInTheDocument();
   });
 
@@ -397,7 +393,7 @@ describe("SummaryList", () => {
             },
           },
         ],
-        onlyComplete: false,
+        responseStatus: "all",
       });
       // Ensure vi.mocked(toast.success) refers to the spy from the named export
       expect(vi.mocked(toast).success).toHaveBeenCalledWith("Custom add message", { duration: 5000 });
@@ -425,7 +421,7 @@ describe("SummaryList", () => {
         },
       };
       vi.mocked(useResponseFilter).mockReturnValue({
-        selectedFilter: { filter: [existingFilter], onlyComplete: false },
+        selectedFilter: { filter: [existingFilter], responseStatus: "all" },
         setSelectedFilter: mockSetSelectedFilter,
         resetFilter: vi.fn(),
       } as any);
@@ -454,7 +450,7 @@ describe("SummaryList", () => {
             },
           },
         ],
-        onlyComplete: false,
+        responseStatus: "all",
       });
       expect(vi.mocked(toast.success)).toHaveBeenCalledWith(
         "environments.surveys.summary.filter_updated_successfully",

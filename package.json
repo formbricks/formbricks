@@ -71,5 +71,10 @@
     "budgetPercentIncreaseRed": 20,
     "minimumChangeThreshold": 0,
     "showDetails": true
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "next-auth@4.24.11": "patches/next-auth@4.24.11.patch"
+    }
   }
 }

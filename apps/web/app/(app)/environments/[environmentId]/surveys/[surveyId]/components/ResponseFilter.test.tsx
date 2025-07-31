@@ -30,6 +30,45 @@ vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [[vi.fn()]],
 }));
 
+// Mock the Select components
+const mockOnValueChange = vi.fn();
+vi.mock("@/modules/ui/components/select", () => ({
+  Select: ({ children, onValueChange, defaultValue }) => {
+    // Store the onValueChange callback for testing
+    mockOnValueChange.mockImplementation(onValueChange);
+    return (
+      <div data-testid="select-root" data-default-value={defaultValue}>
+        {children}
+      </div>
+    );
+  },
+  SelectTrigger: ({ children, className }) => (
+    <div
+      role="combobox"
+      className={className}
+      data-testid="select-trigger"
+      tabIndex={0}
+      aria-expanded="false"
+      aria-haspopup="listbox">
+      {children}
+    </div>
+  ),
+  SelectValue: () => <span>environments.surveys.filter.complete_and_partial_responses</span>,
+  SelectContent: ({ children }) => <div data-testid="select-content">{children}</div>,
+  SelectItem: ({ value, children, ...props }) => (
+    <div
+      data-testid={`select-item-${value}`}
+      data-value={value}
+      onClick={() => mockOnValueChange(value)}
+      onKeyDown={(e) => e.key === "Enter" && mockOnValueChange(value)}
+      role="option"
+      tabIndex={0}
+      {...props}>
+      {children}
+    </div>
+  ),
+}));
+
 vi.mock("./QuestionsComboBox", () => ({
   QuestionsComboBox: ({ onChangeValue }) => (
     <div data-testid="questions-combo-box">
@@ -67,7 +106,7 @@ describe("ResponseFilter", () => {
 
   const mockSelectedFilter = {
     filter: [],
-    onlyComplete: false,
+    responseStatus: "all",
   };
 
   const mockSelectedOptions = {
@@ -145,7 +184,7 @@ describe("ResponseFilter", () => {
     expect(
       screen.getByText("environments.surveys.summary.show_all_responses_that_match")
     ).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.only_completed")).toBeInTheDocument();
+    expect(screen.getByTestId("select-trigger")).toBeInTheDocument();
   });
 
   test("fetches filter data when opened", async () => {
@@ -160,7 +199,7 @@ describe("ResponseFilter", () => {
   test("handles adding new filter", async () => {
     // Start with an empty filter
     vi.mocked(useResponseFilter).mockReturnValue({
-      selectedFilter: { filter: [], onlyComplete: false },
+      selectedFilter: { filter: [], responseStatus: "all" },
       setSelectedFilter: mockSetSelectedFilter,
       selectedOptions: mockSelectedOptions,
       setSelectedOptions: mockSetSelectedOptions,
@@ -178,14 +217,38 @@ describe("ResponseFilter", () => {
     expect(screen.getByTestId("questions-combo-box")).toBeInTheDocument();
   });
 
-  test("handles only complete checkbox toggle", async () => {
+  test("handles response status filter change to complete", async () => {
     render(<ResponseFilter survey={mockSurvey} />);
 
     await userEvent.click(screen.getByText("Filter"));
-    await userEvent.click(screen.getByRole("checkbox"));
+
+    // Simulate selecting "complete" by calling the mock function
+    mockOnValueChange("complete");
+
     await userEvent.click(screen.getByText("common.apply_filters"));
 
-    expect(mockSetSelectedFilter).toHaveBeenCalledWith({ filter: [], onlyComplete: true });
+    expect(mockSetSelectedFilter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        responseStatus: "complete",
+      })
+    );
+  });
+
+  test("handles response status filter change to partial", async () => {
+    render(<ResponseFilter survey={mockSurvey} />);
+
+    await userEvent.click(screen.getByText("Filter"));
+
+    // Simulate selecting "partial" by calling the mock function
+    mockOnValueChange("partial");
+
+    await userEvent.click(screen.getByText("common.apply_filters"));
+
+    expect(mockSetSelectedFilter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        responseStatus: "partial",
+      })
+    );
   });
 
   test("handles selecting question and filter options", async () => {
@@ -199,7 +262,7 @@ describe("ResponseFilter", () => {
             filterType: { filterComboBoxValue: undefined, filterValue: undefined },
           },
         ],
-        onlyComplete: false,
+        responseStatus: "all",
       },
       setSelectedFilter: setSelectedFilterMock,
       selectedOptions: mockSelectedOptions,
@@ -228,6 +291,6 @@ describe("ResponseFilter", () => {
     await userEvent.click(screen.getByText("Filter"));
     await userEvent.click(screen.getByText("common.clear_all"));
 
-    expect(mockSetSelectedFilter).toHaveBeenCalledWith({ filter: [], onlyComplete: false });
+    expect(mockSetSelectedFilter).toHaveBeenCalledWith({ filter: [], responseStatus: "all" });
   });
 });

@@ -40,7 +40,8 @@ export type TActionClassPageUrlRule =
   | "startsWith"
   | "endsWith"
   | "notMatch"
-  | "notContains";
+  | "notContains"
+  | "matchesRegex";
 
 export type TActionClassNoCodeConfig =
   | {
