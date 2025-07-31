@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { testURLmatch } from "@/lib/utils/url";
 import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -14,18 +14,44 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
-import { useTranslate } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Control,
   FieldArrayWithId,
   UseFieldArrayRemove,
   UseFormReturn,
   useFieldArray,
+  useWatch,
 } from "react-hook-form";
 import toast from "react-hot-toast";
-import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
+import {
+  ACTION_CLASS_PAGE_URL_RULES,
+  TActionClassInput,
+  TActionClassPageUrlRule,
+} from "@formbricks/types/action-classes";
+
+const getRuleLabel = (rule: TActionClassPageUrlRule, t: TFnType): string => {
+  switch (rule) {
+    case "exactMatch":
+      return t("environments.actions.exactly_matches");
+    case "contains":
+      return t("environments.actions.contains");
+    case "startsWith":
+      return t("environments.actions.starts_with");
+    case "endsWith":
+      return t("environments.actions.ends_with");
+    case "notMatch":
+      return t("environments.actions.does_not_exactly_match");
+    case "notContains":
+      return t("environments.actions.does_not_contain");
+    case "matchesRegex":
+      return t("environments.actions.matches_regex");
+    default:
+      return rule;
+  }
+};
 
 interface PageUrlSelectorProps {
   form: UseFormReturn<TActionClassInput>;
@@ -34,28 +60,34 @@ interface PageUrlSelectorProps {
 
 export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
   const [testUrl, setTestUrl] = useState("");
-  const [isMatch, setIsMatch] = useState("");
+  const [isMatch, setIsMatch] = useState<boolean | null>(null);
   const { t } = useTranslate();
-  const filterType = form.watch("noCodeConfig.urlFilters")?.length ? "specific" : "all";
+  const urlFilters = form.watch("noCodeConfig.urlFilters");
+  const filterType = urlFilters?.length ? "specific" : "all";
 
   const setFilterType = (value: string) => {
     form.setValue("noCodeConfig.urlFilters", value === "all" ? [] : [{ rule: "exactMatch", value: "" }]);
   };
 
   const handleMatchClick = () => {
-    const match =
-      form.watch("noCodeConfig.urlFilters")?.some((urlFilter) => {
-        const res =
-          testURLmatch(testUrl, urlFilter.value, urlFilter.rule as TActionClassPageUrlRule) === "yes";
-        return res;
-      }) || false;
+    try {
+      const match =
+        urlFilters?.some((urlFilter) => {
+          return testURLmatch(testUrl, urlFilter.value, urlFilter.rule, t);
+        }) || false;
 
-    const isMatch = match ? "yes" : "no";
-
-    setIsMatch(isMatch);
-    if (isMatch === "yes") toast.success("Your survey would be shown on this URL.");
-    if (isMatch === "no") toast.error("Your survey would not be shown.");
+      setIsMatch(match);
+      if (match) toast.success(t("environments.actions.your_survey_would_be_shown_on_this_url"));
+      if (!match) toast.error(t("environments.actions.your_survey_would_not_be_shown"));
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
+
+  const matchClass = useMemo(() => {
+    if (isMatch === null) return "border-slate-200";
+    return isMatch ? "border-green-500 bg-green-50" : "border-red-200 bg-red-50";
+  }, [isMatch]);
 
   const {
     fields,
@@ -112,11 +144,11 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
             {t("environments.actions.add_url")}
           </Button>
           <div className="mt-4">
-            <div className="text-sm text-slate-900">{t("environments.actions.test_your_url")}</div>
-            <div className="text-xs text-slate-400">
+            <Label className="font-semibold">{t("environments.actions.test_your_url")}</Label>
+            <p className="text-sm font-normal text-slate-500">
               {t("environments.actions.enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked")}
-            </div>
-            <div className="rounded bg-slate-50">
+            </p>
+            <div className="rounded">
               <div className="mt-1 flex items-end">
                 <Input
                   type="text"
@@ -124,17 +156,9 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
                   name="noCodeConfig.urlFilters.testUrl"
                   onChange={(e) => {
                     setTestUrl(e.target.value);
-                    setIsMatch("default");
+                    setIsMatch(null);
                   }}
-                  className={cn(
-                    isMatch === "yes"
-                      ? "border-green-500 bg-green-50"
-                      : isMatch === "no"
-                        ? "border-red-200 bg-red-50"
-                        : isMatch === "default"
-                          ? "border-slate-200"
-                          : "bg-white"
-                  )}
+                  className={cn(matchClass)}
                   placeholder="e.g. https://app.com/dashboard"
                 />
                 <Button
@@ -167,10 +191,16 @@ const UrlInput = ({
   disabled: boolean;
 }) => {
   const { t } = useTranslate();
+
+  // Watch all rule values to determine placeholders
+  const ruleValues = useWatch({
+    control,
+    name: "noCodeConfig.urlFilters",
+  });
   return (
     <div className="flex w-full flex-col gap-2">
       {fields.map((field, index) => (
-        <div key={field.id} className="flex items-center space-x-2">
+        <div key={field.id} className="ml-1 flex items-start space-x-2">
           {index !== 0 && <p className="ml-1 text-sm font-bold text-slate-700">or</p>}
           <FormField
             name={`noCodeConfig.urlFilters.${index}.rule`}
@@ -179,20 +209,15 @@ const UrlInput = ({
               <FormItem>
                 <FormControl>
                   <Select onValueChange={onChange} value={value} name={name} disabled={disabled}>
-                    <SelectTrigger className="w-[250px] bg-white">
+                    <SelectTrigger className="h-[40px] w-[250px] bg-white">
                       <SelectValue placeholder={t("environments.actions.select_match_type")} />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
-                      <SelectItem value="exactMatch">{t("environments.actions.exactly_matches")}</SelectItem>
-                      <SelectItem value="contains">{t("environments.actions.contains")}</SelectItem>
-                      <SelectItem value="startsWith">{t("environments.actions.starts_with")}</SelectItem>
-                      <SelectItem value="endsWith">{t("environments.actions.ends_with")}</SelectItem>
-                      <SelectItem value="notMatch">
-                        {t("environments.actions.does_not_exactly_match")}
-                      </SelectItem>
-                      <SelectItem value="notContains">
-                        {t("environments.actions.does_not_contain")}
-                      </SelectItem>
+                      {ACTION_CLASS_PAGE_URL_RULES.map((rule) => (
+                        <SelectItem key={rule} value={rule}>
+                          {getRuleLabel(rule, t)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormControl>
@@ -202,27 +227,37 @@ const UrlInput = ({
           <FormField
             control={control}
             name={`noCodeConfig.urlFilters.${index}.value`}
-            render={({ field, fieldState: { error } }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <Input
-                    type="text"
-                    className="bg-white"
-                    disabled={disabled}
-                    {...field}
-                    placeholder="e.g. https://app.com/dashboard"
-                    autoComplete="off"
-                    isInvalid={!!error?.message}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+            render={({ field, fieldState: { error } }) => {
+              const ruleValue = ruleValues[index]?.rule;
+
+              return (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input
+                      type="text"
+                      className="bg-white"
+                      disabled={disabled}
+                      {...field}
+                      placeholder={
+                        ruleValue === "matchesRegex"
+                          ? t("environments.actions.add_regular_expression_here")
+                          : t("environments.actions.enter_url")
+                      }
+                      autoComplete="off"
+                      isInvalid={!!error?.message}
+                    />
+                  </FormControl>
+
+                  <FormError />
+                </FormItem>
+              );
+            }}
           />
 
           {fields.length > 1 && (
             <Button
               variant="secondary"
-              size="sm"
+              size="tall"
               type="button"
               onClick={() => {
                 removeUrlRule(index);

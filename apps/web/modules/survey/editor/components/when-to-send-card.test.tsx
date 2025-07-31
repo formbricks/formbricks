@@ -136,6 +136,42 @@ const mockActionClasses: ActionClass[] = [
       urlFilters: [{ rule: "exactMatch", value: "http://example.com" }],
     },
   },
+  {
+    id: "action3",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "Regex URL Action",
+    description: "A no-code action with regex URL filter",
+    type: "noCode",
+    environmentId: "env1",
+    key: null,
+    noCodeConfig: {
+      type: "pageView",
+      urlFilters: [
+        { rule: "matchesRegex", value: "^https://app\\.example\\.com/user/\\d+$" },
+        { rule: "contains", value: "/dashboard" },
+      ],
+    },
+  },
+  {
+    id: "action4",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: "Multiple Filter Action",
+    description: "Action with multiple URL filter types including regex",
+    type: "noCode",
+    environmentId: "env1",
+    key: null,
+    noCodeConfig: {
+      type: "click",
+      elementSelector: { cssSelector: ".submit-btn" },
+      urlFilters: [
+        { rule: "startsWith", value: "https://secure" },
+        { rule: "matchesRegex", value: "/checkout/\\w+/complete" },
+        { rule: "notContains", value: "test" },
+      ],
+    },
+  },
 ];
 
 describe("WhenToSendCard Component Tests", () => {
@@ -274,6 +310,124 @@ describe("WhenToSendCard Component Tests", () => {
       );
     await userEvent.click(trashIcon);
     expect(setLocalSurvey).toHaveBeenCalledWith(expect.objectContaining({ triggers: [] }));
+  });
+
+  test("displays action with regex URL filters correctly", () => {
+    const regexActionClass = mockActionClasses[2]; // "Regex URL Action"
+    localSurvey.triggers = [{ actionClass: regexActionClass }];
+
+    render(
+      <WhenToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId="env1"
+        propActionClasses={mockActionClasses}
+        membershipRole={OrganizationRole.owner}
+        projectPermission={null}
+      />
+    );
+
+    // Verify the action name is displayed
+    expect(screen.getByText("Regex URL Action")).toBeInTheDocument();
+
+    // Verify the action description is displayed
+    expect(screen.getByText("A no-code action with regex URL filter")).toBeInTheDocument();
+  });
+
+  test("displays action with multiple URL filter types including regex", () => {
+    const multipleFilterAction = mockActionClasses[3]; // "Multiple Filter Action"
+    localSurvey.triggers = [{ actionClass: multipleFilterAction }];
+
+    render(
+      <WhenToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId="env1"
+        propActionClasses={mockActionClasses}
+        membershipRole={OrganizationRole.owner}
+        projectPermission={null}
+      />
+    );
+
+    // Verify the action name is displayed
+    expect(screen.getByText("Multiple Filter Action")).toBeInTheDocument();
+
+    // Verify the action description is displayed
+    expect(screen.getByText("Action with multiple URL filter types including regex")).toBeInTheDocument();
+  });
+
+  test("displays multiple triggers with mixed URL filter types", () => {
+    const standardAction = mockActionClasses[1]; // "No Code Action" with exactMatch
+    const regexAction = mockActionClasses[2]; // "Regex URL Action" with matchesRegex
+
+    localSurvey.triggers = [{ actionClass: standardAction }, { actionClass: regexAction }];
+
+    render(
+      <WhenToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId="env1"
+        propActionClasses={mockActionClasses}
+        membershipRole={OrganizationRole.owner}
+        projectPermission={null}
+      />
+    );
+
+    // Verify both actions are displayed
+    expect(screen.getByText("No Code Action")).toBeInTheDocument();
+    expect(screen.getByText("Regex URL Action")).toBeInTheDocument();
+
+    // Verify the "or" separator is shown between triggers
+    expect(screen.getByText("or")).toBeInTheDocument();
+  });
+
+  test("removes regex action trigger correctly", async () => {
+    const regexAction = mockActionClasses[2]; // "Regex URL Action"
+    localSurvey.triggers = [{ actionClass: regexAction }];
+
+    const { container } = render(
+      <WhenToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId="env1"
+        propActionClasses={mockActionClasses}
+        membershipRole={OrganizationRole.owner}
+        projectPermission={null}
+      />
+    );
+
+    expect(screen.getByText("Regex URL Action")).toBeInTheDocument();
+
+    const trashIcon = container.querySelector("svg.lucide-trash2");
+    if (!trashIcon)
+      throw new Error(
+        "Trash icon not found using selector 'svg.lucide-trash2'. Check component's class names."
+      );
+
+    await userEvent.click(trashIcon);
+    expect(setLocalSurvey).toHaveBeenCalledWith(expect.objectContaining({ triggers: [] }));
+  });
+
+  test("handles empty triggers array correctly", () => {
+    localSurvey.triggers = [];
+
+    render(
+      <WhenToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId="env1"
+        propActionClasses={mockActionClasses}
+        membershipRole={OrganizationRole.owner}
+        projectPermission={null}
+      />
+    );
+
+    // Should show amber circle indicating empty triggers
+    const amberIndicator = document.querySelector(".border-amber-500.bg-amber-50");
+    expect(amberIndicator).toBeInTheDocument();
+
+    // Should still show the "Add Action" button
+    expect(screen.getByText("common.add_action")).toBeInTheDocument();
   });
 
   describe("Delay functionality", () => {

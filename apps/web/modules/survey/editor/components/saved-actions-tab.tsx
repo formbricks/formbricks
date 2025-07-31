@@ -1,6 +1,7 @@
 "use client";
 
 import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
+import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { Input } from "@/modules/ui/components/input";
 import { ActionClass } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
@@ -79,7 +80,7 @@ export const SavedActionsTab = ({
                         </div>
                         <h4 className="text-sm font-semibold text-slate-600">{action.name}</h4>
                       </div>
-                      <p className="mt-1 text-xs text-slate-500">{action.description}</p>
+                      <ActionClassInfo actionClass={action} />
                     </button>
                   ))}
                 </div>
