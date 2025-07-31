@@ -14,7 +14,6 @@ const getFeaturePermission = async (
   billingPlan: Organization["billing"]["plan"],
   featureKey: keyof Pick<TEnterpriseLicenseFeatures, "removeBranding" | "whitelabel">
 ): Promise<boolean> => {
-  return true;
   const license = await getEnterpriseLicense();
 
   if (IS_FORMBRICKS_CLOUD) {
