@@ -69,7 +69,7 @@ const meta: Meta<typeof Button> = {
     },
     size: {
       control: "select",
-      options: ["default", "sm", "lg", "icon"],
+      options: ["default", "sm", "lg", "icon", "tall"],
       description: "Size of the button",
       table: {
         category: "Appearance",
@@ -203,6 +203,20 @@ export const Icon: Story = {
     docs: {
       description: {
         story: "Use for icon-only buttons. The button will be square-shaped.",
+      },
+    },
+  },
+};
+
+export const Tall: Story = {
+  args: {
+    children: "Tall Button",
+    size: "tall",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Use for buttons that need more height while maintaining compact padding.",
       },
     },
   },

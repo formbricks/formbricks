@@ -503,21 +503,21 @@
       "action_with_key_already_exists": "Action with key {key} already exists",
       "action_with_name_already_exists": "Action with name {name} already exists",
       "add_css_class_or_id": "Add CSS class or id",
+      "add_regular_expression_here": "Add a regular expression here",
       "add_url": "Add URL",
       "click": "Click",
       "contains": "Contains",
       "create_action": "Create action",
       "css_selector": "CSS Selector",
       "delete_action_text": "Are you sure you want to delete this action? This also removes this action as a trigger from all your surveys.",
-      "display_name": "Display name",
       "does_not_contain": "Does not contain",
       "does_not_exactly_match": "Does not exactly match",
       "eg_clicked_download": "E.g. Clicked Download",
       "eg_download_cta_click_on_home": "e.g. download_cta_click_on_home",
       "eg_install_app": "E.g. Install App",
-      "eg_user_clicked_download_button": "E.g. User clicked Download Button",
       "ends_with": "Ends with",
       "enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked": "Enter a URL to see if a user visiting it would be tracked.",
+      "enter_url": "e.g. https://app.com/dashboard",
       "exactly_matches": "Exactly matches",
       "exit_intent": "Exit Intent",
       "fifty_percent_scroll": "50% Scroll",
@@ -526,9 +526,14 @@
       "if_a_user_clicks_a_button_with_a_specific_text": "If a user clicks a button with a specific text",
       "in_your_code_read_more_in_our": "in your code. Read more in our",
       "inner_text": "Inner Text",
+      "invalid_action_type_code": "Invalid action type for code action.",
+      "invalid_action_type_no_code": "Invalid action type for noCode action.",
       "invalid_css_selector": "Invalid CSS Selector",
+      "invalid_match_type": "The option selected is not available.",
+      "invalid_regex": "Please use a valid regular expression.",
       "limit_the_pages_on_which_this_action_gets_captured": "Limit the pages on which this action gets captured",
       "limit_to_specific_pages": "Limit to specific pages",
+      "matches_regex": "Matches regex",
       "on_all_pages": "On all pages",
       "page_filter": "Page filter",
       "page_view": "Page View",
@@ -548,7 +553,9 @@
       "user_clicked_download_button": "User clicked Download Button",
       "what_did_your_user_do": "What did your user do?",
       "what_is_the_user_doing": "What is the user doing?",
-      "you_can_track_code_action_anywhere_in_your_app_using": "You can track code action anywhere in your app using"
+      "you_can_track_code_action_anywhere_in_your_app_using": "You can track code action anywhere in your app using",
+      "your_survey_would_be_shown_on_this_url": "Your survey would be shown on this URL.",
+      "your_survey_would_not_be_shown": "Your survey would not be shown."
     },
     "connect": {
       "congrats": "Congrats!",
@@ -1279,6 +1286,7 @@
         "change_anyway": "Change anyway",
         "change_background": "Change background",
         "change_question_type": "Change question type",
+        "change_survey_type": "Switching survey type affects existing access",
         "change_the_background_color_of_the_card": "Change the background color of the card.",
         "change_the_background_color_of_the_input_fields": "Change the background color of the input fields.",
         "change_the_background_to_a_color_image_or_animation": "Change the background to a color, image or animation.",
@@ -1289,6 +1297,7 @@
         "change_the_placement_of_this_survey": "Change the placement of this survey.",
         "change_the_question_color_of_the_survey": "Change the question color of the survey.",
         "changes_saved": "Changes saved.",
+        "changing_survey_type_will_remove_existing_distribution_channels": "Changing the survey type will affect how it can be shared. If respondents already have access links for the current type, they may lose access after the switch.",
         "character_limit_toggle_description": "Limit how short or long an answer can be.",
         "character_limit_toggle_title": "Add character limits",
         "checkbox_label": "Checkbox Label",
@@ -1607,6 +1616,11 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "An error occured while deleting survey",
+      "filter": {
+        "complete_and_partial_responses": "Complete and partial responses",
+        "complete_responses": "Complete responses",
+        "partial_responses": "Partial responses"
+      },
       "new_survey": "New Survey",
       "no_surveys_created_yet": "No surveys created yet",
       "open_options": "Open options",
@@ -1799,7 +1813,6 @@
         "last_quarter": "Last quarter",
         "last_year": "Last year",
         "no_responses_found": "No responses found",
-        "only_completed": "Only completed",
         "other_values_found": "Other values found",
         "overall": "Overall",
         "qr_code": "QR code",
@@ -2840,6 +2853,6 @@
     "usability_question_8_headline": "Using the system felt like a hassle.",
     "usability_question_9_headline": "I felt confident while using the system.",
     "usability_rating_description": "Measure perceived usability by asking users to rate their experience with your product using a standardized 10-question survey.",
-    "usability_score_name": "System Usability Scale (SUS)"
+    "usability_score_name": "System Usability Score (SUS)"
   }
 }
