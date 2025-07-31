@@ -510,13 +510,11 @@
       "create_action": "Create action",
       "css_selector": "CSS Selector",
       "delete_action_text": "Are you sure you want to delete this action? This also removes this action as a trigger from all your surveys.",
-      "display_name": "Display name",
       "does_not_contain": "Does not contain",
       "does_not_exactly_match": "Does not exactly match",
       "eg_clicked_download": "E.g. Clicked Download",
       "eg_download_cta_click_on_home": "e.g. download_cta_click_on_home",
       "eg_install_app": "E.g. Install App",
-      "eg_user_clicked_download_button": "E.g. User clicked Download Button",
       "ends_with": "Ends with",
       "enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked": "Enter a URL to see if a user visiting it would be tracked.",
       "enter_url": "e.g. https://app.com/dashboard",
@@ -1616,6 +1614,11 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "An error occured while deleting survey",
+      "filter": {
+        "complete_and_partial_responses": "Complete and partial responses",
+        "complete_responses": "Complete responses",
+        "partial_responses": "Partial responses"
+      },
       "new_survey": "New Survey",
       "no_surveys_created_yet": "No surveys created yet",
       "open_options": "Open options",

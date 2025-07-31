@@ -510,13 +510,11 @@
       "create_action": "Aktion erstellen",
       "css_selector": "CSS-Selektor",
       "delete_action_text": "Bist Du sicher, dass Du diese Aktion löschen möchtest? Dadurch wird diese Aktion auch als Auslöser aus all deinen Umfragen entfernt.",
-      "display_name": "Anzeigename",
       "does_not_contain": "Enthält nicht",
       "does_not_exactly_match": "Stimmt nicht genau überein",
       "eg_clicked_download": "z.B. 'Herunterladen' geklickt",
       "eg_download_cta_click_on_home": "z.B. Download-CTA-Klick auf der Startseite",
       "eg_install_app": "z.B. App installieren",
-      "eg_user_clicked_download_button": "z.B. Benutzer hat auf 'Herunterladen' geklickt",
       "ends_with": "endet mit",
       "enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked": "Teste eine URL, um zu sehen, ob der Nutzer deine Umfrage sehen würde.",
       "enter_url": "z.B. https://app.com/dashboard",
@@ -1616,6 +1614,11 @@
         "zip": "Postleitzahl"
       },
       "error_deleting_survey": "Beim Löschen der Umfrage ist ein Fehler aufgetreten",
+      "filter": {
+        "complete_and_partial_responses": "Vollständige und Teilantworten",
+        "complete_responses": "Vollständige Antworten",
+        "partial_responses": "Teilantworten"
+      },
       "new_survey": "Neue Umfrage",
       "no_surveys_created_yet": "Noch keine Umfragen erstellt",
       "open_options": "Optionen öffnen",

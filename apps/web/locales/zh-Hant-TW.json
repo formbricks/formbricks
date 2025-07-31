@@ -510,13 +510,11 @@
       "create_action": "建立操作",
       "css_selector": "CSS 選取器",
       "delete_action_text": "您確定要刪除此操作嗎？這也會從您的所有問卷中移除此操作作為觸發器。",
-      "display_name": "顯示名稱",
       "does_not_contain": "不包含",
       "does_not_exactly_match": "不完全相符",
       "eg_clicked_download": "例如，點擊下載",
       "eg_download_cta_click_on_home": "例如，download_cta_click_on_home",
       "eg_install_app": "例如，安裝應用程式",
-      "eg_user_clicked_download_button": "例如，使用者點擊了下載按鈕",
       "ends_with": "結尾為",
       "enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked": "輸入網址以查看造訪該網址的使用者是否會被追蹤。",
       "enter_url": "例如 https://app.com/dashboard",
@@ -1616,6 +1614,11 @@
         "zip": "郵遞區號"
       },
       "error_deleting_survey": "刪除問卷時發生錯誤",
+      "filter": {
+        "complete_and_partial_responses": "完整 和 部分 回應",
+        "complete_responses": "完整回應",
+        "partial_responses": "部分回應"
+      },
       "new_survey": "新增問卷",
       "no_surveys_created_yet": "尚未建立任何問卷",
       "open_options": "開啟選項",

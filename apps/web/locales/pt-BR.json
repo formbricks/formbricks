@@ -510,13 +510,11 @@
       "create_action": "criar ação",
       "css_selector": "Seletor CSS",
       "delete_action_text": "Tem certeza de que quer deletar essa ação? Isso também vai remover essa ação como gatilho de todas as suas pesquisas.",
-      "display_name": "Nome de exibição",
       "does_not_contain": "não contém",
       "does_not_exactly_match": "Não bate exatamente",
       "eg_clicked_download": "Por exemplo, clicou em baixar",
       "eg_download_cta_click_on_home": "e.g. download_cta_click_on_home",
       "eg_install_app": "Ex: Instalar App",
-      "eg_user_clicked_download_button": "Por exemplo, usuário clicou no botão de download",
       "ends_with": "Termina com",
       "enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked": "Digite uma URL para ver se um usuário que a visita seria rastreado.",
       "enter_url": "ex.: https://app.com/dashboard",
@@ -1616,6 +1614,11 @@
         "zip": "Fecho éclair"
       },
       "error_deleting_survey": "Ocorreu um erro ao deletar a pesquisa",
+      "filter": {
+        "complete_and_partial_responses": "Respostas completas e parciais",
+        "complete_responses": "Respostas completas",
+        "partial_responses": "Respostas parciais"
+      },
       "new_survey": "Nova Pesquisa",
       "no_surveys_created_yet": "Ainda não foram criadas pesquisas",
       "open_options": "Abre opções",

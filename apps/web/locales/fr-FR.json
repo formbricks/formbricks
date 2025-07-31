@@ -510,13 +510,11 @@
       "create_action": "Créer une action",
       "css_selector": "Sélecteur CSS",
       "delete_action_text": "Êtes-vous sûr de vouloir supprimer cette action ? Cela supprime également cette action en tant que déclencheur de toutes vos enquêtes.",
-      "display_name": "Nom d'affichage",
       "does_not_contain": "Ne contient pas",
       "does_not_exactly_match": "Ne correspond pas exactement",
       "eg_clicked_download": "Par exemple, cliqué sur Télécharger",
       "eg_download_cta_click_on_home": "Par exemple, cliquez sur le CTA de téléchargement sur la page d'accueil",
       "eg_install_app": "Par exemple, installer l'application",
-      "eg_user_clicked_download_button": "Par exemple, l'utilisateur a cliqué sur le bouton de téléchargement.",
       "ends_with": "Se termine par",
       "enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked": "Saisissez une URL pour voir si un utilisateur la visitant serait suivi.",
       "enter_url": "par exemple https://app.com/dashboard",
@@ -1616,6 +1614,11 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "Une erreur est survenue lors de la suppression de l'enquête.",
+      "filter": {
+        "complete_and_partial_responses": "Réponses complètes et partielles",
+        "complete_responses": "Réponses complètes",
+        "partial_responses": "Réponses partielles"
+      },
       "new_survey": "Nouveau Sondage",
       "no_surveys_created_yet": "Aucun sondage créé pour le moment",
       "open_options": "Ouvrir les options",
