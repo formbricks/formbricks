@@ -1614,6 +1614,11 @@
         "zip": "郵遞區號"
       },
       "error_deleting_survey": "刪除問卷時發生錯誤",
+      "filter": {
+        "complete_and_partial_responses": "完整 和 部分 回應",
+        "complete_responses": "完整回應",
+        "partial_responses": "部分回應"
+      },
       "new_survey": "新增問卷",
       "no_surveys_created_yet": "尚未建立任何問卷",
       "open_options": "開啟選項",
@@ -1806,7 +1811,6 @@
         "last_quarter": "上一季",
         "last_year": "去年",
         "no_responses_found": "找不到回應",
-        "only_completed": "僅已完成",
         "other_values_found": "找到其他值",
         "overall": "整體",
         "qr_code": "QR 碼",

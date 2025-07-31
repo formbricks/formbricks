@@ -1614,6 +1614,11 @@
         "zip": "Postleitzahl"
       },
       "error_deleting_survey": "Beim Löschen der Umfrage ist ein Fehler aufgetreten",
+      "filter": {
+        "complete_and_partial_responses": "Vollständige und Teilantworten",
+        "complete_responses": "Vollständige Antworten",
+        "partial_responses": "Teilantworten"
+      },
       "new_survey": "Neue Umfrage",
       "no_surveys_created_yet": "Noch keine Umfragen erstellt",
       "open_options": "Optionen öffnen",
@@ -1806,7 +1811,6 @@
         "last_quarter": "Letztes Quartal",
         "last_year": "Letztes Jahr",
         "no_responses_found": "Keine Antworten gefunden",
-        "only_completed": "Nur vollständige Antworten",
         "other_values_found": "Andere Werte gefunden",
         "overall": "Insgesamt",
         "qr_code": "QR-Code",

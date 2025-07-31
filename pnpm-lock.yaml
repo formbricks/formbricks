@@ -442,8 +442,8 @@ importers:
         specifier: 5.99.8
         version: 5.99.8(esbuild@0.25.4)
       xlsx:
-        specifier: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
-        version: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
+        specifier: file:vendor/xlsx-0.20.3.tgz
+        version: file:apps/web/vendor/xlsx-0.20.3.tgz
       zod:
         specifier: 3.24.4
         version: 3.24.4
@@ -9541,8 +9541,8 @@ packages:
     resolution: {integrity: sha512-h3Fbisa2nKGPxCpm89Hk33lBLsnaGBvctQopaBSOW/uIs6FTe1ATyAnKFJrzVs9vpGdsTe73WF3V4lIsk4Gacw==}
     engines: {node: '>=18'}
 
-  xlsx@https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz:
-    resolution: {tarball: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz}
+  xlsx@file:apps/web/vendor/xlsx-0.20.3.tgz:
+    resolution: {integrity: sha512-oLDq3jw7AcLqKWH2AhCpVTZl8mf6X2YReP+Neh0SJUzV/BdZYjth94tG5toiMB1PPrYtxOCfaoUCkvtuH+3AJA==, tarball: file:apps/web/vendor/xlsx-0.20.3.tgz}
     version: 0.20.3
     engines: {node: '>=0.8'}
     hasBin: true
@@ -20103,7 +20103,7 @@ snapshots:
     dependencies:
       is-wsl: 3.1.0
 
-  xlsx@https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz: {}
+  xlsx@file:apps/web/vendor/xlsx-0.20.3.tgz: {}
 
   xml-crypto@6.1.2:
     dependencies:

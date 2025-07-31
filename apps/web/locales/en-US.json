@@ -1614,6 +1614,11 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "An error occured while deleting survey",
+      "filter": {
+        "complete_and_partial_responses": "Complete and partial responses",
+        "complete_responses": "Complete responses",
+        "partial_responses": "Partial responses"
+      },
       "new_survey": "New Survey",
       "no_surveys_created_yet": "No surveys created yet",
       "open_options": "Open options",
@@ -1806,7 +1811,6 @@
         "last_quarter": "Last quarter",
         "last_year": "Last year",
         "no_responses_found": "No responses found",
-        "only_completed": "Only completed",
         "other_values_found": "Other values found",
         "overall": "Overall",
         "qr_code": "QR code",
