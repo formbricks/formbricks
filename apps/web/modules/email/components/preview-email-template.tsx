@@ -317,17 +317,17 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
-          <Section className="mx-0">
+          <Section className="mx-0 mt-4">
             {firstQuestion.choices.map((choice) =>
               firstQuestion.allowMulti ? (
                 <Img
-                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
+                  className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
                   key={choice.id}
                   src={choice.imageUrl}
                 />
               ) : (
                 <Link
-                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
+                  className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
                   key={choice.id}
                   target="_blank">

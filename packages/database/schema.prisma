@@ -407,7 +407,6 @@ model Survey {
   isSingleResponsePerEmailEnabled Boolean          @default(false)
   isBackButtonHidden              Boolean          @default(false)
   pin                             String?
-  resultShareKey                  String?          @unique
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?

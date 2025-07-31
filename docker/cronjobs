@@ -1,3 +1,3 @@
 0 0 * * * curl $WEBAPP_URL/api/cron/survey-status -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''
-0 8 * * 1 curl $WEBAPP_URL/api/cron/weekly-summary -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''
+
 0 9 * * * curl $WEBAPP_URL/api/cron/ping -X POST -H 'content-type: application/json' -H 'x-api-key: '"$CRON_SECRET"''

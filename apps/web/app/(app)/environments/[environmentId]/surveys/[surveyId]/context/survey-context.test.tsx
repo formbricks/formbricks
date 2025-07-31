@@ -78,7 +78,6 @@ const mockSurvey: TSurvey = {
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
   pin: null,
-  resultShareKey: null,
   displayPercentage: null,
   languages: [
     {

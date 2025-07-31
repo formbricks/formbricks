@@ -3,23 +3,34 @@ import { TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 export const testURLmatch = (
   testUrl: string,
   pageUrlValue: string,
-  pageUrlRule: TActionClassPageUrlRule
-): string => {
+  pageUrlRule: TActionClassPageUrlRule,
+  t: (key: string) => string
+): boolean => {
+  let regex: RegExp;
+
   switch (pageUrlRule) {
     case "exactMatch":
-      return testUrl === pageUrlValue ? "yes" : "no";
+      return testUrl === pageUrlValue;
     case "contains":
-      return testUrl.includes(pageUrlValue) ? "yes" : "no";
+      return testUrl.includes(pageUrlValue);
     case "startsWith":
-      return testUrl.startsWith(pageUrlValue) ? "yes" : "no";
+      return testUrl.startsWith(pageUrlValue);
     case "endsWith":
-      return testUrl.endsWith(pageUrlValue) ? "yes" : "no";
+      return testUrl.endsWith(pageUrlValue);
     case "notMatch":
-      return testUrl !== pageUrlValue ? "yes" : "no";
+      return testUrl !== pageUrlValue;
     case "notContains":
-      return !testUrl.includes(pageUrlValue) ? "yes" : "no";
+      return !testUrl.includes(pageUrlValue);
+    case "matchesRegex":
+      try {
+        regex = new RegExp(pageUrlValue);
+      } catch {
+        throw new Error(t("environments.actions.invalid_regex"));
+      }
+
+      return regex.test(testUrl);
     default:
-      throw new Error("Invalid match type");
+      throw new Error(t("environments.actions.invalid_match_type"));
   }
 };
 

@@ -20,7 +20,7 @@ const mockUser = {
   email: "test@example.com",
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
+
     unsubscribedOrganizationIds: [],
   },
   twoFactorEnabled: false,

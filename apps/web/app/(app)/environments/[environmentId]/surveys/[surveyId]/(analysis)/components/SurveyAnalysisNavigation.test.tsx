@@ -58,7 +58,6 @@ vi.mock("@/lib/env", () => ({
 vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext");
 vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions");
 vi.mock("@/app/lib/surveys/surveys");
-vi.mock("@/app/share/[sharingKey]/actions");
 vi.mock("@/modules/ui/components/secondary-navigation", () => ({
   SecondaryNavigation: vi.fn(() => <div data-testid="secondary-navigation" />),
 }));
@@ -112,7 +111,6 @@ const mockSurvey = {
   surveyClosedMessage: null,
   welcomeCard: { enabled: false, headline: { default: "" } } as unknown as TSurvey["welcomeCard"],
   segment: null,
-  resultShareKey: null,
   closeOnDate: null,
   delay: 0,
   autoComplete: null,
@@ -169,22 +167,6 @@ describe("SurveyAnalysisNavigation", () => {
       defaultProps.environmentId,
       defaultProps.survey.id
     );
-  });
-
-  test("renders navigation correctly for sharing page", () => {
-    mockUsePathname.mockReturnValue(
-      `/environments/${defaultProps.environmentId}/surveys/${mockSurvey.id}/summary`
-    );
-    mockUseParams.mockReturnValue({ sharingKey: "test-sharing-key" });
-    mockUseResponseFilter.mockReturnValue({ selectedFilter: "all", dateRange: {} } as any);
-    mockGetFormattedFilters.mockReturnValue([] as any);
-    mockGetResponseCountAction.mockResolvedValue({ data: 5 });
-
-    render(<SurveyAnalysisNavigation {...defaultProps} />);
-
-    expect(MockSecondaryNavigation).toHaveBeenCalled();
-    const lastCallArgs = MockSecondaryNavigation.mock.calls[MockSecondaryNavigation.mock.calls.length - 1][0];
-    expect(lastCallArgs.navigation[0].href).toContain("/share/test-sharing-key");
   });
 
   test("displays correct response count string in label for various scenarios", async () => {

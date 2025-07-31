@@ -165,7 +165,6 @@ export const mockSurvey: TSurvey = {
     isEncrypted: true,
   },
   pin: null,
-  resultShareKey: null,
   showLanguageSwitch: null,
   languages: [],
   triggers: [],

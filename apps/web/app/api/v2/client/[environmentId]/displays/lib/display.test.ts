@@ -2,7 +2,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { TDisplayCreateInputV2 } from "../types/display";
 import { doesContactExist } from "./contact";
 import { createDisplay } from "./display";
@@ -15,6 +15,9 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     display: {
       create: vi.fn(),
+    },
+    survey: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -43,17 +46,32 @@ const mockDisplay = {
   id: displayId,
   contactId,
   surveyId,
+  responseId: null,
+  status: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 const mockDisplayWithoutContact = {
   id: displayId,
   contactId: null,
   surveyId,
+  responseId: null,
+  status: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
+
+const mockSurvey = {
+  id: surveyId,
+  name: "Test Survey",
+  environmentId,
+} as any;
 
 describe("createDisplay", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurvey);
   });
 
   test("should create a display with contactId successfully", async () => {
@@ -119,7 +137,19 @@ describe("createDisplay", () => {
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
-  test("should throw DatabaseError on Prisma known request error", async () => {
+  test("should throw InvalidInputError when survey does not exist (P2025)", async () => {
+    vi.mocked(doesContactExist).mockResolvedValue(true);
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
+
+    await expect(createDisplay(displayInput)).rejects.toThrow(new ResourceNotFoundError("Survey", surveyId));
+    expect(doesContactExist).toHaveBeenCalledWith(contactId);
+    expect(prisma.survey.findUnique).toHaveBeenCalledWith({
+      where: { id: surveyId, environmentId },
+    });
+    expect(prisma.display.create).not.toHaveBeenCalled();
+  });
+
+  test("should throw DatabaseError on other Prisma known request errors", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
       code: "P2002",
       clientVersion: "2.0.0",

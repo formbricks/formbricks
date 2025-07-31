@@ -152,7 +152,6 @@ const mockSurvey = {
   environmentId: "env1",
   singleUse: null,
   surveyClosedMessage: null,
-  resultShareKey: null,
   pin: null,
 } as unknown as TSurvey;
 

@@ -127,7 +127,6 @@ describe("withAuditLogging", () => {
         objective: null,
         notificationSettings: {
           alert: {},
-          weeklySummary: {},
         },
       },
       organizationId: "org1",
@@ -167,7 +166,6 @@ describe("withAuditLogging", () => {
         objective: null,
         notificationSettings: {
           alert: {},
-          weeklySummary: {},
         },
       },
       organizationId: "org1",

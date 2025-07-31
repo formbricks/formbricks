@@ -103,7 +103,6 @@
     "lucide-react": "0.507.0",
     "markdown-it": "14.1.0",
     "mime-types": "3.0.1",
-    "nanoid": "5.1.5",
     "next": "15.3.3",
     "next-auth": "4.24.11",
     "next-safe-action": "7.10.8",
