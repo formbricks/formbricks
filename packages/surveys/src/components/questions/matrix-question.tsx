@@ -119,109 +119,100 @@ export function MatrixQuestion({
   );
 
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="fb-w-full">
-      <ScrollableContainer>
-        <div>
-          {isMediaAvailable ? (
-            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-          ) : null}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={getLocalizedValue(question.subheader, languageCode)}
-            questionId={question.id}
-          />
-          <div className="fb-overflow-x-auto fb-py-4">
-            <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
-              <thead>
-                <tr>
-                  <th className="fb-px-4 fb-py-2" />
-                  {columnsHeaders}
-                </tr>
-              </thead>
-              <tbody>
-                {questionRows.map((row, rowIndex) => (
-                  <tr
-                    key={`row-${rowIndex.toString()}`}
-                    className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
-                    <th
-                      scope="row"
-                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
-                      dir="auto">
-                      {getLocalizedValue(row, languageCode)}
-                    </th>
-                    {question.columns.map((column, columnIndex) => (
-                      <td
-                        key={`column-${columnIndex.toString()}`}
-                        tabIndex={isCurrent ? 0 : -1}
-                        className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
-                        onClick={() => {
+    <ScrollableContainer>
+      <form key={question.id} onSubmit={handleSubmit} className="fb-w-full">
+        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
+        <div className="fb-overflow-x-auto fb-py-4">
+          <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
+            <thead>
+              <tr>
+                <th className="fb-px-4 fb-py-2" />
+                {columnsHeaders}
+              </tr>
+            </thead>
+            <tbody>
+              {questionRows.map((row, rowIndex) => (
+                <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
+                  <th
+                    scope="row"
+                    className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
+                    dir="auto">
+                    {getLocalizedValue(row, languageCode)}
+                  </th>
+                  {question.columns.map((column, columnIndex) => (
+                    <td
+                      key={`column-${columnIndex.toString()}`}
+                      tabIndex={isCurrent ? 0 : -1}
+                      className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
+                      onClick={() => {
+                        handleSelect(
+                          getLocalizedValue(column, languageCode),
+                          getLocalizedValue(row, languageCode)
+                        );
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          e.preventDefault();
                           handleSelect(
                             getLocalizedValue(column, languageCode),
                             getLocalizedValue(row, languageCode)
                           );
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === " ") {
-                            e.preventDefault();
-                            handleSelect(
-                              getLocalizedValue(column, languageCode),
-                              getLocalizedValue(row, languageCode)
-                            );
+                        }
+                      }}
+                      dir="auto">
+                      <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
+                        <input
+                          dir="auto"
+                          type="radio"
+                          tabIndex={-1}
+                          required={question.required}
+                          id={`row${rowIndex.toString()}-column${columnIndex.toString()}`}
+                          name={getLocalizedValue(row, languageCode)}
+                          value={getLocalizedValue(column, languageCode)}
+                          checked={
+                            typeof value === "object" && !Array.isArray(value)
+                              ? value[getLocalizedValue(row, languageCode)] ===
+                                getLocalizedValue(column, languageCode)
+                              : false
                           }
-                        }}
-                        dir="auto">
-                        <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
-                          <input
-                            dir="auto"
-                            type="radio"
-                            tabIndex={-1}
-                            required={question.required}
-                            id={`row${rowIndex.toString()}-column${columnIndex.toString()}`}
-                            name={getLocalizedValue(row, languageCode)}
-                            value={getLocalizedValue(column, languageCode)}
-                            checked={
-                              typeof value === "object" && !Array.isArray(value)
-                                ? value[getLocalizedValue(row, languageCode)] ===
-                                  getLocalizedValue(column, languageCode)
-                                : false
-                            }
-                            aria-label={`${getLocalizedValue(
-                              question.headline,
-                              languageCode
-                            )}: ${getLocalizedValue(row, languageCode)} – ${getLocalizedValue(
-                              column,
-                              languageCode
-                            )}`}
-                            className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                          />
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          aria-label={`${getLocalizedValue(
+                            question.headline,
+                            languageCode
+                          )}: ${getLocalizedValue(row, languageCode)} – ${getLocalizedValue(
+                            column,
+                            languageCode
+                          )}`}
+                          className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                        />
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <SubmitButton
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-          tabIndex={isCurrent ? 0 : -1}
-        />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={handleBackButtonClick}
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+          <SubmitButton
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
             tabIndex={isCurrent ? 0 : -1}
           />
-        )}
-      </div>
-    </form>
+          {!isFirstQuestion && !isBackButtonHidden && (
+            <BackButton
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              onClick={handleBackButtonClick}
+              tabIndex={isCurrent ? 0 : -1}
+            />
+          )}
+        </div>
+      </form>
+    </ScrollableContainer>
   );
 }
