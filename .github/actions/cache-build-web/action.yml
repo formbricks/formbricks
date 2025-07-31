@@ -31,12 +31,14 @@ runs:
         cache-name: prod-build
         key-1: ${{ hashFiles('pnpm-lock.yaml') }}
         key-2: ${{ hashFiles('apps/**/**.[jt]s', 'apps/**/**.[jt]sx', 'packages/**/**.[jt]s', 'packages/**/**.[jt]sx', '!**/node_modules') }}
+        key-3: ${{ hashFiles('vendor/**') }}
       with:
         path: |
           ${{ github.workspace }}/apps/web/.next
+          ${{ github.workspace }}/vendor
           **/.turbo/**
           **/dist/**
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}-${{ env.key-3 }}
 
     - name: Set Cache Hit Status
       run: echo "cache-hit=${{ steps.cache-build.outputs.cache-hit }}" >> "$GITHUB_OUTPUT"
