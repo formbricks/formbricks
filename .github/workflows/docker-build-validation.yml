@@ -7,8 +7,7 @@ on:
     paths-ignore:
       - helm-chart
       - infra
-  merge_group:
-    <<: *pr-defs
+  merge_group: *pr-defs
   workflow_dispatch:
 
 permissions:
