@@ -70,15 +70,13 @@ export const ActionDetailModal = ({
   };
 
   return (
-    <>
-      <ModalWithTabs
-        open={open}
-        setOpen={setOpen}
-        tabs={tabs}
-        icon={ACTION_TYPE_ICON_LOOKUP[actionClass.type]}
-        label={actionClass.name}
-        description={typeDescription()}
-      />
-    </>
+    <ModalWithTabs
+      open={open}
+      setOpen={setOpen}
+      tabs={tabs}
+      icon={ACTION_TYPE_ICON_LOOKUP[actionClass.type]}
+      label={actionClass.name}
+      description={typeDescription()}
+    />
   );
 };

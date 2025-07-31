@@ -503,6 +503,7 @@
       "action_with_key_already_exists": "Action with key {key} already exists",
       "action_with_name_already_exists": "Action with name {name} already exists",
       "add_css_class_or_id": "Add CSS class or id",
+      "add_regular_expression_here": "Add a regular expression here",
       "add_url": "Add URL",
       "click": "Click",
       "contains": "Contains",
@@ -518,6 +519,7 @@
       "eg_user_clicked_download_button": "E.g. User clicked Download Button",
       "ends_with": "Ends with",
       "enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked": "Enter a URL to see if a user visiting it would be tracked.",
+      "enter_url": "e.g. https://app.com/dashboard",
       "exactly_matches": "Exactly matches",
       "exit_intent": "Exit Intent",
       "fifty_percent_scroll": "50% Scroll",
@@ -526,9 +528,14 @@
       "if_a_user_clicks_a_button_with_a_specific_text": "If a user clicks a button with a specific text",
       "in_your_code_read_more_in_our": "in your code. Read more in our",
       "inner_text": "Inner Text",
+      "invalid_action_type_code": "Invalid action type for code action.",
+      "invalid_action_type_no_code": "Invalid action type for noCode action.",
       "invalid_css_selector": "Invalid CSS Selector",
+      "invalid_match_type": "The option selected is not available.",
+      "invalid_regex": "Please use a valid regular expression.",
       "limit_the_pages_on_which_this_action_gets_captured": "Limit the pages on which this action gets captured",
       "limit_to_specific_pages": "Limit to specific pages",
+      "matches_regex": "Matches regex",
       "on_all_pages": "On all pages",
       "page_filter": "Page filter",
       "page_view": "Page View",
@@ -548,7 +555,9 @@
       "user_clicked_download_button": "User clicked Download Button",
       "what_did_your_user_do": "What did your user do?",
       "what_is_the_user_doing": "What is the user doing?",
-      "you_can_track_code_action_anywhere_in_your_app_using": "You can track code action anywhere in your app using"
+      "you_can_track_code_action_anywhere_in_your_app_using": "You can track code action anywhere in your app using",
+      "your_survey_would_be_shown_on_this_url": "Your survey would be shown on this URL.",
+      "your_survey_would_not_be_shown": "Your survey would not be shown."
     },
     "connect": {
       "congrats": "Congrats!",
@@ -2840,6 +2849,6 @@
     "usability_question_8_headline": "Using the system felt like a hassle.",
     "usability_question_9_headline": "I felt confident while using the system.",
     "usability_rating_description": "Measure perceived usability by asking users to rate their experience with your product using a standardized 10-question survey.",
-    "usability_score_name": "System Usability Scale (SUS)"
+    "usability_score_name": "System Usability Score (SUS)"
   }
 }

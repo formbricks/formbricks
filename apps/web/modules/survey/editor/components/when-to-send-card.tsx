@@ -5,6 +5,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
+import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -199,48 +200,7 @@ export const WhenToSendCard = ({
 
                           <h4 className="text-sm font-semibold text-slate-600">{trigger.actionClass.name}</h4>
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {trigger.actionClass.description && (
-                            <span className="mr-1">{trigger.actionClass.description}</span>
-                          )}
-                          {trigger.actionClass.type === "code" && (
-                            <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                              {t("environments.surveys.edit.key")}: <b>{trigger.actionClass.key}</b>
-                            </span>
-                          )}
-                          {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.type === "click" &&
-                            trigger.actionClass.noCodeConfig?.elementSelector.cssSelector && (
-                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                {t("environments.surveys.edit.css_selector")}:{" "}
-                                <b>{trigger.actionClass.noCodeConfig?.elementSelector.cssSelector}</b>
-                              </span>
-                            )}
-                          {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.type === "click" &&
-                            trigger.actionClass.noCodeConfig?.elementSelector.innerHtml && (
-                              <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                {t("environments.surveys.edit.inner_text")}:{" "}
-                                <b>{trigger.actionClass.noCodeConfig?.elementSelector.innerHtml}</b>
-                              </span>
-                            )}
-                          {trigger.actionClass.type === "noCode" &&
-                          trigger.actionClass.noCodeConfig?.urlFilters &&
-                          trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
-                            <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                              {t("environments.surveys.edit.url_filters")}:{" "}
-                              {trigger.actionClass.noCodeConfig.urlFilters.map((urlFilter, index) => (
-                                <span key={index}>
-                                  {urlFilter.rule} <b>{urlFilter.value}</b>
-                                  {trigger.actionClass.type === "noCode" &&
-                                    index !==
-                                      (trigger.actionClass.noCodeConfig?.urlFilters?.length || 0) - 1 &&
-                                    ", "}
-                                </span>
-                              ))}
-                            </span>
-                          ) : null}
-                        </div>
+                        <ActionClassInfo actionClass={trigger.actionClass} />
                       </div>
                     </div>
                     <Trash2Icon

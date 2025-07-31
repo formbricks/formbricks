@@ -503,6 +503,7 @@
       "action_with_key_already_exists": "Aktion mit dem Schlüssel {key} existiert bereits",
       "action_with_name_already_exists": "Aktion mit dem Namen {name} existiert bereits",
       "add_css_class_or_id": "CSS-Klasse oder ID hinzufügen",
+      "add_regular_expression_here": "Fügen Sie hier einen regulären Ausdruck hinzu",
       "add_url": "URL hinzufügen",
       "click": "Klicken",
       "contains": "enthält",
@@ -518,6 +519,7 @@
       "eg_user_clicked_download_button": "z.B. Benutzer hat auf 'Herunterladen' geklickt",
       "ends_with": "endet mit",
       "enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked": "Teste eine URL, um zu sehen, ob der Nutzer deine Umfrage sehen würde.",
+      "enter_url": "z.B. https://app.com/dashboard",
       "exactly_matches": "Stimmt exakt überein",
       "exit_intent": "Will Seite verlassen",
       "fifty_percent_scroll": "50% Scroll",
@@ -526,9 +528,14 @@
       "if_a_user_clicks_a_button_with_a_specific_text": "Wenn ein Benutzer auf einen Button mit einem bestimmten Text klickt",
       "in_your_code_read_more_in_our": "in deinem Code. Lies mehr in unserem",
       "inner_text": "Innerer Text",
+      "invalid_action_type_code": "Ungültiger Aktionstyp für Code-Aktion",
+      "invalid_action_type_no_code": "Ungültiger Aktionstyp für NoCode-Aktion",
       "invalid_css_selector": "Ungültiger CSS-Selektor",
+      "invalid_match_type": "Die ausgewählte Option ist nicht verfügbar.",
+      "invalid_regex": "Bitte verwenden Sie einen gültigen regulären Ausdruck.",
       "limit_the_pages_on_which_this_action_gets_captured": "Begrenze die Seiten, auf denen diese Aktion erfasst wird",
       "limit_to_specific_pages": "Auf bestimmte Seiten beschränken",
+      "matches_regex": "Entspricht Regex",
       "on_all_pages": "Auf allen Seiten",
       "page_filter": "Seitenfilter",
       "page_view": "Seitenansicht",
@@ -548,7 +555,9 @@
       "user_clicked_download_button": "Benutzer hat auf 'Herunterladen' geklickt",
       "what_did_your_user_do": "Was hat dein Nutzer gemacht?",
       "what_is_the_user_doing": "Was macht der Nutzer?",
-      "you_can_track_code_action_anywhere_in_your_app_using": "Du kannst Code-Aktionen überall in deiner App tracken mit"
+      "you_can_track_code_action_anywhere_in_your_app_using": "Du kannst Code-Aktionen überall in deiner App tracken mit",
+      "your_survey_would_be_shown_on_this_url": "Ihre Umfrage wäre unter dieser URL angezeigt.",
+      "your_survey_would_not_be_shown": "Ihre Umfrage wäre nicht angezeigt."
     },
     "connect": {
       "congrats": "Glückwunsch!",
@@ -2840,6 +2849,6 @@
     "usability_question_8_headline": "Die Nutzung des Systems fühlte sich wie eine Belastung an.",
     "usability_question_9_headline": "Ich fühlte mich beim Benutzen des Systems sicher.",
     "usability_rating_description": "Bewerte die wahrgenommene Benutzerfreundlichkeit, indem du die Nutzer bittest, ihre Erfahrung mit deinem Produkt mittels eines standardisierten 10-Fragen-Fragebogens zu bewerten.",
-    "usability_score_name": "System Usability Scale Survey (SUS)"
+    "usability_score_name": "System Usability Score Survey (SUS)"
   }
 }
