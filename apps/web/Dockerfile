@@ -44,9 +44,6 @@ WORKDIR /app
 # Prepare the build
 COPY . .
 
-# Ensure vendor directory is available for npm install
-COPY vendor/ ./vendor/
-
 # Create a .env file
 RUN touch apps/web/.env
 
