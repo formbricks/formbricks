@@ -2,17 +2,23 @@
 
 import {
   SelectedFilterValue,
+  TResponseStatus,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { Button } from "@/modules/ui/components/button";
-import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
-import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -72,7 +78,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           )?.filterOptions[0],
         },
       };
-      setFilterValue({ filter: [...filterValue.filter], onlyComplete: filterValue.onlyComplete });
+      setFilterValue({ filter: [...filterValue.filter], responseStatus: filterValue.responseStatus });
     } else {
       // Update the existing value at the specified index
       filterValue.filter[index].questionType = value;
@@ -93,7 +99,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
         // keep the filter if questionType is selected and filterComboBoxValue is selected
         return s.questionType.hasOwnProperty("label") && s.filterType.filterComboBoxValue?.length;
       }),
-      onlyComplete: filterValue.onlyComplete,
+      responseStatus: filterValue.responseStatus,
     });
   };
 
@@ -120,8 +126,8 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   };
 
   const handleClearAllFilters = () => {
-    setFilterValue((filterValue) => ({ ...filterValue, filter: [] }));
-    setSelectedFilter((selectedFilters) => ({ ...selectedFilters, filter: [] }));
+    setFilterValue((filterValue) => ({ ...filterValue, filter: [], responseStatus: "all" }));
+    setSelectedFilter((selectedFilters) => ({ ...selectedFilters, filter: [], responseStatus: "all" }));
     setIsOpen(false);
   };
 
@@ -158,8 +164,8 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     setFilterValue({ ...filterValue });
   };
 
-  const handleCheckOnlyComplete = (checked: boolean) => {
-    setFilterValue({ ...filterValue, onlyComplete: checked });
+  const handleResponseStatusChange = (responseStatus: TResponseStatus) => {
+    setFilterValue({ ...filterValue, responseStatus });
   };
 
   // remove the filter which has already been selected
@@ -203,8 +209,9 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
-        <div className="mb-8 flex flex-wrap items-start justify-between">
+        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]"
+        onOpenAutoFocus={(event) => event.preventDefault()}>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-2">
           <p className="text-slate800 hidden text-lg font-semibold sm:block">
             {t("environments.surveys.summary.show_all_responses_that_match")}
           </p>
@@ -212,16 +219,24 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
             {t("environments.surveys.summary.show_all_responses_where")}
           </p>
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-normal text-slate-600">
-              {t("environments.surveys.summary.only_completed")}
-            </label>
-            <Checkbox
-              className={clsx("rounded-md", filterValue.onlyComplete && "bg-black text-white")}
-              checked={filterValue.onlyComplete}
-              onCheckedChange={(checked) => {
-                typeof checked === "boolean" && handleCheckOnlyComplete(checked);
+            <Select
+              onValueChange={(val) => {
+                handleResponseStatusChange(val as TResponseStatus);
               }}
-            />
+              defaultValue={filterValue.responseStatus}>
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="all">
+                  {t("environments.surveys.filter.complete_and_partial_responses")}
+                </SelectItem>
+                <SelectItem value="complete">
+                  {t("environments.surveys.filter.complete_responses")}
+                </SelectItem>
+                <SelectItem value="partial">{t("environments.surveys.filter.partial_responses")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

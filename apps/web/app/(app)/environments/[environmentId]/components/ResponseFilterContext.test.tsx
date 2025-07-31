@@ -28,7 +28,7 @@ const TestComponent = () => {
 
   return (
     <div>
-      <div data-testid="onlyComplete">{selectedFilter.onlyComplete.toString()}</div>
+      <div data-testid="responseStatus">{selectedFilter.responseStatus}</div>
       <div data-testid="filterLength">{selectedFilter.filter.length}</div>
       <div data-testid="questionOptionsLength">{selectedOptions.questionOptions.length}</div>
       <div data-testid="questionFilterOptionsLength">{selectedOptions.questionFilterOptions.length}</div>
@@ -44,7 +44,7 @@ const TestComponent = () => {
                 filterType: { filterValue: "value1", filterComboBoxValue: "option1" },
               },
             ],
-            onlyComplete: true,
+            responseStatus: "complete",
           })
         }>
         Update Filter
@@ -81,7 +81,7 @@ describe("ResponseFilterContext", () => {
       </ResponseFilterProvider>
     );
 
-    expect(screen.getByTestId("onlyComplete").textContent).toBe("false");
+    expect(screen.getByTestId("responseStatus").textContent).toBe("all");
     expect(screen.getByTestId("filterLength").textContent).toBe("0");
     expect(screen.getByTestId("questionOptionsLength").textContent).toBe("0");
     expect(screen.getByTestId("questionFilterOptionsLength").textContent).toBe("0");
@@ -99,7 +99,7 @@ describe("ResponseFilterContext", () => {
     const updateButton = screen.getByText("Update Filter");
     await userEvent.click(updateButton);
 
-    expect(screen.getByTestId("onlyComplete").textContent).toBe("true");
+    expect(screen.getByTestId("responseStatus").textContent).toBe("complete");
     expect(screen.getByTestId("filterLength").textContent).toBe("1");
   });
 
