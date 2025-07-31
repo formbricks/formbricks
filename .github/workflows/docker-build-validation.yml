@@ -1,13 +1,18 @@
 name: Docker Build Validation
 
 on:
-  pull_request: &pr-defs
+  pull_request:
     branches:
       - main
     paths-ignore:
-      - helm-chart
-      - infra
-  merge_group: *pr-defs
+      - helm-chart/**
+      - infra/**
+  merge_group:
+    branches:
+      - main
+    paths-ignore:
+      - helm-chart/**
+      - infra/**
   workflow_dispatch:
 
 permissions:
