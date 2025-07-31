@@ -749,37 +749,40 @@ export function Survey({
             offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
           )}>
           <div className={cn("fb-relative")}>
-            <div className="fb-flex fb-flex-col fb-w-full fb-items-end fb-absolute fb-top-0 fb-left-0 fb-right-0">
+            <div className="fb-flex fb-flex-col fb-w-full fb-items-end">
               {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
 
-              <div className="fb-flex fb-items-center">
-                {getShowLanguageSwitch(offset) && (
-                  <LanguageSwitch
-                    surveyLanguages={localSurvey.languages}
-                    setSelectedLanguageCode={setselectedLanguage}
-                    hoverColor={styling.questionColor?.light ?? "#000000"}
-                    borderRadius={styling.roundness ?? 8}
-                  />
-                )}
+              <div className="fb-h-5 fb-relative fb-w-full">
+                <div className="fb-flex fb-items-center fb-justify-end fb-absolute fb-top-0 fb-right-0">
+                  {getShowLanguageSwitch(offset) && (
+                    <LanguageSwitch
+                      surveyLanguages={localSurvey.languages}
+                      setSelectedLanguageCode={setselectedLanguage}
+                      hoverColor={styling.questionColor?.light ?? "#000000"}
+                      borderRadius={styling.roundness ?? 8}
+                    />
+                  )}
 
-                {getShowLanguageSwitch(offset) && getShowSurveyCloseButton(offset) && (
-                  <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-mx-1"></div>
-                )}
-                {getShowSurveyCloseButton(offset) && (
-                  <SurveyCloseButton
-                    onClose={onClose}
-                    hoverColor={styling.questionColor?.light ?? "#000000"}
-                    borderRadius={styling.roundness ?? 8}
-                  />
-                )}
+                  {getShowLanguageSwitch(offset) && getShowSurveyCloseButton(offset) && (
+                    <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-mx-1"></div>
+                  )}
+
+                  {getShowSurveyCloseButton(offset) && (
+                    <SurveyCloseButton
+                      onClose={onClose}
+                      hoverColor={styling.questionColor?.light ?? "#000000"}
+                      borderRadius={styling.roundness ?? 8}
+                    />
+                  )}
+                </div>
               </div>
             </div>
             <div
               ref={contentRef}
               className={cn(
                 loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-                fullSizeCards ? "" : "fb-my-auto",
-                "fb-pt-8"
+                fullSizeCards ? "" : "fb-my-auto"
+                // "fb-pt-8"
               )}>
               {content()}
             </div>

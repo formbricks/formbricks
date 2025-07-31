@@ -10,9 +10,9 @@ export function Headline({ headline, questionId, required = true, alignTextCente
   return (
     <label
       htmlFor={questionId}
-      className="fb-text-heading fb-relative fb-mb-1.5 fb-block fb-text-base fb-font-semibold fb-leading-6">
+      className="fb-text-heading fb-mb-1.5 fb-text-base fb-font-semibold fb-flex fb-flex-col">
       <span
-        className="fb-text-heading fb-text-xs fb-opacity-60 fb-absolute -fb-top-4"
+        className="fb-text-heading fb-text-xs fb-opacity-60"
         tabIndex={-1}
         style={{ visibility: required ? "hidden" : "visible" }}
         aria-hidden="true">
