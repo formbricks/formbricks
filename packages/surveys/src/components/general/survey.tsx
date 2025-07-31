@@ -764,7 +764,7 @@ export function Survey({
                   )}
 
                   {getShowLanguageSwitch(offset) && getShowSurveyCloseButton(offset) && (
-                    <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-mx-1"></div>
+                    <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-mx-1 fb-z-[1001]"></div>
                   )}
 
                   {getShowSurveyCloseButton(offset) && (
