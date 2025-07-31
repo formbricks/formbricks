@@ -4,7 +4,7 @@ export function FormbricksBranding() {
       href="https://formbricks.com?utm_source=survey_branding"
       target="_blank"
       tabIndex={-1}
-      className="fb-my-2 fb-flex fb-justify-center"
+      className="fb-flex fb-justify-center"
       rel="noopener">
       <p className="fb-text-signature fb-text-xs">
         Powered by{" "}

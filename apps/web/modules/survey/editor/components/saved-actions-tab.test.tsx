@@ -20,6 +20,13 @@ describe("SavedActionsTab", () => {
         description: "Description for No Code Action",
         type: "noCode",
         environmentId: "env1",
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [{ rule: "exactMatch", value: "https://example.com" }],
+          elementSelector: {
+            cssSelector: ".button",
+          },
+        },
       } as unknown as ActionClass,
       {
         id: "2",
@@ -29,6 +36,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Code Action",
         type: "code",
         environmentId: "env1",
+        key: "code-action-key",
       } as unknown as ActionClass,
     ];
 
@@ -74,6 +82,13 @@ describe("SavedActionsTab", () => {
         description: "Description for Action One",
         type: "noCode",
         environmentId: "env1",
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [{ rule: "contains", value: "/dashboard" }],
+          elementSelector: {
+            cssSelector: ".button",
+          },
+        },
       } as unknown as ActionClass,
     ];
 
@@ -121,6 +136,74 @@ describe("SavedActionsTab", () => {
     expect(setOpen).toHaveBeenCalledWith(false);
   });
 
+  test("displays action classes with regex URL filters correctly", () => {
+    const actionClasses: ActionClass[] = [
+      {
+        id: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Regex Action",
+        description: "Action with regex URL filter",
+        type: "noCode",
+        environmentId: "env1",
+        noCodeConfig: {
+          type: "pageView",
+          urlFilters: [{ rule: "matchesRegex", value: "user/\\d+" }],
+        },
+      } as unknown as ActionClass,
+      {
+        id: "2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Multiple Filters Action",
+        description: "Action with multiple URL filters including regex",
+        type: "noCode",
+        environmentId: "env1",
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [
+            { rule: "startsWith", value: "https://app.example.com" },
+            { rule: "matchesRegex", value: "dashboard.*\\?tab=\\w+" },
+          ],
+          elementSelector: {
+            cssSelector: ".nav-button",
+          },
+        },
+      } as unknown as ActionClass,
+    ];
+
+    const localSurvey: TSurvey = {
+      id: "survey1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      questions: [],
+      triggers: [],
+      environmentId: "env1",
+      status: "draft",
+    } as any;
+
+    const setLocalSurvey = vi.fn();
+    const setOpen = vi.fn();
+
+    render(
+      <SavedActionsTab
+        actionClasses={actionClasses}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        setOpen={setOpen}
+      />
+    );
+
+    // Check if actions with regex filters are displayed
+    expect(screen.getByText("Regex Action")).toBeInTheDocument();
+    expect(screen.getByText("Multiple Filters Action")).toBeInTheDocument();
+
+    // Verify the ActionClassInfo component displays the URL filters
+    expect(screen.getByText("Action with regex URL filter")).toBeInTheDocument();
+    expect(screen.getByText("Action with multiple URL filters including regex")).toBeInTheDocument();
+  });
+
   test("displays 'No saved actions found' message when no actions are available", () => {
     const actionClasses: ActionClass[] = [];
     const localSurvey: TSurvey = {
@@ -149,6 +232,68 @@ describe("SavedActionsTab", () => {
     expect(noActionsMessage).toBeInTheDocument();
   });
 
+  test("excludes actions that are already used as triggers in the survey", () => {
+    const actionClasses: ActionClass[] = [
+      {
+        id: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Available Action",
+        description: "This action is available",
+        type: "noCode",
+        environmentId: "env1",
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [{ rule: "exactMatch", value: "https://example.com" }],
+          elementSelector: {
+            cssSelector: ".button",
+          },
+        },
+      } as unknown as ActionClass,
+      {
+        id: "2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Used Action",
+        description: "This action is already used",
+        type: "code",
+        environmentId: "env1",
+        key: "used-action-key",
+      } as unknown as ActionClass,
+    ];
+
+    const localSurvey: TSurvey = {
+      id: "survey1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      questions: [],
+      triggers: [
+        { actionClass: actionClasses[1] }, // "Used Action" is already a trigger
+      ],
+      environmentId: "env1",
+      status: "draft",
+    } as any;
+
+    const setLocalSurvey = vi.fn();
+    const setOpen = vi.fn();
+
+    render(
+      <SavedActionsTab
+        actionClasses={actionClasses}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        setOpen={setOpen}
+      />
+    );
+
+    // Available action should be displayed
+    expect(screen.getByText("Available Action")).toBeInTheDocument();
+
+    // Used action should not be displayed
+    expect(screen.queryByText("Used Action")).not.toBeInTheDocument();
+  });
+
   test("filters actionClasses correctly with special characters, diacritics, and non-Latin scripts", async () => {
     const user = userEvent.setup();
     const actionClasses: ActionClass[] = [
@@ -160,6 +305,13 @@ describe("SavedActionsTab", () => {
         description: "Description for Action One",
         type: "noCode",
         environmentId: "env1",
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [{ rule: "contains", value: "special" }],
+          elementSelector: {
+            cssSelector: ".special",
+          },
+        },
       } as unknown as ActionClass,
       {
         id: "2",
@@ -169,6 +321,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Action Two",
         type: "code",
         environmentId: "env1",
+        key: "cyrillic-action",
       } as unknown as ActionClass,
       {
         id: "3",
@@ -178,6 +331,10 @@ describe("SavedActionsTab", () => {
         description: "Description for Another Action",
         type: "noCode",
         environmentId: "env1",
+        noCodeConfig: {
+          type: "pageView",
+          urlFilters: [{ rule: "matchesRegex", value: "special.*symbols" }],
+        },
       } as unknown as ActionClass,
     ];
 
@@ -228,6 +385,13 @@ describe("SavedActionsTab", () => {
         description: "Description for Action One",
         type: "noCode",
         environmentId: "env1",
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [{ rule: "exactMatch", value: "https://example.com" }],
+          elementSelector: {
+            cssSelector: ".button-one",
+          },
+        },
       } as unknown as ActionClass,
       {
         id: "2",
@@ -237,6 +401,7 @@ describe("SavedActionsTab", () => {
         description: "Description for Action Two",
         type: "code",
         environmentId: "env1",
+        key: "action-two-key",
       } as unknown as ActionClass,
       {
         id: "3",
@@ -246,6 +411,10 @@ describe("SavedActionsTab", () => {
         description: "Description for Another Action",
         type: "noCode",
         environmentId: "env1",
+        noCodeConfig: {
+          type: "pageView",
+          urlFilters: [{ rule: "matchesRegex", value: "another.*page" }],
+        },
       } as unknown as ActionClass,
     ];
 
@@ -309,5 +478,70 @@ describe("SavedActionsTab", () => {
     // Check if "Action One" and "Action Two" are not present
     expect(screen.queryByText("Action One")).toBeNull();
     expect(screen.queryByText("Action Two")).toBeNull();
+  });
+
+  test("handles action classes with mixed URL filter rule types including regex", async () => {
+    const user = userEvent.setup();
+    const actionClasses: ActionClass[] = [
+      {
+        id: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: "Mixed Rules Action",
+        description: "Action with multiple rule types",
+        type: "noCode",
+        environmentId: "env1",
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [
+            { rule: "startsWith", value: "https://app" },
+            { rule: "contains", value: "/dashboard" },
+            { rule: "matchesRegex", value: "\\?section=\\w+" },
+            { rule: "endsWith", value: "#main" },
+          ],
+          elementSelector: {
+            cssSelector: ".complex-button",
+          },
+        },
+      } as unknown as ActionClass,
+    ];
+
+    const localSurvey: TSurvey = {
+      id: "survey1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      questions: [],
+      triggers: [],
+      environmentId: "env1",
+      status: "draft",
+    } as any;
+
+    const setLocalSurvey = vi.fn();
+    const setOpen = vi.fn();
+
+    render(
+      <SavedActionsTab
+        actionClasses={actionClasses}
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        setOpen={setOpen}
+      />
+    );
+
+    // Verify the action is displayed
+    expect(screen.getByText("Mixed Rules Action")).toBeInTheDocument();
+    expect(screen.getByText("Action with multiple rule types")).toBeInTheDocument();
+
+    // Click on the action to add it as a trigger
+    const actionElement = screen.getByText("Mixed Rules Action");
+    await user.click(actionElement);
+
+    // Verify the action was added to triggers
+    expect(setLocalSurvey).toHaveBeenCalledTimes(1);
+    const updateFunction = setLocalSurvey.mock.calls[0][0];
+    const result = updateFunction(localSurvey);
+    expect(result.triggers).toHaveLength(1);
+    expect(result.triggers[0].actionClass).toEqual(actionClasses[0]);
   });
 });

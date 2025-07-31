@@ -1,22 +1,32 @@
+import { Select, SelectContent, SelectItem } from "@/modules/ui/components/select";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TActionClassInput } from "@formbricks/types/action-classes";
+import { ACTION_CLASS_PAGE_URL_RULES, TActionClassInput } from "@formbricks/types/action-classes";
 import { PageUrlSelector } from "./page-url-selector";
 
 // Mock testURLmatch function
 vi.mock("@/lib/utils/url", () => ({
-  testURLmatch: vi.fn((testUrl, value, rule) => {
-    // Simple mock implementation
-    if (rule === "exactMatch" && testUrl === value) return "yes";
-    if (rule === "contains" && testUrl.includes(value)) return "yes";
-    if (rule === "startsWith" && testUrl.startsWith(value)) return "yes";
-    if (rule === "endsWith" && testUrl.endsWith(value)) return "yes";
-    if (rule === "notMatch" && testUrl !== value) return "yes";
-    if (rule === "notContains" && !testUrl.includes(value)) return "yes";
-    return "no";
+  testURLmatch: vi.fn((testUrl, value, rule, t) => {
+    // Updated mock implementation to match new function signature
+    if (rule === "exactMatch") return testUrl === value;
+    if (rule === "contains") return testUrl.includes(value);
+    if (rule === "startsWith") return testUrl.startsWith(value);
+    if (rule === "endsWith") return testUrl.endsWith(value);
+    if (rule === "notMatch") return testUrl !== value;
+    if (rule === "notContains") return !testUrl.includes(value);
+    if (rule === "matchesRegex") {
+      try {
+        const regex = new RegExp(value);
+        return regex.test(testUrl);
+      } catch {
+        throw new Error(t("environments.actions.invalid_regex"));
+      }
+    }
+    throw new Error(t("environments.actions.invalid_match_type"));
   }),
 }));
 
@@ -66,7 +76,7 @@ vi.mock("@/modules/ui/components/input", () => ({
       placeholder={placeholder}
       disabled={disabled}
       value={value || ""}
-      onChange={(e) => onChange && onChange(e)}
+      onChange={(e) => onChange?.(e)}
       data-invalid={isInvalid}
       autoComplete={autoComplete}
       {...rest}
@@ -95,25 +105,43 @@ vi.mock("@/modules/ui/components/button", () => ({
 }));
 
 // Mock the Select component
-vi.mock("@/modules/ui/components/select", () => ({
-  Select: ({ children, onValueChange, value, name, disabled }: any) => (
-    <div data-testid={`select-${name}`} data-value={value} data-disabled={disabled}>
-      {children}
-    </div>
-  ),
-  SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
-  SelectItem: ({ children, value }: any) => (
-    <div data-testid={`select-item-${value}`} data-value={value}>
-      {children}
-    </div>
-  ),
-  SelectTrigger: ({ children, className }: any) => (
-    <div data-testid="select-trigger" className={className}>
-      {children}
-    </div>
-  ),
-  SelectValue: ({ placeholder }: any) => <div data-testid="select-value">{placeholder}</div>,
-}));
+vi.mock("@/modules/ui/components/select", async () => {
+  const React = await import("react");
+  const SelectContext = React.createContext<{ onValueChange?: (value: string) => void }>({});
+
+  return {
+    Select: ({ children, value, name, disabled, onValueChange }: any) => {
+      const contextValue = React.useMemo(() => ({ onValueChange }), [onValueChange]);
+      return (
+        <SelectContext.Provider value={contextValue}>
+          <div data-testid={`select-${name}`} data-value={value} data-disabled={disabled}>
+            {children}
+          </div>
+        </SelectContext.Provider>
+      );
+    },
+    SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
+    SelectItem: ({ children, value }: any) => {
+      const context = React.useContext(SelectContext);
+      return (
+        <button // NOSONAR // This is a mocked component to test the logic
+          type="button"
+          data-testid={`select-item-${value}`}
+          data-value={value}
+          onClick={() => context.onValueChange?.(value)}
+          style={{ cursor: "pointer" }}>
+          {children}
+        </button>
+      );
+    },
+    SelectTrigger: ({ children, className }: any) => (
+      <div data-testid="select-trigger" className={className}>
+        {children}
+      </div>
+    ),
+    SelectValue: ({ placeholder }: any) => <div data-testid="select-value">{placeholder}</div>,
+  };
+});
 
 // Mock the Label component
 vi.mock("@/modules/ui/components/label", () => ({
@@ -154,6 +182,7 @@ vi.mock("@/modules/ui/components/form", () => ({
       fieldState: { error: null },
     }),
   FormItem: ({ children, className }: any) => <div className={className}>{children}</div>,
+  FormError: () => <div>Form Error</div>,
 }));
 
 // Mock the tolgee translation
@@ -166,7 +195,7 @@ vi.mock("@tolgee/react", () => ({
 // Helper component for the form
 const TestWrapper = ({
   urlFilters = [] as {
-    rule: "startsWith" | "exactMatch" | "contains" | "endsWith" | "notMatch" | "notContains";
+    rule: "startsWith" | "exactMatch" | "contains" | "endsWith" | "notMatch" | "notContains" | "matchesRegex";
     value: string;
   }[],
   isReadOnly = false,
@@ -188,6 +217,7 @@ const TestWrapper = ({
 describe("PageUrlSelector", () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
   });
 
   test("renders with default values and 'all' filter type", () => {
@@ -233,21 +263,267 @@ describe("PageUrlSelector", () => {
     expect(trashIcons.length).toBe(2);
   });
 
-  test("test URL match functionality", async () => {
+  test("test URL match functionality - successful match", async () => {
     const testUrl = "https://example.com/pricing";
     const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
 
     render(<TestWrapper urlFilters={urlFilters} />);
 
     const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
-    // Updated testId to match the actual button's testId from our mock
     const testButton = screen.getByTestId("button-environments.actions.test_match");
 
     await userEvent.type(testInput, testUrl);
     await userEvent.click(testButton);
 
-    // Toast should be called to show match result
+    // Toast should be called to show successful match
     const toast = await import("react-hot-toast");
-    expect(toast.default.success).toHaveBeenCalled();
+    expect(toast.default.success).toHaveBeenCalledWith(
+      "environments.actions.your_survey_would_be_shown_on_this_url"
+    );
+  });
+
+  test("test URL match functionality - no match", async () => {
+    const testUrl = "https://example.com/dashboard";
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // Toast should be called to show no match
+    const toast = await import("react-hot-toast");
+    expect(toast.default.error).toHaveBeenCalledWith("environments.actions.your_survey_would_not_be_shown");
+  });
+
+  test("test URL match functionality with regex - valid regex", async () => {
+    const testUrl = "https://example.com/user/123";
+    const urlFilters = [{ rule: "matchesRegex" as const, value: "/user/\\d+" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // Toast should be called to show successful match
+    const toast = await import("react-hot-toast");
+    expect(toast.default.success).toHaveBeenCalledWith(
+      "environments.actions.your_survey_would_be_shown_on_this_url"
+    );
+  });
+
+  test("test URL match functionality with regex - invalid regex", async () => {
+    const testUrl = "https://example.com/user/123";
+    const urlFilters = [{ rule: "matchesRegex" as const, value: "[invalid-regex" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // Toast should be called to show error
+    const toast = await import("react-hot-toast");
+    expect(toast.default.error).toHaveBeenCalledWith("environments.actions.invalid_regex");
+  });
+
+  test("test URL match functionality with regex - no match", async () => {
+    const testUrl = "https://example.com/user/abc";
+    const urlFilters = [{ rule: "matchesRegex" as const, value: "/user/\\d+" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // Toast should be called to show no match
+    const toast = await import("react-hot-toast");
+    expect(toast.default.error).toHaveBeenCalledWith("environments.actions.your_survey_would_not_be_shown");
+  });
+
+  test("handles multiple URL filters with OR logic", async () => {
+    const testUrl = "https://example.com/pricing";
+    const urlFilters = [
+      { rule: "contains" as const, value: "dashboard" },
+      { rule: "contains" as const, value: "pricing" },
+    ];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // Should match because one of the filters matches (OR logic)
+    const toast = await import("react-hot-toast");
+    expect(toast.default.success).toHaveBeenCalledWith(
+      "environments.actions.your_survey_would_be_shown_on_this_url"
+    );
+  });
+
+  test("shows correct placeholder for regex input", () => {
+    const urlFilters = [{ rule: "matchesRegex" as const, value: "" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const input = screen.getByTestId("input-noCodeConfig.urlFilters.0.value");
+    expect(input).toHaveAttribute("placeholder", "environments.actions.add_regular_expression_here");
+  });
+
+  test("shows correct placeholder for non-regex input", () => {
+    const urlFilters = [{ rule: "exactMatch" as const, value: "" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const input = screen.getByTestId("input-noCodeConfig.urlFilters.0.value");
+    expect(input).toHaveAttribute("placeholder", "environments.actions.enter_url");
+  });
+
+  test("renders all available rule options from ACTION_CLASS_PAGE_URL_RULES", () => {
+    render(<TestWrapper urlFilters={[{ rule: "exactMatch", value: "https://example.com" }]} />);
+
+    // Check that all rule options are rendered
+    ACTION_CLASS_PAGE_URL_RULES.forEach((rule) => {
+      expect(screen.getByTestId(`select-item-${rule}`)).toBeInTheDocument();
+    });
+  });
+
+  test("displays correct translated labels for each rule type", () => {
+    render(<TestWrapper urlFilters={[{ rule: "exactMatch", value: "https://example.com" }]} />);
+
+    // Test that each rule has the correct translated label
+    expect(screen.getByTestId("select-item-exactMatch")).toHaveTextContent(
+      "environments.actions.exactly_matches"
+    );
+    expect(screen.getByTestId("select-item-contains")).toHaveTextContent("environments.actions.contains");
+    expect(screen.getByTestId("select-item-startsWith")).toHaveTextContent(
+      "environments.actions.starts_with"
+    );
+    expect(screen.getByTestId("select-item-endsWith")).toHaveTextContent("environments.actions.ends_with");
+    expect(screen.getByTestId("select-item-notMatch")).toHaveTextContent(
+      "environments.actions.does_not_exactly_match"
+    );
+    expect(screen.getByTestId("select-item-notContains")).toHaveTextContent(
+      "environments.actions.does_not_contain"
+    );
+    expect(screen.getByTestId("select-item-matchesRegex")).toHaveTextContent(
+      "environments.actions.matches_regex"
+    );
+  });
+
+  test("test input styling changes based on match result", async () => {
+    const testUrl = "https://example.com/pricing";
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    // Test URL that should match
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // The input should have success styling (this tests the useMemo matchClass logic)
+    expect(testInput).toHaveClass("border-green-500", "bg-green-50");
+  });
+
+  test("test input styling for no match", async () => {
+    const testUrl = "https://example.com/dashboard";
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    await userEvent.type(testInput, testUrl);
+    await userEvent.click(testButton);
+
+    // The input should have error styling
+    expect(testInput).toHaveClass("border-red-200", "bg-red-50");
+  });
+
+  test("test input has default styling before any test", () => {
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+
+    // The input should have default styling
+    expect(testInput).toHaveClass("border-slate-200");
+  });
+
+  test("resets match state when test URL is changed", async () => {
+    const urlFilters = [{ rule: "contains" as const, value: "pricing" }];
+
+    render(<TestWrapper urlFilters={urlFilters} />);
+
+    const testInput = screen.getByTestId("input-noCodeConfig.urlFilters.testUrl");
+    const testButton = screen.getByTestId("button-environments.actions.test_match");
+
+    // First, perform a test that matches
+    await userEvent.type(testInput, "https://example.com/pricing");
+    await userEvent.click(testButton);
+
+    // Verify the input has success styling
+    expect(testInput).toHaveClass("border-green-500", "bg-green-50");
+
+    // Clear and type new URL
+    await userEvent.clear(testInput);
+    await userEvent.type(testInput, "https://example.com/dashboard");
+
+    // The styling should reset to default while typing
+    expect(testInput).toHaveClass("border-slate-200");
+  });
+
+  test("Select mock properly handles different selection values", async () => {
+    const mockOnValueChange = vi.fn();
+
+    render(
+      <div>
+        <Select name="test-select" onValueChange={mockOnValueChange}>
+          <SelectContent>
+            <SelectItem value="exactMatch">Exact Match</SelectItem>
+            <SelectItem value="contains">Contains</SelectItem>
+            <SelectItem value="startsWith">Starts With</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    );
+
+    // Test clicking different select items
+    const exactMatchItem = screen.getByTestId("select-item-exactMatch");
+    const containsItem = screen.getByTestId("select-item-contains");
+    const startsWithItem = screen.getByTestId("select-item-startsWith");
+
+    // Click exactMatch
+    await userEvent.click(exactMatchItem);
+    expect(mockOnValueChange).toHaveBeenCalledWith("exactMatch");
+
+    // Click contains
+    await userEvent.click(containsItem);
+    expect(mockOnValueChange).toHaveBeenCalledWith("contains");
+
+    // Click startsWith
+    await userEvent.click(startsWithItem);
+    expect(mockOnValueChange).toHaveBeenCalledWith("startsWith");
+
+    // Verify each call was made with the correct value
+    expect(mockOnValueChange).toHaveBeenCalledTimes(3);
   });
 });

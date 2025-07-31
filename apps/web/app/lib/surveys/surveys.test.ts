@@ -320,7 +320,7 @@ describe("surveys", () => {
 
     test("should return empty filters when no selections", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [],
       };
 
@@ -331,7 +331,7 @@ describe("surveys", () => {
 
     test("should filter by completed responses", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: true,
+        responseStatus: "complete",
         filter: [],
       };
 
@@ -342,7 +342,7 @@ describe("surveys", () => {
 
     test("should filter by date range", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [],
       };
 
@@ -355,7 +355,7 @@ describe("surveys", () => {
 
     test("should filter by tags", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Tags", label: "Tag 1", id: "tag1" },
@@ -376,7 +376,7 @@ describe("surveys", () => {
 
     test("should filter by open text questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -397,7 +397,7 @@ describe("surveys", () => {
 
     test("should filter by address questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -418,7 +418,7 @@ describe("surveys", () => {
 
     test("should filter by contact info questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -439,7 +439,7 @@ describe("surveys", () => {
 
     test("should filter by ranking questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -460,7 +460,7 @@ describe("surveys", () => {
 
     test("should filter by multiple choice single questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -481,7 +481,7 @@ describe("surveys", () => {
 
     test("should filter by multiple choice multi questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -502,7 +502,7 @@ describe("surveys", () => {
 
     test("should filter by NPS questions with different operations", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -523,7 +523,7 @@ describe("surveys", () => {
 
     test("should filter by rating questions with less than operation", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -544,7 +544,7 @@ describe("surveys", () => {
 
     test("should filter by CTA questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -565,7 +565,7 @@ describe("surveys", () => {
 
     test("should filter by consent questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -586,7 +586,7 @@ describe("surveys", () => {
 
     test("should filter by picture selection questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -607,7 +607,7 @@ describe("surveys", () => {
 
     test("should filter by matrix questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -628,7 +628,7 @@ describe("surveys", () => {
 
     test("should filter by hidden fields", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Hidden Fields", label: "plan", id: "plan" },
@@ -644,7 +644,7 @@ describe("surveys", () => {
 
     test("should filter by attributes", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Attributes", label: "role", id: "role" },
@@ -660,7 +660,7 @@ describe("surveys", () => {
 
     test("should filter by other filters", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Other Filters", label: "Language", id: "language" },
@@ -676,7 +676,7 @@ describe("surveys", () => {
 
     test("should filter by meta fields", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Meta", label: "source", id: "source" },
@@ -692,7 +692,7 @@ describe("surveys", () => {
 
     test("should handle multiple filters together", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: true,
+        responseStatus: "complete",
         filter: [
           {
             questionType: {
