@@ -632,11 +632,11 @@ describe("extractChoiceIdsFromResponse", () => {
       expect(result).toEqual(["choice-1", "choice-2"]);
     });
 
-    test("should filter out non-matching choices", () => {
+    test("should render other option when non-matching choice is selected", () => {
       const responseValue = ["Option 1", "Non-existent option", "Option 3"];
       const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "default");
 
-      expect(result).toEqual(["choice-1", "choice-3"]);
+      expect(result).toEqual(["choice-1", "other", "choice-3"]);
     });
 
     test("should return empty array for empty response", () => {
@@ -667,13 +667,6 @@ describe("extractChoiceIdsFromResponse", () => {
       const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceSingleQuestion, "default");
 
       expect(result).toEqual(["choice-a"]);
-    });
-
-    test("should return empty array for non-matching single choice", () => {
-      const responseValue = "Non-existent choice";
-      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceSingleQuestion, "default");
-
-      expect(result).toEqual([]);
     });
 
     test("should return empty array for empty string response", () => {
