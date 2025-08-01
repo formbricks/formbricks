@@ -15,6 +15,14 @@ on:
         description: "Docker image tag (leave empty to use release_version)"
         required: false
         type: string
+      environment:
+        description: "Sentry environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
 
 permissions:
   contents: read
@@ -23,7 +31,7 @@ jobs:
   upload-sourcemaps:
     name: Upload Sourcemaps to Sentry
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
@@ -43,4 +51,5 @@ jobs:
         with:
           docker_image: ${{ env.DOCKER_IMAGE }}
           release_version: ${{ inputs.release_version }}
-          sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }} 
+          environment: ${{ inputs.environment }}
+          sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}

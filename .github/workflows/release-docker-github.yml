@@ -9,7 +9,7 @@ on:
   workflow_call:
     inputs:
       IS_PRERELEASE:
-        description: 'Whether this is a prerelease (affects latest tag)'
+        description: "Whether this is a prerelease (affects latest tag)"
         required: false
         type: boolean
         default: false

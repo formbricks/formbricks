@@ -1,59 +1,28 @@
-name: 'Upload Sentry Sourcemaps'
-description: 'Extract sourcemaps from Docker image and upload to Sentry'
+name: "Upload Sentry Sourcemaps"
+description: "Extract sourcemaps from Docker image and upload to Sentry"
 
 inputs:
   docker_image:
-    description: 'Docker image to extract sourcemaps from'
+    description: "Docker image to extract sourcemaps from"
     required: true
   release_version:
-    description: 'Sentry release version (e.g., v1.2.3)'
+    description: "Sentry release version (e.g., v1.2.3)"
     required: true
   sentry_auth_token:
-    description: 'Sentry authentication token'
+    description: "Sentry authentication token"
     required: true
   environment:
-    description: 'Sentry environment (e.g., production, staging)'
+    description: "Sentry environment (e.g., production, staging)"
     required: false
-    default: 'staging'
+    default: "staging"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
-    - name: Validate Sentry auth token
-      shell: bash
-      run: |
-        set -euo pipefail
-        echo "🔐 Validating Sentry authentication token..."
-
-        # Assign token to local variable for secure handling
-        SENTRY_TOKEN="${{ inputs.sentry_auth_token }}"
-
-        # Test the token by making a simple API call to Sentry
-        response=$(curl -s -w "%{http_code}" -o /tmp/sentry_response.json \
-          -H "Authorization: Bearer $SENTRY_TOKEN" \
-          "https://sentry.io/api/0/organizations/formbricks/")
-
-        http_code=$(echo "$response" | tail -n1)
-
-        if [ "$http_code" != "200" ]; then
-          echo "❌ Error: Invalid Sentry auth token (HTTP $http_code)"
-          echo "Please check your SENTRY_AUTH_TOKEN is correct and has the necessary permissions."
-          if [ -f /tmp/sentry_response.json ]; then
-            echo "Response body:"
-            cat /tmp/sentry_response.json
-          fi
-          exit 1
-        fi
-
-        echo "✅ Sentry auth token validated successfully"
-
-        # Clean up temp file
-        rm -f /tmp/sentry_response.json
 
     - name: Extract sourcemaps from Docker image
       shell: bash
@@ -82,25 +51,34 @@ runs:
           # Exit with the original exit code to preserve script success/failure status
           exit $original_exit_code
         }
-        
+
         # Register cleanup function to run on script exit (success or failure)
         trap cleanup_container EXIT
 
         # Extract .next directory containing sourcemaps
         docker cp "$CONTAINER_ID:/home/nextjs/apps/web/.next" ./extracted-next
 
-        # Verify sourcemaps exist
-        if [ ! -d "./extracted-next/static/chunks" ]; then
-          echo "❌ Error: .next/static/chunks directory not found in Docker image"
-          echo "Expected structure: /home/nextjs/apps/web/.next/static/chunks/"
+        # Verify .next directory structure exists (sourcemaps could be in static or server)
+        if [ ! -d "./extracted-next" ]; then
+          echo "❌ Error: .next directory not found in Docker image"
+          echo "Expected structure: /home/nextjs/apps/web/.next/"
           exit 1
         fi
 
-        sourcemap_count=$(find ./extracted-next/static/chunks -name "*.map" | wc -l)
-        echo "✅ Found $sourcemap_count sourcemap files"
+        echo "🔍 Scanning for sourcemaps in both client (/static) and server (/server) directories..."
 
-        if [ "$sourcemap_count" -eq 0 ]; then
-          echo "❌ Error: No sourcemap files found. Check that productionBrowserSourceMaps is enabled."
+        # Count sourcemaps in both locations
+        client_sourcemap_count=$(find ./extracted-next/static -name "*.map" 2>/dev/null | wc -l || echo "0")
+        server_sourcemap_count=$(find ./extracted-next/server -name "*.map" 2>/dev/null | wc -l || echo "0")
+        total_sourcemap_count=$((client_sourcemap_count + server_sourcemap_count))
+
+        echo "✅ Found $client_sourcemap_count client sourcemap files in /static"
+        echo "✅ Found $server_sourcemap_count server sourcemap files in /server"
+        echo "✅ Total sourcemap files: $total_sourcemap_count"
+
+        if [ "$total_sourcemap_count" -eq 0 ]; then
+          echo "❌ Error: No sourcemap files found in either /static or /server directories."
+          echo "Check that productionBrowserSourceMaps is enabled and Sentry plugin is configured correctly."
           exit 1
         fi
 
@@ -113,7 +91,7 @@ runs:
       with:
         environment: ${{ inputs.environment }}
         version: ${{ inputs.release_version }}
-        sourcemaps: './extracted-next/'
+        sourcemaps: "./extracted-next/"
 
     - name: Clean up extracted files
       shell: bash
