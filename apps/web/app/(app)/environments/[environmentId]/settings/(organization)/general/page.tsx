@@ -4,9 +4,9 @@ import { getUser } from "@/lib/user/service";
 import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
@@ -70,7 +70,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         </SettingsCard>
       )}
 
-      <SettingsId title={t("common.organization_id")} id={organization.id}></SettingsId>
+      <IdBadge id={organization.id} label={t("common.organization_id")} variant="column" />
     </PageContentWrapper>
   );
 };

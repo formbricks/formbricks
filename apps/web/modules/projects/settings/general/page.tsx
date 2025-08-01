@@ -3,9 +3,9 @@ import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getProjects } from "@/lib/project/service";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { SettingsId } from "@/modules/ui/components/settings-id";
 import packageJson from "@/package.json";
 import { getTranslate } from "@/tolgee/server";
 import { DeleteProject } from "./components/delete-project";
@@ -49,10 +49,10 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
           isOwnerOrManager={isOwnerOrManager}
         />
       </SettingsCard>
-      <div>
-        <SettingsId title={t("common.project_id")} id={project.id}></SettingsId>
+      <div className="space-y-2">
+        <IdBadge id={project.id} label={t("common.project_id")} variant="column" />
         {!IS_FORMBRICKS_CLOUD && !IS_DEVELOPMENT && (
-          <SettingsId title={t("common.formbricks_version")} id={packageJson.version}></SettingsId>
+          <IdBadge id={packageJson.version} label={t("common.formbricks_version")} variant="column" />
         )}
       </div>
     </PageContentWrapper>

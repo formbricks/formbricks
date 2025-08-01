@@ -22,6 +22,16 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.id,
   });
+  const isOptionIdColumn = column.id.endsWith("optionIds");
+
+  const getOptionIdColumnLabel = () => {
+    const questionId = column.id.split("optionIds")[0];
+    const question = survey?.questions.find((q) => q.id === questionId);
+    if (question) {
+      return `${getLocalizedValue(question.headline, "default")} - ${t("common.option_id")}`;
+    }
+    return null;
+  };
 
   const getLabelFromColumnId = () => {
     switch (column.id) {
@@ -77,7 +87,9 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
                 <span className="max-w-xs truncate">{getLocalizedValue(question.headline, "default")}</span>
               </div>
             ) : (
-              <span className="max-w-xs truncate">{getLabelFromColumnId()}</span>
+              <span className="max-w-xs truncate">
+                {isOptionIdColumn ? getOptionIdColumnLabel() : getLabelFromColumnId()}
+              </span>
             )}
           </div>
           <Switch

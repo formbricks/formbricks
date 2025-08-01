@@ -2,6 +2,7 @@ import { getResponsesByContactId } from "@/lib/response/service";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { getTranslate } from "@/tolgee/server";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
@@ -42,7 +43,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
         <dt className="text-sm font-medium text-slate-500">{t("common.user_id")}</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.userId ? (
-            <span>{attributes.userId}</span>
+            <IdBadge id={attributes.userId} />
           ) : (
             <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>
           )}

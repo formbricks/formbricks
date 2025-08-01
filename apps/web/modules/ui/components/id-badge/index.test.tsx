@@ -24,6 +24,16 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
+// Mock lucide-react icons used in IdBadge
+vi.mock("lucide-react", async () => {
+  const actual = await vi.importActual<typeof import("lucide-react")>("lucide-react");
+  return {
+    ...actual,
+    Copy: () => "Copy Icon",
+    Check: () => "Check Icon",
+  };
+});
+
 describe("IdBadge", () => {
   beforeEach(() => {
     vi.clearAllMocks();

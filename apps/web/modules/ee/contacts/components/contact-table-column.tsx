@@ -2,6 +2,7 @@
 
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { HighlightedText } from "@/modules/ui/components/highlighted-text";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ColumnDef } from "@tanstack/react-table";
 import { TContactTableData } from "../types/contact";
 
@@ -26,7 +27,7 @@ export const generateContactTableColumns = (
     header: "User ID",
     cell: ({ row }) => {
       const userId = row.original.userId;
-      return <HighlightedText value={userId} searchValue={searchValue} />;
+      return <IdBadge id={userId} showCopyIconOnHover={true} />;
     },
   };
 

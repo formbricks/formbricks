@@ -3,7 +3,7 @@
 import { recallToHeadline } from "@/lib/utils/recall";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
-import { SettingsId } from "@/modules/ui/components/settings-id";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import type { JSX } from "react";
@@ -55,7 +55,7 @@ export const QuestionSummaryHeader = ({
           </div>
         )}
       </div>
-      <SettingsId title={t("common.question_id")} id={questionSummary.question.id}></SettingsId>
+      <IdBadge id={questionSummary.question.id} label={t("common.question_id")} />
     </div>
   );
 };

@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Input } from "@/modules/ui/components/input";
 import {
   Select,
@@ -234,6 +235,8 @@ export const TeamSettingsModal = ({
                   </FormItem>
                 )}
               />
+
+              <IdBadge id={team.id} label={t("common.team_id")} variant="column" />
 
               {/* Members Section */}
               <div className="space-y-2">
