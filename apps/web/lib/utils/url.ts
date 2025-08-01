@@ -49,3 +49,12 @@ export const isValidCallbackUrl = (url: string, WEBAPP_URL: string): boolean => 
     return false;
   }
 };
+
+export const isStringUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
