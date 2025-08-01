@@ -30,6 +30,7 @@ jobs:
         env:
           INPUT_VERSION: ${{ inputs.VERSION }}
         run: |
+          set -euo pipefail
           # Validate input version format (expects clean semver without 'v' prefix)
           if [[ ! "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
             echo "❌ Error: Invalid version format. Must be clean semver (e.g., 1.2.3, 1.2.3-alpha)"
@@ -52,19 +53,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
-        run: echo "$GITHUB_TOKEN" | helm registry login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+        run: printf '%s' "$GITHUB_TOKEN" | helm registry login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
 
       - name: Install YQ
         uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
 
       - name: Update Chart.yaml with new version
         run: |
-          # Validate version format (semver pattern, expects clean version without 'v' prefix)
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
-            echo "Error: Invalid version format. Must be semver (e.g., 1.2.3, 1.2.3-alpha, 1.2.3+build)"
-            exit 1
-          fi
-
           yq -i ".version = \"$VERSION\"" helm-chart/Chart.yaml
           yq -i ".appVersion = \"v$VERSION\"" helm-chart/Chart.yaml
 
