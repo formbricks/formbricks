@@ -50,8 +50,6 @@ jobs:
 
       - name: Get Release Tag
         id: extract_release_tag
-        env:
-          GITHUB_REF: ${{ github.ref }}
         run: |
           # Extract version from tag (e.g., refs/tags/v1.2.3 -> 1.2.3)
           TAG="$GITHUB_REF"
