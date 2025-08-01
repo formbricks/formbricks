@@ -324,6 +324,7 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "credentials" || account?.provider === "token") {
         // check if user's email is verified or not
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
+          logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
         }
         await updateUserLastLoginAt(user.email);
