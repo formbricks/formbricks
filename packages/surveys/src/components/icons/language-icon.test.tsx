@@ -3,7 +3,7 @@ import { render } from "@testing-library/preact";
 import { describe, expect, test } from "vitest";
 import { LanguageIcon } from "./language-icon";
 
-describe("CloseIcon", () => {
+describe("LanguageIcon", () => {
   test("renders SVG with correct attributes", () => {
     const { container } = render(<LanguageIcon />);
 

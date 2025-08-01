@@ -79,7 +79,7 @@ describe("WelcomeCard", () => {
   test("does not show response count when count <= 3", () => {
     const { container } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
 
-    const responseText = container.querySelector(".fb-text-xs");
+    const responseText = container.querySelector("[data-testid='fb__surveys__welcome-card__response-count']");
     expect(responseText).not.toHaveTextContent(/3 people responded/);
   });
 

@@ -13,7 +13,7 @@ export function Headline({ headline, questionId, required = true, alignTextCente
         className="fb-text-xs fb-opacity-60 fb-font-normal"
         tabIndex={-1}
         style={{ visibility: required ? "hidden" : "visible" }}
-        aria-hidden="true"
+        aria-hidden={required}
         data-testid="fb__surveys__headline-optional-text-test">
         Optional
       </span>
