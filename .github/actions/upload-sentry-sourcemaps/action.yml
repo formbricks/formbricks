@@ -62,7 +62,7 @@ runs:
         set -euo pipefail
 
         # Validate docker image format (basic validation)
-        if [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+:[a-zA-Z0-9._-]+$ ]] && [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+@sha256:[a-f0-9]{64}$ ]]; then
+        if [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+:[a-zA-Z0-9._-]+$ ]] && [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+@sha256:[A-Fa-f0-9]{64}$ ]]; then
           echo "❌ Error: Invalid docker image format. Must be in format 'image:tag' or 'image@sha256:hash'"
           echo "Provided: $DOCKER_IMAGE"
           exit 1

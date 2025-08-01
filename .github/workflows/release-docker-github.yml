@@ -65,10 +65,8 @@ jobs:
             exit 1
           fi
 
-          # Safely add to environment variables using GitHub's recommended method
-          echo "RELEASE_TAG<<EOF" >> $GITHUB_ENV
-          echo "$TAG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          # Safely add to environment variables
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
 
           echo "VERSION=$TAG" >> $GITHUB_OUTPUT
           echo "Using tag-based version: $TAG"
