@@ -92,6 +92,7 @@ export const SingleResponseCardBody = ({
                       survey={survey}
                       responseData={response.data[question.id]}
                       language={response.language}
+                      showId={true}
                     />
                   </div>
                 </div>

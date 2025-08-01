@@ -27,6 +27,7 @@ interface RenderResponseProps {
   survey: TSurvey;
   language: string | null;
   isExpanded?: boolean;
+  showId: boolean;
 }
 
 export const RenderResponse: React.FC<RenderResponseProps> = ({
@@ -35,6 +36,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   survey,
   language,
   isExpanded = true,
+  showId,
 }) => {
   if (
     (typeof responseData === "string" && responseData === "") ||
@@ -81,6 +83,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
             choices={(question as TSurveyPictureSelectionQuestion).choices}
             selected={responseData}
             isExpanded={isExpanded}
+            showId={showId}
           />
         );
       }
@@ -121,9 +124,10 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
-            items={[capitalizeFirstLetter(responseData.toString())]}
+            items={[{ value: capitalizeFirstLetter(responseData.toString()) }]}
             isExpanded={isExpanded}
             icon={<PhoneIcon className="h-4 w-4 text-slate-500" />}
+            showId={showId}
           />
         );
       }
@@ -132,9 +136,10 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
-            items={[capitalizeFirstLetter(responseData.toString())]}
+            items={[{ value: capitalizeFirstLetter(responseData.toString()) }]}
             isExpanded={isExpanded}
             icon={<CheckCheckIcon className="h-4 w-4 text-slate-500" />}
+            showId={showId}
           />
         );
       }
@@ -143,26 +148,46 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
-            items={[capitalizeFirstLetter(responseData.toString())]}
+            items={[{ value: capitalizeFirstLetter(responseData.toString()) }]}
             isExpanded={isExpanded}
             icon={<MousePointerClickIcon className="h-4 w-4 text-slate-500" />}
+            showId={showId}
           />
         );
       }
       break;
     case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
     case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
-    case TSurveyQuestionTypeEnum.NPS:
       if (typeof responseData === "string" || typeof responseData === "number") {
-        return <ResponseBadges items={[responseData.toString()]} isExpanded={isExpanded} />;
+        const choiceId = question.choices?.find(
+          (choice) => choice.label.default === responseData.toString()
+        )?.id;
+        return (
+          <ResponseBadges
+            items={[{ value: responseData.toString(), id: choiceId }]}
+            isExpanded={isExpanded}
+            showId={showId}
+          />
+        );
       } else if (Array.isArray(responseData)) {
-        return <ResponseBadges items={responseData} isExpanded={isExpanded} />;
+        const itemsArray = responseData.map((choice) => {
+          const choiceId = question.choices?.find((c) => c.label.default === choice)?.id;
+          return { value: choice, id: choiceId };
+        });
+        return <ResponseBadges items={itemsArray} isExpanded={isExpanded} showId={showId} />;
       }
       break;
+
     case TSurveyQuestionTypeEnum.Ranking:
       if (Array.isArray(responseData)) {
-        return <RankingResponse value={responseData} isExpanded={isExpanded} />;
+        const itemsArray = responseData.map((choice) => {
+          const choiceId = question.choices?.find((c) => c.label.default === choice)?.id;
+          return { value: choice, id: choiceId };
+        });
+        return <RankingResponse value={itemsArray} isExpanded={isExpanded} showId={showId} />;
       }
+      break;
+
     default:
       if (
         typeof responseData === "string" ||
