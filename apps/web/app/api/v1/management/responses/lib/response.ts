@@ -227,3 +227,24 @@ export const getResponsesByEnvironmentIds = reactCache(
     }
   }
 );
+
+export const checkDisplayIdForResponse = async (responseInput: TResponseInput): Promise<boolean> => {
+  const { displayId } = responseInput;
+
+  let response;
+  try {
+    response = await prisma.response.findFirst({
+      where: {
+        displayId: displayId,
+      },
+    });
+
+    return !!response;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
