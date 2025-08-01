@@ -748,29 +748,51 @@ export function Survey({
             "fb-no-scrollbar fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
             offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
           )}>
-          <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2">
-            {getShowLanguageSwitch(offset) && (
-              <LanguageSwitch
-                surveyLanguages={localSurvey.languages}
-                setSelectedLanguageCode={setselectedLanguage}
-              />
-            )}
-            {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
-          </div>
-          <div
-            ref={contentRef}
-            className={cn(
-              loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-              fullSizeCards ? "" : "fb-my-auto"
-            )}>
-            {content()}
-          </div>
-          <div className="fb-gap-y-2 fb-min-h-8 fb-flex fb-flex-col fb-justify-end">
-            <div className="fb-px-4 fb-space-y-2">
-              {isBrandingEnabled ? <FormbricksBranding /> : null}
-              {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
+          <div className={cn("fb-relative")}>
+            <div className="fb-flex fb-flex-col fb-w-full fb-items-end">
+              {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
+
+              <div className="fb-h-5 fb-relative fb-w-full">
+                <div className="fb-flex fb-items-center fb-justify-end fb-absolute fb-top-0 fb-right-0">
+                  {getShowLanguageSwitch(offset) && (
+                    <LanguageSwitch
+                      surveyLanguages={localSurvey.languages}
+                      setSelectedLanguageCode={setselectedLanguage}
+                      hoverColor={styling.questionColor?.light ?? "#000000"}
+                      borderRadius={styling.roundness ?? 8}
+                    />
+                  )}
+
+                  {getShowLanguageSwitch(offset) && getShowSurveyCloseButton(offset) && (
+                    <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-mx-1 fb-z-[1001]"></div>
+                  )}
+
+                  {getShowSurveyCloseButton(offset) && (
+                    <SurveyCloseButton
+                      onClose={onClose}
+                      hoverColor={styling.questionColor?.light ?? "#000000"}
+                      borderRadius={styling.roundness ?? 8}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-            {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
+            <div
+              ref={contentRef}
+              className={cn(
+                loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
+                fullSizeCards ? "" : "fb-my-auto"
+                // "fb-pt-8"
+              )}>
+              {content()}
+            </div>
+
+            <div className="fb-gap-y-2 fb-min-h-8 fb-flex fb-flex-col fb-justify-end">
+              <div className="fb-px-4 fb-space-y-2">
+                {isBrandingEnabled ? <FormbricksBranding /> : null}
+                {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
+              </div>
+            </div>
           </div>
         </div>
       </AutoCloseWrapper>
