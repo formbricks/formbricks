@@ -66,7 +66,7 @@ export const extractChoiceIdsFromResponse = (
       // Fall back to checking all language values
       return Object.values(c.label).includes(choiceLabel);
     });
-    return targetChoice?.id || null;
+    return targetChoice?.id || "other";
   };
 
   if (Array.isArray(responseValue)) {
@@ -559,8 +559,7 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
     } else if (
       question.type === "multipleChoiceMulti" ||
       question.type === "multipleChoiceSingle" ||
-      question.type === "ranking" ||
-      question.type === "pictureSelection"
+      question.type === "ranking"
     ) {
       return [`${idx + 1}. ${headline}`, `${idx + 1}. ${headline} - Option ID`];
     } else {
@@ -633,8 +632,7 @@ export const getResponsesJson = (
       } else if (
         question.type === "multipleChoiceMulti" ||
         question.type === "multipleChoiceSingle" ||
-        question.type === "ranking" ||
-        question.type === "pictureSelection"
+        question.type === "ranking"
       ) {
         // Set the main response value
         jsonData[idx][questionHeadline[0]] = processResponseData(answer);

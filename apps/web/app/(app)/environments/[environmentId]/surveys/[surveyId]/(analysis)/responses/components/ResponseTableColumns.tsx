@@ -89,10 +89,7 @@ const getQuestionColumnsData = (
   const renderChoiceIdBadges = (choiceIds: string[], isExpanded: boolean) => {
     if (choiceIds.length === 0) return null;
 
-    const containerClasses = cn(
-      "flex gap-x-1 w-full overflow-scroll no-scrollbar",
-      isExpanded ? "flex-wrap gap-y-1" : ""
-    );
+    const containerClasses = cn("flex gap-x-1 w-full", isExpanded && "flex-wrap gap-y-1");
 
     return (
       <div className={containerClasses}>
