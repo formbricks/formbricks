@@ -91,6 +91,29 @@ export const SurveyMenuBar = ({
     };
   }, [localSurvey, survey, t]);
 
+  useEffect(() => {
+    window.history.pushState({ inSurveyEditor: true }, "");
+
+    const handlePopstate = (_: PopStateEvent) => {
+      handleBack();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isBackShortcut = (e.altKey || e.metaKey) && e.key === "ArrowLeft";
+      if (isBackShortcut) {
+        handleBack();
+      }
+    };
+
+    window.addEventListener("popstate", handlePopstate);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopstate);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const clearSurveyLocalStorage = () => {
     if (typeof localStorage !== "undefined") {
       localStorage.removeItem(`${localSurvey.id}-columnOrder`);
@@ -121,7 +144,7 @@ export const SurveyMenuBar = ({
     if (!isEqual(localSurveyRest, surveyRest)) {
       setConfirmDialogOpen(true);
     } else {
-      router.back();
+      router.push("/");
     }
   };
 
@@ -247,7 +270,6 @@ export const SurveyMenuBar = ({
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
         toast.success(t("environments.surveys.edit.changes_saved"));
-        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
@@ -266,7 +288,8 @@ export const SurveyMenuBar = ({
   const handleSaveAndGoBack = async () => {
     const isSurveySaved = await handleSurveySave();
     if (isSurveySaved) {
-      router.back();
+      setConfirmDialogOpen(false);
+      router.push("/");
     }
   };
 
@@ -395,7 +418,7 @@ export const SurveyMenuBar = ({
         declineBtnVariant="destructive"
         onDecline={() => {
           setConfirmDialogOpen(false);
-          router.back();
+          router.push("/");
         }}
         onConfirm={handleSaveAndGoBack}
       />
