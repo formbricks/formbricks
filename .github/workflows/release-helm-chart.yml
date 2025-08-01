@@ -26,20 +26,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Extract release version
+      - name: Validate input version
         env:
-          RELEASE_TAG: ${{ inputs.VERSION }}
+          INPUT_VERSION: ${{ inputs.VERSION }}
         run: |
-          # Validate release tag format (should be a valid version)
-          if [[ ! "$RELEASE_TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
-            echo "❌ Error: Invalid release tag format. Must be semver (e.g., v1.2.3, 1.2.3-alpha)"
-            echo "Provided: $RELEASE_TAG"
+          # Validate input version format (expects clean semver without 'v' prefix)
+          if [[ ! "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Error: Invalid version format. Must be clean semver (e.g., 1.2.3, 1.2.3-alpha)"
+            echo "Expected: clean version without 'v' prefix"
+            echo "Provided: $INPUT_VERSION"
             exit 1
           fi
 
-          # Safely add to environment variables using GitHub's recommended method
+          # Store validated version in environment variable
           echo "VERSION<<EOF" >> $GITHUB_ENV
-          echo "$RELEASE_TAG" >> $GITHUB_ENV
+          echo "$INPUT_VERSION" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Set up Helm
@@ -57,10 +58,8 @@ jobs:
         uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
 
       - name: Update Chart.yaml with new version
-        env:
-          VERSION: ${{ inputs.VERSION }}
         run: |
-          # Validate version format (semver pattern)
+          # Validate version format (semver pattern, expects clean version without 'v' prefix)
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
             echo "Error: Invalid version format. Must be semver (e.g., 1.2.3, 1.2.3-alpha, 1.2.3+build)"
             exit 1
@@ -74,7 +73,5 @@ jobs:
           helm package ./helm-chart
 
       - name: Push Helm chart to GitHub Container Registry
-        env:
-          VERSION: ${{ inputs.VERSION }}
         run: |
           helm push "formbricks-$VERSION.tgz" oci://ghcr.io/formbricks/helm-charts
