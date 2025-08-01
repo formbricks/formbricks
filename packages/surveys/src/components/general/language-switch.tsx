@@ -66,6 +66,7 @@ export function LanguageSwitch({
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}
+        aria-label="Language switch"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}>
         <LanguageIcon />

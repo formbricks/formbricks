@@ -240,7 +240,7 @@ describe("AutoCloseWrapper", () => {
     );
 
     // Find the wrapper div that has the click handler (the inner one with event handlers)
-    const wrapper = container.querySelector(".fb-h-full.fb-w-full:nth-child(2)");
+    const wrapper = container.querySelector(`[data-testid="fb__surveys__auto-close-wrapper"]`);
     expect(wrapper).toBeTruthy();
 
     // Use fireEvent instead of userEvent for more reliable event triggering
@@ -265,7 +265,7 @@ describe("AutoCloseWrapper", () => {
     );
 
     // Find the wrapper div that has the mouseover handler (the inner one with event handlers)
-    const wrapper = container.querySelector(".fb-h-full.fb-w-full:nth-child(2)");
+    const wrapper = container.querySelector(`[data-testid="fb__surveys__auto-close-wrapper"]`);
     expect(wrapper).toBeTruthy();
 
     // Use fireEvent instead of userEvent for more reliable event triggering

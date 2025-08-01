@@ -54,7 +54,7 @@ describe("WelcomeCard", () => {
   test("shows response count when showResponseCount is true and count > 3", () => {
     const { container } = render(<WelcomeCard {...defaultProps} responseCount={10} />);
 
-    const responseText = container.querySelector(".fb-text-xs");
+    const responseText = container.querySelector("[data-testid='fb__surveys__welcome-card__response-count']");
     expect(responseText).toHaveTextContent(/10 people responded/);
   });
 
@@ -137,7 +137,7 @@ describe("WelcomeCard", () => {
       />
     );
 
-    const textDisplay = container.querySelector(".fb-text-xs");
+    const textDisplay = container.querySelector("[data-testid='fb__surveys__welcome-card__info-text']");
     expect(textDisplay).toHaveTextContent(/Takes.*10 people responded/);
   });
 
@@ -201,11 +201,15 @@ describe("WelcomeCard", () => {
   test("handles response counts at boundary conditions", () => {
     // Test with exactly 3 responses (boundary)
     const { container: container3 } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
-    expect(container3.querySelector(".fb-text-xs")).not.toHaveTextContent(/3 people responded/);
+    expect(
+      container3.querySelector("[data-testid='fb__surveys__welcome-card__response-count']")
+    ).not.toHaveTextContent(/3 people responded/);
 
     // Test with 4 responses (just above boundary)
     const { container: container4 } = render(<WelcomeCard {...defaultProps} responseCount={4} />);
-    expect(container4.querySelector(".fb-text-xs")).toHaveTextContent(/4 people responded/);
+    expect(
+      container4.querySelector("[data-testid='fb__surveys__welcome-card__response-count']")
+    ).toHaveTextContent(/4 people responded/);
   });
 
   test("handles time calculation edge cases", () => {

@@ -26,8 +26,9 @@ export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: SurveyC
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
-          "fb-text-heading fb-relative fb-rounded-md focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-p-2 flex items-center justify-center"
-        )}>
+          "fb-text-heading fb-relative focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-p-2 fb-h-8 fb-w-8 flex items-center justify-center"
+        )}
+        aria-label="Close survey">
         <CloseIcon />
       </button>
     </div>

@@ -15,14 +15,7 @@ describe("Headline", () => {
 
     expect(label).toHaveTextContent("Test Question");
     expect(label).toHaveAttribute("for", "test-id");
-    expect(label).toHaveClass(
-      "fb-text-heading",
-      "fb-mb-1.5",
-      "fb-block",
-      "fb-text-base",
-      "fb-font-semibold",
-      "fb-leading-6"
-    );
+    expect(label).toHaveClass("fb-text-heading", "fb-mb-1.5", "fb-flex", "fb-flex-col");
   });
 
   test("renders with left alignment by default", () => {
@@ -43,9 +36,9 @@ describe("Headline", () => {
 
   test("does not show 'Optional' text when required is true", () => {
     const { container } = render(<Headline {...defaultProps} required={true} />);
-    const optionalText = container.querySelector("span");
+    const optionalText = container.querySelector("[data-testid='fb__surveys__headline-optional-text-test']");
 
-    expect(optionalText).not.toBeInTheDocument();
+    expect(optionalText).toHaveAttribute("aria-hidden", "true");
   });
 
   test("shows 'Optional' text when required is false", () => {
@@ -54,15 +47,7 @@ describe("Headline", () => {
 
     expect(optionalText).toBeInTheDocument();
     expect(optionalText).toHaveTextContent("Optional");
-    expect(optionalText).toHaveClass(
-      "fb-text-heading",
-      "fb-mx-2",
-      "fb-self-start",
-      "fb-text-sm",
-      "fb-font-normal",
-      "fb-leading-7",
-      "fb-opacity-60"
-    );
+    expect(optionalText).toHaveClass("fb-text-xs", "fb-opacity-60", "fb-font-normal");
     expect(optionalText).toHaveAttribute("tabIndex", "-1");
   });
 
@@ -71,7 +56,9 @@ describe("Headline", () => {
     const label = container.querySelector("label");
 
     expect(label).toBeInTheDocument();
-    expect(label).toHaveTextContent("");
+
+    const headlineText = label?.querySelector("[data-testid='fb__surveys__headline-text-test']");
+    expect(headlineText).toBeEmptyDOMElement();
   });
 
   test("sets dir attribute to auto", () => {
