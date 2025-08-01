@@ -67,7 +67,7 @@ describe("EditMemberships", () => {
       organization: mockOrg,
       currentUserId: "user-1",
       role: "owner",
-      canDoRoleManagement: true,
+      isAccessControlAllowed: true,
       isUserManagementDisabledFromUi: false,
     });
     render(ui);
@@ -81,18 +81,18 @@ describe("EditMemberships", () => {
     expect(props.organization.id).toBe("org-1");
     expect(props.currentUserId).toBe("user-1");
     expect(props.currentUserRole).toBe("owner");
-    expect(props.canDoRoleManagement).toBe(true);
+    expect(props.isAccessControlAllowed).toBe(true);
     expect(props.isUserManagementDisabledFromUi).toBe(false);
     expect(Array.isArray(props.invites)).toBe(true);
     expect(Array.isArray(props.members)).toBe(true);
   });
 
-  test("does not render role/actions columns if canDoRoleManagement or isUserManagementDisabledFromUi is false", async () => {
+  test("does not render role/actions columns if isAccessControlAllowed or isUserManagementDisabledFromUi is false", async () => {
     const ui = await EditMemberships({
       organization: mockOrg,
       currentUserId: "user-1",
       role: "member",
-      canDoRoleManagement: false,
+      isAccessControlAllowed: false,
       isUserManagementDisabledFromUi: true,
     });
     render(ui);
@@ -109,7 +109,7 @@ describe("EditMemberships", () => {
       organization: mockOrg,
       currentUserId: "user-1",
       role: undefined as any,
-      canDoRoleManagement: true,
+      isAccessControlAllowed: true,
       isUserManagementDisabledFromUi: false,
     });
     render(ui);

@@ -31,7 +31,7 @@ interface OrganizationActionsProps {
   organization: TOrganization;
   teams: TOrganizationTeam[];
   isInviteDisabled: boolean;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
   isMultiOrgEnabled: boolean;
@@ -45,7 +45,7 @@ export const OrganizationActions = ({
   teams,
   isLeaveOrganizationDisabled,
   isInviteDisabled,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isFormbricksCloud,
   environmentId,
   isMultiOrgEnabled,
@@ -154,7 +154,7 @@ export const OrganizationActions = ({
         setOpen={setInviteMemberModalOpen}
         onSubmit={handleAddMembers}
         membershipRole={membershipRole}
-        canDoRoleManagement={canDoRoleManagement}
+        isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}
         teams={teams}

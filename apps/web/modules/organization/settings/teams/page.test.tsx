@@ -1,4 +1,4 @@
-import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -20,7 +20,7 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getRoleManagementPermission: vi.fn(),
+  getAccessControlPermission: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/teams/team-list/components/teams-view", () => ({
@@ -68,7 +68,7 @@ describe("TeamsPage", () => {
       currentUserMembership: mockMembership,
       organization: mockOrg,
     } as any);
-    vi.mocked(getRoleManagementPermission).mockResolvedValue(true);
+    vi.mocked(getAccessControlPermission).mockResolvedValue(true);
     const props = { params: Promise.resolve(mockParams) };
     render(await TeamsPage(props));
     expect(screen.getByTestId("content-wrapper")).toBeInTheDocument();
@@ -85,9 +85,9 @@ describe("TeamsPage", () => {
       currentUserMembership: mockMembership,
       organization: mockOrg,
     } as any);
-    vi.mocked(getRoleManagementPermission).mockResolvedValue(false);
+    vi.mocked(getAccessControlPermission).mockResolvedValue(false);
     const props = { params: Promise.resolve(mockParams) };
     render(await TeamsPage(props));
-    expect(getRoleManagementPermission).toHaveBeenCalledWith("free");
+    expect(getAccessControlPermission).toHaveBeenCalledWith("free");
   });
 });

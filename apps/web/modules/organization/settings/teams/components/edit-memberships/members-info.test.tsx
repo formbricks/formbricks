@@ -77,7 +77,7 @@ describe("MembersInfo", () => {
     cleanup();
   });
 
-  test("renders member info and EditMembershipRole when canDoRoleManagement", () => {
+  test("renders member info and EditMembershipRole when isAccessControlAllowed", () => {
     render(
       <MembersInfo
         organization={org}
@@ -85,7 +85,7 @@ describe("MembersInfo", () => {
         invites={[]}
         currentUserRole="owner"
         currentUserId="user-1"
-        canDoRoleManagement={true}
+        isAccessControlAllowed={true}
         isFormbricksCloud={true}
         isUserManagementDisabledFromUi={false}
       />
@@ -105,7 +105,7 @@ describe("MembersInfo", () => {
         invites={[]}
         currentUserRole="owner"
         currentUserId="user-1"
-        canDoRoleManagement={true}
+        isAccessControlAllowed={true}
         isFormbricksCloud={true}
         isUserManagementDisabledFromUi={false}
       />
@@ -121,7 +121,7 @@ describe("MembersInfo", () => {
         invites={[invite]}
         currentUserRole="owner"
         currentUserId="user-1"
-        canDoRoleManagement={true}
+        isAccessControlAllowed={true}
         isFormbricksCloud={true}
         isUserManagementDisabledFromUi={false}
       />
@@ -139,7 +139,7 @@ describe("MembersInfo", () => {
         invites={[invite]}
         currentUserRole="owner"
         currentUserId="user-1"
-        canDoRoleManagement={true}
+        isAccessControlAllowed={true}
         isFormbricksCloud={true}
         isUserManagementDisabledFromUi={false}
       />
@@ -147,7 +147,7 @@ describe("MembersInfo", () => {
     expect(screen.getByTestId("expired-badge")).toHaveTextContent("Expired");
   });
 
-  test("does not render EditMembershipRole if canDoRoleManagement is false", () => {
+  test("does not render EditMembershipRole if isAccessControlAllowed is false", () => {
     render(
       <MembersInfo
         organization={org}
@@ -155,7 +155,7 @@ describe("MembersInfo", () => {
         invites={[]}
         currentUserRole="owner"
         currentUserId="user-1"
-        canDoRoleManagement={false}
+        isAccessControlAllowed={false}
         isFormbricksCloud={true}
         isUserManagementDisabledFromUi={false}
       />
@@ -171,7 +171,7 @@ describe("MembersInfo", () => {
         invites={[]}
         currentUserRole="owner"
         currentUserId="user-1"
-        canDoRoleManagement={true}
+        isAccessControlAllowed={true}
         isFormbricksCloud={true}
         isUserManagementDisabledFromUi={true}
       />
@@ -193,7 +193,7 @@ describe("MembersInfo", () => {
         invites={[invite]}
         currentUserRole="owner"
         currentUserId="user-1"
-        canDoRoleManagement={true}
+        isAccessControlAllowed={true}
         isFormbricksCloud={true}
         isUserManagementDisabledFromUi={false}
       />

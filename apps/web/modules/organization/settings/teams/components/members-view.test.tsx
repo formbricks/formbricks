@@ -56,7 +56,7 @@ describe("MembersView", () => {
     organization: { id: "org-1", name: "Test Org" },
     currentUserId: "user-1",
     environmentId: "env-1",
-    canDoRoleManagement: true,
+    isAccessControlAllowed: true,
     isUserManagementDisabledFromUi: false,
   } as any;
 

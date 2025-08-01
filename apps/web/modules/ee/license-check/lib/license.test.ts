@@ -102,6 +102,8 @@ describe("License Core Logic", () => {
       spamProtection: true,
       ai: false,
       auditLogs: true,
+      multiLanguageSurveys: true,
+      accessControl: true,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
       status: "active",
@@ -231,6 +233,8 @@ describe("License Core Logic", () => {
             saml: false,
             spamProtection: false,
             auditLogs: false,
+            multiLanguageSurveys: false,
+            accessControl: false,
           },
           lastChecked: expect.any(Date),
           version: 1,
@@ -251,6 +255,8 @@ describe("License Core Logic", () => {
           saml: false,
           spamProtection: false,
           auditLogs: false,
+          multiLanguageSurveys: false,
+          accessControl: false,
         },
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -278,6 +284,8 @@ describe("License Core Logic", () => {
         saml: false,
         spamProtection: false,
         auditLogs: false,
+        multiLanguageSurveys: false,
+        accessControl: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
         expect.stringContaining("fb:license:"),

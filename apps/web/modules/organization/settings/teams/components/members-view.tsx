@@ -16,7 +16,7 @@ interface MembersViewProps {
   organization: TOrganization;
   currentUserId: string;
   environmentId: string;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isUserManagementDisabledFromUi: boolean;
 }
 
@@ -35,7 +35,7 @@ export const MembersView = async ({
   organization,
   currentUserId,
   environmentId,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isUserManagementDisabledFromUi,
 }: MembersViewProps) => {
   const t = await getTranslate();
@@ -47,7 +47,7 @@ export const MembersView = async ({
 
   let teams: TOrganizationTeam[] = [];
 
-  if (canDoRoleManagement) {
+  if (isAccessControlAllowed) {
     teams = (await getTeamsByOrganizationId(organization.id)) ?? [];
   }
 
@@ -62,7 +62,7 @@ export const MembersView = async ({
           role={membershipRole}
           isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
           isInviteDisabled={INVITE_DISABLED}
-          canDoRoleManagement={canDoRoleManagement}
+          isAccessControlAllowed={isAccessControlAllowed}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
@@ -74,7 +74,7 @@ export const MembersView = async ({
       {membershipRole && (
         <Suspense fallback={<MembersLoading />}>
           <EditMemberships
-            canDoRoleManagement={canDoRoleManagement}
+            isAccessControlAllowed={isAccessControlAllowed}
             organization={organization}
             currentUserId={currentUserId}
             role={membershipRole}

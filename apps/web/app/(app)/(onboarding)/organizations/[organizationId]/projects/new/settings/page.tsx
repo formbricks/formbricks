@@ -2,7 +2,7 @@ import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboardin
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
 import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
 import { getUserProjects } from "@/lib/project/service";
-import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
@@ -41,7 +41,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
 
   if (!organizationTeams) {
     throw new Error(t("common.organization_teams_not_found"));
@@ -60,7 +60,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
         industry={industry}
         defaultBrandColor={DEFAULT_BRAND_COLOR}
         organizationTeams={organizationTeams}
-        canDoRoleManagement={canDoRoleManagement}
+        isAccessControlAllowed={isAccessControlAllowed}
         userProjectsCount={projects.length}
       />
       {projects.length >= 1 && (

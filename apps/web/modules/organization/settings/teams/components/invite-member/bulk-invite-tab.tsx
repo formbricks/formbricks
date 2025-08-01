@@ -15,14 +15,14 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
 }
 
 export const BulkInviteTab = ({
   setOpen,
   onSubmit,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isFormbricksCloud,
 }: BulkInviteTabProps) => {
   const { t } = useTranslate();
@@ -48,7 +48,7 @@ export const BulkInviteTab = ({
       },
       complete: (results: ParseResult<{ name: string; email: string; role: string }>) => {
         const members = results.data.map((csv) => {
-          let orgRole = canDoRoleManagement ? csv.role.trim().toLowerCase() : "owner";
+          let orgRole = isAccessControlAllowed ? csv.role.trim().toLowerCase() : "owner";
           if (!isFormbricksCloud) {
             orgRole = orgRole === "billing" ? "owner" : orgRole;
           }
@@ -119,7 +119,7 @@ export const BulkInviteTab = ({
           </div>
         )}
 
-        {!canDoRoleManagement && (
+        {!isAccessControlAllowed && (
           <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50">
             <AlertDescription className="ml-2">
               <p className="text-sm">

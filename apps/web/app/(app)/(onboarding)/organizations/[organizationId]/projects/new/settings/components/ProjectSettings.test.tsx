@@ -62,7 +62,7 @@ describe("ProjectSettings component", () => {
     industry: "ind",
     defaultBrandColor: "#fff",
     organizationTeams: [],
-    canDoRoleManagement: false,
+    isAccessControlAllowed: false,
     userProjectsCount: 0,
   } as any;
 

@@ -52,6 +52,8 @@ const LicenseFeaturesSchema = z.object({
   saml: z.boolean(),
   spamProtection: z.boolean(),
   auditLogs: z.boolean(),
+  multiLanguageSurveys: z.boolean(),
+  accessControl: z.boolean(),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -112,6 +114,8 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   saml: false,
   spamProtection: false,
   auditLogs: false,
+  multiLanguageSurveys: false,
+  accessControl: false,
 };
 
 // Helper functions

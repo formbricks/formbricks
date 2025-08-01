@@ -18,14 +18,14 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {
   control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
 }
 
 export function AddMemberRole({
   control,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isFormbricksCloud,
   membershipRole,
 }: AddMemberRoleProps) {
@@ -62,8 +62,8 @@ export function AddMemberRole({
         <div className="flex flex-col space-y-2">
           <Label>{t("common.role_organization")}</Label>
           <Select
-            defaultValue={canDoRoleManagement ? "member" : "owner"}
-            disabled={!canDoRoleManagement}
+            defaultValue={isAccessControlAllowed ? "member" : "owner"}
+            disabled={!isAccessControlAllowed}
             onValueChange={(v) => {
               onChange(v as TOrganizationRole);
             }}

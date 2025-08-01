@@ -42,7 +42,7 @@ interface ProjectSettingsProps {
   industry: TProjectConfigIndustry;
   defaultBrandColor: string;
   organizationTeams: TOrganizationTeam[];
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   userProjectsCount: number;
 }
 
@@ -53,7 +53,7 @@ export const ProjectSettings = ({
   industry,
   defaultBrandColor,
   organizationTeams,
-  canDoRoleManagement = false,
+  isAccessControlAllowed = false,
   userProjectsCount,
 }: ProjectSettingsProps) => {
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
@@ -174,7 +174,7 @@ export const ProjectSettings = ({
               )}
             />
 
-            {canDoRoleManagement && userProjectsCount > 0 && (
+            {isAccessControlAllowed && userProjectsCount > 0 && (
               <FormField
                 control={form.control}
                 name="teamIds"

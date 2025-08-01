@@ -123,7 +123,7 @@ describe("OrganizationActions Component", () => {
     organization: { id: "org-123", name: "Test Org" } as TOrganization,
     teams: [{ id: "team-1", name: "Team 1" }],
     isInviteDisabled: false,
-    canDoRoleManagement: true,
+    isAccessControlAllowed: true,
     isFormbricksCloud: false,
     environmentId: "env-123",
     isMultiOrgEnabled: true,
@@ -310,7 +310,7 @@ describe("OrganizationActions Component", () => {
         expect
           .objectContaining({
             environmentId: "env-123",
-            canDoRoleManagement: true,
+            isAccessControlAllowed: true,
             isFormbricksCloud: false,
             teams: expect.arrayContaining(defaultProps.teams),
             membershipRole: "owner",

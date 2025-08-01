@@ -11,14 +11,20 @@ vi.mock("@tolgee/react", () => ({
 }));
 
 // Create a wrapper component that provides the form context
-const FormWrapper = ({ children, defaultValues, membershipRole, canDoRoleManagement, isFormbricksCloud }) => {
+const FormWrapper = ({
+  children,
+  defaultValues,
+  membershipRole,
+  isAccessControlAllowed,
+  isFormbricksCloud,
+}) => {
   const methods = useForm({ defaultValues });
   return (
     <FormProvider {...methods}>
       <AddMemberRole
         control={methods.control}
         membershipRole={membershipRole}
-        canDoRoleManagement={canDoRoleManagement}
+        isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
       />
       {children}
@@ -44,7 +50,7 @@ describe("AddMemberRole Component", () => {
         <FormWrapper
           defaultValues={defaultValues}
           membershipRole="owner"
-          canDoRoleManagement={true}
+          isAccessControlAllowed={true}
           isFormbricksCloud={true}>
           <div />
         </FormWrapper>
@@ -59,7 +65,7 @@ describe("AddMemberRole Component", () => {
         <FormWrapper
           defaultValues={defaultValues}
           membershipRole="member"
-          canDoRoleManagement={true}
+          isAccessControlAllowed={true}
           isFormbricksCloud={true}>
           <div data-testid="child" />
         </FormWrapper>
@@ -69,12 +75,12 @@ describe("AddMemberRole Component", () => {
       expect(screen.getByTestId("child")).toBeInTheDocument();
     });
 
-    test("disables the role selector when canDoRoleManagement is false", () => {
+    test("disables the role selector when isAccessControlAllowed is false", () => {
       render(
         <FormWrapper
           defaultValues={defaultValues}
           membershipRole="owner"
-          canDoRoleManagement={false}
+          isAccessControlAllowed={false}
           isFormbricksCloud={true}>
           <div />
         </FormWrapper>
@@ -91,7 +97,7 @@ describe("AddMemberRole Component", () => {
         <FormWrapper
           defaultValues={defaultValues}
           membershipRole="owner"
-          canDoRoleManagement={true}
+          isAccessControlAllowed={true}
           isFormbricksCloud={true}>
           <div />
         </FormWrapper>

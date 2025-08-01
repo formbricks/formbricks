@@ -44,14 +44,14 @@ interface CreateProjectModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   organizationId: string;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
 }
 
 export const CreateProjectModal = ({
   open,
   setOpen,
   organizationId,
-  canDoRoleManagement,
+  isAccessControlAllowed,
 }: CreateProjectModalProps) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -144,7 +144,7 @@ export const CreateProjectModal = ({
                 )}
               />
 
-              {canDoRoleManagement && organizationTeams.length > 0 && (
+              {isAccessControlAllowed && organizationTeams.length > 0 && (
                 <FormField
                   control={form.control}
                   name="teamIds"
