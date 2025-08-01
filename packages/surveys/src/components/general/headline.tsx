@@ -1,7 +1,7 @@
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface HeadlineProps {
-  headline?: string;
+  headline: string;
   questionId: TSurveyQuestionId;
   required?: boolean;
   alignTextCenter?: boolean;

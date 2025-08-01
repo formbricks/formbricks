@@ -1,9 +1,13 @@
 import "@testing-library/jest-dom/vitest";
-import { render } from "@testing-library/preact";
-import { describe, expect, test } from "vitest";
+import { cleanup, render } from "@testing-library/preact";
+import { afterEach, describe, expect, test } from "vitest";
 import { LanguageIcon } from "./language-icon";
 
 describe("LanguageIcon", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   test("renders SVG with correct attributes", () => {
     const { container } = render(<LanguageIcon />);
 

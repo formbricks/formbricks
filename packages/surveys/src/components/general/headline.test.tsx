@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
-import { render } from "@testing-library/preact";
-import { describe, expect, test } from "vitest";
+import { cleanup, render } from "@testing-library/preact";
+import { afterEach, describe, expect, test } from "vitest";
 import { Headline } from "./headline";
 
 describe("Headline", () => {
@@ -8,6 +8,10 @@ describe("Headline", () => {
     headline: "Test Question",
     questionId: "test-id" as const,
   };
+
+  afterEach(() => {
+    cleanup();
+  });
 
   test("renders headline text correctly", () => {
     const { container } = render(<Headline {...defaultProps} />);
@@ -35,8 +39,8 @@ describe("Headline", () => {
   });
 
   test("does not show 'Optional' text when required is true", () => {
-    const { container } = render(<Headline {...defaultProps} required={true} />);
-    const optionalText = container.querySelector("[data-testid='fb__surveys__headline-optional-text-test']");
+    const { queryByTestId } = render(<Headline {...defaultProps} required={true} />);
+    const optionalText = queryByTestId("fb__surveys__headline-optional-text-test");
 
     expect(optionalText).toHaveAttribute("aria-hidden", "true");
   });
@@ -49,16 +53,6 @@ describe("Headline", () => {
     expect(optionalText).toHaveTextContent("Optional");
     expect(optionalText).toHaveClass("fb-text-xs", "fb-opacity-60", "fb-font-normal");
     expect(optionalText).toHaveAttribute("tabIndex", "-1");
-  });
-
-  test("handles empty headline", () => {
-    const { container } = render(<Headline {...defaultProps} headline={undefined} />);
-    const label = container.querySelector("label");
-
-    expect(label).toBeInTheDocument();
-
-    const headlineText = label?.querySelector("[data-testid='fb__surveys__headline-text-test']");
-    expect(headlineText).toBeEmptyDOMElement();
   });
 
   test("sets dir attribute to auto", () => {
