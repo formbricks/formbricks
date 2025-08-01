@@ -28,6 +28,7 @@ test.describe("API Tests for Single Contact Creation", () => {
         },
       });
 
+      console.log("response", response);
       expect(response.status()).toBe(201);
 
       const contactData = await response.json();
