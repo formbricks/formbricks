@@ -43,6 +43,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
       environment={environment}
       project={project}
       prefilledFilters={prefilledFilters}
+      isTemplatePage={true}
     />
   );
 };
