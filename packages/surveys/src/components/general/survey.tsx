@@ -753,7 +753,7 @@ export function Survey({
           )}>
           <div className={cn("fb-relative")}>
             <div className="fb-flex fb-flex-col fb-w-full fb-items-end">
-              {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
+              {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : null}
 
               <div
                 className={cn(
@@ -771,7 +771,10 @@ export function Survey({
                   )}
 
                   {isLanguageSwitchVisible && isCloseButtonVisible && (
-                    <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-z-[1001]"></div>
+                    <div
+                      className="fb-h-5 fb-w-px fb-bg-slate-200 fb-z-[1001]"
+                      aria-hidden="true"
+                      role="presentation"></div>
                   )}
 
                   {isCloseButtonVisible && (
