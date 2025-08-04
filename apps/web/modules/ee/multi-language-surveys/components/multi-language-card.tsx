@@ -223,7 +223,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
-          <div className="space-y-6">
+          <div className="space-y-6 pt-3">
             {!isMultiLanguageAllowed && !isMultiLanguageActivated ? (
               <UpgradePrompt
                 title={t("environments.surveys.edit.upgrade_notice_title")}
@@ -258,13 +258,11 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 )}
                 {projectLanguages.length > 1 && (
                   <div className="space-y-6">
-                    <div>
-                      {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
-                        <div className="text-sm italic text-slate-500">
-                          {t("environments.surveys.edit.switch_multi_lanugage_on_to_get_started")}
-                        </div>
-                      ) : null}
-                    </div>
+                    {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
+                      <div className="text-sm italic text-slate-500">
+                        {t("environments.surveys.edit.switch_multi_lanugage_on_to_get_started")}
+                      </div>
+                    ) : null}
 
                     {isMultiLanguageActivated ? (
                       <div className="space-y-6">
