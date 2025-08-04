@@ -5,9 +5,9 @@ import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/servi
 import { getUser } from "@/lib/user/service";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { SettingsId } from "@/modules/ui/components/settings-id";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getTranslate } from "@/tolgee/server";
 import { SettingsCard } from "../../components/SettingsCard";
@@ -103,7 +103,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
               isMultiOrgEnabled={isMultiOrgEnabled}
             />
           </SettingsCard>
-          <SettingsId title={t("common.profile")} id={user.id}></SettingsId>
+          <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />
         </div>
       )}
     </PageContentWrapper>

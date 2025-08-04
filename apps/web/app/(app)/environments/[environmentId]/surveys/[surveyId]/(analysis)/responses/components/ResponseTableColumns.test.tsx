@@ -1,10 +1,9 @@
+import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
-import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { cleanup } from "@testing-library/react";
-import { AnyActionArg } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponseNote, TResponseNoteUser, TResponseTableData } from "@formbricks/types/responses";
 import {
@@ -60,6 +59,7 @@ vi.mock("@/modules/survey/lib/questions", () => ({
   getQuestionIconMap: vi.fn(() => ({
     [TSurveyQuestionTypeEnum.OpenText]: <span>OT</span>,
     [TSurveyQuestionTypeEnum.MultipleChoiceSingle]: <span>MCS</span>,
+    [TSurveyQuestionTypeEnum.MultipleChoiceMulti]: <span>MCM</span>,
     [TSurveyQuestionTypeEnum.Matrix]: <span>MX</span>,
     [TSurveyQuestionTypeEnum.Address]: <span>AD</span>,
     [TSurveyQuestionTypeEnum.ContactInfo]: <span>CI</span>,
@@ -104,6 +104,27 @@ vi.mock("lucide-react", () => ({
   TagIcon: () => <span>Tag</span>,
 }));
 
+// Mock new dependencies
+vi.mock("@/lib/response/utils", () => ({
+  extractChoiceIdsFromResponse: vi.fn((responseValue) => {
+    // Mock implementation that returns choice IDs based on response value
+    if (Array.isArray(responseValue)) {
+      return responseValue.map((_, index) => `choice-${index + 1}`);
+    } else if (typeof responseValue === "string") {
+      return [`choice-single`];
+    }
+    return [];
+  }),
+}));
+
+vi.mock("@/modules/ui/components/id-badge", () => ({
+  IdBadge: vi.fn(({ id }) => <div data-testid="id-badge">{id}</div>),
+}));
+
+vi.mock("@/modules/ui/lib/utils", () => ({
+  cn: vi.fn((...classes) => classes.filter(Boolean).join(" ")),
+}));
+
 const mockSurvey = {
   id: "survey1",
   name: "Test Survey",
@@ -135,6 +156,28 @@ const mockSurvey = {
       type: TSurveyQuestionTypeEnum.ContactInfo,
       headline: { default: "Contact Info Question" },
       required: false,
+    } as unknown as TSurveyQuestion,
+    {
+      id: "q5single",
+      type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+      headline: { default: "Single Choice Question" },
+      required: false,
+      choices: [
+        { id: "choice-1", label: { default: "Option 1" } },
+        { id: "choice-2", label: { default: "Option 2" } },
+        { id: "choice-3", label: { default: "Option 3" } },
+      ],
+    } as unknown as TSurveyQuestion,
+    {
+      id: "q6multi",
+      type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+      headline: { default: "Multi Choice Question" },
+      required: false,
+      choices: [
+        { id: "choice-a", label: { default: "Choice A" } },
+        { id: "choice-b", label: { default: "Choice B" } },
+        { id: "choice-c", label: { default: "Choice C" } },
+      ],
     } as unknown as TSurveyQuestion,
   ],
   variables: [
@@ -173,6 +216,8 @@ const mockResponseData = {
     firstName: "John",
     email: "john.doe@example.com",
     hf1: "Hidden Field 1 Value",
+    q5single: "Option 1", // Single choice response
+    q6multi: ["Choice A", "Choice C"], // Multi choice response
   },
   variables: {
     var1: "Segment A",
@@ -493,5 +538,283 @@ describe("ResponseTableColumns - Column Implementations", () => {
     // Check that no hidden field columns were created
     const hfColumn = columns.find((col) => (col as any).accessorKey === "hf1");
     expect(hfColumn).toBeUndefined();
+  });
+});
+
+describe("ResponseTableColumns - Multiple Choice Questions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  test("generates two columns for multipleChoiceSingle questions", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+
+    // Should have main response column
+    const mainColumn = columns.find((col) => (col as any).accessorKey === "q5single");
+    expect(mainColumn).toBeDefined();
+
+    // Should have option IDs column
+    const optionIdsColumn = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
+    expect(optionIdsColumn).toBeDefined();
+  });
+
+  test("generates two columns for multipleChoiceMulti questions", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+
+    // Should have main response column
+    const mainColumn = columns.find((col) => (col as any).accessorKey === "q6multi");
+    expect(mainColumn).toBeDefined();
+
+    // Should have option IDs column
+    const optionIdsColumn = columns.find((col) => (col as any).accessorKey === "q6multioptionIds");
+    expect(optionIdsColumn).toBeDefined();
+  });
+
+  test("multipleChoiceSingle main column renders RenderResponse component", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const mainColumn: any = columns.find((col) => (col as any).accessorKey === "q5single");
+
+    const mockRow = {
+      original: {
+        responseData: { q5single: "Option 1" },
+        language: "default",
+      },
+    };
+
+    const cellResult = mainColumn?.cell?.({ row: mockRow } as any);
+    // Check that RenderResponse component is returned
+    expect(cellResult).toBeDefined();
+  });
+
+  test("multipleChoiceMulti main column renders RenderResponse component", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const mainColumn: any = columns.find((col) => (col as any).accessorKey === "q6multi");
+
+    const mockRow = {
+      original: {
+        responseData: { q6multi: ["Choice A", "Choice C"] },
+        language: "default",
+      },
+    };
+
+    const cellResult = mainColumn?.cell?.({ row: mockRow } as any);
+    // Check that RenderResponse component is returned
+    expect(cellResult).toBeDefined();
+  });
+});
+
+describe("ResponseTableColumns - Choice ID Columns", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  test("option IDs column calls extractChoiceIdsFromResponse for string response", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
+
+    const mockRow = {
+      original: {
+        responseData: { q5single: "Option 1" },
+        language: "default",
+      },
+    };
+
+    optionIdsColumn?.cell?.({ row: mockRow } as any);
+
+    expect(vi.mocked(extractChoiceIdsFromResponse)).toHaveBeenCalledWith(
+      "Option 1",
+      expect.objectContaining({ id: "q5single", type: "multipleChoiceSingle" }),
+      "default"
+    );
+  });
+
+  test("option IDs column calls extractChoiceIdsFromResponse for array response", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q6multioptionIds");
+
+    const mockRow = {
+      original: {
+        responseData: { q6multi: ["Choice A", "Choice C"] },
+        language: "default",
+      },
+    };
+
+    optionIdsColumn?.cell?.({ row: mockRow } as any);
+
+    expect(vi.mocked(extractChoiceIdsFromResponse)).toHaveBeenCalledWith(
+      ["Choice A", "Choice C"],
+      expect.objectContaining({ id: "q6multi", type: "multipleChoiceMulti" }),
+      "default"
+    );
+  });
+
+  test("option IDs column renders IdBadge components for choice IDs", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q6multioptionIds");
+
+    const mockRow = {
+      original: {
+        responseData: { q6multi: ["Choice A", "Choice C"] },
+        language: "default",
+      },
+    };
+
+    // Mock extractChoiceIdsFromResponse to return specific choice IDs
+    vi.mocked(extractChoiceIdsFromResponse).mockReturnValueOnce(["choice-1", "choice-3"]);
+
+    const cellResult = optionIdsColumn?.cell?.({ row: mockRow } as any);
+
+    // Should render something for choice IDs
+    expect(cellResult).toBeDefined();
+    // Verify that extractChoiceIdsFromResponse was called
+    expect(vi.mocked(extractChoiceIdsFromResponse)).toHaveBeenCalled();
+  });
+
+  test("option IDs column returns null for non-string/array response values", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
+
+    const mockRow = {
+      original: {
+        responseData: { q5single: 123 }, // Invalid type
+        language: "default",
+      },
+    };
+
+    const cellResult = optionIdsColumn?.cell?.({ row: mockRow } as any);
+
+    expect(cellResult).toBeNull();
+    expect(vi.mocked(extractChoiceIdsFromResponse)).not.toHaveBeenCalled();
+  });
+
+  test("option IDs column returns null when no choice IDs found", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
+
+    const mockRow = {
+      original: {
+        responseData: { q5single: "Non-existent option" },
+        language: "default",
+      },
+    };
+
+    // Mock extractChoiceIdsFromResponse to return empty array
+    vi.mocked(extractChoiceIdsFromResponse).mockReturnValueOnce([]);
+
+    const cellResult = optionIdsColumn?.cell?.({ row: mockRow } as any);
+
+    expect(cellResult).toBeNull();
+  });
+
+  test("option IDs column handles missing language gracefully", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
+
+    const mockRow = {
+      original: {
+        responseData: { q5single: "Option 1" },
+        language: null, // No language
+      },
+    };
+
+    optionIdsColumn?.cell?.({ row: mockRow } as any);
+
+    expect(vi.mocked(extractChoiceIdsFromResponse)).toHaveBeenCalledWith(
+      "Option 1",
+      expect.objectContaining({ id: "q5single" }),
+      undefined
+    );
+  });
+});
+
+describe("ResponseTableColumns - Helper Functions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  test("question headers are properly created for multiple choice questions", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const mainColumn: any = columns.find((col) => (col as any).accessorKey === "q5single");
+    const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
+
+    // Test main column header
+    const mainHeader = mainColumn?.header?.();
+    expect(mainHeader).toBeDefined();
+    expect(mainHeader?.props?.className).toContain("flex items-center justify-between");
+
+    // Test option IDs column header
+    const optionHeader = optionIdsColumn?.header?.();
+    expect(optionHeader).toBeDefined();
+    expect(optionHeader?.props?.className).toContain("flex items-center justify-between");
+  });
+
+  test("question headers include proper icons for multiple choice questions", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const singleChoiceColumn: any = columns.find((col) => (col as any).accessorKey === "q5single");
+    const multiChoiceColumn: any = columns.find((col) => (col as any).accessorKey === "q6multi");
+
+    // Headers should be functions that return JSX
+    expect(typeof singleChoiceColumn?.header).toBe("function");
+    expect(typeof multiChoiceColumn?.header).toBe("function");
+
+    // Call headers to ensure they don't throw
+    expect(() => singleChoiceColumn?.header?.()).not.toThrow();
+    expect(() => multiChoiceColumn?.header?.()).not.toThrow();
+  });
+});
+
+describe("ResponseTableColumns - Integration Tests", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  test("multiple choice questions work end-to-end with real data", () => {
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+
+    // Find all multiple choice related columns
+    const singleMainCol = columns.find((col) => (col as any).accessorKey === "q5single");
+    const singleIdsCol = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
+    const multiMainCol = columns.find((col) => (col as any).accessorKey === "q6multi");
+    const multiIdsCol = columns.find((col) => (col as any).accessorKey === "q6multioptionIds");
+
+    expect(singleMainCol).toBeDefined();
+    expect(singleIdsCol).toBeDefined();
+    expect(multiMainCol).toBeDefined();
+    expect(multiIdsCol).toBeDefined();
+
+    // Test with actual mock response data
+    const mockRow = { original: mockResponseData };
+
+    // Test single choice main column
+    const singleMainResult = (singleMainCol?.cell as any)?.({ row: mockRow });
+    expect(singleMainResult).toBeDefined();
+
+    // Test multi choice main column
+    const multiMainResult = (multiMainCol?.cell as any)?.({ row: mockRow });
+    expect(multiMainResult).toBeDefined();
+
+    // Test that choice ID columns exist and can be called
+    const singleIdsResult = (singleIdsCol?.cell as any)?.({ row: mockRow });
+    const multiIdsResult = (multiIdsCol?.cell as any)?.({ row: mockRow });
+
+    // Should not error when calling the cell functions
+    expect(() => singleIdsResult).not.toThrow();
+    expect(() => multiIdsResult).not.toThrow();
   });
 });
