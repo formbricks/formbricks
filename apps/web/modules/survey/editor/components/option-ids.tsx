@@ -32,7 +32,8 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
         return (
           <div className="flex flex-col gap-3">
             {question.choices.map((choice) => {
-              const imageUrl = choice.imageUrl ?? "";
+              const imageUrl = choice.imageUrl;
+              if (!imageUrl) return null;
               return (
                 <div key={choice.id} className="flex items-center gap-3">
                   <div className="relative h-24 w-40 overflow-hidden rounded-lg bg-gray-100">
@@ -54,20 +55,14 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
         );
 
       default:
-        return null;
+        return <></>;
     }
   };
-
-  const choiceIds = renderChoiceIds();
-
-  if (!choiceIds) {
-    return null;
-  }
 
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium text-gray-700">{t("common.option_ids")}</Label>
-      <div className="w-full">{choiceIds}</div>
+      <div className="w-full">{renderChoiceIds()}</div>
     </div>
   );
 };

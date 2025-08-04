@@ -76,15 +76,6 @@ describe("OptionIds", () => {
     ],
   };
 
-  const mockOpenTextQuestion: TSurveyQuestion = {
-    id: "question4",
-    type: TSurveyQuestionTypeEnum.OpenText,
-    headline: { default: "Open Text Question" },
-    required: false,
-    inputType: "text",
-    charLimit: 100,
-  } as TSurveyQuestion;
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -157,12 +148,6 @@ describe("OptionIds", () => {
     expect(idBadges[1]).toHaveAttribute("data-id", "pic2");
   });
 
-  test("returns null for unsupported question types", () => {
-    const { container } = render(<OptionIds question={mockOpenTextQuestion} selectedLanguageCode="en" />);
-
-    expect(container.firstChild).toBeNull();
-  });
-
   test("handles picture selection with missing imageUrl", () => {
     const questionWithMissingImage = {
       ...mockPictureSelectionQuestion,
@@ -175,10 +160,9 @@ describe("OptionIds", () => {
     render(<OptionIds question={questionWithMissingImage} selectedLanguageCode="en" />);
 
     const images = screen.getAllByTestId("choice-image");
-    expect(images).toHaveLength(2);
+    expect(images).toHaveLength(1);
     expect(images[0]).toHaveAttribute("src", "https://example.com/image1.jpg");
     // Next.js Image component doesn't render src attribute when imageUrl is empty
-    expect(images[1]).not.toHaveAttribute("src");
   });
 
   test("uses correct language code for localized values", () => {

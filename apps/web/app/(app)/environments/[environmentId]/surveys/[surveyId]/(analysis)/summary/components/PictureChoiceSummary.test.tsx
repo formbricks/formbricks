@@ -1,7 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyPictureSelectionQuestion,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { PictureChoiceSummary } from "./PictureChoiceSummary";
 
 vi.mock("@/modules/ui/components/progress-bar", () => ({
@@ -18,6 +22,12 @@ vi.mock("@/modules/ui/components/id-badge", () => ({
       ID: {id}
     </div>
   ),
+}));
+
+vi.mock("@/lib/response/utils", () => ({
+  getChoiceIdByValue: (value: string, question: TSurveyPictureSelectionQuestion) => {
+    return question.choices?.find((choice) => choice.imageUrl === value)?.id ?? "other";
+  },
 }));
 
 // mock next image
@@ -125,29 +135,6 @@ describe("PictureChoiceSummary", () => {
     expect(idBadges[1]).toHaveAttribute("data-id", "pic-choice-2");
     expect(idBadges[0]).toHaveTextContent("ID: pic-choice-1");
     expect(idBadges[1]).toHaveTextContent("ID: pic-choice-2");
-  });
-
-  test("does not render IdBadge when choice ID is not found", () => {
-    const choices = [
-      { id: "choice1", imageUrl: "https://example.com/unknown.png", percentage: 100, count: 10 },
-    ];
-    const questionSummary = {
-      choices,
-      question: {
-        id: "q3",
-        type: TSurveyQuestionTypeEnum.PictureSelection,
-        headline: "Picture Question",
-        allowMulti: false,
-        choices: [{ id: "pic-choice-1", imageUrl: "https://example.com/img1.png" }],
-      },
-      selectionCount: 10,
-    } as any;
-
-    render(<PictureChoiceSummary questionSummary={questionSummary} survey={survey} setFilter={() => {}} />);
-
-    expect(screen.queryByTestId("id-badge")).not.toBeInTheDocument();
-    // The image should still be rendered
-    expect(screen.getByRole("img")).toHaveAttribute("src", "https://example.com/unknown.png");
   });
 
   test("getChoiceIdByValue function correctly maps imageUrl to choice ID", () => {

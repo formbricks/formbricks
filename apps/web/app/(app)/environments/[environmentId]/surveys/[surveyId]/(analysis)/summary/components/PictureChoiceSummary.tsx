@@ -1,5 +1,6 @@
 "use client";
 
+import { getChoiceIdByValue } from "@/lib/response/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
@@ -31,10 +32,6 @@ export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: Pic
   const results = questionSummary.choices;
   const { t } = useTranslate();
 
-  const getChoiceIdByValue = (imageUrl: string) => {
-    return questionSummary.question.choices?.find((choice) => choice.imageUrl === imageUrl)?.id;
-  };
-
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -51,7 +48,7 @@ export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: Pic
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, index) => {
-          const choiceId = getChoiceIdByValue(result.imageUrl);
+          const choiceId = getChoiceIdByValue(result.imageUrl, questionSummary.question);
           return (
             <button
               type="button"

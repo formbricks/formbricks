@@ -10,12 +10,12 @@ interface RankingResponseProps {
 export const RankingResponse = ({ value, isExpanded, showId }: RankingResponseProps) => {
   return (
     <div
-      className={cn("my-1 text-slate-700", isExpanded ? "" : "flex space-x-2", showId ? "flex-col" : "")}
+      className={cn("text-slate-700", isExpanded ? "space-y-2" : "flex space-x-2", showId ? "flex-col" : "")}
       dir="auto">
       {value.map(
         (item, index) =>
           item.value && (
-            <div key={item.value} className="flex items-center gap-2 space-y-2">
+            <div key={item.value} className="flex items-center space-x-2">
               <span className="text-slate-400">#{index + 1}</span>
               <div className="rounded bg-slate-100 px-2 py-1 font-semibold">{item.value}</div>
               {item.id && showId && <IdBadge id={item.id} />}

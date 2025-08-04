@@ -167,8 +167,8 @@ describe("MultipleChoiceSummary", () => {
       />
     );
     const btns = screen.getAllByRole("button");
-    expect(btns[0]).toHaveTextContent("2 - Y2 common.selections");
-    expect(btns[1]).toHaveTextContent("1 - X1 common.selection");
+    expect(btns[0]).toHaveTextContent("2 - YID: other2 common.selections50%");
+    expect(btns[1]).toHaveTextContent("1 - XID: other1 common.selection50%");
   });
 
   test("places choice with others after one without when reversed inputs", () => {
@@ -317,36 +317,6 @@ describe("MultipleChoiceSummary", () => {
     expect(idBadges[1]).toHaveAttribute("data-id", "choice2");
     expect(idBadges[0]).toHaveTextContent("ID: choice1");
     expect(idBadges[1]).toHaveTextContent("ID: choice2");
-  });
-
-  test("does not render IdBadge when choice ID is not found", () => {
-    const setFilter = vi.fn();
-    const q = {
-      question: {
-        id: "q7",
-        headline: "H7",
-        type: "multipleChoiceSingle",
-        choices: [{ id: "choice1", label: { default: "Option A" } }],
-      },
-      choices: {
-        "Unknown Option": { value: "Unknown Option", count: 5, percentage: 100, others: [] },
-      },
-      type: "multipleChoiceSingle",
-      selectionCount: 0,
-    } as any;
-
-    render(
-      <MultipleChoiceSummary
-        questionSummary={q}
-        environmentId="env"
-        surveyType="link"
-        survey={baseSurvey}
-        setFilter={setFilter}
-      />
-    );
-
-    expect(screen.queryByTestId("id-badge")).not.toBeInTheDocument();
-    expect(screen.getByText("1 - Unknown Option")).toBeInTheDocument();
   });
 
   test("getChoiceIdByValue function correctly maps values to IDs", () => {

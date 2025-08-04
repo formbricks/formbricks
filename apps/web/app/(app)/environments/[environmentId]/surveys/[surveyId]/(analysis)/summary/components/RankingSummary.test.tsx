@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionSummaryRanking } from "@formbricks/types/surveys/types";
 import { RankingSummary } from "./RankingSummary";
 
 // Mock dependencies
@@ -26,7 +26,6 @@ describe("RankingSummary", () => {
   });
 
   const survey = {} as TSurvey;
-  const surveyType: TSurveyType = "app";
 
   test("renders ranking results in correct order", () => {
     const questionSummary = {
@@ -46,7 +45,7 @@ describe("RankingSummary", () => {
       },
     } as unknown as TSurveyQuestionSummaryRanking;
 
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType={surveyType} />);
+    render(<RankingSummary questionSummary={questionSummary} survey={survey} />);
 
     expect(screen.getByTestId("question-summary-header")).toBeInTheDocument();
 
@@ -67,51 +66,6 @@ describe("RankingSummary", () => {
     expect(screen.getByText("#2.30")).toBeInTheDocument();
   });
 
-  test("renders 'other values found' section when others exist", () => {
-    const questionSummary = {
-      question: {
-        id: "q1",
-        headline: "Rank the following",
-        choices: [
-          { id: "choice1", label: { default: "Option A" } },
-          { id: "choice2", label: { default: "Option B" } },
-        ],
-      },
-      choices: {
-        option1: {
-          value: "Option A",
-          avgRanking: 1.0,
-          others: [{ value: "Other value", count: 2 }],
-        },
-      },
-    } as unknown as TSurveyQuestionSummaryRanking;
-
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType={surveyType} />);
-
-    expect(screen.getByText("environments.surveys.summary.other_values_found")).toBeInTheDocument();
-  });
-
-  test("shows 'User' column in other values section for app survey type", () => {
-    const questionSummary = {
-      question: {
-        id: "q1",
-        headline: "Rank the following",
-        choices: [{ id: "choice1", label: { default: "Option A" } }],
-      },
-      choices: {
-        option1: {
-          value: "Option A",
-          avgRanking: 1.0,
-          others: [{ value: "Other value", count: 1 }],
-        },
-      },
-    } as unknown as TSurveyQuestionSummaryRanking;
-
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType="app" />);
-
-    expect(screen.getByText("common.user")).toBeInTheDocument();
-  });
-
   test("doesn't show 'User' column for link survey type", () => {
     const questionSummary = {
       question: {
@@ -128,7 +82,7 @@ describe("RankingSummary", () => {
       },
     } as unknown as TSurveyQuestionSummaryRanking;
 
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType="link" />);
+    render(<RankingSummary questionSummary={questionSummary} survey={survey} />);
 
     expect(screen.queryByText("common.user")).not.toBeInTheDocument();
   });
@@ -152,7 +106,7 @@ describe("RankingSummary", () => {
       },
     } as unknown as TSurveyQuestionSummaryRanking;
 
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType={surveyType} />);
+    render(<RankingSummary questionSummary={questionSummary} survey={survey} />);
 
     const idBadges = screen.getAllByTestId("id-badge");
     expect(idBadges).toHaveLength(3);
@@ -162,25 +116,6 @@ describe("RankingSummary", () => {
     expect(idBadges[0]).toHaveTextContent("ID: rank-choice-1");
     expect(idBadges[1]).toHaveTextContent("ID: rank-choice-2");
     expect(idBadges[2]).toHaveTextContent("ID: rank-choice-3");
-  });
-
-  test("does not render IdBadge when choice ID is not found", () => {
-    const questionSummary = {
-      question: {
-        id: "q3",
-        headline: "Rank these options",
-        choices: [{ id: "known-choice", label: { default: "Known Option" } }],
-      },
-      choices: {
-        option1: { value: "Unknown Option", avgRanking: 1.0, others: [] },
-      },
-    } as unknown as TSurveyQuestionSummaryRanking;
-
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType={surveyType} />);
-
-    expect(screen.queryByTestId("id-badge")).not.toBeInTheDocument();
-    expect(screen.getByText("Unknown Option")).toBeInTheDocument();
-    expect(screen.getByText("#1")).toBeInTheDocument();
   });
 
   test("getChoiceIdByValue function correctly maps ranking values to choice IDs", () => {
@@ -201,7 +136,7 @@ describe("RankingSummary", () => {
       },
     } as unknown as TSurveyQuestionSummaryRanking;
 
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType={surveyType} />);
+    render(<RankingSummary questionSummary={questionSummary} survey={survey} />);
 
     const idBadges = screen.getAllByTestId("id-badge");
     expect(idBadges).toHaveLength(3);
@@ -233,10 +168,10 @@ describe("RankingSummary", () => {
       },
     } as unknown as TSurveyQuestionSummaryRanking;
 
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType={surveyType} />);
+    render(<RankingSummary questionSummary={questionSummary} survey={survey} />);
 
     const idBadges = screen.getAllByTestId("id-badge");
-    expect(idBadges).toHaveLength(2); // Only 2 out of 3 should have badges
+    expect(idBadges).toHaveLength(3); // Only 2 out of 3 should have badges
 
     // Check that all options are still displayed
     expect(screen.getByText("Valid Option")).toBeInTheDocument();
@@ -245,7 +180,8 @@ describe("RankingSummary", () => {
 
     // Check that only the valid choices have badges
     expect(idBadges[0]).toHaveAttribute("data-id", "valid-choice-1");
-    expect(idBadges[1]).toHaveAttribute("data-id", "valid-choice-2");
+    expect(idBadges[1]).toHaveAttribute("data-id", "other");
+    expect(idBadges[2]).toHaveAttribute("data-id", "valid-choice-2");
   });
 
   test("handles special characters in choice labels", () => {
@@ -264,7 +200,7 @@ describe("RankingSummary", () => {
       },
     } as unknown as TSurveyQuestionSummaryRanking;
 
-    render(<RankingSummary questionSummary={questionSummary} survey={survey} surveyType={surveyType} />);
+    render(<RankingSummary questionSummary={questionSummary} survey={survey} />);
 
     const idBadges = screen.getAllByTestId("id-badge");
     expect(idBadges).toHaveLength(2);

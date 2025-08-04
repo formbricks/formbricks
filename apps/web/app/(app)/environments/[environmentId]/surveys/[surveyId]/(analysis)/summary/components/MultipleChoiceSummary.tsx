@@ -1,5 +1,6 @@
 "use client";
 
+import { getChoiceIdByValue } from "@/lib/response/utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
@@ -70,10 +71,6 @@ export const MultipleChoiceSummary = ({
     );
   };
 
-  const getChoiceIdByValue = (value: string) => {
-    return questionSummary.question.choices.find((choice) => choice.label.default === value)?.id;
-  };
-
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -90,7 +87,7 @@ export const MultipleChoiceSummary = ({
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => {
-          const choiceId = getChoiceIdByValue(result.value);
+          const choiceId = getChoiceIdByValue(result.value, questionSummary.question);
           return (
             <Fragment key={result.value}>
               <button

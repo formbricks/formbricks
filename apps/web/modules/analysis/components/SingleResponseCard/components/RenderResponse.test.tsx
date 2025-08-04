@@ -69,7 +69,14 @@ describe("RenderResponse", () => {
   });
 
   const defaultSurvey = { languages: [] } as any;
-  const defaultQuestion = { id: "q1", type: "Unknown" } as any;
+  const defaultQuestion = {
+    id: "q1",
+    type: "Unknown",
+    choices: [
+      { id: "choice1", label: { default: "Option 1" } },
+      { id: "choice2", label: { default: "Option 2" } },
+    ],
+  } as any;
   const dummyLanguage = "default";
 
   test("returns '-' for empty responseData (string)", () => {
@@ -268,7 +275,7 @@ describe("RenderResponse", () => {
         showId={false}
       />
     );
-    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("opt1:no-id,opt2:no-id");
+    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("opt1:other,opt2:other");
   });
 
   test("renders ResponseBadges for 'NPS' question (number)", () => {
@@ -297,7 +304,7 @@ describe("RenderResponse", () => {
         showId={false}
       />
     );
-    expect(screen.getByTestId("RankingResponse")).toHaveTextContent("first:no-id,second:no-id");
+    expect(screen.getByTestId("RankingResponse")).toHaveTextContent("first:other,second:other showId: false");
   });
 
   test("renders default branch for unknown question type with string", () => {
@@ -393,7 +400,7 @@ describe("RenderResponse", () => {
       />
     );
     const component = screen.getByTestId("RankingResponse");
-    expect(component).toHaveTextContent("Option 1:choice1,Unknown Option:no-id");
+    expect(component).toHaveTextContent("Option 1:choice1,Unknown Option:other");
   });
 
   test("passes showId prop to ResponseBadges for multiple choice single", () => {
@@ -457,7 +464,7 @@ describe("RenderResponse", () => {
       />
     );
     const component = screen.getByTestId("ResponseBadges");
-    expect(component).toHaveTextContent("Option 1:choice1,Unknown Option:no-id");
+    expect(component).toHaveTextContent("Option 1:choice1,Unknown Option:other");
   });
 
   test("passes showId=false to components when showId is false", () => {
@@ -494,6 +501,6 @@ describe("RenderResponse", () => {
       />
     );
     const component = screen.getByTestId("ResponseBadges");
-    expect(component).toHaveTextContent("Option 1:no-id");
+    expect(component).toHaveTextContent("Option 1:choice1");
   });
 });

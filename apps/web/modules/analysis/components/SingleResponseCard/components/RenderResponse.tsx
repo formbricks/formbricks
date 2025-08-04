@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
+import { getChoiceIdByValue } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
 import { formatDateWithOrdinal } from "@/lib/utils/datetime";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
@@ -158,10 +159,9 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
     case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
+    case TSurveyQuestionTypeEnum.Ranking:
       if (typeof responseData === "string" || typeof responseData === "number") {
-        const choiceId = question.choices?.find(
-          (choice) => choice.label.default === responseData.toString()
-        )?.id;
+        const choiceId = getChoiceIdByValue(responseData.toString(), question);
         return (
           <ResponseBadges
             items={[{ value: responseData.toString(), id: choiceId }]}
@@ -171,20 +171,18 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         );
       } else if (Array.isArray(responseData)) {
         const itemsArray = responseData.map((choice) => {
-          const choiceId = question.choices?.find((c) => c.label.default === choice)?.id;
+          const choiceId = getChoiceIdByValue(choice, question);
           return { value: choice, id: choiceId };
         });
-        return <ResponseBadges items={itemsArray} isExpanded={isExpanded} showId={showId} />;
-      }
-      break;
-
-    case TSurveyQuestionTypeEnum.Ranking:
-      if (Array.isArray(responseData)) {
-        const itemsArray = responseData.map((choice) => {
-          const choiceId = question.choices?.find((c) => c.label.default === choice)?.id;
-          return { value: choice, id: choiceId };
-        });
-        return <RankingResponse value={itemsArray} isExpanded={isExpanded} showId={showId} />;
+        return (
+          <>
+            {questionType === TSurveyQuestionTypeEnum.Ranking ? (
+              <RankingResponse value={itemsArray} isExpanded={isExpanded} showId={showId} />
+            ) : (
+              <ResponseBadges items={itemsArray} isExpanded={isExpanded} showId={showId} />
+            )}
+          </>
+        );
       }
       break;
 
