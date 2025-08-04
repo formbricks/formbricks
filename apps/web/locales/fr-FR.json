@@ -1205,7 +1205,7 @@
       "delete_survey_and_responses_warning": "Êtes-vous sûr de vouloir supprimer cette enquête et toutes ses réponses?",
       "edit": {
         "1_choose_the_default_language_for_this_survey": "1. Choisissez la langue par défaut pour ce sondage :",
-        "2_activate_translation_for_specific_languages": "2. Activer la traduction pour des langues spécifiques :",
+        "2_activate_translation_for_specific_languages": "2. Activer la traduction pour des langues spécifiques:",
         "add": "Ajouter +",
         "add_a_delay_or_auto_close_the_survey": "Ajouter un délai ou fermer automatiquement l'enquête",
         "add_a_four_digit_pin": "Ajoutez un code PIN à quatre chiffres.",

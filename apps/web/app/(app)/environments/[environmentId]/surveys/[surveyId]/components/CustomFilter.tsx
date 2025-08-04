@@ -238,31 +238,29 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     setSelectingDate(DateSelected.FROM);
   };
 
-  const handleDowndloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
-    try {
-      const responseFilters = filter === FilterDownload.ALL ? {} : filters;
-      setIsDownloading(true);
-      const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
-        surveyId: survey.id,
-        format: filetype,
-        filterCriteria: responseFilters,
-      });
-      if (responsesDownloadUrlResponse?.data) {
-        const link = document.createElement("a");
-        link.href = responsesDownloadUrlResponse.data;
-        link.download = "";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        const errorMessage = getFormattedErrorMessage(responsesDownloadUrlResponse);
-        toast.error(errorMessage);
-      }
-    } catch (error) {
-      toast.error("Error downloading responses");
-    } finally {
-      setIsDownloading(false);
+  const handleDownloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
+    const responseFilters = filter === FilterDownload.ALL ? {} : filters;
+    setIsDownloading(true);
+
+    const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
+      surveyId: survey.id,
+      format: filetype,
+      filterCriteria: responseFilters,
+    });
+
+    if (responsesDownloadUrlResponse?.data) {
+      const link = document.createElement("a");
+      link.href = responsesDownloadUrlResponse.data;
+      link.download = "";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      const errorMessage = getFormattedErrorMessage(responsesDownloadUrlResponse);
+      toast.error(errorMessage);
     }
+
+    setIsDownloading(false);
   };
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());
@@ -415,29 +413,29 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
             <DropdownMenuContent align="start">
               <DropdownMenuItem
                 data-testid="fb__custom-filter-download-all-csv"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.ALL, "csv");
+                onClick={async () => {
+                  await handleDownloadResponses(FilterDownload.ALL, "csv");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 data-testid="fb__custom-filter-download-all-xlsx"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.ALL, "xlsx");
+                onClick={async () => {
+                  await handleDownloadResponses(FilterDownload.ALL, "xlsx");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 data-testid="fb__custom-filter-download-filtered-csv"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.FILTER, "csv");
+                onClick={async () => {
+                  await handleDownloadResponses(FilterDownload.FILTER, "csv");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 data-testid="fb__custom-filter-download-filtered-xlsx"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
+                onClick={async () => {
+                  await handleDownloadResponses(FilterDownload.FILTER, "xlsx");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_excel")}</p>
               </DropdownMenuItem>
