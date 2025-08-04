@@ -736,6 +736,9 @@ export function Survey({
       }
     };
 
+    const isLanguageSwitchVisible = getShowLanguageSwitch(offset);
+    const isCloseButtonVisible = getShowSurveyCloseButton(offset);
+
     return (
       <AutoCloseWrapper
         survey={localSurvey}
@@ -752,9 +755,13 @@ export function Survey({
             <div className="fb-flex fb-flex-col fb-w-full fb-items-end">
               {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
 
-              <div className="fb-h-8 fb-relative fb-w-full">
+              <div
+                className={cn(
+                  "fb-relative fb-w-full",
+                  isCloseButtonVisible || isLanguageSwitchVisible ? "fb-h-8" : "fb-h-5"
+                )}>
                 <div className="fb-flex fb-items-center fb-justify-end fb-absolute fb-top-0 fb-right-0">
-                  {getShowLanguageSwitch(offset) && (
+                  {isLanguageSwitchVisible && (
                     <LanguageSwitch
                       surveyLanguages={localSurvey.languages}
                       setSelectedLanguageCode={setselectedLanguage}
@@ -763,11 +770,11 @@ export function Survey({
                     />
                   )}
 
-                  {getShowLanguageSwitch(offset) && getShowSurveyCloseButton(offset) && (
+                  {isLanguageSwitchVisible && isCloseButtonVisible && (
                     <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-z-[1001]"></div>
                   )}
 
-                  {getShowSurveyCloseButton(offset) && (
+                  {isCloseButtonVisible && (
                     <SurveyCloseButton
                       onClose={onClose}
                       hoverColor={styling.questionColor?.light ?? "#000000"}
