@@ -33,9 +33,9 @@ export function SecondaryLanguageSelect({
   };
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm">
-        {t("environments.surveys.edit.2_activate_translation_for_specific_languages")}:
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-slate-800">
+        {t("environments.surveys.edit.2_activate_translation_for_specific_languages")}
       </p>
       {projectLanguages
         .filter((lang) => lang.id !== defaultLanguage.id)

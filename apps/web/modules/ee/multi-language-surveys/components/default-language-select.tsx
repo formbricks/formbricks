@@ -30,11 +30,11 @@ export function DefaultLanguageSelect({
 }: DefaultLanguageSelectProps) {
   const { t } = useTranslate();
   return (
-    <div className="space-y-4">
-      <p className="text-sm">
-        {t("environments.surveys.edit.1_choose_the_default_language_for_this_survey")}:
-      </p>
-      <div className="flex items-center space-x-4">
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-slate-800">
+        {t("environments.surveys.edit.1_choose_the_default_language_for_this_survey")}
+      </label>
+      <div className="flex items-center space-x-2">
         <div className="w-48">
           <Select
             defaultValue={`${defaultLanguage?.code}`}
@@ -57,7 +57,7 @@ export function DefaultLanguageSelect({
               });
             }}
             value={`${defaultLanguage?.code}`}>
-            <SelectTrigger className="xs:w-[180px] xs:text-base w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
+            <SelectTrigger className="xs:w-[180px] xs:text-sm w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
