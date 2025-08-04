@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { cn } from "@/modules/ui/lib/utils";
 import { TFnType, useTranslate } from "@tolgee/react";
 import {
   differenceInDays,
@@ -31,7 +32,7 @@ import {
   subQuarters,
   subYears,
 } from "date-fns";
-import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon, Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -135,6 +136,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const firstMountRef = useRef(true);
 
@@ -239,6 +241,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const handleDowndloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
     try {
       const responseFilters = filter === FilterDownload.ALL ? {} : filters;
+      setIsDownloading(true);
       const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
         surveyId: survey.id,
         format: filetype,
@@ -257,6 +260,8 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
       }
     } catch (error) {
       toast.error("Error downloading responses");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -386,11 +391,21 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
             onOpenChange={(value) => {
               value && handleDatePickerClose();
             }}>
-            <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
+            <DropdownMenuTrigger
+              asChild
+              className={cn(
+                "focus:bg-muted cursor-pointer outline-none",
+                isDownloading && "cursor-not-allowed opacity-50"
+              )}
+              disabled={isDownloading}>
               <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
                 <div className="hidden w-full items-center justify-between sm:flex">
                   <span className="text-sm text-slate-700">{t("common.download")}</span>
-                  <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
+                  {isDownloading ? (
+                    <Loader2Icon className="ml-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
+                  )}
                 </div>
                 <DownloadIcon className="block h-4 sm:hidden" />
               </div>
