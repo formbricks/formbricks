@@ -3,7 +3,7 @@ import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/sur
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -27,36 +27,55 @@ const fetchAndAuthorizeSurvey = async (
   return { survey };
 };
 
-export const GET = async (
-  request: Request,
-  props: { params: Promise<{ surveyId: string }> }
-): Promise<Response> => {
-  const params = await props.params;
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "GET");
-    if (result.error) return result.error;
-    return responses.successResponse(result.survey);
-  } catch (error) {
-    return handleErrorResponse(error);
-  }
-};
+export const GET = withV1ApiWrapper(
+  async (
+    _request: Request,
+    props: { params: Promise<{ surveyId: string }> },
+    _auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
 
-export const DELETE = withApiLogging(
-  async (request: Request, props: { params: Promise<{ surveyId: string }> }, auditLog: ApiAuditLog) => {
+    const params = await props.params;
+
+    try {
+      const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "GET");
+      if (result.error) {
+        return {
+          response: result.error,
+        };
+      }
+      return {
+        response: responses.successResponse(result.survey),
+      };
+    } catch (error) {
+      return {
+        response: handleErrorResponse(error),
+      };
+    }
+  }
+);
+
+export const DELETE = withV1ApiWrapper(
+  async (
+    _request: Request,
+    props: { params: Promise<{ surveyId: string }> },
+    auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
+
     const params = await props.params;
     auditLog.targetId = params.surveyId;
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-      auditLog.organizationId = authentication.organizationId;
-
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
       if (result.error) {
         return {
@@ -79,19 +98,22 @@ export const DELETE = withApiLogging(
   "survey"
 );
 
-export const PUT = withApiLogging(
-  async (request: Request, props: { params: Promise<{ surveyId: string }> }, auditLog: ApiAuditLog) => {
+export const PUT = withV1ApiWrapper(
+  async (
+    request: Request,
+    props: { params: Promise<{ surveyId: string }> },
+    auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
+
     const params = await props.params;
     auditLog.targetId = params.surveyId;
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "PUT");
       if (result.error) {
         return {
@@ -106,7 +128,6 @@ export const PUT = withApiLogging(
           response: responses.notFoundResponse("Organization", null),
         };
       }
-      auditLog.organizationId = organization.id;
 
       let surveyUpdate;
       try {

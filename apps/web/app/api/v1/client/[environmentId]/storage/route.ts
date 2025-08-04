@@ -1,5 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { validateFile } from "@/lib/fileValidation";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -30,8 +31,8 @@ export const OPTIONS = async (): Promise<Response> => {
 // use this to let users upload files to a survey for example
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
-export const POST = async (req: NextRequest, context: Context): Promise<Response> => {
-  const params = await context.params;
+export const POST = withV1ApiWrapper(async (req: NextRequest, props: Context) => {
+  const params = await props.params;
   const environmentId = params.environmentId;
 
   const jsonInput = await req.json();
@@ -41,11 +42,13 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   });
 
   if (!inputValidation.success) {
-    return responses.badRequestResponse(
-      "Invalid request",
-      transformErrorToDetails(inputValidation.error),
-      true
-    );
+    return {
+      response: responses.badRequestResponse(
+        "Invalid request",
+        transformErrorToDetails(inputValidation.error),
+        true
+      ),
+    };
   }
 
   const { fileName, fileType, surveyId } = inputValidation.data;
@@ -53,7 +56,13 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   // Perform server-side file validation
   const fileValidation = validateFile(fileName, fileType);
   if (!fileValidation.valid) {
-    return responses.badRequestResponse(fileValidation.error ?? "Invalid file", { fileName, fileType }, true);
+    return {
+      response: responses.badRequestResponse(
+        fileValidation.error ?? "Invalid file",
+        { fileName, fileType },
+        true
+      ),
+    };
   }
 
   const [survey, organization] = await Promise.all([
@@ -62,14 +71,20 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   ]);
 
   if (!survey) {
-    return responses.notFoundResponse("Survey", surveyId);
+    return {
+      response: responses.notFoundResponse("Survey", surveyId),
+    };
   }
 
   if (!organization) {
-    return responses.notFoundResponse("OrganizationByEnvironmentId", environmentId);
+    return {
+      response: responses.notFoundResponse("OrganizationByEnvironmentId", environmentId),
+    };
   }
 
   const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
 
-  return await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed);
-};
+  return {
+    response: await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed),
+  };
+});

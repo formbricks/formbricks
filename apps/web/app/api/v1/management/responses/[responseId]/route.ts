@@ -1,7 +1,7 @@
-import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
+import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { deleteResponse, getResponse, updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -31,38 +31,49 @@ async function fetchAndAuthorizeResponse(
   return { response, survey };
 }
 
-export const GET = async (
-  request: Request,
-  props: { params: Promise<{ responseId: string }> }
-): Promise<Response> => {
-  const params = await props.params;
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
+export const GET = withV1ApiWrapper(
+  async (
+    _request: Request,
+    props: { params: Promise<{ responseId: string }> },
+    _auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
+    const params = await props.params;
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
 
-    const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "GET");
-    if (result.error) return result.error;
+    try {
+      const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "GET");
+      if (result.error) {
+        return {
+          response: result.error,
+        };
+      }
 
-    return responses.successResponse(result.response);
-  } catch (error) {
-    return handleErrorResponse(error);
+      return {
+        response: responses.successResponse(result.response),
+      };
+    } catch (error) {
+      return {
+        response: handleErrorResponse(error),
+      };
+    }
   }
-};
+);
 
-export const DELETE = withApiLogging(
-  async (request: Request, props: { params: Promise<{ responseId: string }> }, auditLog: ApiAuditLog) => {
+export const DELETE = withV1ApiWrapper(
+  async (
+    _request: Request,
+    props: { params: Promise<{ responseId: string }> },
+    auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
     const params = await props.params;
     auditLog.targetId = params.responseId;
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-      auditLog.organizationId = authentication.organizationId;
-
       const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "DELETE");
       if (result.error) {
         return {
@@ -85,20 +96,16 @@ export const DELETE = withApiLogging(
   "response"
 );
 
-export const PUT = withApiLogging(
-  async (request: Request, props: { params: Promise<{ responseId: string }> }, auditLog: ApiAuditLog) => {
+export const PUT = withV1ApiWrapper(
+  async (
+    request: Request,
+    props: { params: Promise<{ responseId: string }> },
+    auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
     const params = await props.params;
     auditLog.targetId = params.responseId;
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-      auditLog.organizationId = authentication.organizationId;
-
       const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "PUT");
       if (result.error) {
         return {

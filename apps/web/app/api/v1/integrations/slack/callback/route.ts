@@ -1,4 +1,5 @@
 import { responses } from "@/app/lib/api/response";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { NextRequest } from "next/server";
@@ -8,7 +9,7 @@ import {
   TIntegrationSlackCredential,
 } from "@formbricks/types/integration/slack";
 
-export const GET = async (req: NextRequest) => {
+export const GET = withV1ApiWrapper(async (req: NextRequest) => {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -16,15 +17,25 @@ export const GET = async (req: NextRequest) => {
   const error = queryParams.get("error");
 
   if (!environmentId) {
-    return responses.badRequestResponse("Invalid environmentId");
+    return {
+      response: responses.badRequestResponse("Invalid environmentId"),
+    };
   }
 
   if (code && typeof code !== "string") {
-    return responses.badRequestResponse("`code` must be a string");
+    return {
+      response: responses.badRequestResponse("`code` must be a string"),
+    };
   }
 
-  if (!SLACK_CLIENT_ID) return responses.internalServerErrorResponse("Slack client id is missing");
-  if (!SLACK_CLIENT_SECRET) return responses.internalServerErrorResponse("Slack client secret is missing");
+  if (!SLACK_CLIENT_ID)
+    return {
+      response: responses.internalServerErrorResponse("Slack client id is missing"),
+    };
+  if (!SLACK_CLIENT_SECRET)
+    return {
+      response: responses.internalServerErrorResponse("Slack client secret is missing"),
+    };
 
   const formData = {
     code,
@@ -50,7 +61,9 @@ export const GET = async (req: NextRequest) => {
     const data = await response.json();
 
     if (!data.ok) {
-      return responses.badRequestResponse(data.error);
+      return {
+        response: responses.badRequestResponse(data.error),
+      };
     }
 
     const slackCredentials: TIntegrationSlackCredential = {
@@ -78,9 +91,19 @@ export const GET = async (req: NextRequest) => {
     const result = await createOrUpdateIntegration(environmentId, integration);
 
     if (result) {
-      return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack`);
+      return {
+        response: Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack`),
+      };
     }
   } else if (error) {
-    return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack?error=${error}`);
+    return {
+      response: Response.redirect(
+        `${WEBAPP_URL}/environments/${environmentId}/integrations/slack?error=${error}`
+      ),
+    };
   }
-};
+
+  return {
+    response: responses.badRequestResponse("Missing code or error parameter"),
+  };
+});

@@ -1,7 +1,6 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
@@ -9,42 +8,53 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
-export const GET = async (request: Request) => {
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
+export const GET = withV1ApiWrapper(
+  async (_request: Request, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
     }
 
-    const environmentIds = authentication.environmentPermissions.map(
-      (permission) => permission.environmentId
-    );
-
-    const contactAttributeKeys = await getContactAttributeKeys(environmentIds);
-
-    return responses.successResponse(contactAttributeKeys);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
-    }
-    throw error;
-  }
-};
-
-export const POST = withApiLogging(
-  async (request: Request, _, auditLog: ApiAuditLog) => {
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
         return {
-          response: responses.notAuthenticatedResponse(),
+          response: responses.forbiddenResponse(
+            "Contacts are only enabled for Enterprise Edition, please upgrade."
+          ),
         };
       }
-      auditLog.userId = authentication.apiKeyId;
 
+      const environmentIds = authentication.environmentPermissions.map(
+        (permission) => permission.environmentId
+      );
+
+      const contactAttributeKeys = await getContactAttributeKeys(environmentIds);
+
+      return {
+        response: responses.successResponse(contactAttributeKeys),
+      };
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
+      }
+      throw error;
+    }
+  }
+);
+
+export const POST = withV1ApiWrapper(
+  async (request: Request, _, auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
+
+    try {
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {
         return {

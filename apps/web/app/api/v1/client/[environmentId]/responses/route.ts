@@ -1,5 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
@@ -29,14 +30,16 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-export const POST = async (request: Request, context: Context): Promise<Response> => {
-  const params = await context.params;
+export const POST = withV1ApiWrapper(async (request: Request, props: Context) => {
+  const params = await props.params;
   const requestHeaders = await headers();
   let responseInput;
   try {
     responseInput = await request.json();
   } catch (error) {
-    return responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true);
+    return {
+      response: responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true),
+    };
   }
 
   const { environmentId } = params;
@@ -44,19 +47,23 @@ export const POST = async (request: Request, context: Context): Promise<Response
   const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
   if (!environmentIdValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(environmentIdValidation.error),
-      true
-    );
+    return {
+      response: responses.badRequestResponse(
+        "Fields are missing or incorrectly formatted",
+        transformErrorToDetails(environmentIdValidation.error),
+        true
+      ),
+    };
   }
 
   if (!responseInputValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(responseInputValidation.error),
-      true
-    );
+    return {
+      response: responses.badRequestResponse(
+        "Fields are missing or incorrectly formatted",
+        transformErrorToDetails(responseInputValidation.error),
+        true
+      ),
+    };
   }
 
   const userAgent = request.headers.get("user-agent") || undefined;
@@ -73,28 +80,39 @@ export const POST = async (request: Request, context: Context): Promise<Response
   if (responseInputData.userId) {
     const isContactsEnabled = await getIsContactsEnabled();
     if (!isContactsEnabled) {
-      return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
+      return {
+        response: responses.forbiddenResponse(
+          "User identification is only available for enterprise users.",
+          true
+        ),
+      };
     }
   }
 
   // get and check survey
   const survey = await getSurvey(responseInputData.surveyId);
   if (!survey) {
-    return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
+    return {
+      response: responses.notFoundResponse("Survey", responseInputData.surveyId, true),
+    };
   }
   if (survey.environmentId !== environmentId) {
-    return responses.badRequestResponse(
-      "Survey is part of another environment",
-      {
-        "survey.environmentId": survey.environmentId,
-        environmentId,
-      },
-      true
-    );
+    return {
+      response: responses.badRequestResponse(
+        "Survey is part of another environment",
+        {
+          "survey.environmentId": survey.environmentId,
+          environmentId,
+        },
+        true
+      ),
+    };
   }
 
   if (!validateFileUploads(responseInputData.data, survey.questions)) {
-    return responses.badRequestResponse("Invalid file upload response");
+    return {
+      response: responses.badRequestResponse("Invalid file upload response"),
+    };
   }
 
   let response: TResponse;
@@ -117,10 +135,14 @@ export const POST = async (request: Request, context: Context): Promise<Response
     });
   } catch (error) {
     if (error instanceof InvalidInputError) {
-      return responses.badRequestResponse(error.message);
+      return {
+        response: responses.badRequestResponse(error.message),
+      };
     } else {
       logger.error({ error, url: request.url }, "Error creating response");
-      return responses.internalServerErrorResponse(error.message);
+      return {
+        response: responses.internalServerErrorResponse(error.message),
+      };
     }
   }
 
@@ -145,5 +167,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     surveyType: survey.type,
   });
 
-  return responses.successResponse({ id: response.id }, true);
-};
+  return {
+    response: responses.successResponse({ id: response.id }, true),
+  };
+});

@@ -4,18 +4,21 @@ import {
   matchesAnyPattern,
 } from "./route-config";
 
-export const isClientSideApiRoute = (url: string): boolean => {
+export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; isRateLimited: boolean } => {
   // Open Graph image generation route is a client side API route but it should not be rate limited
-  if (url.includes("/api/v1/client/og")) return false;
+  if (url.includes("/api/v1/client/og")) return { isClientSideApi: true, isRateLimited: false };
 
-  if (url.includes("/api/v1/js/actions")) return true;
-  if (url.includes("/api/v1/client/storage")) return true;
   const regex = /^\/api\/v\d+\/client\//;
-  return regex.test(url);
+  return { isClientSideApi: regex.test(url), isRateLimited: true };
 };
 
 export const isManagementApiRoute = (url: string): boolean => {
   const regex = /^\/api\/v\d+\/management\//;
+  return regex.test(url);
+};
+
+export const isIntegrationRoute = (url: string): boolean => {
+  const regex = /^\/api\/v\d+\/integrations\//;
   return regex.test(url);
 };
 

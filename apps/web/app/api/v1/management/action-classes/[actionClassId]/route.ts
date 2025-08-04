@@ -1,7 +1,7 @@
-import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
+import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
@@ -27,36 +27,55 @@ const fetchAndAuthorizeActionClass = async (
   return actionClass;
 };
 
-export const GET = async (
-  request: Request,
-  props: { params: Promise<{ actionClassId: string }> }
-): Promise<Response> => {
-  const params = await props.params;
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "GET");
-    if (actionClass) {
-      return responses.successResponse(actionClass);
-    }
-    return responses.notFoundResponse("Action Class", params.actionClassId);
-  } catch (error) {
-    return handleErrorResponse(error);
-  }
-};
-
-export const PUT = withApiLogging(
-  async (request: Request, props: { params: Promise<{ actionClassId: string }> }, auditLog: ApiAuditLog) => {
+export const GET = withV1ApiWrapper(
+  async (
+    _request: Request,
+    props: { params: Promise<{ actionClassId: string }> },
+    _auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
     const params = await props.params;
+
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
+
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
+      const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "GET");
+      if (actionClass) {
         return {
-          response: responses.notAuthenticatedResponse(),
+          response: responses.successResponse(actionClass),
         };
       }
-      auditLog.userId = authentication.apiKeyId;
+      return {
+        response: responses.notFoundResponse("Action Class", params.actionClassId),
+      };
+    } catch (error) {
+      return {
+        response: handleErrorResponse(error),
+      };
+    }
+  }
+);
 
+export const PUT = withV1ApiWrapper(
+  async (
+    request: Request,
+    props: { params: Promise<{ actionClassId: string }> },
+    auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
+    const params = await props.params;
+
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
+
+    try {
       const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "PUT");
       if (!actionClass) {
         return {
@@ -64,7 +83,6 @@ export const PUT = withApiLogging(
         };
       }
       auditLog.oldObject = actionClass;
-      auditLog.organizationId = authentication.organizationId;
 
       let actionClassUpdate;
       try {
@@ -109,20 +127,24 @@ export const PUT = withApiLogging(
   "actionClass"
 );
 
-export const DELETE = withApiLogging(
-  async (request: Request, props: { params: Promise<{ actionClassId: string }> }, auditLog: ApiAuditLog) => {
+export const DELETE = withV1ApiWrapper(
+  async (
+    _request: Request,
+    props: { params: Promise<{ actionClassId: string }> },
+    auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
     const params = await props.params;
+
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
+
     auditLog.targetId = params.actionClassId;
 
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-
       const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "DELETE");
       if (!actionClass) {
         return {
@@ -131,7 +153,6 @@ export const DELETE = withApiLogging(
       }
 
       auditLog.oldObject = actionClass;
-      auditLog.organizationId = authentication.organizationId;
 
       const deletedActionClass = await deleteActionClass(params.actionClassId);
       return {

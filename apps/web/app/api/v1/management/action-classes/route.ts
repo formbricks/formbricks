@@ -1,7 +1,6 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { createActionClass } from "@/lib/actionClass/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
@@ -9,38 +8,44 @@ import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classe
 import { DatabaseError } from "@formbricks/types/errors";
 import { getActionClasses } from "./lib/action-classes";
 
-export const GET = async (request: Request) => {
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-
-    const environmentIds = authentication.environmentPermissions.map(
-      (permission) => permission.environmentId
-    );
-
-    const actionClasses = await getActionClasses(environmentIds);
-
-    return responses.successResponse(actionClasses);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
+export const GET = withV1ApiWrapper(
+  async (_request: Request, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
     }
-    throw error;
-  }
-};
 
-export const POST = withApiLogging(
-  async (request: Request, _, auditLog: ApiAuditLog) => {
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
+      const environmentIds = authentication.environmentPermissions.map(
+        (permission) => permission.environmentId
+      );
+
+      const actionClasses = await getActionClasses(environmentIds);
+
+      return {
+        response: responses.successResponse(actionClasses),
+      };
+    } catch (error) {
+      if (error instanceof DatabaseError) {
         return {
-          response: responses.notAuthenticatedResponse(),
+          response: responses.badRequestResponse(error.message),
         };
       }
-      auditLog.userId = authentication.apiKeyId;
-      auditLog.organizationId = authentication.organizationId;
+      throw error;
+    }
+  }
+);
 
+export const POST = withV1ApiWrapper(
+  async (request: Request, _, auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
+
+    try {
       let actionClassInput;
       try {
         actionClassInput = await request.json();

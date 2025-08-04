@@ -1,4 +1,5 @@
 import { responses } from "@/app/lib/api/response";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import {
   ENCRYPTION_KEY,
   NOTION_OAUTH_CLIENT_ID,
@@ -11,7 +12,7 @@ import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integrati
 import { NextRequest } from "next/server";
 import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 
-export const GET = async (req: NextRequest) => {
+export const GET = withV1ApiWrapper(async (req: NextRequest) => {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -19,19 +20,32 @@ export const GET = async (req: NextRequest) => {
   const error = queryParams.get("error");
 
   if (!environmentId) {
-    return responses.badRequestResponse("Invalid environmentId");
+    return {
+      response: responses.badRequestResponse("Invalid environmentId"),
+    };
   }
 
   if (code && typeof code !== "string") {
-    return responses.badRequestResponse("`code` must be a string");
+    return {
+      response: responses.badRequestResponse("`code` must be a string"),
+    };
   }
 
   const client_id = NOTION_OAUTH_CLIENT_ID;
   const client_secret = NOTION_OAUTH_CLIENT_SECRET;
   const redirect_uri = NOTION_REDIRECT_URI;
-  if (!client_id) return responses.internalServerErrorResponse("Notion client id is missing");
-  if (!redirect_uri) return responses.internalServerErrorResponse("Notion redirect url is missing");
-  if (!client_secret) return responses.internalServerErrorResponse("Notion client secret is missing");
+  if (!client_id)
+    return {
+      response: responses.internalServerErrorResponse("Notion client id is missing"),
+    };
+  if (!redirect_uri)
+    return {
+      response: responses.internalServerErrorResponse("Notion redirect url is missing"),
+    };
+  if (!client_secret)
+    return {
+      response: responses.internalServerErrorResponse("Notion client secret is missing"),
+    };
   if (code) {
     // encode in base 64
     const encoded = Buffer.from(`${client_id}:${client_secret}`).toString("base64");
@@ -70,11 +84,19 @@ export const GET = async (req: NextRequest) => {
     const result = await createOrUpdateIntegration(environmentId, notionIntegration);
 
     if (result) {
-      return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/notion`);
+      return {
+        response: Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/notion`),
+      };
     }
   } else if (error) {
-    return Response.redirect(
-      `${WEBAPP_URL}/environments/${environmentId}/integrations/notion?error=${error}`
-    );
+    return {
+      response: Response.redirect(
+        `${WEBAPP_URL}/environments/${environmentId}/integrations/notion?error=${error}`
+      ),
+    };
   }
-};
+
+  return {
+    response: responses.badRequestResponse("Missing code or error parameter"),
+  };
+});

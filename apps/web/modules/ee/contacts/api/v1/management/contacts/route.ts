@@ -1,32 +1,45 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContacts } from "./lib/contacts";
 
-export const GET = async (request: Request) => {
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
+export const GET = withV1ApiWrapper(
+  async (_request: Request, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
     }
 
-    const environmentIds = authentication.environmentPermissions.map(
-      (permission) => permission.environmentId
-    );
+    try {
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
+        return {
+          response: responses.forbiddenResponse(
+            "Contacts are only enabled for Enterprise Edition, please upgrade."
+          ),
+        };
+      }
 
-    const contacts = await getContacts(environmentIds);
+      const environmentIds = authentication.environmentPermissions.map(
+        (permission) => permission.environmentId
+      );
 
-    return responses.successResponse(contacts);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
+      const contacts = await getContacts(environmentIds);
+
+      return {
+        response: responses.successResponse(contacts),
+      };
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
+      }
+      throw error;
     }
-    throw error;
   }
-};
+);
 
 // Please use the client API to create a new contact

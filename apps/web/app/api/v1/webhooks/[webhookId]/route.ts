@@ -1,53 +1,57 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
 import { responses } from "@/app/lib/api/response";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { headers } from "next/headers";
 import { logger } from "@formbricks/logger";
 
-export const GET = async (request: Request, props: { params: Promise<{ webhookId: string }> }) => {
-  const params = await props.params;
-  const headersList = await headers();
-  const apiKey = headersList.get("x-api-key");
-  if (!apiKey) {
-    return responses.notAuthenticatedResponse();
-  }
-  const authentication = await authenticateRequest(request);
-  if (!authentication) {
-    return responses.notAuthenticatedResponse();
-  }
-
-  // add webhook to database
-  const webhook = await getWebhook(params.webhookId);
-  if (!webhook) {
-    return responses.notFoundResponse("Webhook", params.webhookId);
-  }
-  if (!hasPermission(authentication.environmentPermissions, webhook.environmentId, "GET")) {
-    return responses.unauthorizedResponse();
-  }
-  return responses.successResponse(webhook);
-};
-
-export const DELETE = withApiLogging(
-  async (request: Request, props: { params: Promise<{ webhookId: string }> }, auditLog: ApiAuditLog) => {
-    const params = await props.params;
-    auditLog.targetId = params.webhookId;
-    const headersList = headers();
-    const apiKey = headersList.get("x-api-key");
-    if (!apiKey) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-    const authentication = await authenticateRequest(request);
+export const GET = withV1ApiWrapper(
+  async (
+    _request: Request,
+    props: { params: Promise<{ webhookId: string }> },
+    _auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
       };
     }
-    auditLog.userId = authentication.apiKeyId;
-    auditLog.organizationId = authentication.organizationId;
+
+    const params = await props.params;
+
+    // add webhook to database
+    const webhook = await getWebhook(params.webhookId);
+    if (!webhook) {
+      return {
+        response: responses.notFoundResponse("Webhook", params.webhookId),
+      };
+    }
+    if (!hasPermission(authentication.environmentPermissions, webhook.environmentId, "GET")) {
+      return {
+        response: responses.unauthorizedResponse(),
+      };
+    }
+    return {
+      response: responses.successResponse(webhook),
+    };
+  }
+);
+
+export const DELETE = withV1ApiWrapper(
+  async (
+    request: Request,
+    props: { params: Promise<{ webhookId: string }> },
+    auditLog: TApiAuditLog,
+    authentication: TApiKeyAuthentication
+  ) => {
+    const params = await props.params;
+    auditLog.targetId = params.webhookId;
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
+
     // check if webhook exists
     const webhook = await getWebhook(params.webhookId);
     if (!webhook) {

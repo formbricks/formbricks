@@ -1,7 +1,7 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -12,42 +12,56 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { createResponse, getResponsesByEnvironmentIds } from "./lib/response";
 
-export const GET = async (request: NextRequest) => {
-  const searchParams = request.nextUrl.searchParams;
-  const surveyId = searchParams.get("surveyId");
-  const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
-  const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
-
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    let allResponses: TResponse[] = [];
-
-    if (surveyId) {
-      const survey = await getSurvey(surveyId);
-      if (!survey) {
-        return responses.notFoundResponse("Survey", surveyId, true);
-      }
-      if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
-        return responses.unauthorizedResponse();
-      }
-      const surveyResponses = await getResponses(surveyId, limit, offset);
-      allResponses.push(...surveyResponses);
-    } else {
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
-      const environmentResponses = await getResponsesByEnvironmentIds(environmentIds, limit, offset);
-      allResponses.push(...environmentResponses);
+export const GET = withV1ApiWrapper(
+  async (request: NextRequest, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
     }
-    return responses.successResponse(allResponses);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
+
+    const searchParams = request.nextUrl.searchParams;
+    const surveyId = searchParams.get("surveyId");
+    const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
+    const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
+
+    try {
+      let allResponses: TResponse[] = [];
+
+      if (surveyId) {
+        const survey = await getSurvey(surveyId);
+        if (!survey) {
+          return {
+            response: responses.notFoundResponse("Survey", surveyId, true),
+          };
+        }
+        if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+          return {
+            response: responses.unauthorizedResponse(),
+          };
+        }
+        const surveyResponses = await getResponses(surveyId, limit, offset);
+        allResponses.push(...surveyResponses);
+      } else {
+        const environmentIds = authentication.environmentPermissions.map(
+          (permission) => permission.environmentId
+        );
+        const environmentResponses = await getResponsesByEnvironmentIds(environmentIds, limit, offset);
+        allResponses.push(...environmentResponses);
+      }
+      return {
+        response: responses.successResponse(allResponses),
+      };
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
+      }
+      throw error;
     }
-    throw error;
   }
-};
+);
 
 const validateInput = async (request: Request) => {
   let jsonInput;
@@ -92,18 +106,15 @@ const validateSurvey = async (responseInput: TResponseInput, environmentId: stri
   return { survey };
 };
 
-export const POST = withApiLogging(
-  async (request: Request, _, auditLog: ApiAuditLog) => {
-    try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-      auditLog.organizationId = authentication.organizationId;
+export const POST = withV1ApiWrapper(
+  async (request: Request, _, auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+    if (!authentication) {
+      return {
+        response: responses.notAuthenticatedResponse(),
+      };
+    }
 
+    try {
       const inputResult = await validateInput(request);
       if (inputResult.error) {
         return {
