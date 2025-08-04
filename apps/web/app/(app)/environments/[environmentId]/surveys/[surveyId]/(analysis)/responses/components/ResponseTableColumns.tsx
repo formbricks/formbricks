@@ -94,7 +94,7 @@ const getQuestionColumnsData = (
     return (
       <div className={containerClasses}>
         {choiceIds.map((choiceId, index) => (
-          <IdBadge key={choiceId || index} id={choiceId} />
+          <IdBadge key={`${choiceId}-${index}`} id={choiceId} />
         ))}
       </div>
     );
