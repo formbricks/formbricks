@@ -42,7 +42,7 @@ describe("Headline", () => {
     const { queryByTestId } = render(<Headline {...defaultProps} required={true} />);
     const optionalText = queryByTestId("fb__surveys__headline-optional-text-test");
 
-    expect(optionalText).toHaveAttribute("aria-hidden", "true");
+    expect(optionalText).not.toBeInTheDocument();
   });
 
   test("shows 'Optional' text when required is false", () => {

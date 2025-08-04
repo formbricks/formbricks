@@ -752,7 +752,7 @@ export function Survey({
             <div className="fb-flex fb-flex-col fb-w-full fb-items-end">
               {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
 
-              <div className="fb-h-5 fb-relative fb-w-full">
+              <div className="fb-h-8 fb-relative fb-w-full">
                 <div className="fb-flex fb-items-center fb-justify-end fb-absolute fb-top-0 fb-right-0">
                   {getShowLanguageSwitch(offset) && (
                     <LanguageSwitch
@@ -764,7 +764,7 @@ export function Survey({
                   )}
 
                   {getShowLanguageSwitch(offset) && getShowSurveyCloseButton(offset) && (
-                    <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-mx-1 fb-z-[1001]"></div>
+                    <div className="fb-h-5 fb-w-px fb-bg-slate-200 fb-z-[1001]"></div>
                   )}
 
                   {getShowSurveyCloseButton(offset) && (
@@ -782,7 +782,6 @@ export function Survey({
               className={cn(
                 loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
                 fullSizeCards ? "" : "fb-my-auto"
-                // "fb-pt-8"
               )}>
               {content()}
             </div>
