@@ -397,7 +397,8 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                 "focus:bg-muted cursor-pointer outline-none",
                 isDownloading && "cursor-not-allowed opacity-50"
               )}
-              disabled={isDownloading}>
+              disabled={isDownloading}
+              data-testid="fb__custom-filter-download-responses-button">
               <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
                 <div className="hidden w-full items-center justify-between sm:flex">
                   <span className="text-sm text-slate-700">{t("common.download")}</span>
@@ -413,24 +414,28 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
 
             <DropdownMenuContent align="start">
               <DropdownMenuItem
+                data-testid="fb__custom-filter-download-all-csv"
                 onClick={() => {
                   handleDowndloadResponses(FilterDownload.ALL, "csv");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
+                data-testid="fb__custom-filter-download-all-xlsx"
                 onClick={() => {
                   handleDowndloadResponses(FilterDownload.ALL, "xlsx");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
+                data-testid="fb__custom-filter-download-filtered-csv"
                 onClick={() => {
                   handleDowndloadResponses(FilterDownload.FILTER, "csv");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
+                data-testid="fb__custom-filter-download-filtered-xlsx"
                 onClick={() => {
                   handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
                 }}>
