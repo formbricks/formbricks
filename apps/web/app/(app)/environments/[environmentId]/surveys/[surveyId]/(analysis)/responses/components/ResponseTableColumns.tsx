@@ -195,6 +195,7 @@ const getQuestionColumnsData = (
                 responseData={responseValue}
                 language={language}
                 isExpanded={isExpanded}
+                showId={false}
               />
             );
           },
