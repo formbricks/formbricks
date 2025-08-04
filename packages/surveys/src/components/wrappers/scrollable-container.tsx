@@ -64,10 +64,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
     return (
       <div className="fb-relative">
         {!isAtTop && (
-          <>
-            <div className="fb-bg-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-0 fb-z-10 fb-h-3" />
-            <div className="fb-from-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-3 fb-z-10 fb-h-4 fb-bg-gradient-to-b fb-to-transparent" />
-          </>
+          <div className="fb-from-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-0 fb-z-10 fb-h-4 fb-bg-gradient-to-b fb-to-transparent" />
         )}
         <div
           ref={containerRef}
