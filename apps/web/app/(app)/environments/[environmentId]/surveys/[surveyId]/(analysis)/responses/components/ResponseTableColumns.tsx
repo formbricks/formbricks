@@ -1,6 +1,7 @@
 "use client";
 
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
@@ -8,8 +9,10 @@ import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { cn } from "@/modules/ui/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { TFnType } from "@tolgee/react";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
@@ -61,6 +64,42 @@ const getQuestionColumnsData = (
   t: TFnType
 ): ColumnDef<TResponseTableData>[] => {
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+
+  // Helper function to create consistent column headers
+  const createQuestionHeader = (questionType: string, headline: string, suffix?: string) => {
+    const title = suffix ? `${headline} - ${suffix}` : headline;
+    const QuestionHeader = () => (
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <span className="h-4 w-4">{QUESTIONS_ICON_MAP[questionType]}</span>
+          <span className="truncate">{title}</span>
+        </div>
+      </div>
+    );
+    QuestionHeader.displayName = "QuestionHeader";
+    return QuestionHeader;
+  };
+
+  // Helper function to get localized question headline
+  const getQuestionHeadline = (question: TSurveyQuestion, survey: TSurvey) => {
+    return getLocalizedValue(recallToHeadline(question.headline, survey, false, "default"), "default");
+  };
+
+  // Helper function to render choice ID badges
+  const renderChoiceIdBadges = (choiceIds: string[], isExpanded: boolean) => {
+    if (choiceIds.length === 0) return null;
+
+    const containerClasses = cn("flex gap-x-1 w-full", isExpanded && "flex-wrap gap-y-1");
+
+    return (
+      <div className={containerClasses}>
+        {choiceIds.map((choiceId, index) => (
+          <IdBadge key={choiceId || index} id={choiceId} />
+        ))}
+      </div>
+    );
+  };
+
   switch (question.type) {
     case "matrix":
       return question.rows.map((matrixRow) => {
@@ -136,6 +175,49 @@ const getQuestionColumnsData = (
           },
         };
       });
+
+    case "multipleChoiceMulti":
+    case "multipleChoiceSingle":
+    case "ranking":
+    case "pictureSelection": {
+      const questionHeadline = getQuestionHeadline(question, survey);
+      return [
+        {
+          accessorKey: question.id,
+          header: createQuestionHeader(question.type, questionHeadline),
+          cell: ({ row }) => {
+            const responseValue = row.original.responseData[question.id];
+            const language = row.original.language;
+            return (
+              <RenderResponse
+                question={question}
+                survey={survey}
+                responseData={responseValue}
+                language={language}
+                isExpanded={isExpanded}
+              />
+            );
+          },
+        },
+        {
+          accessorKey: question.id + "optionIds",
+          header: createQuestionHeader(question.type, questionHeadline, t("common.option_id")),
+          cell: ({ row }) => {
+            const responseValue = row.original.responseData[question.id];
+            // Type guard to ensure responseValue is the correct type
+            if (typeof responseValue === "string" || Array.isArray(responseValue)) {
+              const choiceIds = extractChoiceIdsFromResponse(
+                responseValue,
+                question,
+                row.original.language || undefined
+              );
+              return renderChoiceIdBadges(choiceIds, isExpanded);
+            }
+            return null;
+          },
+        },
+      ];
+    }
 
     default:
       return [
@@ -317,7 +399,6 @@ export const generateResponseTableColumns = (
   };
 
   // Combine the selection column with the dynamic question columns
-
   const baseColumns = [
     personColumn,
     dateColumn,
