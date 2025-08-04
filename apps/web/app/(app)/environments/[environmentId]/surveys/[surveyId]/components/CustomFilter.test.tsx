@@ -189,7 +189,7 @@ describe("CustomFilter", () => {
     });
   });
 
-  test("downloading all responses as csv and xlsx", async () => {
+  test("downloading all and filtered responses in csv and xlsx formats", async () => {
     const user = userEvent.setup();
 
     render(<CustomFilter survey={mockSurvey} />);
