@@ -1,23 +1,23 @@
-name: 'Upload Sentry Sourcemaps'
-description: 'Extract sourcemaps from Docker image and upload to Sentry'
+name: "Upload Sentry Sourcemaps"
+description: "Extract sourcemaps from Docker image and upload to Sentry"
 
 inputs:
   docker_image:
-    description: 'Docker image to extract sourcemaps from'
+    description: "Docker image to extract sourcemaps from"
     required: true
   release_version:
-    description: 'Sentry release version (e.g., v1.2.3)'
+    description: "Sentry release version (e.g., v1.2.3)"
     required: true
   sentry_auth_token:
-    description: 'Sentry authentication token'
+    description: "Sentry authentication token"
     required: true
   environment:
-    description: 'Sentry environment (e.g., production, staging)'
+    description: "Sentry environment (e.g., production, staging)"
     required: false
-    default: 'staging'
+    default: "staging"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -26,12 +26,11 @@ runs:
 
     - name: Validate Sentry auth token
       shell: bash
+      env:
+        SENTRY_TOKEN: ${{ inputs.sentry_auth_token }}
       run: |
         set -euo pipefail
         echo "🔐 Validating Sentry authentication token..."
-
-        # Assign token to local variable for secure handling
-        SENTRY_TOKEN="${{ inputs.sentry_auth_token }}"
 
         # Test the token by making a simple API call to Sentry
         response=$(curl -s -w "%{http_code}" -o /tmp/sentry_response.json \
@@ -57,13 +56,23 @@ runs:
 
     - name: Extract sourcemaps from Docker image
       shell: bash
+      env:
+        DOCKER_IMAGE: ${{ inputs.docker_image }}
       run: |
         set -euo pipefail
-        echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
+
+        # Validate docker image format (basic validation)
+        if [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+:[a-zA-Z0-9._-]+$ ]] && [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+@sha256:[A-Fa-f0-9]{64}$ ]]; then
+          echo "❌ Error: Invalid docker image format. Must be in format 'image:tag' or 'image@sha256:hash'"
+          echo "Provided: $DOCKER_IMAGE"
+          exit 1
+        fi
+
+        echo "📦 Extracting sourcemaps from Docker image: $DOCKER_IMAGE"
 
         # Create temporary container from the image and capture its ID
         echo "Creating temporary container..."
-        CONTAINER_ID=$(docker create "${{ inputs.docker_image }}")
+        CONTAINER_ID=$(docker create "$DOCKER_IMAGE")
         echo "Container created with ID: $CONTAINER_ID"
 
         # Set up cleanup function to ensure container is removed on script exit
@@ -82,7 +91,7 @@ runs:
           # Exit with the original exit code to preserve script success/failure status
           exit $original_exit_code
         }
-        
+
         # Register cleanup function to run on script exit (success or failure)
         trap cleanup_container EXIT
 
@@ -113,7 +122,7 @@ runs:
       with:
         environment: ${{ inputs.environment }}
         version: ${{ inputs.release_version }}
-        sourcemaps: './extracted-next/'
+        sourcemaps: "./extracted-next/"
 
     - name: Clean up extracted files
       shell: bash

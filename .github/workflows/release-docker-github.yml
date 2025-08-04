@@ -9,7 +9,7 @@ on:
   workflow_call:
     inputs:
       IS_PRERELEASE:
-        description: 'Whether this is a prerelease (affects latest tag)'
+        description: "Whether this is a prerelease (affects latest tag)"
         required: false
         type: boolean
         default: false
@@ -52,9 +52,20 @@ jobs:
         id: extract_release_tag
         run: |
           # Extract version from tag (e.g., refs/tags/v1.2.3 -> 1.2.3)
-          TAG=${{ github.ref }}
+          TAG="$GITHUB_REF"
           TAG=${TAG#refs/tags/v}
+
+          # Validate the extracted tag format
+          if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Error: Invalid release tag format after extraction. Must be semver (e.g., 1.2.3, 1.2.3-alpha)"
+            echo "Original ref: $GITHUB_REF"
+            echo "Extracted tag: $TAG"
+            exit 1
+          fi
+
+          # Safely add to environment variables
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+
           echo "VERSION=$TAG" >> $GITHUB_OUTPUT
           echo "Using tag-based version: $TAG"
 

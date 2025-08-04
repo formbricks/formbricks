@@ -1,11 +1,17 @@
 import { Prisma } from "@prisma/client";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyOpenTextQuestion,
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import {
   buildWhereClause,
   calculateTtcTotal,
   extracMetadataKeys,
+  extractChoiceIdsFromResponse,
   extractSurveyDetails,
   generateAllPermutationsOfSubsets,
   getResponseContactAttributes,
@@ -552,6 +558,179 @@ describe("Response Utils", () => {
       const out = generateAllPermutationsOfSubsets(["x", "y"]);
       expect(out).toEqual(expect.arrayContaining([["x"], ["y"], ["x", "y"], ["y", "x"]]));
       expect(out).toHaveLength(4);
+    });
+  });
+});
+
+describe("extractChoiceIdsFromResponse", () => {
+  const multipleChoiceMultiQuestion: TSurveyQuestion = {
+    id: "multi-choice-id",
+    type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+    headline: { default: "Select multiple options" },
+    required: false,
+    choices: [
+      {
+        id: "choice-1",
+        label: { default: "Option 1", es: "Opción 1" },
+      },
+      {
+        id: "choice-2",
+        label: { default: "Option 2", es: "Opción 2" },
+      },
+      {
+        id: "choice-3",
+        label: { default: "Option 3", es: "Opción 3" },
+      },
+    ],
+  };
+
+  const multipleChoiceSingleQuestion: TSurveyQuestion = {
+    id: "single-choice-id",
+    type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+    headline: { default: "Select one option" },
+    required: false,
+    choices: [
+      {
+        id: "choice-a",
+        label: { default: "Choice A", fr: "Choix A" },
+      },
+      {
+        id: "choice-b",
+        label: { default: "Choice B", fr: "Choix B" },
+      },
+    ],
+  };
+
+  const textQuestion: TSurveyOpenTextQuestion = {
+    id: "text-id",
+    type: TSurveyQuestionTypeEnum.OpenText,
+    headline: { default: "What do you think?" },
+    required: false,
+    inputType: "text",
+    charLimit: { enabled: false, min: 0, max: 0 },
+  };
+
+  describe("multipleChoiceMulti questions", () => {
+    test("should extract choice IDs from array response with default language", () => {
+      const responseValue = ["Option 1", "Option 3"];
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "default");
+
+      expect(result).toEqual(["choice-1", "choice-3"]);
+    });
+
+    test("should extract choice IDs from array response with specific language", () => {
+      const responseValue = ["Opción 1", "Opción 2"];
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "es");
+
+      expect(result).toEqual(["choice-1", "choice-2"]);
+    });
+
+    test("should fall back to checking all language values when exact language match fails", () => {
+      const responseValue = ["Opción 1", "Option 2"];
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "default");
+
+      expect(result).toEqual(["choice-1", "choice-2"]);
+    });
+
+    test("should render other option when non-matching choice is selected", () => {
+      const responseValue = ["Option 1", "Non-existent option", "Option 3"];
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "default");
+
+      expect(result).toEqual(["choice-1", "other", "choice-3"]);
+    });
+
+    test("should return empty array for empty response", () => {
+      const responseValue: string[] = [];
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "default");
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("multipleChoiceSingle questions", () => {
+    test("should extract choice ID from string response with default language", () => {
+      const responseValue = "Choice A";
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceSingleQuestion, "default");
+
+      expect(result).toEqual(["choice-a"]);
+    });
+
+    test("should extract choice ID from string response with specific language", () => {
+      const responseValue = "Choix B";
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceSingleQuestion, "fr");
+
+      expect(result).toEqual(["choice-b"]);
+    });
+
+    test("should fall back to checking all language values for single choice", () => {
+      const responseValue = "Choix A";
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceSingleQuestion, "default");
+
+      expect(result).toEqual(["choice-a"]);
+    });
+
+    test("should return empty array for empty string response", () => {
+      const responseValue = "";
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceSingleQuestion, "default");
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("edge cases", () => {
+    test("should return empty array for non-multiple choice questions", () => {
+      const responseValue = "Some text response";
+      const result = extractChoiceIdsFromResponse(responseValue, textQuestion, "default");
+
+      expect(result).toEqual([]);
+    });
+
+    test("should handle missing language parameter by defaulting to 'default'", () => {
+      const responseValue = "Option 1";
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion);
+
+      expect(result).toEqual(["choice-1"]);
+    });
+
+    test("should handle numeric or other types by returning empty array", () => {
+      const responseValue = 123;
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "default");
+
+      expect(result).toEqual([]);
+    });
+
+    test("should handle object responses by returning empty array", () => {
+      const responseValue = { invalid: "object" };
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "default");
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("language handling", () => {
+    test("should use provided language parameter", () => {
+      const responseValue = ["Opción 1"];
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, "es");
+
+      expect(result).toEqual(["choice-1"]);
+    });
+
+    test("should handle null language parameter by defaulting to 'default'", () => {
+      const responseValue = ["Option 1"];
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, null as any);
+
+      expect(result).toEqual(["choice-1"]);
+    });
+
+    test("should handle undefined language parameter by defaulting to 'default'", () => {
+      const responseValue = ["Option 1"];
+      const result = extractChoiceIdsFromResponse(
+        responseValue,
+        multipleChoiceMultiQuestion,
+        undefined as any
+      );
+
+      expect(result).toEqual(["choice-1"]);
     });
   });
 });

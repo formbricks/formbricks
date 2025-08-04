@@ -47,12 +47,14 @@ jobs:
 
       - name: Build Docker Image
         uses: docker/build-push-action@v6
+        env:
+          GITHUB_SHA: ${{ github.sha }}
         with:
           context: .
           file: ./apps/web/Dockerfile
           push: false
           load: true
-          tags: formbricks-test:${{ github.sha }}
+          tags: formbricks-test:${{ env.GITHUB_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           secrets: |
@@ -89,6 +91,9 @@ jobs:
 
       - name: Test Docker Image with Health Check
         shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           echo "🧪 Testing if the Docker image starts correctly..."
 
@@ -100,8 +105,8 @@ jobs:
             $DOCKER_RUN_ARGS \
             -p 3000:3000 \
             -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
-            -e ENCRYPTION_KEY="${{ secrets.DUMMY_ENCRYPTION_KEY }}" \
-            -d formbricks-test:${{ github.sha }}
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
+            -d "formbricks-test:$GITHUB_SHA"
 
           # Start health check polling immediately (every 5 seconds for up to 5 minutes)
           echo "🏥 Polling /health endpoint every 5 seconds for up to 5 minutes..."

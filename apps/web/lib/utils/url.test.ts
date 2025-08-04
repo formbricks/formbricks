@@ -1,7 +1,7 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import { TActionClassPageUrlRule } from "@formbricks/types/action-classes";
-import { isValidCallbackUrl, testURLmatch } from "./url";
+import { isStringUrl, isValidCallbackUrl, testURLmatch } from "./url";
 
 afterEach(() => {
   cleanup();
@@ -89,5 +89,15 @@ describe("isValidCallbackUrl", () => {
 
   test("returns false for malformed URL", () => {
     expect(isValidCallbackUrl("not-a-valid-url", WEBAPP_URL)).toBe(false);
+  });
+});
+
+describe("isStringUrl", () => {
+  test("returns true for valid URL", () => {
+    expect(isStringUrl("https://example.com")).toBe(true);
+  });
+
+  test("returns false for invalid URL", () => {
+    expect(isStringUrl("not-a-valid-url")).toBe(false);
   });
 });

@@ -2,6 +2,7 @@
 
 import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useTranslate } from "@tolgee/react";
 
@@ -21,6 +22,7 @@ export const AccessTable = ({ teams }: AccessTableProps) => {
               {t("environments.project.teams.team_name")}
             </TableHead>
             <TableHead className="font-medium text-slate-500">{t("common.size")}</TableHead>
+            <TableHead className="font-medium text-slate-500">{t("common.team_id")}</TableHead>
             <TableHead className="font-medium text-slate-500">
               {t("environments.project.teams.permission")}
             </TableHead>
@@ -39,6 +41,9 @@ export const AccessTable = ({ teams }: AccessTableProps) => {
               <TableCell className="font-medium">{team.name}</TableCell>
               <TableCell>
                 {team.memberCount} {team.memberCount === 1 ? t("common.member") : t("common.members")}
+              </TableCell>
+              <TableCell>
+                <IdBadge id={team.id} showCopyIconOnHover={true} />
               </TableCell>
               <TableCell>
                 <p className="capitalize">{TeamPermissionMapping[team.permission]}</p>

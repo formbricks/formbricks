@@ -23,7 +23,7 @@ jobs:
   upload-sourcemaps:
     name: Upload Sourcemaps to Sentry
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
@@ -31,16 +31,13 @@ jobs:
           fetch-depth: 0
 
       - name: Set Docker Image
-        run: |
-          if [ -n "${{ inputs.tag_version }}" ]; then
-            echo "DOCKER_IMAGE=${{ inputs.docker_image }}:${{ inputs.tag_version }}" >> $GITHUB_ENV
-          else
-            echo "DOCKER_IMAGE=${{ inputs.docker_image }}:${{ inputs.release_version }}" >> $GITHUB_ENV
-          fi
+        run: echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> $GITHUB_ENV
+        env:
+          DOCKER_IMAGE: ${{ inputs.docker_image }}:${{ inputs.tag_version != '' && inputs.tag_version || inputs.release_version }}
 
       - name: Upload Sourcemaps to Sentry
         uses: ./.github/actions/upload-sentry-sourcemaps
         with:
           docker_image: ${{ env.DOCKER_IMAGE }}
           release_version: ${{ inputs.release_version }}
-          sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }} 
+          sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
