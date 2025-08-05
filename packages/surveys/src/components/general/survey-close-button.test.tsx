@@ -39,7 +39,7 @@ describe("SurveyCloseButton", () => {
     fireEvent.mouseEnter(button as HTMLButtonElement);
     const backgroundColor = button?.style?.backgroundColor;
 
-    expect(backgroundColor).toBe("rgb(204, 230, 230)");
+    expect(backgroundColor).toBe("rgb(0, 128, 128)");
   });
 
   test("renders close button with correct border radius", () => {
