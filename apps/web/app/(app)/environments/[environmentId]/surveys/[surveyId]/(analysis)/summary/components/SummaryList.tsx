@@ -244,7 +244,6 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               <RankingSummary
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
-                surveyType={survey.type}
                 survey={survey}
               />
             );
