@@ -3,6 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -25,7 +26,7 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, props }: { req: Request; props: Context }) => {
+  handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
     const params = await props.params;
     const jsonInput = await req.json();
     const inputValidation = ZDisplayCreateInput.safeParse({

@@ -125,12 +125,42 @@ describe("endpoint-validator", () => {
       });
     });
 
+    test("should return correct object for webhooks routes with API key authentication", () => {
+      expect(isManagementApiRoute("/api/v1/webhooks")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v1/webhooks/123")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v1/webhooks/webhook-id/config")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+    });
+
     test("should return correct object for non-v1 storage management routes (only v1 supports both auth methods)", () => {
       expect(isManagementApiRoute("/api/v2/management/storage")).toEqual({
         isManagementApi: true,
         authenticationMethod: AuthenticationMethod.ApiKey,
       });
       expect(isManagementApiRoute("/api/v3/management/storage/upload")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+    });
+
+    test("should return correct object for non-v1 webhooks routes (falls back to management regex)", () => {
+      expect(isManagementApiRoute("/api/v2/webhooks")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v3/webhooks/123")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v2/management/webhooks")).toEqual({
         isManagementApi: true,
         authenticationMethod: AuthenticationMethod.ApiKey,
       });
@@ -165,6 +195,21 @@ describe("endpoint-validator", () => {
         authenticationMethod: AuthenticationMethod.ApiKey,
       });
       expect(isManagementApiRoute("/api/management/test")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+    });
+
+    test("should handle webhooks edge cases", () => {
+      expect(isManagementApiRoute("/api/v1/webhook")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/webhooks")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/webhooks/api/v1")).toEqual({
         isManagementApi: false,
         authenticationMethod: AuthenticationMethod.ApiKey,
       });

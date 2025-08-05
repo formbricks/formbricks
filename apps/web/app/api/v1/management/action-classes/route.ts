@@ -3,6 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { createActionClass } from "@/lib/actionClass/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -43,7 +44,7 @@ export const POST = withV1ApiWrapper({
     auditLog,
     authentication,
   }: {
-    req: Request;
+    req: NextRequest;
     auditLog: TApiAuditLog;
     authentication: TApiKeyAuthentication;
   }) => {

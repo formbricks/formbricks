@@ -7,6 +7,7 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
@@ -109,7 +110,7 @@ export const PUT = withV1ApiWrapper({
     auditLog,
     authentication,
   }: {
-    req: Request;
+    req: NextRequest;
     props: { params: Promise<{ surveyId: string }> };
     auditLog: TApiAuditLog;
     authentication: TApiKeyAuthentication;

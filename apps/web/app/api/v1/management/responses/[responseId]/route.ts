@@ -6,6 +6,7 @@ import { validateFileUploads } from "@/lib/fileValidation";
 import { deleteResponse, getResponse, updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
 
@@ -105,7 +106,7 @@ export const PUT = withV1ApiWrapper({
     auditLog,
     authentication,
   }: {
-    req: Request;
+    req: NextRequest;
     props: { params: Promise<{ responseId: string }> };
     auditLog: TApiAuditLog;
     authentication: TApiKeyAuthentication;

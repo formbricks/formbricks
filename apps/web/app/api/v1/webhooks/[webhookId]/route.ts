@@ -2,6 +2,7 @@ import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib
 import { responses } from "@/app/lib/api/response";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 
 export const GET = withV1ApiWrapper({
@@ -44,7 +45,7 @@ export const DELETE = withV1ApiWrapper({
     auditLog,
     authentication,
   }: {
-    req: Request;
+    req: NextRequest;
     props: { params: Promise<{ webhookId: string }> };
     auditLog: TApiAuditLog;
     authentication: TApiKeyAuthentication;

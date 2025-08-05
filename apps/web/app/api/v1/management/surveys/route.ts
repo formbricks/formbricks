@@ -5,13 +5,14 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: Request; authentication: TApiKeyAuthentication }) => {
+  handler: async ({ req, authentication }: { req: NextRequest; authentication: TApiKeyAuthentication }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -48,7 +49,7 @@ export const POST = withV1ApiWrapper({
     auditLog,
     authentication,
   }: {
-    req: Request;
+    req: NextRequest;
     auditLog: TApiAuditLog;
     authentication: TApiKeyAuthentication;
   }) => {

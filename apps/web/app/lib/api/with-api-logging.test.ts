@@ -1,5 +1,6 @@
 import { AuthenticationMethod } from "@/app/middleware/endpoint-validator";
 import * as Sentry from "@sentry/nextjs";
+import { NextRequest } from "next/server";
 import { Mock, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -75,13 +76,19 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
 }));
 
 function createMockRequest({ method = "GET", url = "https://api.test/endpoint", headers = new Map() } = {}) {
+  // Parse the URL to get the pathname
+  const parsedUrl = url.startsWith("/") ? new URL(url, "http://localhost:3000") : new URL(url);
+
   return {
     method,
     url,
     headers: {
       get: (key: string) => headers.get(key),
     },
-  } as unknown as Request;
+    nextUrl: {
+      pathname: parsedUrl.pathname,
+    },
+  } as unknown as NextRequest;
 }
 
 const mockApiAuthentication = {

@@ -7,6 +7,7 @@ import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
+import { NextRequest } from "next/server";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
@@ -31,7 +32,7 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = withV1ApiWrapper({
-  handler: async ({ req, props }: { req: Request; props: Context }) => {
+  handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
     const params = await props.params;
     const requestHeaders = await headers();
     let responseInput;

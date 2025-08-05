@@ -24,6 +24,8 @@ export const isManagementApiRoute = (
 ): { isManagementApi: boolean; authenticationMethod: AuthenticationMethod } => {
   if (url.includes("/api/v1/management/storage"))
     return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
+  if (url.includes("/api/v1/webhooks"))
+    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.ApiKey };
 
   const regex = /^\/api\/v\d+\/management\//;
   return { isManagementApi: regex.test(url), authenticationMethod: AuthenticationMethod.ApiKey };

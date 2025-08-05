@@ -111,7 +111,7 @@ export const POST = withV1ApiWrapper({
     auditLog,
     authentication,
   }: {
-    req: Request;
+    req: NextRequest;
     auditLog: TApiAuditLog;
     authentication: TApiKeyAuthentication;
   }) => {

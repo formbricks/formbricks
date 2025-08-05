@@ -6,6 +6,7 @@ import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponse, updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
@@ -29,7 +30,13 @@ const handleDatabaseError = (error: Error, url: string, endpoint: string, respon
 };
 
 export const PUT = withV1ApiWrapper({
-  handler: async ({ req, props }: { req: Request; props: { params: Promise<{ responseId: string }> } }) => {
+  handler: async ({
+    req,
+    props,
+  }: {
+    req: NextRequest;
+    props: { params: Promise<{ responseId: string }> };
+  }) => {
     const params = await props.params;
     const { responseId } = params;
 

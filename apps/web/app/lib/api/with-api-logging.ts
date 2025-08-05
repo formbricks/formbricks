@@ -26,7 +26,7 @@ export type TSessionAuthentication = Session | null;
 
 // Interface for handler function parameters
 export interface THandlerParams<TProps = unknown> {
-  req?: Request | NextRequest;
+  req?: NextRequest;
   props?: TProps;
   auditLog?: TApiAuditLog;
   authentication?: TApiKeyAuthentication | TSessionAuthentication;
@@ -75,14 +75,14 @@ const handleRateLimiting = async (
         // API key authentication for general routes
         await applyRateLimit(rateLimitConfigs.api.v1, authentication.hashedApiKey);
       }
-    }
+    } else {
+      if (routeType === ApiV1RouteTypeEnum.General) {
+        await applyIPRateLimit(rateLimitConfigs.api.v1);
+      }
 
-    if (routeType === ApiV1RouteTypeEnum.General) {
-      await applyIPRateLimit(rateLimitConfigs.api.v1);
-    }
-
-    if (routeType === ApiV1RouteTypeEnum.Client) {
-      await applyClientRateLimit(url);
+      if (routeType === ApiV1RouteTypeEnum.Client) {
+        await applyClientRateLimit(url);
+      }
     }
   } catch (error) {
     return responses.tooManyRequestsResponse(error.message);
@@ -96,7 +96,7 @@ const handleRateLimiting = async (
  */
 const executeHandler = async <TResult extends { response: Response }, TProps>(
   handler: (params: THandlerParams<TProps>) => Promise<TResult>,
-  req: Request,
+  req: NextRequest,
   props: TProps,
   auditLog: TApiAuditLog | undefined,
   authentication: TApiV1Authentication
@@ -136,7 +136,7 @@ const setupAuditLog = (
  */
 const handleAuthentication = async (
   authenticationMethod: AuthenticationMethod,
-  req: Request
+  req: NextRequest
 ): Promise<TApiV1Authentication> => {
   switch (authenticationMethod) {
     case AuthenticationMethod.ApiKey:
@@ -171,7 +171,7 @@ const isResponseSuccessful = async (res: Response): Promise<boolean> => {
 /**
  * Log error details to system logger and Sentry
  */
-const logErrorDetails = (res: Response, req: Request, correlationId: string, error?: any): void => {
+const logErrorDetails = (res: Response, req: NextRequest, correlationId: string, error?: any): void => {
   const logContext = {
     correlationId,
     method: req.method,
@@ -193,7 +193,7 @@ const logErrorDetails = (res: Response, req: Request, correlationId: string, err
  */
 const processResponse = async (
   res: Response,
-  req: Request,
+  req: NextRequest,
   auditLog?: TApiAuditLog,
   error?: any
 ): Promise<void> => {
@@ -221,11 +221,13 @@ const processResponse = async (
 };
 
 const getRouteType = (
-  url: string
+  req: NextRequest
 ): { routeType: ApiV1RouteTypeEnum; isRateLimited: boolean; authenticationMethod: AuthenticationMethod } => {
-  const { isClientSideApi, isRateLimited } = isClientSideApiRoute(url);
-  const { isManagementApi, authenticationMethod } = isManagementApiRoute(url);
-  const isIntegration = isIntegrationRoute(url);
+  const pathname = req.nextUrl.pathname;
+
+  const { isClientSideApi, isRateLimited } = isClientSideApiRoute(pathname);
+  const { isManagementApi, authenticationMethod } = isManagementApiRoute(pathname);
+  const isIntegration = isIntegrationRoute(pathname);
 
   if (isClientSideApi)
     return {
@@ -242,7 +244,7 @@ const getRouteType = (
       authenticationMethod: AuthenticationMethod.Session,
     };
 
-  throw new Error(`Unknown route type: ${url}`);
+  throw new Error(`Unknown route type: ${pathname}`);
 };
 
 /**
@@ -274,7 +276,7 @@ export const withV1ApiWrapper: {
         params: THandlerParams<TProps> & { authentication?: TApiKeyAuthentication }
       ) => Promise<TResult>;
     }
-  ): (req: Request, props: TProps) => Promise<Response>;
+  ): (req: NextRequest, props: TProps) => Promise<Response>;
 
   <TResult extends { response: Response }, TProps = unknown>(
     params: TWithV1ApiWrapperParams<TResult, TProps> & {
@@ -282,7 +284,7 @@ export const withV1ApiWrapper: {
         params: THandlerParams<TProps> & { authentication?: TSessionAuthentication }
       ) => Promise<TResult>;
     }
-  ): (req: Request, props: TProps) => Promise<Response>;
+  ): (req: NextRequest, props: TProps) => Promise<Response>;
 
   <TResult extends { response: Response }, TProps = unknown>(
     params: TWithV1ApiWrapperParams<TResult, TProps> & {
@@ -290,12 +292,12 @@ export const withV1ApiWrapper: {
         params: THandlerParams<TProps> & { authentication?: TApiV1Authentication }
       ) => Promise<TResult>;
     }
-  ): (req: Request, props: TProps) => Promise<Response>;
+  ): (req: NextRequest, props: TProps) => Promise<Response>;
 } = <TResult extends { response: Response }, TProps = unknown>(
   params: TWithV1ApiWrapperParams<TResult, TProps>
-): ((req: Request, props: TProps) => Promise<Response>) => {
+): ((req: NextRequest, props: TProps) => Promise<Response>) => {
   const { handler, action, targetType } = params;
-  return async (req: Request, props: TProps): Promise<Response> => {
+  return async (req: NextRequest, props: TProps): Promise<Response> => {
     const saveAuditLog = action && targetType;
     const auditLog = saveAuditLog ? buildAuditLogBaseObject(action, targetType, req.url) : undefined;
 
@@ -307,7 +309,7 @@ export const withV1ApiWrapper: {
     let authentication: TApiV1Authentication = null;
 
     try {
-      ({ routeType, isRateLimited, authenticationMethod } = getRouteType(req.url));
+      ({ routeType, isRateLimited, authenticationMethod } = getRouteType(req));
     } catch (error) {
       logger.error({ error }, "Error getting route type");
       return responses.internalServerErrorResponse("An unexpected error occurred.");
@@ -322,7 +324,7 @@ export const withV1ApiWrapper: {
     setupAuditLog(authentication, auditLog, routeType);
 
     if (isRateLimited) {
-      const rateLimitResponse = await handleRateLimiting(req.url, authentication, routeType);
+      const rateLimitResponse = await handleRateLimiting(req.nextUrl.pathname, authentication, routeType);
       if (rateLimitResponse) return rateLimitResponse;
     }
 
