@@ -6,8 +6,8 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
-export const GET = withV1ApiWrapper(
-  async (_request: Request, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ authentication }: { authentication: TApiKeyAuthentication }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -30,18 +30,26 @@ export const GET = withV1ApiWrapper(
       }
       throw error;
     }
-  }
-);
+  },
+});
 
-export const POST = withV1ApiWrapper(
-  async (request: Request, _, auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const POST = withV1ApiWrapper({
+  handler: async ({
+    req,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
       };
     }
 
-    const webhookInput = await request.json();
+    const webhookInput = await req.json();
     const inputValidation = ZWebhookInput.safeParse(webhookInput);
 
     if (!inputValidation.success) {
@@ -89,6 +97,6 @@ export const POST = withV1ApiWrapper(
       throw error;
     }
   },
-  "created",
-  "webhook"
-);
+  action: "created",
+  targetType: "webhook",
+});

@@ -1,5 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { TApiAuditLog, TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
@@ -20,8 +20,8 @@ const getEmail = async (token: string) => {
   return z.string().parse(res_?.email);
 };
 
-export const GET = withV1ApiWrapper(
-  async (req: NextRequest, _, _auditLog: TApiAuditLog, session: TSessionAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ req, authentication }: { req: NextRequest; authentication: TSessionAuthentication }) => {
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
     const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -33,7 +33,7 @@ export const GET = withV1ApiWrapper(
       };
     }
 
-    if (!session) {
+    if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
       };
@@ -44,7 +44,7 @@ export const GET = withV1ApiWrapper(
         response: responses.badRequestResponse("`code` must be a string"),
       };
     }
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user.id, environmentId);
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication?.user.id, environmentId);
     if (!canUserAccessEnvironment) {
       return {
         response: responses.unauthorizedResponse(),
@@ -53,7 +53,9 @@ export const GET = withV1ApiWrapper(
 
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
-    const code_verifier = Buffer.from(environmentId + session.user.id + environmentId).toString("base64");
+    const code_verifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
+      "base64"
+    );
 
     if (!client_id)
       return {
@@ -100,5 +102,5 @@ export const GET = withV1ApiWrapper(
         response: responses.internalServerErrorResponse(error),
       };
     }
-  }
-);
+  },
+});

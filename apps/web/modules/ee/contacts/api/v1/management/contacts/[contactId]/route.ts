@@ -28,13 +28,14 @@ const fetchAndAuthorizeContact = async (
   return { contact };
 };
 
-export const GET = withV1ApiWrapper(
-  async (
-    _request: Request,
-    { params: paramsPromise }: { params: Promise<{ contactId: string }> },
-    _auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ contactId: string }> };
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -42,7 +43,7 @@ export const GET = withV1ApiWrapper(
     }
 
     try {
-      const params = await paramsPromise;
+      const params = await props.params;
 
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {
@@ -68,23 +69,26 @@ export const GET = withV1ApiWrapper(
         response: handleErrorResponse(error),
       };
     }
-  }
-);
+  },
+});
 
-export const DELETE = withV1ApiWrapper(
-  async (
-    _request: Request,
-    { params: paramsPromise }: { params: Promise<{ contactId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    props,
+    auditLog,
+    authentication,
+  }: {
+    props: { params: Promise<{ contactId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
       };
     }
 
-    const params = await paramsPromise;
+    const params = await props.params;
     auditLog.targetId = params.contactId;
 
     try {
@@ -115,6 +119,6 @@ export const DELETE = withV1ApiWrapper(
       };
     }
   },
-  "deleted",
-  "contact"
-);
+  action: "deleted",
+  targetType: "contact",
+});

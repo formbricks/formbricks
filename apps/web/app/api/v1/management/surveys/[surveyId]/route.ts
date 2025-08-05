@@ -27,13 +27,14 @@ const fetchAndAuthorizeSurvey = async (
   return { survey };
 };
 
-export const GET = withV1ApiWrapper(
-  async (
-    _request: Request,
-    props: { params: Promise<{ surveyId: string }> },
-    _auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ surveyId: string }> };
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -57,16 +58,19 @@ export const GET = withV1ApiWrapper(
         response: handleErrorResponse(error),
       };
     }
-  }
-);
+  },
+});
 
-export const DELETE = withV1ApiWrapper(
-  async (
-    _request: Request,
-    props: { params: Promise<{ surveyId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    props,
+    auditLog,
+    authentication,
+  }: {
+    props: { params: Promise<{ surveyId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -94,17 +98,22 @@ export const DELETE = withV1ApiWrapper(
       };
     }
   },
-  "deleted",
-  "survey"
-);
+  action: "deleted",
+  targetType: "survey",
+});
 
-export const PUT = withV1ApiWrapper(
-  async (
-    request: Request,
-    props: { params: Promise<{ surveyId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const PUT = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    props: { params: Promise<{ surveyId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -131,9 +140,9 @@ export const PUT = withV1ApiWrapper(
 
       let surveyUpdate;
       try {
-        surveyUpdate = await request.json();
+        surveyUpdate = await req.json();
       } catch (error) {
-        logger.error({ error, url: request.url }, "Error parsing JSON input");
+        logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
@@ -179,6 +188,6 @@ export const PUT = withV1ApiWrapper(
       };
     }
   },
-  "updated",
-  "survey"
-);
+  action: "updated",
+  targetType: "survey",
+});

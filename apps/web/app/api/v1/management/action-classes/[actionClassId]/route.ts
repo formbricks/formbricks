@@ -27,13 +27,14 @@ const fetchAndAuthorizeActionClass = async (
   return actionClass;
 };
 
-export const GET = withV1ApiWrapper(
-  async (
-    _request: Request,
-    props: { params: Promise<{ actionClassId: string }> },
-    _auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ actionClassId: string }> };
+    authentication: TApiKeyAuthentication;
+  }) => {
     const params = await props.params;
 
     if (!authentication) {
@@ -57,16 +58,21 @@ export const GET = withV1ApiWrapper(
         response: handleErrorResponse(error),
       };
     }
-  }
-);
+  },
+});
 
-export const PUT = withV1ApiWrapper(
-  async (
-    request: Request,
-    props: { params: Promise<{ actionClassId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const PUT = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    props: { params: Promise<{ actionClassId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     const params = await props.params;
 
     if (!authentication) {
@@ -86,9 +92,9 @@ export const PUT = withV1ApiWrapper(
 
       let actionClassUpdate;
       try {
-        actionClassUpdate = await request.json();
+        actionClassUpdate = await req.json();
       } catch (error) {
-        logger.error({ error, url: request.url }, "Error parsing JSON");
+        logger.error({ error, url: req.url }, "Error parsing JSON");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
@@ -123,17 +129,20 @@ export const PUT = withV1ApiWrapper(
       };
     }
   },
-  "updated",
-  "actionClass"
-);
+  action: "updated",
+  targetType: "actionClass",
+});
 
-export const DELETE = withV1ApiWrapper(
-  async (
-    _request: Request,
-    props: { params: Promise<{ actionClassId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    props,
+    auditLog,
+    authentication,
+  }: {
+    props: { params: Promise<{ actionClassId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     const params = await props.params;
 
     if (!authentication) {
@@ -164,6 +173,6 @@ export const DELETE = withV1ApiWrapper(
       };
     }
   },
-  "deleted",
-  "actionClass"
-);
+  action: "deleted",
+  targetType: "actionClass",
+});

@@ -12,8 +12,14 @@ export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
 };
 
-export const GET = withV1ApiWrapper(
-  async (request: NextRequest, props: { params: Promise<{ environmentId: string; userId: string }> }) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+  }: {
+    req: NextRequest;
+    props: { params: Promise<{ environmentId: string; userId: string }> };
+  }) => {
     const params = await props.params;
 
     try {
@@ -44,7 +50,7 @@ export const GET = withV1ApiWrapper(
         };
       }
 
-      const { device } = userAgent(request);
+      const { device } = userAgent(req);
       const deviceType = device ? "phone" : "desktop";
 
       try {
@@ -64,7 +70,7 @@ export const GET = withV1ApiWrapper(
           };
         }
 
-        logger.error({ err, url: request.url }, "Error fetching person state");
+        logger.error({ err, url: req.url }, "Error fetching person state");
         return {
           response: responses.internalServerErrorResponse(
             err.message ?? "Unable to fetch person state",
@@ -73,7 +79,7 @@ export const GET = withV1ApiWrapper(
         };
       }
     } catch (error) {
-      logger.error({ error, url: request.url }, "Error fetching person state");
+      logger.error({ error, url: req.url }, "Error fetching person state");
       return {
         response: responses.internalServerErrorResponse(
           `Unable to complete response: ${error.message}`,
@@ -81,5 +87,5 @@ export const GET = withV1ApiWrapper(
         ),
       };
     }
-  }
-);
+  },
+});

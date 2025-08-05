@@ -31,20 +31,15 @@ async function fetchAndAuthorizeResponse(
   return { response, survey };
 }
 
-export const GET = withV1ApiWrapper(
-  async (
-    _request: Request,
-    props: { params: Promise<{ responseId: string }> },
-    _auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ responseId: string }> };
+    authentication: TApiKeyAuthentication;
+  }) => {
     const params = await props.params;
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     try {
       const result = await fetchAndAuthorizeResponse(params.responseId, authentication, "GET");
       if (result.error) {
@@ -61,16 +56,19 @@ export const GET = withV1ApiWrapper(
         response: handleErrorResponse(error),
       };
     }
-  }
-);
+  },
+});
 
-export const DELETE = withV1ApiWrapper(
-  async (
-    _request: Request,
-    props: { params: Promise<{ responseId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    props,
+    auditLog,
+    authentication,
+  }: {
+    props: { params: Promise<{ responseId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     const params = await props.params;
     auditLog.targetId = params.responseId;
     try {
@@ -92,17 +90,22 @@ export const DELETE = withV1ApiWrapper(
       };
     }
   },
-  "deleted",
-  "response"
-);
+  action: "deleted",
+  targetType: "response",
+});
 
-export const PUT = withV1ApiWrapper(
-  async (
-    request: Request,
-    props: { params: Promise<{ responseId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const PUT = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    props: { params: Promise<{ responseId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     const params = await props.params;
     auditLog.targetId = params.responseId;
     try {
@@ -116,9 +119,9 @@ export const PUT = withV1ApiWrapper(
 
       let responseUpdate;
       try {
-        responseUpdate = await request.json();
+        responseUpdate = await req.json();
       } catch (error) {
-        logger.error({ error, url: request.url }, "Error parsing JSON");
+        logger.error({ error, url: req.url }, "Error parsing JSON");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
@@ -151,6 +154,6 @@ export const PUT = withV1ApiWrapper(
       };
     }
   },
-  "updated",
-  "response"
-);
+  action: "updated",
+  targetType: "response",
+});

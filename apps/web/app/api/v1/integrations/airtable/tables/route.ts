@@ -1,5 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { TApiAuditLog, TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getTables } from "@/lib/airtable/service";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getIntegrationByType } from "@/lib/integration/service";
@@ -7,8 +7,8 @@ import { NextRequest } from "next/server";
 import * as z from "zod";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
-export const GET = withV1ApiWrapper(
-  async (req: NextRequest, _, _auditLog: TApiAuditLog, session: TSessionAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ req, authentication }: { req: NextRequest; authentication: TSessionAuthentication }) => {
     const url = req.url;
     const environmentId = req.headers.get("environmentId");
     const queryParams = new URLSearchParams(url.split("?")[1]);
@@ -20,7 +20,7 @@ export const GET = withV1ApiWrapper(
       };
     }
 
-    if (!session) {
+    if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
       };
@@ -32,7 +32,7 @@ export const GET = withV1ApiWrapper(
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user.id, environmentId);
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication?.user.id, environmentId);
     if (!canUserAccessEnvironment || !environmentId) {
       return {
         response: responses.unauthorizedResponse(),
@@ -51,5 +51,5 @@ export const GET = withV1ApiWrapper(
     return {
       response: responses.successResponse(tables),
     };
-  }
-);
+  },
+});

@@ -4,13 +4,14 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 
-export const GET = withV1ApiWrapper(
-  async (
-    _request: Request,
-    props: { params: Promise<{ webhookId: string }> },
-    _auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ webhookId: string }> };
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -34,16 +35,21 @@ export const GET = withV1ApiWrapper(
     return {
       response: responses.successResponse(webhook),
     };
-  }
-);
+  },
+});
 
-export const DELETE = withV1ApiWrapper(
-  async (
-    request: Request,
-    props: { params: Promise<{ webhookId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    props: { params: Promise<{ webhookId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     const params = await props.params;
     auditLog.targetId = params.webhookId;
     if (!authentication) {
@@ -75,12 +81,12 @@ export const DELETE = withV1ApiWrapper(
       };
     } catch (e) {
       auditLog.status = "failure";
-      logger.error({ error: e, url: request.url }, "Error deleting webhook");
+      logger.error({ error: e, url: req.url }, "Error deleting webhook");
       return {
         response: responses.notFoundResponse("Webhook", params.webhookId),
       };
     }
   },
-  "deleted",
-  "webhook"
-);
+  action: "deleted",
+  targetType: "webhook",
+});

@@ -10,8 +10,8 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
 import { getSurveys } from "./lib/surveys";
 
-export const GET = withV1ApiWrapper(
-  async (request: Request, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ req, authentication }: { req: Request; authentication: TApiKeyAuthentication }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -19,7 +19,7 @@ export const GET = withV1ApiWrapper(
     }
 
     try {
-      const searchParams = new URL(request.url).searchParams;
+      const searchParams = new URL(req.url).searchParams;
       const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
       const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
 
@@ -39,11 +39,19 @@ export const GET = withV1ApiWrapper(
       }
       throw error;
     }
-  }
-);
+  },
+});
 
-export const POST = withV1ApiWrapper(
-  async (request: Request, _, auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const POST = withV1ApiWrapper({
+  handler: async ({
+    req,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -53,9 +61,9 @@ export const POST = withV1ApiWrapper(
     try {
       let surveyInput;
       try {
-        surveyInput = await request.json();
+        surveyInput = await req.json();
       } catch (error) {
-        logger.error({ error, url: request.url }, "Error parsing JSON");
+        logger.error({ error, url: req.url }, "Error parsing JSON");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
@@ -112,6 +120,6 @@ export const POST = withV1ApiWrapper(
       throw error;
     }
   },
-  "created",
-  "survey"
-);
+  action: "created",
+  targetType: "survey",
+});

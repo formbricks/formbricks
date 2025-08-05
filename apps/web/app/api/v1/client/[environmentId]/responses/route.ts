@@ -30,144 +30,150 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-export const POST = withV1ApiWrapper(async (request: Request, props: Context) => {
-  const params = await props.params;
-  const requestHeaders = await headers();
-  let responseInput;
-  try {
-    responseInput = await request.json();
-  } catch (error) {
-    return {
-      response: responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true),
-    };
-  }
-
-  const { environmentId } = params;
-  const environmentIdValidation = ZId.safeParse(environmentId);
-  const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
-
-  if (!environmentIdValidation.success) {
-    return {
-      response: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(environmentIdValidation.error),
-        true
-      ),
-    };
-  }
-
-  if (!responseInputValidation.success) {
-    return {
-      response: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(responseInputValidation.error),
-        true
-      ),
-    };
-  }
-
-  const userAgent = request.headers.get("user-agent") || undefined;
-  const agent = new UAParser(userAgent);
-
-  const country =
-    requestHeaders.get("CF-IPCountry") ||
-    requestHeaders.get("X-Vercel-IP-Country") ||
-    requestHeaders.get("CloudFront-Viewer-Country") ||
-    undefined;
-
-  const responseInputData = responseInputValidation.data;
-
-  if (responseInputData.userId) {
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
+export const POST = withV1ApiWrapper({
+  handler: async ({ req, props }: { req: Request; props: Context }) => {
+    const params = await props.params;
+    const requestHeaders = await headers();
+    let responseInput;
+    try {
+      responseInput = await req.json();
+    } catch (error) {
       return {
-        response: responses.forbiddenResponse(
-          "User identification is only available for enterprise users.",
+        response: responses.badRequestResponse(
+          "Invalid JSON in request body",
+          { error: error.message },
           true
         ),
       };
     }
-  }
 
-  // get and check survey
-  const survey = await getSurvey(responseInputData.surveyId);
-  if (!survey) {
-    return {
-      response: responses.notFoundResponse("Survey", responseInputData.surveyId, true),
-    };
-  }
-  if (survey.environmentId !== environmentId) {
-    return {
-      response: responses.badRequestResponse(
-        "Survey is part of another environment",
-        {
-          "survey.environmentId": survey.environmentId,
-          environmentId,
-        },
-        true
-      ),
-    };
-  }
+    const { environmentId } = params;
+    const environmentIdValidation = ZId.safeParse(environmentId);
+    const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
-  if (!validateFileUploads(responseInputData.data, survey.questions)) {
-    return {
-      response: responses.badRequestResponse("Invalid file upload response"),
-    };
-  }
-
-  let response: TResponse;
-  try {
-    const meta: TResponseInput["meta"] = {
-      source: responseInputData?.meta?.source,
-      url: responseInputData?.meta?.url,
-      userAgent: {
-        browser: agent.getBrowser().name,
-        device: agent.getDevice().type || "desktop",
-        os: agent.getOS().name,
-      },
-      country: country,
-      action: responseInputData?.meta?.action,
-    };
-
-    response = await createResponse({
-      ...responseInputData,
-      meta,
-    });
-  } catch (error) {
-    if (error instanceof InvalidInputError) {
+    if (!environmentIdValidation.success) {
       return {
-        response: responses.badRequestResponse(error.message),
-      };
-    } else {
-      logger.error({ error, url: request.url }, "Error creating response");
-      return {
-        response: responses.internalServerErrorResponse(error.message),
+        response: responses.badRequestResponse(
+          "Fields are missing or incorrectly formatted",
+          transformErrorToDetails(environmentIdValidation.error),
+          true
+        ),
       };
     }
-  }
 
-  sendToPipeline({
-    event: "responseCreated",
-    environmentId: survey.environmentId,
-    surveyId: response.surveyId,
-    response: response,
-  });
+    if (!responseInputValidation.success) {
+      return {
+        response: responses.badRequestResponse(
+          "Fields are missing or incorrectly formatted",
+          transformErrorToDetails(responseInputValidation.error),
+          true
+        ),
+      };
+    }
 
-  if (responseInput.finished) {
+    const userAgent = req.headers.get("user-agent") || undefined;
+    const agent = new UAParser(userAgent);
+
+    const country =
+      requestHeaders.get("CF-IPCountry") ||
+      requestHeaders.get("X-Vercel-IP-Country") ||
+      requestHeaders.get("CloudFront-Viewer-Country") ||
+      undefined;
+
+    const responseInputData = responseInputValidation.data;
+
+    if (responseInputData.userId) {
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
+        return {
+          response: responses.forbiddenResponse(
+            "User identification is only available for enterprise users.",
+            true
+          ),
+        };
+      }
+    }
+
+    // get and check survey
+    const survey = await getSurvey(responseInputData.surveyId);
+    if (!survey) {
+      return {
+        response: responses.notFoundResponse("Survey", responseInputData.surveyId, true),
+      };
+    }
+    if (survey.environmentId !== environmentId) {
+      return {
+        response: responses.badRequestResponse(
+          "Survey is part of another environment",
+          {
+            "survey.environmentId": survey.environmentId,
+            environmentId,
+          },
+          true
+        ),
+      };
+    }
+
+    if (!validateFileUploads(responseInputData.data, survey.questions)) {
+      return {
+        response: responses.badRequestResponse("Invalid file upload response"),
+      };
+    }
+
+    let response: TResponse;
+    try {
+      const meta: TResponseInput["meta"] = {
+        source: responseInputData?.meta?.source,
+        url: responseInputData?.meta?.url,
+        userAgent: {
+          browser: agent.getBrowser().name,
+          device: agent.getDevice().type || "desktop",
+          os: agent.getOS().name,
+        },
+        country: country,
+        action: responseInputData?.meta?.action,
+      };
+
+      response = await createResponse({
+        ...responseInputData,
+        meta,
+      });
+    } catch (error) {
+      if (error instanceof InvalidInputError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
+      } else {
+        logger.error({ error, url: req.url }, "Error creating response");
+        return {
+          response: responses.internalServerErrorResponse(error.message),
+        };
+      }
+    }
+
     sendToPipeline({
-      event: "responseFinished",
+      event: "responseCreated",
       environmentId: survey.environmentId,
       surveyId: response.surveyId,
       response: response,
     });
-  }
 
-  await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
-    surveyId: response.surveyId,
-    surveyType: survey.type,
-  });
+    if (responseInput.finished) {
+      sendToPipeline({
+        event: "responseFinished",
+        environmentId: survey.environmentId,
+        surveyId: response.surveyId,
+        response: response,
+      });
+    }
 
-  return {
-    response: responses.successResponse({ id: response.id }, true),
-  };
+    await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
+      surveyId: response.surveyId,
+      surveyType: survey.type,
+    });
+
+    return {
+      response: responses.successResponse({ id: response.id }, true),
+    };
+  },
 });

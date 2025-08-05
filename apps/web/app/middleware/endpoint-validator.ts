@@ -4,6 +4,13 @@ import {
   matchesAnyPattern,
 } from "./route-config";
 
+export enum AuthenticationMethod {
+  ApiKey = "apiKey",
+  Session = "session",
+  Both = "both",
+  None = "none",
+}
+
 export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; isRateLimited: boolean } => {
   // Open Graph image generation route is a client side API route but it should not be rate limited
   if (url.includes("/api/v1/client/og")) return { isClientSideApi: true, isRateLimited: false };
@@ -12,9 +19,14 @@ export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; i
   return { isClientSideApi: regex.test(url), isRateLimited: true };
 };
 
-export const isManagementApiRoute = (url: string): boolean => {
+export const isManagementApiRoute = (
+  url: string
+): { isManagementApi: boolean; authenticationMethod: AuthenticationMethod } => {
+  if (url.includes("/api/v1/management/storage"))
+    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
+
   const regex = /^\/api\/v\d+\/management\//;
-  return regex.test(url);
+  return { isManagementApi: regex.test(url), authenticationMethod: AuthenticationMethod.ApiKey };
 };
 
 export const isIntegrationRoute = (url: string): boolean => {

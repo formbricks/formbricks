@@ -71,19 +71,17 @@ export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
 };
 
-export const GET = withV1ApiWrapper(
-  async (
-    request: NextRequest,
-    props: {
-      params: Promise<{
-        environmentId: string;
-        userId: string;
-      }>;
-    }
-  ) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+  }: {
+    req: NextRequest;
+    props: { params: Promise<{ environmentId: string; userId: string }> };
+  }) => {
     const params = await props.params;
     try {
-      const { device } = userAgent(request);
+      const { device } = userAgent(req);
 
       // validate using zod
       const validation = validateInput(params.environmentId, params.userId);
@@ -187,10 +185,7 @@ export const GET = withV1ApiWrapper(
         response: responses.successResponse({ ...state }, true),
       };
     } catch (error) {
-      logger.error(
-        { error, url: request.url },
-        "Error in GET /api/v1/client/[environmentId]/app/sync/[userId]"
-      );
+      logger.error({ error, url: req.url }, "Error in GET /api/v1/client/[environmentId]/app/sync/[userId]");
       return {
         response: responses.internalServerErrorResponse(
           "Unable to handle the request: " + error.message,
@@ -198,5 +193,5 @@ export const GET = withV1ApiWrapper(
         ),
       };
     }
-  }
-);
+  },
+});

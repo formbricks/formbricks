@@ -31,60 +31,62 @@ export const OPTIONS = async (): Promise<Response> => {
 // use this to let users upload files to a survey for example
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
-export const POST = withV1ApiWrapper(async (req: NextRequest, props: Context) => {
-  const params = await props.params;
-  const environmentId = params.environmentId;
+export const POST = withV1ApiWrapper({
+  handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
+    const params = await props.params;
+    const environmentId = params.environmentId;
 
-  const jsonInput = await req.json();
-  const inputValidation = ZUploadFileRequest.safeParse({
-    ...jsonInput,
-    environmentId,
-  });
+    const jsonInput = await req.json();
+    const inputValidation = ZUploadFileRequest.safeParse({
+      ...jsonInput,
+      environmentId,
+    });
 
-  if (!inputValidation.success) {
+    if (!inputValidation.success) {
+      return {
+        response: responses.badRequestResponse(
+          "Invalid request",
+          transformErrorToDetails(inputValidation.error),
+          true
+        ),
+      };
+    }
+
+    const { fileName, fileType, surveyId } = inputValidation.data;
+
+    // Perform server-side file validation
+    const fileValidation = validateFile(fileName, fileType);
+    if (!fileValidation.valid) {
+      return {
+        response: responses.badRequestResponse(
+          fileValidation.error ?? "Invalid file",
+          { fileName, fileType },
+          true
+        ),
+      };
+    }
+
+    const [survey, organization] = await Promise.all([
+      getSurvey(surveyId),
+      getOrganizationByEnvironmentId(environmentId),
+    ]);
+
+    if (!survey) {
+      return {
+        response: responses.notFoundResponse("Survey", surveyId),
+      };
+    }
+
+    if (!organization) {
+      return {
+        response: responses.notFoundResponse("OrganizationByEnvironmentId", environmentId),
+      };
+    }
+
+    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
+
     return {
-      response: responses.badRequestResponse(
-        "Invalid request",
-        transformErrorToDetails(inputValidation.error),
-        true
-      ),
+      response: await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed),
     };
-  }
-
-  const { fileName, fileType, surveyId } = inputValidation.data;
-
-  // Perform server-side file validation
-  const fileValidation = validateFile(fileName, fileType);
-  if (!fileValidation.valid) {
-    return {
-      response: responses.badRequestResponse(
-        fileValidation.error ?? "Invalid file",
-        { fileName, fileType },
-        true
-      ),
-    };
-  }
-
-  const [survey, organization] = await Promise.all([
-    getSurvey(surveyId),
-    getOrganizationByEnvironmentId(environmentId),
-  ]);
-
-  if (!survey) {
-    return {
-      response: responses.notFoundResponse("Survey", surveyId),
-    };
-  }
-
-  if (!organization) {
-    return {
-      response: responses.notFoundResponse("OrganizationByEnvironmentId", environmentId),
-    };
-  }
-
-  const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
-
-  return {
-    response: await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed),
-  };
+  },
 });

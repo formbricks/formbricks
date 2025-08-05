@@ -18,8 +18,14 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-export const POST = withV1ApiWrapper(
-  async (request: NextRequest, props: { params: Promise<{ environmentId: string }> }) => {
+export const POST = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+  }: {
+    req: NextRequest;
+    props: { params: Promise<{ environmentId: string }> };
+  }) => {
     const params = await props.params;
 
     try {
@@ -32,7 +38,7 @@ export const POST = withV1ApiWrapper(
         };
       }
 
-      const jsonInput = await request.json();
+      const jsonInput = await req.json();
 
       // Basic input validation without Zod overhead
       if (
@@ -75,7 +81,7 @@ export const POST = withV1ApiWrapper(
         attributeUpdatesToSend = updatedAttributes;
       }
 
-      const { device } = userAgent(request);
+      const { device } = userAgent(req);
       const deviceType = device ? "phone" : "desktop";
 
       const { state: userState, messages } = await updateUser(
@@ -101,10 +107,10 @@ export const POST = withV1ApiWrapper(
         };
       }
 
-      logger.error({ error: err, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
+      logger.error({ error: err, url: req.url }, "Error in POST /api/v1/client/[environmentId]/user");
       return {
         response: responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true),
       };
     }
-  }
-);
+  },
+});

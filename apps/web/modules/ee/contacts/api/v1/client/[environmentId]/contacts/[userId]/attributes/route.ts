@@ -41,10 +41,16 @@ export const OPTIONS = async () => {
   return responses.successResponse({}, true);
 };
 
-export const PUT = withV1ApiWrapper(
-  async (req: NextRequest, context: { params: Promise<{ environmentId: string; userId: string }> }) => {
+export const PUT = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+  }: {
+    req: NextRequest;
+    props: { params: Promise<{ environmentId: string; userId: string }> };
+  }) => {
     try {
-      const params = await context.params;
+      const params = await props.params;
       const { environmentId, userId } = params;
 
       // Validate required parameters
@@ -127,5 +133,5 @@ export const PUT = withV1ApiWrapper(
         response: responses.internalServerErrorResponse("Something went wrong", true),
       };
     }
-  }
-);
+  },
+});

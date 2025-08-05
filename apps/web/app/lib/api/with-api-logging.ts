@@ -1,6 +1,7 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import {
+  AuthenticationMethod,
   isClientSideApiRoute,
   isIntegrationRoute,
   isManagementApiRoute,
@@ -22,6 +23,21 @@ export type TApiAuditLog = Parameters<typeof queueAuditEvent>[0];
 export type TApiV1Authentication = TAuthenticationApiKey | Session | null;
 export type TApiKeyAuthentication = TAuthenticationApiKey | null;
 export type TSessionAuthentication = Session | null;
+
+// Interface for handler function parameters
+export interface THandlerParams<TProps = unknown> {
+  req?: Request | NextRequest;
+  props?: TProps;
+  auditLog?: TApiAuditLog;
+  authentication?: TApiKeyAuthentication | TSessionAuthentication;
+}
+
+// Interface for wrapper function parameters
+export interface TWithV1ApiWrapperParams<TResult extends { response: Response }, TProps = unknown> {
+  handler: (params: THandlerParams<TProps>) => Promise<TResult>;
+  action?: TAuditAction;
+  targetType?: TAuditTarget;
+}
 
 enum ApiV1RouteTypeEnum {
   Client = "client",
@@ -48,7 +64,6 @@ const applyClientRateLimit = async (url: string): Promise<void> => {
 const handleRateLimiting = async (
   url: string,
   authentication: TApiV1Authentication,
-  isClientSideApi: boolean,
   routeType: ApiV1RouteTypeEnum
 ): Promise<Response | null> => {
   try {
@@ -62,7 +77,11 @@ const handleRateLimiting = async (
       }
     }
 
-    if (isClientSideApi) {
+    if (routeType === ApiV1RouteTypeEnum.General) {
+      await applyIPRateLimit(rateLimitConfigs.api.v1);
+    }
+
+    if (routeType === ApiV1RouteTypeEnum.Client) {
       await applyClientRateLimit(url);
     }
   } catch (error) {
@@ -125,11 +144,29 @@ const processResponse = async (
   }
 };
 
-const getRouteType = (url: string): ApiV1RouteTypeEnum => {
-  if (isClientSideApiRoute(url)) return ApiV1RouteTypeEnum.Client;
-  if (isManagementApiRoute(url)) return ApiV1RouteTypeEnum.General;
-  if (isIntegrationRoute(url)) return ApiV1RouteTypeEnum.Integration;
-  return ApiV1RouteTypeEnum.Client;
+const getRouteType = (
+  url: string
+): { routeType: ApiV1RouteTypeEnum; isRateLimited: boolean; authenticationMethod: AuthenticationMethod } => {
+  const { isClientSideApi, isRateLimited } = isClientSideApiRoute(url);
+  const { isManagementApi, authenticationMethod } = isManagementApiRoute(url);
+  const isIntegration = isIntegrationRoute(url);
+
+  if (isClientSideApi)
+    return {
+      routeType: ApiV1RouteTypeEnum.Client,
+      isRateLimited,
+      authenticationMethod: AuthenticationMethod.None,
+    };
+  if (isManagementApi)
+    return { routeType: ApiV1RouteTypeEnum.General, isRateLimited: true, authenticationMethod };
+  if (isIntegration)
+    return {
+      routeType: ApiV1RouteTypeEnum.Integration,
+      isRateLimited: true,
+      authenticationMethod: AuthenticationMethod.Session,
+    };
+
+  throw new Error(`Unknown route type: ${url}`);
 };
 
 /**
@@ -143,63 +180,79 @@ const getRouteType = (url: string): ApiV1RouteTypeEnum => {
  * - System and Sentry logs are always called for non-success responses
  * - Uses function overloads to provide type safety without requiring type guards
  *
- * @param handler - The API handler function that processes the request
- * @param handler.req - The incoming HTTP request object
- * @param handler.props - Optional route parameters (e.g., { params: { id: string } })
- * @param handler.auditLog - Optional audit log object for tracking API actions (only present when action/targetType provided)
- * @param handler.authentication - Authentication result (type determined by route - API key for general, session for integration)
- * @param action - Optional audit action type (e.g., "created", "updated", "deleted"). Required for audit logging
- * @param targetType - Optional audit target type (e.g., "webhook", "survey", "response"). Required for audit logging
+ * @param params - Configuration object for the wrapper
+ * @param params.handler - The API handler function that processes the request, receives an object with:
+ *   - req: The incoming HTTP request object
+ *   - props: Optional route parameters (e.g., { params: { id: string } })
+ *   - auditLog: Optional audit log object for tracking API actions (only present when action/targetType provided)
+ *   - authentication: Authentication result (type determined by route - API key for general, session for integration)
+ * @param params.action - Optional audit action type (e.g., "created", "updated", "deleted"). Required for audit logging
+ * @param params.targetType - Optional audit target type (e.g., "webhook", "survey", "response"). Required for audit logging
  * @returns Wrapped handler function that returns the final HTTP response
  *
  */
 export const withV1ApiWrapper: {
   <TResult extends { response: Response }, TProps = unknown>(
-    handler: (
-      req: Request | NextRequest,
-      props?: TProps,
-      auditLog?: TApiAuditLog,
-      authentication?: TApiKeyAuthentication
-    ) => Promise<TResult>,
-    action?: TAuditAction,
-    targetType?: TAuditTarget
+    params: TWithV1ApiWrapperParams<TResult, TProps> & {
+      handler: (
+        params: THandlerParams<TProps> & { authentication?: TApiKeyAuthentication }
+      ) => Promise<TResult>;
+    }
   ): (req: Request, props: TProps) => Promise<Response>;
 
   <TResult extends { response: Response }, TProps = unknown>(
-    handler: (
-      req: Request | NextRequest,
-      props?: TProps,
-      auditLog?: TApiAuditLog,
-      authentication?: TSessionAuthentication
-    ) => Promise<TResult>,
-    action?: TAuditAction,
-    targetType?: TAuditTarget
+    params: TWithV1ApiWrapperParams<TResult, TProps> & {
+      handler: (
+        params: THandlerParams<TProps> & { authentication?: TSessionAuthentication }
+      ) => Promise<TResult>;
+    }
+  ): (req: Request, props: TProps) => Promise<Response>;
+
+  <TResult extends { response: Response }, TProps = unknown>(
+    params: TWithV1ApiWrapperParams<TResult, TProps> & {
+      handler: (
+        params: THandlerParams<TProps> & { authentication?: TApiV1Authentication }
+      ) => Promise<TResult>;
+    }
   ): (req: Request, props: TProps) => Promise<Response>;
 } = <TResult extends { response: Response }, TProps = unknown>(
-  handler: (
-    req: Request | NextRequest,
-    props?: TProps,
-    auditLog?: TApiAuditLog,
-    authentication?: any // Must use 'any' for overload compatibility
-  ) => Promise<TResult>,
-  action?: TAuditAction,
-  targetType?: TAuditTarget
+  params: TWithV1ApiWrapperParams<TResult, TProps>
 ): ((req: Request, props: TProps) => Promise<Response>) => {
+  const { handler, action, targetType } = params;
   return async (req: Request, props: TProps): Promise<Response> => {
     const saveAuditLog = action && targetType;
     const auditLog = saveAuditLog ? buildAuditLogBaseObject(action, targetType, req.url) : undefined;
 
     let result: { response: Response };
     let error: any = undefined;
+    let routeType: ApiV1RouteTypeEnum;
+    let isRateLimited: boolean;
+    let authenticationMethod: AuthenticationMethod;
+    let authentication: TApiV1Authentication = null;
 
-    const routeType = getRouteType(req.url);
-    const authentication =
-      routeType === ApiV1RouteTypeEnum.Integration
-        ? await getServerSession(authOptions)
-        : await authenticateRequest(req);
-    const { isClientSideApi, isRateLimited } = isClientSideApiRoute(req.url);
+    try {
+      ({ routeType, isRateLimited, authenticationMethod } = getRouteType(req.url));
+    } catch (error) {
+      logger.error({ error }, "Error getting route type");
+      return responses.internalServerErrorResponse("An unexpected error occurred.");
+    }
 
-    if (!authentication && !isClientSideApi) {
+    switch (authenticationMethod) {
+      case AuthenticationMethod.ApiKey:
+        authentication = await authenticateRequest(req);
+        break;
+      case AuthenticationMethod.Session:
+        authentication = await getServerSession(authOptions);
+        break;
+      case AuthenticationMethod.Both:
+        authentication = await getServerSession(authOptions);
+        authentication ??= await authenticateRequest(req);
+        break;
+      case AuthenticationMethod.None:
+        break;
+    }
+
+    if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
       return responses.notAuthenticatedResponse();
     }
 
@@ -214,12 +267,12 @@ export const withV1ApiWrapper: {
     }
 
     if (isRateLimited) {
-      const rateLimitResponse = await handleRateLimiting(req.url, authentication, isClientSideApi, routeType);
+      const rateLimitResponse = await handleRateLimiting(req.url, authentication, routeType);
       if (rateLimitResponse) return rateLimitResponse;
     }
 
     try {
-      result = await handler(req, props, auditLog, authentication);
+      result = await handler({ req, props, auditLog, authentication });
     } catch (err) {
       error = err;
       result = {

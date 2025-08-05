@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  AuthenticationMethod,
   isAdminDomainRoute,
   isAuthProtectedRoute,
   isClientSideApiRoute,
@@ -11,6 +12,14 @@ import {
 } from "./endpoint-validator";
 
 describe("endpoint-validator", () => {
+  describe("AuthenticationMethod enum", () => {
+    test("should have correct values", () => {
+      expect(AuthenticationMethod.ApiKey).toBe("apiKey");
+      expect(AuthenticationMethod.Session).toBe("session");
+      expect(AuthenticationMethod.Both).toBe("both");
+      expect(AuthenticationMethod.None).toBe("none");
+    });
+  });
   describe("isClientSideApiRoute", () => {
     test("should return correct object for client-side API routes with rate limiting", () => {
       expect(isClientSideApiRoute("/api/v1/client/storage")).toEqual({
@@ -82,24 +91,83 @@ describe("endpoint-validator", () => {
   });
 
   describe("isManagementApiRoute", () => {
-    test("should return true for management API routes", () => {
-      expect(isManagementApiRoute("/api/v1/management/something")).toBe(true);
-      expect(isManagementApiRoute("/api/v2/management/other")).toBe(true);
-      expect(isManagementApiRoute("/api/v1/management/surveys")).toBe(true);
-      expect(isManagementApiRoute("/api/v3/management/users")).toBe(true);
+    test("should return correct object for management API routes with API key authentication", () => {
+      expect(isManagementApiRoute("/api/v1/management/something")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v2/management/other")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v1/management/surveys")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v3/management/users")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
     });
 
-    test("should return false for non-management API routes", () => {
-      expect(isManagementApiRoute("/api/v1/client/something")).toBe(false);
-      expect(isManagementApiRoute("/api/something")).toBe(false);
-      expect(isManagementApiRoute("/auth/login")).toBe(false);
-      expect(isManagementApiRoute("/api/v1/integrations/webhook")).toBe(false);
+    test("should return correct object for storage management routes with both authentication methods", () => {
+      expect(isManagementApiRoute("/api/v1/management/storage")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.Both,
+      });
+      expect(isManagementApiRoute("/api/v1/management/storage/files")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.Both,
+      });
+      expect(isManagementApiRoute("/api/v1/management/storage/upload")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.Both,
+      });
+    });
+
+    test("should return correct object for non-v1 storage management routes (only v1 supports both auth methods)", () => {
+      expect(isManagementApiRoute("/api/v2/management/storage")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v3/management/storage/upload")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+    });
+
+    test("should return correct object for non-management API routes", () => {
+      expect(isManagementApiRoute("/api/v1/client/something")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/something")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/auth/login")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v1/integrations/webhook")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
     });
 
     test("should handle edge cases", () => {
-      expect(isManagementApiRoute("/api/v1/management")).toBe(false);
-      expect(isManagementApiRoute("/api/v1/management/")).toBe(true);
-      expect(isManagementApiRoute("/api/management/test")).toBe(false);
+      expect(isManagementApiRoute("/api/v1/management")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/v1/management/")).toEqual({
+        isManagementApi: true,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
+      expect(isManagementApiRoute("/api/management/test")).toEqual({
+        isManagementApi: false,
+        authenticationMethod: AuthenticationMethod.ApiKey,
+      });
     });
   });
 
@@ -407,7 +475,10 @@ describe("endpoint-validator", () => {
       test("should handle trailing slashes", () => {
         expect(isPublicDomainRoute("/s/survey123/")).toBe(true);
         expect(isPublicDomainRoute("/api/v1/client/test/")).toBe(true);
-        expect(isManagementApiRoute("/api/v1/management/test/")).toBe(true);
+        expect(isManagementApiRoute("/api/v1/management/test/")).toEqual({
+          isManagementApi: true,
+          authenticationMethod: AuthenticationMethod.ApiKey,
+        });
         expect(isIntegrationRoute("/api/v1/integrations/webhook/")).toBe(true);
       });
     });
@@ -444,9 +515,18 @@ describe("endpoint-validator", () => {
         expect(isPublicDomainRoute("/api/v3/client/test")).toBe(false);
 
         // Management API - all versions supported
-        expect(isManagementApiRoute("/api/v1/management/test")).toBe(true);
-        expect(isManagementApiRoute("/api/v2/management/test")).toBe(true);
-        expect(isManagementApiRoute("/api/v3/management/test")).toBe(true);
+        expect(isManagementApiRoute("/api/v1/management/test")).toEqual({
+          isManagementApi: true,
+          authenticationMethod: AuthenticationMethod.ApiKey,
+        });
+        expect(isManagementApiRoute("/api/v2/management/test")).toEqual({
+          isManagementApi: true,
+          authenticationMethod: AuthenticationMethod.ApiKey,
+        });
+        expect(isManagementApiRoute("/api/v3/management/test")).toEqual({
+          isManagementApi: true,
+          authenticationMethod: AuthenticationMethod.ApiKey,
+        });
 
         // Integration API - all versions supported
         expect(isIntegrationRoute("/api/v1/integrations/test")).toBe(true);
@@ -465,6 +545,88 @@ describe("endpoint-validator", () => {
           environmentId: "env-123_test",
           userId: "user-456_test",
         });
+      });
+    });
+
+    describe("security considerations", () => {
+      test("should properly validate malicious or injection-like URLs", () => {
+        // SQL injection-like attempts
+        expect(isPublicDomainRoute("/s/'; DROP TABLE users; --")).toBe(true); // Still valid survey ID format
+        expect(isManagementApiRoute("/api/v1/management/'; DROP TABLE users; --")).toEqual({
+          isManagementApi: true,
+          authenticationMethod: AuthenticationMethod.ApiKey,
+        });
+
+        // Path traversal attempts
+        expect(isPublicDomainRoute("/s/../../../etc/passwd")).toBe(true); // Still matches pattern
+        expect(isAuthProtectedRoute("/environments/../../../etc/passwd")).toBe(true);
+
+        // XSS-like attempts
+        expect(isPublicDomainRoute("/s/<script>alert('xss')</script>")).toBe(true);
+        expect(isClientSideApiRoute("/api/v1/client/<script>alert('xss')</script>")).toEqual({
+          isClientSideApi: true,
+          isRateLimited: true,
+        });
+      });
+
+      test("should handle URL encoding", () => {
+        expect(isPublicDomainRoute("/s/survey%20123")).toBe(true);
+        expect(isPublicDomainRoute("/c/jwt%2Etoken")).toBe(true);
+        expect(isAuthProtectedRoute("/environments%2F123")).toBe(true);
+        expect(isManagementApiRoute("/api/v1/management/test%20route")).toEqual({
+          isManagementApi: true,
+          authenticationMethod: AuthenticationMethod.ApiKey,
+        });
+      });
+    });
+
+    describe("performance considerations", () => {
+      test("should handle very long URLs efficiently", () => {
+        const longSurveyId = "a".repeat(1000);
+        const longPath = `s/${longSurveyId}`;
+        expect(isPublicDomainRoute(`/${longPath}`)).toBe(true);
+
+        const longEnvironmentId = "env" + "a".repeat(1000);
+        const longUserId = "user" + "b".repeat(1000);
+        expect(
+          isSyncWithUserIdentificationEndpoint(`/api/v1/client/${longEnvironmentId}/app/sync/${longUserId}`)
+        ).toEqual({
+          environmentId: longEnvironmentId,
+          userId: longUserId,
+        });
+      });
+
+      test("should handle empty and minimal inputs", () => {
+        expect(isPublicDomainRoute("")).toBe(false);
+        expect(isClientSideApiRoute("")).toEqual({
+          isClientSideApi: false,
+          isRateLimited: true,
+        });
+        expect(isManagementApiRoute("")).toEqual({
+          isManagementApi: false,
+          authenticationMethod: AuthenticationMethod.ApiKey,
+        });
+        expect(isIntegrationRoute("")).toBe(false);
+        expect(isAuthProtectedRoute("")).toBe(false);
+        expect(isSyncWithUserIdentificationEndpoint("")).toBe(false);
+      });
+    });
+
+    describe("case sensitivity", () => {
+      test("should be case sensitive for route patterns", () => {
+        // These should not match due to case sensitivity
+        expect(isPublicDomainRoute("/S/survey123")).toBe(false);
+        expect(isPublicDomainRoute("/C/jwt-token")).toBe(false);
+        expect(isClientSideApiRoute("/API/V1/CLIENT/test")).toEqual({
+          isClientSideApi: false,
+          isRateLimited: true,
+        });
+        expect(isManagementApiRoute("/API/V1/MANAGEMENT/test")).toEqual({
+          isManagementApi: false,
+          authenticationMethod: AuthenticationMethod.ApiKey,
+        });
+        expect(isIntegrationRoute("/API/V1/INTEGRATIONS/test")).toBe(false);
+        expect(isAuthProtectedRoute("/ENVIRONMENTS/123")).toBe(false);
       });
     });
   });

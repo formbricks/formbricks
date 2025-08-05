@@ -17,15 +17,14 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-export const GET = withV1ApiWrapper(
-  async (
-    request: NextRequest,
-    props: {
-      params: Promise<{
-        environmentId: string;
-      }>;
-    }
-  ) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+  }: {
+    req: NextRequest;
+    props: { params: Promise<{ environmentId: string }> };
+  }) => {
     const params = await props.params;
 
     try {
@@ -73,7 +72,7 @@ export const GET = withV1ApiWrapper(
       logger.error(
         {
           error: err,
-          url: request.url,
+          url: req.url,
           environmentId: params.environmentId,
         },
         "Error in GET /api/v1/client/[environmentId]/environment"
@@ -82,5 +81,5 @@ export const GET = withV1ApiWrapper(
         response: responses.internalServerErrorResponse(err.message, true),
       };
     }
-  }
-);
+  },
+});

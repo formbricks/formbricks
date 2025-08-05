@@ -1,5 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { TApiAuditLog, TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import crypto from "crypto";
@@ -7,8 +7,8 @@ import { NextRequest } from "next/server";
 
 const scope = `data.records:read data.records:write schema.bases:read schema.bases:write user.email:read`;
 
-export const GET = withV1ApiWrapper(
-  async (req: NextRequest, _, _auditLog: TApiAuditLog, session: TSessionAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ req, authentication }: { req: NextRequest; authentication: TSessionAuthentication }) => {
     const environmentId = req.headers.get("environmentId");
 
     if (!environmentId) {
@@ -17,13 +17,13 @@ export const GET = withV1ApiWrapper(
       };
     }
 
-    if (!session) {
+    if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user.id, environmentId);
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication?.user.id, environmentId);
     if (!canUserAccessEnvironment) {
       return {
         response: responses.unauthorizedResponse(),
@@ -40,7 +40,9 @@ export const GET = withV1ApiWrapper(
       return {
         response: responses.internalServerErrorResponse("Airtable redirect url is missing"),
       };
-    const codeVerifier = Buffer.from(environmentId + session.user.id + environmentId).toString("base64");
+    const codeVerifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
+      "base64"
+    );
 
     const codeChallengeMethod = "S256";
     const codeChallenge = crypto
@@ -64,5 +66,5 @@ export const GET = withV1ApiWrapper(
     return {
       response: responses.successResponse({ authUrl: authUrl.toString() }),
     };
-  }
-);
+  },
+});

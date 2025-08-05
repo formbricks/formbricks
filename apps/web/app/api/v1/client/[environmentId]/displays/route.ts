@@ -24,53 +24,55 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-export const POST = withV1ApiWrapper(async (request: Request, props: Context) => {
-  const params = await props.params;
-  const jsonInput = await request.json();
-  const inputValidation = ZDisplayCreateInput.safeParse({
-    ...jsonInput,
-    environmentId: params.environmentId,
-  });
+export const POST = withV1ApiWrapper({
+  handler: async ({ req, props }: { req: Request; props: Context }) => {
+    const params = await props.params;
+    const jsonInput = await req.json();
+    const inputValidation = ZDisplayCreateInput.safeParse({
+      ...jsonInput,
+      environmentId: params.environmentId,
+    });
 
-  if (!inputValidation.success) {
-    return {
-      response: responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error),
-        true
-      ),
-    };
-  }
-
-  if (inputValidation.data.userId) {
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
+    if (!inputValidation.success) {
       return {
-        response: responses.forbiddenResponse(
-          "User identification is only available for enterprise users.",
+        response: responses.badRequestResponse(
+          "Fields are missing or incorrectly formatted",
+          transformErrorToDetails(inputValidation.error),
           true
         ),
       };
     }
-  }
 
-  try {
-    const response = await createDisplay(inputValidation.data);
-
-    await capturePosthogEnvironmentEvent(inputValidation.data.environmentId, "display created");
-    return {
-      response: responses.successResponse(response, true),
-    };
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      return {
-        response: responses.notFoundResponse("Survey", inputValidation.data.surveyId),
-      };
-    } else {
-      logger.error({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/displays");
-      return {
-        response: responses.internalServerErrorResponse("Something went wrong. Please try again."),
-      };
+    if (inputValidation.data.userId) {
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
+        return {
+          response: responses.forbiddenResponse(
+            "User identification is only available for enterprise users.",
+            true
+          ),
+        };
+      }
     }
-  }
+
+    try {
+      const response = await createDisplay(inputValidation.data);
+
+      await capturePosthogEnvironmentEvent(inputValidation.data.environmentId, "display created");
+      return {
+        response: responses.successResponse(response, true),
+      };
+    } catch (error) {
+      if (error instanceof ResourceNotFoundError) {
+        return {
+          response: responses.notFoundResponse("Survey", inputValidation.data.surveyId),
+        };
+      } else {
+        logger.error({ error, url: req.url }, "Error in POST /api/v1/client/[environmentId]/displays");
+        return {
+          response: responses.internalServerErrorResponse("Something went wrong. Please try again."),
+        };
+      }
+    }
+  },
 });

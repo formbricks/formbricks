@@ -11,15 +11,15 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { createResponse, getResponsesByEnvironmentIds } from "./lib/response";
 
-export const GET = withV1ApiWrapper(
-  async (request: NextRequest, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ req, authentication }: { req: NextRequest; authentication: TApiKeyAuthentication }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
       };
     }
 
-    const searchParams = request.nextUrl.searchParams;
+    const searchParams = req.nextUrl.searchParams;
     const surveyId = searchParams.get("surveyId");
     const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
     const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
@@ -59,8 +59,8 @@ export const GET = withV1ApiWrapper(
       }
       throw error;
     }
-  }
-);
+  },
+});
 
 const validateInput = async (request: Request) => {
   let jsonInput;
@@ -105,8 +105,16 @@ const validateSurvey = async (responseInput: TResponseInput, environmentId: stri
   return { survey };
 };
 
-export const POST = withV1ApiWrapper(
-  async (request: Request, _, auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const POST = withV1ApiWrapper({
+  handler: async ({
+    req,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -114,7 +122,7 @@ export const POST = withV1ApiWrapper(
     }
 
     try {
-      const inputResult = await validateInput(request);
+      const inputResult = await validateInput(req);
       if (inputResult.error) {
         return {
           response: inputResult.error,
@@ -155,16 +163,14 @@ export const POST = withV1ApiWrapper(
           response: responses.successResponse(response, true),
         };
       } catch (error) {
+        logger.error({ error, url: req.url }, "Error in POST /api/v1/management/responses");
+
         if (error instanceof InvalidInputError) {
           return {
             response: responses.badRequestResponse(error.message),
           };
-        } else if (error instanceof DatabaseError) {
-          return {
-            response: responses.badRequestResponse(error.message),
-          };
         }
-        logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
+
         return {
           response: responses.internalServerErrorResponse(error.message),
         };
@@ -178,6 +184,6 @@ export const POST = withV1ApiWrapper(
       throw error;
     }
   },
-  "created",
-  "response"
-);
+  action: "created",
+  targetType: "response",
+});

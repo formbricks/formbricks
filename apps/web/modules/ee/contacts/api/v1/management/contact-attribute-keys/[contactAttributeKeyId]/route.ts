@@ -30,13 +30,14 @@ async function fetchAndAuthorizeContactAttributeKey(
 
   return { attributeKey };
 }
-export const GET = withV1ApiWrapper(
-  async (
-    _: Request,
-    props: { params: Promise<{ contactAttributeKeyId: string }> },
-    _auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ contactAttributeKeyId: string }> };
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -73,16 +74,19 @@ export const GET = withV1ApiWrapper(
         response: handleErrorResponse(error),
       };
     }
-  }
-);
+  },
+});
 
-export const DELETE = withV1ApiWrapper(
-  async (
-    _: Request,
-    props: { params: Promise<{ contactAttributeKeyId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    props,
+    auditLog,
+    authentication,
+  }: {
+    props: { params: Promise<{ contactAttributeKeyId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -104,7 +108,6 @@ export const DELETE = withV1ApiWrapper(
         };
       }
       auditLog.oldObject = result.attributeKey;
-      auditLog.organizationId = authentication.organizationId;
       if (result.attributeKey.type === "default") {
         return {
           response: responses.badRequestResponse("Default Contact Attribute Keys cannot be deleted"),
@@ -120,17 +123,22 @@ export const DELETE = withV1ApiWrapper(
       };
     }
   },
-  "deleted",
-  "contactAttributeKey"
-);
+  action: "deleted",
+  targetType: "contactAttributeKey",
+});
 
-export const PUT = withV1ApiWrapper(
-  async (
-    request: Request,
-    props: { params: Promise<{ contactAttributeKeyId: string }> },
-    auditLog: TApiAuditLog,
-    authentication: TApiKeyAuthentication
-  ) => {
+export const PUT = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    props: { params: Promise<{ contactAttributeKeyId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -150,13 +158,12 @@ export const PUT = withV1ApiWrapper(
         };
       }
       auditLog.oldObject = result.attributeKey;
-      auditLog.organizationId = authentication.organizationId;
 
       let contactAttributeKeyUpdate;
       try {
-        contactAttributeKeyUpdate = await request.json();
+        contactAttributeKeyUpdate = await req.json();
       } catch (error) {
-        logger.error({ error, url: request.url }, "Error parsing JSON input");
+        logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
@@ -192,6 +199,6 @@ export const PUT = withV1ApiWrapper(
       };
     }
   },
-  "updated",
-  "contactAttributeKey"
-);
+  action: "updated",
+  targetType: "contactAttributeKey",
+});

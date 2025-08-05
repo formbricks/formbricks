@@ -8,8 +8,8 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
-export const GET = withV1ApiWrapper(
-  async (_request: Request, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ authentication }: { authentication: TApiKeyAuthentication }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -43,11 +43,19 @@ export const GET = withV1ApiWrapper(
       }
       throw error;
     }
-  }
-);
+  },
+});
 
-export const POST = withV1ApiWrapper(
-  async (request: Request, _, auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const POST = withV1ApiWrapper({
+  handler: async ({
+    req,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -66,9 +74,9 @@ export const POST = withV1ApiWrapper(
 
       let contactAttibuteKeyInput;
       try {
-        contactAttibuteKeyInput = await request.json();
+        contactAttibuteKeyInput = await req.json();
       } catch (error) {
-        logger.error({ error, url: request.url }, "Error parsing JSON input");
+        logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
@@ -86,7 +94,6 @@ export const POST = withV1ApiWrapper(
         };
       }
       const environmentId = inputValidation.data.environmentId;
-      auditLog.organizationId = authentication.organizationId;
 
       if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
         return {
@@ -115,6 +122,6 @@ export const POST = withV1ApiWrapper(
       throw error;
     }
   },
-  "created",
-  "contactAttributeKey"
-);
+  action: "created",
+  targetType: "contactAttributeKey",
+});

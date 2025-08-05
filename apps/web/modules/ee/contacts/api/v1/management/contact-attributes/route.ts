@@ -1,11 +1,11 @@
 import { responses } from "@/app/lib/api/response";
-import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContactAttributes } from "./lib/contact-attributes";
 
-export const GET = withV1ApiWrapper(
-  async (_request: Request, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ authentication }: { authentication: TApiKeyAuthentication }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -38,5 +38,5 @@ export const GET = withV1ApiWrapper(
       }
       throw error;
     }
-  }
-);
+  },
+});

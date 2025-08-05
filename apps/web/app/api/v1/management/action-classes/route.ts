@@ -8,8 +8,8 @@ import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classe
 import { DatabaseError } from "@formbricks/types/errors";
 import { getActionClasses } from "./lib/action-classes";
 
-export const GET = withV1ApiWrapper(
-  async (_request: Request, _, _auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ authentication }: { authentication: TApiKeyAuthentication }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -34,11 +34,19 @@ export const GET = withV1ApiWrapper(
       }
       throw error;
     }
-  }
-);
+  },
+});
 
-export const POST = withV1ApiWrapper(
-  async (request: Request, _, auditLog: TApiAuditLog, authentication: TApiKeyAuthentication) => {
+export const POST = withV1ApiWrapper({
+  handler: async ({
+    req,
+    auditLog,
+    authentication,
+  }: {
+    req: Request;
+    auditLog: TApiAuditLog;
+    authentication: TApiKeyAuthentication;
+  }) => {
     if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
@@ -48,9 +56,9 @@ export const POST = withV1ApiWrapper(
     try {
       let actionClassInput;
       try {
-        actionClassInput = await request.json();
+        actionClassInput = await req.json();
       } catch (error) {
-        logger.error({ error, url: request.url }, "Error parsing JSON input");
+        logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
@@ -90,6 +98,6 @@ export const POST = withV1ApiWrapper(
       throw error;
     }
   },
-  "created",
-  "actionClass"
-);
+  action: "created",
+  targetType: "actionClass",
+});

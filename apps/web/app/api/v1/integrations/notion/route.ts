@@ -1,5 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { TApiAuditLog, TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
@@ -9,8 +9,8 @@ import {
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { NextRequest } from "next/server";
 
-export const GET = withV1ApiWrapper(
-  async (req: NextRequest, _, _auditLog: TApiAuditLog, session: TSessionAuthentication) => {
+export const GET = withV1ApiWrapper({
+  handler: async ({ req, authentication }: { req: NextRequest; authentication: TSessionAuthentication }) => {
     const environmentId = req.headers.get("environmentId");
 
     if (!environmentId) {
@@ -19,13 +19,13 @@ export const GET = withV1ApiWrapper(
       };
     }
 
-    if (!session) {
+    if (!authentication) {
       return {
         response: responses.notAuthenticatedResponse(),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(session?.user.id, environmentId);
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication?.user.id, environmentId);
     if (!canUserAccessEnvironment) {
       return {
         response: responses.unauthorizedResponse(),
@@ -56,5 +56,5 @@ export const GET = withV1ApiWrapper(
     return {
       response: responses.successResponse({ authUrl: `${auth_url}&state=${environmentId}` }),
     };
-  }
-);
+  },
+});

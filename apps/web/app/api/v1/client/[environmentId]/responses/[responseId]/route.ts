@@ -28,8 +28,8 @@ const handleDatabaseError = (error: Error, url: string, endpoint: string, respon
   return responses.internalServerErrorResponse("Unknown error occurred", true);
 };
 
-export const PUT = withV1ApiWrapper(
-  async (request: Request, props: { params: Promise<{ responseId: string }> }) => {
+export const PUT = withV1ApiWrapper({
+  handler: async ({ req, props }: { req: Request; props: { params: Promise<{ responseId: string }> } }) => {
     const params = await props.params;
     const { responseId } = params;
 
@@ -39,7 +39,7 @@ export const PUT = withV1ApiWrapper(
       };
     }
 
-    const responseUpdate = await request.json();
+    const responseUpdate = await req.json();
     const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
 
     if (!inputValidation.success) {
@@ -58,7 +58,7 @@ export const PUT = withV1ApiWrapper(
     } catch (error) {
       const endpoint = "PUT /api/v1/client/[environmentId]/responses/[responseId]";
       return {
-        response: handleDatabaseError(error, request.url, endpoint, responseId),
+        response: handleDatabaseError(error, req.url, endpoint, responseId),
       };
     }
 
@@ -75,7 +75,7 @@ export const PUT = withV1ApiWrapper(
     } catch (error) {
       const endpoint = "PUT /api/v1/client/[environmentId]/responses/[responseId]";
       return {
-        response: handleDatabaseError(error, request.url, endpoint, responseId),
+        response: handleDatabaseError(error, req.url, endpoint, responseId),
       };
     }
 
@@ -121,7 +121,7 @@ export const PUT = withV1ApiWrapper(
       }
       if (error instanceof DatabaseError) {
         logger.error(
-          { error, url: request.url },
+          { error, url: req.url },
           "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
         );
         return {
@@ -152,5 +152,5 @@ export const PUT = withV1ApiWrapper(
     return {
       response: responses.successResponse({}, true),
     };
-  }
-);
+  },
+});
