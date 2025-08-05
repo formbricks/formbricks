@@ -73,9 +73,9 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      let contactAttibuteKeyInput;
+      let contactAttributeKeyInput;
       try {
-        contactAttibuteKeyInput = await req.json();
+        contactAttributeKeyInput = await req.json();
       } catch (error) {
         logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
@@ -83,7 +83,7 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      const inputValidation = ZContactAttributeKeyCreateInput.safeParse(contactAttibuteKeyInput);
+      const inputValidation = ZContactAttributeKeyCreateInput.safeParse(contactAttributeKeyInput);
 
       if (!inputValidation.success) {
         return {

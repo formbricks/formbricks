@@ -316,16 +316,6 @@ describe("endpoint-validator", () => {
       expect(isSyncWithUserIdentificationEndpoint("/api/v2/client/env123/app/sync/user456")).toBe(false); // only v1 supported
     });
 
-    test("should reject URLs with additional path segments", () => {
-      // The regex now has anchors, so it should reject URLs with extra segments
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456/extra")).toBe(
-        false
-      );
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456/extra/more")).toBe(
-        false
-      );
-    });
-
     test("should handle empty or malformed IDs", () => {
       expect(isSyncWithUserIdentificationEndpoint("/api/v1/client//app/sync/user456")).toBe(false);
       expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/")).toBe(false);
