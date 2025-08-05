@@ -169,19 +169,16 @@ const isResponseSuccessful = async (res: Response): Promise<boolean> => {
 };
 
 /**
- * Handle error logging and Sentry reporting
+ * Log error details to system logger and Sentry
  */
-const handleErrorLogging = (res: Response, req: Request, correlationId: string, error?: any): void => {
-  const logContext: any = {
+const logErrorDetails = (res: Response, req: Request, correlationId: string, error?: any): void => {
+  const logContext = {
     correlationId,
     method: req.method,
     path: req.url,
     status: res.status,
+    ...(error && { error }),
   };
-
-  if (error) {
-    logContext.error = error;
-  }
 
   logger.withContext(logContext).error("V1 API Error Details");
 
@@ -197,21 +194,27 @@ const handleErrorLogging = (res: Response, req: Request, correlationId: string, 
 const processResponse = async (
   res: Response,
   req: Request,
-  auditLog: TApiAuditLog,
+  auditLog?: TApiAuditLog,
   error?: any
 ): Promise<void> => {
-  const isSuccess = await isResponseSuccessful(res);
   const correlationId = req.headers.get("x-request-id") ?? "";
+  const isSuccess = await isResponseSuccessful(res);
 
-  if (!isSuccess) {
-    if (auditLog) {
+  // Handle audit logging
+  if (auditLog) {
+    if (isSuccess) {
+      auditLog.status = "success";
+    } else {
       auditLog.eventId = correlationId;
     }
-    handleErrorLogging(res, req, correlationId, error);
-  } else {
-    auditLog.status = "success";
   }
 
+  // Handle error logging
+  if (!isSuccess) {
+    logErrorDetails(res, req, correlationId, error);
+  }
+
+  // Queue audit event if enabled and audit log exists
   if (AUDIT_LOG_ENABLED && auditLog) {
     queueAuditEvent(auditLog);
   }
@@ -326,9 +329,9 @@ export const withV1ApiWrapper: {
     ({ result, error } = await executeHandler(handler, req, props, auditLog, authentication));
 
     const res = result.response;
-    if (auditLog) {
-      await processResponse(res, req, auditLog, error);
-    }
+
+    await processResponse(res, req, auditLog, error);
+
     return res;
   };
 };
