@@ -319,7 +319,6 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }: { user: TUser; account: Account }) {
       const cookieStore = await cookies();
 
-      // TODO: please change this approach to get callback url
       // get callback url from the cookie store,
       const callbackUrl =
         cookieStore.get("__Secure-next-auth.callback-url")?.value ||
