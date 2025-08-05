@@ -76,7 +76,7 @@ export const SingleResponseCardBody = ({
             <div key={`${question.id}`}>
               {isValidValue(response.data[question.id]) ? (
                 <div>
-                  <p className="text-sm text-slate-500">
+                  <p className="mb-1 text-sm text-slate-500">
                     {formatTextWithSlashes(
                       parseRecallInfo(
                         getLocalizedValue(question.headline, "default"),
@@ -92,6 +92,7 @@ export const SingleResponseCardBody = ({
                       survey={survey}
                       responseData={response.data[question.id]}
                       language={response.language}
+                      showId={true}
                     />
                   </div>
                 </div>
