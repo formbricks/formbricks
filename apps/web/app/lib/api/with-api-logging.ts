@@ -153,6 +153,45 @@ const handleAuthentication = async (
 };
 
 /**
+ * Check if response indicates success
+ */
+const isResponseSuccessful = async (res: Response): Promise<boolean> => {
+  if (res.status >= 200 && res.status < 300) {
+    return true;
+  }
+
+  try {
+    const parsed = await res.clone().json();
+    return parsed && typeof parsed === "object" && "data" in parsed;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Handle error logging and Sentry reporting
+ */
+const handleErrorLogging = (res: Response, req: Request, correlationId: string, error?: any): void => {
+  const logContext: any = {
+    correlationId,
+    method: req.method,
+    path: req.url,
+    status: res.status,
+  };
+
+  if (error) {
+    logContext.error = error;
+  }
+
+  logger.withContext(logContext).error("V1 API Error Details");
+
+  if (SENTRY_DSN && IS_PRODUCTION && res.status === 500) {
+    const err = new Error(`API V1 error, id: ${correlationId}`);
+    Sentry.captureException(err, { extra: { error, correlationId } });
+  }
+};
+
+/**
  * Handle response processing and logging
  */
 const processResponse = async (
@@ -161,49 +200,14 @@ const processResponse = async (
   auditLog: TApiAuditLog,
   error?: any
 ): Promise<void> => {
-  let isSuccess = false;
-
-  // Check HTTP status code first (2xx indicates success)
-  if (res.status >= 200 && res.status < 300) {
-    isSuccess = true;
-  } else {
-    // For non-2xx responses, try to parse JSON and check for data property
-    // This maintains backward compatibility for error responses
-    try {
-      const parsed = await res.clone().json();
-      isSuccess = parsed && typeof parsed === "object" && "data" in parsed;
-    } catch {
-      isSuccess = false;
-    }
-  }
-
+  const isSuccess = await isResponseSuccessful(res);
   const correlationId = req.headers.get("x-request-id") ?? "";
 
   if (!isSuccess) {
     if (auditLog) {
       auditLog.eventId = correlationId;
     }
-
-    const logContext: any = {
-      correlationId,
-      method: req.method,
-      path: req.url,
-      status: res.status,
-    };
-    if (error) {
-      logContext.error = error;
-    }
-    logger.withContext(logContext).error("V1 API Error Details");
-
-    if (SENTRY_DSN && IS_PRODUCTION && res.status === 500) {
-      const err = new Error(`API V1 error, id: ${correlationId}`);
-      Sentry.captureException(err, {
-        extra: {
-          error,
-          correlationId,
-        },
-      });
-    }
+    handleErrorLogging(res, req, correlationId, error);
   } else {
     auditLog.status = "success";
   }
