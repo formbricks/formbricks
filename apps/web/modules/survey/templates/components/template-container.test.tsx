@@ -38,20 +38,6 @@ vi.mock("@/modules/ui/components/search-bar", () => ({
   )),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: vi.fn(() => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "environments.surveys.templates.create_a_new_survey": "Create a new survey",
-        "environments.surveys.all_set_time_to_create_first_survey":
-          "All set! Time to create your first survey",
-        "common.search": "Search",
-      };
-      return translations[key] || key;
-    },
-  })),
-}));
-
 vi.mock("../lib/minimal-survey", () => ({
   getMinimalSurvey: vi.fn(() => ({})),
 }));
@@ -119,7 +105,7 @@ describe("TemplateContainerWithPreview", () => {
       />
     );
 
-    expect(screen.getByText("Create a new survey")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.templates.create_a_new_survey")).toBeInTheDocument();
   });
 
   test("displays correct title when isTemplatePage is false", () => {
@@ -133,7 +119,7 @@ describe("TemplateContainerWithPreview", () => {
       />
     );
 
-    expect(screen.getByText("All set! Time to create your first survey")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.all_set_time_to_create_first_survey")).toBeInTheDocument();
   });
 
   test("renders SearchBar with correct placeholder", () => {

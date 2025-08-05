@@ -18,7 +18,7 @@ type TemplateContainerWithPreviewProps = {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   userId: string;
   prefilledFilters: (TProjectConfigChannel | TProjectConfigIndustry | TTemplateRole | null)[];
-  isTemplatePage: boolean;
+  isTemplatePage?: boolean;
 };
 
 export const TemplateContainerWithPreview = ({
@@ -26,7 +26,7 @@ export const TemplateContainerWithPreview = ({
   environment,
   userId,
   prefilledFilters,
-  isTemplatePage,
+  isTemplatePage = true,
 }: TemplateContainerWithPreviewProps) => {
   const { t } = useTranslate();
   const initialTemplate = customSurveyTemplate(t);
