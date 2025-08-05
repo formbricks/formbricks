@@ -3,6 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
@@ -52,7 +53,7 @@ export const POST = withV1ApiWrapper({
     auditLog,
     authentication,
   }: {
-    req: Request;
+    req: NextRequest;
     auditLog: TApiAuditLog;
     authentication: TApiKeyAuthentication;
   }) => {

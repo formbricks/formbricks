@@ -293,27 +293,37 @@ describe("endpoint-validator", () => {
       });
     });
 
+    test("should handle optional trailing slash", () => {
+      // Test both with and without trailing slash
+      const result1 = isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456");
+      expect(result1).toEqual({
+        environmentId: "env123",
+        userId: "user456",
+      });
+
+      const result2 = isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456/");
+      expect(result2).toEqual({
+        environmentId: "env123",
+        userId: "user456",
+      });
+    });
+
     test("should return false for invalid sync URLs", () => {
       expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync")).toBe(false);
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/")).toBe(false);
       expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/something")).toBe(false);
       expect(isSyncWithUserIdentificationEndpoint("/api/something")).toBe(false);
       expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/other/user456")).toBe(false);
       expect(isSyncWithUserIdentificationEndpoint("/api/v2/client/env123/app/sync/user456")).toBe(false); // only v1 supported
     });
 
-    test("should handle URLs with additional path segments", () => {
-      // The regex doesn't have end anchor, so it matches URLs with extra segments
-      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456/extra")).toEqual({
-        environmentId: "env123",
-        userId: "user456",
-      });
-      expect(
-        isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456/extra/more")
-      ).toEqual({
-        environmentId: "env123",
-        userId: "user456",
-      });
+    test("should reject URLs with additional path segments", () => {
+      // The regex now has anchors, so it should reject URLs with extra segments
+      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456/extra")).toBe(
+        false
+      );
+      expect(isSyncWithUserIdentificationEndpoint("/api/v1/client/env123/app/sync/user456/extra/more")).toBe(
+        false
+      );
     });
 
     test("should handle empty or malformed IDs", () => {

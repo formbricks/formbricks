@@ -3,6 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import {
   deleteContactAttributeKey,
@@ -134,7 +135,7 @@ export const PUT = withV1ApiWrapper({
     auditLog,
     authentication,
   }: {
-    req: Request;
+    req: NextRequest;
     props: { params: Promise<{ contactAttributeKeyId: string }> };
     auditLog: TApiAuditLog;
     authentication: TApiKeyAuthentication;
