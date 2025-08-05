@@ -18,14 +18,14 @@ export const POST = async (request: NextRequest) =>
       const { body } = parsedInput;
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {
-        // return handleApiError(
-        //   request,
-        //   {
-        //     type: "forbidden",
-        //     details: [{ field: "contacts", issue: "Contacts feature is not enabled for this environment" }],
-        //   },
-        //   auditLog
-        // );
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [{ field: "contacts", issue: "Contacts feature is not enabled for this environment" }],
+          },
+          auditLog
+        );
       }
 
       const { environmentId } = body;

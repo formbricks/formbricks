@@ -141,7 +141,7 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
       active: false,
       lastChecked: new Date(0),
       features: DEFAULT_FEATURES,
-      version: 1,
+      version: 2,
     };
   }
 
@@ -162,7 +162,7 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
     active: false,
     lastChecked: new Date(0),
     features: DEFAULT_FEATURES,
-    version: 1,
+    version: 2,
   };
 };
 
@@ -201,7 +201,7 @@ const trackApiError = (error: LicenseApiError) => {
 const validateFallback = (previousResult: TPreviousResult): boolean => {
   if (!previousResult.features) return false;
   if (previousResult.lastChecked.getTime() === new Date(0).getTime()) return false;
-  if (previousResult.version !== 1) return false; // Add version check
+  if (previousResult.version !== 2) return false; // Add version check
   return true;
 };
 
@@ -228,7 +228,7 @@ const handleInitialFailure = async (currentTime: Date) => {
     active: false,
     features: DEFAULT_FEATURES,
     lastChecked: currentTime,
-    version: 1,
+    version: 2,
   };
   await setPreviousResult(initialFailResult);
   return {
@@ -374,7 +374,7 @@ export const getEnterpriseLicense = reactCache(
           active: liveLicenseDetails.status === "active",
           features: liveLicenseDetails.features,
           lastChecked: currentTime,
-          version: 1,
+          version: 2,
         };
         await setPreviousResult(currentLicenseState);
         return {
