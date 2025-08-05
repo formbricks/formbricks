@@ -135,7 +135,7 @@ describe("TemplateContainerWithPreview", () => {
 
     const searchBar = screen.getByTestId("search-bar");
     expect(searchBar).toBeInTheDocument();
-    expect(searchBar).toHaveAttribute("placeholder", "Search");
+    expect(searchBar).toHaveAttribute("placeholder", "common.search");
   });
 
   test("renders TemplateList component", () => {
