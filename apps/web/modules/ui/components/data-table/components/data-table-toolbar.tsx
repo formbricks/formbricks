@@ -17,7 +17,7 @@ interface DataTableToolbarProps<T> {
   deleteRowsAction: (rowIds: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
-  downloadRowsAction?: (rowIds: string[], format: string) => void;
+  downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
 }
 
 export const DataTableToolbar = <T,>({
