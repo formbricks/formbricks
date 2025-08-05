@@ -68,7 +68,7 @@ const handleRateLimiting = async (
 ): Promise<Response | null> => {
   try {
     if (authentication) {
-      if (routeType === ApiV1RouteTypeEnum.Integration && "user" in authentication) {
+      if ("user" in authentication) {
         // Session-based authentication for integration routes
         await applyRateLimit(rateLimitConfigs.api.v1, authentication.user.id);
       } else if ("hashedApiKey" in authentication) {
@@ -322,6 +322,9 @@ export const withV1ApiWrapper: {
     }
 
     setupAuditLog(authentication, auditLog, routeType);
+
+    console.log("authentication -----", authentication);
+    console.log("isRateLimited -----", isRateLimited);
 
     if (isRateLimited) {
       const rateLimitResponse = await handleRateLimiting(req.nextUrl.pathname, authentication, routeType);
