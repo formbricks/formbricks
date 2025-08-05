@@ -80,25 +80,25 @@ export const LandingSidebar = ({
           <DropdownMenuTrigger
             asChild
             id="userDropdownTrigger"
-            className="w-full rounded-br-xl border-t py-4 pl-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
-            <div tabIndex={0} className={cn("flex cursor-pointer flex-row items-center space-x-3")}>
+            className="w-full rounded-br-xl border-t p-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
+            <div tabIndex={0} className={cn("flex cursor-pointer flex-row items-center gap-3")}>
               <ProfileAvatar userId={user.id} imageUrl={user.imageUrl} />
               <>
-                <div>
+                <div className="grow overflow-hidden">
                   <p
                     title={user?.email}
                     className={cn(
-                      "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700"
+                      "ph-no-capture ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700"
                     )}>
                     {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
                   </p>
                   <p
                     title={capitalizeFirstLetter(organization?.name)}
-                    className="max-w-28 truncate text-sm text-slate-500">
+                    className="truncate text-sm text-slate-500">
                     {capitalizeFirstLetter(organization?.name)}
                   </p>
                 </div>
-                <ChevronRightIcon className={cn("h-5 w-5 text-slate-700 hover:text-slate-500")} />
+                <ChevronRightIcon className={cn("h-5 w-5 shrink-0 text-slate-700 hover:text-slate-500")} />
               </>
             </div>
           </DropdownMenuTrigger>
