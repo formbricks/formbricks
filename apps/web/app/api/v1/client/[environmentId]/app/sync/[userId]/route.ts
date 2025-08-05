@@ -44,7 +44,12 @@ const checkResponseLimit = async (environmentId: string) => {
   if (!IS_FORMBRICKS_CLOUD) return { isLimitReached: false };
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
-  if (!organization) throw new Error("Organization does not exist");
+  if (!organization) {
+    logger.error({ environmentId }, "Organization does not exist");
+
+    // fail closed if the organization does not exist
+    return { isLimitReached: true };
+  }
 
   const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
   const monthlyResponseLimit = organization.billing.limits.monthly.responses;
@@ -64,7 +69,7 @@ const checkResponseLimit = async (environmentId: string) => {
     }
   }
 
-  return { isLimitReached, organization };
+  return isLimitReached;
 };
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -110,7 +115,7 @@ export const GET = withV1ApiWrapper({
       }
 
       // check organization subscriptions and response limits
-      const { isLimitReached: isAppSurveyResponseLimitReached } = await checkResponseLimit(environmentId);
+      const isAppSurveyResponseLimitReached = await checkResponseLimit(environmentId);
 
       let contact = await getContactByUserId(environmentId, userId);
       if (!contact) {
@@ -152,10 +157,6 @@ export const GET = withV1ApiWrapper({
         ),
         getActionClasses(environmentId),
       ]);
-
-      if (!project) {
-        throw new Error("Project not found");
-      }
 
       const updatedProject: any = {
         ...project,

@@ -20,7 +20,6 @@ export const GET = withV1ApiWrapper({
 
     const params = await props.params;
 
-    // add webhook to database
     const webhook = await getWebhook(params.webhookId);
     if (!webhook) {
       return {

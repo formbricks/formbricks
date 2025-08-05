@@ -92,6 +92,67 @@ const handleRateLimiting = async (
 };
 
 /**
+ * Execute handler with error handling
+ */
+const executeHandler = async <TResult extends { response: Response }, TProps>(
+  handler: (params: THandlerParams<TProps>) => Promise<TResult>,
+  req: Request,
+  props: TProps,
+  auditLog: TApiAuditLog | undefined,
+  authentication: TApiV1Authentication
+): Promise<{ result: TResult; error?: any }> => {
+  try {
+    const result = await handler({ req, props, auditLog, authentication });
+    return { result };
+  } catch (err) {
+    const result = {
+      response: responses.internalServerErrorResponse("An unexpected error occurred."),
+    } as TResult;
+    return { result, error: err };
+  }
+};
+
+/**
+ * Set up audit log with authentication details
+ */
+const setupAuditLog = (
+  authentication: TApiV1Authentication,
+  auditLog: TApiAuditLog | undefined,
+  routeType: ApiV1RouteTypeEnum
+): void => {
+  if (
+    authentication &&
+    auditLog &&
+    routeType === ApiV1RouteTypeEnum.General &&
+    "apiKeyId" in authentication
+  ) {
+    auditLog.userId = authentication.apiKeyId;
+    auditLog.organizationId = authentication.organizationId;
+  }
+};
+
+/**
+ * Handle authentication based on method
+ */
+const handleAuthentication = async (
+  authenticationMethod: AuthenticationMethod,
+  req: Request
+): Promise<TApiV1Authentication> => {
+  switch (authenticationMethod) {
+    case AuthenticationMethod.ApiKey:
+      return await authenticateRequest(req);
+    case AuthenticationMethod.Session:
+      return await getServerSession(authOptions);
+    case AuthenticationMethod.Both: {
+      const session = await getServerSession(authOptions);
+      return session ?? (await authenticateRequest(req));
+    }
+    case AuthenticationMethod.None:
+      return null;
+  }
+};
+
+/**
  * Handle response processing and logging
  */
 const processResponse = async (
@@ -101,11 +162,19 @@ const processResponse = async (
   error?: any
 ): Promise<void> => {
   let isSuccess = false;
-  try {
-    const parsed = await res.clone().json();
-    isSuccess = parsed && typeof parsed === "object" && "data" in parsed;
-  } catch {
-    isSuccess = false;
+
+  // Check HTTP status code first (2xx indicates success)
+  if (res.status >= 200 && res.status < 300) {
+    isSuccess = true;
+  } else {
+    // For non-2xx responses, try to parse JSON and check for data property
+    // This maintains backward compatibility for error responses
+    try {
+      const parsed = await res.clone().json();
+      isSuccess = parsed && typeof parsed === "object" && "data" in parsed;
+    } catch {
+      isSuccess = false;
+    }
   }
 
   const correlationId = req.headers.get("x-request-id") ?? "";
@@ -237,48 +306,20 @@ export const withV1ApiWrapper: {
       return responses.internalServerErrorResponse("An unexpected error occurred.");
     }
 
-    switch (authenticationMethod) {
-      case AuthenticationMethod.ApiKey:
-        authentication = await authenticateRequest(req);
-        break;
-      case AuthenticationMethod.Session:
-        authentication = await getServerSession(authOptions);
-        break;
-      case AuthenticationMethod.Both:
-        authentication = await getServerSession(authOptions);
-        authentication ??= await authenticateRequest(req);
-        break;
-      case AuthenticationMethod.None:
-        break;
-    }
+    authentication = await handleAuthentication(authenticationMethod, req);
 
     if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
       return responses.notAuthenticatedResponse();
     }
 
-    if (
-      authentication &&
-      auditLog &&
-      routeType === ApiV1RouteTypeEnum.General &&
-      "apiKeyId" in authentication
-    ) {
-      auditLog.userId = authentication.apiKeyId;
-      auditLog.organizationId = authentication.organizationId;
-    }
+    setupAuditLog(authentication, auditLog, routeType);
 
     if (isRateLimited) {
       const rateLimitResponse = await handleRateLimiting(req.url, authentication, routeType);
       if (rateLimitResponse) return rateLimitResponse;
     }
 
-    try {
-      result = await handler({ req, props, auditLog, authentication });
-    } catch (err) {
-      error = err;
-      result = {
-        response: responses.internalServerErrorResponse("An unexpected error occurred."),
-      };
-    }
+    ({ result, error } = await executeHandler(handler, req, props, auditLog, authentication));
 
     const res = result.response;
     if (auditLog) {

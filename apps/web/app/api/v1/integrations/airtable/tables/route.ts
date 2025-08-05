@@ -33,7 +33,7 @@ export const GET = withV1ApiWrapper({
     }
 
     const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication?.user.id, environmentId);
-    if (!canUserAccessEnvironment || !environmentId) {
+    if (!canUserAccessEnvironment) {
       return {
         response: responses.unauthorizedResponse(),
       };

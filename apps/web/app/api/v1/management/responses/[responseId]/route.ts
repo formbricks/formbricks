@@ -11,9 +11,13 @@ import { ZResponseUpdateInput } from "@formbricks/types/responses";
 
 async function fetchAndAuthorizeResponse(
   responseId: string,
-  authentication: any,
+  authentication: TApiKeyAuthentication,
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) {
+  if (!authentication) {
+    return { error: responses.notAuthenticatedResponse() };
+  }
+
   const response = await getResponse(responseId);
   if (!response) {
     return { error: responses.notFoundResponse("Response", responseId) };
