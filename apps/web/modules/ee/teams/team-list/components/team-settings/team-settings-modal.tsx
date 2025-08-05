@@ -363,6 +363,7 @@ export const TeamSettingsModal = ({
                     type="button"
                     variant="secondary"
                     onClick={handleAddMember}
+                    className="mt-2"
                     disabled={
                       (!isOwnerOrManager && !isTeamAdminMember) ||
                       selectedMemberIds.length === orgMembers.length ||
@@ -482,6 +483,7 @@ export const TeamSettingsModal = ({
                     size="default"
                     type="button"
                     variant="secondary"
+                    className="mt-2"
                     onClick={handleAddProject}
                     disabled={
                       !isOwnerOrManager || selectedProjectIds.length === orgProjects.length || hasEmptyProject
