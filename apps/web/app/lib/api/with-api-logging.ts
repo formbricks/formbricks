@@ -323,9 +323,6 @@ export const withV1ApiWrapper: {
 
     setupAuditLog(authentication, auditLog, routeType);
 
-    console.log("authentication -----", authentication);
-    console.log("isRateLimited -----", isRateLimited);
-
     if (isRateLimited) {
       const rateLimitResponse = await handleRateLimiting(req.nextUrl.pathname, authentication, routeType);
       if (rateLimitResponse) return rateLimitResponse;
