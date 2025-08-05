@@ -353,7 +353,7 @@ export const TeamSettingsModal = ({
                 />
                 <TooltipRenderer
                   shouldRender={selectedMemberIds.length === orgMembers.length || hasEmptyMember}
-                  triggerClass="block"
+                  triggerClass="inline-block"
                   tooltipContent={
                     hasEmptyMember
                       ? t("environments.settings.teams.please_fill_all_member_fields")
@@ -474,7 +474,7 @@ export const TeamSettingsModal = ({
 
                 <TooltipRenderer
                   shouldRender={selectedProjectIds.length === orgProjects.length || hasEmptyProject}
-                  triggerClass="block"
+                  triggerClass="inline-block"
                   tooltipContent={
                     hasEmptyProject
                       ? t("environments.settings.teams.please_fill_all_project_fields")
