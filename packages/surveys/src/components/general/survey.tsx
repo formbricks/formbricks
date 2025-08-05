@@ -765,7 +765,7 @@ export function Survey({
                     <LanguageSwitch
                       surveyLanguages={localSurvey.languages}
                       setSelectedLanguageCode={setselectedLanguage}
-                      hoverColor={styling.questionColor?.light ?? "#000000"}
+                      hoverColor={styling.inputColor?.light ?? "#000000"}
                       borderRadius={styling.roundness ?? 8}
                     />
                   )}
@@ -780,7 +780,7 @@ export function Survey({
                   {isCloseButtonVisible && (
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.questionColor?.light ?? "#000000"}
+                      hoverColor={styling.inputColor?.light ?? "#000000"}
                       borderRadius={styling.roundness ?? 8}
                     />
                   )}
@@ -796,11 +796,13 @@ export function Survey({
               {content()}
             </div>
 
-            <div className="fb-gap-y-2 fb-min-h-8 fb-flex fb-flex-col fb-justify-end">
-              <div className="fb-px-4 fb-space-y-2">
-                {isBrandingEnabled ? <FormbricksBranding /> : null}
-                {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
-              </div>
+            <div
+              className={cn(
+                "fb-flex fb-flex-col fb-justify-center fb-gap-2 fb-px-4 fb-pt-2",
+                isCloseButtonVisible || isLanguageSwitchVisible ? "fb-min-h-8" : "fb-min-h-5"
+              )}>
+              {isBrandingEnabled ? <FormbricksBranding /> : null}
+              {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
             </div>
           </div>
         </div>

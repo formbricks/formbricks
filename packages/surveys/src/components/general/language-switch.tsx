@@ -20,7 +20,8 @@ export function LanguageSwitch({
   hoverColor,
   borderRadius,
 }: LanguageSwitchProps) {
-  const hoverColorWithOpacity = mixColor(hoverColor ?? "#000000", "#ffffff", 0.8);
+  const hoverColorWithOpacity = hoverColor ?? mixColor("#000000", "#ffffff", 0.8);
+
   const [isHovered, setIsHovered] = useState(false);
 
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);

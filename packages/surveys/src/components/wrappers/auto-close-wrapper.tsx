@@ -66,7 +66,7 @@ export function AutoCloseWrapper({
       <div
         onClick={stopCountdown}
         onMouseOver={stopCountdown}
-        className="fb-h-full fb-w-full fb-pb-2"
+        className="fb-h-full fb-w-full"
         data-testid="fb__surveys__auto-close-wrapper-test"
         onKeyDown={stopCountdown}
         onFocus={stopCountdown}
