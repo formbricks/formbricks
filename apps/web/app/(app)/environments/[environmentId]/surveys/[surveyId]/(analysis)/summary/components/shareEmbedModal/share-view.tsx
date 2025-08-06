@@ -67,6 +67,9 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
     );
   };
 
+  const shareSettingsTabs = tabs.filter((tab) => tab.type === "share_setting");
+  const shareViaTabs = tabs.filter((tab) => tab.type === "share_via");
+
   return (
     <div className="h-full">
       <div className={`flex h-full lg:grid lg:grid-cols-4`}>
@@ -88,28 +91,28 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu className="flex flex-col gap-1">
-                    {tabs.map(
+                    {shareViaTabs.map(
                       (tab) =>
-                        tab.type === "share_via" && (
-                          <SidebarMenuItem key={tab.id}>
-                            <SidebarMenuButton
-                              onClick={() => setActiveId(tab.id)}
-                              className={cn(
-                                "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                                tab.id === activeId
-                                  ? "bg-slate-100 font-medium text-slate-900"
-                                  : "text-slate-700"
-                              )}
-                              tooltip={tab.label}
-                              isActive={tab.id === activeId}>
-                              <tab.icon className="h-4 w-4 text-slate-700" />
-                              <span>{tab.label}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        )
+                        <SidebarMenuItem key={tab.id}>
+                          <SidebarMenuButton
+                            onClick={() => setActiveId(tab.id)}
+                            className={cn(
+                              "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                              tab.id === activeId
+                                ? "bg-slate-100 font-medium text-slate-900"
+                                : "text-slate-700"
+                            )}
+                            tooltip={tab.label}
+                            isActive={tab.id === activeId}>
+                            <tab.icon className="h-4 w-4 text-slate-700" />
+                            <span>{tab.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
                     )}
                   </SidebarMenu>
                 </SidebarGroupContent>
+              </SidebarGroup>
+              <SidebarGroup className="p-0">
                 <SidebarGroupLabel>
                   <Small className="text-xs text-slate-500">
                     {t("environments.surveys.share.share_settings_title")}
@@ -117,25 +120,23 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu className="flex flex-col gap-1">
-                    {tabs.map(
+                    {shareSettingsTabs.map(
                       (tab) =>
-                        tab.type === "share_setting" && (
-                          <SidebarMenuItem key={tab.id}>
-                            <SidebarMenuButton
-                              onClick={() => setActiveId(tab.id)}
-                              className={cn(
-                                "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                                tab.id === activeId
-                                  ? "bg-slate-100 font-medium text-slate-900"
-                                  : "text-slate-700"
-                              )}
-                              tooltip={tab.label}
-                              isActive={tab.id === activeId}>
-                              <tab.icon className="h-4 w-4 text-slate-700" />
-                              <span>{tab.label}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        )
+                        <SidebarMenuItem key={tab.id}>
+                          <SidebarMenuButton
+                            onClick={() => setActiveId(tab.id)}
+                            className={cn(
+                              "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                              tab.id === activeId
+                                ? "bg-slate-100 font-medium text-slate-900"
+                                : "text-slate-700"
+                            )}
+                            tooltip={tab.label}
+                            isActive={tab.id === activeId}>
+                            <tab.icon className="h-4 w-4 text-slate-700" />
+                            <span>{tab.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
                     )}
                   </SidebarMenu>
                 </SidebarGroupContent>

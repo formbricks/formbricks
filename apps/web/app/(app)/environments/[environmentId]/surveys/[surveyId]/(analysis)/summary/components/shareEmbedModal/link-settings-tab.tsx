@@ -80,6 +80,7 @@ export const LinkSettingsTab = ({ survey, isReadOnly, locale }: LinkSettingsTabP
   const {
     handleSubmit,
     setValue,
+    reset,
     formState: { isDirty },
   } = form;
 
@@ -98,7 +99,7 @@ export const LinkSettingsTab = ({ survey, isReadOnly, locale }: LinkSettingsTabP
     setIsSaving(true);
 
     // Get current linkMetadata
-    const currentLinkMetadata = survey.metadata || {
+    const currentSurveyMetadata = survey.metadata || {
       title: createI18nString("", languageCodes),
       description: createI18nString("", languageCodes),
       ogImage: undefined,
@@ -106,30 +107,31 @@ export const LinkSettingsTab = ({ survey, isReadOnly, locale }: LinkSettingsTabP
 
     // Merge form data with existing linkMetadata
     const updatedTitle: TI18nString = {
-      ...currentLinkMetadata.title,
+      ...currentSurveyMetadata.title,
       ...data.title,
     };
 
     const updatedDescription: TI18nString = {
-      ...currentLinkMetadata.description,
+      ...currentSurveyMetadata.description,
       ...data.description,
     };
 
-    const updatedLinkMetadata: TSurveyMetadata = {
+    const updatedSurveyMetadata: TSurveyMetadata = {
       title: updatedTitle,
       description: updatedDescription,
       ogImage: data.ogImage || undefined,
     };
 
-    const updatedSurvey = {
+    const updatedSurvey: TSurvey = {
       ...survey,
-      linkMetadata: updatedLinkMetadata,
+      metadata: updatedSurveyMetadata,
     };
 
     const result = await updateSurveyAction(updatedSurvey);
 
     if (result?.data) {
       toast.success(t("environments.surveys.edit.settings_saved_successfully"));
+      reset(data);
     } else {
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
@@ -138,121 +140,125 @@ export const LinkSettingsTab = ({ survey, isReadOnly, locale }: LinkSettingsTabP
   };
 
   return (
-    <FormProvider {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Language Selection - only show if survey has multiple languages */}
-        {hasMultipleLanguages && (
-          <FormItem>
-            <FormLabel>{t("common.language")}</FormLabel>
-            <FormControl>
-              <Select value={selectedLanguageCode} onValueChange={setSelectedLanguageCode}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {enabledLanguages.map((lang) => (
-                    <SelectItem key={lang.language.code} value={lang.language.code}>
-                      {getLanguageLabel(lang.language.code, locale)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormDescription>
-              {t("environments.surveys.share.link_settings.language_help_text")}
-            </FormDescription>
-          </FormItem>
-        )}
-
-        {/* Link Title */}
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
+    <div className="px-1">
+      <FormProvider {...form}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Language Selection - only show if survey has multiple languages */}
+          {hasMultipleLanguages && (
             <FormItem>
-              <FormLabel>{t("environments.surveys.share.link_settings.link_title")}</FormLabel>
+              <FormLabel>{t("common.language")}</FormLabel>
               <FormControl>
-                <Input
-                  value={field.value[currentLangCode] || ""}
-                  onChange={(e) => {
-                    const updatedValue = {
-                      ...field.value,
-                      [currentLangCode]: e.target.value,
-                    };
-                    field.onChange(updatedValue);
-                  }}
-                  placeholder={t("environments.surveys.share.link_settings.link_title_placeholder")}
-                  disabled={isReadOnly}
-                />
+                <Select value={selectedLanguageCode} onValueChange={setSelectedLanguageCode}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {enabledLanguages.map((lang) => (
+                      <SelectItem key={lang.language.code} value={lang.language.code} className="bg-white">
+                        {getLanguageLabel(lang.language.code, locale)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormDescription>
-                {t("environments.surveys.share.link_settings.link_title_description")}
+                {t("environments.surveys.share.link_settings.language_help_text")}
               </FormDescription>
-              <FormError />
             </FormItem>
           )}
-        />
 
-        {/* Link Description */}
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("environments.surveys.share.link_settings.link_description")}</FormLabel>
-              <FormControl>
-                <Input
-                  value={field.value[currentLangCode] || ""}
-                  onChange={(e) => {
-                    const updatedValue = {
-                      ...field.value,
-                      [currentLangCode]: e.target.value,
-                    };
-                    field.onChange(updatedValue);
-                  }}
-                  placeholder={t("environments.surveys.share.link_settings.link_description_placeholder")}
-                  disabled={isReadOnly}
-                />
-              </FormControl>
-              <FormDescription>
-                {t("environments.surveys.share.link_settings.link_description_description")}
-              </FormDescription>
-              <FormError />
-            </FormItem>
-          )}
-        />
+          {/* Link Title */}
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("environments.surveys.share.link_settings.link_title")}</FormLabel>
+                <FormControl>
+                  <Input
+                    value={field.value[currentLangCode] || ""}
+                    className="bg-white"
+                    onChange={(e) => {
+                      const updatedValue = {
+                        ...field.value,
+                        [currentLangCode]: e.target.value,
+                      };
+                      field.onChange(updatedValue);
+                    }}
+                    placeholder={t("environments.surveys.share.link_settings.link_title_placeholder")}
+                    disabled={isReadOnly}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t("environments.surveys.share.link_settings.link_title_description")}
+                </FormDescription>
+                <FormError />
+              </FormItem>
+            )}
+          />
 
-        {/* Preview Image */}
-        <FormField
-          control={form.control}
-          name="ogImage"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("environments.surveys.share.link_settings.preview_image")}</FormLabel>
-              <FormControl>
-                <FileInput
-                  id="og-image-upload"
-                  allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
-                  environmentId={survey.environmentId}
-                  onFileUpload={handleFileUpload}
-                  fileUrl={field.value}
-                  maxSizeInMB={5}
-                  disabled={isReadOnly}
-                />
-              </FormControl>
-              <FormDescription>
-                {t("environments.surveys.share.link_settings.preview_image_description")}
-              </FormDescription>
-              <FormError />
-            </FormItem>
-          )}
-        />
+          {/* Link Description */}
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("environments.surveys.share.link_settings.link_description")}</FormLabel>
+                <FormControl>
+                  <Input
+                    value={field.value[currentLangCode] || ""}
+                    className="bg-white"
+                    onChange={(e) => {
+                      const updatedValue = {
+                        ...field.value,
+                        [currentLangCode]: e.target.value,
+                      };
+                      field.onChange(updatedValue);
+                    }}
+                    placeholder={t("environments.surveys.share.link_settings.link_description_placeholder")}
+                    disabled={isReadOnly}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t("environments.surveys.share.link_settings.link_description_description")}
+                </FormDescription>
+                <FormError />
+              </FormItem>
+            )}
+          />
 
-        {/* Save Button */}
-        <Button type="submit" disabled={isSaving || isReadOnly || !isDirty}>
-          {isSaving ? t("common.saving") : t("common.save")}
-        </Button>
-      </form>
-    </FormProvider>
+          {/* Preview Image */}
+          <FormField
+            control={form.control}
+            name="ogImage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("environments.surveys.share.link_settings.preview_image")}</FormLabel>
+                <FormControl>
+                  <FileInput
+                    id="og-image-upload"
+                    allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
+                    environmentId={survey.environmentId}
+                    onFileUpload={handleFileUpload}
+                    fileUrl={field.value}
+                    maxSizeInMB={5}
+                    disabled={isReadOnly}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t("environments.surveys.share.link_settings.preview_image_description")}
+                </FormDescription>
+                <FormError />
+              </FormItem>
+            )}
+          />
+
+          {/* Save Button */}
+          <Button type="submit" disabled={isSaving || isReadOnly || !isDirty}>
+            {isSaving ? t("common.saving") : t("common.save")}
+          </Button>
+        </form>
+      </FormProvider>
+    </div>
   );
 };
