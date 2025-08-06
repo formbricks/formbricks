@@ -7,6 +7,13 @@ vi.mock("@/modules/ui/components/avatars", () => ({
   PersonAvatar: ({ personId }: any) => <div data-testid="avatar">{personId}</div>,
 }));
 vi.mock("./QuestionSummaryHeader", () => ({ QuestionSummaryHeader: () => <div data-testid="header" /> }));
+vi.mock("@/modules/ui/components/id-badge", () => ({
+  IdBadge: ({ id }: { id: string }) => (
+    <div data-testid="id-badge" data-id={id}>
+      ID: {id}
+    </div>
+  ),
+}));
 
 describe("MultipleChoiceSummary", () => {
   afterEach(() => {
@@ -160,8 +167,8 @@ describe("MultipleChoiceSummary", () => {
       />
     );
     const btns = screen.getAllByRole("button");
-    expect(btns[0]).toHaveTextContent("2 - Y50%2 common.selections");
-    expect(btns[1]).toHaveTextContent("1 - X50%1 common.selection");
+    expect(btns[0]).toHaveTextContent("2 - YID: other2 common.selections50%");
+    expect(btns[1]).toHaveTextContent("1 - XID: other1 common.selection50%");
   });
 
   test("places choice with others after one without when reversed inputs", () => {
@@ -271,5 +278,128 @@ describe("MultipleChoiceSummary", () => {
       "environments.surveys.summary.includes_either",
       ["O5"]
     );
+  });
+
+  // New tests for IdBadge functionality
+  test("renders IdBadge when choice ID is found", () => {
+    const setFilter = vi.fn();
+    const q = {
+      question: {
+        id: "q6",
+        headline: "H6",
+        type: "multipleChoiceSingle",
+        choices: [
+          { id: "choice1", label: { default: "Option A" } },
+          { id: "choice2", label: { default: "Option B" } },
+        ],
+      },
+      choices: {
+        "Option A": { value: "Option A", count: 5, percentage: 50, others: [] },
+        "Option B": { value: "Option B", count: 5, percentage: 50, others: [] },
+      },
+      type: "multipleChoiceSingle",
+      selectionCount: 0,
+    } as any;
+
+    render(
+      <MultipleChoiceSummary
+        questionSummary={q}
+        environmentId="env"
+        surveyType="link"
+        survey={baseSurvey}
+        setFilter={setFilter}
+      />
+    );
+
+    const idBadges = screen.getAllByTestId("id-badge");
+    expect(idBadges).toHaveLength(2);
+    expect(idBadges[0]).toHaveAttribute("data-id", "choice1");
+    expect(idBadges[1]).toHaveAttribute("data-id", "choice2");
+    expect(idBadges[0]).toHaveTextContent("ID: choice1");
+    expect(idBadges[1]).toHaveTextContent("ID: choice2");
+  });
+
+  test("getChoiceIdByValue function correctly maps values to IDs", () => {
+    const setFilter = vi.fn();
+    const q = {
+      question: {
+        id: "q8",
+        headline: "H8",
+        type: "multipleChoiceMulti",
+        choices: [
+          { id: "id-apple", label: { default: "Apple" } },
+          { id: "id-banana", label: { default: "Banana" } },
+          { id: "id-cherry", label: { default: "Cherry" } },
+        ],
+      },
+      choices: {
+        Apple: { value: "Apple", count: 3, percentage: 30, others: [] },
+        Banana: { value: "Banana", count: 4, percentage: 40, others: [] },
+        Cherry: { value: "Cherry", count: 3, percentage: 30, others: [] },
+      },
+      type: "multipleChoiceMulti",
+      selectionCount: 0,
+    } as any;
+
+    render(
+      <MultipleChoiceSummary
+        questionSummary={q}
+        environmentId="env"
+        surveyType="link"
+        survey={baseSurvey}
+        setFilter={setFilter}
+      />
+    );
+
+    const idBadges = screen.getAllByTestId("id-badge");
+    expect(idBadges).toHaveLength(3);
+
+    // Check that each badge has the correct ID
+    const expectedMappings = [
+      { text: "Banana", id: "id-banana" }, // Highest count appears first
+      { text: "Apple", id: "id-apple" },
+      { text: "Cherry", id: "id-cherry" },
+    ];
+
+    expectedMappings.forEach(({ text, id }, index) => {
+      expect(screen.getByText(`${3 - index} - ${text}`)).toBeInTheDocument();
+      expect(idBadges[index]).toHaveAttribute("data-id", id);
+    });
+  });
+
+  test("handles choices with special characters in labels", () => {
+    const setFilter = vi.fn();
+    const q = {
+      question: {
+        id: "q9",
+        headline: "H9",
+        type: "multipleChoiceSingle",
+        choices: [
+          { id: "special-1", label: { default: "Option & Choice" } },
+          { id: "special-2", label: { default: "Choice with 'quotes'" } },
+        ],
+      },
+      choices: {
+        "Option & Choice": { value: "Option & Choice", count: 2, percentage: 50, others: [] },
+        "Choice with 'quotes'": { value: "Choice with 'quotes'", count: 2, percentage: 50, others: [] },
+      },
+      type: "multipleChoiceSingle",
+      selectionCount: 0,
+    } as any;
+
+    render(
+      <MultipleChoiceSummary
+        questionSummary={q}
+        environmentId="env"
+        surveyType="link"
+        survey={baseSurvey}
+        setFilter={setFilter}
+      />
+    );
+
+    const idBadges = screen.getAllByTestId("id-badge");
+    expect(idBadges).toHaveLength(2);
+    expect(idBadges[0]).toHaveAttribute("data-id", "special-1");
+    expect(idBadges[1]).toHaveAttribute("data-id", "special-2");
   });
 });

@@ -8,7 +8,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
@@ -24,8 +24,8 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
     throw new Error("Organization not found");
   }
 
-  const isRoleManagementAllowed = await getRoleManagementPermission(organization.billing.plan);
-  if (!isRoleManagementAllowed) {
+  const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
+  if (!isAccessControlAllowed) {
     throw new OperationNotAllowedError("Role management is not allowed for this organization");
   }
 };

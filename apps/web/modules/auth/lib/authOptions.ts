@@ -319,11 +319,16 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }: { user: TUser; account: Account }) {
       const cookieStore = await cookies();
 
-      const callbackUrl = cookieStore.get("next-auth.callback-url")?.value || "";
+      // get callback url from the cookie store,
+      const callbackUrl =
+        cookieStore.get("__Secure-next-auth.callback-url")?.value ||
+        cookieStore.get("next-auth.callback-url")?.value ||
+        "";
 
       if (account?.provider === "credentials" || account?.provider === "token") {
         // check if user's email is verified or not
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
+          logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
         }
         await updateUserLastLoginAt(user.email);

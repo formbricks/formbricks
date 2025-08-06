@@ -27,10 +27,18 @@ jobs:
 
       - name: Get source branch name
         id: branch-name
+        env:
+          RAW_BRANCH: ${{ github.head_ref }}
         run: |
-          RAW_BRANCH="${{ github.head_ref }}"
+          # Validate and sanitize branch name - only allow alphanumeric, dots, underscores, hyphens, and forward slashes
           SOURCE_BRANCH=$(echo "$RAW_BRANCH" | sed 's/[^a-zA-Z0-9._\/-]//g')
 
+          # Additional validation - ensure branch name is not empty after sanitization
+          if [[ -z "$SOURCE_BRANCH" ]]; then
+            echo "❌ Error: Branch name is empty after sanitization"
+            echo "Original branch: $RAW_BRANCH"
+            exit 1
+          fi
 
           # Safely add to environment variables using GitHub's recommended method
           # This prevents environment variable injection attacks
