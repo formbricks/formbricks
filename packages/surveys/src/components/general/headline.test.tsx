@@ -19,7 +19,7 @@ describe("Headline", () => {
 
     expect(label).toHaveTextContent("Test Question");
     expect(label).toHaveAttribute("for", "test-id");
-    expect(label).toHaveClass("fb-text-heading", "fb-mb-1.5", "fb-flex", "fb-flex-col");
+    expect(label).toHaveClass("fb-text-heading", "fb-mb-[3px]", "fb-flex", "fb-flex-col");
   });
 
   test("renders with left alignment by default", () => {
