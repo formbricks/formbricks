@@ -6,7 +6,9 @@ import { ResponseOptionsCard } from "@/modules/survey/editor/components/response
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
+import { PreviewSurveyRef } from "@/modules/ui/components/preview-survey";
 import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
+import { RefObject } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -24,6 +26,7 @@ interface SettingsViewProps {
   isSpamProtectionAllowed: boolean;
   projectPermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
+  previewSurveyRef: RefObject<PreviewSurveyRef | null>;
 }
 
 export const SettingsView = ({
@@ -39,6 +42,7 @@ export const SettingsView = ({
   isSpamProtectionAllowed,
   projectPermission,
   isFormbricksCloud,
+  previewSurveyRef,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -75,6 +79,7 @@ export const SettingsView = ({
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
         projectPermission={projectPermission}
+        previewSurveyRef={previewSurveyRef}
       />
 
       <ResponseOptionsCard
