@@ -34,7 +34,7 @@ export function DefaultLanguageSelect({
       <p className="text-sm">
         {t("environments.surveys.edit.1_choose_the_default_language_for_this_survey")}:
       </p>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2">
         <div className="w-48">
           <Select
             defaultValue={`${defaultLanguage?.code}`}
@@ -57,13 +57,13 @@ export function DefaultLanguageSelect({
               });
             }}
             value={`${defaultLanguage?.code}`}>
-            <SelectTrigger className="xs:w-[180px] xs:text-base w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
+            <SelectTrigger className="w-[180px] px-4 text-sm text-slate-800">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {projectLanguages.map((language) => (
                 <SelectItem
-                  className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                  className="px-0.5 py-1 text-sm text-slate-800"
                   key={language.id}
                   value={language.code}>
                   {`${getLanguageLabel(language.code, locale)} (${language.code})`}

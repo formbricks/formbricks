@@ -215,7 +215,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 checked={isMultiLanguageActivated}
                 disabled={!isMultiLanguageAllowed || projectLanguages.length === 0}
                 id="multi-lang-toggle"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   handleActivationSwitchLogic();
                 }}
               />
