@@ -159,7 +159,6 @@ describe("License Core Logic", () => {
           active: true,
           features: mockFetchedLicenseDetails.features,
           lastChecked: expect.any(Date),
-          version: 1,
         },
         expect.any(Number)
       );
@@ -237,7 +236,6 @@ describe("License Core Logic", () => {
             accessControl: false,
           },
           lastChecked: expect.any(Date),
-          version: 1,
         },
         expect.any(Number)
       );
@@ -293,7 +291,6 @@ describe("License Core Logic", () => {
           active: false,
           features: expectedFeatures,
           lastChecked: expect.any(Date),
-          version: 1,
         },
         expect.any(Number)
       );
