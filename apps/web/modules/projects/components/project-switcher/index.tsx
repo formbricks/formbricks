@@ -133,8 +133,8 @@ export const ProjectSwitcher = ({
           <div
             tabIndex={0}
             className={cn(
-              "flex cursor-pointer flex-row items-center space-x-3",
-              isCollapsed ? "pl-2" : "pl-4"
+              "flex cursor-pointer flex-row items-center gap-3",
+              isCollapsed ? "justify-center px-2" : "px-4"
             )}>
             <div className="rounded-lg bg-slate-900 p-1.5 text-slate-50">
               {project.config.channel === "website" ? (
@@ -149,11 +149,11 @@ export const ProjectSwitcher = ({
             </div>
             {!isCollapsed && !isTextVisible && (
               <>
-                <div>
+                <div className="grow overflow-hidden">
                   <p
                     title={project.name}
                     className={cn(
-                      "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700 transition-opacity duration-200",
+                      "ph-no-capture ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700 transition-opacity duration-200",
                       isTextVisible ? "opacity-0" : "opacity-100"
                     )}>
                     {project.name}
@@ -170,7 +170,7 @@ export const ProjectSwitcher = ({
                 </div>
                 <ChevronRightIcon
                   className={cn(
-                    "h-5 w-5 text-slate-700 transition-opacity duration-200 hover:text-slate-500",
+                    "h-5 w-5 shrink-0 text-slate-700 transition-opacity duration-200 hover:text-slate-500",
                     isTextVisible ? "opacity-0" : "opacity-100"
                   )}
                 />
