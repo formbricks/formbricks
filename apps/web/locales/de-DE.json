@@ -1316,7 +1316,7 @@
         "columns": "Spalten",
         "company": "Firma",
         "company_logo": "Firmenlogo",
-        "completed_responses": "abgeschlossene Antworten",
+        "completed_responses": "unvollständige oder vollständige Antworten.",
         "concat": "Verketten +",
         "conditional_logic": "Bedingte Logik",
         "confirm_default_language": "Standardsprache bestätigen",

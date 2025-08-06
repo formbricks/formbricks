@@ -1316,7 +1316,7 @@
         "columns": "Colonnes",
         "company": "Société",
         "company_logo": "Logo de l'entreprise",
-        "completed_responses": "réponses complètes.",
+        "completed_responses": "des réponses partielles ou complètes.",
         "concat": "Concat +",
         "conditional_logic": "Logique conditionnelle",
         "confirm_default_language": "Confirmer la langue par défaut",
