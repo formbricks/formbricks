@@ -1316,7 +1316,7 @@
         "columns": "欄位",
         "company": "公司",
         "company_logo": "公司標誌",
-        "completed_responses": "完成的回應。",
+        "completed_responses": "部分或完整答复。",
         "concat": "串連 +",
         "conditional_logic": "條件邏輯",
         "confirm_default_language": "確認預設語言",
