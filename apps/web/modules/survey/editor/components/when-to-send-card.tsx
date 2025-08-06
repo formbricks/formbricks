@@ -25,7 +25,7 @@ interface WhenToSendCardProps {
   propActionClasses: ActionClass[];
   membershipRole?: OrganizationRole;
   projectPermission: TTeamPermission | null;
-  previewSurveyRef: RefObject<PreviewSurveyRef>;
+  previewSurveyRef: RefObject<PreviewSurveyRef | null>;
 }
 
 export const WhenToSendCard = ({
@@ -67,7 +67,7 @@ export const WhenToSendCard = ({
     }
 
     // Reset preview when auto-close setting changes
-    if (previewSurveyRef.current) {
+    if (previewSurveyRef?.current) {
       previewSurveyRef.current.resetProgress();
     }
   };
