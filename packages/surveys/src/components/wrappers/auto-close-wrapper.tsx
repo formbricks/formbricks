@@ -73,9 +73,11 @@ export function AutoCloseWrapper({
         aria-label="Auto close wrapper">
         {children}
       </div>
-      {survey.autoClose && showAutoCloseProgressBar ? (
-        <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />
-      ) : null}
+      {survey.type === "app" && survey.autoClose && (
+        <div className="fb-h-2 fb-w-full" aria-hidden={!showAutoCloseProgressBar}>
+          {showAutoCloseProgressBar && <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />}
+        </div>
+      )}
     </div>
   );
 }

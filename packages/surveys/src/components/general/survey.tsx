@@ -798,7 +798,7 @@ export function Survey({
 
             <div
               className={cn(
-                "fb-flex fb-flex-col fb-justify-center fb-gap-2 fb-px-4 fb-pt-2",
+                "fb-flex fb-flex-col fb-justify-center fb-gap-2 fb-px-4 fb-py-2",
                 isCloseButtonVisible || isLanguageSwitchVisible ? "fb-min-h-8" : "fb-min-h-5"
               )}>
               {isBrandingEnabled ? <FormbricksBranding /> : null}
