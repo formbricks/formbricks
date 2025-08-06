@@ -89,11 +89,8 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
-# Copy static assets (needed for runtime)
-COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
-
-# Copy only sourcemap files for Sentry
-COPY --from=installer /app/apps/web/.next/server ./apps/web/.next/server
+# Copy the entire .next directory to preserve structure for sourcemaps
+COPY --from=installer /app/apps/web/.next ./apps/web/.next
 
 # Set permissions for copied files
 RUN chown -R nextjs:nextjs ./apps/web/.next && chmod -R 755 ./apps/web/.next
