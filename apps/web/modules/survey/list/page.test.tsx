@@ -70,7 +70,7 @@ vi.mock("@/modules/survey/templates/components/template-container", () => ({
 
 vi.mock("@/modules/ui/components/button", () => ({
   Button: vi.fn(({ size, asChild, children }) => (
-    <button data-testid="create-survey-button" data-size={size} data-as-child={asChild}>
+    <button data-testid="create-survey-button" type="button" data-size={size} data-as-child={asChild}>
       {children}
     </button>
   )),
