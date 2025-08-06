@@ -29,6 +29,10 @@ RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
 RUN chmod +x /tmp/read-secrets.sh
 
+# Increase Node.js memory limit as a regular build argument
+ARG NODE_OPTIONS="--max_old_space_size=4096"
+ENV NODE_OPTIONS=${NODE_OPTIONS}
+
 # Set the working directory
 WORKDIR /app
 
@@ -58,7 +62,9 @@ RUN --mount=type=secret,id=database_url \
 # Debug: List generated files to verify sourcemaps exist
 RUN echo "🔍 Checking for generated sourcemaps..." && \
     find apps/web/.next -name "*.map" -type f | head -10 && \
-    echo "📊 Total .map files: $(find apps/web/.next -name "*.map" -type f | wc -l)"
+    echo "📊 Total .map files: $(find apps/web/.next -name "*.map" -type f | wc -l)" && \
+    echo "📂 Static sourcemaps: $(find apps/web/.next/static -name "*.map" -type f | wc -l)" && \
+    echo "🖥️  Server sourcemaps: $(find apps/web/.next/server -name "*.map" -type f | wc -l)"
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
@@ -89,7 +95,7 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
-# Copy the entire .next directory to preserve structure for sourcemaps
+# Copy the entire .next directory to preserve all sourcemaps (including those in standalone)
 COPY --from=installer /app/apps/web/.next ./apps/web/.next
 
 # Set permissions for copied files
