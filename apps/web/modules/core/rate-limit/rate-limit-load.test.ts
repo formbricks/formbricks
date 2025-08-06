@@ -69,10 +69,11 @@ async function checkRedisAvailability() {
  *    - Failure Indicates: TTL or window calculation issues
  *
  * 5. High Throughput Stress Test
- *    - Purpose: Test performance under sustained load
- *    - Method: 200 requests in batches (limit: 50)
+ *    - Purpose: Test performance under sustained load within single time window
+ *    - Method: 200 concurrent requests (limit: 50)
  *    - Expected: Exactly 50 requests allowed, consistent performance
  *    - Failure Indicates: Performance degradation or counter corruption
+ *    - Note: Fixed to send all requests concurrently to avoid window boundary race conditions
  *
  * 6. applyRateLimit Function Test
  *    - Purpose: Test the higher-level wrapper function
@@ -315,28 +316,26 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
 
     const config = TEST_CONFIGS.high;
     const totalRequests = 200;
-    const batchSize = 50;
     const identifier = "stress-test";
 
-    let totalAllowed = 0;
-    let totalDenied = 0;
-
-    // Send requests in batches to simulate real load
-    for (let i = 0; i < totalRequests; i += batchSize) {
-      const batchEnd = Math.min(i + batchSize, totalRequests);
-      const batchPromises = Array.from({ length: batchEnd - i }, () => checkRateLimit(config, identifier));
-
-      const batchResults = await Promise.all(batchPromises);
-
-      const batchAllowed = batchResults.filter((r) => r.ok && r.data.allowed).length;
-      const batchDenied = batchResults.filter((r) => r.ok && !r.data.allowed).length;
-
-      totalAllowed += batchAllowed;
-      totalDenied += batchDenied;
-
-      // Small delay between batches
-      await new Promise((resolve) => setTimeout(resolve, 10));
+    // Clear any existing keys first to ensure clean state
+    const redis = getRedisClient();
+    if (redis) {
+      const existingKeys = await redis.keys(`fb:rate_limit:${config.namespace}:*`);
+      if (existingKeys.length > 0) {
+        await redis.del(existingKeys);
+      }
     }
+
+    // Send ALL requests concurrently within the same time window
+    // This eliminates window boundary race conditions that caused intermittent failures
+    const allPromises = Array.from({ length: totalRequests }, () => checkRateLimit(config, identifier));
+
+    console.log(`Sending ${totalRequests} concurrent requests...`);
+    const results = await Promise.all(allPromises);
+
+    const totalAllowed = results.filter((r) => r.ok && r.data.allowed).length;
+    const totalDenied = results.filter((r) => r.ok && !r.data.allowed).length;
 
     console.log(`Stress test: ${totalAllowed} allowed, ${totalDenied} denied`);
 
