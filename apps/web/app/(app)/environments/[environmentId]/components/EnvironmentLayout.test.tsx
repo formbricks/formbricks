@@ -10,8 +10,8 @@ import {
 import { getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import {
+  getAccessControlPermission,
   getOrganizationProjectsLimit,
-  getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
@@ -53,7 +53,7 @@ vi.mock("@/lib/membership/utils", () => ({
 }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getOrganizationProjectsLimit: vi.fn(),
-  getRoleManagementPermission: vi.fn(),
+  getAccessControlPermission: vi.fn(),
 }));
 vi.mock("@/modules/ee/teams/lib/roles", () => ({
   getProjectPermissionByUserId: vi.fn(),
@@ -79,11 +79,11 @@ vi.mock("@/lib/constants", () => ({
 
 // Mock components
 vi.mock("@/app/(app)/environments/[environmentId]/components/MainNavigation", () => ({
-  MainNavigation: ({ organizationTeams, canDoRoleManagement }: any) => (
+  MainNavigation: ({ organizationTeams, isAccessControlAllowed }: any) => (
     <div data-testid="main-navigation">
       MainNavigation
       <div data-testid="organization-teams">{JSON.stringify(organizationTeams || [])}</div>
-      <div data-testid="can-do-role-management">{canDoRoleManagement?.toString() || "false"}</div>
+      <div data-testid="is-access-control-allowed">{isAccessControlAllowed?.toString() || "false"}</div>
     </div>
   ),
 }));
@@ -202,7 +202,7 @@ describe("EnvironmentLayout", () => {
     vi.mocked(getOrganizationProjectsLimit).mockResolvedValue(null as any);
     vi.mocked(getProjectPermissionByUserId).mockResolvedValue(mockProjectPermission);
     vi.mocked(getTeamsByOrganizationId).mockResolvedValue(mockOrganizationTeams);
-    vi.mocked(getRoleManagementPermission).mockResolvedValue(true);
+    vi.mocked(getAccessControlPermission).mockResolvedValue(true);
     mockIsDevelopment = false;
     mockIsFormbricksCloud = false;
   });
@@ -315,7 +315,7 @@ describe("EnvironmentLayout", () => {
     expect(screen.getByTestId("downgrade-banner")).toBeInTheDocument();
   });
 
-  test("passes canDoRoleManagement props to MainNavigation", async () => {
+  test("passes isAccessControlAllowed props to MainNavigation", async () => {
     vi.resetModules();
     await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({
@@ -337,8 +337,8 @@ describe("EnvironmentLayout", () => {
       })
     );
 
-    expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("true");
-    expect(vi.mocked(getRoleManagementPermission)).toHaveBeenCalledWith(mockOrganization.billing.plan);
+    expect(screen.getByTestId("is-access-control-allowed")).toHaveTextContent("true");
+    expect(vi.mocked(getAccessControlPermission)).toHaveBeenCalledWith(mockOrganization.billing.plan);
   });
 
   test("handles empty organizationTeams array", async () => {
@@ -393,8 +393,8 @@ describe("EnvironmentLayout", () => {
     expect(screen.getByTestId("organization-teams")).toHaveTextContent("[]");
   });
 
-  test("handles canDoRoleManagement false", async () => {
-    vi.mocked(getRoleManagementPermission).mockResolvedValue(false);
+  test("handles isAccessControlAllowed false", async () => {
+    vi.mocked(getAccessControlPermission).mockResolvedValue(false);
     vi.resetModules();
     await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({
@@ -416,7 +416,7 @@ describe("EnvironmentLayout", () => {
       })
     );
 
-    expect(screen.getByTestId("can-do-role-management")).toHaveTextContent("false");
+    expect(screen.getByTestId("is-access-control-allowed")).toHaveTextContent("false");
   });
 
   test("throws error if user not found", async () => {
