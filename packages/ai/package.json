@@ -1,0 +1,39 @@
+{
+  "name": "@formbricks/ai",
+  "packageManager": "pnpm@9.15.9",
+  "private": true,
+  "version": "0.1.0",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "clean": "rimraf .turbo node_modules dist",
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "lint": "eslint ./src --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.0.6",
+    "@ai-sdk/openai": "^1.0.20",
+    "ai": "^5.0.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
+    "typescript": "5.8.3",
+    "vite": "6.3.5",
+    "vite-plugin-dts": "4.5.3"
+  }
+}
