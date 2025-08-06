@@ -213,6 +213,15 @@ const ZSurveyBase = z.object({
   recaptcha: ZSurveyRecaptcha.openapi({
     description: "Google reCAPTCHA configuration",
   }),
+  metadata: z
+    .object({
+      title: z.record(z.string()).optional(),
+      description: z.record(z.string()).optional(),
+      ogImage: z.string().optional(),
+    })
+    .openapi({
+      description: "Custom link metadata for social sharing",
+    }),
   displayPercentage: z.number().nullable().openapi({
     description: "The display percentage of the survey",
   }),

@@ -280,6 +280,7 @@
     "only_one_file_allowed": "É permitido apenas um arquivo",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Apenas proprietários, gerentes e membros com acesso de gerenciamento podem realizar essa ação.",
     "option_id": "ID da opção",
+    "option_ids": "IDs da Opção",
     "or": "ou",
     "organization": "organização",
     "organization_id": "ID da Organização",
@@ -335,6 +336,7 @@
     "sales": "vendas",
     "save": "Salvar",
     "save_changes": "Salvar alterações",
+    "saving": "Salvando",
     "scheduled": "agendado",
     "search": "Buscar",
     "security": "Segurança",
@@ -1541,6 +1543,7 @@
         "send_survey_to_audience_who_match": "Enviar pesquisa para o público que corresponde...",
         "send_your_respondents_to_a_page_of_your_choice": "Envie seus respondentes para uma página de sua escolha.",
         "set_the_global_placement_in_the_look_feel_settings": "Defina o posicionamento global nas configurações de Aparência.",
+        "settings_saved_successfully": "Configurações salvas com sucesso",
         "seven_points": "7 pontos",
         "show_advanced_settings": "Mostrar configurações avançadas",
         "show_button": "Mostrar Botão",
@@ -1710,6 +1713,19 @@
           "embed_mode_description": "Incorpore sua pesquisa com um design minimalista, sem preenchimento e fundo.",
           "nav_title": "Incorporar no site"
         },
+        "link_settings": {
+          "description": "Dê aos links um título, descrição e imagem personalizados para compartilhamento público.",
+          "language_help_text": "Os metadados são carregados com base no valor `lang` na URL.",
+          "link_description": "Descrição do link",
+          "link_description_description": "Esta é a descrição meta.",
+          "link_description_placeholder": "Ajude-nos a melhorar compartilhando suas opiniões.",
+          "link_title": "Título do link",
+          "link_title_description": "Este é o título meta.",
+          "link_title_placeholder": "Pesquisa de Feedback do Cliente",
+          "preview_image": "Imagem de prévia",
+          "preview_image_description": "Usado para pré-visualização rica em chats, redes sociais, etc.",
+          "title": "Configurações de link"
+        },
         "personal_links": {
           "create_and_manage_segments": "Crie e gerencie seus Segmentos em Contatos > Segmentos",
           "description": "Gerar links pessoais para um segmento e associar respostas de pesquisa a cada contato.",
@@ -1741,6 +1757,7 @@
           "send_preview": "Enviar prévia",
           "send_preview_email": "Enviar prévia de e-mail"
         },
+        "share_settings_title": "Compartilhar configurações",
         "share_view_title": "Compartilhar via",
         "social_media": {
           "description": "Obtenha respostas de seus contatos em várias redes sociais.",

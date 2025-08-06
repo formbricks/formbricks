@@ -39,6 +39,7 @@ export const selectSurvey = {
   showLanguageSwitch: true,
   recaptcha: true,
   isBackButtonHidden: true,
+  metadata: true,
   languages: {
     select: {
       default: true,

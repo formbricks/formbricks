@@ -280,6 +280,7 @@
     "only_one_file_allowed": "Es ist nur eine Datei erlaubt",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Nur Eigentümer, Manager und Mitglieder mit Zugriff auf das Management können diese Aktion ausführen.",
     "option_id": "Option-ID",
+    "option_ids": "Option-IDs",
     "or": "oder",
     "organization": "Organisation",
     "organization_id": "Organisations-ID",
@@ -335,6 +336,7 @@
     "sales": "Vertrieb",
     "save": "Speichern",
     "save_changes": "Änderungen speichern",
+    "saving": "Speichern",
     "scheduled": "Geplant",
     "search": "Suchen",
     "security": "Sicherheit",
@@ -1541,6 +1543,7 @@
         "send_survey_to_audience_who_match": "Umfrage an das Publikum senden, das übereinstimmt...",
         "send_your_respondents_to_a_page_of_your_choice": "Schicke deine Befragten auf eine Seite deiner Wahl.",
         "set_the_global_placement_in_the_look_feel_settings": "Stelle die globale Platzierung in den Look & Feel-Einstellungen ein.",
+        "settings_saved_successfully": "Einstellungen erfolgreich gespeichert",
         "seven_points": "7 Punkte",
         "show_advanced_settings": "Erweiterte Einstellungen anzeigen",
         "show_button": "Button anzeigen",
@@ -1710,6 +1713,19 @@
           "embed_mode_description": "Bette deine Umfrage mit einem minimalistischen Design ein, ohne Karten und Hintergrund.",
           "nav_title": "Auf Website einbetten"
         },
+        "link_settings": {
+          "description": "Vergebe Links einen benutzerdefinierten Titel, eine Beschreibung und ein Bild zum Teilen in der Öffentlichkeit.",
+          "language_help_text": "Die Meta-Daten werden basierend auf dem `lang` Wert in der URL geladen.",
+          "link_description": "Linkbeschreibung",
+          "link_description_description": "Dies ist die Meta-Beschreibung.",
+          "link_description_placeholder": "Hilf uns, indem du deine Gedanken teilst.",
+          "link_title": "Linktitel",
+          "link_title_description": "Dies ist der Titel des Meta-Bereichs.",
+          "link_title_placeholder": "Kundenfeedback-Umfrage",
+          "preview_image": "Vorschaubild",
+          "preview_image_description": "Verwendet für eine reichhaltige Vorschau in Chats, auf sozialen Netzwerken usw.",
+          "title": "Link-Einstellungen"
+        },
         "personal_links": {
           "create_and_manage_segments": "Erstellen und verwalten Sie Ihre Segmente unter Kontakte > Segmente",
           "description": "Erstellen Sie persönliche Links für ein Segment und ordnen Sie Umfrageantworten jedem Kontakt zu.",
@@ -1741,6 +1757,7 @@
           "send_preview": "Vorschau senden",
           "send_preview_email": "Vorschau-E-Mail senden"
         },
+        "share_settings_title": "Freigabeeinstellungen",
         "share_view_title": "Teilen über",
         "social_media": {
           "description": "Erhalte Rückmeldungen von deinen Kontakten auf verschiedenen sozialen Medien.",

@@ -1,4 +1,4 @@
-export enum ShareViewType {
+export enum ShareViaType {
   ANON_LINKS = "anon-links",
   PERSONAL_LINKS = "personal-links",
   EMAIL = "email",
@@ -8,4 +8,8 @@ export enum ShareViewType {
   DYNAMIC_POPUP = "dynamic-popup",
   SOCIAL_MEDIA = "social-media",
   QR_CODE = "qr-code",
+}
+
+export enum ShareSettingsType {
+  LINK_SETTINGS = "link-settings",
 }

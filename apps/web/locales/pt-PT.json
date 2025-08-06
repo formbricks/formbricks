@@ -280,6 +280,7 @@
     "only_one_file_allowed": "Apenas um ficheiro é permitido",
     "only_owners_managers_and_manage_access_members_can_perform_this_action": "Apenas proprietários e gestores podem realizar esta ação.",
     "option_id": "ID de Opção",
+    "option_ids": "IDs de Opção",
     "or": "ou",
     "organization": "Organização",
     "organization_id": "ID da Organização",
@@ -335,6 +336,7 @@
     "sales": "Vendas",
     "save": "Guardar",
     "save_changes": "Guardar alterações",
+    "saving": "Guardando",
     "scheduled": "Agendado",
     "search": "Procurar",
     "security": "Segurança",
@@ -1541,6 +1543,7 @@
         "send_survey_to_audience_who_match": "Enviar inquérito para o público que corresponde...",
         "send_your_respondents_to_a_page_of_your_choice": "Envie os seus respondentes para uma página à sua escolha.",
         "set_the_global_placement_in_the_look_feel_settings": "Definir a colocação global nas definições de Aparência.",
+        "settings_saved_successfully": "Definições guardadas com sucesso",
         "seven_points": "7 pontos",
         "show_advanced_settings": "Mostrar definições avançadas",
         "show_button": "Mostrar Botão",
@@ -1710,6 +1713,19 @@
           "embed_mode_description": "Incorpore o seu inquérito com um design minimalista, descartando o preenchimento e o fundo.",
           "nav_title": "Incorporar no site"
         },
+        "link_settings": {
+          "description": "Dê aos links um título, descrição e imagem personalizados para partilhar publicamente.",
+          "language_help_text": "Os metadados são carregados com base no valor `lang` no URL.",
+          "link_description": "Descrição do link",
+          "link_description_description": "Esta é a descrição meta.",
+          "link_description_placeholder": "Ajude-nos a melhorar compartilhando suas opiniões.",
+          "link_title": "Título do Link",
+          "link_title_description": "Este é o título meta.",
+          "link_title_placeholder": "Inquérito de Feedback do Cliente",
+          "preview_image": "Pré-visualização da imagem",
+          "preview_image_description": "Usado para pré-visualização rica em chats, em redes sociais, etc.",
+          "title": "Definições de ligação"
+        },
         "personal_links": {
           "create_and_manage_segments": "Crie e gere os seus Segmentos em Contactos > Segmentos",
           "description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto.",
@@ -1741,6 +1757,7 @@
           "send_preview": "Enviar pré-visualização",
           "send_preview_email": "Enviar pré-visualização de email"
         },
+        "share_settings_title": "Partilhar Configurações",
         "share_view_title": "Partilhar via",
         "social_media": {
           "description": "Obtenha respostas dos seus contactos em várias redes sociais.",
