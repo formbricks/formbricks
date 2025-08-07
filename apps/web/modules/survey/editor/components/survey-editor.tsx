@@ -13,7 +13,7 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
-import { PreviewSurvey, PreviewSurveyRef } from "@/modules/ui/components/preview-survey";
+import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -84,7 +84,6 @@ export const SurveyEditor = ({
 
   const [styling, setStyling] = useState(localSurvey?.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
-  const previewSurveyRef = useRef<PreviewSurveyRef | null>(null);
 
   const fetchLatestProject = useCallback(async () => {
     const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
@@ -232,7 +231,6 @@ export const SurveyEditor = ({
               isSpamProtectionAllowed={isSpamProtectionAllowed}
               projectPermission={projectPermission}
               isFormbricksCloud={isFormbricksCloud}
-              previewSurveyRef={previewSurveyRef}
             />
           )}
 
@@ -252,7 +250,6 @@ export const SurveyEditor = ({
 
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
           <PreviewSurvey
-            ref={previewSurveyRef}
             survey={localSurvey}
             questionId={activeQuestionId}
             project={localProject}
