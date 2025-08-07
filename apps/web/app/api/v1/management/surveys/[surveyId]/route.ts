@@ -159,13 +159,11 @@ export const PUT = withV1ApiWrapper({
           response: responses.successResponse(updatedSurvey),
         };
       } catch (error) {
-        auditLog.status = "failure";
         return {
           response: handleErrorResponse(error),
         };
       }
     } catch (error) {
-      auditLog.status = "failure";
       return {
         response: handleErrorResponse(error),
       };

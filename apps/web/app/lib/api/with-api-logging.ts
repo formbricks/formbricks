@@ -76,9 +76,8 @@ const handleRateLimiting = async (
         await applyRateLimit(rateLimitConfigs.api.v1, authentication.hashedApiKey);
       } else {
         logger.error({ authentication }, "Unknown authentication type");
+        return responses.internalServerErrorResponse("Invalid authentication configuration");
       }
-
-      return null;
     }
 
     if (routeType === ApiV1RouteTypeEnum.Client) {
@@ -331,11 +330,12 @@ export const withV1ApiWrapper: {
     }
 
     // === Handler Execution ===
-    let result: { response: Response };
-    let error: any = undefined;
-    ({ result, error } = await executeHandler(handler, req, props, auditLog, authentication));
-
+    const { result, error } = await executeHandler(handler, req, props, auditLog, authentication);
     const res = result.response;
+
+    if (res.status >= 500) {
+      logger.error({ error, url: req.url }, "Error in handler");
+    }
 
     // === Response Processing & Logging ===
     await processResponse(res, req, auditLog, error);

@@ -36,10 +36,6 @@ export const GET = withV1ApiWrapper({
       return {
         response: responses.internalServerErrorResponse("Airtable client id is missing"),
       };
-    if (!redirect_uri)
-      return {
-        response: responses.internalServerErrorResponse("Airtable redirect url is missing"),
-      };
     const codeVerifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
       "base64"
     );
