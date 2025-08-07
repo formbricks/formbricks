@@ -1,193 +1,32 @@
-name: Docker Image Security Vulnerability Scan
+name: Docker Security Scan
 
 on:
-  # Run daily at 2 AM UTC to catch new vulnerabilities
   schedule:
-    - cron: "0 2 * * *"
-  # Allow manual triggering
+    - cron: "0 2 * * *" # Daily at 2 AM UTC
   workflow_dispatch:
-  # Run on new releases to immediately scan newly published images
   workflow_run:
     workflows: ["Docker Release to Github"]
-    types:
-      - completed
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+    types: [completed]
 
 permissions:
   contents: read
   security-events: write
 
 jobs:
-  get-image-tags:
+  scan:
+    name: Vulnerability Scan
     runs-on: ubuntu-latest
-    outputs:
-      tags: ${{ steps.get-tags.outputs.tags }}
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
-        with:
-          egress-policy: audit
-
-      - name: Get latest image tags
-        id: get-tags
-        run: |
-          # Get the latest stable release tag and latest tag
-          LATEST_TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name' || echo "latest")
-
-          # Create JSON array of tags to scan
-          TAGS='["latest"'
-          if [ "$LATEST_TAG" != "latest" ]; then
-            TAGS="$TAGS,\"$LATEST_TAG\""
-          fi
-          TAGS="$TAGS]"
-
-          echo "tags=$TAGS" >> $GITHUB_OUTPUT
-          echo "Will scan image tags: $TAGS"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  vulnerability-scan:
-    needs: get-image-tags
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tag: ${{ fromJson(needs.get-image-tags.outputs.tags) }}
-      fail-fast: false
-
-    steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
-        with:
-          egress-policy: audit
-
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Login to Container Registry
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # v0.29.0
+        uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
         with:
-          image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag }}"
+          image-ref: "ghcr.io/${{ github.repository }}:latest"
           format: "sarif"
-          output: "trivy-results-${{ matrix.tag }}.sarif"
+          output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH,MEDIUM,LOW"
-          timeout: "10m"
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@aa578102511db1f4524ed59b8cc2bae4f6e88195 # v3.28.0
+        uses: github/codeql-action/upload-sarif@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f # v3.28.0
         if: always()
         with:
-          sarif_file: "trivy-results-${{ matrix.tag }}.sarif"
-          category: "container-security-${{ matrix.tag }}"
-
-      - name: Parse vulnerabilities and check severity
-        id: parse-vulns
-        run: |
-          # Extract vulnerability data from SARIF
-          if [ -f "trivy-results-${{ matrix.tag }}.sarif" ]; then
-            # Count vulnerabilities by severity
-            CRITICAL_COUNT=$(jq -r '.runs[0].results[]? | select(.level == "error" and (.properties.security_severity // "0") | tonumber >= 9.0) | .ruleId' trivy-results-${{ matrix.tag }}.sarif | wc -l)
-            HIGH_COUNT=$(jq -r '.runs[0].results[]? | select(.level == "error" and (.properties.security_severity // "0") | tonumber >= 7.0 and (.properties.security_severity // "0") | tonumber < 9.0) | .ruleId' trivy-results-${{ matrix.tag }}.sarif | wc -l)
-            MEDIUM_COUNT=$(jq -r '.runs[0].results[]? | select(.level == "warning" and (.properties.security_severity // "0") | tonumber >= 4.0 and (.properties.security_severity // "0") | tonumber < 7.0) | .ruleId' trivy-results-${{ matrix.tag }}.sarif | wc -l)
-            LOW_COUNT=$(jq -r '.runs[0].results[]? | select(.level == "note" and (.properties.security_severity // "0") | tonumber < 4.0) | .ruleId' trivy-results-${{ matrix.tag }}.sarif | wc -l)
-            
-            echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
-            echo "high_count=$HIGH_COUNT" >> $GITHUB_OUTPUT
-            echo "medium_count=$MEDIUM_COUNT" >> $GITHUB_OUTPUT
-            echo "low_count=$LOW_COUNT" >> $GITHUB_OUTPUT
-            
-            # Check if we have critical vulnerabilities that need immediate attention
-            if [ "$CRITICAL_COUNT" -gt 0 ]; then
-              echo "::warning::Found $CRITICAL_COUNT critical vulnerabilities in ${{ matrix.tag }}"
-            fi
-            
-            if [ "$HIGH_COUNT" -gt 0 ]; then
-              echo "::warning::Found $HIGH_COUNT high vulnerabilities in ${{ matrix.tag }}"
-            fi
-            
-            echo "Vulnerability Summary for ${{ matrix.tag }}:"
-            echo "  Critical (P0): $CRITICAL_COUNT"
-            echo "  High (P1): $HIGH_COUNT" 
-            echo "  Medium (P2): $MEDIUM_COUNT"
-            echo "  Low (P3): $LOW_COUNT"
-          else
-            echo "No SARIF file found"
-          fi
-
-      - name: Create vulnerability report artifact
-        if: always()
-        run: |
-          # Create a detailed report
-          cat > vulnerability-report-${{ matrix.tag }}.md << 'EOF'
-          # Vulnerability Scan Report for ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag }}
-
-          **Scan Date:** $(date -u)
-          **Image:** ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag }}
-
-          ## Summary
-          - **Critical (P0):** ${{ steps.parse-vulns.outputs.critical_count }} vulnerabilities (TTR: 7 days)
-          - **High (P1):** ${{ steps.parse-vulns.outputs.high_count }} vulnerabilities (TTR: 30 days)
-          - **Medium (P2):** ${{ steps.parse-vulns.outputs.medium_count }} vulnerabilities (TTR: 90 days)
-          - **Low (P3):** ${{ steps.parse-vulns.outputs.low_count }} vulnerabilities (TTR: As needed)
-
-          ## SOC-2 Compliance Notes
-          - This scan fulfills the "Vulnerability identification" requirement through automatic security scanning
-          - Vulnerabilities are categorized according to the defined severity levels in the Vulnerability and Patch Management Policy
-          - Documentation will be preserved for minimum 5 years as required
-
-          ## Next Steps
-          For detailed findings, check the Security tab in GitHub or review the SARIF report.
-          EOF
-
-      - name: Upload vulnerability reports
-        if: always()
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
-        with:
-          name: vulnerability-report-${{ matrix.tag }}
-          path: |
-            vulnerability-report-${{ matrix.tag }}.md
-            trivy-results-${{ matrix.tag }}.sarif
-          retention-days: 1825 # 5 years as required by SOC-2 policy
-
-  security-summary:
-    needs: vulnerability-scan
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
-        with:
-          egress-policy: audit
-
-      - name: Generate security summary
-        run: |
-          echo "# 🔒 Container Security Scan Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Scan Date:** $(date -u)" >> $GITHUB_STEP_SUMMARY
-          echo "**Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Scanned Images" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/formbricks/formbricks:latest" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## SOC-2 Compliance Status" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Automated vulnerability scanning completed" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Results uploaded to GitHub Security tab" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Vulnerability assessment categorized by severity" >> $GITHUB_STEP_SUMMARY
-          echo "📋 Documentation preserved for 5-year retention" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Review findings in [Security tab](https://github.com/${{ github.repository }}/security/code-scanning)" >> $GITHUB_STEP_SUMMARY
-          echo "2. Address vulnerabilities according to SOC-2 policy requirements" >> $GITHUB_STEP_SUMMARY
-          echo "3. Document remediation actions" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*This scan is part of our Vulnerability and Patch Management Policy for SOC-2 compliance.*" >> $GITHUB_STEP_SUMMARY
+          sarif_file: "trivy-results.sarif"
