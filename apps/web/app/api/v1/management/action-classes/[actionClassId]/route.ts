@@ -34,15 +34,9 @@ export const GET = withV1ApiWrapper({
     authentication,
   }: {
     props: { params: Promise<{ actionClassId: string }> };
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
     const params = await props.params;
-
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
 
     try {
       const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "GET");
@@ -72,15 +66,9 @@ export const PUT = withV1ApiWrapper({
     req: NextRequest;
     props: { params: Promise<{ actionClassId: string }> };
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
     const params = await props.params;
-
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
 
     try {
       const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "PUT");
@@ -142,15 +130,9 @@ export const DELETE = withV1ApiWrapper({
   }: {
     props: { params: Promise<{ actionClassId: string }> };
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
     const params = await props.params;
-
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
 
     auditLog.targetId = params.actionClassId;
 

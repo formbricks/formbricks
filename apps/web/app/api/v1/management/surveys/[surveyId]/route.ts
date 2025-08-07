@@ -34,14 +34,8 @@ export const GET = withV1ApiWrapper({
     authentication,
   }: {
     props: { params: Promise<{ surveyId: string }> };
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     const params = await props.params;
 
     try {
@@ -70,14 +64,8 @@ export const DELETE = withV1ApiWrapper({
   }: {
     props: { params: Promise<{ surveyId: string }> };
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     const params = await props.params;
     auditLog.targetId = params.surveyId;
     try {
@@ -113,14 +101,8 @@ export const PUT = withV1ApiWrapper({
     req: NextRequest;
     props: { params: Promise<{ surveyId: string }> };
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     const params = await props.params;
     auditLog.targetId = params.surveyId;
     try {

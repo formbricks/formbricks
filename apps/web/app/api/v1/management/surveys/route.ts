@@ -12,13 +12,13 @@ import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/t
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TApiKeyAuthentication }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
+  handler: async ({
+    req,
+    authentication,
+  }: {
+    req: NextRequest;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
     try {
       const searchParams = new URL(req.url).searchParams;
       const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
@@ -51,14 +51,8 @@ export const POST = withV1ApiWrapper({
   }: {
     req: NextRequest;
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     try {
       let surveyInput;
       try {

@@ -32,7 +32,7 @@ const validateInput = (
   const inputValidation = ZJsPeopleUserIdInput.safeParse({ environmentId, userId });
   if (!inputValidation.success) {
     return {
-      isValid: false as const,
+      isValid: false,
       error: responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
         transformErrorToDetails(inputValidation.error),
@@ -40,7 +40,7 @@ const validateInput = (
       ),
     };
   }
-  return { isValid: true as const, data: inputValidation.data };
+  return { isValid: true, data: inputValidation.data };
 };
 
 const checkResponseLimit = async (environmentId: string): Promise<boolean> => {

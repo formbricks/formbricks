@@ -1,6 +1,6 @@
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
-import { IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@/lib/constants";
+import { WEBAPP_URL } from "@/lib/constants";
 import { isValidCallbackUrl } from "@/lib/utils/url";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
@@ -79,10 +79,6 @@ export const middleware = async (originalRequest: NextRequest) => {
   // Handle authentication
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
-
-  if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
-    return nextResponseWithCustomHeader;
-  }
 
   return nextResponseWithCustomHeader;
 };

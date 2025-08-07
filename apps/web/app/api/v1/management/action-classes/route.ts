@@ -10,13 +10,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { getActionClasses } from "./lib/action-classes";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: { authentication: TApiKeyAuthentication }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
+  handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
     try {
       const environmentIds = authentication.environmentPermissions.map(
         (permission) => permission.environmentId
@@ -46,14 +40,8 @@ export const POST = withV1ApiWrapper({
   }: {
     req: NextRequest;
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     try {
       let actionClassInput;
       try {

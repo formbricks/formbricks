@@ -15,14 +15,8 @@ export const GET = withV1ApiWrapper({
   }: {
     req: NextRequest;
     props: { params: Promise<{ surveyId: string }> };
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     try {
       const params = await props.params;
       const survey = await getSurvey(params.surveyId);

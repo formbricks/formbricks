@@ -298,6 +298,7 @@ export const withV1ApiWrapper: {
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
   const { handler, action, targetType } = params;
   return async (req: NextRequest, props: TProps): Promise<Response> => {
+    // === Audit Log Setup ===
     const saveAuditLog = action && targetType;
     const auditLog = saveAuditLog ? buildAuditLogBaseObject(action, targetType, req.url) : undefined;
 
@@ -305,7 +306,7 @@ export const withV1ApiWrapper: {
     let isRateLimited: boolean;
     let authenticationMethod: AuthenticationMethod;
 
-    // 1. Determine route metadata
+    // === Route Classification ===
     try {
       ({ routeType, isRateLimited, authenticationMethod } = getRouteType(req));
     } catch (error) {
@@ -313,30 +314,30 @@ export const withV1ApiWrapper: {
       return responses.internalServerErrorResponse("An unexpected error occurred.");
     }
 
-    // 2. Handle authentication
+    // === Authentication ===
     const authentication = await handleAuthentication(authenticationMethod, req);
 
     if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
       return responses.notAuthenticatedResponse();
     }
 
-    // 3. Setup audit log
+    // === Audit Log Enhancement ===
     setupAuditLog(authentication, auditLog, routeType);
 
-    // 4. Handle rate limiting
+    // === Rate Limiting ===
     if (isRateLimited) {
       const rateLimitResponse = await handleRateLimiting(req.nextUrl.pathname, authentication, routeType);
       if (rateLimitResponse) return rateLimitResponse;
     }
 
-    // 5. Execute handler
+    // === Handler Execution ===
     let result: { response: Response };
     let error: any = undefined;
     ({ result, error } = await executeHandler(handler, req, props, auditLog, authentication));
 
     const res = result.response;
 
-    // 6. Process response
+    // === Response Processing & Logging ===
     await processResponse(res, req, auditLog, error);
 
     return res;

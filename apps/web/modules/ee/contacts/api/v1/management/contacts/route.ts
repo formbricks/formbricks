@@ -5,13 +5,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { getContacts } from "./lib/contacts";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: { authentication: TApiKeyAuthentication }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
+  handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
     try {
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {

@@ -31,14 +31,8 @@ export const GET = withV1ApiWrapper({
     authentication,
   }: {
     props: { params: Promise<{ contactId: string }> };
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     try {
       const params = await props.params;
 
@@ -81,14 +75,8 @@ export const DELETE = withV1ApiWrapper({
   }: {
     props: { params: Promise<{ contactId: string }> };
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     const params = await props.params;
     auditLog.targetId = params.contactId;
 

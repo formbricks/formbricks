@@ -10,13 +10,7 @@ import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: { authentication: TApiKeyAuthentication }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
+  handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
     try {
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {
@@ -55,14 +49,8 @@ export const POST = withV1ApiWrapper({
   }: {
     req: NextRequest;
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     try {
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {

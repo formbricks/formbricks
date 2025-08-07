@@ -8,7 +8,13 @@ import * as z from "zod";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TSessionAuthentication }) => {
+  handler: async ({
+    req,
+    authentication,
+  }: {
+    req: NextRequest;
+    authentication: NonNullable<TSessionAuthentication>;
+  }) => {
     const url = req.url;
     const environmentId = req.headers.get("environmentId");
     const queryParams = new URLSearchParams(url.split("?")[1]);
@@ -20,19 +26,13 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     if (!environmentId) {
       return {
         response: responses.badRequestResponse("environmentId is missing"),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication?.user.id, environmentId);
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
     if (!canUserAccessEnvironment) {
       return {
         response: responses.unauthorizedResponse(),

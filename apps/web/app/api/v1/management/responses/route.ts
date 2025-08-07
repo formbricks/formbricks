@@ -12,13 +12,13 @@ import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/res
 import { createResponse, getResponsesByEnvironmentIds } from "./lib/response";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TApiKeyAuthentication }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
+  handler: async ({
+    req,
+    authentication,
+  }: {
+    req: NextRequest;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
     const searchParams = req.nextUrl.searchParams;
     const surveyId = searchParams.get("surveyId");
     const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
@@ -113,14 +113,8 @@ export const POST = withV1ApiWrapper({
   }: {
     req: NextRequest;
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     try {
       const inputResult = await validateInput(req);
       if (inputResult.error) {

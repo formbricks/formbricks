@@ -11,14 +11,8 @@ export const GET = withV1ApiWrapper({
     authentication,
   }: {
     props: { params: Promise<{ webhookId: string }> };
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     const params = await props.params;
 
     const webhook = await getWebhook(params.webhookId);
@@ -48,15 +42,10 @@ export const DELETE = withV1ApiWrapper({
     req: NextRequest;
     props: { params: Promise<{ webhookId: string }> };
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
     const params = await props.params;
     auditLog.targetId = params.webhookId;
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
 
     // check if webhook exists
     const webhook = await getWebhook(params.webhookId);

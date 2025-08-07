@@ -21,7 +21,13 @@ const getEmail = async (token: string) => {
 };
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TSessionAuthentication }) => {
+  handler: async ({
+    req,
+    authentication,
+  }: {
+    req: NextRequest;
+    authentication: NonNullable<TSessionAuthentication>;
+  }) => {
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
     const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -33,18 +39,12 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     if (code && typeof code !== "string") {
       return {
         response: responses.badRequestResponse("`code` must be a string"),
       };
     }
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication?.user.id, environmentId);
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
     if (!canUserAccessEnvironment) {
       return {
         response: responses.unauthorizedResponse(),

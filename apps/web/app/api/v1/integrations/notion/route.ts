@@ -10,18 +10,18 @@ import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { NextRequest } from "next/server";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TSessionAuthentication }) => {
+  handler: async ({
+    req,
+    authentication,
+  }: {
+    req: NextRequest;
+    authentication: NonNullable<TSessionAuthentication>;
+  }) => {
     const environmentId = req.headers.get("environmentId");
 
     if (!environmentId) {
       return {
         response: responses.badRequestResponse("environmentId is missing"),
-      };
-    }
-
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
       };
     }
 

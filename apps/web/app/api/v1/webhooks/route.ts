@@ -8,13 +8,7 @@ import { NextRequest } from "next/server";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: { authentication: TApiKeyAuthentication }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
+  handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
     try {
       const environmentIds = authentication.environmentPermissions.map(
         (permission) => permission.environmentId
@@ -42,14 +36,8 @@ export const POST = withV1ApiWrapper({
   }: {
     req: NextRequest;
     auditLog: TApiAuditLog;
-    authentication: TApiKeyAuthentication;
+    authentication: NonNullable<TApiKeyAuthentication>;
   }) => {
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
     const webhookInput = await req.json();
     const inputValidation = ZWebhookInput.safeParse(webhookInput);
 

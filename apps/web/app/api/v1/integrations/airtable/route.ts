@@ -8,7 +8,13 @@ import { NextRequest } from "next/server";
 const scope = `data.records:read data.records:write schema.bases:read schema.bases:write user.email:read`;
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ req, authentication }: { req: NextRequest; authentication: TSessionAuthentication }) => {
+  handler: async ({
+    req,
+    authentication,
+  }: {
+    req: NextRequest;
+    authentication: NonNullable<TSessionAuthentication>;
+  }) => {
     const environmentId = req.headers.get("environmentId");
 
     if (!environmentId) {
@@ -17,13 +23,7 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication?.user.id, environmentId);
+    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
     if (!canUserAccessEnvironment) {
       return {
         response: responses.unauthorizedResponse(),
