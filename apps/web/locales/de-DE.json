@@ -1644,6 +1644,7 @@
         "company": "Firma",
         "completed": "Erledigt ✅",
         "country": "Land",
+        "delete_response_confirmation": "Dies wird die Umfrageantwort einschließlich aller Antworten, Notizen, Tags, angehängter Dokumente und Antwortmetadaten löschen.",
         "device": "Gerät",
         "device_info": "Geräteinfo",
         "email": "E-Mail",

@@ -1644,6 +1644,7 @@
         "company": "empresa",
         "completed": "Concluído ✅",
         "country": "País",
+        "delete_response_confirmation": "Isso excluirá a resposta da pesquisa, incluindo todas as respostas, notas, etiquetas, documentos anexados e metadados da resposta.",
         "device": "dispositivo",
         "device_info": "Informações do dispositivo",
         "email": "Email",
