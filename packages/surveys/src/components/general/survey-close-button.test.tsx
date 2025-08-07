@@ -69,9 +69,9 @@ describe("SurveyCloseButton", () => {
     expect(path).toBeInTheDocument();
     expect(path).toHaveAttribute("stroke", "currentColor");
     expect(path).toHaveAttribute("d", "M12 4L4 12M4 4L12 12");
-    expect(path).toHaveAttribute("stroke-width", "1.33");
-    expect(path).toHaveAttribute("stroke-linecap", "round");
-    expect(path).toHaveAttribute("stroke-linejoin", "round");
+    expect(path).toHaveAttribute("strokeWidth", "1.33");
+    expect(path).toHaveAttribute("strokeLinecap", "round");
+    expect(path).toHaveAttribute("strokeLinejoin", "round");
   });
 
   test("calls onClose when clicked", async () => {

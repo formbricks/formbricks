@@ -21,9 +21,9 @@ describe("LanguageIcon", () => {
     const path = svg?.querySelector("path");
     expect(path).toBeInTheDocument();
     expect(path).toHaveAttribute("stroke", "currentColor");
-    expect(path).toHaveAttribute("stroke-width", "1.33");
-    expect(path).toHaveAttribute("stroke-linecap", "round");
-    expect(path).toHaveAttribute("stroke-linejoin", "round");
+    expect(path).toHaveAttribute("strokeWidth", "1.33");
+    expect(path).toHaveAttribute("strokeLinecap", "round");
+    expect(path).toHaveAttribute("strokeLinejoin", "round");
   });
 
   test("applies additional className", () => {
