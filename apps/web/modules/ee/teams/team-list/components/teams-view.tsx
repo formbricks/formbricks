@@ -12,7 +12,7 @@ interface TeamsViewProps {
   organizationId: string;
   membershipRole?: TOrganizationRole;
   currentUserId: string;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   environmentId: string;
 }
 
@@ -20,7 +20,7 @@ export const TeamsView = async ({
   organizationId,
   membershipRole,
   currentUserId,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   environmentId,
 }: TeamsViewProps) => {
   const t = await getTranslate();
@@ -52,7 +52,7 @@ export const TeamsView = async ({
     <SettingsCard
       title={t("environments.settings.teams.teams")}
       description={t("environments.settings.teams.teams_description")}>
-      {canDoRoleManagement ? (
+      {isAccessControlAllowed ? (
         <TeamsTable
           teams={teams}
           membershipRole={membershipRole}

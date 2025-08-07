@@ -18,6 +18,7 @@ type TemplateContainerWithPreviewProps = {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   userId: string;
   prefilledFilters: (TProjectConfigChannel | TProjectConfigIndustry | TTemplateRole | null)[];
+  isTemplatePage?: boolean;
 };
 
 export const TemplateContainerWithPreview = ({
@@ -25,6 +26,7 @@ export const TemplateContainerWithPreview = ({
   environment,
   userId,
   prefilledFilters,
+  isTemplatePage = true,
 }: TemplateContainerWithPreviewProps) => {
   const { t } = useTranslate();
   const initialTemplate = customSurveyTemplate(t);
@@ -34,12 +36,14 @@ export const TemplateContainerWithPreview = ({
 
   return (
     <div className="flex h-full flex-col">
-      <MenuBar />
+      {isTemplatePage && <MenuBar />}
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
           <div className="mb-3 ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-end">
             <h1 className="text-2xl font-bold text-slate-800">
-              {t("environments.surveys.templates.create_a_new_survey")}
+              {isTemplatePage
+                ? t("environments.surveys.templates.create_a_new_survey")
+                : t("environments.surveys.all_set_time_to_create_first_survey")}
             </h1>
             <div className="px-6">
               <SearchBar

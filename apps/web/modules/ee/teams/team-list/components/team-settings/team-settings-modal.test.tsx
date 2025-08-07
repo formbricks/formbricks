@@ -107,7 +107,7 @@ describe("TeamSettingsModal", () => {
     expect(screen.getByText("common.team_name")).toBeInTheDocument();
     expect(screen.getByText("common.members")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.add_members_description")).toBeInTheDocument();
-    expect(screen.getByText("Add member")).toBeInTheDocument();
+    expect(screen.getByText("common.add_member")).toBeInTheDocument();
     expect(screen.getByText("common.projects")).toBeInTheDocument();
     expect(screen.getByText("common.add_project")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.add_projects_description")).toBeInTheDocument();

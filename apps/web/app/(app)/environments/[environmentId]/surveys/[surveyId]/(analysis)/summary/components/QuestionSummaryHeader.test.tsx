@@ -27,10 +27,10 @@ vi.mock("@/modules/survey/lib/questions", () => ({
   ],
 }));
 
-vi.mock("@/modules/ui/components/settings-id", () => ({
-  SettingsId: ({ title, id }: { title: string; id: string }) => (
-    <div data-testid="settings-id">
-      {title}: {id}
+vi.mock("@/modules/ui/components/id-badge", () => ({
+  IdBadge: ({ label, id }: { label: string; id: string }) => (
+    <div data-testid="id-badge">
+      {label}: {id}
     </div>
   ),
 }));
@@ -76,7 +76,7 @@ describe("QuestionSummaryHeader", () => {
     ).toBeInTheDocument();
 
     expect(screen.getByTestId("question-icon")).toBeInTheDocument();
-    expect(screen.getByTestId("settings-id")).toHaveTextContent("common.question_id: q1");
+    expect(screen.getByTestId("id-badge")).toHaveTextContent("common.question_id: q1");
     expect(screen.queryByText("environments.surveys.edit.optional")).not.toBeInTheDocument();
   });
 

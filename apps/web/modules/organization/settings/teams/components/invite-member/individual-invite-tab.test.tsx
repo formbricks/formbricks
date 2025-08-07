@@ -35,7 +35,7 @@ const defaultProps = {
     { id: "team-1", name: "Team 1" },
     { id: "team-2", name: "Team 2" },
   ],
-  canDoRoleManagement: true,
+  isAccessControlAllowed: true,
   isFormbricksCloud: true,
   environmentId: "env-1",
   membershipRole: "owner" as TOrganizationRole,
@@ -85,21 +85,21 @@ describe("IndividualInviteTab", () => {
   });
 
   test("shows member role info alert when role is member", async () => {
-    render(<IndividualInviteTab {...defaultProps} canDoRoleManagement={true} />);
+    render(<IndividualInviteTab {...defaultProps} isAccessControlAllowed={true} />);
     await userEvent.type(screen.getByLabelText("common.full_name"), "Test User");
     await userEvent.type(screen.getByLabelText("common.email"), "test@example.com");
     // Simulate selecting member role
-    // Not needed as default is member if canDoRoleManagement is true
+    // Not needed as default is member if isAccessControlAllowed is true
     expect(screen.getByText("environments.settings.teams.member_role_info_message")).toBeInTheDocument();
   });
 
-  test("shows team select when canDoRoleManagement is true", () => {
-    render(<IndividualInviteTab {...defaultProps} canDoRoleManagement={true} />);
+  test("shows team select when isAccessControlAllowed is true", () => {
+    render(<IndividualInviteTab {...defaultProps} isAccessControlAllowed={true} />);
     expect(screen.getByTestId("multi-select")).toBeInTheDocument();
   });
 
-  test("shows upgrade alert when canDoRoleManagement is false", () => {
-    render(<IndividualInviteTab {...defaultProps} canDoRoleManagement={false} />);
+  test("shows upgrade alert when isAccessControlAllowed is false", () => {
+    render(<IndividualInviteTab {...defaultProps} isAccessControlAllowed={false} />);
     expect(screen.getByText("environments.settings.teams.upgrade_plan_notice_message")).toBeInTheDocument();
     expect(screen.getByText("common.start_free_trial")).toBeInTheDocument();
   });

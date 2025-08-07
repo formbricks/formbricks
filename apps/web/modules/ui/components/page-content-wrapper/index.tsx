@@ -6,5 +6,5 @@ interface PageContentWrapperProps {
 }
 
 export const PageContentWrapper = ({ children, className }: PageContentWrapperProps) => {
-  return <div className={cn("h-full space-y-6 p-6", className)}>{children}</div>;
+  return <div className={cn("min-h-full space-y-6 p-6", className)}>{children}</div>;
 };

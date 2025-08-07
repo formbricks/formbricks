@@ -98,8 +98,8 @@ vi.mock("@/modules/ui/components/page-header", () => ({
   PageHeader: vi.fn(({ children }) => <div data-testid="page-header">{children}</div>),
 }));
 
-vi.mock("@/modules/ui/components/settings-id", () => ({
-  SettingsId: vi.fn(() => <div data-testid="settings-id"></div>),
+vi.mock("@/modules/ui/components/id-badge", () => ({
+  IdBadge: vi.fn(() => <div data-testid="id-badge"></div>),
 }));
 
 vi.mock("@/tolgee/server", () => ({
@@ -227,7 +227,7 @@ describe("SurveyPage", () => {
     expect(screen.getByTestId("page-header")).toBeInTheDocument();
     expect(screen.getByTestId("survey-analysis-navigation")).toBeInTheDocument();
     expect(screen.getByTestId("summary-page")).toBeInTheDocument();
-    expect(screen.getByTestId("settings-id")).toBeInTheDocument();
+    expect(screen.getByTestId("id-badge")).toBeInTheDocument();
 
     expect(vi.mocked(getEnvironmentAuth)).toHaveBeenCalledWith(mockEnvironmentId);
     expect(vi.mocked(getSurvey)).toHaveBeenCalledWith(mockSurveyId);

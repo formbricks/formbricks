@@ -75,7 +75,7 @@ function flattenOptions(options?: TComboboxOption[]): TComboboxOption[] {
 export const InputCombobox: React.FC<InputComboboxProps> = ({
   id = "temp",
   showSearch = true,
-  searchPlaceholder = "Search",
+  searchPlaceholder,
   options,
   groupedOptions,
   value,
@@ -89,6 +89,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   emptyDropdownText,
 }) => {
   const { t } = useTranslate();
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
   const [isClearing, setIsClearing] = useState(false);
   const [open, setOpen] = useState(false);
   const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
@@ -245,12 +246,16 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           </div>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent side="bottom" align="start" className="p-0" data-testid="dropdown-menu-content">
+        <DropdownMenuContent
+          side="bottom"
+          align="start"
+          className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-52"
+          data-testid="dropdown-menu-content">
           <Command className="h-full max-h-[400px] overflow-y-auto">
             {showSearch ? (
               <div className="border-b border-slate-100 px-3">
                 <CommandInput
-                  placeholder={searchPlaceholder}
+                  placeholder={resolvedSearchPlaceholder}
                   className="h-8 border-none placeholder-slate-300 outline-none"
                   autoFocus
                   ref={searchRef}

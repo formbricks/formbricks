@@ -5,7 +5,7 @@ import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/lice
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
-import { SettingsId } from "@/modules/ui/components/settings-id";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { getTranslate } from "@/tolgee/server";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -78,8 +78,8 @@ vi.mock("./components/DeleteOrganization", () => ({
   DeleteOrganization: vi.fn(() => <div>DeleteOrganization</div>),
 }));
 
-vi.mock("@/modules/ui/components/settings-id", () => ({
-  SettingsId: vi.fn(() => <div>SettingsId</div>),
+vi.mock("@/modules/ui/components/id-badge", () => ({
+  IdBadge: vi.fn(() => <div>IdBadge</div>),
 }));
 
 describe("Page", () => {
@@ -156,10 +156,11 @@ describe("Page", () => {
       },
       undefined
     );
-    expect(SettingsId).toHaveBeenCalledWith(
+    expect(IdBadge).toHaveBeenCalledWith(
       {
-        title: "common.organization_id",
         id: mockEnvironmentAuth.organization.id,
+        label: "common.organization_id",
+        variant: "column",
       },
       undefined
     );

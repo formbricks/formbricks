@@ -55,7 +55,7 @@ const defaultProps = {
   setOpen: vi.fn(),
   onSubmit: vi.fn(),
   teams: [],
-  canDoRoleManagement: true,
+  isAccessControlAllowed: true,
   isFormbricksCloud: true,
   environmentId: "env-1",
   membershipRole: "owner" as TOrganizationRole,
