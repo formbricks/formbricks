@@ -317,6 +317,7 @@ export const PreviewSurvey = forwardRef<PreviewSurveyRef, PreviewSurveyProps>(
                   <div className="h-3 w-3 rounded-full bg-red-500"></div>
                   <div className="h-3 w-3 rounded-full bg-amber-500"></div>
                   <button
+                    type="button"
                     className="h-3 w-3 cursor-pointer rounded-full bg-emerald-500"
                     onClick={() => {
                       if (isFullScreenPreview) {
