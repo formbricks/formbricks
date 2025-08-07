@@ -22,10 +22,13 @@ import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { NextRequest, userAgent } from "next/server";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TJsPeopleUserIdInput, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
-const validateInput = (environmentId: string, userId: string) => {
+const validateInput = (
+  environmentId: string,
+  userId: string
+): { isValid: true; data: TJsPeopleUserIdInput } | { isValid: false; error: Response } => {
   const inputValidation = ZJsPeopleUserIdInput.safeParse({ environmentId, userId });
   if (!inputValidation.success) {
     return {
@@ -40,15 +43,15 @@ const validateInput = (environmentId: string, userId: string) => {
   return { isValid: true as const, data: inputValidation.data };
 };
 
-const checkResponseLimit = async (environmentId: string) => {
-  if (!IS_FORMBRICKS_CLOUD) return { isLimitReached: false };
+const checkResponseLimit = async (environmentId: string): Promise<boolean> => {
+  if (!IS_FORMBRICKS_CLOUD) return false;
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
     logger.error({ environmentId }, "Organization does not exist");
 
     // fail closed if the organization does not exist
-    return { isLimitReached: true };
+    return true;
   }
 
   const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);

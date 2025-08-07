@@ -9,7 +9,7 @@ import { deleteContact, getContact } from "./lib/contact";
 
 const fetchAndAuthorizeContact = async (
   contactId: string,
-  authentication: TApiKeyAuthentication,
+  environmentPermissions: NonNullable<TApiKeyAuthentication>["environmentPermissions"],
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) => {
   const contact = await getContact(contactId);
@@ -18,10 +18,7 @@ const fetchAndAuthorizeContact = async (
     return { error: responses.notFoundResponse("Contact", contactId) };
   }
 
-  if (
-    !authentication ||
-    !hasPermission(authentication.environmentPermissions, contact.environmentId, requiredPermission)
-  ) {
+  if (!hasPermission(environmentPermissions, contact.environmentId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -54,7 +51,11 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const result = await fetchAndAuthorizeContact(params.contactId, authentication, "GET");
+      const result = await fetchAndAuthorizeContact(
+        params.contactId,
+        authentication.environmentPermissions,
+        "GET"
+      );
       if (result.error) {
         return {
           response: result.error,
@@ -101,7 +102,11 @@ export const DELETE = withV1ApiWrapper({
         };
       }
 
-      const result = await fetchAndAuthorizeContact(params.contactId, authentication, "DELETE");
+      const result = await fetchAndAuthorizeContact(
+        params.contactId,
+        authentication.environmentPermissions,
+        "DELETE"
+      );
       if (result.error) {
         return {
           response: result.error,

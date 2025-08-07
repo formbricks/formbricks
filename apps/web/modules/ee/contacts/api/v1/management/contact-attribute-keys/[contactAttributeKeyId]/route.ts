@@ -14,7 +14,7 @@ import { ZContactAttributeKeyUpdateInput } from "./types/contact-attribute-keys"
 
 async function fetchAndAuthorizeContactAttributeKey(
   attributeKeyId: string,
-  authentication: TApiKeyAuthentication,
+  environmentPermissions: NonNullable<TApiKeyAuthentication>["environmentPermissions"],
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) {
   const attributeKey = await getContactAttributeKey(attributeKeyId);
@@ -22,10 +22,7 @@ async function fetchAndAuthorizeContactAttributeKey(
     return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
   }
 
-  if (
-    !authentication ||
-    !hasPermission(authentication.environmentPermissions, attributeKey.environmentId, requiredPermission)
-  ) {
+  if (!hasPermission(environmentPermissions, attributeKey.environmentId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -50,7 +47,7 @@ export const GET = withV1ApiWrapper({
 
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication,
+        authentication.environmentPermissions,
         "GET"
       );
       if (result.error) {
@@ -99,7 +96,7 @@ export const DELETE = withV1ApiWrapper({
     try {
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication,
+        authentication.environmentPermissions,
         "DELETE"
       );
 
@@ -150,7 +147,7 @@ export const PUT = withV1ApiWrapper({
     try {
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication,
+        authentication.environmentPermissions,
         "PUT"
       );
       if (result.error) {

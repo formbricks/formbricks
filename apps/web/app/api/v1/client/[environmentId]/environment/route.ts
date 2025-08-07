@@ -29,7 +29,7 @@ export const GET = withV1ApiWrapper({
 
     try {
       // Simple validation for environmentId (faster than Zod for high-frequency endpoint)
-      if (!params.environmentId || typeof params.environmentId !== "string") {
+      if (typeof params.environmentId !== "string") {
         return {
           response: responses.badRequestResponse("Environment ID is required", undefined, true),
         };

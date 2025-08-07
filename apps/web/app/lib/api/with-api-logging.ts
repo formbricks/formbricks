@@ -74,15 +74,15 @@ const handleRateLimiting = async (
       } else if ("hashedApiKey" in authentication) {
         // API key authentication for general routes
         await applyRateLimit(rateLimitConfigs.api.v1, authentication.hashedApiKey);
-      }
-    } else {
-      if (routeType === ApiV1RouteTypeEnum.General) {
-        await applyIPRateLimit(rateLimitConfigs.api.v1);
+      } else {
+        logger.error({ authentication }, "Unknown authentication type");
       }
 
-      if (routeType === ApiV1RouteTypeEnum.Client) {
-        await applyClientRateLimit(url);
-      }
+      return null;
+    }
+
+    if (routeType === ApiV1RouteTypeEnum.Client) {
+      await applyClientRateLimit(url);
     }
   } catch (error) {
     return responses.tooManyRequestsResponse(error.message);
@@ -301,13 +301,11 @@ export const withV1ApiWrapper: {
     const saveAuditLog = action && targetType;
     const auditLog = saveAuditLog ? buildAuditLogBaseObject(action, targetType, req.url) : undefined;
 
-    let result: { response: Response };
-    let error: any = undefined;
     let routeType: ApiV1RouteTypeEnum;
     let isRateLimited: boolean;
     let authenticationMethod: AuthenticationMethod;
-    let authentication: TApiV1Authentication = null;
 
+    // 1. Determine route metadata
     try {
       ({ routeType, isRateLimited, authenticationMethod } = getRouteType(req));
     } catch (error) {
@@ -315,23 +313,30 @@ export const withV1ApiWrapper: {
       return responses.internalServerErrorResponse("An unexpected error occurred.");
     }
 
-    authentication = await handleAuthentication(authenticationMethod, req);
+    // 2. Handle authentication
+    const authentication = await handleAuthentication(authenticationMethod, req);
 
     if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
       return responses.notAuthenticatedResponse();
     }
 
+    // 3. Setup audit log
     setupAuditLog(authentication, auditLog, routeType);
 
+    // 4. Handle rate limiting
     if (isRateLimited) {
       const rateLimitResponse = await handleRateLimiting(req.nextUrl.pathname, authentication, routeType);
       if (rateLimitResponse) return rateLimitResponse;
     }
 
+    // 5. Execute handler
+    let result: { response: Response };
+    let error: any = undefined;
     ({ result, error } = await executeHandler(handler, req, props, auditLog, authentication));
 
     const res = result.response;
 
+    // 6. Process response
     await processResponse(res, req, auditLog, error);
 
     return res;
