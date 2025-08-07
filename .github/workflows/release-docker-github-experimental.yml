@@ -179,7 +179,6 @@ jobs:
 
       - name: Upload Sentry Sourcemaps
         uses: ./.github/actions/upload-sentry-sourcemaps
-        continue-on-error: true
         with:
           docker_image: ${{ needs.build.outputs.DOCKER_IMAGE }}
           release_version: ${{ needs.build.outputs.RELEASE_VERSION }}

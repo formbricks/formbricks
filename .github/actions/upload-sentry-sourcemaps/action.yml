@@ -121,6 +121,19 @@ runs:
         echo ""
         echo "🎯 Expected ~553 sourcemap files based on build output. Found: $total_sourcemap_count"
 
+    - name: Debug sourcemaps structure before upload
+      shell: bash
+      run: |
+        echo "🔍 Debugging sourcemap structure for getsentry/action-release@v3..."
+        echo "Directory structure:"
+        ls -la ./extracted-next/ || true
+        echo ""
+        echo "Sample sourcemap files:"
+        find ./extracted-next -name "*.map" | head -20
+        echo ""
+        echo "Checking file sizes:"
+        find ./extracted-next -name "*.map" -exec ls -lh {} \; | head -10
+
     - name: Create Sentry release and upload sourcemaps
       uses: getsentry/action-release@v3
       env:
@@ -129,8 +142,10 @@ runs:
         SENTRY_PROJECT: formbricks-cloud
       with:
         environment: ${{ inputs.environment }}
-        version: ${{ inputs.release_version }}
+        release: ${{ inputs.release_version }}
         sourcemaps: './extracted-next/'
+        url_prefix: '~/_next/'
+        set_commits: auto
 
     - name: Clean up extracted files
       shell: bash

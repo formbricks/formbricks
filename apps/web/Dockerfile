@@ -30,7 +30,7 @@ COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
 RUN chmod +x /tmp/read-secrets.sh
 
 # Increase Node.js memory limit as a regular build argument
-ARG NODE_OPTIONS="--max_old_space_size=4096"
+ARG NODE_OPTIONS="--max_old_space_size=8192"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
 
 # Set the working directory
