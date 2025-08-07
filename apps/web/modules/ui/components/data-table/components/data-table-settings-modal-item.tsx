@@ -18,11 +18,11 @@ interface DataTableSettingsModalItemProps<T> {
 }
 
 const getColumnIcon = (columnId: string) => {
-  const ICON = COLUMNS_ICON_MAP[columnId];
-  if (ICON) {
+  const Icon = COLUMNS_ICON_MAP[columnId];
+  if (Icon) {
     return (
       <span className="h-4 w-4">
-        <ICON className="h-4 w-4" />
+        <Icon className="h-4 w-4" />
       </span>
     );
   }
