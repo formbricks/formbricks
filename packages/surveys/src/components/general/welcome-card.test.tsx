@@ -56,7 +56,7 @@ describe("WelcomeCard", () => {
   test("shows response count when showResponseCount is true and count > 3", () => {
     const { queryByTestId } = render(<WelcomeCard {...defaultProps} responseCount={10} />);
 
-    const responseText = queryByTestId("fb__surveys__welcome-card__response-count-test");
+    const responseText = queryByTestId("fb__surveys__welcome-card__response-count");
     expect(responseText).toHaveTextContent(/10 people responded/);
   });
 
@@ -81,7 +81,7 @@ describe("WelcomeCard", () => {
   test("does not show response count when count <= 3", () => {
     const { queryByTestId } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
 
-    const responseText = queryByTestId("fb__surveys__welcome-card__response-count-test");
+    const responseText = queryByTestId("fb__surveys__welcome-card__response-count");
     expect(responseText).not.toHaveTextContent(/3 people responded/);
   });
 
@@ -205,7 +205,7 @@ describe("WelcomeCard", () => {
     const { queryByTestId: queryByTestId3, unmount } = render(
       <WelcomeCard {...defaultProps} responseCount={3} />
     );
-    expect(queryByTestId3("fb__surveys__welcome-card__response-count-test")).not.toHaveTextContent(
+    expect(queryByTestId3("fb__surveys__welcome-card__response-count")).not.toHaveTextContent(
       /3 people responded/
     );
 
@@ -214,7 +214,7 @@ describe("WelcomeCard", () => {
 
     // Test with 4 responses (just above boundary)
     const { queryByTestId: queryByTestId4 } = render(<WelcomeCard {...defaultProps} responseCount={4} />);
-    expect(queryByTestId4("fb__surveys__welcome-card__response-count-test")).toHaveTextContent(
+    expect(queryByTestId4("fb__surveys__welcome-card__response-count")).toHaveTextContent(
       /4 people responded/
     );
   });
