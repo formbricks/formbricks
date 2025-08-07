@@ -9,12 +9,13 @@ import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+import { PreviewSurveyRef } from "@/modules/ui/components/preview-survey";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ActionClass, OrganizationRole } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { RefObject, useEffect, useMemo, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface WhenToSendCardProps {
@@ -24,6 +25,7 @@ interface WhenToSendCardProps {
   propActionClasses: ActionClass[];
   membershipRole?: OrganizationRole;
   projectPermission: TTeamPermission | null;
+  previewSurveyRef: RefObject<PreviewSurveyRef>;
 }
 
 export const WhenToSendCard = ({
@@ -33,6 +35,7 @@ export const WhenToSendCard = ({
   propActionClasses,
   membershipRole,
   projectPermission,
+  previewSurveyRef,
 }: WhenToSendCardProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
@@ -61,6 +64,9 @@ export const WhenToSendCard = ({
     } else {
       const updatedSurvey = { ...localSurvey, autoClose: 10 };
       setLocalSurvey(updatedSurvey);
+    }
+    if (previewSurveyRef.current) {
+      previewSurveyRef.current.resetProgress();
     }
   };
 
