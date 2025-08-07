@@ -769,12 +769,12 @@ export function Survey({
                       borderRadius={styling.roundness ?? 8}
                     />
                   )}
-
                   {isLanguageSwitchVisible && isCloseButtonVisible && (
-                    <div
+                    <img
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='20' fill='none'%3E%3Cline x1='0.5' y1='0' x2='0.5' y2='20' stroke='%23E2E8F0' stroke-width='1'/%3E%3C/svg%3E"
+                      alt="Divider"
                       className="fb-h-5 fb-w-px fb-bg-slate-200 fb-z-[1001]"
-                      aria-hidden="true"
-                      role="presentation"></div>
+                    />
                   )}
 
                   {isCloseButtonVisible && (

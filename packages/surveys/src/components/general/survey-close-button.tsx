@@ -9,7 +9,7 @@ interface SurveyCloseButtonProps {
   borderRadius?: number;
 }
 
-export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: SurveyCloseButtonProps) {
+export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonly<SurveyCloseButtonProps>) {
   const [isHovered, setIsHovered] = useState(false);
   const hoverColorWithOpacity = hoverColor ?? mixColor("#000000", "#ffffff", 0.8);
 
