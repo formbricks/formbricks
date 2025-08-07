@@ -44,7 +44,7 @@ describe("TopControlBar", () => {
     );
 
     // Check if the main div is rendered
-    const mainDiv = screen.getByTestId("top-control-buttons").parentElement?.parentElement?.parentElement;
+    const mainDiv = screen.getByTestId("fb__global-top-control-bar");
     expect(mainDiv).toHaveClass("flex h-14 w-full items-center justify-end bg-slate-50 px-6");
 
     // Check if the mocked child component is rendered
