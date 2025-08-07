@@ -66,7 +66,7 @@ interface NavigationProps {
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
   isLicenseActive: boolean;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
 }
 
 export const MainNavigation = ({
@@ -81,7 +81,7 @@ export const MainNavigation = ({
   organizationProjectsLimit,
   isLicenseActive,
   isDevelopment,
-  canDoRoleManagement,
+  isAccessControlAllowed,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -325,7 +325,7 @@ export const MainNavigation = ({
                 isTextVisible={isTextVisible}
                 organization={organization}
                 organizationProjectsLimit={organizationProjectsLimit}
-                canDoRoleManagement={canDoRoleManagement}
+                isAccessControlAllowed={isAccessControlAllowed}
               />
             )}
 

@@ -1,6 +1,6 @@
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getUserProjects } from "@/lib/project/service";
-import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -12,7 +12,7 @@ vi.mock("@/lib/constants", () => ({ DEFAULT_BRAND_COLOR: "#fff" }));
 // Mocks before component import
 vi.mock("@/app/(app)/(onboarding)/lib/onboarding", () => ({ getTeamsByOrganizationId: vi.fn() }));
 vi.mock("@/lib/project/service", () => ({ getUserProjects: vi.fn() }));
-vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getRoleManagementPermission: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getAccessControlPermission: vi.fn() }));
 vi.mock("@/modules/organization/lib/utils", () => ({ getOrganizationAuth: vi.fn() }));
 vi.mock("@/tolgee/server", () => ({ getTranslate: () => Promise.resolve((key: string) => key) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
@@ -61,7 +61,7 @@ describe("ProjectSettingsPage", () => {
     } as any);
     vi.mocked(getUserProjects).mockResolvedValueOnce([] as any);
     vi.mocked(getTeamsByOrganizationId).mockResolvedValueOnce(null as any);
-    vi.mocked(getRoleManagementPermission).mockResolvedValueOnce(false as any);
+    vi.mocked(getAccessControlPermission).mockResolvedValueOnce(false as any);
 
     await expect(Page({ params, searchParams })).rejects.toThrow("common.organization_teams_not_found");
   });
@@ -73,7 +73,7 @@ describe("ProjectSettingsPage", () => {
     } as any);
     vi.mocked(getUserProjects).mockResolvedValueOnce([{ id: "p1" }] as any);
     vi.mocked(getTeamsByOrganizationId).mockResolvedValueOnce([{ id: "t1", name: "Team1" }] as any);
-    vi.mocked(getRoleManagementPermission).mockResolvedValueOnce(true as any);
+    vi.mocked(getAccessControlPermission).mockResolvedValueOnce(true as any);
 
     const element = await Page({ params, searchParams });
     render(element as React.ReactElement);
@@ -96,7 +96,7 @@ describe("ProjectSettingsPage", () => {
     } as any);
     vi.mocked(getUserProjects).mockResolvedValueOnce([] as any);
     vi.mocked(getTeamsByOrganizationId).mockResolvedValueOnce([{ id: "t1", name: "Team1" }] as any);
-    vi.mocked(getRoleManagementPermission).mockResolvedValueOnce(true as any);
+    vi.mocked(getAccessControlPermission).mockResolvedValueOnce(true as any);
 
     const element = await Page({ params, searchParams });
     render(element as React.ReactElement);
