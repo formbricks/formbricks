@@ -22,6 +22,7 @@ export function TolgeeBase() {
         "pt-BR": () => import("@/locales/pt-BR.json"),
         "pt-PT": () => import("@/locales/pt-PT.json"),
         "zh-Hant-TW": () => import("@/locales/zh-Hant-TW.json"),
+        "ro-RO": () => import("@/locales/ro-RO.json"),
       },
     });
 }
