@@ -1,6 +1,7 @@
 "use client";
 
 import { DefaultTag } from "@/modules/ui/components/default-tag";
+import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -31,9 +32,7 @@ export function DefaultLanguageSelect({
   const { t } = useTranslate();
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-800">
-        {t("environments.surveys.edit.1_choose_the_default_language_for_this_survey")}
-      </label>
+      <Label>{t("environments.surveys.edit.1_choose_the_default_language_for_this_survey")}</Label>
       <div className="flex items-center space-x-2">
         <div className="w-48">
           <Select

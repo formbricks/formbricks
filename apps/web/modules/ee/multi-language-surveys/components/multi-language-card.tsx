@@ -289,14 +289,12 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   </div>
                 )}
 
-                <Button size="sm" variant="secondary">
+                <Button asChild size="sm" variant="secondary">
                   <Link href={`/environments/${environmentId}/project/languages`} target="_blank">
                     {t("environments.surveys.edit.manage_languages")}
+                    <ArrowUpRight />
                   </Link>
-
-                  <ArrowUpRight />
                 </Button>
-                {/* </Link> */}
                 {isMultiLanguageActivated && (
                   <AdvancedOptionToggle
                     customContainerClass="px-0 pt-0"

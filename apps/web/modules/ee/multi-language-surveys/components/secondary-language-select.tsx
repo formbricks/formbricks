@@ -1,5 +1,6 @@
 "use client";
 
+import { Label } from "@/modules/ui/components/label";
 import { Language } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import type { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -34,9 +35,7 @@ export function SecondaryLanguageSelect({
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-slate-800">
-        {t("environments.surveys.edit.2_activate_translation_for_specific_languages")}
-      </p>
+      <Label>{t("environments.surveys.edit.2_activate_translation_for_specific_languages")}</Label>
       {projectLanguages
         .filter((lang) => lang.id !== defaultLanguage.id)
         .map((language) => (
