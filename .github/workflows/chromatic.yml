@@ -14,7 +14,6 @@ jobs:
     name: Run Chromatic
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: write
       id-token: write
       actions: read
