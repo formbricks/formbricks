@@ -1,5 +1,6 @@
 "use client";
 
+import { COLUMNS_ICON_MAP } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/lib/utils";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { Switch } from "@/modules/ui/components/switch";
@@ -15,6 +16,18 @@ interface DataTableSettingsModalItemProps<T> {
   column: Column<T, unknown>;
   survey?: TSurvey;
 }
+
+const getColumnIcon = (columnId: string) => {
+  const ICON = COLUMNS_ICON_MAP[columnId];
+  if (ICON) {
+    return (
+      <span className="h-4 w-4">
+        <ICON className="h-4 w-4" />
+      </span>
+    );
+  }
+  return null;
+};
 
 export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSettingsModalItemProps<T>) => {
   const { t } = useTranslate();
@@ -57,6 +70,20 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
         return t("environments.contacts.first_name");
       case "lastName":
         return t("environments.contacts.last_name");
+      case "action":
+        return t("common.action");
+      case "country":
+        return "Country";
+      case "os":
+        return t("environments.surveys.responses.os");
+      case "device":
+        return t("environments.surveys.responses.device");
+      case "browser":
+        return t("environments.surveys.responses.browser");
+      case "url":
+        return t("common.url");
+      case "source":
+        return t("environments.surveys.responses.source");
 
       default:
         return capitalize(column.id);
@@ -87,9 +114,12 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
                 <span className="max-w-xs truncate">{getLocalizedValue(question.headline, "default")}</span>
               </div>
             ) : (
-              <span className="max-w-xs truncate">
-                {isOptionIdColumn ? getOptionIdColumnLabel() : getLabelFromColumnId()}
-              </span>
+              <div className="flex items-center space-x-2">
+                {getColumnIcon(column.id)}
+                <span className="max-w-xs truncate">
+                  {isOptionIdColumn ? getOptionIdColumnLabel() : getLabelFromColumnId()}
+                </span>
+              </div>
             )}
           </div>
           <Switch

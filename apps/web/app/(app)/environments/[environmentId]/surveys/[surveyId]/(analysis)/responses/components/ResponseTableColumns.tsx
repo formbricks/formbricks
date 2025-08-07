@@ -17,45 +17,16 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TFnType } from "@tolgee/react";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
-import { TResponseTableData } from "@formbricks/types/responses";
+import { TResponseMeta, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-
-const getAddressFieldLabel = (field: string, t: TFnType) => {
-  switch (field) {
-    case "addressLine1":
-      return t("environments.surveys.responses.address_line_1");
-    case "addressLine2":
-      return t("environments.surveys.responses.address_line_2");
-    case "city":
-      return t("environments.surveys.responses.city");
-    case "state":
-      return t("environments.surveys.responses.state_region");
-    case "zip":
-      return t("environments.surveys.responses.zip_post_code");
-    case "country":
-      return t("environments.surveys.responses.country");
-
-    default:
-      break;
-  }
-};
-
-const getContactInfoFieldLabel = (field: string, t: TFnType) => {
-  switch (field) {
-    case "firstName":
-      return t("environments.surveys.responses.first_name");
-    case "lastName":
-      return t("environments.surveys.responses.last_name");
-    case "email":
-      return t("environments.surveys.responses.email");
-    case "phone":
-      return t("environments.surveys.responses.phone");
-    case "company":
-      return t("environments.surveys.responses.company");
-    default:
-      break;
-  }
-};
+import {
+  COLUMNS_ICON_MAP,
+  getAddressFieldLabel,
+  getContactInfoFieldLabel,
+  getMetadataFieldLabel,
+  getNestedKeys,
+  getNestedValue,
+} from "../lib/utils";
 
 const getQuestionColumnsData = (
   question: TSurveyQuestion,
@@ -256,6 +227,48 @@ const getQuestionColumnsData = (
   }
 };
 
+const getMetadataColumnsData = (t: TFnType): ColumnDef<TResponseTableData>[] => {
+  const metadataColumns: ColumnDef<TResponseTableData>[] = [];
+
+  const sampleMetaObject: TResponseMeta = {
+    action: "action_column",
+    country: "country_column",
+    userAgent: {
+      browser: "browser_column",
+      os: "os_column",
+      device: "device_column",
+    },
+    source: "source_column",
+    url: "url_column",
+  };
+
+  const metadataFields = getNestedKeys(sampleMetaObject);
+
+  metadataFields.forEach((field) => {
+    const label = field.split(".").pop() || "";
+    const IconComponent = COLUMNS_ICON_MAP[label];
+
+    metadataColumns.push({
+      accessorKey: label,
+      header: () => (
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <span className="h-4 w-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
+          <span className="truncate">{getMetadataFieldLabel(label, t)}</span>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const value = getNestedValue(row.original.meta, field);
+        if (value) {
+          return <div className="truncate text-slate-900">{value}</div>;
+        }
+        return null;
+      },
+    });
+  });
+
+  return metadataColumns;
+};
+
 export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
@@ -389,6 +402,8 @@ export const generateResponseTableColumns = (
       })
     : [];
 
+  const metadataColumns = getMetadataColumnsData(t);
+
   const verifiedEmailColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "verifiedEmail",
     header: () => (
@@ -410,6 +425,7 @@ export const generateResponseTableColumns = (
     ...questionColumns,
     ...variableColumns,
     ...hiddenFieldColumns,
+    ...metadataColumns,
     tagsColumn,
     notesColumn,
   ];
