@@ -51,7 +51,7 @@ export const getMetadataFieldLabel = (label: string, t: TFnType) => {
     case "action":
       return t("common.action");
     case "country":
-      return "Country";
+      return t("environments.surveys.responses.country");
     case "os":
       return t("environments.surveys.responses.os");
     case "device":
