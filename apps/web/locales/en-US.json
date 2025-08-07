@@ -1644,6 +1644,7 @@
         "company": "Company",
         "completed": "Completed ✅",
         "country": "Country",
+        "delete_response_confirmation": "This will delete the survey response, including all answers, notes, tags, attached documents, and response metadata.",
         "device": "Device",
         "device_info": "Device info",
         "email": "Email",

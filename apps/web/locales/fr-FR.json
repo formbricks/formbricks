@@ -1644,6 +1644,7 @@
         "company": "Société",
         "completed": "Terminé ✅",
         "country": "Pays",
+        "delete_response_confirmation": "\"Cela supprimera la réponse au sondage, y compris toutes les réponses, notes, étiquettes, documents joints et métadonnées de réponse.\"",
         "device": "Dispositif",
         "device_info": "Informations sur l'appareil",
         "email": "Email",
