@@ -123,14 +123,14 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isLicenseActive={active}
           isAccessControlAllowed={isAccessControlAllowed}
         />
-        <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
+        <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar
             environment={environment}
             environments={environments}
             membershipRole={membershipRole}
             projectPermission={projectPermission}
           />
-          <div className="mt-14">{children}</div>
+          <div className="flex-1 overflow-y-auto">{children}</div>
         </div>
       </div>
     </div>

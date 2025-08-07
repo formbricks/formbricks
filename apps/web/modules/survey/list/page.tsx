@@ -2,10 +2,10 @@ import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserLocale } from "@/lib/user/service";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { TemplateList } from "@/modules/survey/components/template-list";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
+import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -73,6 +73,17 @@ export const SurveysPage = async ({
     highlightBorderColor: null,
   };
 
+  if (surveyCount === 0)
+    return (
+      <TemplateContainerWithPreview
+        userId={session.user.id}
+        environment={environment}
+        project={projectWithRequiredProps}
+        prefilledFilters={prefilledFilters}
+        isTemplatePage={false}
+      />
+    );
+
   let content;
   if (surveyCount > 0) {
     content = (
@@ -99,20 +110,6 @@ export const SurveysPage = async ({
         <h2 className="px-6 text-lg font-medium text-slate-500">
           {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
         </h2>
-      </>
-    );
-  } else {
-    content = (
-      <>
-        <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("environments.surveys.all_set_time_to_create_first_survey")}
-        </h1>
-        <TemplateList
-          environmentId={environment.id}
-          project={projectWithRequiredProps}
-          userId={session.user.id}
-          prefilledFilters={prefilledFilters}
-        />
       </>
     );
   }
