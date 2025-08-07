@@ -24,36 +24,6 @@ runs:
       with:
         fetch-depth: 0
 
-    - name: Validate Sentry auth token
-      shell: bash
-      env:
-        SENTRY_TOKEN: ${{ inputs.sentry_auth_token }}
-      run: |
-        set -euo pipefail
-        echo "🔐 Validating Sentry authentication token..."
-
-        # Test the token by making a simple API call to Sentry
-        response=$(curl -s -w "%{http_code}" -o /tmp/sentry_response.json \
-          -H "Authorization: Bearer $SENTRY_TOKEN" \
-          "https://sentry.io/api/0/organizations/formbricks/")
-
-        http_code=$(echo "$response" | tail -n1)
-
-        if [ "$http_code" != "200" ]; then
-          echo "❌ Error: Invalid Sentry auth token (HTTP $http_code)"
-          echo "Please check your SENTRY_AUTH_TOKEN is correct and has the necessary permissions."
-          if [ -f /tmp/sentry_response.json ]; then
-            echo "Response body:"
-            cat /tmp/sentry_response.json
-          fi
-          exit 1
-        fi
-
-        echo "✅ Sentry auth token validated successfully"
-
-        # Clean up temp file
-        rm -f /tmp/sentry_response.json
-
     - name: Extract sourcemaps from Docker image
       shell: bash
       env:
@@ -64,16 +34,16 @@ runs:
         # Validate docker image format (basic validation)
         if [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+:[a-zA-Z0-9._-]+$ ]] && [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+@sha256:[A-Fa-f0-9]{64}$ ]]; then
           echo "❌ Error: Invalid docker image format. Must be in format 'image:tag' or 'image@sha256:hash'"
-          echo "Provided: $DOCKER_IMAGE"
+          echo "Provided: ${DOCKER_IMAGE}"
           exit 1
         fi
 
-        echo "📦 Extracting sourcemaps from Docker image: $DOCKER_IMAGE"
+        echo "📦 Extracting sourcemaps from Docker image: ${DOCKER_IMAGE}"
 
         # Create temporary container from the image and capture its ID
         echo "Creating temporary container..."
         CONTAINER_ID=$(docker create "$DOCKER_IMAGE")
-        echo "Container created with ID: $CONTAINER_ID"
+        echo "Container created with ID: ${CONTAINER_ID}"
 
         # Set up cleanup function to ensure container is removed on script exit
         cleanup_container() {
@@ -85,7 +55,7 @@ runs:
           # Remove the container if it exists (ignore errors if already removed)
           if [ -n "$CONTAINER_ID" ]; then
             docker rm -f "$CONTAINER_ID" 2>/dev/null || true
-            echo "Container $CONTAINER_ID removed"
+            echo "Container ${CONTAINER_ID} removed"
           fi
           
           # Exit with the original exit code to preserve script success/failure status
@@ -106,7 +76,7 @@ runs:
         fi
 
         sourcemap_count=$(find ./extracted-next/static/chunks -name "*.map" | wc -l)
-        echo "✅ Found $sourcemap_count sourcemap files"
+        echo "✅ Found ${sourcemap_count} sourcemap files"
 
         if [ "$sourcemap_count" -eq 0 ]; then
           echo "❌ Error: No sourcemap files found. Check that productionBrowserSourceMaps is enabled."
