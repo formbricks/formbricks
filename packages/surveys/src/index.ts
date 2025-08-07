@@ -1,8 +1,25 @@
 import { RenderSurvey } from "@/components/general/render-survey";
 import { FILE_PICK_EVENT } from "@/lib/constants";
 import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
+import { isRTL } from "@/lib/utils";
 import { h, render } from "preact";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+
+const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCode: string): boolean => {
+  if (survey.welcomeCard.enabled) {
+    const welcomeCardHeadline = survey.welcomeCard.headline?.[languageCode];
+    if (welcomeCardHeadline) {
+      return isRTL(welcomeCardHeadline);
+    }
+
+    return false;
+  }
+
+  const firstQuestionHeadline = survey.questions[0].headline[languageCode];
+
+  return isRTL(firstQuestionHeadline);
+};
 
 export const renderSurveyInline = (props: SurveyContainerProps) => {
   const inlineProps: SurveyContainerProps = {
@@ -22,6 +39,8 @@ export const renderSurvey = (props: SurveyContainerProps) => {
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
 
+  const isSurveyRTL = checkIfSurveyIsRTL(props.survey, props.languageCode);
+
   if (mode === "inline") {
     if (!containerId) {
       throw new Error("renderSurvey: containerId is required for inline mode");
@@ -34,13 +53,25 @@ export const renderSurvey = (props: SurveyContainerProps) => {
 
     const { placement, darkOverlay, onClose, clickOutside, ...surveyInlineProps } = props;
 
-    render(h(RenderSurvey, surveyInlineProps), element);
+    render(
+      h(RenderSurvey, {
+        ...surveyInlineProps,
+        dir: isSurveyRTL ? "rtl" : "auto",
+      }),
+      element
+    );
   } else {
     const modalContainer = document.createElement("div");
     modalContainer.id = "formbricks-modal-container";
     document.body.appendChild(modalContainer);
 
-    render(h(RenderSurvey, props), modalContainer);
+    render(
+      h(RenderSurvey, {
+        ...props,
+        dir: isSurveyRTL ? "rtl" : "auto",
+      }),
+      modalContainer
+    );
   }
 };
 

@@ -51,7 +51,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
       darkOverlay={props.darkOverlay}
       clickOutside={props.clickOutside}
       onClose={close}
-      isOpen={isOpen}>
+      isOpen={isOpen}
+      dir={props.dir ?? "auto"}>
       {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}
