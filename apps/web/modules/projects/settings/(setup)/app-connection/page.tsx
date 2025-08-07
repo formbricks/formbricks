@@ -30,13 +30,13 @@ export const AppConnectionPage = async (props) => {
           description={t("environments.project.app-connection.app_connection_description")}>
           {environment && (
             <div className="space-y-4">
+              <WidgetStatusIndicator environment={environment} />
               <Alert variant="info">
                 <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
                 <AlertDescription>
                   {t("environments.project.app-connection.cache_update_delay_description")}
                 </AlertDescription>
               </Alert>
-              <WidgetStatusIndicator environment={environment} />
             </div>
           )}
         </SettingsCard>
