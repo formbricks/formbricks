@@ -2,10 +2,10 @@ import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { EnvironmentIdField } from "@/modules/projects/settings/(setup)/components/environment-id-field";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -38,7 +38,7 @@ export const AppConnectionPage = async (props) => {
         <SettingsCard
           title={t("environments.project.app-connection.environment_id")}
           description={t("environments.project.app-connection.environment_id_description")}>
-          <EnvironmentIdField environmentId={params.environmentId} />
+          <IdBadge id={params.environmentId} />
         </SettingsCard>
       </div>
     </PageContentWrapper>

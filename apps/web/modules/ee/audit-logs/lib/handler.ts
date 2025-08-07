@@ -2,6 +2,7 @@ import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { ActionClientCtx, AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { deepDiff, redactPII } from "@/lib/utils/logger-helpers";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import {
   TActor,
@@ -13,7 +14,6 @@ import {
 } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { logger } from "@formbricks/logger";
-import { deepDiff, redactPII } from "./utils";
 
 /**
  * Builds an audit event and logs it.

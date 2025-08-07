@@ -83,6 +83,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
               className="relative cursor-pointer overflow-hidden rounded-lg">
               <video
                 disablePictureInPicture
+                muted
                 id={`video-${index}`}
                 className="h-46 w-96 origin-center scale-105 transform">
                 <source src={`${key}`} type="video/mp4" />

@@ -68,7 +68,7 @@ export const StackedCard = ({
             ? `translateY(25%)`
             : `translateY(-${((hovered ? 12 : 10) * offset).toString()}px)`;
         default:
-          return offset < 0 ? `translateX(0)` : `translateX(0)`;
+          return `translateX(0)`;
       }
     };
   }, [cardArrangement, hovered, cardWidth]);

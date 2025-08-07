@@ -169,7 +169,7 @@ describe("CreateProjectModal", () => {
     open: true,
     setOpen: vi.fn(),
     organizationId: "org-123",
-    canDoRoleManagement: true,
+    isAccessControlAllowed: true,
   };
 
   beforeEach(() => {
@@ -214,7 +214,7 @@ describe("CreateProjectModal", () => {
     });
   });
 
-  test("shows team selection when canDoRoleManagement is true and teams exist", async () => {
+  test("shows team selection when isAccessControlAllowed is true and teams exist", async () => {
     render(<CreateProjectModal {...defaultProps} />);
 
     await waitFor(() => {
@@ -230,8 +230,8 @@ describe("CreateProjectModal", () => {
     expect(options[1]).toHaveTextContent("Marketing Team");
   });
 
-  test("hides team selection when canDoRoleManagement is false", async () => {
-    render(<CreateProjectModal {...defaultProps} canDoRoleManagement={false} />);
+  test("hides team selection when isAccessControlAllowed is false", async () => {
+    render(<CreateProjectModal {...defaultProps} isAccessControlAllowed={false} />);
 
     await waitFor(() => {
       expect(screen.queryByTestId("multi-select")).not.toBeInTheDocument();

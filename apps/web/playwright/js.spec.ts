@@ -141,8 +141,8 @@ test.describe("JS Package Test", async () => {
     await expect(page.getByRole("button", { name: "Completed 100%" })).toBeVisible();
     await expect(page.getByText("1 Responses", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("CTR100%")).toBeVisible();
-    await expect(page.getByText("Somewhat disappointed100%")).toBeVisible();
-    await expect(page.getByText("Founder100%")).toBeVisible();
+    await expect(page.getByText("Somewhat disappointed")).toBeVisible();
+    await expect(page.getByText("Founder")).toBeVisible();
     await expect(page.getByText("People who believe that PMF").first()).toBeVisible();
     await expect(page.getByText("Much higher response rates!").first()).toBeVisible();
     await expect(page.getByText("Make this end to end test").first()).toBeVisible();

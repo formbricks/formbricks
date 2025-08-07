@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Input } from "@/modules/ui/components/input";
 import {
   Select,
@@ -235,6 +236,8 @@ export const TeamSettingsModal = ({
                 )}
               />
 
+              <IdBadge id={team.id} label={t("common.team_id")} variant="column" />
+
               {/* Members Section */}
               <div className="space-y-2">
                 <div className="flex flex-col space-y-1">
@@ -350,6 +353,7 @@ export const TeamSettingsModal = ({
                 />
                 <TooltipRenderer
                   shouldRender={selectedMemberIds.length === orgMembers.length || hasEmptyMember}
+                  triggerClass="inline-block"
                   tooltipContent={
                     hasEmptyMember
                       ? t("environments.settings.teams.please_fill_all_member_fields")
@@ -366,7 +370,7 @@ export const TeamSettingsModal = ({
                       hasEmptyMember
                     }>
                     <PlusIcon className="h-4 w-4" />
-                    <span>Add member</span>
+                    <span>{t("common.add_member")}</span>
                   </Button>
                 </TooltipRenderer>
               </div>
@@ -470,6 +474,7 @@ export const TeamSettingsModal = ({
 
                 <TooltipRenderer
                   shouldRender={selectedProjectIds.length === orgProjects.length || hasEmptyProject}
+                  triggerClass="inline-block"
                   tooltipContent={
                     hasEmptyProject
                       ? t("environments.settings.teams.please_fill_all_project_fields")
