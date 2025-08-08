@@ -764,6 +764,8 @@
         "api_host_description": "Acesta este URL-ul backend-ului tău Formbricks.",
         "app_connection": "Conectare aplicație",
         "app_connection_description": "Conectează aplicația ta la Formbricks.",
+        "cache_update_delay_description": "Când faci actualizări la sondaje, contacte, acțiuni sau alte date, poate dura până la 5 minute pentru ca aceste modificări să apară în aplicația locală care rulează SDK Formbricks. Această întârziere se datorează unei limitări în sistemul nostru actual de caching. Revedem activ cache-ul și vom lansa o soluție în Formbricks 4.0.",
+        "cache_update_delay_title": "Modificările vor fi reflectate după 5 minute datorită memorării în cache",
         "check_out_the_docs": "Consultați documentația.",
         "dive_into_the_docs": "Accesați documentația.",
         "does_your_widget_work": "Funcționează widgetul dvs.?",

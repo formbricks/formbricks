@@ -631,10 +631,17 @@ export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
 
+export const ZSurveyMatrixQuestionChoice = z.object({
+  id: z.string(),
+  label: ZI18nString,
+});
+
+export type TSurveyMatrixQuestionChoice = z.infer<typeof ZSurveyMatrixQuestionChoice>;
+
 export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
-  rows: z.array(ZI18nString),
-  columns: z.array(ZI18nString),
+  rows: z.array(ZSurveyMatrixQuestionChoice),
+  columns: z.array(ZSurveyMatrixQuestionChoice),
   shuffleOption: ZShuffleOption.optional().default("none"),
 });
 
@@ -1057,7 +1064,7 @@ export const ZSurvey = z
         question.rows.forEach((row, rowIndex) => {
           multiLangIssue = validateQuestionLabels(
             `Row ${String(rowIndex + 1)}`,
-            row,
+            row.label,
             languages,
             questionIndex,
             true
@@ -1070,7 +1077,7 @@ export const ZSurvey = z
         question.columns.forEach((column, columnIndex) => {
           multiLangIssue = validateQuestionLabels(
             `Column ${String(columnIndex + 1)}`,
-            column,
+            column.label,
             languages,
             questionIndex,
             true
@@ -1080,8 +1087,14 @@ export const ZSurvey = z
           }
         });
 
-        const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(question.rows, languages);
-        const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(question.columns, languages);
+        const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.rows.map((row) => row.label),
+          languages
+        );
+        const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.columns.map((column) => column.label),
+          languages
+        );
 
         if (duplicateRowsLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
