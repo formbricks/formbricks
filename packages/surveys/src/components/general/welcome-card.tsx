@@ -174,16 +174,16 @@ export function WelcomeCard({
           <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <UsersIcon />
             <p className="fb-pt-1 fb-text-xs">
-              <span>{`${responseCount.toString()} people responded`}</span>
+              <span data-testid="fb__surveys__welcome-card__response-count">{`${responseCount.toString()} people responded`}</span>
             </p>
           </div>
         ) : null}
         {timeToFinish && showResponseCount ? (
           <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <TimerIcon />
-            <p className="fb-pt-1 fb-text-xs">
+            <p className="fb-pt-1 fb-text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
               <span> Takes {calculateTimeToComplete()} </span>
-              <span>
+              <span data-testid="fb__surveys__welcome-card__response-count">
                 {responseCount && responseCount > 3 ? `⋅ ${responseCount.toString()} people responded` : ""}
               </span>
             </p>

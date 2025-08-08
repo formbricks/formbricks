@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen } from "@testing-library/preact";
+import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { WelcomeCard } from "./welcome-card";
 
@@ -7,7 +7,9 @@ describe("WelcomeCard", () => {
   afterEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
+    cleanup();
   });
+
   const mockSurvey = {
     questions: [
       { id: "q1", logic: [] },
@@ -52,9 +54,9 @@ describe("WelcomeCard", () => {
   });
 
   test("shows response count when showResponseCount is true and count > 3", () => {
-    const { container } = render(<WelcomeCard {...defaultProps} responseCount={10} />);
+    const { queryByTestId } = render(<WelcomeCard {...defaultProps} responseCount={10} />);
 
-    const responseText = container.querySelector(".fb-text-xs");
+    const responseText = queryByTestId("fb__surveys__welcome-card__response-count");
     expect(responseText).toHaveTextContent(/10 people responded/);
   });
 
@@ -77,9 +79,9 @@ describe("WelcomeCard", () => {
   });
 
   test("does not show response count when count <= 3", () => {
-    const { container } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
+    const { queryByTestId } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
 
-    const responseText = container.querySelector(".fb-text-xs");
+    const responseText = queryByTestId("fb__surveys__welcome-card__response-count");
     expect(responseText).not.toHaveTextContent(/3 people responded/);
   });
 
@@ -122,7 +124,7 @@ describe("WelcomeCard", () => {
   });
 
   test("shows both time and response count when both flags are true", () => {
-    const { container } = render(
+    const { queryByTestId } = render(
       <WelcomeCard
         {...defaultProps}
         responseCount={10}
@@ -137,7 +139,7 @@ describe("WelcomeCard", () => {
       />
     );
 
-    const textDisplay = container.querySelector(".fb-text-xs");
+    const textDisplay = queryByTestId("fb__surveys__welcome-card__info-text-test");
     expect(textDisplay).toHaveTextContent(/Takes.*10 people responded/);
   });
 
@@ -200,12 +202,21 @@ describe("WelcomeCard", () => {
 
   test("handles response counts at boundary conditions", () => {
     // Test with exactly 3 responses (boundary)
-    const { container: container3 } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
-    expect(container3.querySelector(".fb-text-xs")).not.toHaveTextContent(/3 people responded/);
+    const { queryByTestId: queryByTestId3, unmount } = render(
+      <WelcomeCard {...defaultProps} responseCount={3} />
+    );
+    expect(queryByTestId3("fb__surveys__welcome-card__response-count")).not.toHaveTextContent(
+      /3 people responded/
+    );
+
+    // unmount to not have conflicting test ids
+    unmount();
 
     // Test with 4 responses (just above boundary)
-    const { container: container4 } = render(<WelcomeCard {...defaultProps} responseCount={4} />);
-    expect(container4.querySelector(".fb-text-xs")).toHaveTextContent(/4 people responded/);
+    const { queryByTestId: queryByTestId4 } = render(<WelcomeCard {...defaultProps} responseCount={4} />);
+    expect(queryByTestId4("fb__surveys__welcome-card__response-count")).toHaveTextContent(
+      /4 people responded/
+    );
   });
 
   test("handles time calculation edge cases", () => {

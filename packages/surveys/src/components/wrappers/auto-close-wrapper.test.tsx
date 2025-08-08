@@ -228,7 +228,7 @@ describe("AutoCloseWrapper", () => {
   });
 
   test("stops countdown on interaction (click)", () => {
-    const { container } = render(
+    const { queryByTestId } = render(
       <AutoCloseWrapper
         survey={mockSurvey}
         questionIdx={-1}
@@ -240,7 +240,7 @@ describe("AutoCloseWrapper", () => {
     );
 
     // Find the wrapper div that has the click handler (the inner one with event handlers)
-    const wrapper = container.querySelector(".fb-h-full.fb-w-full:nth-child(2)");
+    const wrapper = queryByTestId("fb__surveys__auto-close-wrapper-test");
     expect(wrapper).toBeTruthy();
 
     // Use fireEvent instead of userEvent for more reliable event triggering
@@ -253,7 +253,7 @@ describe("AutoCloseWrapper", () => {
   });
 
   test("stops countdown on interaction (mouseover)", () => {
-    const { container } = render(
+    const { queryByTestId } = render(
       <AutoCloseWrapper
         survey={mockSurvey}
         questionIdx={-1}
@@ -265,7 +265,7 @@ describe("AutoCloseWrapper", () => {
     );
 
     // Find the wrapper div that has the mouseover handler (the inner one with event handlers)
-    const wrapper = container.querySelector(".fb-h-full.fb-w-full:nth-child(2)");
+    const wrapper = queryByTestId("fb__surveys__auto-close-wrapper-test");
     expect(wrapper).toBeTruthy();
 
     // Use fireEvent instead of userEvent for more reliable event triggering
