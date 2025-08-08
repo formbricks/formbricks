@@ -10,6 +10,7 @@ import { Column } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { capitalize } from "lodash";
 import { GripVertical } from "lucide-react";
+import { useMemo } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface DataTableSettingsModalItemProps<T> {
@@ -21,8 +22,8 @@ const getColumnIcon = (columnId: string) => {
   const Icon = COLUMNS_ICON_MAP[columnId];
   if (Icon) {
     return (
-      <span className="h-4 w-4">
-        <Icon className="h-4 w-4" />
+      <span className="h-4 w-4" aria-hidden="true">
+        <Icon className="h-4 w-4" aria-hidden="true" focusable="false" />
       </span>
     );
   }
@@ -98,6 +99,10 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
     zIndex: isDragging ? 10 : 1,
   };
 
+  const iconMemo = useMemo(() => {
+    return getColumnIcon(column.id);
+  }, [column.id]);
+
   return (
     <div ref={setNodeRef} style={style} id={column.id}>
       <div {...listeners} {...attributes}>
@@ -115,7 +120,7 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                {getColumnIcon(column.id)}
+                {iconMemo}
                 <span className="max-w-xs truncate">
                   {isOptionIdColumn ? getOptionIdColumnLabel() : getLabelFromColumnId()}
                 </span>

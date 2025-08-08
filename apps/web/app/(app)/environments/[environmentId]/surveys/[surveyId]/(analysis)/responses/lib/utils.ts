@@ -24,7 +24,6 @@ export const getAddressFieldLabel = (field: string, t: TFnType) => {
       return t("environments.surveys.responses.zip_post_code");
     case "country":
       return t("environments.surveys.responses.country");
-
     default:
       break;
   }
