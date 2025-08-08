@@ -144,8 +144,8 @@ jobs:
       - name: Extract image info for sourcemap upload
         id: extract_image_info
         run: |
-          # Use the first readable tag from metadata action output
-          DOCKER_IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | head -n1 | xargs)
+          # Use the timestamped tag (contains the VERSION) for sourcemap extraction
+          DOCKER_IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | grep "$VERSION" | head -n1 | xargs)
           echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_OUTPUT
 
           # Use the generated version for Sentry release
