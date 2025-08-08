@@ -63,7 +63,7 @@ export function AutoCloseWrapper({
 
   return (
     <div className="fb-h-full fb-w-full fb-flex fb-flex-col">
-      <div
+      <div // NOSONAR // We can't have a role="button" here as sonarqube registers more issues with this. This is indeed an interactive element.
         onClick={stopCountdown}
         onMouseOver={stopCountdown} // NOSONAR // We can't check for onFocus because the survey is auto focused after the first question and we don't want to stop the countdown
         className="fb-h-full fb-w-full"
