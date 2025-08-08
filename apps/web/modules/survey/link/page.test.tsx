@@ -88,7 +88,7 @@ describe("LinkSurveyPage", () => {
 
     const result = await generateMetadata(props);
 
-    expect(getMetadataForLinkSurvey).toHaveBeenCalledWith("survey123");
+    expect(getMetadataForLinkSurvey).toHaveBeenCalledWith("survey123", undefined);
     expect(result).toEqual(mockMetadata);
   });
 
@@ -415,7 +415,7 @@ describe("generateMetadata", () => {
       searchParams: Promise.resolve({}),
     };
     const metadata = await generateMetadata(props);
-    expect(getMetadataForLinkSurvey).toHaveBeenCalledWith("survey-123");
+    expect(getMetadataForLinkSurvey).toHaveBeenCalledWith("survey-123", undefined);
     expect(metadata).toEqual({ title: "Test Survey" });
   });
 });

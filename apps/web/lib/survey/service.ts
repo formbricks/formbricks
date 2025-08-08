@@ -60,6 +60,7 @@ export const selectSurvey = {
   pin: true,
   showLanguageSwitch: true,
   recaptcha: true,
+  metadata: true,
   languages: {
     select: {
       default: true,

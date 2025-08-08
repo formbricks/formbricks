@@ -25,12 +25,16 @@ interface LinkSurveyPageProps {
 
 export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Metadata> => {
   const params = await props.params;
+  const searchParams = await props.searchParams;
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
   }
 
-  return getMetadataForLinkSurvey(params.surveyId);
+  // Extract language code from URL params
+  const languageCode = typeof searchParams.lang === "string" ? searchParams.lang : undefined;
+
+  return getMetadataForLinkSurvey(params.surveyId, languageCode);
 };
 
 export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {

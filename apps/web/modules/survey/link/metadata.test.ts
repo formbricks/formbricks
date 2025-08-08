@@ -2,7 +2,12 @@ import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getBrandColorForURL, getNameForURL, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
+import {
+  getBasicSurveyMetadata,
+  getBrandColorForURL,
+  getNameForURL,
+  getSurveyOpenGraphMetadata,
+} from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
@@ -17,6 +22,7 @@ vi.mock("./lib/metadata-utils", () => ({
   getBrandColorForURL: vi.fn(),
   getNameForURL: vi.fn(),
   getSurveyOpenGraphMetadata: vi.fn(),
+  getBasicSurveyMetadata: vi.fn(),
 }));
 
 describe("getMetadataForLinkSurvey", () => {
@@ -32,6 +38,12 @@ describe("getMetadataForLinkSurvey", () => {
 
     vi.mocked(getBrandColorForURL).mockReturnValue(mockEncodedBrandColor);
     vi.mocked(getNameForURL).mockReturnValue(mockEncodedName);
+    vi.mocked(getBasicSurveyMetadata).mockResolvedValue({
+      title: mockSurveyName,
+      description: "Complete this survey",
+      survey: null,
+      ogImage: undefined,
+    });
     vi.mocked(getSurveyOpenGraphMetadata).mockReturnValue({
       openGraph: {
         title: mockSurveyName,
@@ -67,12 +79,15 @@ describe("getMetadataForLinkSurvey", () => {
 
     expect(result).toEqual({
       title: mockSurveyName,
+      description: "Complete this survey",
       openGraph: {
         title: mockSurveyName,
+        description: "Complete this survey",
         images: [mockOgImageUrl],
       },
       twitter: {
         title: mockSurveyName,
+        description: "Complete this survey",
         images: [mockOgImageUrl],
       },
       alternates: {
@@ -155,8 +170,10 @@ describe("getMetadataForLinkSurvey", () => {
 
     expect(result).toEqual({
       title: mockSurveyName,
+      description: "Complete this survey",
       twitter: {
         title: mockSurveyName,
+        description: "Complete this survey",
         images: [mockOgImageUrl],
       },
       alternates: {
@@ -194,8 +211,10 @@ describe("getMetadataForLinkSurvey", () => {
 
     expect(result).toEqual({
       title: mockSurveyName,
+      description: "Complete this survey",
       openGraph: {
         title: mockSurveyName,
+        description: "Complete this survey",
         images: [mockOgImageUrl],
       },
       alternates: {
