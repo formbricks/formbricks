@@ -99,7 +99,7 @@ const executeHandler = async <TResult extends { response: Response }, TProps>(
   props: TProps,
   auditLog: TApiAuditLog | undefined,
   authentication: TApiV1Authentication
-): Promise<{ result: TResult; error?: any }> => {
+): Promise<{ result: TResult; error?: unknown }> => {
   try {
     const result = await handler({ req, props, auditLog, authentication });
     return { result };
@@ -128,6 +128,10 @@ const setupAuditLog = (
     auditLog.userId = authentication.apiKeyId;
     auditLog.organizationId = authentication.organizationId;
   }
+
+  if (authentication && auditLog && "user" in authentication) {
+    auditLog.userId = authentication.user.id;
+  }
 };
 
 /**
@@ -152,22 +156,6 @@ const handleAuthentication = async (
 };
 
 /**
- * Check if response indicates success
- */
-const isResponseSuccessful = async (res: Response): Promise<boolean> => {
-  if (res.status >= 200 && res.status < 300) {
-    return true;
-  }
-
-  try {
-    const parsed = await res.clone().json();
-    return parsed && typeof parsed === "object" && "data" in parsed;
-  } catch {
-    return false;
-  }
-};
-
-/**
  * Log error details to system logger and Sentry
  */
 const logErrorDetails = (res: Response, req: NextRequest, correlationId: string, error?: any): void => {
@@ -181,7 +169,7 @@ const logErrorDetails = (res: Response, req: NextRequest, correlationId: string,
 
   logger.withContext(logContext).error("V1 API Error Details");
 
-  if (SENTRY_DSN && IS_PRODUCTION && res.status === 500) {
+  if (SENTRY_DSN && IS_PRODUCTION && res.status >= 500) {
     const err = new Error(`API V1 error, id: ${correlationId}`);
     Sentry.captureException(err, { extra: { error, correlationId } });
   }
@@ -197,7 +185,7 @@ const processResponse = async (
   error?: any
 ): Promise<void> => {
   const correlationId = req.headers.get("x-request-id") ?? "";
-  const isSuccess = await isResponseSuccessful(res);
+  const isSuccess = res.status === 200;
 
   // Handle audit logging
   if (auditLog) {
