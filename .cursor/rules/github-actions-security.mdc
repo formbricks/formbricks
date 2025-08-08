@@ -129,8 +129,12 @@ runs:
     - name: Validate input
       shell: bash
       run: |
-        # Validate input format/content before use
-        if [[ ! "${{ inputs.user_input }}" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        # Harden shell and validate input format/content before use
+        set -euo pipefail
+
+        USER_INPUT="${{ inputs.user_input }}"
+
+        if [[ ! "${USER_INPUT}" =~ ^[A-Za-z0-9._-]+$ ]]; then
           echo "❌ Invalid input format"
           exit 1
         fi
