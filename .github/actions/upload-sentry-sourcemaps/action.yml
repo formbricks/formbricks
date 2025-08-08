@@ -90,17 +90,59 @@ runs:
         echo ""
         echo "🎯 Expected ~553 sourcemap files based on build output. Found: $total_sourcemap_count"
 
+    - name: Install Sentry CLI
+      shell: bash
+      run: |
+        echo "Installing Sentry CLI..."
+        npm install -g @sentry/cli
+        echo "✅ Sentry CLI installed"
+
     - name: Create Sentry release and upload sourcemaps
-      uses: getsentry/action-release@v3
+      shell: bash
       env:
         SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
-        SENTRY_ORG: formbricks
-        SENTRY_PROJECT: formbricks-cloud
-      with:
-        environment: ${{ inputs.environment }}
-        release: ${{ inputs.release_version }}
-        sourcemaps: './extracted-next/'
-        set_commits: auto
+      run: |
+        set -euo pipefail
+        echo "📤 Creating Sentry release and uploading sourcemaps..."
+        
+        RELEASE_VERSION="${{ inputs.release_version }}"
+        ENVIRONMENT="${{ inputs.environment }}"
+        
+        echo "Creating Sentry release: $RELEASE_VERSION"
+        sentry-cli releases new "$RELEASE_VERSION" \
+          --org formbricks \
+          --project formbricks-cloud
+        
+        echo "Uploading sourcemaps (exactly like local test)..."
+        sentry-cli sourcemaps upload \
+          --release="$RELEASE_VERSION" \
+          --org=formbricks \
+          --project=formbricks-cloud \
+          --url-prefix="~/_next/" \
+          ./extracted-next/
+        
+        echo "Setting release environment to: $ENVIRONMENT"
+        sentry-cli releases set-commits "$RELEASE_VERSION" --auto \
+          --org formbricks \
+          --project formbricks-cloud || echo "Warning: Could not set commits (this is OK)"
+        
+        echo "Deploying release..."
+        sentry-cli releases deploys "$RELEASE_VERSION" new \
+          --env "$ENVIRONMENT" \
+          --org formbricks \
+          --project formbricks-cloud
+        
+        echo "Finalizing release..."
+        sentry-cli releases finalize "$RELEASE_VERSION" \
+          --org formbricks \
+          --project formbricks-cloud
+        
+        echo "✅ Sourcemap upload completed successfully!"
+        
+        echo "Verifying sourcemap upload:"
+        sentry-cli releases files list "$RELEASE_VERSION" \
+          --org formbricks \
+          --project formbricks-cloud | head -10
 
     - name: Clean up extracted files
       shell: bash
