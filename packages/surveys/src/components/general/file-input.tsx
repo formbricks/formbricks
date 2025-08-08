@@ -376,25 +376,25 @@ export function FileInput({
                 className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
                 id={`${uniqueHtmlFor}-label`}>
                 Click or drag to upload files.
+                <input
+                  type="file"
+                  id={uniqueHtmlFor}
+                  name={uniqueHtmlFor}
+                  accept={mimeTypeForAllowedFileExtensions}
+                  className="fb-hidden"
+                  onChange={async (e) => {
+                    const inputElement = e.target as HTMLInputElement;
+                    if (inputElement.files) {
+                      await handleFileSelection(inputElement.files);
+                    }
+                  }}
+                  multiple={allowMultipleFiles}
+                  aria-label="File upload"
+                  aria-describedby={`${uniqueHtmlFor}-label`}
+                  data-accept-multiple={allowMultipleFiles}
+                  data-accept-extensions={mimeTypeForAllowedFileExtensions}
+                />
               </label>
-              <input
-                type="file"
-                id={uniqueHtmlFor}
-                name={uniqueHtmlFor}
-                accept={mimeTypeForAllowedFileExtensions}
-                className="fb-hidden"
-                onChange={async (e) => {
-                  const inputElement = e.target as HTMLInputElement;
-                  if (inputElement.files) {
-                    await handleFileSelection(inputElement.files);
-                  }
-                }}
-                multiple={allowMultipleFiles}
-                aria-label="File upload"
-                aria-describedby={`${uniqueHtmlFor}-label`}
-                data-accept-multiple={allowMultipleFiles}
-                data-accept-extensions={mimeTypeForAllowedFileExtensions}
-              />
             </button>
           ) : null}
         </label>

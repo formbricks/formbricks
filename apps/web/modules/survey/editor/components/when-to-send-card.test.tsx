@@ -482,22 +482,14 @@ describe("WhenToSendCard Component Tests", () => {
           projectPermission={null}
         />
       );
-      const delayInput = screen.getByLabelText(
-        /environments\.surveys\.edit\.wait.*environments\.surveys\.edit\.seconds_before_showing_the_survey/i
-      );
-      await userEvent.clear(delayInput);
-      await userEvent.type(delayInput, "15");
-      fireEvent.change(delayInput, { target: { value: "15" } }); // Ensure change event fires
+      const delayInput = screen.getByDisplayValue("5");
+      fireEvent.change(delayInput, { target: { value: "15" } });
       expect(setLocalSurvey).toHaveBeenCalledWith(expect.objectContaining({ delay: 15 }));
 
       // Test invalid input
-      await userEvent.clear(delayInput);
-      await userEvent.type(delayInput, "abc");
       fireEvent.change(delayInput, { target: { value: "abc" } });
       expect(setLocalSurvey).toHaveBeenCalledWith(expect.objectContaining({ delay: 0 }));
 
-      await userEvent.clear(delayInput);
-      await userEvent.type(delayInput, "0");
       fireEvent.change(delayInput, { target: { value: "0" } });
       expect(setLocalSurvey).toHaveBeenCalledWith(expect.objectContaining({ delay: 0 }));
     });

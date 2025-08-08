@@ -242,9 +242,7 @@ export const WhenToSendCard = ({
                 "environments.surveys.edit.wait_a_few_seconds_after_the_trigger_before_showing_the_survey"
               )}
               childBorder={true}>
-              <label
-                htmlFor="triggerDelay"
-                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+              <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">
                     {t("environments.surveys.edit.wait")}
@@ -259,7 +257,7 @@ export const WhenToSendCard = ({
                     {t("environments.surveys.edit.seconds_before_showing_the_survey")}
                   </p>
                 </div>
-              </label>
+              </div>
             </AdvancedOptionToggle>
             <AdvancedOptionToggle
               htmlId="autoClose"

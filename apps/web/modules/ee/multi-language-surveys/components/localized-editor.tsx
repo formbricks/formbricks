@@ -98,7 +98,7 @@ export function LocalizedEditor({
           {value && selectedLanguageCode !== "default" && value.default ? (
             <div className="mt-1 flex text-xs text-gray-500">
               <strong>{t("environments.project.languages.translate")}:</strong>
-              <label
+              <span
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
