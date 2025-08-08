@@ -1,7 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyPictureSelectionQuestion,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { PictureChoiceSummary } from "./PictureChoiceSummary";
 
 vi.mock("@/modules/ui/components/progress-bar", () => ({
@@ -11,6 +15,19 @@ vi.mock("@/modules/ui/components/progress-bar", () => ({
 }));
 vi.mock("./QuestionSummaryHeader", () => ({
   QuestionSummaryHeader: ({ additionalInfo }: any) => <div data-testid="header">{additionalInfo}</div>,
+}));
+vi.mock("@/modules/ui/components/id-badge", () => ({
+  IdBadge: ({ id }: { id: string }) => (
+    <div data-testid="id-badge" data-id={id}>
+      ID: {id}
+    </div>
+  ),
+}));
+
+vi.mock("@/lib/response/utils", () => ({
+  getChoiceIdByValue: (value: string, question: TSurveyPictureSelectionQuestion) => {
+    return question.choices?.find((choice) => choice.imageUrl === value)?.id ?? "other";
+  },
 }));
 
 // mock next image
@@ -87,5 +104,74 @@ describe("PictureChoiceSummary", () => {
     render(<PictureChoiceSummary questionSummary={questionSummary} survey={survey} setFilter={() => {}} />);
 
     expect(screen.getByTestId("header")).toBeEmptyDOMElement();
+  });
+
+  // New tests for IdBadge functionality
+  test("renders IdBadge when choice ID is found via imageUrl", () => {
+    const choices = [
+      { id: "choice1", imageUrl: "https://example.com/img1.png", percentage: 50, count: 5 },
+      { id: "choice2", imageUrl: "https://example.com/img2.png", percentage: 50, count: 5 },
+    ];
+    const questionSummary = {
+      choices,
+      question: {
+        id: "q2",
+        type: TSurveyQuestionTypeEnum.PictureSelection,
+        headline: "Picture Question",
+        allowMulti: true,
+        choices: [
+          { id: "pic-choice-1", imageUrl: "https://example.com/img1.png" },
+          { id: "pic-choice-2", imageUrl: "https://example.com/img2.png" },
+        ],
+      },
+      selectionCount: 10,
+    } as any;
+
+    render(<PictureChoiceSummary questionSummary={questionSummary} survey={survey} setFilter={() => {}} />);
+
+    const idBadges = screen.getAllByTestId("id-badge");
+    expect(idBadges).toHaveLength(2);
+    expect(idBadges[0]).toHaveAttribute("data-id", "pic-choice-1");
+    expect(idBadges[1]).toHaveAttribute("data-id", "pic-choice-2");
+    expect(idBadges[0]).toHaveTextContent("ID: pic-choice-1");
+    expect(idBadges[1]).toHaveTextContent("ID: pic-choice-2");
+  });
+
+  test("getChoiceIdByValue function correctly maps imageUrl to choice ID", () => {
+    const choices = [
+      { id: "choice1", imageUrl: "https://cdn.example.com/photo1.jpg", percentage: 33.33, count: 2 },
+      { id: "choice2", imageUrl: "https://cdn.example.com/photo2.jpg", percentage: 33.33, count: 2 },
+      { id: "choice3", imageUrl: "https://cdn.example.com/photo3.jpg", percentage: 33.33, count: 2 },
+    ];
+    const questionSummary = {
+      choices,
+      question: {
+        id: "q4",
+        type: TSurveyQuestionTypeEnum.PictureSelection,
+        headline: "Photo Selection",
+        allowMulti: true,
+        choices: [
+          { id: "photo-a", imageUrl: "https://cdn.example.com/photo1.jpg" },
+          { id: "photo-b", imageUrl: "https://cdn.example.com/photo2.jpg" },
+          { id: "photo-c", imageUrl: "https://cdn.example.com/photo3.jpg" },
+        ],
+      },
+      selectionCount: 6,
+    } as any;
+
+    render(<PictureChoiceSummary questionSummary={questionSummary} survey={survey} setFilter={() => {}} />);
+
+    const idBadges = screen.getAllByTestId("id-badge");
+    expect(idBadges).toHaveLength(3);
+    expect(idBadges[0]).toHaveAttribute("data-id", "photo-a");
+    expect(idBadges[1]).toHaveAttribute("data-id", "photo-b");
+    expect(idBadges[2]).toHaveAttribute("data-id", "photo-c");
+
+    // Verify the images are also rendered correctly
+    const images = screen.getAllByRole("img");
+    expect(images).toHaveLength(3);
+    expect(images[0]).toHaveAttribute("src", "https://cdn.example.com/photo1.jpg");
+    expect(images[1]).toHaveAttribute("src", "https://cdn.example.com/photo2.jpg");
+    expect(images[2]).toHaveAttribute("src", "https://cdn.example.com/photo3.jpg");
   });
 });

@@ -224,16 +224,8 @@ export const getMonthlyActiveOrganizationPeopleCount = reactCache(
   async (organizationId: string): Promise<number> => {
     validateInputs([organizationId, ZId]);
 
-    try {
-      // temporary solution until we have a better way to track active users
-      return 0;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
+    // temporary solution until we have a better way to track active users
+    return 0;
   }
 );
 

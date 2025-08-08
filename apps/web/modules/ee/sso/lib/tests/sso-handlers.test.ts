@@ -5,10 +5,10 @@ import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import type { TSamlNameFields } from "@/modules/auth/types/auth";
 import {
+  getAccessControlPermission,
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
   getIsSsoEnabled,
-  getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -43,7 +43,7 @@ vi.mock("@/modules/auth/signup/lib/invite", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
   getIsSsoEnabled: vi.fn(),
-  getRoleManagementPermission: vi.fn(),
+  getAccessControlPermission: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
 }));
 
@@ -310,7 +310,7 @@ describe("handleSsoCallback", () => {
       });
 
       expect(result).toBe(true);
-      expect(getRoleManagementPermission).not.toHaveBeenCalled();
+      expect(getAccessControlPermission).not.toHaveBeenCalled();
     });
 
     test("should return true when organization exists but role management is not enabled", async () => {
@@ -318,7 +318,7 @@ describe("handleSsoCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
       vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrganization);
-      vi.mocked(getRoleManagementPermission).mockResolvedValue(false);
+      vi.mocked(getAccessControlPermission).mockResolvedValue(false);
 
       const result = await handleSsoCallback({
         user: mockUser,

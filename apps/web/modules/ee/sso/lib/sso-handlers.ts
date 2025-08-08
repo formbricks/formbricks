@@ -10,10 +10,10 @@ import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user"
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import {
+  getAccessControlPermission,
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
   getIsSsoEnabled,
-  getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
@@ -305,13 +305,13 @@ export const handleSsoCallback = async ({
         return false;
       }
 
-      const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
-      if (!canDoRoleManagement && !callbackUrl) {
+      const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
+      if (!isAccessControlAllowed && !callbackUrl) {
         contextLogger.debug(
           {
             reason: "insufficient_role_permissions",
             organizationId: organization.id,
-            canDoRoleManagement,
+            isAccessControlAllowed,
           },
           "SSO callback rejected: insufficient role management permissions"
         );

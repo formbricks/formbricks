@@ -52,7 +52,7 @@ export const PasswordChecks = ({ password }: PasswordChecksProps) => {
 
   return (
     <div className="my-2 text-left text-slate-700 sm:text-sm">
-      <ul role="list" aria-label="Password requirements">
+      <ul aria-label="Password requirements">
         {validations.map((validation) => (
           <li key={validation.label} className="flex items-center">
             <ValidationIcon state={validation.state} />
