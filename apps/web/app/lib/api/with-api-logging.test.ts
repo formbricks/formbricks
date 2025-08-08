@@ -1,11 +1,12 @@
+import { AuthenticationMethod } from "@/app/middleware/endpoint-validator";
 import * as Sentry from "@sentry/nextjs";
+import { NextRequest } from "next/server";
 import { Mock, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { responses } from "./response";
-import { ApiAuditLog } from "./with-api-logging";
 
 // Mocks
-// This top-level mock is crucial for the SUT (withApiLogging.ts)
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   __esModule: true,
   queueAuditEvent: vi.fn(),
@@ -29,7 +30,6 @@ vi.mock("@formbricks/logger", () => {
   return {
     logger: {
       withContext: mockWithContextInstance,
-      // These are for direct calls like logger.error(), logger.warn()
       error: vi.fn(),
       warn: vi.fn(),
       info: vi.fn(),
@@ -37,35 +37,70 @@ vi.mock("@formbricks/logger", () => {
   };
 });
 
+vi.mock("@/app/api/v1/auth", () => ({
+  authenticateRequest: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/lib/authOptions", () => ({
+  authOptions: {},
+}));
+
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
+}));
+
+vi.mock("@/app/middleware/endpoint-validator", async () => {
+  const original = await vi.importActual("@/app/middleware/endpoint-validator");
+  return {
+    ...original,
+    isClientSideApiRoute: vi.fn().mockReturnValue({ isClientSideApi: false, isRateLimited: true }),
+    isManagementApiRoute: vi.fn().mockReturnValue({ isManagementApi: false, authenticationMethod: "apiKey" }),
+    isIntegrationRoute: vi.fn().mockReturnValue(false),
+    isSyncWithUserIdentificationEndpoint: vi.fn().mockReturnValue(null),
+  };
+});
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyIPRateLimit: vi.fn(),
+  applyRateLimit: vi.fn(),
+}));
+
+vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
+  rateLimitConfigs: {
+    api: {
+      client: { windowMs: 60000, max: 100 },
+      v1: { windowMs: 60000, max: 1000 },
+      syncUserIdentification: { windowMs: 60000, max: 50 },
+    },
+  },
+}));
+
 function createMockRequest({ method = "GET", url = "https://api.test/endpoint", headers = new Map() } = {}) {
+  // Parse the URL to get the pathname
+  const parsedUrl = url.startsWith("/") ? new URL(url, "http://localhost:3000") : new URL(url);
+
   return {
     method,
     url,
     headers: {
       get: (key: string) => headers.get(key),
     },
-  } as unknown as Request;
+    nextUrl: {
+      pathname: parsedUrl.pathname,
+    },
+  } as unknown as NextRequest;
 }
 
-// Minimal valid ApiAuditLog
-const baseAudit: ApiAuditLog = {
-  action: "created",
-  targetType: "survey",
-  userId: "user-1",
-  targetId: "target-1",
+const mockApiAuthentication = {
+  hashedApiKey: "test-api-key",
+  apiKeyId: "api-key-1",
   organizationId: "org-1",
-  status: "failure",
-  userType: "api",
-};
+} as TAuthenticationApiKey;
 
-describe("withApiLogging", () => {
+describe("withV1ApiWrapper", () => {
   beforeEach(() => {
-    vi.resetModules(); // Reset SUT and other potentially cached modules
-    // vi.doMock for constants if a specific test needs to override it
-    // The top-level mocks for audit-logs, sentry, logger should be re-applied implicitly
-    // or are already in place due to vi.mock hoisting.
+    vi.resetModules();
 
-    // Restore the mock for constants to its default for most tests
     vi.doMock("@/lib/constants", () => ({
       AUDIT_LOG_ENABLED: true,
       IS_PRODUCTION: true,
@@ -74,34 +109,45 @@ describe("withApiLogging", () => {
       REDIS_URL: "redis://localhost:6379",
     }));
 
-    vi.clearAllMocks(); // Clear call counts etc. for all vi.fn()
+    vi.clearAllMocks();
   });
 
-  test("logs and audits on error response", async () => {
+  test("logs and audits on error response with API key authentication", async () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const handler = vi.fn().mockImplementation(async (req, _props, auditLog) => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockImplementation(async ({ auditLog }) => {
       if (auditLog) {
-        auditLog.action = "created";
-        auditLog.targetType = "survey";
-        auditLog.userId = "user-1";
         auditLog.targetId = "target-1";
-        auditLog.organizationId = "org-1";
-        auditLog.userType = "api";
       }
       return {
         response: responses.internalServerErrorResponse("fail"),
       };
     });
-    const req = createMockRequest({ headers: new Map([["x-request-id", "abc-123"]]) });
-    const { withApiLogging } = await import("./with-api-logging"); // SUT dynamically imported
-    const wrapped = withApiLogging(handler, "created", "survey");
+
+    const req = createMockRequest({
+      url: "https://api.test/v1/management/surveys",
+      headers: new Map([["x-request-id", "abc-123"]]),
+    });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
+
     expect(logger.withContext).toHaveBeenCalled();
     expect(mockContextualLoggerError).toHaveBeenCalled();
-    expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
-    expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventId: "abc-123",
@@ -110,7 +156,7 @@ describe("withApiLogging", () => {
         action: "created",
         status: "failure",
         targetType: "survey",
-        userId: "user-1",
+        userId: "api-key-1",
         targetId: "target-1",
         organizationId: "org-1",
       })
@@ -125,28 +171,36 @@ describe("withApiLogging", () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const handler = vi.fn().mockImplementation(async (req, _props, auditLog) => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockImplementation(async ({ auditLog }) => {
       if (auditLog) {
-        auditLog.action = "created";
-        auditLog.targetType = "survey";
-        auditLog.userId = "user-1";
         auditLog.targetId = "target-1";
-        auditLog.organizationId = "org-1";
-        auditLog.userType = "api";
       }
       return {
         response: responses.badRequestResponse("bad req"),
       };
     });
-    const req = createMockRequest();
-    const { withApiLogging } = await import("./with-api-logging");
-    const wrapped = withApiLogging(handler, "created", "survey");
+
+    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
+
     expect(Sentry.captureException).not.toHaveBeenCalled();
     expect(logger.withContext).toHaveBeenCalled();
     expect(mockContextualLoggerError).toHaveBeenCalled();
-    expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
-    expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         userType: "api",
@@ -154,7 +208,7 @@ describe("withApiLogging", () => {
         action: "created",
         status: "failure",
         targetType: "survey",
-        userId: "user-1",
+        userId: "api-key-1",
         targetId: "target-1",
         organizationId: "org-1",
       })
@@ -165,21 +219,34 @@ describe("withApiLogging", () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const handler = vi.fn().mockImplementation(async (req, _props, auditLog) => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockImplementation(async ({ auditLog }) => {
       if (auditLog) {
-        auditLog.action = "created";
-        auditLog.targetType = "survey";
-        auditLog.userId = "user-1";
         auditLog.targetId = "target-1";
-        auditLog.organizationId = "org-1";
-        auditLog.userType = "api";
       }
       throw new Error("fail!");
     });
-    const req = createMockRequest({ headers: new Map([["x-request-id", "err-1"]]) });
-    const { withApiLogging } = await import("./with-api-logging");
-    const wrapped = withApiLogging(handler, "created", "survey");
+
+    const req = createMockRequest({
+      url: "https://api.test/v1/management/surveys",
+      headers: new Map([["x-request-id", "err-1"]]),
+    });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     const res = await wrapped(req, undefined);
+
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body).toEqual({
@@ -189,8 +256,6 @@ describe("withApiLogging", () => {
     });
     expect(logger.withContext).toHaveBeenCalled();
     expect(mockContextualLoggerError).toHaveBeenCalled();
-    expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
-    expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventId: "err-1",
@@ -199,7 +264,7 @@ describe("withApiLogging", () => {
         action: "created",
         status: "failure",
         targetType: "survey",
-        userId: "user-1",
+        userId: "api-key-1",
         targetId: "target-1",
         organizationId: "org-1",
       })
@@ -210,31 +275,39 @@ describe("withApiLogging", () => {
     );
   });
 
-  test("does not log/audit on success response", async () => {
+  test("does not log on success response but still audits", async () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const handler = vi.fn().mockImplementation(async (req, _props, auditLog) => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockImplementation(async ({ auditLog }) => {
       if (auditLog) {
-        auditLog.action = "created";
-        auditLog.targetType = "survey";
-        auditLog.userId = "user-1";
         auditLog.targetId = "target-1";
-        auditLog.organizationId = "org-1";
-        auditLog.userType = "api";
       }
       return {
         response: responses.successResponse({ ok: true }),
       };
     });
-    const req = createMockRequest();
-    const { withApiLogging } = await import("./with-api-logging");
-    const wrapped = withApiLogging(handler, "created", "survey");
+
+    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
+
     expect(logger.withContext).not.toHaveBeenCalled();
     expect(mockContextualLoggerError).not.toHaveBeenCalled();
-    expect(mockContextualLoggerWarn).not.toHaveBeenCalled();
-    expect(mockContextualLoggerInfo).not.toHaveBeenCalled();
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         userType: "api",
@@ -242,7 +315,7 @@ describe("withApiLogging", () => {
         action: "created",
         status: "success",
         targetType: "survey",
-        userId: "user-1",
+        userId: "api-key-1",
         targetId: "target-1",
         organizationId: "org-1",
       })
@@ -251,7 +324,6 @@ describe("withApiLogging", () => {
   });
 
   test("does not call audit if AUDIT_LOG_ENABLED is false", async () => {
-    // For this specific test, we override the AUDIT_LOG_ENABLED constant
     vi.doMock("@/lib/constants", () => ({
       AUDIT_LOG_ENABLED: false,
       IS_PRODUCTION: true,
@@ -263,15 +335,209 @@ describe("withApiLogging", () => {
     const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
       "@/modules/ee/audit-logs/lib/handler"
     )) as unknown as { queueAuditEvent: Mock };
-    const { withApiLogging } = await import("./with-api-logging");
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
     const handler = vi.fn().mockResolvedValue({
       response: responses.internalServerErrorResponse("fail"),
-      audit: { ...baseAudit },
     });
-    const req = createMockRequest();
-    const wrapped = withApiLogging(handler, "created", "survey");
+
+    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
+
     expect(mockedQueueAuditEvent).not.toHaveBeenCalled();
+  });
+
+  test("handles client-side API routes without authentication", async () => {
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: false,
+      authenticationMethod: AuthenticationMethod.None,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+    vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
+
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.successResponse({ data: "test" }),
+    });
+
+    const req = createMockRequest({ url: "/api/v1/client/displays" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(200);
+    expect(handler).toHaveBeenCalledWith({
+      req,
+      props: undefined,
+      auditLog: undefined,
+      authentication: null,
+    });
+  });
+
+  test("returns authentication error for non-client routes without auth", async () => {
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+
+    const handler = vi.fn();
+    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(401);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("handles rate limiting errors", async () => {
+    const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    const rateLimitError = new Error("Rate limit exceeded");
+    rateLimitError.message = "Rate limit exceeded";
+    vi.mocked(applyRateLimit).mockRejectedValue(rateLimitError);
+
+    const handler = vi.fn();
+    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(429);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("handles sync user identification rate limiting", async () => {
+    const { applyRateLimit, applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const {
+      isClientSideApiRoute,
+      isManagementApiRoute,
+      isIntegrationRoute,
+      isSyncWithUserIdentificationEndpoint,
+    } = await import("@/app/middleware/endpoint-validator");
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: false,
+      authenticationMethod: AuthenticationMethod.None,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(isSyncWithUserIdentificationEndpoint).mockReturnValue({
+      userId: "user-123",
+      environmentId: "env-123",
+    });
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+    vi.mocked(applyIPRateLimit).mockResolvedValue(undefined);
+    const rateLimitError = new Error("Sync rate limit exceeded");
+    rateLimitError.message = "Sync rate limit exceeded";
+    vi.mocked(applyRateLimit).mockRejectedValue(rateLimitError);
+
+    const handler = vi.fn();
+    const req = createMockRequest({ url: "/api/v1/client/env-123/app/sync/user-123" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(429);
+    expect(applyRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ windowMs: 60000, max: 50 }),
+      "user-123"
+    );
+  });
+
+  test("skips audit log creation when no action/targetType provided", async () => {
+    const { queueAuditEvent: mockedQueueAuditEvent } = (await import(
+      "@/modules/ee/audit-logs/lib/handler"
+    )) as unknown as { queueAuditEvent: Mock };
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } = await import(
+      "@/app/middleware/endpoint-validator"
+    );
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.successResponse({ data: "test" }),
+    });
+
+    const req = createMockRequest({ url: "https://api.test/v1/management/surveys" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    await wrapped(req, undefined);
+
+    expect(handler).toHaveBeenCalledWith({
+      req,
+      props: undefined,
+      auditLog: undefined,
+      authentication: mockApiAuthentication,
+    });
+    expect(mockedQueueAuditEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe("buildAuditLogBaseObject", () => {
+  test("creates audit log base object with correct structure", async () => {
+    const { buildAuditLogBaseObject } = await import("./with-api-logging");
+
+    const result = buildAuditLogBaseObject("created", "survey", "https://api.test/v1/management/surveys");
+
+    expect(result).toEqual({
+      action: "created",
+      targetType: "survey",
+      userId: "unknown",
+      targetId: "unknown",
+      organizationId: "unknown",
+      status: "failure",
+      oldObject: undefined,
+      newObject: undefined,
+      userType: "api",
+      apiUrl: "https://api.test/v1/management/surveys",
+    });
   });
 });

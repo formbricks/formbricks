@@ -1,53 +1,52 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
 import { responses } from "@/app/lib/api/response";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { headers } from "next/headers";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 
-export const GET = async (request: Request, props: { params: Promise<{ webhookId: string }> }) => {
-  const params = await props.params;
-  const headersList = await headers();
-  const apiKey = headersList.get("x-api-key");
-  if (!apiKey) {
-    return responses.notAuthenticatedResponse();
-  }
-  const authentication = await authenticateRequest(request);
-  if (!authentication) {
-    return responses.notAuthenticatedResponse();
-  }
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ webhookId: string }> };
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
+    const params = await props.params;
 
-  // add webhook to database
-  const webhook = await getWebhook(params.webhookId);
-  if (!webhook) {
-    return responses.notFoundResponse("Webhook", params.webhookId);
-  }
-  if (!hasPermission(authentication.environmentPermissions, webhook.environmentId, "GET")) {
-    return responses.unauthorizedResponse();
-  }
-  return responses.successResponse(webhook);
-};
+    const webhook = await getWebhook(params.webhookId);
+    if (!webhook) {
+      return {
+        response: responses.notFoundResponse("Webhook", params.webhookId),
+      };
+    }
+    if (!hasPermission(authentication.environmentPermissions, webhook.environmentId, "GET")) {
+      return {
+        response: responses.unauthorizedResponse(),
+      };
+    }
+    return {
+      response: responses.successResponse(webhook),
+    };
+  },
+});
 
-export const DELETE = withApiLogging(
-  async (request: Request, props: { params: Promise<{ webhookId: string }> }, auditLog: ApiAuditLog) => {
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+    auditLog,
+    authentication,
+  }: {
+    req: NextRequest;
+    props: { params: Promise<{ webhookId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
     const params = await props.params;
     auditLog.targetId = params.webhookId;
-    const headersList = headers();
-    const apiKey = headersList.get("x-api-key");
-    if (!apiKey) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-    const authentication = await authenticateRequest(request);
-    if (!authentication) {
-      return {
-        response: responses.notAuthenticatedResponse(),
-      };
-    }
-    auditLog.userId = authentication.apiKeyId;
-    auditLog.organizationId = authentication.organizationId;
+
     // check if webhook exists
     const webhook = await getWebhook(params.webhookId);
     if (!webhook) {
@@ -71,12 +70,12 @@ export const DELETE = withApiLogging(
       };
     } catch (e) {
       auditLog.status = "failure";
-      logger.error({ error: e, url: request.url }, "Error deleting webhook");
+      logger.error({ error: e, url: req.url }, "Error deleting webhook");
       return {
         response: responses.notFoundResponse("Webhook", params.webhookId),
       };
     }
   },
-  "deleted",
-  "webhook"
-);
+  action: "deleted",
+  targetType: "webhook",
+});

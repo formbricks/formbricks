@@ -1,16 +1,7 @@
-import { clientSideApiEndpointsLimiter, syncUserIdentificationLimiter } from "@/app/middleware/bucket";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
-import {
-  isAuthProtectedRoute,
-  isClientSideApiRoute,
-  isRouteAllowedForDomain,
-  isSyncWithUserIdentificationEndpoint,
-} from "@/app/middleware/endpoint-validator";
-import { IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@/lib/constants";
-import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
+import { WEBAPP_URL } from "@/lib/constants";
 import { isValidCallbackUrl } from "@/lib/utils/url";
-import { logApiErrorEdge } from "@/modules/api/v2/lib/utils-edge";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
@@ -35,17 +26,6 @@ const handleAuth = async (request: NextRequest): Promise<Response | null> => {
   }
 
   return null;
-};
-
-const applyRateLimiting = async (request: NextRequest, ip: string) => {
-  if (isClientSideApiRoute(request.nextUrl.pathname)) {
-    await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
-    const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
-    if (envIdAndUserId) {
-      const { environmentId, userId } = envIdAndUserId;
-      await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
-    }
-  }
 };
 
 /**
@@ -99,27 +79,6 @@ export const middleware = async (originalRequest: NextRequest) => {
   // Handle authentication
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
-
-  const ip = await getClientIpFromHeaders();
-
-  if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
-    return nextResponseWithCustomHeader;
-  }
-
-  if (ip) {
-    try {
-      await applyRateLimiting(request, ip);
-      return nextResponseWithCustomHeader;
-    } catch (e) {
-      logger.error(e, "Error applying rate limiting");
-      const apiError: ApiErrorResponseV2 = {
-        type: "too_many_requests",
-        details: [{ field: "", issue: "Too many requests. Please try again later." }],
-      };
-      logApiErrorEdge(request, apiError);
-      return NextResponse.json(apiError, { status: 429 });
-    }
-  }
 
   return nextResponseWithCustomHeader;
 };

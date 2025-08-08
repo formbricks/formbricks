@@ -1,5 +1,8 @@
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
+import { responses } from "@/app/lib/api/response";
 import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 
@@ -9,9 +12,11 @@ export const GET = async () => {
   const headersList = await headers();
   const apiKey = headersList.get("x-api-key");
   if (apiKey) {
+    const hashedApiKey = hashApiKey(apiKey);
+
     const apiKeyData = await prisma.apiKey.findUnique({
       where: {
-        hashedKey: hashApiKey(apiKey),
+        hashedKey: hashedApiKey,
       },
       select: {
         apiKeyEnvironments: {
@@ -39,9 +44,13 @@ export const GET = async () => {
     });
 
     if (!apiKeyData) {
-      return new Response("Not authenticated", {
-        status: 401,
-      });
+      return responses.notAuthenticatedResponse();
+    }
+
+    try {
+      await applyRateLimit(rateLimitConfigs.api.v1, hashedApiKey);
+    } catch (error) {
+      return responses.tooManyRequestsResponse(error.message);
     }
 
     if (
@@ -60,16 +69,18 @@ export const GET = async () => {
         },
       });
     } else {
-      return new Response("You can't use this method with this API key", {
-        status: 400,
-      });
+      return responses.badRequestResponse("You can't use this method with this API key");
     }
   } else {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
-      return new Response("Not authenticated", {
-        status: 401,
-      });
+      return responses.notAuthenticatedResponse();
+    }
+
+    try {
+      await applyRateLimit(rateLimitConfigs.api.v1, sessionUser.id);
+    } catch (error) {
+      return responses.tooManyRequestsResponse(error.message);
     }
 
     const user = await prisma.user.findUnique({

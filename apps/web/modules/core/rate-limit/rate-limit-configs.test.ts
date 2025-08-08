@@ -66,7 +66,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all API configurations", () => {
       const apiConfigs = Object.keys(rateLimitConfigs.api);
-      expect(apiConfigs).toEqual(["v1", "v2", "client"]);
+      expect(apiConfigs).toEqual(["v1", "v2", "client", "syncUserIdentification"]);
     });
 
     test("should have all action configurations", () => {
@@ -83,9 +83,9 @@ describe("rateLimitConfigs", () => {
         ...Object.values(rateLimitConfigs.actions),
       ];
 
-      allConfigs.forEach((config) => {
+      for (const config of allConfigs) {
         expect(() => ZRateLimitConfig.parse(config)).not.toThrow();
-      });
+      }
     });
   });
 
@@ -129,29 +129,50 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.auth.signup, identifier: "user-signup" },
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
+        { config: rateLimitConfigs.api.client, identifier: "client-api-key" },
+        { config: rateLimitConfigs.api.syncUserIdentification, identifier: "sync-user-id" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
       ];
 
-      const testAllowedRequest = async (config: any, identifier: string) => {
+      for (const { config, identifier } of testCases) {
+        // Test allowed request
         mockEval.mockClear();
         mockEval.mockResolvedValue([1, 1]);
-        const result = await checkRateLimit(config, identifier);
-        expect(result.ok).toBe(true);
-        expect((result as any).data.allowed).toBe(true);
-      };
+        const allowedResult = await checkRateLimit(config, identifier);
+        expect(allowedResult.ok).toBe(true);
+        expect((allowedResult as any).data.allowed).toBe(true);
 
-      const testExceededLimit = async (config: any, identifier: string) => {
-        // When limit is exceeded, remaining should be 0
+        // Test exceeded limit
         mockEval.mockClear();
         mockEval.mockResolvedValue([config.allowedPerInterval + 1, 0]);
-        const result = await checkRateLimit(config, identifier);
-        expect(result.ok).toBe(true);
-        expect((result as any).data.allowed).toBe(false);
-      };
+        const exceededResult = await checkRateLimit(config, identifier);
+        expect(exceededResult.ok).toBe(true);
+        expect((exceededResult as any).data.allowed).toBe(false);
+      }
+    });
 
-      for (const { config, identifier } of testCases) {
-        await testAllowedRequest(config, identifier);
-        await testExceededLimit(config, identifier);
+    test("should properly configure syncUserIdentification rate limit", async () => {
+      const config = rateLimitConfigs.api.syncUserIdentification;
+
+      // Verify configuration values
+      expect(config.interval).toBe(60); // 1 minute
+      expect(config.allowedPerInterval).toBe(5); // 5 requests per minute
+      expect(config.namespace).toBe("api:sync-user-identification");
+
+      // Test with allowed request
+      mockEval.mockResolvedValue([1, 1]); // 1 request used, allowed (1 = true)
+      const allowedResult = await checkRateLimit(config, "env-user-123");
+      expect(allowedResult.ok).toBe(true);
+      if (allowedResult.ok) {
+        expect(allowedResult.data.allowed).toBe(true);
+      }
+
+      // Test when limit is exceeded
+      mockEval.mockResolvedValue([6, 0]); // 6 requests used (exceeds limit of 5), not allowed (0 = false)
+      const exceededResult = await checkRateLimit(config, "env-user-123");
+      expect(exceededResult.ok).toBe(true);
+      if (exceededResult.ok) {
+        expect(exceededResult.data.allowed).toBe(false);
       }
     });
   });

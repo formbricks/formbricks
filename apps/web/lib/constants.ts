@@ -153,20 +153,6 @@ export const SURVEY_BG_COLORS = [
   "#CDFAD5",
 ];
 
-// Rate Limiting
-export const CLIENT_SIDE_API_RATE_LIMIT = {
-  interval: 60, // 1 minute
-  allowedPerInterval: 100,
-};
-export const MANAGEMENT_API_RATE_LIMIT = {
-  interval: 60, // 1 minute
-  allowedPerInterval: 100,
-};
-export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
-  interval: 60, // 1 minute
-  allowedPerInterval: 5,
-};
-
 export const DEBUG = env.DEBUG === "1";
 
 // Enterprise License constant

@@ -1,10 +1,10 @@
-import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
+import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import {
   deleteContactAttributeKey,
   getContactAttributeKey,
@@ -14,7 +14,7 @@ import { ZContactAttributeKeyUpdateInput } from "./types/contact-attribute-keys"
 
 async function fetchAndAuthorizeContactAttributeKey(
   attributeKeyId: string,
-  authentication: TAuthenticationApiKey,
+  environmentPermissions: NonNullable<TApiKeyAuthentication>["environmentPermissions"],
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) {
   const attributeKey = await getContactAttributeKey(attributeKeyId);
@@ -22,60 +22,69 @@ async function fetchAndAuthorizeContactAttributeKey(
     return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
   }
 
-  if (!hasPermission(authentication.environmentPermissions, attributeKey.environmentId, requiredPermission)) {
+  if (!hasPermission(environmentPermissions, attributeKey.environmentId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
   return { attributeKey };
 }
-export const GET = async (
-  request: Request,
-  { params: paramsPromise }: { params: Promise<{ contactAttributeKeyId: string }> }
-): Promise<Response> => {
-  try {
-    const params = await paramsPromise;
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-
-    const result = await fetchAndAuthorizeContactAttributeKey(
-      params.contactAttributeKeyId,
-      authentication,
-      "GET"
-    );
-    if (result.error) return result.error;
-
-    return responses.successResponse(result.attributeKey);
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "Contacts are only enabled for Enterprise Edition, please upgrade."
-    ) {
-      return responses.forbiddenResponse(error.message);
-    }
-    return handleErrorResponse(error);
-  }
-};
-
-export const DELETE = withApiLogging(
-  async (
-    request: Request,
-    { params: paramsPromise }: { params: Promise<{ contactAttributeKeyId: string }> },
-    auditLog: ApiAuditLog
-  ) => {
-    const params = await paramsPromise;
-    auditLog.targetId = params.contactAttributeKeyId;
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ contactAttributeKeyId: string }> };
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
+      const params = await props.params;
 
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication,
+        authentication.environmentPermissions,
+        "GET"
+      );
+      if (result.error) {
+        return {
+          response: result.error,
+        };
+      }
+
+      return {
+        response: responses.successResponse(result.attributeKey),
+      };
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Contacts are only enabled for Enterprise Edition, please upgrade."
+      ) {
+        return {
+          response: responses.forbiddenResponse(error.message),
+        };
+      }
+      return {
+        response: handleErrorResponse(error),
+      };
+    }
+  },
+});
+
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    props,
+    auditLog,
+    authentication,
+  }: {
+    props: { params: Promise<{ contactAttributeKeyId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
+    const params = await props.params;
+    auditLog.targetId = params.contactAttributeKeyId;
+    try {
+      const result = await fetchAndAuthorizeContactAttributeKey(
+        params.contactAttributeKeyId,
+        authentication.environmentPermissions,
         "DELETE"
       );
 
@@ -85,7 +94,6 @@ export const DELETE = withApiLogging(
         };
       }
       auditLog.oldObject = result.attributeKey;
-      auditLog.organizationId = authentication.organizationId;
       if (result.attributeKey.type === "default") {
         return {
           response: responses.badRequestResponse("Default Contact Attribute Keys cannot be deleted"),
@@ -101,30 +109,28 @@ export const DELETE = withApiLogging(
       };
     }
   },
-  "deleted",
-  "contactAttributeKey"
-);
+  action: "deleted",
+  targetType: "contactAttributeKey",
+});
 
-export const PUT = withApiLogging(
-  async (
-    request: Request,
-    { params: paramsPromise }: { params: Promise<{ contactAttributeKeyId: string }> },
-    auditLog: ApiAuditLog
-  ) => {
-    const params = await paramsPromise;
+export const PUT = withV1ApiWrapper({
+  handler: async ({
+    req,
+    props,
+    auditLog,
+    authentication,
+  }: {
+    req: NextRequest;
+    props: { params: Promise<{ contactAttributeKeyId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
+    const params = await props.params;
     auditLog.targetId = params.contactAttributeKeyId;
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication,
+        authentication.environmentPermissions,
         "PUT"
       );
       if (result.error) {
@@ -133,13 +139,12 @@ export const PUT = withApiLogging(
         };
       }
       auditLog.oldObject = result.attributeKey;
-      auditLog.organizationId = authentication.organizationId;
 
       let contactAttributeKeyUpdate;
       try {
-        contactAttributeKeyUpdate = await request.json();
+        contactAttributeKeyUpdate = await req.json();
       } catch (error) {
-        logger.error({ error, url: request.url }, "Error parsing JSON input");
+        logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
@@ -175,6 +180,6 @@ export const PUT = withApiLogging(
       };
     }
   },
-  "updated",
-  "contactAttributeKey"
-);
+  action: "updated",
+  targetType: "contactAttributeKey",
+});
