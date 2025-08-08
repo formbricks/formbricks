@@ -26,7 +26,7 @@ For **every job** on `ubuntu-latest`, add Harden-Runner as the first step:
 
 ```yaml
 - name: Harden the runner
-  uses: step-security/harden-runner@v2
+  uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
   with:
     egress-policy: audit # or 'block' for stricter security
 ```
@@ -95,6 +95,7 @@ jobs:
   job-name:
     name: "Descriptive Job Name"
     runs-on: ubuntu-latest
+    timeout-minutes: 30 # tune per job; standardize repo-wide
 
     # Set job-level permissions if different from workflow level
     permissions:
@@ -154,11 +155,13 @@ container: node:18@sha256:a1ba21bf0c92931d02a8416f0a54daad66cb36a85d6a37b82dfe16
 ```yaml
 - name: Process files securely
   shell: bash
+  env:
+    FILE_PATH: ${{ inputs.file_path }}
   run: |
     set -euo pipefail  # Fail on errors, undefined vars, pipe failures
 
     # Use absolute paths and validate
-    SAFE_PATH=$(realpath "${{ inputs.file_path }}")
+    SAFE_PATH=$(realpath "${FILE_PATH}")
     if [[ "$SAFE_PATH" != "${GITHUB_WORKSPACE}"/* ]]; then
       echo "❌ Path outside workspace"
       exit 1
@@ -178,6 +181,23 @@ container: node:18@sha256:a1ba21bf0c92931d02a8416f0a54daad66cb36a85d6a37b82dfe16
     retention-days: 30
 ```
 
+### GHCR authentication for pulls/scans
+
+```yaml
+# Minimal permissions required for GHCR pulls/scans
+permissions:
+  contents: read
+  packages: read
+
+steps:
+  - name: Log in to GitHub Container Registry
+    uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+    with:
+      registry: ghcr.io
+      username: ${{ github.actor }}
+      password: ${{ secrets.GITHUB_TOKEN }}
+```
+
 ## Security Checklist
 
 - [ ] Minimum GITHUB_TOKEN permissions set
@@ -190,6 +210,8 @@ container: node:18@sha256:a1ba21bf0c92931d02a8416f0a54daad66cb36a85d6a37b82dfe16
 - [ ] Error handling with `set -euo pipefail`
 - [ ] File paths validated and sanitized
 - [ ] No sensitive data in logs or outputs
+- [ ] GHCR login performed before pulls/scans (packages: read)
+- [ ] Job timeouts configured (`timeout-minutes`)
 
 ## Recommended Additional Workflows
 
