@@ -25,6 +25,7 @@ interface NPSQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function NPSQuestion({
@@ -40,6 +41,7 @@ export function NPSQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<NPSQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
@@ -120,9 +122,12 @@ export function NPSQuestion({
                       value === number
                         ? "fb-border-border-highlight fb-bg-accent-selected-bg fb-z-10 fb-border"
                         : "fb-border-border",
-                      "fb-text-heading first:fb-rounded-l-custom last:fb-rounded-r-custom focus:fb-border-brand fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-overflow-hidden fb-border-b fb-border-l fb-border-t fb-text-center fb-text-sm last:fb-border-r focus:fb-border-2 focus:fb-outline-none",
+                      "fb-text-heading focus:fb-border-brand fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-overflow-hidden fb-border-b fb-border-l fb-border-t fb-text-center fb-text-sm focus:fb-border-2 focus:fb-outline-none",
                       question.isColorCodingEnabled ? "fb-h-[46px] fb-leading-[3.5em]" : "fb-h fb-leading-10",
-                      hoveredNumber === number ? "fb-bg-accent-bg" : ""
+                      hoveredNumber === number ? "fb-bg-accent-bg" : "",
+                      dir === "rtl"
+                        ? "first:fb-rounded-r-custom first:fb-border-r last:fb-rounded-l-custom last:fb-border-l"
+                        : "first:fb-rounded-l-custom first:fb-border-l last:fb-rounded-r-custom last:fb-border-r"
                     )}>
                     {question.isColorCodingEnabled ? (
                       <div
@@ -147,9 +152,13 @@ export function NPSQuestion({
                 );
               })}
             </div>
-            <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
-              <p dir="auto">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
-              <p dir="auto">{getLocalizedValue(question.upperLabel, languageCode)}</p>
+            <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-gap-8">
+              <p dir="auto" className="fb-max-w-[50%]">
+                {getLocalizedValue(question.lowerLabel, languageCode)}
+              </p>
+              <p dir="auto" className="fb-max-w-[50%]">
+                {getLocalizedValue(question.upperLabel, languageCode)}
+              </p>
             </div>
           </fieldset>
         </div>

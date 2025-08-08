@@ -75,6 +75,7 @@ export function Survey({
   isWebEnvironment = true,
   getRecaptchaToken,
   isSpamProtectionEnabled,
+  dir = "auto",
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -730,6 +731,7 @@ export function Survey({
               currentQuestionId={questionId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               onOpenExternalURL={onOpenExternalURL}
+              dir={dir}
             />
           )
         );
