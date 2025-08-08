@@ -4,6 +4,7 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -27,7 +28,17 @@ export const AppConnectionPage = async (props) => {
         <SettingsCard
           title={t("environments.project.app-connection.app_connection")}
           description={t("environments.project.app-connection.app_connection_description")}>
-          {environment && <WidgetStatusIndicator environment={environment} />}
+          {environment && (
+            <div className="space-y-4">
+              <WidgetStatusIndicator environment={environment} />
+              <Alert variant="info">
+                <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
+                <AlertDescription>
+                  {t("environments.project.app-connection.cache_update_delay_description")}
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
         </SettingsCard>
         <SettingsCard
           title={t("environments.project.app-connection.how_to_setup")}

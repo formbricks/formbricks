@@ -3,6 +3,7 @@
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
@@ -162,19 +163,21 @@ export const SingleResponseCardHeader = ({
                 {response.contact?.id ? (
                   user ? (
                     <Link
-                      className="flex items-center"
+                      className="flex items-center space-x-2"
                       href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
                       <PersonAvatar personId={response.contact.id} />
                       <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                         {displayIdentifier}
                       </h3>
+                      {response.contact.userId && <IdBadge id={response.contact.userId} />}
                     </Link>
                   ) : (
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-2">
                       <PersonAvatar personId={response.contact.id} />
                       <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
                         {displayIdentifier}
                       </h3>
+                      {response.contact.userId && <IdBadge id={response.contact.userId} />}
                     </div>
                   )
                 ) : (

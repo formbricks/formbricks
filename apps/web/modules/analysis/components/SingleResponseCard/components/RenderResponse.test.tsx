@@ -12,9 +12,10 @@ vi.mock("@/modules/ui/components/file-upload-response", () => ({
   ),
 }));
 vi.mock("@/modules/ui/components/picture-selection-response", () => ({
-  PictureSelectionResponse: ({ selected, isExpanded }: any) => (
-    <div data-testid="PictureSelectionResponse">
-      PictureSelection: {selected.join(",")} ({isExpanded ? "expanded" : "collapsed"})
+  PictureSelectionResponse: ({ selected, isExpanded, showId }: any) => (
+    <div data-testid="PictureSelectionResponse" data-show-id={showId}>
+      PictureSelection: {selected.join(",")} ({isExpanded ? "expanded" : "collapsed"}) showId:{" "}
+      {String(showId)}
     </div>
   ),
 }));
@@ -22,10 +23,28 @@ vi.mock("@/modules/ui/components/array-response", () => ({
   ArrayResponse: ({ value }: any) => <div data-testid="ArrayResponse">{value.join(",")}</div>,
 }));
 vi.mock("@/modules/ui/components/response-badges", () => ({
-  ResponseBadges: ({ items }: any) => <div data-testid="ResponseBadges">{items.join(",")}</div>,
+  ResponseBadges: ({ items, showId }: any) => (
+    <div data-testid="ResponseBadges" data-show-id={showId}>
+      {Array.isArray(items)
+        ? items
+            .map((item) => (typeof item === "object" ? `${item.value}:${item.id || "no-id"}` : item))
+            .join(",")
+        : items}{" "}
+      showId: {String(showId)}
+    </div>
+  ),
 }));
 vi.mock("@/modules/ui/components/ranking-response", () => ({
-  RankingResponse: ({ value }: any) => <div data-testid="RankingResponse">{value.join(",")}</div>,
+  RankingResponse: ({ value, showId }: any) => (
+    <div data-testid="RankingResponse" data-show-id={showId}>
+      {Array.isArray(value)
+        ? value
+            .map((item) => (typeof item === "object" ? `${item.value}:${item.id || "no-id"}` : item))
+            .join(",")
+        : value}{" "}
+      showId: {String(showId)}
+    </div>
+  ),
 }));
 vi.mock("@/modules/analysis/utils", () => ({
   renderHyperlinkedContent: vi.fn((text: string) => "hyper:" + text),
@@ -50,7 +69,14 @@ describe("RenderResponse", () => {
   });
 
   const defaultSurvey = { languages: [] } as any;
-  const defaultQuestion = { id: "q1", type: "Unknown" } as any;
+  const defaultQuestion = {
+    id: "q1",
+    type: "Unknown",
+    choices: [
+      { id: "choice1", label: { default: "Option 1" } },
+      { id: "choice2", label: { default: "Option 2" } },
+    ],
+  } as any;
   const dummyLanguage = "default";
 
   test("returns '-' for empty responseData (string)", () => {
@@ -60,6 +86,7 @@ describe("RenderResponse", () => {
         question={defaultQuestion}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(container.textContent).toBe("-");
@@ -72,6 +99,7 @@ describe("RenderResponse", () => {
         question={defaultQuestion}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(container.textContent).toBe("-");
@@ -84,6 +112,7 @@ describe("RenderResponse", () => {
         question={defaultQuestion}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(container.textContent).toBe("-");
@@ -92,7 +121,13 @@ describe("RenderResponse", () => {
   test("renders RatingResponse for 'Rating' question with number", () => {
     const question = { ...defaultQuestion, type: "rating", scale: 5, range: [1, 5] };
     render(
-      <RenderResponse responseData={4} question={question} survey={defaultSurvey} language={dummyLanguage} />
+      <RenderResponse
+        responseData={4}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={false}
+      />
     );
     expect(screen.getByTestId("RatingResponse")).toHaveTextContent("Rating: 4");
   });
@@ -106,6 +141,7 @@ describe("RenderResponse", () => {
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByText(/formatted_/)).toBeInTheDocument();
@@ -119,6 +155,7 @@ describe("RenderResponse", () => {
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByTestId("PictureSelectionResponse")).toHaveTextContent(
@@ -134,6 +171,7 @@ describe("RenderResponse", () => {
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByTestId("FileUploadResponse")).toHaveTextContent("FileUpload: file1,file2");
@@ -149,6 +187,7 @@ describe("RenderResponse", () => {
         question={question}
         survey={{ languages: [] } as any}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByText("row1:processed:answer1")).toBeInTheDocument();
@@ -163,6 +202,7 @@ describe("RenderResponse", () => {
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByTestId("ArrayResponse")).toHaveTextContent("addr1,addr2");
@@ -176,6 +216,7 @@ describe("RenderResponse", () => {
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("Value");
@@ -184,7 +225,13 @@ describe("RenderResponse", () => {
   test("renders ResponseBadges for 'Consent' question (number)", () => {
     const question = { ...defaultQuestion, type: "consent" };
     render(
-      <RenderResponse responseData={5} question={question} survey={defaultSurvey} language={dummyLanguage} />
+      <RenderResponse
+        responseData={5}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={false}
+      />
     );
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("5");
   });
@@ -197,56 +244,67 @@ describe("RenderResponse", () => {
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("Click");
   });
 
   test("renders ResponseBadges for 'MultipleChoiceSingle' question (string)", () => {
-    const question = { ...defaultQuestion, type: "multipleChoiceSingle" };
+    const question = { ...defaultQuestion, type: "multipleChoiceSingle", choices: [] };
     render(
       <RenderResponse
         responseData={"option1"}
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("option1");
   });
 
   test("renders ResponseBadges for 'MultipleChoiceMulti' question (array)", () => {
-    const question = { ...defaultQuestion, type: "multipleChoiceMulti" };
+    const question = { ...defaultQuestion, type: "multipleChoiceMulti", choices: [] };
     render(
       <RenderResponse
         responseData={["opt1", "opt2"]}
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
-    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("opt1,opt2");
+    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("opt1:other,opt2:other");
   });
 
   test("renders ResponseBadges for 'NPS' question (number)", () => {
     const question = { ...defaultQuestion, type: "nps" };
     render(
-      <RenderResponse responseData={9} question={question} survey={defaultSurvey} language={dummyLanguage} />
+      <RenderResponse
+        responseData={9}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={false}
+      />
     );
-    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("9");
+    // NPS questions render as simple text, not ResponseBadges
+    expect(screen.getByText("9")).toBeInTheDocument();
   });
 
   test("renders RankingResponse for 'Ranking' question", () => {
-    const question = { ...defaultQuestion, type: "ranking" };
+    const question = { ...defaultQuestion, type: "ranking", choices: [] };
     render(
       <RenderResponse
         responseData={["first", "second"]}
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
-    expect(screen.getByTestId("RankingResponse")).toHaveTextContent("first,second");
+    expect(screen.getByTestId("RankingResponse")).toHaveTextContent("first:other,second:other showId: false");
   });
 
   test("renders default branch for unknown question type with string", () => {
@@ -257,6 +315,7 @@ describe("RenderResponse", () => {
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByText("hyper:some text")).toBeInTheDocument();
@@ -270,8 +329,178 @@ describe("RenderResponse", () => {
         question={question}
         survey={defaultSurvey}
         language={dummyLanguage}
+        showId={false}
       />
     );
     expect(screen.getByText("a, b")).toBeInTheDocument();
+  });
+
+  // New tests for showId functionality
+  test("passes showId prop to PictureSelectionResponse", () => {
+    const question = {
+      ...defaultQuestion,
+      type: "pictureSelection",
+      choices: [{ id: "choice1", imageUrl: "url1" }],
+    };
+    render(
+      <RenderResponse
+        responseData={["choice1"]}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={true}
+      />
+    );
+    const component = screen.getByTestId("PictureSelectionResponse");
+    expect(component).toHaveAttribute("data-show-id", "true");
+    expect(component).toHaveTextContent("showId: true");
+  });
+
+  test("passes showId prop to RankingResponse with choice ID extraction", () => {
+    const question = {
+      ...defaultQuestion,
+      type: "ranking",
+      choices: [
+        { id: "choice1", label: { default: "Option 1" } },
+        { id: "choice2", label: { default: "Option 2" } },
+      ],
+    };
+    render(
+      <RenderResponse
+        responseData={["Option 1", "Option 2"]}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={true}
+      />
+    );
+    const component = screen.getByTestId("RankingResponse");
+    expect(component).toHaveAttribute("data-show-id", "true");
+    expect(component).toHaveTextContent("showId: true");
+    // Should extract choice IDs and pass them as value objects
+    expect(component).toHaveTextContent("Option 1:choice1,Option 2:choice2");
+  });
+
+  test("handles ranking response with missing choice IDs", () => {
+    const question = {
+      ...defaultQuestion,
+      type: "ranking",
+      choices: [
+        { id: "choice1", label: { default: "Option 1" } },
+        { id: "choice2", label: { default: "Option 2" } },
+      ],
+    };
+    render(
+      <RenderResponse
+        responseData={["Option 1", "Unknown Option"]}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={true}
+      />
+    );
+    const component = screen.getByTestId("RankingResponse");
+    expect(component).toHaveTextContent("Option 1:choice1,Unknown Option:other");
+  });
+
+  test("passes showId prop to ResponseBadges for multiple choice single", () => {
+    const question = {
+      ...defaultQuestion,
+      type: "multipleChoiceSingle",
+      choices: [{ id: "choice1", label: { default: "Option 1" } }],
+    };
+    render(
+      <RenderResponse
+        responseData={"Option 1"}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={true}
+      />
+    );
+    const component = screen.getByTestId("ResponseBadges");
+    expect(component).toHaveAttribute("data-show-id", "true");
+    expect(component).toHaveTextContent("showId: true");
+    expect(component).toHaveTextContent("Option 1:choice1");
+  });
+
+  test("passes showId prop to ResponseBadges for multiple choice multi", () => {
+    const question = {
+      ...defaultQuestion,
+      type: "multipleChoiceMulti",
+      choices: [
+        { id: "choice1", label: { default: "Option 1" } },
+        { id: "choice2", label: { default: "Option 2" } },
+      ],
+    };
+    render(
+      <RenderResponse
+        responseData={["Option 1", "Option 2"]}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={true}
+      />
+    );
+    const component = screen.getByTestId("ResponseBadges");
+    expect(component).toHaveAttribute("data-show-id", "true");
+    expect(component).toHaveTextContent("showId: true");
+    expect(component).toHaveTextContent("Option 1:choice1,Option 2:choice2");
+  });
+
+  test("handles multiple choice with missing choice IDs", () => {
+    const question = {
+      ...defaultQuestion,
+      type: "multipleChoiceMulti",
+      choices: [{ id: "choice1", label: { default: "Option 1" } }],
+    };
+    render(
+      <RenderResponse
+        responseData={["Option 1", "Unknown Option"]}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={true}
+      />
+    );
+    const component = screen.getByTestId("ResponseBadges");
+    expect(component).toHaveTextContent("Option 1:choice1,Unknown Option:other");
+  });
+
+  test("passes showId=false to components when showId is false", () => {
+    const question = {
+      ...defaultQuestion,
+      type: "multipleChoiceMulti",
+      choices: [{ id: "choice1", label: { default: "Option 1" } }],
+    };
+    render(
+      <RenderResponse
+        responseData={["Option 1"]}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={false}
+      />
+    );
+    const component = screen.getByTestId("ResponseBadges");
+    expect(component).toHaveAttribute("data-show-id", "false");
+    expect(component).toHaveTextContent("showId: false");
+    // Should still extract IDs but showId=false
+    expect(component).toHaveTextContent("Option 1:choice1");
+  });
+
+  test("handles questions without choices property", () => {
+    const question = { ...defaultQuestion, type: "multipleChoiceSingle" }; // No choices property
+    render(
+      <RenderResponse
+        responseData={"Option 1"}
+        question={question}
+        survey={defaultSurvey}
+        language={dummyLanguage}
+        showId={true}
+      />
+    );
+    const component = screen.getByTestId("ResponseBadges");
+    expect(component).toHaveTextContent("Option 1:choice1");
   });
 });

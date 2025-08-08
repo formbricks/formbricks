@@ -94,7 +94,7 @@ const getQuestionColumnsData = (
     return (
       <div className={containerClasses}>
         {choiceIds.map((choiceId, index) => (
-          <IdBadge key={choiceId || index} id={choiceId} />
+          <IdBadge key={`${choiceId}-${index}`} id={choiceId} />
         ))}
       </div>
     );
@@ -195,6 +195,7 @@ const getQuestionColumnsData = (
                 responseData={responseValue}
                 language={language}
                 isExpanded={isExpanded}
+                showId={false}
               />
             );
           },
@@ -246,6 +247,7 @@ const getQuestionColumnsData = (
                 responseData={responseValue}
                 language={language}
                 isExpanded={isExpanded}
+                showId={false}
               />
             );
           },
@@ -312,7 +314,7 @@ export const generateResponseTableColumns = (
     header: t("common.status"),
     cell: ({ row }) => {
       const status = row.original.status;
-      return <ResponseBadges items={[status]} />;
+      return <ResponseBadges items={[{ value: status }]} showId={false} />;
     },
   };
 
@@ -325,9 +327,10 @@ export const generateResponseTableColumns = (
         const tagsArray = tags.map((tag) => tag.name);
         return (
           <ResponseBadges
-            items={tagsArray}
+            items={tagsArray.map((tag) => ({ value: tag }))}
             isExpanded={isExpanded}
             icon={<TagIcon className="h-4 w-4 text-slate-500" />}
+            showId={false}
           />
         );
       }

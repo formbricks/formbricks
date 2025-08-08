@@ -9,7 +9,13 @@ import {
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyMultipleChoiceQuestion,
+  TSurveyPictureSelectionQuestion,
+  TSurveyQuestion,
+  TSurveyRankingQuestion,
+} from "@formbricks/types/surveys/types";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
 import { getFormattedDateTimeString } from "../utils/datetime";
@@ -79,6 +85,17 @@ export const extractChoiceIdsFromResponse = (
   }
 
   return [];
+};
+
+export const getChoiceIdByValue = (
+  value: string,
+  question: TSurveyMultipleChoiceQuestion | TSurveyRankingQuestion | TSurveyPictureSelectionQuestion
+) => {
+  if (question.type === "pictureSelection") {
+    return question.choices.find((choice) => choice.imageUrl === value)?.id ?? "other";
+  }
+
+  return question.choices.find((choice) => choice.label.default === value)?.id ?? "other";
 };
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {

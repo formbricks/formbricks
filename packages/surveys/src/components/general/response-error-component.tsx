@@ -38,7 +38,6 @@ export function ResponseErrorComponent({ questions, responseData, onRetry }: Res
       </div>
       <div className="fb-mt-4 fb-flex fb-flex-1 fb-flex-row fb-items-center fb-justify-end fb-space-x-2">
         <SubmitButton
-          tabIndex={2}
           buttonLabel="Retry"
           isLastQuestion={false}
           onClick={() => {

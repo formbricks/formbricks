@@ -188,4 +188,70 @@ describe("CustomFilter", () => {
       expect(screen.queryByTestId("calendar-mock")).not.toBeInTheDocument();
     });
   });
+
+  test("downloading all and filtered responses in csv and xlsx formats", async () => {
+    const user = userEvent.setup();
+
+    render(<CustomFilter survey={mockSurvey} />);
+
+    // Mock the action to return undefined data to avoid DOM manipulation
+    vi.mocked(getResponsesDownloadUrlAction).mockResolvedValue({
+      data: undefined,
+    });
+
+    // Test CSV download
+    const downloadButton = screen.getByTestId("fb__custom-filter-download-responses-button");
+    await user.click(downloadButton);
+    const downloadAllCsv = screen.getByTestId("fb__custom-filter-download-all-csv");
+    await user.click(downloadAllCsv);
+
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+        surveyId: "survey-1",
+        format: "csv",
+        filterCriteria: {},
+      });
+    });
+
+    // Test XLSX download
+    await user.click(downloadButton);
+    const downloadAllXlsx = screen.getByTestId("fb__custom-filter-download-all-xlsx");
+    await user.click(downloadAllXlsx);
+
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+        surveyId: "survey-1",
+        format: "xlsx",
+        filterCriteria: {},
+      });
+    });
+
+    // Test filtered CSV download
+    await user.click(downloadButton);
+    const downloadFilteredCsv = screen.getByTestId("fb__custom-filter-download-filtered-csv");
+    await user.click(downloadFilteredCsv);
+
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+        surveyId: "survey-1",
+        format: "csv",
+        filterCriteria: {},
+      });
+    });
+
+    // Test filtered XLSX download
+    await user.click(downloadButton);
+    const downloadFilteredXlsx = screen.getByTestId("fb__custom-filter-download-filtered-xlsx");
+    await user.click(downloadFilteredXlsx);
+
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+        surveyId: "survey-1",
+        format: "xlsx",
+        filterCriteria: {},
+      });
+    });
+
+    vi.restoreAllMocks();
+  });
 });

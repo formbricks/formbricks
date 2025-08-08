@@ -8,8 +8,8 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
+  getAccessControlPermission,
   getOrganizationProjectsLimit,
-  getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { createProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
@@ -58,9 +58,9 @@ export const createProjectAction = authenticatedActionClient.schema(ZCreateProje
       }
 
       if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
-        const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+        const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
 
-        if (!canDoRoleManagement) {
+        if (!isAccessControlAllowed) {
           throw new OperationNotAllowedError("You do not have permission to manage roles");
         }
       }

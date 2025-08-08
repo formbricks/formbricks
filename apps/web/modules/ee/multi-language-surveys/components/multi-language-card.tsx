@@ -223,7 +223,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
-          <div className="space-y-4">
+          <div className="space-y-6 pt-3">
             {!isMultiLanguageAllowed && !isMultiLanguageActivated ? (
               <UpgradePrompt
                 title={t("environments.surveys.edit.upgrade_notice_title")}
@@ -257,17 +257,15 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   </div>
                 )}
                 {projectLanguages.length > 1 && (
-                  <div className="my-4 space-y-4">
-                    <div>
-                      {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
-                        <div className="text-sm italic text-slate-500">
-                          {t("environments.surveys.edit.switch_multi_lanugage_on_to_get_started")}
-                        </div>
-                      ) : null}
-                    </div>
+                  <div className="space-y-6">
+                    {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
+                      <div className="text-sm italic text-slate-500">
+                        {t("environments.surveys.edit.switch_multi_lanugage_on_to_get_started")}
+                      </div>
+                    ) : null}
 
                     {isMultiLanguageActivated ? (
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <DefaultLanguageSelect
                           defaultLanguage={defaultLanguage}
                           handleDefaultLanguageChange={handleDefaultLanguageChange}
@@ -291,15 +289,15 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   </div>
                 )}
 
-                <Link href={`/environments/${environmentId}/project/languages`} target="_blank">
-                  <Button className="mt-2" size="sm" variant="secondary">
-                    {t("environments.surveys.edit.manage_languages")}{" "}
-                    <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                <Button asChild size="sm" variant="secondary">
+                  <Link href={`/environments/${environmentId}/project/languages`} target="_blank">
+                    {t("environments.surveys.edit.manage_languages")}
+                    <ArrowUpRight />
+                  </Link>
+                </Button>
                 {isMultiLanguageActivated && (
                   <AdvancedOptionToggle
-                    customContainerClass="px-0 pt-2"
+                    customContainerClass="px-0 pt-0"
                     htmlId="languageSwitch"
                     isChecked={!!localSurvey.showLanguageSwitch}
                     onToggle={handleLanguageSwitchToggle}

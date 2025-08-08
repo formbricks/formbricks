@@ -764,6 +764,8 @@
         "api_host_description": "Ceci est l'URL de votre backend Formbricks.",
         "app_connection": "Connexion d'application",
         "app_connection_description": "Connectez votre application à Formbricks.",
+        "cache_update_delay_description": "Lorsque vous effectuez des mises à jour sur les sondages, contacts, actions ou autres données, cela peut prendre jusqu'à 5 minutes pour que ces modifications apparaissent dans votre application locale exécutant le SDK Formbricks. Ce délai est dû à une limitation de notre système de mise en cache actuel. Nous retravaillons activement le cache et publierons une correction dans Formbricks 4.0.",
+        "cache_update_delay_title": "Les modifications seront reflétées après 5 minutes en raison de la mise en cache",
         "check_out_the_docs": "Consultez la documentation.",
         "dive_into_the_docs": "Plongez dans la documentation.",
         "does_your_widget_work": "Votre widget fonctionne-t-il ?",
