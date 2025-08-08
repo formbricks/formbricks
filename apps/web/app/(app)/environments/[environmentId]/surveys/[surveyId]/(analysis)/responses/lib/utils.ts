@@ -8,6 +8,7 @@ import {
   MousePointerClickIcon,
   SmartphoneIcon,
 } from "lucide-react";
+import { TResponseMeta } from "@formbricks/types/responses";
 
 export const getAddressFieldLabel = (field: string, t: TFnType) => {
   switch (field) {
@@ -77,27 +78,12 @@ export const COLUMNS_ICON_MAP = {
   url: GlobeIcon,
 };
 
-export function getNestedKeys(obj: object, prefix = ""): string[] {
-  let keys: string[] = [];
-  for (const key of Object.keys(obj)) {
-    const value = (obj as any)[key];
-    const path = prefix ? `${prefix}.${key}` : key;
-    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-      keys = keys.concat(getNestedKeys(value, path));
-    } else {
-      keys.push(path);
-    }
-  }
-  return keys;
-}
+const userAgentFields = ["browser", "os", "device"];
+export const METADATA_FIELDS = ["action", "country", ...userAgentFields, "source", "url"];
 
-export function getNestedValue(meta: Object, field: string): string {
-  let cleanField = field;
-
-  while (cleanField.includes(".")) {
-    const key = cleanField.split(".")[0];
-    meta = meta[key];
-    cleanField = cleanField.split(".").slice(1).join(".");
+export const getMetadataValue = (meta: TResponseMeta, label: string) => {
+  if (userAgentFields.includes(label)) {
+    return meta.userAgent?.[label];
   }
-  return meta[cleanField];
-}
+  return meta[label];
+};

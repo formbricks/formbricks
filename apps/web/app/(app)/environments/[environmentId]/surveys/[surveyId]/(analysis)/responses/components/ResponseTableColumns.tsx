@@ -17,15 +17,15 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TFnType } from "@tolgee/react";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
-import { TResponseMeta, TResponseTableData } from "@formbricks/types/responses";
+import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   COLUMNS_ICON_MAP,
+  METADATA_FIELDS,
   getAddressFieldLabel,
   getContactInfoFieldLabel,
   getMetadataFieldLabel,
-  getNestedKeys,
-  getNestedValue,
+  getMetadataValue,
 } from "../lib/utils";
 
 const getQuestionColumnsData = (
@@ -230,22 +230,7 @@ const getQuestionColumnsData = (
 const getMetadataColumnsData = (t: TFnType): ColumnDef<TResponseTableData>[] => {
   const metadataColumns: ColumnDef<TResponseTableData>[] = [];
 
-  const sampleMetaObject: TResponseMeta = {
-    action: "action_column",
-    country: "country_column",
-    userAgent: {
-      browser: "browser_column",
-      os: "os_column",
-      device: "device_column",
-    },
-    source: "source_column",
-    url: "url_column",
-  };
-
-  const metadataFields = getNestedKeys(sampleMetaObject);
-
-  metadataFields.forEach((field) => {
-    const label = field.split(".").pop() || "";
+  METADATA_FIELDS.forEach((label) => {
     const IconComponent = COLUMNS_ICON_MAP[label];
 
     metadataColumns.push({
@@ -257,7 +242,7 @@ const getMetadataColumnsData = (t: TFnType): ColumnDef<TResponseTableData>[] => 
         </div>
       ),
       cell: ({ row }) => {
-        const value = getNestedValue(row.original.meta, field);
+        const value = getMetadataValue(row.original.meta, label);
         if (value) {
           return <div className="truncate text-slate-900">{value}</div>;
         }

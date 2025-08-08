@@ -13,8 +13,7 @@ import {
   getAddressFieldLabel,
   getContactInfoFieldLabel,
   getMetadataFieldLabel,
-  getNestedKeys,
-  getNestedValue,
+  getMetadataValue,
 } from "./utils";
 
 describe("utils", () => {
@@ -191,120 +190,15 @@ describe("utils", () => {
     });
   });
 
-  describe("getNestedKeys", () => {
-    test("returns keys for flat object", () => {
-      const obj = { a: 1, b: 2, c: 3 };
-      const result = getNestedKeys(obj);
-      expect(result).toEqual(["a", "b", "c"]);
+  describe("getMetadataValue", () => {
+    test("returns correct value for action", () => {
+      const result = getMetadataValue({ action: "action_column" }, "action");
+      expect(result).toBe("action_column");
     });
 
-    test("returns nested keys for nested object", () => {
-      const obj = {
-        user: {
-          name: "John",
-          age: 30,
-          address: {
-            street: "123 Main St",
-            city: "Anytown",
-          },
-        },
-        status: "active",
-      };
-      const result = getNestedKeys(obj);
-      expect(result).toEqual(["user.name", "user.age", "user.address.street", "user.address.city", "status"]);
-    });
-
-    test("handles arrays as leaf values", () => {
-      const obj = {
-        tags: ["tag1", "tag2"],
-        user: {
-          hobbies: ["reading", "gaming"],
-        },
-      };
-      const result = getNestedKeys(obj);
-      expect(result).toEqual(["tags", "user.hobbies"]);
-    });
-
-    test("handles null values", () => {
-      const obj = {
-        user: {
-          name: "John",
-          email: null,
-        },
-        data: null,
-      };
-      const result = getNestedKeys(obj);
-      expect(result).toEqual(["user.name", "user.email", "data"]);
-    });
-
-    test("handles empty object", () => {
-      const obj = {};
-      const result = getNestedKeys(obj);
-      expect(result).toEqual([]);
-    });
-
-    test("uses custom prefix", () => {
-      const obj = { name: "John", age: 30 };
-      const result = getNestedKeys(obj, "user");
-      expect(result).toEqual(["user.name", "user.age"]);
-    });
-  });
-
-  describe("getNestedValue", () => {
-    const testObj = {
-      user: {
-        name: "John",
-        profile: {
-          age: 30,
-          location: {
-            city: "New York",
-            country: "USA",
-          },
-        },
-      },
-      status: "active",
-      tags: ["admin", "user"],
-    };
-
-    test("returns value for simple field", () => {
-      const result = getNestedValue(testObj, "status");
-      expect(result).toBe("active");
-    });
-
-    test("returns value for nested field", () => {
-      const result = getNestedValue(testObj, "user.name");
-      expect(result).toBe("John");
-    });
-
-    test("returns value for deeply nested field", () => {
-      const result = getNestedValue(testObj, "user.profile.age");
-      expect(result).toBe(30);
-    });
-
-    test("returns value for very deeply nested field", () => {
-      const result = getNestedValue(testObj, "user.profile.location.city");
-      expect(result).toBe("New York");
-    });
-
-    test("returns array value", () => {
-      const result = getNestedValue(testObj, "tags");
-      expect(result).toEqual(["admin", "user"]);
-    });
-
-    test("returns undefined for non-existent keys", () => {
-      const result = getNestedValue(testObj, "nonexistent");
-      expect(result).toBeUndefined();
-    });
-
-    test("returns undefined for non-existent nested keys", () => {
-      const result = getNestedValue(testObj, "user.nonexistent");
-      expect(result).toBeUndefined();
-    });
-
-    test("handles single level field correctly", () => {
-      const simpleObj = { name: "test" };
-      const result = getNestedValue(simpleObj, "name");
-      expect(result).toBe("test");
+    test("returns correct value for userAgent", () => {
+      const result = getMetadataValue({ userAgent: { browser: "browser_column" } }, "browser");
+      expect(result).toBe("browser_column");
     });
   });
 });
