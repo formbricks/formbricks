@@ -101,6 +101,7 @@ export const mapResponsesToTableData = (
     language: response.language,
     person: response.contact,
     contactAttributes: response.contactAttributes,
+    meta: response.meta,
   }));
 };
 

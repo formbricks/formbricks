@@ -19,43 +19,14 @@ import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-
-const getAddressFieldLabel = (field: string, t: TFnType) => {
-  switch (field) {
-    case "addressLine1":
-      return t("environments.surveys.responses.address_line_1");
-    case "addressLine2":
-      return t("environments.surveys.responses.address_line_2");
-    case "city":
-      return t("environments.surveys.responses.city");
-    case "state":
-      return t("environments.surveys.responses.state_region");
-    case "zip":
-      return t("environments.surveys.responses.zip_post_code");
-    case "country":
-      return t("environments.surveys.responses.country");
-
-    default:
-      break;
-  }
-};
-
-const getContactInfoFieldLabel = (field: string, t: TFnType) => {
-  switch (field) {
-    case "firstName":
-      return t("environments.surveys.responses.first_name");
-    case "lastName":
-      return t("environments.surveys.responses.last_name");
-    case "email":
-      return t("environments.surveys.responses.email");
-    case "phone":
-      return t("environments.surveys.responses.phone");
-    case "company":
-      return t("environments.surveys.responses.company");
-    default:
-      break;
-  }
-};
+import {
+  COLUMNS_ICON_MAP,
+  METADATA_FIELDS,
+  getAddressFieldLabel,
+  getContactInfoFieldLabel,
+  getMetadataFieldLabel,
+  getMetadataValue,
+} from "../lib/utils";
 
 const getQuestionColumnsData = (
   question: TSurveyQuestion,
@@ -256,6 +227,33 @@ const getQuestionColumnsData = (
   }
 };
 
+const getMetadataColumnsData = (t: TFnType): ColumnDef<TResponseTableData>[] => {
+  const metadataColumns: ColumnDef<TResponseTableData>[] = [];
+
+  METADATA_FIELDS.forEach((label) => {
+    const IconComponent = COLUMNS_ICON_MAP[label];
+
+    metadataColumns.push({
+      accessorKey: label,
+      header: () => (
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <span className="h-4 w-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
+          <span className="truncate">{getMetadataFieldLabel(label, t)}</span>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const value = getMetadataValue(row.original.meta, label);
+        if (value) {
+          return <div className="truncate text-slate-900">{value}</div>;
+        }
+        return null;
+      },
+    });
+  });
+
+  return metadataColumns;
+};
+
 export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
@@ -389,6 +387,8 @@ export const generateResponseTableColumns = (
       })
     : [];
 
+  const metadataColumns = getMetadataColumnsData(t);
+
   const verifiedEmailColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "verifiedEmail",
     header: () => (
@@ -410,6 +410,7 @@ export const generateResponseTableColumns = (
     ...questionColumns,
     ...variableColumns,
     ...hiddenFieldColumns,
+    ...metadataColumns,
     tagsColumn,
     notesColumn,
   ];

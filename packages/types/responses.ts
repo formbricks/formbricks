@@ -376,6 +376,7 @@ export const ZResponseTableData = z.object({
   variables: z.record(z.union([z.string(), z.number()])),
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
+  meta: ZResponseMeta,
 });
 
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;

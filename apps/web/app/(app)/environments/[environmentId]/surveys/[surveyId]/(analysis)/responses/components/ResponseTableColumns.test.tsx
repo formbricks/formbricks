@@ -102,6 +102,12 @@ vi.mock("lucide-react", () => ({
   EyeOffIcon: () => <span>EyeOff</span>,
   MailIcon: () => <span>Mail</span>,
   TagIcon: () => <span>Tag</span>,
+  MousePointerClickIcon: () => <span>MousePointerClick</span>,
+  AirplayIcon: () => <span>Airplay</span>,
+  ArrowUpFromDotIcon: () => <span>ArrowUpFromDot</span>,
+  FlagIcon: () => <span>Flag</span>,
+  GlobeIcon: () => <span>Globe</span>,
+  SmartphoneIcon: () => <span>Smartphone</span>,
 }));
 
 // Mock new dependencies
