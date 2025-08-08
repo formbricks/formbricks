@@ -105,8 +105,14 @@ runs:
         set -euo pipefail
         echo "📤 Creating Sentry release and uploading sourcemaps..."
         
-        RELEASE_VERSION="${{ inputs.release_version }}"
+        # Create unique release version to avoid debug ID conflicts (like local test)
+        BASE_VERSION="${{ inputs.release_version }}"
+        TIMESTAMP=$(date +%s)
+        RELEASE_VERSION="${BASE_VERSION}-${TIMESTAMP}"
         ENVIRONMENT="${{ inputs.environment }}"
+        
+        echo "Base version: $BASE_VERSION"
+        echo "Unique release version: $RELEASE_VERSION"
         
         echo "Creating Sentry release: $RELEASE_VERSION"
         sentry-cli releases new "$RELEASE_VERSION" \
