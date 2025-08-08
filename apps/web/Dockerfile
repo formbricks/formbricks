@@ -59,13 +59,6 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
-# Debug: List generated files to verify sourcemaps exist
-RUN echo "🔍 Checking for generated sourcemaps..." && \
-    find apps/web/.next -name "*.map" -type f | head -10 && \
-    echo "📊 Total .map files: $(find apps/web/.next -name "*.map" -type f | wc -l)" && \
-    echo "📂 Static sourcemaps: $(find apps/web/.next/static -name "*.map" -type f | wc -l)" && \
-    echo "🖥️  Server sourcemaps: $(find apps/web/.next/server -name "*.map" -type f | wc -l)"
-
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
 
@@ -95,10 +88,8 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
-# Copy the entire .next directory to preserve all sourcemaps (including those in standalone)
+# Copy the entire .next directory to preserve all sourcemaps and debug IDs
 COPY --from=installer /app/apps/web/.next ./apps/web/.next
-
-# Set permissions for copied files
 RUN chown -R nextjs:nextjs ./apps/web/.next && chmod -R 755 ./apps/web/.next
 
 COPY --from=installer /app/apps/web/public ./apps/web/public
