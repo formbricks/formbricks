@@ -52,9 +52,9 @@ Prevent command injection by properly quoting variables:
 run: echo "Processing ${{ inputs.user_input }}"
 
 # ✅ GOOD - properly quoted
-run: echo "Processing ${{ inputs.user_input }}"
 env:
   USER_INPUT: ${{ inputs.user_input }}
+run: echo "Processing ${USER_INPUT}"
 ```
 
 Use `${VARIABLE}` syntax in shell scripts instead of `$VARIABLE`.
@@ -70,7 +70,7 @@ run: curl -H "Authorization: Bearer ${{ secrets.TOKEN }}" api.example.com
 # ✅ GOOD
 env:
   API_TOKEN: ${{ secrets.TOKEN }}
-run: curl -H "Authorization: Bearer $API_TOKEN" api.example.com
+run: curl -H "Authorization: Bearer ${API_TOKEN}" api.example.com
 ```
 
 ## Workflow Structure Best Practices
