@@ -1,4 +1,3 @@
-
 name: 'Upload Sentry Sourcemaps'
 description: 'Extract sourcemaps from Docker image and upload to Sentry'
 
@@ -31,9 +30,9 @@ runs:
         set -euo pipefail
         echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
 
-        # Create temporary container from the image and capture its ID
-        echo "Creating temporary container..."
-        CONTAINER_ID=$(docker create "${{ inputs.docker_image }}")
+        # Create temporary container from the ARM64 image specifically (for Mac M2 compatibility)
+        echo "Creating temporary container from ARM64 platform..."
+        CONTAINER_ID=$(docker create --platform linux/arm64 "${{ inputs.docker_image }}")
         echo "Container created with ID: $CONTAINER_ID"
 
         # Set up cleanup function to ensure container is removed on script exit
@@ -109,17 +108,19 @@ runs:
         RELEASE_VERSION="${{ inputs.release_version }}"
         ENVIRONMENT="${{ inputs.environment }}"
         
+        echo "Release version (must match app SENTRY_RELEASE): $RELEASE_VERSION"
+        
         echo "Creating Sentry release: $RELEASE_VERSION"
         sentry-cli releases new "$RELEASE_VERSION" \
           --org formbricks \
           --project formbricks-cloud
         
-        echo "Uploading sourcemaps (exactly like local test)..."
+        echo "Uploading sourcemaps with app:// prefix for Docker environment..."
         sentry-cli sourcemaps upload \
           --release="$RELEASE_VERSION" \
           --org=formbricks \
           --project=formbricks-cloud \
-          --url-prefix="~/_next/" \
+          --url-prefix="app:///_next/" \
           ./extracted-next/
         
         echo "Setting release environment to: $ENVIRONMENT"
