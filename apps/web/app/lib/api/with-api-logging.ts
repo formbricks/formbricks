@@ -185,11 +185,10 @@ const processResponse = async (
   error?: any
 ): Promise<void> => {
   const correlationId = req.headers.get("x-request-id") ?? "";
-  const isSuccess = res.status === 200;
 
   // Handle audit logging
   if (auditLog) {
-    if (isSuccess) {
+    if (res.ok) {
       auditLog.status = "success";
     } else {
       auditLog.eventId = correlationId;
@@ -197,7 +196,7 @@ const processResponse = async (
   }
 
   // Handle error logging
-  if (!isSuccess) {
+  if (!res.ok) {
     logErrorDetails(res, req, correlationId, error);
   }
 
