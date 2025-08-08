@@ -15,6 +15,14 @@ on:
         description: "Docker image tag (leave empty to use release_version)"
         required: false
         type: string
+      environment:
+        description: "Sentry environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
 
 permissions:
   contents: read
