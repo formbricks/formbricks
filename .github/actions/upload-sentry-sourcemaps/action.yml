@@ -100,7 +100,6 @@ runs:
         environment: ${{ inputs.environment }}
         release: ${{ inputs.release_version }}
         sourcemaps: './extracted-next/'
-        url_prefix: 'app:///_next/'
         set_commits: auto
 
     - name: Clean up extracted files
