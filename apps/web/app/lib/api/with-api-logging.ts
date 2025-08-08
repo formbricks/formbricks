@@ -333,10 +333,6 @@ export const withV1ApiWrapper: {
     const { result, error } = await executeHandler(handler, req, props, auditLog, authentication);
     const res = result.response;
 
-    if (res.status >= 500) {
-      logger.error({ error, url: req.url }, "Error in handler");
-    }
-
     // === Response Processing & Logging ===
     await processResponse(res, req, auditLog, error);
 
