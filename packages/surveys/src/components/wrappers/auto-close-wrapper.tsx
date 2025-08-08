@@ -66,11 +66,12 @@ export function AutoCloseWrapper({
       <div
         onClick={stopCountdown}
         onMouseOver={stopCountdown} // NOSONAR // We can't check for onFocus because the survey is auto focused after the first question and we don't want to stop the countdown
+        role="button"
         className="fb-h-full fb-w-full"
         data-testid="fb__surveys__auto-close-wrapper-test"
         onKeyDown={stopCountdown}
-        tabIndex={0}
-        aria-label="Auto close wrapper">
+        aria-label="Auto close wrapper"
+        onTouchStart={stopCountdown}>
         {children}
       </div>
       {survey.type === "app" && survey.autoClose && (
