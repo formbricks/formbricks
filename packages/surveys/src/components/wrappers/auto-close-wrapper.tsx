@@ -62,13 +62,22 @@ export function AutoCloseWrapper({
   }, [survey.autoClose]);
 
   return (
-    <div className="fb-h-full fb-w-full">
-      {survey.autoClose && showAutoCloseProgressBar ? (
-        <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />
-      ) : null}
-      <div onClick={stopCountdown} onMouseOver={stopCountdown} className="fb-h-full fb-w-full">
+    <div className="fb-h-full fb-w-full fb-flex fb-flex-col">
+      <div // NOSONAR // We can't have a role="button" here as sonarqube registers more issues with this. This is indeed an interactive element.
+        onClick={stopCountdown}
+        onMouseOver={stopCountdown} // NOSONAR // We can't check for onFocus because the survey is auto focused after the first question and we don't want to stop the countdown
+        className="fb-h-full fb-w-full"
+        data-testid="fb__surveys__auto-close-wrapper-test"
+        onKeyDown={stopCountdown}
+        aria-label="Auto close wrapper"
+        onTouchStart={stopCountdown}>
         {children}
       </div>
+      {survey.type === "app" && survey.autoClose && (
+        <div className="fb-h-2 fb-w-full" aria-hidden={!showAutoCloseProgressBar}>
+          {showAutoCloseProgressBar && <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />}
+        </div>
+      )}
     </div>
   );
 }
