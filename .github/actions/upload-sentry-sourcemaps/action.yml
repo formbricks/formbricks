@@ -138,11 +138,6 @@ runs:
           --project formbricks-cloud
         
         echo "✅ Sourcemap upload completed successfully!"
-        
-        echo "Verifying sourcemap upload:"
-        sentry-cli releases files list "$RELEASE_VERSION" \
-          --org formbricks \
-          --project formbricks-cloud | head -10
 
     - name: Clean up extracted files
       shell: bash
