@@ -10,7 +10,7 @@ interface SurveyContainerProps {
   onClose?: () => void;
   clickOutside?: boolean;
   isOpen?: boolean;
-  dir: "ltr" | "rtl" | "auto";
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function SurveyContainer({
@@ -76,7 +76,7 @@ export function SurveyContainer({
   }
 
   return (
-    <div id="fbjs" className="fb-formbricks-form" dir={dir}>
+    <div id="fbjs" className="fb-formbricks-form" dir={dir ?? "auto"}>
       <div
         aria-live="assertive"
         className={cn(

@@ -16,9 +16,16 @@ const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCode: str
     return false;
   }
 
-  const firstQuestionHeadline = survey.questions[0].headline[languageCode];
+  for (const question of survey.questions) {
+    const questionHeadline = question.headline[languageCode];
 
-  return isRTL(firstQuestionHeadline);
+    // the first non-empty question headline is the survey direction
+    if (questionHeadline) {
+      return isRTL(questionHeadline);
+    }
+  }
+
+  return false;
 };
 
 export const renderSurveyInline = (props: SurveyContainerProps) => {

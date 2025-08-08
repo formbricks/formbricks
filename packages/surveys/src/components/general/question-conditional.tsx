@@ -44,6 +44,7 @@ interface QuestionConditionalProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function QuestionConditional({
@@ -65,6 +66,7 @@ export function QuestionConditional({
   currentQuestionId,
   isBackButtonHidden,
   onOpenExternalURL,
+  dir,
 }: QuestionConditionalProps) {
   const getResponseValueForRankingQuestion = (
     value: string[],
@@ -153,6 +155,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
     <CTAQuestion
@@ -188,6 +191,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
     <ConsentQuestion

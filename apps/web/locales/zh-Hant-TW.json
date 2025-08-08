@@ -764,6 +764,8 @@
         "api_host_description": "這是您 Formbricks 後端的網址。",
         "app_connection": "應用程式連線",
         "app_connection_description": "將您的應用程式連線至 Formbricks。",
+        "cache_update_delay_description": "當您對調查、聯絡人、操作或其他資料進行更新時，可能需要長達 5 分鐘這些變更才能顯示在執行 Formbricks SDK 的本地應用程式中。此延遲是因我們目前快取系統的限制。我們正積極重新設計快取，並將在 Formbricks 4.0 中發佈修補程式。",
+        "cache_update_delay_title": "更改將於 5 分鐘後因快取而反映",
         "check_out_the_docs": "查看文件。",
         "dive_into_the_docs": "深入瞭解文件。",
         "does_your_widget_work": "您的小工具運作嗎？",
