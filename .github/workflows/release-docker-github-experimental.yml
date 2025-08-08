@@ -52,23 +52,27 @@ jobs:
           echo "Reference type: $REF_TYPE"
           echo "Reference name: $REF_NAME"
 
+          # Create unique timestamped version for testing sourcemap resolution
+          TIMESTAMP=$(date +%s)
+          
           if [[ "$REF_TYPE" == "tag" ]]; then
-            # If running from a tag, use the tag name
+            # If running from a tag, use the tag name + timestamp
             if [[ "$REF_NAME" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
               # Tag looks like a SemVer, use it directly (remove 'v' prefix if present)
-              VERSION=$(echo "$REF_NAME" | sed 's/^v//')
-              echo "Using SemVer tag: $VERSION"
+              BASE_VERSION=$(echo "$REF_NAME" | sed 's/^v//')
+              VERSION="${BASE_VERSION}-${TIMESTAMP}"
+              echo "Using SemVer tag with timestamp: $VERSION"
             else
               # Tag is not SemVer, treat as prerelease
               SANITIZED_TAG=$(echo "$REF_NAME" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
-              VERSION="0.0.0-$SANITIZED_TAG"
-              echo "Using tag as prerelease: $VERSION"
+              VERSION="0.0.0-${SANITIZED_TAG}-${TIMESTAMP}"
+              echo "Using tag as prerelease with timestamp: $VERSION"
             fi
           else
-            # Running from branch, use branch name as prerelease
+            # Running from branch, use branch name as prerelease + timestamp
             SANITIZED_BRANCH=$(echo "$REF_NAME" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
-            VERSION="0.0.0-$SANITIZED_BRANCH"
-            echo "Using branch as prerelease: $VERSION"
+            VERSION="0.0.0-${SANITIZED_BRANCH}-${TIMESTAMP}"
+            echo "Using branch as prerelease with timestamp: $VERSION"
           fi
 
           echo "VERSION=$VERSION" >> $GITHUB_ENV
