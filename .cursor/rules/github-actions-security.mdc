@@ -159,7 +159,7 @@ container: node:18@sha256:a1ba21bf0c92931d02a8416f0a54daad66cb36a85d6a37b82dfe16
 
     # Use absolute paths and validate
     SAFE_PATH=$(realpath "${{ inputs.file_path }}")
-    if [[ "$SAFE_PATH" != "$GITHUB_WORKSPACE"/* ]]; then
+    if [[ "$SAFE_PATH" != "${GITHUB_WORKSPACE}"/* ]]; then
       echo "❌ Path outside workspace"
       exit 1
     fi
