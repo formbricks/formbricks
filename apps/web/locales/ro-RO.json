@@ -337,6 +337,7 @@
     "sales": "Vânzări",
     "save": "Salvează",
     "save_changes": "Salvează modificările",
+    "saving": "Salvare",
     "scheduled": "Programat",
     "search": "Căutare",
     "security": "Securitate",
@@ -764,6 +765,8 @@
         "api_host_description": "Acesta este URL-ul backend-ului tău Formbricks.",
         "app_connection": "Conectare aplicație",
         "app_connection_description": "Conectează aplicația ta la Formbricks.",
+        "cache_update_delay_description": "Când faci actualizări la sondaje, contacte, acțiuni sau alte date, poate dura până la 5 minute pentru ca aceste modificări să apară în aplicația locală care rulează SDK Formbricks. Această întârziere se datorează unei limitări în sistemul nostru actual de caching. Revedem activ cache-ul și vom lansa o soluție în Formbricks 4.0.",
+        "cache_update_delay_title": "Modificările vor fi reflectate după 5 minute datorită memorării în cache",
         "check_out_the_docs": "Consultați documentația.",
         "dive_into_the_docs": "Accesați documentația.",
         "does_your_widget_work": "Funcționează widgetul dvs.?",
@@ -1543,6 +1546,7 @@
         "send_survey_to_audience_who_match": "Trimiteți sondajul către publicul care se potrivește...",
         "send_your_respondents_to_a_page_of_your_choice": "Trimiteți respondenții către o pagină la alegerea dumneavoastră",
         "set_the_global_placement_in_the_look_feel_settings": "Setați amplasarea globală în setările Aspect & Stil.",
+        "settings_saved_successfully": "Setările au fost salvate cu succes.",
         "seven_points": "7 puncte",
         "show_advanced_settings": "Afișați setările avansate",
         "show_button": "Afișează butonul",
@@ -1713,6 +1717,19 @@
           "embed_mode_description": "Incorporează sondajul tău cu un design minimalist, eliminând spațiul și fundalul.",
           "nav_title": "Incorporare pe site web"
         },
+        "link_settings": {
+          "description": "Atribuiți linkurilor un titlu, o descriere și o imagine personalizată pentru partajarea în public.",
+          "language_help_text": "Meta datele sunt încărcate pe baza valorii `lang` din URL.",
+          "link_description": "Descriere legătură",
+          "link_description_description": "Descrierile între 55-200 de caractere au cele mai bune performanțe.",
+          "link_description_placeholder": "Ajutați-ne să ne îmbunătățim împărtășindu-vă gândurile.",
+          "link_title": "Titlu link",
+          "link_title_description": "Titlurile scurte funcționează cel mai bine ca Meta Title-uri.",
+          "link_title_placeholder": "Chestionar de feedback al clienților",
+          "preview_image": "Previzualizare imagine",
+          "preview_image_description": "Imaginile panoramice cu dimensiuni de fișier mici (<4MB) au cel mai bun randament.",
+          "title": "Setări link"
+        },
         "personal_links": {
           "create_and_manage_segments": "Creați și gestionați segmentele dvs. sub Contacte > Segmente",
           "description": "Generează linkuri personale pentru un segment și corelează răspunsurile la sondaje cu fiecare contact.",
@@ -1744,6 +1761,7 @@
           "send_preview": "Trimite previzualizare",
           "send_preview_email": "Trimite email de previzualizare"
         },
+        "share_settings_title": "Setări de partajare",
         "share_view_title": "Distribuie prin",
         "social_media": {
           "description": "Obține răspunsuri de la contactele tale pe diferite rețele sociale.",
