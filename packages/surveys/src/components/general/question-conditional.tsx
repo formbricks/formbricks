@@ -104,6 +104,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -121,6 +122,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -138,6 +140,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
     <NPSQuestion
@@ -243,6 +246,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
     <FileUploadQuestion
