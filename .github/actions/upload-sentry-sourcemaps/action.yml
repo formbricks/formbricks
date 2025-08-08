@@ -120,7 +120,7 @@ runs:
           --release="$RELEASE_VERSION" \
           --org=formbricks \
           --project=formbricks-cloud \
-          --url-prefix="~/_next/" \
+          --url-prefix="app:///_next/" \
           ./extracted-next/
         
         echo "Setting release environment to: $ENVIRONMENT"
