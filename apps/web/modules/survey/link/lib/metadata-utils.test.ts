@@ -80,6 +80,7 @@ describe("Metadata Utils", () => {
         title: "Survey",
         description: "Complete this survey",
         survey: null,
+        ogImage: undefined,
       });
     });
 
@@ -88,6 +89,7 @@ describe("Metadata Utils", () => {
         id: mockSurveyId,
         environmentId: mockEnvironmentId,
         name: "Test Survey",
+        metadata: {},
         welcomeCard: {
           enabled: true,
           timeToFinish: false,
@@ -112,6 +114,7 @@ describe("Metadata Utils", () => {
         title: "Welcome Headline | Formbricks",
         description: "Welcome Description",
         survey: mockSurvey,
+        ogImage: undefined,
       });
     });
 
@@ -120,6 +123,7 @@ describe("Metadata Utils", () => {
         id: mockSurveyId,
         environmentId: mockEnvironmentId,
         name: "Test Survey",
+        metadata: {},
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
@@ -134,6 +138,7 @@ describe("Metadata Utils", () => {
         title: "Test Survey | Formbricks",
         description: "Complete this survey",
         survey: mockSurvey,
+        ogImage: undefined,
       });
     });
 
@@ -145,6 +150,7 @@ describe("Metadata Utils", () => {
         id: mockSurveyId,
         environmentId: mockEnvironmentId,
         name: "Test Survey",
+        metadata: {},
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
