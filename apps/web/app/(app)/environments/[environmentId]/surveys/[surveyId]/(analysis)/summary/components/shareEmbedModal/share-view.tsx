@@ -69,6 +69,16 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
 
   const shareSettingsTabs = tabs.filter((tab) => tab.type === "share_setting");
   const shareViaTabs = tabs.filter((tab) => tab.type === "share_via");
+  const sideBarGroups = [
+    {
+      label: t("environments.surveys.share.share_view_title"),
+      tabs: shareViaTabs,
+    },
+    {
+      label: t("environments.surveys.share.share_settings_title"),
+      tabs: shareSettingsTabs,
+    },
+  ];
 
   return (
     <div className="h-full">
@@ -83,16 +93,14 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
           }>
           <Sidebar className="relative h-full p-0" variant="inset" collapsible="icon">
             <SidebarContent className="h-full rounded-l-lg border-r border-slate-200 bg-white p-4">
-              <SidebarGroup className="p-0">
-                <SidebarGroupLabel>
-                  <Small className="text-xs text-slate-500">
-                    {t("environments.surveys.share.share_view_title")}
-                  </Small>
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu className="flex flex-col gap-1">
-                    {shareViaTabs.map(
-                      (tab) =>
+              {sideBarGroups.map((group) => (
+                <SidebarGroup className="p-0" key={group.label}>
+                  <SidebarGroupLabel>
+                    <Small className="text-xs text-slate-500">{group.label}</Small>
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu className="flex flex-col gap-1">
+                      {group.tabs.map((tab) => (
                         <SidebarMenuItem key={tab.id}>
                           <SidebarMenuButton
                             onClick={() => setActiveId(tab.id)}
@@ -108,39 +116,11 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                             <span>{tab.label}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
-                    )}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-              <SidebarGroup className="p-0">
-                <SidebarGroupLabel>
-                  <Small className="text-xs text-slate-500">
-                    {t("environments.surveys.share.share_settings_title")}
-                  </Small>
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu className="flex flex-col gap-1">
-                    {shareSettingsTabs.map(
-                      (tab) =>
-                        <SidebarMenuItem key={tab.id}>
-                          <SidebarMenuButton
-                            onClick={() => setActiveId(tab.id)}
-                            className={cn(
-                              "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                              tab.id === activeId
-                                ? "bg-slate-100 font-medium text-slate-900"
-                                : "text-slate-700"
-                            )}
-                            tooltip={tab.label}
-                            isActive={tab.id === activeId}>
-                            <tab.icon className="h-4 w-4 text-slate-700" />
-                            <span>{tab.label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    )}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              ))}
             </SidebarContent>
           </Sidebar>
         </SidebarProvider>

@@ -139,6 +139,26 @@ export const LinkSettingsTab = ({ survey, isReadOnly, locale }: LinkSettingsTabP
     setIsSaving(false);
   };
 
+  const inputFields: {
+    name: "title" | "description";
+    label: string;
+    description: string;
+    placeholder: string;
+  }[] = [
+    {
+      name: "title",
+      label: t("environments.surveys.share.link_settings.link_title"),
+      description: t("environments.surveys.share.link_settings.link_title_description"),
+      placeholder: t("environments.surveys.share.link_settings.link_title_placeholder"),
+    },
+    {
+      name: "description",
+      label: t("environments.surveys.share.link_settings.link_description"),
+      description: t("environments.surveys.share.link_settings.link_description_description"),
+      placeholder: t("environments.surveys.share.link_settings.link_description_placeholder"),
+    },
+  ];
+
   return (
     <div className="px-1">
       <FormProvider {...form}>
@@ -167,65 +187,37 @@ export const LinkSettingsTab = ({ survey, isReadOnly, locale }: LinkSettingsTabP
             </FormItem>
           )}
 
-          {/* Link Title */}
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("environments.surveys.share.link_settings.link_title")}</FormLabel>
-                <FormControl>
-                  <Input
-                    value={field.value[currentLangCode] || ""}
-                    className="bg-white"
-                    onChange={(e) => {
-                      const updatedValue = {
-                        ...field.value,
-                        [currentLangCode]: e.target.value,
-                      };
-                      field.onChange(updatedValue);
-                    }}
-                    placeholder={t("environments.surveys.share.link_settings.link_title_placeholder")}
-                    disabled={isReadOnly}
-                  />
-                </FormControl>
-                <FormDescription>
-                  {t("environments.surveys.share.link_settings.link_title_description")}
-                </FormDescription>
-                <FormError />
-              </FormItem>
-            )}
-          />
-
-          {/* Link Description */}
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("environments.surveys.share.link_settings.link_description")}</FormLabel>
-                <FormControl>
-                  <Input
-                    value={field.value[currentLangCode] || ""}
-                    className="bg-white"
-                    onChange={(e) => {
-                      const updatedValue = {
-                        ...field.value,
-                        [currentLangCode]: e.target.value,
-                      };
-                      field.onChange(updatedValue);
-                    }}
-                    placeholder={t("environments.surveys.share.link_settings.link_description_placeholder")}
-                    disabled={isReadOnly}
-                  />
-                </FormControl>
-                <FormDescription>
-                  {t("environments.surveys.share.link_settings.link_description_description")}
-                </FormDescription>
-                <FormError />
-              </FormItem>
-            )}
-          />
+          {inputFields.map((inputField) => {
+            return (
+              <FormField
+                key={inputField.name}
+                control={form.control}
+                name={inputField.name}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{inputField.label}</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={field.value[currentLangCode] || ""}
+                        className="bg-white"
+                        onChange={(e) => {
+                          const updatedValue = {
+                            ...field.value,
+                            [currentLangCode]: e.target.value,
+                          };
+                          field.onChange(updatedValue);
+                        }}
+                        placeholder={inputField.placeholder}
+                        disabled={isReadOnly}
+                      />
+                    </FormControl>
+                    <FormDescription>{inputField.description}</FormDescription>
+                    <FormError />
+                  </FormItem>
+                )}
+              />
+            );
+          })}
 
           {/* Preview Image */}
           <FormField
