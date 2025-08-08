@@ -11,7 +11,6 @@ import { type JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type {
-  TI18nString,
   TSurveyMatrixQuestion,
   TSurveyMatrixQuestionChoice,
   TSurveyQuestionId,

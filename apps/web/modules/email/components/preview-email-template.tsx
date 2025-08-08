@@ -380,8 +380,8 @@ export async function PreviewEmailTemplate({
                   return (
                     <Column
                       className="text-question-color max-w-40 break-words px-4 py-2 text-center"
-                      key={getLocalizedValue(column, "default")}>
-                      {getLocalizedValue(column, "default")}
+                      key={column.id}>
+                      {getLocalizedValue(column.label, "default")}
                     </Column>
                   );
                 })}
@@ -390,15 +390,13 @@ export async function PreviewEmailTemplate({
                 return (
                   <Row
                     className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-custom`}
-                    key={getLocalizedValue(row, "default")}>
+                    key={row.id}>
                     <Column className="w-40 break-words px-4 py-2">
-                      {getLocalizedValue(row, "default")}
+                      {getLocalizedValue(row.label, "default")}
                     </Column>
-                    {firstQuestion.columns.map((_) => {
+                    {firstQuestion.columns.map((column) => {
                       return (
-                        <Column
-                          className="text-question-color px-4 py-2"
-                          key={getLocalizedValue(_, "default")}>
+                        <Column className="text-question-color px-4 py-2" key={column.id}>
                           <Section className="bg-card-bg-color h-4 w-4 rounded-full p-2 outline" />
                         </Column>
                       );
