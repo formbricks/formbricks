@@ -105,16 +105,18 @@ runs:
         set -euo pipefail
         echo "📤 Creating Sentry release and uploading sourcemaps..."
         
-        # Create unique release version to avoid debug ID conflicts (like local test)
-        BASE_VERSION="${{ inputs.release_version }}"
-        TIMESTAMP=$(date +%s)
-        RELEASE_VERSION="${BASE_VERSION}-${TIMESTAMP}"
+        RELEASE_VERSION="${{ inputs.release_version }}"
         ENVIRONMENT="${{ inputs.environment }}"
         
-        echo "Base version: $BASE_VERSION"
-        echo "Unique release version: $RELEASE_VERSION"
+        echo "Release version (must match app SENTRY_RELEASE): $RELEASE_VERSION"
         
-        echo "Creating Sentry release: $RELEASE_VERSION"
+        echo "Ensuring clean release (delete existing if present): $RELEASE_VERSION"
+        # Delete existing release to avoid debug ID conflicts (ignore errors if doesn't exist)
+        sentry-cli releases delete "$RELEASE_VERSION" \
+          --org formbricks \
+          --project formbricks-cloud 2>/dev/null || echo "No existing release to delete (this is fine)"
+        
+        echo "Creating fresh Sentry release: $RELEASE_VERSION"
         sentry-cli releases new "$RELEASE_VERSION" \
           --org formbricks \
           --project formbricks-cloud
