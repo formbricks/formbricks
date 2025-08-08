@@ -30,9 +30,9 @@ runs:
         set -euo pipefail
         echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
 
-        # Create temporary container from the image and capture its ID
-        echo "Creating temporary container..."
-        CONTAINER_ID=$(docker create "${{ inputs.docker_image }}")
+        # Create temporary container from the ARM64 image specifically (for Mac M2 compatibility)
+        echo "Creating temporary container from ARM64 platform..."
+        CONTAINER_ID=$(docker create --platform linux/arm64 "${{ inputs.docker_image }}")
         echo "Container created with ID: $CONTAINER_ID"
 
         # Set up cleanup function to ensure container is removed on script exit
@@ -120,7 +120,7 @@ runs:
           --release="$RELEASE_VERSION" \
           --org=formbricks \
           --project=formbricks-cloud \
-          --url-prefix="app:///_next/" \
+          --url-prefix="~/_next/" \
           ./extracted-next/
         
         echo "Setting release environment to: $ENVIRONMENT"
