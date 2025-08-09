@@ -437,6 +437,9 @@ const sentryOptions = {
   autoUploadSourceMaps: false,
   hideSourceMaps: false,
 
+  // CRITICAL: Disable deletion of sourcemaps to ensure all referenced files exist
+  deleteFilesAfterUpload: false,
+
   // Disable telemetry to prevent data collection
   telemetry: false,
 
