@@ -4,6 +4,7 @@ import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
 import { writeData } from "@/lib/googleSheet/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { writeData as writeNotionData } from "@/lib/notion/service";
+import { writeData as writeDataToPlain } from "@/lib/plain/service";
 import { processResponseData } from "@/lib/responses";
 import { writeDataToSlack } from "@/lib/slack/service";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
@@ -15,6 +16,7 @@ import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { TIntegrationPlain, TIntegrationPlainConfigData } from "@formbricks/types/integration/plain";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TResponseMeta } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -109,6 +111,13 @@ export const handleIntegrations = async (
           logger.error(notionResult.error, "Error in notion integration");
         }
         break;
+      case "plain": {
+        const plainResult = await handlePlainIntegration(integration as TIntegrationPlain, data);
+        if (!plainResult.ok) {
+          logger.error(plainResult.error, "Error in plain integration");
+        }
+        break;
+      }
     }
   }
 };
@@ -434,5 +443,31 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
   } catch (error) {
     logger.error(error, "Payload build failed!");
     throw new Error("Payload build failed!");
+  }
+};
+
+const handlePlainIntegration = async (
+  integration: TIntegrationPlain,
+  data: TPipelineInput
+): Promise<Result<void, Error>> => {
+  try {
+    if (integration.config.data.length > 0) {
+      for (const element of integration.config.data) {
+        if (element.surveyId === data.surveyId) {
+          const configData: TIntegrationPlainConfigData = element;
+          await writeDataToPlain(integration.config, data, configData);
+        }
+      }
+    }
+
+    return {
+      ok: true,
+      data: undefined,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err : new Error(String(err)),
+    };
   }
 };

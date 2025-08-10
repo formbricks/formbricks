@@ -33,5 +33,12 @@ export const getIntegrationDetails = (integrationType: TIntegrationType, t: TFnT
         connectButtonLabel: t("environments.integrations.slack.connect_with_slack"),
         notConfiguredText: t("environments.integrations.slack.slack_integration_is_not_configured"),
       };
+    case "plain":
+      return {
+        text: t("environments.integrations.plain.plain_integration_description"),
+        docsLink: "https://formbricks.com/docs/integrations/plain",
+        connectButtonLabel: t("environments.integrations.plain.connect_with_plain"),
+        notConfiguredText: t("environments.integrations.plain.plain_integration_is_not_configured"),
+      };
   }
 };
