@@ -1,16 +1,15 @@
-import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
+import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { deleteContact, getContact } from "./lib/contact";
 
 // Please use the methods provided by the client API to update a person
 
 const fetchAndAuthorizeContact = async (
   contactId: string,
-  authentication: TAuthenticationApiKey,
+  environmentPermissions: NonNullable<TApiKeyAuthentication>["environmentPermissions"],
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) => {
   const contact = await getContact(contactId);
@@ -19,54 +18,23 @@ const fetchAndAuthorizeContact = async (
     return { error: responses.notFoundResponse("Contact", contactId) };
   }
 
-  if (!hasPermission(authentication.environmentPermissions, contact.environmentId, requiredPermission)) {
+  if (!hasPermission(environmentPermissions, contact.environmentId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
   return { contact };
 };
 
-export const GET = async (
-  request: Request,
-  { params: paramsPromise }: { params: Promise<{ contactId: string }> }
-): Promise<Response> => {
-  try {
-    const params = await paramsPromise;
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
-    }
-
-    const result = await fetchAndAuthorizeContact(params.contactId, authentication, "GET");
-    if (result.error) return result.error;
-
-    return responses.successResponse(result.contact);
-  } catch (error) {
-    return handleErrorResponse(error);
-  }
-};
-
-export const DELETE = withApiLogging(
-  async (
-    request: Request,
-    { params: paramsPromise }: { params: Promise<{ contactId: string }> },
-    auditLog: ApiAuditLog
-  ) => {
-    const params = await paramsPromise;
-    auditLog.targetId = params.contactId;
-
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    props,
+    authentication,
+  }: {
+    props: { params: Promise<{ contactId: string }> };
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-      auditLog.organizationId = authentication.organizationId;
+      const params = await props.params;
 
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {
@@ -77,7 +45,56 @@ export const DELETE = withApiLogging(
         };
       }
 
-      const result = await fetchAndAuthorizeContact(params.contactId, authentication, "DELETE");
+      const result = await fetchAndAuthorizeContact(
+        params.contactId,
+        authentication.environmentPermissions,
+        "GET"
+      );
+      if (result.error) {
+        return {
+          response: result.error,
+        };
+      }
+
+      return {
+        response: responses.successResponse(result.contact),
+      };
+    } catch (error) {
+      return {
+        response: handleErrorResponse(error),
+      };
+    }
+  },
+});
+
+export const DELETE = withV1ApiWrapper({
+  handler: async ({
+    props,
+    auditLog,
+    authentication,
+  }: {
+    props: { params: Promise<{ contactId: string }> };
+    auditLog: TApiAuditLog;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
+    const params = await props.params;
+    auditLog.targetId = params.contactId;
+
+    try {
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
+        return {
+          response: responses.forbiddenResponse(
+            "Contacts are only enabled for Enterprise Edition, please upgrade."
+          ),
+        };
+      }
+
+      const result = await fetchAndAuthorizeContact(
+        params.contactId,
+        authentication.environmentPermissions,
+        "DELETE"
+      );
       if (result.error) {
         return {
           response: result.error,
@@ -95,6 +112,6 @@ export const DELETE = withApiLogging(
       };
     }
   },
-  "deleted",
-  "contact"
-);
+  action: "deleted",
+  targetType: "contact",
+});
