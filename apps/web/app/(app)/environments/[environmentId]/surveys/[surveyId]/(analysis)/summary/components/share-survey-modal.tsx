@@ -210,7 +210,7 @@ export const ShareSurveyModal = ({
     setShowView(view);
   };
 
-  const handleEmbedViewWithTab = (tabId: ShareViaType) => {
+  const handleEmbedViewWithTab = (tabId: ShareViaType | ShareSettingsType) => {
     setShowView("share");
     setActiveId(tabId);
   };
