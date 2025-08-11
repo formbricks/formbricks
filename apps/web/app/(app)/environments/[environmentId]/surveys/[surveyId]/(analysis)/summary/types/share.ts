@@ -13,3 +13,8 @@ export enum ShareViaType {
 export enum ShareSettingsType {
   LINK_SETTINGS = "link-settings",
 }
+
+export enum LinkTabsType {
+  SHARE_VIA = "share_via",
+  SHARE_SETTING = "share_setting",
+}

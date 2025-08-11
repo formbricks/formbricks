@@ -230,7 +230,7 @@ export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
 export const ZSurveyMetadata = z.object({
   title: ZI18nString.optional(),
   description: ZI18nString.optional(),
-  ogImage: z.string().optional(),
+  ogImage: z.string().url().optional(),
 });
 
 export type TSurveyMetadata = z.infer<typeof ZSurveyMetadata>;

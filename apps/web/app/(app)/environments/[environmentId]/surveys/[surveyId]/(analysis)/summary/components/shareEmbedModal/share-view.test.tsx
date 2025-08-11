@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { ShareSettingsType, ShareViaType } from "../../types/share";
+import { LinkTabsType, ShareSettingsType, ShareViaType } from "../../types/share";
 import { ShareView } from "./share-view";
 
 // Mock sidebar components
@@ -283,7 +283,7 @@ const MockLinkSettingsTab = ({
 const mockTabs = [
   {
     id: ShareViaType.EMAIL,
-    type: "share_via" as const,
+    type: LinkTabsType.SHARE_VIA,
     label: "Email",
     icon: () => <div data-testid="email-tab-icon" />,
     componentType: MockEmailTab,
@@ -293,7 +293,7 @@ const mockTabs = [
   },
   {
     id: ShareViaType.WEBSITE_EMBED,
-    type: "share_via" as const,
+    type: LinkTabsType.SHARE_VIA,
     label: "Website Embed",
     icon: () => <div data-testid="website-embed-tab-icon" />,
     componentType: MockWebsiteEmbedTab,
@@ -303,7 +303,7 @@ const mockTabs = [
   },
   {
     id: ShareViaType.DYNAMIC_POPUP,
-    type: "share_via" as const,
+    type: LinkTabsType.SHARE_VIA,
     label: "Dynamic Popup",
     icon: () => <div data-testid="dynamic-popup-tab-icon" />,
     componentType: MockDynamicPopupTab,
@@ -313,7 +313,7 @@ const mockTabs = [
   },
   {
     id: ShareViaType.ANON_LINKS,
-    type: "share_via" as const,
+    type: LinkTabsType.SHARE_VIA,
     label: "Anonymous Links",
     icon: () => <div data-testid="anonymous-links-tab-icon" />,
     componentType: MockAnonymousLinksTab,
@@ -329,7 +329,7 @@ const mockTabs = [
   },
   {
     id: ShareViaType.QR_CODE,
-    type: "share_via" as const,
+    type: LinkTabsType.SHARE_VIA,
     label: "QR Code",
     icon: () => <div data-testid="qr-code-tab-icon" />,
     componentType: MockQRCodeTab,
@@ -339,7 +339,7 @@ const mockTabs = [
   },
   {
     id: ShareViaType.PERSONAL_LINKS,
-    type: "share_via" as const,
+    type: LinkTabsType.SHARE_VIA,
     label: "Personal Links",
     icon: () => <div data-testid="personal-links-tab-icon" />,
     componentType: MockPersonalLinksTab,
@@ -349,7 +349,7 @@ const mockTabs = [
   },
   {
     id: ShareViaType.SOCIAL_MEDIA,
-    type: "share_via" as const,
+    type: LinkTabsType.SHARE_VIA,
     label: "Social Media",
     icon: () => <div data-testid="social-media-tab-icon" />,
     componentType: MockSocialMediaTab,
@@ -359,7 +359,7 @@ const mockTabs = [
   },
   {
     id: ShareSettingsType.LINK_SETTINGS,
-    type: "share_setting" as const,
+    type: LinkTabsType.SHARE_SETTING,
     label: "Link Settings",
     icon: () => <div data-testid="link-settings-tab-icon" />,
     componentType: MockLinkSettingsTab,

@@ -223,7 +223,7 @@ const ZSurveyBase = z.object({
     .object({
       title: ZI18nString.optional(),
       description: ZI18nString.optional(),
-      ogImage: z.string().optional(),
+      ogImage: z.string().url().optional(),
     })
     .openapi({
       description: "Custom link metadata for social sharing",

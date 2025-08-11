@@ -2,6 +2,7 @@
 
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import {
+  LinkTabsType,
   ShareSettingsType,
   ShareViaType,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
@@ -26,7 +27,7 @@ import { useEffect, useState } from "react";
 interface ShareViewProps {
   tabs: Array<{
     id: ShareViaType | ShareSettingsType;
-    type: "share_via" | "share_setting";
+    type: LinkTabsType;
     label: string;
     icon: React.ElementType;
     componentType: React.ComponentType<any>;
@@ -67,16 +68,16 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
     );
   };
 
-  const shareSettingsTabs = tabs.filter((tab) => tab.type === "share_setting");
-  const shareViaTabs = tabs.filter((tab) => tab.type === "share_via");
+  const shareSettingsTabs = tabs.filter((tab) => tab.type === LinkTabsType.SHARE_SETTING);
+  const shareViaTabs = tabs.filter((tab) => tab.type === LinkTabsType.SHARE_VIA);
   const sideBarGroups = [
     {
-      id: "share_via",
+      id: LinkTabsType.SHARE_VIA,
       label: t("environments.surveys.share.share_view_title"),
       tabs: shareViaTabs,
     },
     {
-      id: "share_settings",
+      id: LinkTabsType.SHARE_SETTING,
       label: t("environments.surveys.share.share_settings_title"),
       tabs: shareSettingsTabs,
     },
