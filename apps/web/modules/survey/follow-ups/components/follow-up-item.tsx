@@ -45,8 +45,14 @@ export const FollowUpItem = ({
     if (!to) return true;
 
     const matchedQuestion = localSurvey.questions.find((question) => {
-      if (question.type === TSurveyQuestionTypeEnum.OpenText) return question.inputType === "email";
-      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) return question.email.show;
+      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+        return question.inputType === "email" && question.id === to;
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+        return question.email.show && question.id === to;
+      }
+
       return false;
     });
 
@@ -70,26 +76,7 @@ export const FollowUpItem = ({
 
     const matchedEmail = updatedTeamMembers.find((detail) => detail.email === to);
 
-    if (!matchedQuestion && !matchedHiddenField && !matchedEmail) return true;
-
-    if (matchedQuestion) {
-      if (
-        ![TSurveyQuestionTypeEnum.OpenText, TSurveyQuestionTypeEnum.ContactInfo].includes(
-          matchedQuestion.type
-        )
-      ) {
-        return true;
-      }
-
-      if (
-        matchedQuestion.type === TSurveyQuestionTypeEnum.OpenText &&
-        matchedQuestion.inputType !== "email"
-      ) {
-        return true;
-      }
-    }
-
-    return false;
+    return !matchedQuestion && !matchedHiddenField && !matchedEmail;
   }, [
     followUp.action.properties,
     localSurvey.hiddenFields?.fieldIds,
