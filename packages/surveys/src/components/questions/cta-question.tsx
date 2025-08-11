@@ -59,7 +59,7 @@ export function CTAQuestion({
             questionId={question.id}
             required={question.required}
           />
-          <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
+          <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} />
           <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
             <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-start">
               <SubmitButton
