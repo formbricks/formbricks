@@ -1646,7 +1646,7 @@
         "company": "Empresa",
         "completed": "Concluído ✅",
         "country": "País",
-        "delete_response_confirmation": "Isto irá eliminar a resposta ao questionário, incluindo todas as respostas, notas, etiquetas, documentos anexados e metadados da resposta.",
+        "delete_response_confirmation": "Isto irá apagar a resposta do inquérito, incluindo todas as respostas, etiquetas, documentos anexos e metadados da resposta.",
         "device": "Dispositivo",
         "device_info": "Informações do dispositivo",
         "email": "Email",
