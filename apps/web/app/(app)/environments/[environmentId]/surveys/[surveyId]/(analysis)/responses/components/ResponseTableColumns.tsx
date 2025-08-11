@@ -2,7 +2,6 @@
 
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
-import { processResponseData } from "@/lib/responses";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -335,18 +334,6 @@ export const generateResponseTableColumns = (
     },
   };
 
-  const notesColumn: ColumnDef<TResponseTableData> = {
-    accessorKey: "notes",
-    header: t("common.notes"),
-    cell: ({ row }) => {
-      const notes = row.original.notes;
-      if (Array.isArray(notes)) {
-        const notesArray = notes.map((note) => note.text);
-        return processResponseData(notesArray);
-      }
-    },
-  };
-
   const variableColumns: ColumnDef<TResponseTableData>[] = survey.variables.map((variable) => {
     return {
       accessorKey: variable.id,
@@ -412,7 +399,6 @@ export const generateResponseTableColumns = (
     ...hiddenFieldColumns,
     ...metadataColumns,
     tagsColumn,
-    notesColumn,
   ];
 
   return isReadOnly ? baseColumns : [getSelectionColumn(), ...baseColumns];

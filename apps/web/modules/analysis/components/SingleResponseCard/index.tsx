@@ -1,9 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslate } from "@tolgee/react";
-import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -13,7 +11,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { deleteResponseAction, getResponseAction } from "./actions";
-import { ResponseNotes } from "./components/ResponseNote";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 import { SingleResponseCardBody } from "./components/SingleResponseCardBody";
 import { SingleResponseCardHeader } from "./components/SingleResponseCardHeader";
@@ -23,7 +20,6 @@ interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
   user?: TUser;
-  pageType: "people" | "response";
   environmentTags: TTag[];
   environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
@@ -37,7 +33,6 @@ export const SingleResponseCard = ({
   survey,
   response,
   user,
-  pageType,
   environmentTags,
   environment,
   updateResponse,
@@ -51,7 +46,6 @@ export const SingleResponseCard = ({
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
 
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
@@ -113,17 +107,8 @@ export const SingleResponseCard = ({
   };
 
   return (
-    <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
-      <div
-        className={clsx(
-          "relative z-20 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all",
-          pageType === "response" &&
-            (isOpen
-              ? "w-3/4"
-              : user && response.notes.length
-                ? "w-[96.5%]"
-                : cn("w-full", user ? "group-hover:w-[96.5%]" : ""))
-        )}>
+    <div className="group relative">
+      <div className="relative z-20 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all">
         <SingleResponseCardHeader
           pageType="response"
           response={response}
@@ -156,17 +141,6 @@ export const SingleResponseCard = ({
           text={t("environments.surveys.responses.delete_response_confirmation")}
         />
       </div>
-      {user && pageType === "response" && (
-        <ResponseNotes
-          user={user}
-          responseId={response.id}
-          notes={response.notes}
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          updateFetchedResponses={updateFetchedResponses}
-          locale={locale}
-        />
-      )}
     </div>
   );
 };

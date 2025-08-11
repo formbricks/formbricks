@@ -44,7 +44,7 @@ erDiagram
     Team ||--o{ TeamUser : "includes"
     Team ||--o{ ProjectTeam : "has access to"
 
-    Response ||--o{ ResponseNote : "has"
+
     Response ||--o{ TagsOnResponses : "tagged with"
 
     Tag ||--o{ TagsOnResponses : "applied to"
@@ -173,7 +173,6 @@ Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of 
 | Project               | Groups related surveys and environments                                |
 | ProjectTeam           | Manages team access permissions to projects                            |
 | Response              | Stores survey responses and associated metadata                        |
-| ResponseNote          | Contains team member comments on survey responses                      |
 | Segment               | Defines groups of contacts based on attributes                         |
 | Survey                | Stores survey configurations, questions, and display rules             |
 | SurveyAttributeFilter | Defines targeting rules for surveys based on contact attributes        |

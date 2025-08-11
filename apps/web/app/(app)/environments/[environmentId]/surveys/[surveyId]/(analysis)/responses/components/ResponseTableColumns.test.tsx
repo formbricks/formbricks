@@ -5,7 +5,7 @@ import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TResponseNote, TResponseNoteUser, TResponseTableData } from "@formbricks/types/responses";
+import { TResponseTableData } from "@formbricks/types/responses";
 import {
   TSurvey,
   TSurveyQuestion,
@@ -229,14 +229,6 @@ const mockResponseData = {
     var1: "Segment A",
     var2: 100,
   },
-  notes: [
-    {
-      id: "note1",
-      text: "This is a note",
-      updatedAt: new Date(),
-      user: { name: "User" } as unknown as TResponseNoteUser,
-    } as TResponseNote,
-  ],
   status: "completed",
   tags: [{ id: "tag1", name: "Important" } as unknown as TTag],
   language: "default",
@@ -301,14 +293,6 @@ describe("generateResponseTableColumns", () => {
     const columns = generateResponseTableColumns(surveyWithoutHiddenFieldIds, false, true, t as any);
     const hf1Col = columns.find((col) => (col as any).accessorKey === "hf1");
     expect(hf1Col).toBeUndefined();
-  });
-
-  test("should generate Notes column", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
-    const notesCol = columns.find((col) => (col as any).accessorKey === "notes");
-    expect(notesCol).toBeDefined();
-    (notesCol?.cell as any)?.({ row: { original: mockResponseData } } as any);
-    expect(vi.mocked(processResponseData)).toHaveBeenCalledWith(["This is a note"]);
   });
 });
 
@@ -446,36 +430,6 @@ describe("ResponseTableColumns - Column Implementations", () => {
 
     // Call the cell function
     const cellResult = tagsColumn?.cell?.({ row: mockRow } as any);
-    expect(cellResult).toBeUndefined();
-  });
-
-  test("notesColumn renders when notes is an array", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
-    const notesColumn: any = columns.find((col) => (col as any).accessorKey === "notes");
-    expect(notesColumn).toBeDefined();
-
-    // Mock a response with notes
-    const mockRow = {
-      original: { notes: [{ text: "Note 1" }, { text: "Note 2" }] },
-    } as any;
-
-    // Call the cell function
-    notesColumn?.cell?.({ row: mockRow } as any);
-    expect(vi.mocked(processResponseData)).toHaveBeenCalledWith(["Note 1", "Note 2"]);
-  });
-
-  test("notesColumn returns undefined when notes is not an array", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
-    const notesColumn: any = columns.find((col) => (col as any).accessorKey === "notes");
-    expect(notesColumn).toBeDefined();
-
-    // Mock a response with no notes
-    const mockRow = {
-      original: { notes: null },
-    } as any;
-
-    // Call the cell function
-    const cellResult = notesColumn?.cell?.({ row: mockRow } as any);
     expect(cellResult).toBeUndefined();
   });
 

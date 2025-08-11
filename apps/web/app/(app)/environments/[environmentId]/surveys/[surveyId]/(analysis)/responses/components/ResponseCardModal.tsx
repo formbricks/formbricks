@@ -82,7 +82,6 @@ export const ResponseCardModal = ({
             survey={survey}
             response={responses[currentIndex]}
             user={user}
-            pageType="response"
             environment={environment}
             environmentTags={environmentTags}
             isReadOnly={isReadOnly}
