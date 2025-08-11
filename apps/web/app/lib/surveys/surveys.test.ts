@@ -231,6 +231,43 @@ describe("surveys", () => {
       expect(result.questionFilterOptions.some((o) => o.id === "q7")).toBeTruthy();
       expect(result.questionFilterOptions.some((o) => o.id === "q8")).toBeTruthy();
     });
+
+    test("should provide extended filter options for URL meta field", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        questions: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        environmentId: "env1",
+        status: "draft",
+      } as unknown as TSurvey;
+
+      const meta = {
+        url: ["https://example.com", "https://test.com"],
+        source: ["web", "mobile"],
+      };
+
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {});
+
+      const urlFilterOption = result.questionFilterOptions.find((o) => o.id === "url");
+      const sourceFilterOption = result.questionFilterOptions.find((o) => o.id === "source");
+
+      expect(urlFilterOption).toBeDefined();
+      expect(urlFilterOption?.filterOptions).toEqual([
+        "Equals",
+        "Not equals",
+        "Contains",
+        "Does not contain",
+        "Starts with",
+        "Does not start with",
+        "Ends with",
+        "Does not end with",
+      ]);
+
+      expect(sourceFilterOption).toBeDefined();
+      expect(sourceFilterOption?.filterOptions).toEqual(["Equals", "Not equals"]);
+    });
   });
 
   describe("getFormattedFilters", () => {
@@ -716,6 +753,119 @@ describe("surveys", () => {
       expect(result.createdAt).toBeDefined();
       expect(result.data?.npsQ).toEqual({ op: "greaterThan", value: 7 });
       expect(result.tags?.applied).toContain("Tag 1");
+    });
+
+    test("should format URL meta filters with string operations", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "url", id: "url" },
+            filterType: { filterValue: "Contains", filterComboBoxValue: "example.com" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.url).toEqual({ op: "contains", value: "example.com" });
+    });
+
+    test("should format URL meta filters with all supported string operations", () => {
+      const testCases = [
+        { filterValue: "Equals", expected: { op: "equals", value: "https://example.com" } },
+        { filterValue: "Not equals", expected: { op: "notEquals", value: "https://example.com" } },
+        { filterValue: "Contains", expected: { op: "contains", value: "example.com" } },
+        { filterValue: "Does not contain", expected: { op: "doesNotContain", value: "test.com" } },
+        { filterValue: "Starts with", expected: { op: "startsWith", value: "https://" } },
+        { filterValue: "Does not start with", expected: { op: "doesNotStartWith", value: "http://" } },
+        { filterValue: "Ends with", expected: { op: "endsWith", value: ".com" } },
+        { filterValue: "Does not end with", expected: { op: "doesNotEndWith", value: ".org" } },
+      ];
+
+      testCases.forEach(({ filterValue, expected }) => {
+        const selectedFilter = {
+          responseStatus: "all",
+          filter: [
+            {
+              questionType: { type: "Meta", label: "url", id: "url" },
+              filterType: { filterValue, filterComboBoxValue: expected.value },
+            },
+          ],
+        } as any;
+
+        const result = getFormattedFilters(survey, selectedFilter, dateRange);
+        expect(result.meta?.url).toEqual(expected);
+      });
+    });
+
+    test("should handle URL meta filters with empty string values", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "url", id: "url" },
+            filterType: { filterValue: "Contains", filterComboBoxValue: "" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.url).toBeUndefined();
+    });
+
+    test("should handle URL meta filters with whitespace-only values", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "url", id: "url" },
+            filterType: { filterValue: "Contains", filterComboBoxValue: "   " },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.url).toEqual({ op: "contains", value: "" });
+    });
+
+    test("should still handle existing meta filters with array values", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "source", id: "source" },
+            filterType: { filterValue: "Equals", filterComboBoxValue: ["google"] },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.source).toEqual({ op: "equals", value: "google" });
+    });
+
+    test("should handle mixed URL and traditional meta filters", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "url", id: "url" },
+            filterType: { filterValue: "Contains", filterComboBoxValue: "formbricks.com" },
+          },
+          {
+            questionType: { type: "Meta", label: "source", id: "source" },
+            filterType: { filterValue: "Equals", filterComboBoxValue: ["newsletter"] },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.url).toEqual({ op: "contains", value: "formbricks.com" });
+      expect(result.meta?.source).toEqual({ op: "equals", value: "newsletter" });
     });
   });
 

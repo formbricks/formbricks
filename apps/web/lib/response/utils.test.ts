@@ -192,7 +192,7 @@ describe("Response Utils", () => {
         },
       ];
 
-      testCases.forEach(({ name, criteria, expected }) => {
+      testCases.forEach(({ criteria, expected }) => {
         const result = buildWhereClause(baseSurvey as TSurvey, criteria);
         expect(result.AND).toEqual([{ AND: [expected] }]);
       });
@@ -614,6 +614,14 @@ describe("Response Utils", () => {
           contactAttributes: {},
           data: {},
           meta: {
+            url: null as any,
+            source: "newsletter",
+          },
+        },
+        {
+          contactAttributes: {},
+          data: {},
+          meta: {
             url: "https://valid.com",
             source: "google",
           },
@@ -621,8 +629,7 @@ describe("Response Utils", () => {
       ];
       const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
       expect(result.url).toEqual(["https://valid.com"]);
-      expect(result.source).toContain("direct");
-      expect(result.source).toContain("google");
+      expect(result.source).toEqual(expect.arrayContaining(["direct", "newsletter", "google"]));
     });
   });
 

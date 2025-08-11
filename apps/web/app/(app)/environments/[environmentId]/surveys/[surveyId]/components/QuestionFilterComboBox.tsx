@@ -78,20 +78,7 @@ export const QuestionFilterComboBox = ({
     (filterValue === "Submitted" || filterValue === "Skipped");
 
   // Check if this is a URL field with string comparison operations that require text input
-  const isTextInputField =
-    type === OptionsType.META &&
-    fieldId === "url" &&
-    filterValue &&
-    [
-      "Equals",
-      "Not equals",
-      "Contains",
-      "Does not contain",
-      "Starts with",
-      "Does not start with",
-      "Ends with",
-      "Does not end with",
-    ].includes(filterValue);
+  const isTextInputField = type === OptionsType.META && fieldId === "url";
 
   const filteredOptions = options?.filter((o) =>
     (typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o)
@@ -184,9 +171,9 @@ export const QuestionFilterComboBox = ({
           type="text"
           value={typeof filterComboBoxValue === "string" ? filterComboBoxValue : ""}
           onChange={(e) => onChangeFilterComboBoxValue(e.target.value)}
-          placeholder="Enter URL..."
+          placeholder={t("common.url")}
           disabled={disabled || !filterValue}
-          className="h-9 rounded-l-none border-l-0 bg-white text-sm focus:border-slate-300 focus:ring-offset-0"
+          className="h-9 rounded-l-none border-none bg-white text-sm focus:ring-offset-0"
         />
       ) : (
         <Command ref={commandRef} className="h-10 overflow-visible bg-transparent">

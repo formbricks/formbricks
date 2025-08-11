@@ -47,6 +47,18 @@ const filterOptions = {
   ranking: ["Filled out", "Skipped"],
 };
 
+// URL/meta text operators mapping
+const META_OP_MAP = {
+  Equals: "equals",
+  "Not equals": "notEquals",
+  Contains: "contains",
+  "Does not contain": "doesNotContain",
+  "Starts with": "startsWith",
+  "Does not start with": "doesNotStartWith",
+  "Ends with": "endsWith",
+  "Does not end with": "doesNotEndWith",
+} as const;
+
 // creating the options for the filtering to be selected there are 4 types questions, attributes, tags and metadata
 export const generateQuestionAndFilterOptions = (
   survey: TSurvey,
@@ -496,32 +508,10 @@ export const getFormattedFilters = (
 
       // For text input cases (URL filtering)
       if (typeof filterType.filterComboBoxValue === "string" && filterType.filterComboBoxValue.length > 0) {
-        const value = filterType.filterComboBoxValue;
-        switch (filterType.filterValue) {
-          case "Equals":
-            filters.meta[questionType.label ?? ""] = { op: "equals", value };
-            break;
-          case "Not equals":
-            filters.meta[questionType.label ?? ""] = { op: "notEquals", value };
-            break;
-          case "Contains":
-            filters.meta[questionType.label ?? ""] = { op: "contains", value };
-            break;
-          case "Does not contain":
-            filters.meta[questionType.label ?? ""] = { op: "doesNotContain", value };
-            break;
-          case "Starts with":
-            filters.meta[questionType.label ?? ""] = { op: "startsWith", value };
-            break;
-          case "Does not start with":
-            filters.meta[questionType.label ?? ""] = { op: "doesNotStartWith", value };
-            break;
-          case "Ends with":
-            filters.meta[questionType.label ?? ""] = { op: "endsWith", value };
-            break;
-          case "Does not end with":
-            filters.meta[questionType.label ?? ""] = { op: "doesNotEndWith", value };
-            break;
+        const value = filterType.filterComboBoxValue.trim();
+        const op = META_OP_MAP[filterType.filterValue as keyof typeof META_OP_MAP];
+        if (op) {
+          filters.meta[questionType.label ?? ""] = { op, value };
         }
       }
       // For dropdown/select cases (existing metadata fields)
