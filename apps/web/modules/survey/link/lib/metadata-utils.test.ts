@@ -112,7 +112,7 @@ describe("Metadata Utils", () => {
       expect(getProjectByEnvironmentId).toHaveBeenCalledWith(mockEnvironmentId);
       expect(result).toEqual({
         title: "Welcome Headline | Formbricks",
-        description: "Welcome Description",
+        description: "Complete this survey",
         survey: mockSurvey,
         ogImage: undefined,
       });

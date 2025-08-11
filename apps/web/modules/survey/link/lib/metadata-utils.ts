@@ -53,8 +53,6 @@ export const getBasicSurveyMetadata = async (surveyId: string, languageCode?: st
   let description = "Complete this survey";
   if (metadata.description?.[langCode]) {
     description = metadata.description[langCode];
-  } else if (welcomeCard.enabled && welcomeCard.html?.default) {
-    description = welcomeCard.html.default;
   }
 
   // Get OG image from link metadata if available
