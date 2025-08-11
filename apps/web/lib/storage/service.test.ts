@@ -1,4 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import { readFile } from "fs/promises";
+import { lookup } from "mime-types";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock AWS SDK
@@ -6,6 +8,19 @@ const mockSend = vi.fn();
 const mockS3Client = {
   send: mockSend,
 };
+
+vi.mock("fs/promises", () => ({
+  readFile: vi.fn(),
+  access: vi.fn(),
+  mkdir: vi.fn(),
+  rmdir: vi.fn(),
+  unlink: vi.fn(),
+  writeFile: vi.fn(),
+}));
+
+vi.mock("mime-types", () => ({
+  lookup: vi.fn(),
+}));
 
 vi.mock("@aws-sdk/client-s3", () => ({
   S3Client: vi.fn(() => mockS3Client),
@@ -193,6 +208,69 @@ describe("Storage Service", () => {
 
       expect(result.signedUrl).toBe("https://test-bucket.s3.test-region.amazonaws.com");
       expect(result.presignedFields).toEqual({ key: "test-key", policy: "test-policy" });
+    });
+
+    test("use local storage for private files when S3 is not configured", async () => {
+      vi.doMock("../constants", () => ({
+        S3_ACCESS_KEY: "test-access-key",
+        S3_SECRET_KEY: "test-secret-key",
+        S3_REGION: "test-region",
+        S3_BUCKET_NAME: "test-bucket",
+        S3_ENDPOINT_URL: "http://test-endpoint",
+        S3_FORCE_PATH_STYLE: true,
+        isS3Configured: () => false,
+        IS_FORMBRICKS_CLOUD: false,
+        MAX_SIZES: {
+          standard: 5 * 1024 * 1024,
+          big: 10 * 1024 * 1024,
+        },
+        WEBAPP_URL: "http://test-webapp",
+        ENCRYPTION_KEY: "test-encryption-key-32-chars-long!!",
+        UPLOADS_DIR: "/tmp/uploads",
+      }));
+
+      // Mock getPublicDomain
+      vi.mock("../getPublicUrl", () => ({
+        getPublicDomain: () => "https://public-domain.com",
+      }));
+
+      const result = await getUploadSignedUrl("test.jpg", "env123", "image/jpeg", "private");
+
+      expect(result.fileUrl).toContain("http://test-webapp");
+      expect(result.fileUrl).toMatch(
+        /http:\/\/test-webapp\/storage\/env123\/private\/test--fid--test-uuid\.jpg/
+      );
+    });
+  });
+
+  describe("getLocalFile", () => {
+    let getLocalFile: any;
+
+    beforeEach(async () => {
+      const serviceModule = await import("./service");
+      getLocalFile = serviceModule.getLocalFile;
+    });
+
+    test("should return file buffer and metadata", async () => {
+      vi.mocked(readFile).mockResolvedValue(Buffer.from("test"));
+      vi.mocked(lookup).mockReturnValue("image/jpeg");
+
+      const result = await getLocalFile("/tmp/uploads/test/test.jpg");
+      expect(result.fileBuffer).toBeInstanceOf(Buffer);
+      expect(result.metaData).toEqual({ contentType: "image/jpeg" });
+    });
+
+    test("should throw error when file does not exist", async () => {
+      vi.mocked(readFile).mockRejectedValue(new Error("File not found"));
+      await expect(getLocalFile("/tmp/uploads/test/test.jpg")).rejects.toThrow("File not found");
+    });
+
+    test("should throw error when file path is invalid", async () => {
+      await expect(getLocalFile("/invalid/path")).rejects.toThrow("Invalid file path");
+    });
+
+    test("should throw error when file path is a directory", async () => {
+      await expect(getLocalFile("/invalid/path")).rejects.toThrow("Invalid file path");
     });
   });
 });

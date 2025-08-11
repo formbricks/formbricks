@@ -764,6 +764,8 @@
         "api_host_description": "This is the URL of your Formbricks backend.",
         "app_connection": "App Connection",
         "app_connection_description": "Connect your app to Formbricks.",
+        "cache_update_delay_description": "When you make updates to surveys, contacts, actions, or other data, it can take up to 5 minutes for those changes to appear in your local app running the Formbricks SDK. This delay is due to a limitation in our current caching system. We’re actively reworking the cache and will release a fix in Formbricks 4.0.",
+        "cache_update_delay_title": "Changes will be reflected after 5 minutes due to caching",
         "check_out_the_docs": "Check out the docs.",
         "dive_into_the_docs": "Dive into the docs.",
         "does_your_widget_work": "Does your widget work?",
