@@ -351,7 +351,7 @@ export function FileInput({
           </div>
         ) : null}
 
-        <div onDragOver={handleDragOver} onDrop={handleDrop}>
+        <div onDragOver={handleDragOver} onDrop={handleDrop} role="button">
           {showUploader ? (
             <label
               htmlFor={uniqueHtmlFor}
