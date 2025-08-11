@@ -118,8 +118,7 @@ export const PricingTable = ({
     }
 
     if (planId === "custom") {
-      window.location.href =
-        "https://app.formbricks.com/s/trvp8tzy5uvsps9rc9qi9l9w?source=billingView&delivery=cloud";
+      window.location.href = "https://formbricks.com/custom-plan?source=billingView";
       return;
     }
 
