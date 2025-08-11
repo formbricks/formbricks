@@ -3,7 +3,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { useEffect, useState } from "react";
 
 interface HtmlBodyProps {
-  htmlString?: string;
+  readonly htmlString?: string;
 }
 
 export function HtmlBody({ htmlString }: HtmlBodyProps) {

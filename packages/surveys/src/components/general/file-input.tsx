@@ -246,14 +246,14 @@ export function FileInput({
     }
   };
 
-  const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
+  const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     // @ts-expect-error -- TS does not recognize dataTransfer
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = async (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
+  const handleDrop = async (e: JSXInternal.TargetedDragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -351,13 +351,12 @@ export function FileInput({
           </div>
         ) : null}
 
-        <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
+        <div onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader ? (
-            <button
-              type="button"
-              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
-              aria-label="Upload files by clicking or dragging them here"
-              onClick={() => document.getElementById(uniqueHtmlFor)?.click()}>
+            <label
+              htmlFor={uniqueHtmlFor}
+              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer fb-cursor-pointer w-full"
+              aria-label="Upload files by clicking or dragging them here">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -372,32 +371,32 @@ export function FileInput({
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-              <label
+              <span
                 className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
                 id={`${uniqueHtmlFor}-label`}>
-                Click or drag to upload files.
-                <input
-                  type="file"
-                  id={uniqueHtmlFor}
-                  name={uniqueHtmlFor}
-                  accept={mimeTypeForAllowedFileExtensions}
-                  className="fb-hidden"
-                  onChange={async (e) => {
-                    const inputElement = e.target as HTMLInputElement;
-                    if (inputElement.files) {
-                      await handleFileSelection(inputElement.files);
-                    }
-                  }}
-                  multiple={allowMultipleFiles}
-                  aria-label="File upload"
-                  aria-describedby={`${uniqueHtmlFor}-label`}
-                  data-accept-multiple={allowMultipleFiles}
-                  data-accept-extensions={mimeTypeForAllowedFileExtensions}
-                />
-              </label>
-            </button>
+                Click or drag to upload files.{" "}
+              </span>
+              <input
+                type="file"
+                id={uniqueHtmlFor}
+                name={uniqueHtmlFor}
+                accept={mimeTypeForAllowedFileExtensions}
+                className="fb-hidden"
+                onChange={async (e) => {
+                  const inputElement = e.target as HTMLInputElement;
+                  if (inputElement.files) {
+                    await handleFileSelection(inputElement.files);
+                  }
+                }}
+                multiple={allowMultipleFiles}
+                aria-label="File upload"
+                aria-describedby={`${uniqueHtmlFor}-label`}
+                data-accept-multiple={allowMultipleFiles}
+                data-accept-extensions={mimeTypeForAllowedFileExtensions}
+              />
+            </label>
           ) : null}
-        </label>
+        </div>
       </div>
     </div>
   );
