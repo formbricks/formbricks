@@ -151,42 +151,40 @@ For detailed information about specific models and their properties, refer to th
 
 Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of all database tables and their purposes:
 
-| Table Name          | Description                                                            |
-| ------------------- | ---------------------------------------------------------------------- |
-| Account             | Stores third-party authentication accounts (OAuth) and their tokens    |
-| ActionClass         | Defines triggerable events that can launch surveys                     |
-| ApiKey              | Stores API authentication keys for environment-specific access         |
-| Contact             | Records information about user that can receive and respond to surveys |
-| ContactAttribute    | Stores attribute values for contacts (e.g., role, company size)        |
-| ContactAttributeKey | Defines available attribute types for contacts                         |
-| DataMigration       | Tracks the status of database schema migrations                        |
-| Display             | Records when and to whom surveys were shown                            |
-| Document            | Stores processed survey responses for analysis                         |
-| DocumentInsight     | Links analyzed documents to derived insights                           |
-| Environment         | Manages production/development environments within projects            |
-| Insight             | Contains analyzed patterns and information from responses              |
-| Integration         | Stores configuration for third-party service integrations              |
-| Invite              | Manages pending invitations to join organizations                      |
-| Language            | Defines supported languages for multi-lingual surveys                  |
-| Membership          | Links users to organizations with specific roles                       |
-| Organization        | Top-level container for projects and team management                   |
-| Project             | Groups related surveys and environments                                |
-| ProjectTeam         | Manages team access permissions to projects                            |
-| Response            | Stores survey responses and associated metadata                        |
-
-| Segment | Defines groups of contacts based on attributes |
-| ShortUrl | Maps shortened URLs to their full destinations |
-| Survey | Stores survey configurations, questions, and display rules |
-| SurveyAttributeFilter | Defines targeting rules for surveys based on contact attributes |
-| SurveyFollowUp | Configures automated actions based on survey responses |
-| SurveyLanguage | Links surveys to their supported languages |
-| SurveyTrigger | Connects surveys to their triggering actions |
-| Tag | Stores labels for categorizing responses |
-| TagsOnResponses | Junction table linking tags to responses |
-| Team | Groups users within organizations |
-| TeamUser | Links users to teams with specific roles |
-| User | Stores user account information and preferences |
-| Webhook | Manages webhook endpoints for event notifications |
+| Table Name            | Description                                                            |
+| --------------------- | ---------------------------------------------------------------------- |
+| Account               | Stores third-party authentication accounts (OAuth) and their tokens    |
+| ActionClass           | Defines triggerable events that can launch surveys                     |
+| ApiKey                | Stores API authentication keys for environment-specific access         |
+| Contact               | Records information about user that can receive and respond to surveys |
+| ContactAttribute      | Stores attribute values for contacts (e.g., role, company size)        |
+| ContactAttributeKey   | Defines available attribute types for contacts                         |
+| DataMigration         | Tracks the status of database schema migrations                        |
+| Display               | Records when and to whom surveys were shown                            |
+| Document              | Stores processed survey responses for analysis                         |
+| DocumentInsight       | Links analyzed documents to derived insights                           |
+| Environment           | Manages production/development environments within projects            |
+| Insight               | Contains analyzed patterns and information from responses              |
+| Integration           | Stores configuration for third-party service integrations              |
+| Invite                | Manages pending invitations to join organizations                      |
+| Language              | Defines supported languages for multi-lingual surveys                  |
+| Membership            | Links users to organizations with specific roles                       |
+| Organization          | Top-level container for projects and team management                   |
+| Project               | Groups related surveys and environments                                |
+| ProjectTeam           | Manages team access permissions to projects                            |
+| Response              | Stores survey responses and associated metadata                        |
+| Segment               | Defines groups of contacts based on attributes                         |
+| Survey                | Stores survey configurations, questions, and display rules             |
+| SurveyAttributeFilter | Defines targeting rules for surveys based on contact attributes        |
+| SurveyFollowUp        | Configures automated actions based on survey responses                 |
+| SurveyLanguage        | Links surveys to their supported languages                             |
+| SurveyTrigger         | Connects surveys to their triggering actions                           |
+| Tag                   | Stores labels for categorizing responses                               |
+| TagsOnResponses       | Junction table linking tags to responses                               |
+| Team                  | Groups users within organizations                                      |
+| TeamUser              | Links users to teams with specific roles                               |
+| User                  | Stores user account information and preferences                        |
+| Webhook               | Manages webhook endpoints for event notifications                      |
 
 ## Schema Reference
 
