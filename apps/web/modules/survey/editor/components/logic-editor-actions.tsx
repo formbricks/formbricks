@@ -239,7 +239,7 @@ export function LogicEditorActions({
                 )}
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger id={`actions-${idx}-dropdown`}>
+                <DropdownMenuTrigger id={`actions-${idx}-dropdown`} asChild>
                   <Button
                     variant="outline"
                     className="flex h-10 w-10 items-center justify-center rounded-md bg-white">

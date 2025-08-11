@@ -271,6 +271,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
     await page.locator("#multi-lang-toggle").click();
+    await page.getByText("Multiple languages").click();
     await page.getByRole("combobox").click();
     await page.getByLabel("English (en)").click();
     await page.getByRole("button", { name: "Confirm" }).click();

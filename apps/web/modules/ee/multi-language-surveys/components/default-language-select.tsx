@@ -62,7 +62,7 @@ export function DefaultLanguageSelect({
             <SelectContent>
               {projectLanguages.map((language) => (
                 <SelectItem
-                  className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                  className="px-0.5 py-1 text-sm text-slate-800"
                   key={language.id}
                   value={language.code}>
                   {`${getLanguageLabel(language.code, locale)} (${language.code})`}
