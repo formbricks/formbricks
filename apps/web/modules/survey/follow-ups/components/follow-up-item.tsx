@@ -60,7 +60,9 @@ export const FollowUpItem = ({
       return false;
     });
 
-    const matchedHiddenField = (localSurvey.hiddenFields?.fieldIds ?? []).find((fieldId) => fieldId === to);
+    const matchedHiddenField = localSurvey.hiddenFields?.enabled
+      ? (localSurvey.hiddenFields.fieldIds ?? []).find((fieldId) => fieldId === to)
+      : undefined;
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
       if (teamMemberDetail.email === userEmail) {

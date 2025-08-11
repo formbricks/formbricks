@@ -1349,7 +1349,7 @@ export const ZSurvey = z
                   return false;
                 })
                 .map((q) => q.id),
-              ...(survey.hiddenFields.fieldIds ?? []),
+              ...(survey.hiddenFields?.enabled ? (survey.hiddenFields.fieldIds ?? []) : []),
             ];
 
             if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
