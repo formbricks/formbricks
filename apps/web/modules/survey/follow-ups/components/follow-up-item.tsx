@@ -44,7 +44,12 @@ export const FollowUpItem = ({
 
     if (!to) return true;
 
-    const matchedQuestion = localSurvey.questions.find((question) => question.id === to);
+    const matchedQuestion = localSurvey.questions.find((question) => {
+      if (question.type === TSurveyQuestionTypeEnum.OpenText) return question.inputType === "email";
+      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) return question.email.show;
+      return false;
+    });
+
     const matchedHiddenField = (localSurvey.hiddenFields?.fieldIds ?? []).find((fieldId) => fieldId === to);
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {

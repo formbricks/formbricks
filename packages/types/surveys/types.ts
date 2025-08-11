@@ -1343,7 +1343,7 @@ export const ZSurvey = z
                   }
 
                   if (q.type === TSurveyQuestionTypeEnum.ContactInfo) {
-                    return true;
+                    return q.email.show;
                   }
 
                   return false;
