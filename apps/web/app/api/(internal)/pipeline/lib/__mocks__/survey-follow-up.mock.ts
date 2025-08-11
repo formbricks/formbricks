@@ -253,7 +253,6 @@ export const mockResponse: TResponse = {
   contactAttributes: {},
   meta: {},
   finished: true,
-  notes: [],
   singleUseId: null,
   tags: [],
   displayId: null,

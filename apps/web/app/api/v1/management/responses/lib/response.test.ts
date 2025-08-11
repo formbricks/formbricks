@@ -65,8 +65,7 @@ const mockResponsePrisma = {
   displayId,
   contact: null, // Prisma relation
   tags: [], // Prisma relation
-  notes: [], // Prisma relation
-} as unknown as ResponsePrisma & { contact: any; tags: any[]; notes: any[] }; // Adjust type as needed
+} as unknown as ResponsePrisma & { contact: any; tags: any[] }; // Adjust type as needed
 
 const mockResponse: TResponse = {
   id: responseId,
@@ -85,7 +84,6 @@ const mockResponse: TResponse = {
   displayId,
   contact: null, // Transformed structure
   tags: [], // Transformed structure
-  notes: [], // Transformed structure
 };
 
 const mockEnvironmentIds = [environmentId, "env-2"];

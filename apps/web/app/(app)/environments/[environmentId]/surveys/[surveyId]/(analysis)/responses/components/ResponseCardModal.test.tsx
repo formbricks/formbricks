@@ -60,7 +60,6 @@ const mockResponses = [
       userAgent: { browser: "Chrome", os: "Mac OS", device: "Desktop" },
       url: "http://localhost:3000",
     },
-    notes: [],
     tags: [],
   } as unknown as TResponse,
   {
@@ -74,7 +73,6 @@ const mockResponses = [
       userAgent: { browser: "Firefox", os: "Windows", device: "Desktop" },
       url: "http://localhost:3000/page2",
     },
-    notes: [],
     tags: [],
   } as unknown as TResponse,
   {
@@ -88,7 +86,6 @@ const mockResponses = [
       userAgent: { browser: "Safari", os: "iOS", device: "Mobile" },
       url: "http://localhost:3000/page3",
     },
-    notes: [],
     tags: [],
   } as unknown as TResponse,
 ] as unknown as TResponse[];

@@ -18,7 +18,6 @@ import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/type
 import { TTag } from "@formbricks/types/tags";
 import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { deleteDisplay } from "../display/service";
-import { getResponseNotes } from "../responseNote/service";
 import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
@@ -72,22 +71,6 @@ export const responseSelection = {
       },
     },
   },
-  notes: {
-    select: {
-      id: true,
-      createdAt: true,
-      updatedAt: true,
-      text: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      isResolved: true,
-      isEdited: true,
-    },
-  },
 } satisfies Prisma.ResponseSelect;
 
 export const getResponseContact = (
@@ -127,7 +110,6 @@ export const getResponsesByContactId = reactCache(
 
       await Promise.all(
         responsePrisma.map(async (response) => {
-          const responseNotes = await getResponseNotes(response.id);
           const responseContact: TResponseContact = {
             id: response.contact?.id as string,
             userId: response.contact?.attributes.find((attribute) => attribute.attributeKey.key === "userId")
@@ -137,7 +119,7 @@ export const getResponsesByContactId = reactCache(
           responses.push({
             ...response,
             contact: responseContact,
-            notes: responseNotes,
+
             tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
           });
         })
@@ -550,11 +532,10 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       select: responseSelection,
     });
 
-    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
       contact: getResponseContact(responsePrisma),
-      notes: responseNotes,
+
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 

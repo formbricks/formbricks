@@ -150,7 +150,6 @@ model Response {
   contact           Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId         String?
   endingId          String?
-  notes             ResponseNote[]
   /// [ResponseData]
   data              Json              @default("{}")
   /// [ResponseVariables]
@@ -174,30 +173,6 @@ model Response {
   @@index([surveyId, createdAt]) // to determine monthly response count
   @@index([contactId, createdAt]) // to determine monthly identified users (persons)
   @@index([surveyId])
-}
-
-/// Represents notes or comments added to survey responses by team members.
-/// Used for internal communication and response analysis.
-///
-/// @property id - Unique identifier for the note
-/// @property response - The associated survey response
-/// @property user - The team member who created the note
-/// @property text - Content of the note
-/// @property isResolved - Whether the note has been marked as resolved
-/// @property isEdited - Whether the note has been modified
-model ResponseNote {
-  id         String   @id @default(cuid())
-  createdAt  DateTime @default(now()) @map(name: "created_at")
-  updatedAt  DateTime @updatedAt @map(name: "updated_at")
-  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  responseId String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  text       String
-  isResolved Boolean  @default(false)
-  isEdited   Boolean  @default(false)
-
-  @@index([responseId])
 }
 
 /// Represents a label that can be applied to survey responses.
@@ -856,7 +831,6 @@ model User {
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
-  responseNotes             ResponseNote[]
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")

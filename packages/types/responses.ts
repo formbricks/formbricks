@@ -234,25 +234,6 @@ export type TResponseContact = z.infer<typeof ZResponseContact>;
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
-export const ZResponseNoteUser = z.object({
-  id: z.string().cuid2(),
-  name: z.string().nullable(),
-});
-
-export type TResponseNoteUser = z.infer<typeof ZResponseNoteUser>;
-
-export const ZResponseNote = z.object({
-  updatedAt: z.date(),
-  createdAt: z.date(),
-  id: z.string(),
-  text: z.string(),
-  user: ZResponseNoteUser,
-  isResolved: z.boolean(),
-  isEdited: z.boolean(),
-});
-
-export type TResponseNote = z.infer<typeof ZResponseNote>;
-
 export const ZResponseMeta = z.object({
   source: z.string().optional(),
   url: z.string().optional(),
@@ -282,7 +263,6 @@ export const ZResponse = z.object({
   data: ZResponseData,
   variables: ZResponseVariables,
   ttc: ZResponseTtc.optional(),
-  notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
   meta: ZResponseMeta,
   singleUseId: z.string().nullable(),
@@ -370,7 +350,6 @@ export const ZResponseTableData = z.object({
   status: z.string(),
   verifiedEmail: z.string(),
   tags: z.array(ZTag),
-  notes: z.array(ZResponseNote),
   language: z.string().nullable(),
   responseData: ZResponseData,
   variables: z.record(z.union([z.string(), z.number()])),
