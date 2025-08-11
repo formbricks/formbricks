@@ -28,6 +28,7 @@ import {
   HomeIcon,
   ImageIcon,
   LanguagesIcon,
+  LinkIcon,
   ListIcon,
   ListOrderedIcon,
   MessageSquareTextIcon,
@@ -94,6 +95,7 @@ const questionIcons = {
   source: ArrowUpFromDotIcon,
   action: MousePointerClickIcon,
   country: FlagIcon,
+  url: LinkIcon,
 
   // others
   Language: LanguagesIcon,

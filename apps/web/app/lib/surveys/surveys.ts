@@ -165,7 +165,19 @@ export const generateQuestionAndFilterOptions = (
     Object.keys(meta).forEach((m) => {
       questionFilterOptions.push({
         type: "Meta",
-        filterOptions: ["Equals", "Not equals"],
+        filterOptions:
+          m === "url"
+            ? [
+                "Equals",
+                "Not equals",
+                "Contains",
+                "Does not contain",
+                "Starts with",
+                "Does not start with",
+                "Ends with",
+                "Does not end with",
+              ]
+            : ["Equals", "Not equals"],
         filterComboBoxOptions: meta[m],
         id: m,
       });
@@ -481,17 +493,45 @@ export const getFormattedFilters = (
   if (meta.length) {
     meta.forEach(({ filterType, questionType }) => {
       if (!filters.meta) filters.meta = {};
-      if (!filterType.filterComboBoxValue) return;
-      if (filterType.filterValue === "Equals") {
-        filters.meta[questionType.label ?? ""] = {
-          op: "equals",
-          value: filterType.filterComboBoxValue as string,
-        };
-      } else if (filterType.filterValue === "Not equals") {
-        filters.meta[questionType.label ?? ""] = {
-          op: "notEquals",
-          value: filterType.filterComboBoxValue as string,
-        };
+
+      // For text input cases (URL filtering)
+      if (typeof filterType.filterComboBoxValue === "string" && filterType.filterComboBoxValue.length > 0) {
+        const value = filterType.filterComboBoxValue;
+        switch (filterType.filterValue) {
+          case "Equals":
+            filters.meta[questionType.label ?? ""] = { op: "equals", value };
+            break;
+          case "Not equals":
+            filters.meta[questionType.label ?? ""] = { op: "notEquals", value };
+            break;
+          case "Contains":
+            filters.meta[questionType.label ?? ""] = { op: "contains", value };
+            break;
+          case "Does not contain":
+            filters.meta[questionType.label ?? ""] = { op: "doesNotContain", value };
+            break;
+          case "Starts with":
+            filters.meta[questionType.label ?? ""] = { op: "startsWith", value };
+            break;
+          case "Does not start with":
+            filters.meta[questionType.label ?? ""] = { op: "doesNotStartWith", value };
+            break;
+          case "Ends with":
+            filters.meta[questionType.label ?? ""] = { op: "endsWith", value };
+            break;
+          case "Does not end with":
+            filters.meta[questionType.label ?? ""] = { op: "doesNotEndWith", value };
+            break;
+        }
+      }
+      // For dropdown/select cases (existing metadata fields)
+      else if (Array.isArray(filterType.filterComboBoxValue) && filterType.filterComboBoxValue.length > 0) {
+        const value = filterType.filterComboBoxValue[0]; // Take first selected value
+        if (filterType.filterValue === "Equals") {
+          filters.meta[questionType.label ?? ""] = { op: "equals", value };
+        } else if (filterType.filterValue === "Not equals") {
+          filters.meta[questionType.label ?? ""] = { op: "notEquals", value };
+        }
       }
     });
   }

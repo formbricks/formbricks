@@ -234,6 +234,60 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             },
           });
           break;
+        case "contains":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              string_contains: val.value,
+            },
+          });
+          break;
+        case "doesNotContain":
+          meta.push({
+            NOT: {
+              meta: {
+                path: updatedKey,
+                string_contains: val.value,
+              },
+            },
+          });
+          break;
+        case "startsWith":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              string_starts_with: val.value,
+            },
+          });
+          break;
+        case "doesNotStartWith":
+          meta.push({
+            NOT: {
+              meta: {
+                path: updatedKey,
+                string_starts_with: val.value,
+              },
+            },
+          });
+          break;
+        case "endsWith":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              string_ends_with: val.value,
+            },
+          });
+          break;
+        case "doesNotEndWith":
+          meta.push({
+            NOT: {
+              meta: {
+                path: updatedKey,
+                string_ends_with: val.value,
+              },
+            },
+          });
+          break;
       }
     });
 
@@ -727,9 +781,6 @@ export const getResponseMeta = (
 
     responses.forEach((response) => {
       Object.entries(response.meta).forEach(([key, value]) => {
-        // skip url
-        if (key === "url") return;
-
         // Handling nested objects (like userAgent)
         if (typeof value === "object" && value !== null) {
           Object.entries(value).forEach(([nestedKey, nestedValue]) => {
