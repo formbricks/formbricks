@@ -240,6 +240,12 @@ describe("ResponseDataView", () => {
         language: "en",
         person: null,
         contactAttributes: null,
+        meta: {
+          url: "http://localhost",
+          userAgent: {
+            browser: "test-agent",
+          },
+        },
       },
       {
         responseData: {
@@ -255,6 +261,12 @@ describe("ResponseDataView", () => {
         language: "de",
         person: null,
         contactAttributes: null,
+        meta: {
+          url: "http://localhost",
+          userAgent: {
+            browser: "test-agent-2",
+          },
+        },
       },
     ];
 

@@ -1646,7 +1646,7 @@
         "company": "Companie",
         "completed": "Finalizat ✅",
         "country": "Țară",
-        "delete_response_confirmation": "Aceasta va șterge răspunsul la sondaj, inclusiv toate răspunsurile, notele, etichetele, documentele atașate și metadatele răspunsului.",
+        "delete_response_confirmation": "Aceasta va șterge răspunsul la sondaj, inclusiv toate răspunsurile, etichetele, documentele atașate și metadatele răspunsului.",
         "device": "Dispozitiv",
         "device_info": "Informații despre dispozitiv",
         "email": "Email",
