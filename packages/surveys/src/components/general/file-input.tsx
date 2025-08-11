@@ -246,14 +246,14 @@ export function FileInput({
     }
   };
 
-  const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     // @ts-expect-error -- TS does not recognize dataTransfer
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = async (e: JSXInternal.TargetedDragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -351,12 +351,13 @@ export function FileInput({
           </div>
         ) : null}
 
-        <div onDragOver={handleDragOver} onDrop={handleDrop} role="button">
+        <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader ? (
-            <label
-              htmlFor={uniqueHtmlFor}
-              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer fb-cursor-pointer w-full"
-              aria-label="Upload files by clicking or dragging them here">
+            <button
+              type="button"
+              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
+              aria-label="Upload files by clicking or dragging them here"
+              onClick={() => document.getElementById(uniqueHtmlFor)?.click()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -374,7 +375,7 @@ export function FileInput({
               <span
                 className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
                 id={`${uniqueHtmlFor}-label`}>
-                Click or drag to upload files.{" "}
+                Click or drag to upload files.
               </span>
               <input
                 type="file"
@@ -394,9 +395,9 @@ export function FileInput({
                 data-accept-multiple={allowMultipleFiles}
                 data-accept-extensions={mimeTypeForAllowedFileExtensions}
               />
-            </label>
+            </button>
           ) : null}
-        </div>
+        </label>
       </div>
     </div>
   );
