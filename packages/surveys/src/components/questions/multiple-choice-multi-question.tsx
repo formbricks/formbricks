@@ -6,7 +6,7 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getShuffledChoicesIds, isRTL } from "@/lib/utils";
+import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -25,6 +25,7 @@ interface MultipleChoiceMultiProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function MultipleChoiceMultiQuestion({
@@ -41,6 +42,7 @@ export function MultipleChoiceMultiQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<MultipleChoiceMultiProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -140,11 +142,7 @@ export function MultipleChoiceMultiQuestion({
       : question.required;
   };
 
-  const otherOptionDir = useMemo(() => {
-    const placeholder = getLocalizedValue(question.otherOptionPlaceholder, languageCode);
-    if (!otherValue) return isRTL(placeholder) ? "rtl" : "ltr";
-    return "auto";
-  }, [languageCode, question.otherOptionPlaceholder, otherValue]);
+  const otherOptionDir = !otherValue ? dir : "auto";
 
   return (
     <ScrollableContainer>
