@@ -2,7 +2,13 @@ import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
-import { ZSurveyEnding, ZSurveyQuestion, ZSurveyRecaptcha, ZSurveyVariable } from "../../types/surveys/types";
+import {
+  ZI18nString,
+  ZSurveyEnding,
+  ZSurveyQuestion,
+  ZSurveyRecaptcha,
+  ZSurveyVariable,
+} from "../../types/surveys/types";
 
 extendZodWithOpenApi(z);
 
@@ -215,8 +221,8 @@ const ZSurveyBase = z.object({
   }),
   metadata: z
     .object({
-      title: z.record(z.string()).optional(),
-      description: z.record(z.string()).optional(),
+      title: ZI18nString.optional(),
+      description: ZI18nString.optional(),
       ogImage: z.string().optional(),
     })
     .openapi({
