@@ -45,12 +45,16 @@ export const FollowUpItem = ({
     if (!to) return true;
 
     const matchedQuestion = localSurvey.questions.find((question) => {
+      if (question.id !== to) {
+        return false;
+      }
+
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {
-        return question.inputType === "email" && question.id === to;
+        return question.inputType === "email";
       }
 
       if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
-        return question.email.show && question.id === to;
+        return question.email.show;
       }
 
       return false;
