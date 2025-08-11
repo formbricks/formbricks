@@ -1,6 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { readFile } from "fs/promises";
 import { lookup } from "mime-types";
+import path from "path";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock AWS SDK
@@ -211,6 +212,8 @@ describe("Storage Service", () => {
     });
 
     test("use local storage for private files when S3 is not configured", async () => {
+      vi.resetModules();
+
       vi.doMock("../constants", () => ({
         S3_ACCESS_KEY: "test-access-key",
         S3_SECRET_KEY: "test-secret-key",
@@ -229,17 +232,21 @@ describe("Storage Service", () => {
         UPLOADS_DIR: "/tmp/uploads",
       }));
 
-      // Mock getPublicDomain
       vi.mock("../getPublicUrl", () => ({
         getPublicDomain: () => "https://public-domain.com",
       }));
 
-      const result = await getUploadSignedUrl("test.jpg", "env123", "image/jpeg", "private");
+      const freshModule = await import("./service");
+      const freshGetUploadSignedUrl = freshModule.getUploadSignedUrl as typeof getUploadSignedUrl;
+
+      const result = await freshGetUploadSignedUrl("test.jpg", "env123", "image/jpeg", "private");
 
       expect(result.fileUrl).toContain("http://test-webapp");
       expect(result.fileUrl).toMatch(
         /http:\/\/test-webapp\/storage\/env123\/private\/test--fid--test-uuid\.jpg/
       );
+      expect(result.fileUrl).not.toContain("test-bucket");
+      expect(result.fileUrl).not.toContain("test-endpoint");
     });
   });
 
@@ -265,12 +272,41 @@ describe("Storage Service", () => {
       await expect(getLocalFile("/tmp/uploads/test/test.jpg")).rejects.toThrow("File not found");
     });
 
-    test("should throw error when file path is invalid", async () => {
-      await expect(getLocalFile("/invalid/path")).rejects.toThrow("Invalid file path");
+    test("should throw error when file path attempts traversal outside uploads dir", async () => {
+      const traversalOutside = path.join("/tmp/uploads", "../outside.txt");
+      await expect(getLocalFile(traversalOutside)).rejects.toThrow(
+        "Invalid file path: Path must be within uploads folder"
+      );
     });
 
-    test("should throw error when file path is a directory", async () => {
-      await expect(getLocalFile("/invalid/path")).rejects.toThrow("Invalid file path");
+    test("should reject path traversal using '../secret' with security error", async () => {
+      await expect(getLocalFile("../secret")).rejects.toThrow(
+        "Invalid file path: Path must be within uploads folder"
+      );
+    });
+
+    test("should reject Windows-style traversal '..\\\\secret' with security error", async () => {
+      await expect(getLocalFile("..\\secret")).rejects.toThrow(
+        "Invalid file path: Path must be within uploads folder"
+      );
+    });
+
+    test("should reject nested traversal 'subdir/../../etc/passwd' with security error", async () => {
+      await expect(getLocalFile("subdir/../../etc/passwd")).rejects.toThrow(
+        "Invalid file path: Path must be within uploads folder"
+      );
+    });
+
+    test("should throw EISDIR when provided path is a directory inside uploads", async () => {
+      // Simulate Node throwing EISDIR when attempting to read a directory
+      const eisdirError: any = new Error("EISDIR: illegal operation on a directory, read");
+      eisdirError.code = "EISDIR";
+      vi.mocked(readFile).mockRejectedValueOnce(eisdirError);
+
+      await expect(getLocalFile("/tmp/uploads/some-dir")).rejects.toMatchObject({
+        code: "EISDIR",
+        message: expect.stringContaining("EISDIR"),
+      });
     });
   });
 });
