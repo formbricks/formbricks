@@ -1,3 +1,4 @@
+import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import { createI18nString, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import "@testing-library/jest-dom/vitest";
@@ -21,6 +22,10 @@ vi.mock("@/modules/survey/editor/actions", () => ({
 
 vi.mock("@formbricks/i18n-utils/src/utils", () => ({
   getLanguageLabel: vi.fn(),
+}));
+
+vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context", () => ({
+  useSurvey: vi.fn(),
 }));
 
 vi.mock("react-hot-toast", () => ({
@@ -99,11 +104,6 @@ const mockSurvey: TSurvey = {
   },
 };
 
-const mockSurveyWithoutMetadata: TSurvey = {
-  ...mockSurvey,
-  metadata: {},
-};
-
 const mockSingleLanguageSurvey: TSurvey = {
   ...mockSurvey,
   languages: [
@@ -114,6 +114,10 @@ const mockSingleLanguageSurvey: TSurvey = {
 describe("LinkSettingsTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    vi.mocked(useSurvey).mockReturnValue({
+      survey: mockSurvey,
+    });
 
     vi.mocked(getEnabledLanguages).mockReturnValue([
       { language: { id: "lang1", code: "default" }, default: true, enabled: true } as TSurveyLanguage,
@@ -146,7 +150,7 @@ describe("LinkSettingsTab", () => {
   });
 
   test("renders form fields correctly", () => {
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     expect(screen.getByText("common.language")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.share.link_settings.link_title")).toBeInTheDocument();
@@ -156,7 +160,7 @@ describe("LinkSettingsTab", () => {
   });
 
   test("initializes form with existing metadata", () => {
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const titleInput = screen.getByDisplayValue("Test Title");
     const descriptionInput = screen.getByDisplayValue("Test Description");
@@ -166,31 +170,44 @@ describe("LinkSettingsTab", () => {
   });
 
   test("initializes form with empty values when metadata is undefined", () => {
+    const mockSurveyWithoutMetadata: TSurvey = {
+      ...mockSurvey,
+      metadata: {},
+    };
+
+    vi.mocked(useSurvey).mockReturnValue({
+      survey: mockSurveyWithoutMetadata,
+    });
+
     vi.mocked(createI18nString).mockReturnValue({ default: "", en: "" });
 
-    render(<LinkSettingsTab survey={mockSurveyWithoutMetadata} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     expect(vi.mocked(createI18nString)).toHaveBeenCalledWith("", ["default", "en"]);
   });
 
   test("does not show language selector for single language surveys", () => {
+    vi.mocked(useSurvey).mockReturnValue({
+      survey: mockSingleLanguageSurvey,
+    });
+
     vi.mocked(getEnabledLanguages).mockReturnValue([
       { language: { id: "lang1", code: "default" }, default: true, enabled: true } as TSurveyLanguage,
     ]);
 
-    render(<LinkSettingsTab survey={mockSingleLanguageSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     expect(screen.queryByText("common.language")).not.toBeInTheDocument();
   });
 
   test("shows language selector for multi-language surveys", () => {
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     expect(screen.getByText("common.language")).toBeInTheDocument();
   });
 
   test("handles language change correctly", async () => {
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     // Since the Select component is complex to test in JSDOM, let's test that
     // the language selector is rendered and has the expected options
@@ -211,7 +228,7 @@ describe("LinkSettingsTab", () => {
 
   test("handles title input change", async () => {
     const user = userEvent.setup();
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const titleInput = screen.getByDisplayValue("Test Title");
     await user.clear(titleInput);
@@ -222,7 +239,7 @@ describe("LinkSettingsTab", () => {
 
   test("handles description input change", async () => {
     const user = userEvent.setup();
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const descriptionInput = screen.getByDisplayValue("Test Description");
     await user.clear(descriptionInput);
@@ -232,7 +249,7 @@ describe("LinkSettingsTab", () => {
   });
 
   test("handles file upload", async () => {
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const fileInput = screen.getByTestId("file-input");
     fireEvent.change(fileInput, { target: { value: "https://example.com/new-image.png" } });
@@ -241,7 +258,7 @@ describe("LinkSettingsTab", () => {
   });
 
   test("handles file removal", async () => {
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const fileInput = screen.getByTestId("file-input");
     fireEvent.change(fileInput, { target: { value: "" } });
@@ -250,7 +267,7 @@ describe("LinkSettingsTab", () => {
   });
 
   test("disables form when isReadOnly is true", () => {
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={true} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={true} locale="en-US" />);
 
     const titleInput = screen.getByDisplayValue("Test Title");
     const descriptionInput = screen.getByDisplayValue("Test Description");
@@ -263,7 +280,7 @@ describe("LinkSettingsTab", () => {
 
   test("submits form successfully", async () => {
     const user = userEvent.setup();
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const titleInput = screen.getByDisplayValue("Test Title");
     await user.clear(titleInput);
@@ -284,7 +301,7 @@ describe("LinkSettingsTab", () => {
     const user = userEvent.setup();
     vi.mocked(updateSurveyAction).mockResolvedValue({ data: mockSurvey });
 
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const titleInput = screen.getByDisplayValue("Test Title");
     await user.clear(titleInput);
@@ -306,7 +323,7 @@ describe("LinkSettingsTab", () => {
     });
     vi.mocked(updateSurveyAction).mockReturnValue(pendingPromise as any);
 
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     // Make form dirty first
     const titleInput = screen.getByDisplayValue("Test Title");
@@ -333,7 +350,7 @@ describe("LinkSettingsTab", () => {
 
   test("does not submit when isReadOnly is true", async () => {
     const user = userEvent.setup();
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={true} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={true} locale="en-US" />);
 
     const saveButton = screen.getByTestId("save-button");
     await user.click(saveButton);
@@ -343,7 +360,7 @@ describe("LinkSettingsTab", () => {
 
   test("handles ogImage correctly in form submission", async () => {
     const user = userEvent.setup();
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const fileInput = screen.getByTestId("file-input");
     fireEvent.change(fileInput, { target: { value: "https://example.com/new-image.png" } });
@@ -361,7 +378,7 @@ describe("LinkSettingsTab", () => {
 
   test("handles empty ogImage correctly in form submission", async () => {
     const user = userEvent.setup();
-    render(<LinkSettingsTab survey={mockSurvey} isReadOnly={false} locale="en-US" />);
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const fileInput = screen.getByTestId("file-input");
     fireEvent.change(fileInput, { target: { value: "" } });
@@ -387,7 +404,11 @@ describe("LinkSettingsTab", () => {
       },
     };
 
-    render(<LinkSettingsTab survey={surveyWithPartialMetadata} isReadOnly={false} locale="en-US" />);
+    vi.mocked(useSurvey).mockReturnValue({
+      survey: surveyWithPartialMetadata,
+    });
+
+    render(<LinkSettingsTab isReadOnly={false} locale="en-US" />);
 
     const titleInput = screen.getByDisplayValue("Existing Title");
     await user.clear(titleInput);

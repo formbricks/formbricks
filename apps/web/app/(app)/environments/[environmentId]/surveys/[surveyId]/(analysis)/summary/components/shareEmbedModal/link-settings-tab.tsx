@@ -1,5 +1,6 @@
 "use client";
 
+import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import { createI18nString, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -29,7 +30,6 @@ import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString, TSurvey, TSurveyMetadata } from "@formbricks/types/surveys/types";
 
 interface LinkSettingsTabProps {
-  survey: TSurvey;
   isReadOnly: boolean;
   locale: string;
 }
@@ -40,8 +40,9 @@ interface LinkSettingsFormData {
   ogImage?: string;
 }
 
-export const LinkSettingsTab = ({ survey, isReadOnly, locale }: LinkSettingsTabProps) => {
+export const LinkSettingsTab = ({ isReadOnly, locale }: LinkSettingsTabProps) => {
   const { t } = useTranslate();
+  const { survey } = useSurvey();
   const enabledLanguages = getEnabledLanguages(survey.languages);
   const hasMultipleLanguages = enabledLanguages.length > 1;
 

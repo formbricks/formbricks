@@ -1,13 +1,7 @@
-import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  getBasicSurveyMetadata,
-  getBrandColorForURL,
-  getNameForURL,
-  getSurveyOpenGraphMetadata,
-} from "./lib/metadata-utils";
+import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
@@ -19,8 +13,6 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("./lib/metadata-utils", () => ({
-  getBrandColorForURL: vi.fn(),
-  getNameForURL: vi.fn(),
   getSurveyOpenGraphMetadata: vi.fn(),
   getBasicSurveyMetadata: vi.fn(),
 }));
@@ -28,30 +20,28 @@ vi.mock("./lib/metadata-utils", () => ({
 describe("getMetadataForLinkSurvey", () => {
   const mockSurveyId = "survey-123";
   const mockSurveyName = "Test Survey";
-  const mockBrandColor = "#123456";
-  const mockEncodedBrandColor = "123456";
-  const mockEncodedName = "Test-Survey";
-  const mockOgImageUrl = `/api/v1/client/og?brandColor=${mockEncodedBrandColor}&name=${mockEncodedName}`;
+  const mockDescription = "Complete this survey";
+  const mockOgImageUrl = "https://example.com/custom-image.png";
 
   beforeEach(() => {
     vi.resetAllMocks();
 
-    vi.mocked(getBrandColorForURL).mockReturnValue(mockEncodedBrandColor);
-    vi.mocked(getNameForURL).mockReturnValue(mockEncodedName);
     vi.mocked(getBasicSurveyMetadata).mockResolvedValue({
       title: mockSurveyName,
-      description: "Complete this survey",
+      description: mockDescription,
       survey: null,
       ogImage: undefined,
     });
     vi.mocked(getSurveyOpenGraphMetadata).mockReturnValue({
       openGraph: {
         title: mockSurveyName,
-        images: [],
+        images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
+        description: "Thanks a lot for your time 🙏",
       },
       twitter: {
         title: mockSurveyName,
-        images: [],
+        images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
+        description: "Thanks a lot for your time 🙏",
       },
     });
   });
@@ -62,11 +52,6 @@ describe("getMetadataForLinkSurvey", () => {
       name: mockSurveyName,
       type: "link",
       status: "published",
-      styling: {
-        brandColor: {
-          light: mockBrandColor,
-        },
-      },
     } as any;
 
     vi.mocked(getSurveyMetadata).mockResolvedValue(mockSurvey);
@@ -74,21 +59,21 @@ describe("getMetadataForLinkSurvey", () => {
     const result = await getMetadataForLinkSurvey(mockSurveyId);
 
     expect(getSurveyMetadata).toHaveBeenCalledWith(mockSurveyId);
-    expect(getBrandColorForURL).toHaveBeenCalledWith(mockBrandColor);
-    expect(getNameForURL).toHaveBeenCalledWith(mockSurveyName);
+    expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined);
+    expect(getSurveyOpenGraphMetadata).toHaveBeenCalledWith(mockSurveyId, mockSurveyName);
 
     expect(result).toEqual({
       title: mockSurveyName,
-      description: "Complete this survey",
+      description: mockDescription,
       openGraph: {
         title: mockSurveyName,
-        description: "Complete this survey",
-        images: [mockOgImageUrl],
+        description: mockDescription,
+        images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
       },
       twitter: {
         title: mockSurveyName,
-        description: "Complete this survey",
-        images: [mockOgImageUrl],
+        description: mockDescription,
+        images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
       },
       alternates: {
         canonical: `/s/${mockSurveyId}`,
@@ -105,7 +90,7 @@ describe("getMetadataForLinkSurvey", () => {
     });
   });
 
-  test("uses default brand color when styling is not defined", async () => {
+  test("returns correct metadata with custom ogImage", async () => {
     const mockSurvey = {
       id: mockSurveyId,
       name: mockSurveyName,
@@ -114,10 +99,17 @@ describe("getMetadataForLinkSurvey", () => {
     } as any;
 
     vi.mocked(getSurveyMetadata).mockResolvedValue(mockSurvey);
+    vi.mocked(getBasicSurveyMetadata).mockResolvedValue({
+      title: mockSurveyName,
+      description: mockDescription,
+      survey: null,
+      ogImage: mockOgImageUrl as any,
+    });
 
-    await getMetadataForLinkSurvey(mockSurveyId);
+    const result = await getMetadataForLinkSurvey(mockSurveyId);
 
-    expect(getBrandColorForURL).toHaveBeenCalledWith(COLOR_DEFAULTS.brandColor);
+    expect(result.openGraph?.images).toEqual(mockOgImageUrl);
+    expect(result.twitter?.images).toEqual(mockOgImageUrl);
   });
 
   test("calls notFound when survey type is not link", async () => {
@@ -162,7 +154,8 @@ describe("getMetadataForLinkSurvey", () => {
     vi.mocked(getSurveyOpenGraphMetadata).mockReturnValue({
       twitter: {
         title: mockSurveyName,
-        images: [],
+        images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
+        description: "Thanks a lot for your time 🙏",
       },
     });
 
@@ -170,11 +163,11 @@ describe("getMetadataForLinkSurvey", () => {
 
     expect(result).toEqual({
       title: mockSurveyName,
-      description: "Complete this survey",
+      description: mockDescription,
       twitter: {
         title: mockSurveyName,
-        description: "Complete this survey",
-        images: [mockOgImageUrl],
+        description: mockDescription,
+        images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
       },
       alternates: {
         canonical: `/s/${mockSurveyId}`,
@@ -203,7 +196,8 @@ describe("getMetadataForLinkSurvey", () => {
     vi.mocked(getSurveyOpenGraphMetadata).mockReturnValue({
       openGraph: {
         title: mockSurveyName,
-        images: [],
+        images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
+        description: "Thanks a lot for your time 🙏",
       },
     });
 
@@ -211,11 +205,11 @@ describe("getMetadataForLinkSurvey", () => {
 
     expect(result).toEqual({
       title: mockSurveyName,
-      description: "Complete this survey",
+      description: mockDescription,
       openGraph: {
         title: mockSurveyName,
-        description: "Complete this survey",
-        images: [mockOgImageUrl],
+        description: mockDescription,
+        images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
       },
       alternates: {
         canonical: `/s/${mockSurveyId}`,
