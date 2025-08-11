@@ -184,28 +184,6 @@ export const getResponse = reactCache(async (responseId: string): Promise<{ surv
   }
 });
 
-export const getResponseNote = reactCache(
-  async (responseNoteId: string): Promise<{ responseId: string } | null> => {
-    try {
-      const responseNote = await prisma.responseNote.findUnique({
-        where: {
-          id: responseNoteId,
-        },
-        select: {
-          responseId: true,
-        },
-      });
-      return responseNote;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
-
 export const getSurvey = reactCache(async (surveyId: string): Promise<{ environmentId: string } | null> => {
   validateInputs([surveyId, ZId]);
   try {

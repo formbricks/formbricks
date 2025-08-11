@@ -5,7 +5,6 @@ import {
   mockEnvironmentId,
   mockResponse,
   mockResponseData,
-  mockResponseNote,
   mockSingleUseId,
   mockSurveyId,
   mockSurveySummaryOutput,
@@ -56,7 +55,6 @@ beforeEach(() => {
 
   // mocking the person findFirst call as it is used in the transformPrismaPerson function
   prisma.contact.findFirst.mockResolvedValue(mockContact);
-  prisma.responseNote.findMany.mockResolvedValue([mockResponseNote]);
 
   prisma.response.findUnique.mockResolvedValue(mockResponse);
 

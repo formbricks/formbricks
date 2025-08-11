@@ -22,7 +22,7 @@ export const ZAuditTarget = z.enum([
   "membership",
   "twoFactorAuth",
   "apiKey",
-  "responseNote",
+
   "integration",
   "file",
 ]);

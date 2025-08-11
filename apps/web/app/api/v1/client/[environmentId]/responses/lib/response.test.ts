@@ -98,7 +98,6 @@ const mockResponsePrisma = {
   language: null,
   displayId: null,
   tags: [],
-  notes: [],
 };
 
 describe("createResponse", () => {

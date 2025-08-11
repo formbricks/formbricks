@@ -53,22 +53,6 @@ export const responseSelection = {
       },
     },
   },
-  notes: {
-    select: {
-      id: true,
-      createdAt: true,
-      updatedAt: true,
-      text: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      isResolved: true,
-      isEdited: true,
-    },
-  },
 } satisfies Prisma.ResponseSelect;
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {

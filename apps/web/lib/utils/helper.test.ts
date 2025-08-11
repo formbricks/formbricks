@@ -19,7 +19,6 @@ import {
   getOrganizationIdFromLanguageId,
   getOrganizationIdFromProjectId,
   getOrganizationIdFromResponseId,
-  getOrganizationIdFromResponseNoteId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromTagId,
@@ -34,7 +33,6 @@ import {
   getProjectIdFromIntegrationId,
   getProjectIdFromLanguageId,
   getProjectIdFromResponseId,
-  getProjectIdFromResponseNoteId,
   getProjectIdFromSegmentId,
   getProjectIdFromSurveyId,
   getProjectIdFromTagId,
@@ -49,7 +47,7 @@ vi.mock("@/lib/utils/services", () => ({
   getSurvey: vi.fn(),
   getResponse: vi.fn(),
   getContact: vi.fn(),
-  getResponseNote: vi.fn(),
+
   getSegment: vi.fn(),
   getActionClass: vi.fn(),
   getIntegration: vi.fn(),
@@ -228,33 +226,6 @@ describe("Helper Utilities", () => {
       vi.mocked(services.getTag).mockResolvedValueOnce(null);
 
       await expect(getOrganizationIdFromTagId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("getOrganizationIdFromResponseNoteId returns organization ID correctly", async () => {
-      vi.mocked(services.getResponseNote).mockResolvedValueOnce({
-        responseId: "response1",
-      });
-      vi.mocked(services.getResponse).mockResolvedValueOnce({
-        surveyId: "survey1",
-      });
-      vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
-        projectId: "project1",
-      });
-      vi.mocked(services.getProject).mockResolvedValueOnce({
-        organizationId: "org1",
-      });
-
-      const orgId = await getOrganizationIdFromResponseNoteId("note1");
-      expect(orgId).toBe("org1");
-    });
-
-    test("getOrganizationIdFromResponseNoteId throws error when note not found", async () => {
-      vi.mocked(services.getResponseNote).mockResolvedValueOnce(null);
-
-      await expect(getOrganizationIdFromResponseNoteId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("getOrganizationIdFromSegmentId returns organization ID correctly", async () => {
@@ -590,29 +561,6 @@ describe("Helper Utilities", () => {
     test("getProjectIdFromResponseId throws error when response not found", async () => {
       vi.mocked(services.getResponse).mockResolvedValueOnce(null);
       await expect(getProjectIdFromResponseId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("getProjectIdFromResponseNoteId returns project ID correctly", async () => {
-      vi.mocked(services.getResponseNote).mockResolvedValueOnce({
-        responseId: "response1",
-      });
-      vi.mocked(services.getResponse).mockResolvedValueOnce({
-        surveyId: "survey1",
-      });
-      vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
-        projectId: "project1",
-      });
-
-      const projectId = await getProjectIdFromResponseNoteId("note1");
-      expect(projectId).toBe("project1");
-    });
-
-    test("getProjectIdFromResponseNoteId throws error when responseNote not found", async () => {
-      vi.mocked(services.getResponseNote).mockResolvedValueOnce(null);
-      await expect(getProjectIdFromResponseNoteId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("getProductIdFromContactId returns project ID correctly", async () => {

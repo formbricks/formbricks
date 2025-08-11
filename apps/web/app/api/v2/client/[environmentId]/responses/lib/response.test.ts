@@ -114,7 +114,6 @@ const mockResponsePrisma = {
   language: "en",
   displayId: null,
   tags: [],
-  notes: [],
 };
 
 const expectedResponse: TResponse = {

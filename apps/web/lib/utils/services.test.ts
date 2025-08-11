@@ -15,7 +15,6 @@ import {
   getLanguage,
   getProject,
   getResponse,
-  getResponseNote,
   getSegment,
   getSurvey,
   getTag,
@@ -56,9 +55,7 @@ vi.mock("@formbricks/database", () => ({
     response: {
       findUnique: vi.fn(),
     },
-    responseNote: {
-      findUnique: vi.fn(),
-    },
+
     survey: {
       findUnique: vi.fn(),
     },
@@ -316,33 +313,6 @@ describe("Service Functions", () => {
       );
 
       await expect(getResponse(responseId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getResponseNote", () => {
-    const responseNoteId = "note123";
-
-    test("returns the response note when found", async () => {
-      const mockResponseNote = { responseId: "resp123" };
-      vi.mocked(prisma.responseNote.findUnique).mockResolvedValue(mockResponseNote);
-
-      const result = await getResponseNote(responseNoteId);
-      expect(prisma.responseNote.findUnique).toHaveBeenCalledWith({
-        where: { id: responseNoteId },
-        select: { responseId: true },
-      });
-      expect(result).toEqual(mockResponseNote);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.responseNote.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getResponseNote(responseNoteId)).rejects.toThrow(DatabaseError);
     });
   });
 
