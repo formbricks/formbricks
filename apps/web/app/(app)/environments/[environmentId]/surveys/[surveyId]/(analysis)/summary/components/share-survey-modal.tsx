@@ -75,8 +75,8 @@ export const ShareSurveyModal = ({
     icon: React.ElementType;
     title: string;
     description: string;
-    componentType: React.ComponentType<any>;
-    componentProps: any;
+    componentType: React.ComponentType<unknown>;
+    componentProps: unknown;
   }[] = useMemo(
     () => [
       {
@@ -188,7 +188,7 @@ export const ShareSurveyModal = ({
     ]
   );
 
-  const [activeId, setActiveId] = useState(
+  const [activeId, setActiveId] = useState<ShareViaType | ShareSettingsType>(
     survey.type === "link" ? ShareViaType.ANON_LINKS : ShareViaType.APP
   );
 
