@@ -874,18 +874,6 @@ model User {
   @@index([email])
 }
 
-/// Maps a short URL to its full destination.
-/// Used for creating memorable, shortened URLs for surveys.
-///
-/// @property id - Short identifier/slug for the URL
-/// @property url - The full destination URL
-model ShortUrl {
-  id        String   @id // generate nanoId in service
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  url       String   @unique
-}
-
 /// Defines a segment of contacts based on attributes.
 /// Used for targeting surveys to specific user groups.
 ///
