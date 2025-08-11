@@ -1,43 +1,44 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { NextRequest } from "next/server";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
-export const GET = async (request: Request) => {
-  const authentication = await authenticateRequest(request);
-  if (!authentication) {
-    return responses.notAuthenticatedResponse();
-  }
-  try {
-    const environmentIds = authentication.environmentPermissions.map(
-      (permission) => permission.environmentId
-    );
-    const webhooks = await getWebhooks(environmentIds);
-    return responses.successResponse(webhooks);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.internalServerErrorResponse(error.message);
-    }
-    throw error;
-  }
-};
-
-export const POST = withApiLogging(
-  async (request: Request, _, auditLog: ApiAuditLog) => {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) {
+export const GET = withV1ApiWrapper({
+  handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {
+    try {
+      const environmentIds = authentication.environmentPermissions.map(
+        (permission) => permission.environmentId
+      );
+      const webhooks = await getWebhooks(environmentIds);
       return {
-        response: responses.notAuthenticatedResponse(),
+        response: responses.successResponse(webhooks),
       };
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        return {
+          response: responses.internalServerErrorResponse(error.message),
+        };
+      }
+      throw error;
     }
+  },
+});
 
-    auditLog.organizationId = authentication.organizationId;
-    auditLog.userId = authentication.apiKeyId;
-    const webhookInput = await request.json();
+export const POST = withV1ApiWrapper({
+  handler: async ({
+    req,
+    auditLog,
+    authentication,
+  }: {
+    req: NextRequest;
+    auditLog: TApiAuditLog;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
+    const webhookInput = await req.json();
     const inputValidation = ZWebhookInput.safeParse(webhookInput);
 
     if (!inputValidation.success) {
@@ -85,6 +86,6 @@ export const POST = withApiLogging(
       throw error;
     }
   },
-  "created",
-  "webhook"
-);
+  action: "created",
+  targetType: "webhook",
+});
