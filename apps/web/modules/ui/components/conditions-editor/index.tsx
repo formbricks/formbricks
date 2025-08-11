@@ -8,8 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { InputCombobox } from "@/modules/ui/components/input-combo-box";
-import { TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import {
   Select,
   SelectContent,
@@ -207,7 +206,7 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`}>
+          <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`} asChild>
             <Button
               variant="outline"
               className="flex h-10 w-10 items-center justify-center rounded-md bg-white">
