@@ -228,7 +228,7 @@ export const LinkSettingsTab = ({ survey, isReadOnly, locale }: LinkSettingsTabP
                 <FormLabel>{t("environments.surveys.share.link_settings.preview_image")}</FormLabel>
                 <FormControl>
                   <FileInput
-                    id="og-image-upload"
+                    id={`og-image-upload-${survey.id}`}
                     allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
                     environmentId={survey.environmentId}
                     onFileUpload={handleFileUpload}

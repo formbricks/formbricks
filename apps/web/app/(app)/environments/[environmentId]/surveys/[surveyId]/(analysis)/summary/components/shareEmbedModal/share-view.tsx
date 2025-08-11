@@ -71,10 +71,12 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
   const shareViaTabs = tabs.filter((tab) => tab.type === "share_via");
   const sideBarGroups = [
     {
+      id: "share_via",
       label: t("environments.surveys.share.share_view_title"),
       tabs: shareViaTabs,
     },
     {
+      id: "share_settings",
       label: t("environments.surveys.share.share_settings_title"),
       tabs: shareSettingsTabs,
     },
@@ -94,7 +96,7 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
           <Sidebar className="relative h-full p-0" variant="inset" collapsible="icon">
             <SidebarContent className="h-full rounded-l-lg border-r border-slate-200 bg-white p-4">
               {sideBarGroups.map((group) => (
-                <SidebarGroup className="p-0" key={group.label}>
+                <SidebarGroup className="p-0" key={group.id}>
                   <SidebarGroupLabel>
                     <Small className="text-xs text-slate-500">{group.label}</Small>
                   </SidebarGroupLabel>
