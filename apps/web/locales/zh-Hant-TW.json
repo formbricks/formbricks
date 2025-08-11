@@ -1646,7 +1646,7 @@
         "company": "公司",
         "completed": "已完成 ✅",
         "country": "國家/地區",
-        "delete_response_confirmation": "這將刪除調查回覆，包括所有答案、註解、標籤、附加文件和回覆元數據。",
+        "delete_response_confirmation": "這將刪除調查響應，包括所有回答、標籤、附件文件以及響應元數據。",
         "device": "裝置",
         "device_info": "裝置資訊",
         "email": "電子郵件",

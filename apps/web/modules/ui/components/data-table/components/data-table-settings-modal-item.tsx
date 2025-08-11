@@ -110,13 +110,15 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
           key={column.id}
           className="flex w-full items-center justify-between gap-4 rounded-md p-1.5 hover:cursor-move hover:bg-slate-100">
           <div className="flex items-center space-x-2 overflow-hidden">
-            <button onClick={(e) => e.preventDefault()}>
+            <button type="button" onClick={(e) => e.preventDefault()}>
               <GripVertical className="h-4 w-4" />
             </button>
             <div className="flex items-center space-x-2 overflow-hidden">
               {question ? (
                 <>
-                  <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
+                  <span className="h-4 w-4" aria-hidden="true">
+                    {QUESTIONS_ICON_MAP[question.type]}
+                  </span>
                   <span className="truncate">{getLocalizedValue(question.headline, "default")}</span>
                 </>
               ) : (
