@@ -171,7 +171,6 @@ export const QuestionFilterComboBox = ({
           type="text"
           value={typeof filterComboBoxValue === "string" ? filterComboBoxValue : ""}
           onChange={(e) => onChangeFilterComboBoxValue(e.target.value)}
-          placeholder={t("common.url")}
           disabled={disabled || !filterValue}
           className="h-9 rounded-l-none border-none bg-white text-sm focus:ring-offset-0"
         />

@@ -335,6 +335,7 @@
     "sales": "銷售",
     "save": "儲存",
     "save_changes": "儲存變更",
+    "saving": "儲存",
     "scheduled": "已排程",
     "search": "搜尋",
     "security": "安全性",
@@ -1542,6 +1543,7 @@
         "send_survey_to_audience_who_match": "將問卷發送給符合以下條件的受眾：",
         "send_your_respondents_to_a_page_of_your_choice": "將您的回應者傳送到您選擇的頁面。",
         "set_the_global_placement_in_the_look_feel_settings": "在「外觀與風格」設定中設定整體位置。",
+        "settings_saved_successfully": "設定已成功儲存",
         "seven_points": "7 分",
         "show_advanced_settings": "顯示進階設定",
         "show_button": "顯示按鈕",
@@ -1708,6 +1710,19 @@
           "embed_mode_description": "以簡約設計嵌入您的問卷，捨棄邊距和背景。",
           "nav_title": "嵌入網站"
         },
+        "link_settings": {
+          "description": "為 分享 在公開的時候給予 連結 自訂 標題 、描述 和 圖像。",
+          "language_help_text": "中 繼資料 會 根據 URL 中 的 `lang` 值 載入。",
+          "link_description": "連結描述",
+          "link_description_description": "描述在 55 - 200 個字符之間的表現最好。",
+          "link_description_placeholder": "幫助 我們 改善 , 分享 您 的 想法 。",
+          "link_title": "連結標題",
+          "link_title_description": "短 標題 在 Meta Titles 中表現最佳。",
+          "link_title_placeholder": "顧客 回饋 調查",
+          "preview_image": "預覽 圖片",
+          "preview_image_description": "景觀 圖片 檔案 大小 小於 4MB 效果 最佳。",
+          "title": "連結 設定"
+        },
         "personal_links": {
           "create_and_manage_segments": "在 聯絡人 > 分段 中建立和管理您的分段",
           "description": "為 一個 群組 生成 個人 連結，並 將 調查 回應 對應 到 每個 聯絡人。",
@@ -1739,6 +1754,7 @@
           "send_preview": "發送預覽",
           "send_preview_email": "發送預覽電子郵件"
         },
+        "share_settings_title": "分享 設定",
         "share_view_title": "透過 分享",
         "social_media": {
           "description": "從 您 的 聯絡人 在 各 種 社交 媒體 網絡 上 獲得 回應。",
