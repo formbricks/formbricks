@@ -227,6 +227,14 @@ export const ZSurveyRecaptcha = z
 
 export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
 
+export const ZSurveyMetadata = z.object({
+  title: ZI18nString.optional(),
+  description: ZI18nString.optional(),
+  ogImage: z.string().url().optional(),
+});
+
+export type TSurveyMetadata = z.infer<typeof ZSurveyMetadata>;
+
 export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
@@ -858,6 +866,7 @@ export const ZSurvey = z
     pin: z.string().length(4, { message: "PIN must be a four digit number" }).nullish(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
+    metadata: ZSurveyMetadata,
   })
   .superRefine((survey, ctx) => {
     const { questions, languages, welcomeCard, endings, isBackButtonHidden } = survey;

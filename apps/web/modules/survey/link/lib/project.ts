@@ -8,7 +8,9 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getProjectByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<Pick<Project, "styling" | "logo" | "linkSurveyBranding"> | null> => {
+  async (
+    environmentId: string
+  ): Promise<Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "name"> | null> => {
     validateInputs([environmentId, ZId]);
 
     let projectPrisma;
@@ -26,6 +28,7 @@ export const getProjectByEnvironmentId = reactCache(
           styling: true,
           logo: true,
           linkSurveyBranding: true,
+          name: true,
         },
       });
 
