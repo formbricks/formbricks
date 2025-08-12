@@ -335,6 +335,7 @@
     "sales": "Sales",
     "save": "Save",
     "save_changes": "Save changes",
+    "saving": "Saving",
     "scheduled": "Scheduled",
     "search": "Search",
     "security": "Security",
@@ -1542,6 +1543,7 @@
         "send_survey_to_audience_who_match": "Send survey to audience who match...",
         "send_your_respondents_to_a_page_of_your_choice": "Send your respondents to a page of your choice.",
         "set_the_global_placement_in_the_look_feel_settings": "Set the global placement in the Look & Feel settings.",
+        "settings_saved_successfully": "Settings saved successfully.",
         "seven_points": "7 points",
         "show_advanced_settings": "Show Advanced settings",
         "show_button": "Show Button",
@@ -1708,6 +1710,19 @@
           "embed_mode_description": "Embed your survey with a minimalist design, discarding padding and background.",
           "nav_title": "Website embed"
         },
+        "link_settings": {
+          "description": "Give links a custom title, description and image for sharing in public.",
+          "language_help_text": "The meta data is loaded based on the `lang` value in the URL.",
+          "link_description": "Link description",
+          "link_description_description": "Descriptions between 55-200 characters perform best.",
+          "link_description_placeholder": "Help us improve by sharing your thoughts.",
+          "link_title": "Link title",
+          "link_title_description": "Short titles perform best as Meta Titles.",
+          "link_title_placeholder": "Customer Feedback Survey",
+          "preview_image": "Preview image",
+          "preview_image_description": "Landscape images with small file sizes (<4MB) perform best.",
+          "title": "Link settings"
+        },
         "personal_links": {
           "create_and_manage_segments": "Create and manage your Segments under Contacts > Segments",
           "description": "Generate personal links for a segment and match survey responses to each contact.",
@@ -1739,6 +1754,7 @@
           "send_preview": "Send preview",
           "send_preview_email": "Send preview email"
         },
+        "share_settings_title": "Share settings",
         "share_view_title": "Share via",
         "social_media": {
           "description": "Get responses from your contacts on various social media networks.",
