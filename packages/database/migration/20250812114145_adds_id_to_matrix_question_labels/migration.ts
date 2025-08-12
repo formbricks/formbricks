@@ -5,8 +5,8 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
 type I18nString = Record<string, string>;
 
 interface MatrixChoice {
-  id?: string;
-  label?: I18nString;
+  id: string;
+  label: I18nString;
 }
 
 interface SurveyRecord {
