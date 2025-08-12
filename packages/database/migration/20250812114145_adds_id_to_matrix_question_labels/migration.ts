@@ -99,7 +99,7 @@ export const addsIdToMatrixQuestionLabels: MigrationScript = {
         await Promise.all(
           chunk.map(
             (update) =>
-              tx.$queryRaw`
+              tx.$executeRaw`
                   UPDATE "Survey"
                   SET questions = ${JSON.stringify(update.questions)}::jsonb
                   WHERE id = ${update.id}
