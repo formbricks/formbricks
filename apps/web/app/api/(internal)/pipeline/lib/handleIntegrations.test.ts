@@ -90,7 +90,6 @@ const mockPipelineInput = {
     personAttributes: {},
     singleUseId: null,
     personId: "person1",
-    notes: [],
     tags: [],
     variables: {
       [variableId]: "Variable Value",

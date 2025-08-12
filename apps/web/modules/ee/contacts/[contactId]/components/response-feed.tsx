@@ -112,7 +112,6 @@ const ResponseSurveyCard = ({
           response={response}
           survey={replaceHeadlineRecall(survey, "default")}
           user={user}
-          pageType="people"
           environmentTags={environmentTags}
           environment={environment}
           deleteResponses={deleteResponses}

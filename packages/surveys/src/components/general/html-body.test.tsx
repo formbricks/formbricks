@@ -12,21 +12,18 @@ vi.mock("isomorphic-dompurify", () => ({
 }));
 
 describe("HtmlBody", () => {
-  const defaultProps = {
-    questionId: "test-id" as const,
-  };
+  const defaultProps = {};
 
   test("renders sanitized HTML content", async () => {
     const htmlString = "<p>Test content</p>";
     const { container } = render(<HtmlBody {...defaultProps} htmlString={htmlString} />);
 
     await waitFor(() => {
-      const label = container.querySelector("label");
-      expect(label).toBeInTheDocument();
-      expect(label).toHaveAttribute("for", "test-id");
-      expect(label).toHaveClass("fb-htmlbody", "fb-break-words");
-      expect(label).toHaveAttribute("dir", "auto");
-      expect(label?.innerHTML).toBe(htmlString);
+      const span = container.querySelector("span");
+      expect(span).toBeInTheDocument();
+      expect(span).toHaveClass("fb-htmlbody", "fb-break-words");
+      expect(span).toHaveAttribute("dir", "auto");
+      expect(span?.innerHTML).toBe(htmlString);
     });
 
     expect(DOMPurify.sanitize).toHaveBeenCalledWith(htmlString, { ADD_ATTR: ["target"] });
@@ -57,9 +54,9 @@ describe("HtmlBody", () => {
     const { container } = render(<HtmlBody {...defaultProps} htmlString={complexHtml} />);
 
     await waitFor(() => {
-      const label = container.querySelector("label");
-      expect(label).toBeInTheDocument();
-      expect(label?.innerHTML).toBe(complexHtml);
+      const span = container.querySelector("span");
+      expect(span).toBeInTheDocument();
+      expect(span?.innerHTML).toBe(complexHtml);
     });
 
     expect(DOMPurify.sanitize).toHaveBeenCalledWith(complexHtml, { ADD_ATTR: ["target"] });
@@ -70,16 +67,16 @@ describe("HtmlBody", () => {
     const { container, rerender } = render(<HtmlBody {...defaultProps} htmlString={initialHtml} />);
 
     await waitFor(() => {
-      const label = container.querySelector("label");
-      expect(label?.innerHTML).toBe(initialHtml);
+      const span = container.querySelector("span");
+      expect(span?.innerHTML).toBe(initialHtml);
     });
 
     const updatedHtml = "<p>Updated content</p>";
     rerender(<HtmlBody {...defaultProps} htmlString={updatedHtml} />);
 
     await waitFor(() => {
-      const label = container.querySelector("label");
-      expect(label?.innerHTML).toBe(updatedHtml);
+      const span = container.querySelector("span");
+      expect(span?.innerHTML).toBe(updatedHtml);
     });
 
     expect(DOMPurify.sanitize).toHaveBeenCalledWith(updatedHtml, { ADD_ATTR: ["target"] });
@@ -90,8 +87,8 @@ describe("HtmlBody", () => {
     const { container } = render(<HtmlBody {...defaultProps} htmlString={htmlString} />);
 
     await waitFor(() => {
-      const label = container.querySelector("label");
-      expect(label).toHaveClass("fb-htmlbody", "fb-break-words");
+      const span = container.querySelector("span");
+      expect(span).toHaveClass("fb-htmlbody", "fb-break-words");
     });
   });
 });

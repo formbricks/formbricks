@@ -407,7 +407,6 @@ describe("Response Utils", () => {
         finished: true,
         createdAt: new Date(),
         updatedAt: new Date(),
-        notes: [],
         tags: [],
       },
     ];
@@ -458,7 +457,6 @@ describe("Response Utils", () => {
         finished: true,
         createdAt: new Date(),
         updatedAt: new Date(),
-        notes: [],
         tags: [],
       },
     ];

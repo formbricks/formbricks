@@ -73,8 +73,6 @@ export default defineConfig({
         "modules/setup/**/intro/**", // Setup intro pages
         "modules/setup/**/signup/**", // Setup signup pages
         "modules/setup/**/layout.tsx", // Setup layouts
-        "lib/shortUrl/**", // Short URL functionality
-        "app/[shortUrlId]", // Short URL pages
         "modules/ee/contacts/components/**", // Contact components
 
         // Third-party integrations

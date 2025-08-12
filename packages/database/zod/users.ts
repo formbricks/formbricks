@@ -66,7 +66,6 @@ export const ZUser = z.object({
     | "identityProviderAccountId"
     | "memberships"
     | "accounts"
-    | "responseNotes"
     | "groupId"
     | "invitesCreated"
     | "invitesAccepted"

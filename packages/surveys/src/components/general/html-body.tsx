@@ -1,14 +1,12 @@
 import { cn } from "@/lib/utils";
 import DOMPurify from "isomorphic-dompurify";
 import { useEffect, useState } from "react";
-import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface HtmlBodyProps {
-  htmlString?: string;
-  questionId: TSurveyQuestionId;
+  readonly htmlString?: string;
 }
 
-export function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
+export function HtmlBody({ htmlString }: HtmlBodyProps) {
   const [safeHtml, setSafeHtml] = useState("");
 
   useEffect(() => {
@@ -21,8 +19,7 @@ export function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
   if (safeHtml === `<p class="fb-editor-paragraph"><br></p>`) return null;
 
   return (
-    <label
-      htmlFor={questionId}
+    <span
       className={cn("fb-htmlbody fb-break-words")} // styles are in global.css
       dangerouslySetInnerHTML={{ __html: safeHtml }}
       dir="auto"

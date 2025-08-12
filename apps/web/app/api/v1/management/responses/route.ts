@@ -1,7 +1,6 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { ApiAuditLog, withApiLogging } from "@/app/lib/api/with-api-logging";
+import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -12,42 +11,56 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { createResponse, getResponsesByEnvironmentIds } from "./lib/response";
 
-export const GET = async (request: NextRequest) => {
-  const searchParams = request.nextUrl.searchParams;
-  const surveyId = searchParams.get("surveyId");
-  const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
-  const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
+export const GET = withV1ApiWrapper({
+  handler: async ({
+    req,
+    authentication,
+  }: {
+    req: NextRequest;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
+    const searchParams = req.nextUrl.searchParams;
+    const surveyId = searchParams.get("surveyId");
+    const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
+    const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
 
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    let allResponses: TResponse[] = [];
+    try {
+      let allResponses: TResponse[] = [];
 
-    if (surveyId) {
-      const survey = await getSurvey(surveyId);
-      if (!survey) {
-        return responses.notFoundResponse("Survey", surveyId, true);
+      if (surveyId) {
+        const survey = await getSurvey(surveyId);
+        if (!survey) {
+          return {
+            response: responses.notFoundResponse("Survey", surveyId, true),
+          };
+        }
+        if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+          return {
+            response: responses.unauthorizedResponse(),
+          };
+        }
+        const surveyResponses = await getResponses(surveyId, limit, offset);
+        allResponses.push(...surveyResponses);
+      } else {
+        const environmentIds = authentication.environmentPermissions.map(
+          (permission) => permission.environmentId
+        );
+        const environmentResponses = await getResponsesByEnvironmentIds(environmentIds, limit, offset);
+        allResponses.push(...environmentResponses);
       }
-      if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
-        return responses.unauthorizedResponse();
+      return {
+        response: responses.successResponse(allResponses),
+      };
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
       }
-      const surveyResponses = await getResponses(surveyId, limit, offset);
-      allResponses.push(...surveyResponses);
-    } else {
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
-      const environmentResponses = await getResponsesByEnvironmentIds(environmentIds, limit, offset);
-      allResponses.push(...environmentResponses);
+      throw error;
     }
-    return responses.successResponse(allResponses);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
-    }
-    throw error;
-  }
-};
+  },
+});
 
 const validateInput = async (request: Request) => {
   let jsonInput;
@@ -92,19 +105,18 @@ const validateSurvey = async (responseInput: TResponseInput, environmentId: stri
   return { survey };
 };
 
-export const POST = withApiLogging(
-  async (request: Request, _, auditLog: ApiAuditLog) => {
+export const POST = withV1ApiWrapper({
+  handler: async ({
+    req,
+    auditLog,
+    authentication,
+  }: {
+    req: NextRequest;
+    auditLog: TApiAuditLog;
+    authentication: NonNullable<TApiKeyAuthentication>;
+  }) => {
     try {
-      const authentication = await authenticateRequest(request);
-      if (!authentication) {
-        return {
-          response: responses.notAuthenticatedResponse(),
-        };
-      }
-      auditLog.userId = authentication.apiKeyId;
-      auditLog.organizationId = authentication.organizationId;
-
-      const inputResult = await validateInput(request);
+      const inputResult = await validateInput(req);
       if (inputResult.error) {
         return {
           response: inputResult.error,
@@ -145,16 +157,14 @@ export const POST = withApiLogging(
           response: responses.successResponse(response, true),
         };
       } catch (error) {
+        logger.error({ error, url: req.url }, "Error in POST /api/v1/management/responses");
+
         if (error instanceof InvalidInputError) {
           return {
             response: responses.badRequestResponse(error.message),
           };
-        } else if (error instanceof DatabaseError) {
-          return {
-            response: responses.badRequestResponse(error.message),
-          };
         }
-        logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
+
         return {
           response: responses.internalServerErrorResponse(error.message),
         };
@@ -168,6 +178,6 @@ export const POST = withApiLogging(
       throw error;
     }
   },
-  "created",
-  "response"
-);
+  action: "created",
+  targetType: "response",
+});

@@ -286,9 +286,7 @@ export const withAuditLogging = <TParsedInput = Record<string, unknown>, TResult
           case "response":
             targetId = auditLoggingCtx.responseId;
             break;
-          case "responseNote":
-            targetId = auditLoggingCtx.responseNoteId;
-            break;
+
           case "integration":
             targetId = auditLoggingCtx.integrationId;
             break;

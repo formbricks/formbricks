@@ -107,7 +107,6 @@ const mockResponses: TResponse[] = [
     finished: true,
     data: {},
     meta: { userAgent: {} },
-    notes: [],
     tags: [],
   } as unknown as TResponse,
   {
@@ -118,7 +117,6 @@ const mockResponses: TResponse[] = [
     finished: true,
     data: {},
     meta: { userAgent: {} },
-    notes: [],
     tags: [],
   } as unknown as TResponse,
 ];

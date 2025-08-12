@@ -73,10 +73,7 @@ export function ConsentQuestion({
           questionId={question.id}
           required={question.required}
         />
-        <HtmlBody
-          htmlString={getLocalizedValue(question.html, languageCode) || ""}
-          questionId={question.id}
-        />
+        <HtmlBody htmlString={getLocalizedValue(question.html, languageCode) || ""} />
         <label
           ref={consentRef}
           dir="auto"
