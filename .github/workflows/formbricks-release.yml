@@ -10,6 +10,10 @@ permissions:
 jobs:
   docker-build:
     name: Build & release docker image
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     uses: ./.github/workflows/release-docker-github.yml
     secrets: inherit
     with:
@@ -17,6 +21,9 @@ jobs:
 
   helm-chart-release:
     name: Release Helm Chart
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/release-helm-chart.yml
     secrets: inherit
     needs:
@@ -26,6 +33,9 @@ jobs:
 
   deploy-formbricks-cloud:
     name: Deploy Helm Chart to Formbricks Cloud
+    permissions:
+      contents: read
+      id-token: write
     secrets: inherit
     uses: ./.github/workflows/deploy-formbricks-cloud.yml
     needs:
