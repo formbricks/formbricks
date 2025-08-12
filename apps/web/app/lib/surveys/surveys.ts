@@ -495,11 +495,7 @@ export const getFormattedFilters = (
       if (!filters.meta) filters.meta = {};
 
       // For text input cases (URL filtering)
-      if (
-        questionType.id === "url" &&
-        typeof filterType.filterComboBoxValue === "string" &&
-        filterType.filterComboBoxValue.length > 0
-      ) {
+      if (typeof filterType.filterComboBoxValue === "string" && filterType.filterComboBoxValue.length > 0) {
         const value = filterType.filterComboBoxValue.trim();
         const op = META_OP_MAP[filterType.filterValue as keyof typeof META_OP_MAP];
         if (op) {

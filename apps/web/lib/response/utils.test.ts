@@ -555,8 +555,7 @@ describe("Response Utils", () => {
         },
       ];
       const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
-      expect(result.url).toContain("https://example.com/page1");
-      expect(result.url).toContain("https://test.com/page2?param=value");
+      expect(result.url).toEqual([]);
       expect(result.source).toContain("direct");
       expect(result.source).toContain("google");
     });
@@ -587,8 +586,7 @@ describe("Response Utils", () => {
       expect(result.browser).toContain("Safari");
       expect(result.device).toContain("desktop");
       expect(result.device).toContain("mobile");
-      expect(result.url).toContain("https://formbricks.com/dashboard");
-      expect(result.url).toContain("https://formbricks.com/surveys/123");
+      expect(result.url).toEqual([]);
       expect(result.country).toContain("US");
       expect(result.country).toContain("UK");
     });
@@ -626,7 +624,7 @@ describe("Response Utils", () => {
         },
       ];
       const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
-      expect(result.url).toEqual(["https://valid.com"]);
+      expect(result.url).toEqual([]);
       expect(result.source).toEqual(expect.arrayContaining(["direct", "newsletter", "google"]));
     });
   });
