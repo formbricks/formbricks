@@ -72,12 +72,28 @@ export const testS3BucketAccess = async () => {
   }
 };
 
+// Helper function to validate file paths are within the uploads directory
+const validateAndResolvePath = (filePath: string): string => {
+  // Resolve and normalize the path to prevent directory traversal attacks
+  const resolvedPath = path.resolve(filePath);
+  const uploadsPath = path.resolve(UPLOADS_DIR);
+
+  // Ensure the resolved path is within the uploads directory
+  if (!resolvedPath.startsWith(uploadsPath)) {
+    throw new Error("Invalid file path: Path must be within uploads folder");
+  }
+
+  return resolvedPath;
+};
+
 const ensureDirectoryExists = async (dirPath: string) => {
+  const safePath = validateAndResolvePath(dirPath);
+
   try {
-    await access(dirPath);
+    await access(safePath);
   } catch (error: any) {
     if (error.code === "ENOENT") {
-      await mkdir(dirPath, { recursive: true });
+      await mkdir(safePath, { recursive: true });
     } else {
       throw error;
     }
@@ -126,7 +142,7 @@ export const getS3File = async (fileKey: string): Promise<string> => {
 
 export const getLocalFile = async (filePath: string): Promise<TGetFileResponse> => {
   try {
-    const safeFilePath = path.resolve(process.cwd(), filePath);
+    const safeFilePath = validateAndResolvePath(filePath);
     const file = await readFile(safeFilePath);
     let contentType = "";
 
@@ -263,6 +279,7 @@ export const putFileToLocalStorage = async (
     await ensureDirectoryExists(`${rootDir}/${environmentId}/${accessType}`);
 
     const uploadPath = `${rootDir}/${environmentId}/${accessType}/${fileName}`;
+    const safeUploadPath = validateAndResolvePath(uploadPath);
 
     const buffer = Buffer.from(fileBuffer as unknown as WithImplicitCoercion<string>);
     const bufferBytes = buffer.byteLength;
@@ -280,7 +297,7 @@ export const putFileToLocalStorage = async (
       throw err;
     }
 
-    await writeFile(uploadPath, buffer as unknown as any);
+    await writeFile(safeUploadPath, buffer as unknown as any);
   } catch (err) {
     throw err;
   }
@@ -346,7 +363,8 @@ export const deleteFile = async (
 
 export const deleteLocalFile = async (filePath: string) => {
   try {
-    await unlink(filePath);
+    const safeFilePath = validateAndResolvePath(filePath);
+    await unlink(safeFilePath);
   } catch (err: any) {
     throw err;
   }

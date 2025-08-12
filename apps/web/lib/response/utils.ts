@@ -613,7 +613,6 @@ export const getResponsesJson = (
       "Survey ID": response.surveyId,
       "Formbricks ID (internal)": response.contact?.id || "",
       "User ID": response.contact?.userId || "",
-      Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
       Tags: response.tags.map((tag) => tag.name).join(", "),
     });
 

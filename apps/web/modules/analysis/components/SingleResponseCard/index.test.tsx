@@ -18,7 +18,6 @@ const dummySurvey = {
   type: "link",
   questions: [{ id: "q1" }, { id: "q2" }],
   responseCount: 10,
-  notes: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 } as unknown as TSurvey;
@@ -26,7 +25,6 @@ const dummyResponse = {
   id: "resp1",
   finished: true,
   data: { q1: "answer1", q2: null },
-  notes: [],
   tags: [],
 } as unknown as TResponse;
 const dummyEnvironment = { id: "env1" } as TEnvironment;
@@ -63,10 +61,6 @@ vi.mock("@/modules/ui/components/delete-dialog", () => ({
       </button>
     ) : null,
 }));
-vi.mock("./components/ResponseNote", () => ({
-  ResponseNotes: (props: any) => <div data-testid="ResponseNotes">Notes ({props.notes.length})</div>,
-}));
-
 vi.mock("./actions", () => ({
   deleteResponseAction: vi.fn().mockResolvedValue("deletedResponse"),
   getResponseAction: vi.fn(),
@@ -88,7 +82,6 @@ describe("SingleResponseCard", () => {
         survey={draftSurvey}
         response={dummyResponse}
         user={dummyUser}
-        pageType="response"
         environmentTags={[]}
         environment={dummyEnvironment}
         updateResponse={dummyUpdateResponse}
@@ -109,7 +102,6 @@ describe("SingleResponseCard", () => {
         survey={dummySurvey}
         response={dummyResponse}
         user={dummyUser}
-        pageType="response"
         environmentTags={[]}
         environment={dummyEnvironment}
         updateResponse={dummyUpdateResponse}
@@ -138,7 +130,6 @@ describe("SingleResponseCard", () => {
         survey={dummySurvey}
         response={dummyResponse}
         user={dummyUser}
-        pageType="response"
         environmentTags={[]}
         environment={dummyEnvironment}
         updateResponse={dummyUpdateResponse}
@@ -164,7 +155,6 @@ describe("SingleResponseCard", () => {
         survey={dummySurvey}
         response={dummyResponse}
         user={dummyUser}
-        pageType="response"
         environmentTags={[]}
         environment={dummyEnvironment}
         updateResponse={dummyUpdateResponse}

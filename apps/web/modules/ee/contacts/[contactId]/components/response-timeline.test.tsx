@@ -57,7 +57,6 @@ describe("ResponseTimeline", () => {
     singleUseId: null,
     language: "en",
     ttc: {},
-    notes: [],
     tags: [],
   };
 

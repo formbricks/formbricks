@@ -1356,13 +1356,13 @@ export const ZSurvey = z
                   }
 
                   if (q.type === TSurveyQuestionTypeEnum.ContactInfo) {
-                    return true;
+                    return q.email.show;
                   }
 
                   return false;
                 })
                 .map((q) => q.id),
-              ...(survey.hiddenFields.fieldIds ?? []),
+              ...(survey.hiddenFields.enabled ? (survey.hiddenFields.fieldIds ?? []) : []),
             ];
 
             if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
