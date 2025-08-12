@@ -44,8 +44,25 @@ export const FollowUpItem = ({
 
     if (!to) return true;
 
-    const matchedQuestion = localSurvey.questions.find((question) => question.id === to);
-    const matchedHiddenField = (localSurvey.hiddenFields?.fieldIds ?? []).find((fieldId) => fieldId === to);
+    const matchedQuestion = localSurvey.questions.find((question) => {
+      if (question.id !== to) {
+        return false;
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+        return question.inputType === "email";
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+        return question.email.show;
+      }
+
+      return false;
+    });
+
+    const matchedHiddenField = localSurvey.hiddenFields?.enabled
+      ? (localSurvey.hiddenFields.fieldIds ?? []).find((fieldId) => fieldId === to)
+      : undefined;
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
       if (teamMemberDetail.email === userEmail) {
@@ -65,26 +82,7 @@ export const FollowUpItem = ({
 
     const matchedEmail = updatedTeamMembers.find((detail) => detail.email === to);
 
-    if (!matchedQuestion && !matchedHiddenField && !matchedEmail) return true;
-
-    if (matchedQuestion) {
-      if (
-        ![TSurveyQuestionTypeEnum.OpenText, TSurveyQuestionTypeEnum.ContactInfo].includes(
-          matchedQuestion.type
-        )
-      ) {
-        return true;
-      }
-
-      if (
-        matchedQuestion.type === TSurveyQuestionTypeEnum.OpenText &&
-        matchedQuestion.inputType !== "email"
-      ) {
-        return true;
-      }
-    }
-
-    return false;
+    return !matchedQuestion && !matchedHiddenField && !matchedEmail;
   }, [
     followUp.action.properties,
     localSurvey.hiddenFields?.fieldIds,
