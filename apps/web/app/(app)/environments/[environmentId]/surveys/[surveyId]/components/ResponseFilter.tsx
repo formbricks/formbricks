@@ -246,9 +246,9 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
               <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
                 <div
                   className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
-                  key={`${s.questionType.id}-${i}`}>
+                  key={`${s.questionType.id}-${i}-${s.questionType.label}`}>
                   <QuestionsComboBox
-                    key={`${s.questionType.label}-${i}`}
+                    key={`${s.questionType.label}-${i}-${s.questionType.id}`}
                     options={questionComboBoxOptions}
                     selected={s.questionType}
                     onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
@@ -276,6 +276,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
                         ? s?.questionType?.questionType
                         : s?.questionType?.type
                     }
+                    fieldId={s?.questionType?.id}
                     handleRemoveMultiSelect={(value) => handleRemoveMultiSelect(value, i)}
                     onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
                     onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}
