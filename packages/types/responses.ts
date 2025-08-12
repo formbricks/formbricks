@@ -254,10 +254,8 @@ export const ZResponseFilterCriteria = z.object({
   meta: z
     .record(
       z.union([
-        z.object({
-          op: z.enum(["equals", "notEquals"]),
-          value: z.union([z.string(), z.number()]),
-        }),
+        ZResponseFilterCriteriaDataEquals,
+        ZResponseFilterCriteriaDataNotEquals,
         ZResponseFilterCriteriaContains,
         ZResponseFilterCriteriaDoesNotContain,
         ZResponseFilterCriteriaStartsWith,

@@ -781,6 +781,12 @@ export const getResponseMeta = (
     responses.forEach((response) => {
       Object.entries(response.meta).forEach(([key, value]) => {
         // Handling nested objects (like userAgent)
+        if (key === "url") {
+          if (!meta[key]) {
+            meta[key] = new Set();
+          }
+          return;
+        }
         if (typeof value === "object" && value !== null) {
           Object.entries(value).forEach(([nestedKey, nestedValue]) => {
             if (typeof nestedValue === "string" && nestedValue) {

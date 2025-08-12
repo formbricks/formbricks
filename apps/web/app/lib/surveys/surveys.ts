@@ -177,19 +177,7 @@ export const generateQuestionAndFilterOptions = (
     Object.keys(meta).forEach((m) => {
       questionFilterOptions.push({
         type: "Meta",
-        filterOptions:
-          m === "url"
-            ? [
-                "Equals",
-                "Not equals",
-                "Contains",
-                "Does not contain",
-                "Starts with",
-                "Does not start with",
-                "Ends with",
-                "Does not end with",
-              ]
-            : ["Equals", "Not equals"],
+        filterOptions: m === "url" ? Object.keys(META_OP_MAP) : ["Equals", "Not equals"],
         filterComboBoxOptions: meta[m],
         id: m,
       });
@@ -507,7 +495,11 @@ export const getFormattedFilters = (
       if (!filters.meta) filters.meta = {};
 
       // For text input cases (URL filtering)
-      if (typeof filterType.filterComboBoxValue === "string" && filterType.filterComboBoxValue.length > 0) {
+      if (
+        questionType.id === "url" &&
+        typeof filterType.filterComboBoxValue === "string" &&
+        filterType.filterComboBoxValue.length > 0
+      ) {
         const value = filterType.filterComboBoxValue.trim();
         const op = META_OP_MAP[filterType.filterValue as keyof typeof META_OP_MAP];
         if (op) {
