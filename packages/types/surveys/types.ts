@@ -859,7 +859,7 @@ export const ZSurvey = z
     pin: z.string().length(4, { message: "PIN must be a four digit number" }).nullish(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
-    metadata: ZSurveyMetadata.nullable(),
+    metadata: ZSurveyMetadata,
   })
   .superRefine((survey, ctx) => {
     const { questions, languages, welcomeCard, endings, isBackButtonHidden } = survey;

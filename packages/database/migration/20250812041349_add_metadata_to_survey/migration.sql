@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "Survey" ADD COLUMN     "metadata" JSONB DEFAULT '{}';
+ALTER TABLE "Survey" ADD COLUMN "metadata" JSONB NOT NULL DEFAULT '{}';

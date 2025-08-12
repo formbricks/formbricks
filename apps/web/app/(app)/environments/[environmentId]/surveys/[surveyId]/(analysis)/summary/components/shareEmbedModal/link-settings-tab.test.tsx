@@ -294,7 +294,7 @@ describe("LinkSettingsTab", () => {
     });
 
     const callArgs = vi.mocked(updateSurveyAction).mock.calls[0][0];
-    expect(callArgs.metadata?.title?.default).toBe("Updated Title");
+    expect(callArgs.metadata.title?.default).toBe("Updated Title");
   });
 
   test("handles submission error", async () => {
@@ -422,7 +422,7 @@ describe("LinkSettingsTab", () => {
     });
 
     const callArgs = vi.mocked(updateSurveyAction).mock.calls[0][0];
-    expect(callArgs.metadata?.title?.default).toBe("New Title");
-    expect(callArgs.metadata?.description?.default).toBe("Existing Description");
+    expect(callArgs.metadata.title?.default).toBe("New Title");
+    expect(callArgs.metadata.description?.default).toBe("Existing Description");
   });
 });
