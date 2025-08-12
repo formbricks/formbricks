@@ -64,10 +64,7 @@ export const getBasicSurveyMetadata = async (
   }
 
   // Get OG image from link metadata if available
-  let ogImage: string | undefined;
-  if (metadata?.ogImage) {
-    ogImage = metadata?.ogImage;
-  }
+  const ogImage: string | undefined = metadata?.ogImage ?? undefined;
 
   // Add product name in title if it's Formbricks cloud and not using custom metadata
   if (!metadata?.title?.[langCode]) {
