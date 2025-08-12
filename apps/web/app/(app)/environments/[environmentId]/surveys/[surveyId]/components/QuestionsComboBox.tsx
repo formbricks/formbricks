@@ -28,6 +28,7 @@ import {
   HomeIcon,
   ImageIcon,
   LanguagesIcon,
+  LinkIcon,
   ListIcon,
   ListOrderedIcon,
   MessageSquareTextIcon,
@@ -94,6 +95,7 @@ const questionIcons = {
   source: ArrowUpFromDotIcon,
   action: MousePointerClickIcon,
   country: FlagIcon,
+  url: LinkIcon,
 
   // others
   Language: LanguagesIcon,
@@ -138,7 +140,7 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
 
   const getLabelStyle = (): string | undefined => {
     if (type !== OptionsType.META) return undefined;
-    return label === "os" ? "uppercase" : "capitalize";
+    return label === "os" || label === "url" ? "uppercase" : "capitalize";
   };
 
   return (

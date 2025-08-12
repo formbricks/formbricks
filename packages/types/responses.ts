@@ -31,6 +31,12 @@ export const ZResponseFilterCondition = z.enum([
   "isEmpty",
   "isNotEmpty",
   "isAnyOf",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "doesNotStartWith",
+  "endsWith",
+  "doesNotEndWith",
 ]);
 
 export type TResponseDataValue = z.infer<typeof ZResponseDataValue>;
@@ -149,6 +155,36 @@ const ZResponseFilterCriteriaIsAnyOf = z.object({
   value: z.record(z.string(), z.array(z.string())),
 });
 
+const ZResponseFilterCriteriaContains = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.contains),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaDoesNotContain = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.doesNotContain),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaStartsWith = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.startsWith),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaDoesNotStartWith = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.doesNotStartWith),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaEndsWith = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.endsWith),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaDoesNotEndWith = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.doesNotEndWith),
+  value: z.string(),
+});
+
 const ZResponseFilterCriteriaFilledOut = z.object({
   op: z.literal("filledOut"),
 });
@@ -217,10 +253,16 @@ export const ZResponseFilterCriteria = z.object({
 
   meta: z
     .record(
-      z.object({
-        op: z.enum(["equals", "notEquals"]),
-        value: z.union([z.string(), z.number()]),
-      })
+      z.union([
+        ZResponseFilterCriteriaDataEquals,
+        ZResponseFilterCriteriaDataNotEquals,
+        ZResponseFilterCriteriaContains,
+        ZResponseFilterCriteriaDoesNotContain,
+        ZResponseFilterCriteriaStartsWith,
+        ZResponseFilterCriteriaDoesNotStartWith,
+        ZResponseFilterCriteriaEndsWith,
+        ZResponseFilterCriteriaDoesNotEndWith,
+      ])
     )
     .optional(),
 });

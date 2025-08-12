@@ -89,4 +89,94 @@ describe("QuestionFilterComboBox", () => {
     await userEvent.click(comboBoxOpenerButton);
     expect(screen.queryByText("X")).not.toBeInTheDocument();
   });
+
+  test("shows text input for URL meta field", () => {
+    const props = {
+      ...defaultProps,
+      type: "Meta",
+      fieldId: "url",
+      filterValue: "Contains",
+      filterComboBoxValue: "example.com",
+    } as any;
+    render(<QuestionFilterComboBox {...props} />);
+    const textInput = screen.getByDisplayValue("example.com");
+    expect(textInput).toBeInTheDocument();
+    expect(textInput).toHaveAttribute("type", "text");
+  });
+
+  test("text input is disabled when no filter value is selected for URL field", () => {
+    const props = {
+      ...defaultProps,
+      type: "Meta",
+      fieldId: "url",
+      filterValue: undefined,
+    } as any;
+    render(<QuestionFilterComboBox {...props} />);
+    const textInput = screen.getByRole("textbox");
+    expect(textInput).toBeDisabled();
+  });
+
+  test("text input calls onChangeFilterComboBoxValue when typing for URL field", async () => {
+    const props = {
+      ...defaultProps,
+      type: "Meta",
+      fieldId: "url",
+      filterValue: "Contains",
+      filterComboBoxValue: "",
+    } as any;
+    render(<QuestionFilterComboBox {...props} />);
+    const textInput = screen.getByRole("textbox");
+    await userEvent.type(textInput, "t");
+    expect(props.onChangeFilterComboBoxValue).toHaveBeenCalledWith("t");
+  });
+
+  test("shows regular combobox for non-URL meta fields", () => {
+    const props = {
+      ...defaultProps,
+      type: "Meta",
+      fieldId: "source",
+      filterValue: "Equals",
+    } as any;
+    render(<QuestionFilterComboBox {...props} />);
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button").length).toBeGreaterThanOrEqual(2);
+  });
+
+  test("shows regular combobox for URL field with non-text operations", () => {
+    const props = {
+      ...defaultProps,
+      type: "Other",
+      fieldId: "url",
+      filterValue: "Equals",
+    } as any;
+    render(<QuestionFilterComboBox {...props} />);
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button").length).toBeGreaterThanOrEqual(2);
+  });
+
+  test("text input handles string filter combo box values correctly", () => {
+    const props = {
+      ...defaultProps,
+      type: "Meta",
+      fieldId: "url",
+      filterValue: "Contains",
+      filterComboBoxValue: "test-url",
+    } as any;
+    render(<QuestionFilterComboBox {...props} />);
+    const textInput = screen.getByDisplayValue("test-url");
+    expect(textInput).toBeInTheDocument();
+  });
+
+  test("text input handles non-string filter combo box values gracefully", () => {
+    const props = {
+      ...defaultProps,
+      type: "Meta",
+      fieldId: "url",
+      filterValue: "Contains",
+      filterComboBoxValue: ["array-value"],
+    } as any;
+    render(<QuestionFilterComboBox {...props} />);
+    const textInput = screen.getByRole("textbox");
+    expect(textInput).toHaveValue("");
+  });
 });
