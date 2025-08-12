@@ -49,8 +49,8 @@ export const getBasicSurveyMetadata = async (
 
   // Set title - priority: custom link metadata > welcome card > survey name
   let title = "Survey";
-  if (metadata.title?.[langCode]) {
-    title = metadata.title[langCode];
+  if (metadata?.title?.[langCode]) {
+    title = metadata?.title[langCode];
   } else if (welcomeCard.enabled && welcomeCard.headline?.default) {
     title = welcomeCard.headline.default;
   } else {
@@ -59,18 +59,18 @@ export const getBasicSurveyMetadata = async (
 
   // Set description - priority: custom link metadata > welcome card > default
   let description = "Complete this survey";
-  if (metadata.description?.[langCode]) {
-    description = metadata.description[langCode];
+  if (metadata?.description?.[langCode]) {
+    description = metadata?.description[langCode];
   }
 
   // Get OG image from link metadata if available
   let ogImage: string | undefined;
-  if (metadata.ogImage) {
-    ogImage = metadata.ogImage;
+  if (metadata?.ogImage) {
+    ogImage = metadata?.ogImage;
   }
 
   // Add product name in title if it's Formbricks cloud and not using custom metadata
-  if (!metadata.title?.[langCode]) {
+  if (!metadata?.title?.[langCode]) {
     if (IS_FORMBRICKS_CLOUD) {
       title = `${title} | Formbricks`;
     } else {
