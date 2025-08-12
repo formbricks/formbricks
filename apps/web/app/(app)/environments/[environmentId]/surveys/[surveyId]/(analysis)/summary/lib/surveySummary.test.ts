@@ -1392,7 +1392,6 @@ describe("Matrix question type tests", () => {
     expect(summary[0].type).toBe(TSurveyQuestionTypeEnum.Matrix);
     expect(summary[0].responseCount).toBe(2);
 
-    console.log(summary[0].data);
     // Verify Speed row
     const speedRow = summary[0].data.find((row) => row.rowLabel === "Speed");
     expect(speedRow.totalResponsesForRow).toBe(2);

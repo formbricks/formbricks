@@ -18,6 +18,12 @@ interface SurveyRecord {
   }[];
 }
 
+const CHUNK_SIZE = 10000;
+
+const isMatrixChoice = (choice: unknown): choice is MatrixChoice => {
+  return typeof choice === "object" && choice !== null && "id" in choice && "label" in choice;
+};
+
 export const addsIdToMatrixQuestionLabels: MigrationScript = {
   type: "data",
   id: "dc990fgnxoynpfao31n5kj6q",
@@ -36,7 +42,7 @@ export const addsIdToMatrixQuestionLabels: MigrationScript = {
     }
 
     let updatedCount = 0;
-    const updatePromises: Promise<unknown>[] = [];
+    const updatePromises: { id: string; questions: Record<string, unknown>[] }[] = [];
 
     for (const survey of matrixSurveys) {
       const questions = survey.questions;
@@ -49,20 +55,20 @@ export const addsIdToMatrixQuestionLabels: MigrationScript = {
         const rows = question.rows ?? [];
         const columns = question.columns ?? [];
 
-        const normalizeChoice = (choice: I18nString): MatrixChoice => {
+        const normalizeChoice = (choice: I18nString | MatrixChoice): MatrixChoice => {
+          // If already a MatrixChoice with id and label, return as-is
+          if (isMatrixChoice(choice)) return choice;
+
+          // Otherwise, treat as I18nString and normalize
           return {
             id: createId(),
             label: choice,
           };
         };
 
-        const rowsNeedUpdate = rows.some((r) => {
-          return !(r.hasOwnProperty("id") && r.hasOwnProperty("label"));
-        });
+        const rowsNeedUpdate = rows.some((r) => !isMatrixChoice(r));
 
-        const colsNeedUpdate = columns.some((c) => {
-          return !(c.hasOwnProperty("id") && c.hasOwnProperty("label"));
-        });
+        const colsNeedUpdate = columns.some((c) => !isMatrixChoice(c));
 
         const newRows = rowsNeedUpdate ? rows.map((r) => normalizeChoice(r)) : rows;
         const newColumns = colsNeedUpdate ? columns.map((c) => normalizeChoice(c)) : columns;
@@ -79,17 +85,30 @@ export const addsIdToMatrixQuestionLabels: MigrationScript = {
 
       if (shouldUpdate) {
         updatedCount++;
-        updatePromises.push(
-          tx.$queryRaw`
-            UPDATE "Survey"
-            SET questions = ${JSON.stringify(questions)}::jsonb
-            WHERE id = ${survey.id}
-          `
+        updatePromises.push({
+          id: survey.id,
+          questions,
+        });
+      }
+    }
+
+    if (updatePromises.length > 0) {
+      const chunkSize = Math.min(CHUNK_SIZE, updatePromises.length);
+      for (let i = 0; i < updatePromises.length; i += chunkSize) {
+        const chunk = updatePromises.slice(i, i + chunkSize);
+        await Promise.all(
+          chunk.map(
+            (update) =>
+              tx.$queryRaw`
+                  UPDATE "Survey"
+                  SET questions = ${JSON.stringify(update.questions)}::jsonb
+                  WHERE id = ${update.id}
+                `
+          )
         );
       }
     }
 
-    await Promise.all(updatePromises);
     logger.info(`Updated ${updatedCount.toString()} surveys to add ids to matrix question labels`);
   },
 };

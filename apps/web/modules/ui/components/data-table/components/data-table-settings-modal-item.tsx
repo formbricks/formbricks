@@ -47,7 +47,6 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
     return null;
   };
 
-  console.log("column", column);
   const getLabelFromColumnId = () => {
     switch (column.id) {
       case "createdAt":

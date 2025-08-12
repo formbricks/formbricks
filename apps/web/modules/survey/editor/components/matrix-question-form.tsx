@@ -13,7 +13,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { type JSX } from "react";
+import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -117,23 +117,26 @@ export const MatrixQuestionForm = ({
     }
   };
 
-  const handleMatrixDragEnd = (type: "row" | "column", event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleMatrixDragEnd = useCallback(
+    (type: "row" | "column", event: DragEndEvent) => {
+      const { active, over } = event;
 
-    if (!active || !over || active.id === over.id) return;
+      if (!active || !over || active.id === over.id) return;
 
-    const items = type === "row" ? [...question.rows] : [...question.columns];
-    const activeIndex = items.findIndex((item) => item.id === active.id);
-    const overIndex = items.findIndex((item) => item.id === over.id);
+      const items = type === "row" ? [...question.rows] : [...question.columns];
+      const activeIndex = items.findIndex((item) => item.id === active.id);
+      const overIndex = items.findIndex((item) => item.id === over.id);
 
-    if (activeIndex === -1 || overIndex === -1) return;
+      if (activeIndex === -1 || overIndex === -1) return;
 
-    const movedItem = items[activeIndex];
-    items.splice(activeIndex, 1);
-    items.splice(overIndex, 0, movedItem);
+      const movedItem = items[activeIndex];
+      items.splice(activeIndex, 1);
+      items.splice(overIndex, 0, movedItem);
 
-    updateQuestion(questionIdx, type === "row" ? { rows: items } : { columns: items });
-  };
+      updateQuestion(questionIdx, type === "row" ? { rows: items } : { columns: items });
+    },
+    [questionIdx, updateQuestion, question.rows, question.columns]
+  );
 
   const shuffleOptionsTypes = {
     none: {

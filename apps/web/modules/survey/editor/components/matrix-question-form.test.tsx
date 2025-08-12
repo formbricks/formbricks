@@ -195,6 +195,7 @@ describe("MatrixQuestionForm", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    cuidIndex = 0;
   });
 
   test("renders the matrix question form with rows and columns", () => {
