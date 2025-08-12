@@ -3,8 +3,8 @@ import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
 import {
-  ZI18nString,
   ZSurveyEnding,
+  ZSurveyMetadata,
   ZSurveyQuestion,
   ZSurveyRecaptcha,
   ZSurveyVariable,
@@ -219,15 +219,9 @@ const ZSurveyBase = z.object({
   recaptcha: ZSurveyRecaptcha.openapi({
     description: "Google reCAPTCHA configuration",
   }),
-  metadata: z
-    .object({
-      title: ZI18nString.optional(),
-      description: ZI18nString.optional(),
-      ogImage: z.string().url().optional(),
-    })
-    .openapi({
-      description: "Custom link metadata for social sharing",
-    }),
+  metadata: ZSurveyMetadata.openapi({
+    description: "Custom link metadata for social sharing",
+  }),
   displayPercentage: z.number().nullable().openapi({
     description: "The display percentage of the survey",
   }),

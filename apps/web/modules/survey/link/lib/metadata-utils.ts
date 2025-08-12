@@ -4,7 +4,13 @@ import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { Metadata } from "next";
-import { TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+
+type TBasicSurveyMetadata = {
+  title: string;
+  description: string;
+  survey: Awaited<ReturnType<typeof getSurvey>> | null;
+  ogImage?: string;
+};
 
 /**
  * Utility function to encode name for URL usage
@@ -19,7 +25,10 @@ export const getBrandColorForURL = (url: string) => url.replace(/#/g, "%23");
 /**
  * Get basic survey metadata (title and description) based on link metadata, welcome card or survey name
  */
-export const getBasicSurveyMetadata = async (surveyId: string, languageCode?: string) => {
+export const getBasicSurveyMetadata = async (
+  surveyId: string,
+  languageCode?: string
+): Promise<TBasicSurveyMetadata> => {
   const survey = await getSurvey(surveyId);
 
   // If survey doesn't exist, return default metadata
@@ -32,9 +41,8 @@ export const getBasicSurveyMetadata = async (surveyId: string, languageCode?: st
     };
   }
 
-  const project = await getProjectByEnvironmentId(survey.environmentId);
   const metadata = survey.metadata;
-  const welcomeCard = survey.welcomeCard as TSurveyWelcomeCard;
+  const welcomeCard = survey.welcomeCard;
 
   // Determine language code to use for metadata
   const langCode = languageCode || "default";
@@ -65,8 +73,11 @@ export const getBasicSurveyMetadata = async (surveyId: string, languageCode?: st
   if (!metadata.title?.[langCode]) {
     if (IS_FORMBRICKS_CLOUD) {
       title = `${title} | Formbricks`;
-    } else if (project) {
-      title = `${title} | Survey`;
+    } else {
+      const project = await getProjectByEnvironmentId(survey.environmentId);
+      if (project) {
+        title = `${title} | ${project.name}`;
+      }
     }
   }
 
