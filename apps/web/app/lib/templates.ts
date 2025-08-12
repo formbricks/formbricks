@@ -3703,5 +3703,6 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     showLanguageSwitch: false,
     followUps: [],
     isBackButtonHidden: false,
+    metadata: {},
   } as TSurvey;
 };

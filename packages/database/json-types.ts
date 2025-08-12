@@ -11,6 +11,7 @@ import {
   type TSurveyClosedMessage,
   type TSurveyEnding,
   type TSurveyHiddenFields,
+  type TSurveyMetadata,
   type TSurveyProjectOverwrites,
   type TSurveyQuestions,
   type TSurveyRecaptcha,
@@ -49,5 +50,6 @@ declare global {
     export type SurveyFollowUpTrigger = TSurveyFollowUpTrigger;
     export type SurveyFollowUpAction = TSurveyFollowUpAction;
     export type OrganizationAccess = TOrganizationAccess;
+    export type SurveyMetadata = TSurveyMetadata;
   }
 }

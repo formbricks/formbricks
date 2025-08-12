@@ -41,8 +41,12 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await page.waitForURL(/\/s\/[A-Za-z0-9]+$/);
 
       // Welcome Card
-      await expect(page.getByText(surveys.createAndSubmit.welcomeCard.headline)).toBeVisible();
-      await expect(page.getByText(surveys.createAndSubmit.welcomeCard.description)).toBeVisible();
+      await expect(
+        page.locator("#questionCard--1").getByText(surveys.createAndSubmit.welcomeCard.headline)
+      ).toBeVisible();
+      await expect(
+        page.locator("#questionCard--1").getByText(surveys.createAndSubmit.welcomeCard.description)
+      ).toBeVisible();
       await page.locator("#questionCard--1").getByRole("button", { name: "Next" }).click();
 
       // Open Text Question
@@ -673,8 +677,12 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.waitForURL(/\/s\/[A-Za-z0-9]+$/);
 
       // Welcome Card
-      await expect(page.getByText(surveys.createWithLogicAndSubmit.welcomeCard.headline)).toBeVisible();
-      await expect(page.getByText(surveys.createWithLogicAndSubmit.welcomeCard.description)).toBeVisible();
+      await expect(
+        page.locator("#questionCard--1").getByText(surveys.createWithLogicAndSubmit.welcomeCard.headline)
+      ).toBeVisible();
+      await expect(
+        page.locator("#questionCard--1").getByText(surveys.createWithLogicAndSubmit.welcomeCard.description)
+      ).toBeVisible();
       await page.locator("#questionCard--1").getByRole("button", { name: "Next" }).click();
 
       // Open Text Question

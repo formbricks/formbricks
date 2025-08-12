@@ -2,7 +2,13 @@ import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
-import { ZSurveyEnding, ZSurveyQuestion, ZSurveyRecaptcha, ZSurveyVariable } from "../../types/surveys/types";
+import {
+  ZSurveyEnding,
+  ZSurveyMetadata,
+  ZSurveyQuestion,
+  ZSurveyRecaptcha,
+  ZSurveyVariable,
+} from "../../types/surveys/types";
 
 extendZodWithOpenApi(z);
 
@@ -212,6 +218,9 @@ const ZSurveyBase = z.object({
     }),
   recaptcha: ZSurveyRecaptcha.openapi({
     description: "Google reCAPTCHA configuration",
+  }),
+  metadata: ZSurveyMetadata.openapi({
+    description: "Custom link metadata for social sharing",
   }),
   displayPercentage: z.number().nullable().openapi({
     description: "The display percentage of the survey",
