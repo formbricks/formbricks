@@ -97,6 +97,8 @@ export const AddApiKeyModal = ({
 
   // Initialize with one permission by default
   const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>({});
+  // Counter to track permission indices
+  const [permissionCounter, setPermissionCounter] = useState(0);
 
   const projectOptions: ProjectOption[] = projects.map((project) => ({
     id: project.id,
@@ -110,13 +112,13 @@ export const AddApiKeyModal = ({
   };
 
   const addPermission = () => {
-    const newIndex = Object.keys(selectedPermissions).length;
     const initialPermission = getInitialPermissions()["permission-0"];
     if (initialPermission) {
       setSelectedPermissions({
         ...selectedPermissions,
-        [`permission-${newIndex}`]: initialPermission,
+        [`permission-${permissionCounter}`]: initialPermission,
       });
+      setPermissionCounter((prev) => prev + 1);
     }
   };
 
