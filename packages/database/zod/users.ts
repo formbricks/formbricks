@@ -57,7 +57,6 @@ export const ZUser = z.object({
   Omit<
     User,
     | "emailVerified"
-    | "imageUrl"
     | "twoFactorSecret"
     | "twoFactorEnabled"
     | "backupCodes"

@@ -342,7 +342,7 @@ export const MainNavigation = ({
                       "flex cursor-pointer flex-row items-center gap-3",
                       isCollapsed ? "justify-center px-2" : "px-4"
                     )}>
-                    <ProfileAvatar userId={user.id} imageUrl={user.imageUrl} />
+                    <ProfileAvatar userId={user.id} />
                     {!isCollapsed && !isTextVisible && (
                       <>
                         <div
