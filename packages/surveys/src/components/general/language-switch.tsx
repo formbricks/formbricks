@@ -1,4 +1,5 @@
 import { LanguageIcon } from "@/components/icons/language-icon";
+import { mixColor } from "@/lib/color";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "preact/hooks";
@@ -19,7 +20,7 @@ export function LanguageSwitch({
   hoverColor,
   borderRadius,
 }: LanguageSwitchProps) {
-  const hoverColorWithOpacity = hoverColor ?? "var(--fb-input-background-color)";
+  const hoverColorWithOpacity = hoverColor ?? mixColor("#000000", "#ffffff", 0.8);
 
   const [isHovered, setIsHovered] = useState(false);
 

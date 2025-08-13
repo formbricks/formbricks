@@ -1,4 +1,5 @@
 import { CloseIcon } from "@/components/icons/close-icon";
+import { mixColor } from "@/lib/color";
 import { cn } from "@/lib/utils";
 import { useState } from "preact/hooks";
 
@@ -10,7 +11,7 @@ interface SurveyCloseButtonProps {
 
 export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonly<SurveyCloseButtonProps>) {
   const [isHovered, setIsHovered] = useState(false);
-  const hoverColorWithOpacity = hoverColor ?? "var(--fb-input-background-color)";
+  const hoverColorWithOpacity = hoverColor ?? mixColor("#000000", "#ffffff", 0.8);
 
   return (
     <div className="fb-z-[1001] fb-flex fb-w-fit fb-items-center">
