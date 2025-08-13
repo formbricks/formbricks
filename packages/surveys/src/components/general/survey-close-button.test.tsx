@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/preact";
+import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { SurveyCloseButton } from "./survey-close-button";
@@ -19,10 +19,13 @@ describe("SurveyCloseButton", () => {
     expect(button).toBeInTheDocument();
     expect(button).toHaveClass("fb-text-heading", "fb-relative", "fb-h-8", "fb-w-8");
     expect(button).toHaveAttribute("aria-label", "Close survey");
+
+    const backgroundColor = button?.style?.backgroundColor;
+    expect(backgroundColor).toBe("transparent");
   });
 
   test("renders close button with correct hover color", () => {
-    const { container } = render(<SurveyCloseButton />);
+    const { container } = render(<SurveyCloseButton hoverColor="#008080" />);
 
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper).toHaveClass("fb-z-[1001]", "fb-flex", "fb-w-fit", "fb-items-center");
@@ -31,6 +34,12 @@ describe("SurveyCloseButton", () => {
     expect(button).toBeInTheDocument();
     expect(button).toHaveClass("fb-text-heading", "fb-relative", "fb-h-8", "fb-w-8");
     expect(button).toHaveAttribute("aria-label", "Close survey");
+
+    // hover over the button
+    fireEvent.mouseEnter(button as HTMLButtonElement);
+    const backgroundColor = button?.style?.backgroundColor;
+
+    expect(backgroundColor).toBe("rgb(0, 128, 128)");
   });
 
   test("renders close button with correct border radius", () => {

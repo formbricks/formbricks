@@ -9,14 +9,20 @@ interface LanguageSwitchProps {
   surveyLanguages: TSurveyLanguage[];
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
+  hoverColor?: string;
   borderRadius?: number;
 }
 export function LanguageSwitch({
   surveyLanguages,
   setSelectedLanguageCode,
   setFirstRender,
+  hoverColor,
   borderRadius,
 }: LanguageSwitchProps) {
+  const hoverColorWithOpacity = hoverColor ?? "var(--fb-input-background-color)";
+
+  const [isHovered, setIsHovered] = useState(false);
+
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const toggleDropdown = () => {
     setShowLanguageDropdown((prev) => !prev);
@@ -49,9 +55,10 @@ export function LanguageSwitch({
         title="Language switch"
         type="button"
         className={cn(
-          "fb-text-heading fb-relative fb-h-8 fb-w-8 fb-rounded-md focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-justify-center fb-flex fb-items-center hover:fb-bg-input-bg"
+          "fb-text-heading fb-relative fb-h-8 fb-w-8 fb-rounded-md focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-justify-center fb-flex fb-items-center"
         )}
         style={{
+          backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",
           transition: "background-color 0.2s ease",
           borderRadius: `${borderRadius}px`,
         }}
@@ -59,7 +66,9 @@ export function LanguageSwitch({
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}
-        aria-label="Language switch">
+        aria-label="Language switch"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}>
         <LanguageIcon />
       </button>
       {showLanguageDropdown ? (
