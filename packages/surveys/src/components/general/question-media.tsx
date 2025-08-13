@@ -72,24 +72,44 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
         href={imgUrl ? imgUrl : convertToEmbedUrl(videoUrl ?? "")}
         target="_blank"
         rel="noreferrer"
+        aria-label={"Open in new tab"}
         className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-          className="lucide lucide-image-down-icon lucide-image-down">
-          <path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" />
-          <path d="m14 19 3 3v-5.5" />
-          <path d="m17 22 3-3" />
-          <circle cx="9" cy="9" r="2" />
-        </svg>
+        {imgUrl ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="lucide lucide-image-down-icon lucide-image-down">
+            <path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" />
+            <path d="m14 19 3 3v-5.5" />
+            <path d="m17 22 3-3" />
+            <circle cx="9" cy="9" r="2" />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-expand">
+            <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
+            <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
+            <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />
+            <path d="M3 7.8V3m0 0h4.8M3 3l6 6" />
+          </svg>
+        )}
       </a>
     </div>
   );
