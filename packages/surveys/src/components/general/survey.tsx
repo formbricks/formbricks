@@ -765,7 +765,6 @@ export function Survey({
                     <LanguageSwitch
                       surveyLanguages={localSurvey.languages}
                       setSelectedLanguageCode={setselectedLanguage}
-                      hoverColor={styling.inputColor?.light ?? "#000000"}
                       borderRadius={styling.roundness ?? 8}
                     />
                   )}
@@ -774,11 +773,7 @@ export function Survey({
                   )}
 
                   {isCloseButtonVisible && (
-                    <SurveyCloseButton
-                      onClose={onClose}
-                      hoverColor={styling.inputColor?.light ?? "#000000"}
-                      borderRadius={styling.roundness ?? 8}
-                    />
+                    <SurveyCloseButton onClose={onClose} borderRadius={styling.roundness ?? 8} />
                   )}
                 </div>
               </div>
