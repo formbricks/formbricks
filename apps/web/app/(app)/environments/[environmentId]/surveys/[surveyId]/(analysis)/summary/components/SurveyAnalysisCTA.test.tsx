@@ -291,7 +291,6 @@ const mockUser: TUser = {
   name: "Test User",
   email: "test@example.com",
   emailVerified: new Date(),
-  imageUrl: "https://example.com/avatar.jpg",
   twoFactorEnabled: false,
   identityProvider: "email",
   createdAt: new Date(),

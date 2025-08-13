@@ -128,7 +128,6 @@ const mockUser = {
   name: "Test User",
   email: "test@example.com",
   emailVerified: new Date(),
-  imageUrl: "",
   twoFactorEnabled: false,
   identityProvider: "email",
   createdAt: new Date(),

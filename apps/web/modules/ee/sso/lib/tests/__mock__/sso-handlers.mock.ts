@@ -13,7 +13,6 @@ export const mockUser: TUser = {
     unsubscribedOrganizationIds: [],
   },
   emailVerified: new Date(),
-  imageUrl: "https://example.com/image.png",
   twoFactorEnabled: false,
   identityProvider: "google",
   locale: "en-US",
