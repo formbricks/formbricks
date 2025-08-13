@@ -29,7 +29,7 @@ import {
   SquareStack,
   UserIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -77,6 +77,7 @@ export const ShareSurveyModal = ({
     description: string;
     componentType: React.ComponentType<unknown>;
     componentProps: unknown;
+    disabled?: boolean;
   }[] = useMemo(
     () => [
       {
@@ -111,6 +112,7 @@ export const ShareSurveyModal = ({
           isContactsEnabled,
           isFormbricksCloud,
         },
+        disabled: survey.singleUse?.enabled,
       },
       {
         id: ShareViaType.WEBSITE_EMBED,
@@ -192,9 +194,15 @@ export const ShareSurveyModal = ({
     ]
   );
 
-  const [activeId, setActiveId] = useState<ShareViaType | ShareSettingsType>(
-    survey.type === "link" ? ShareViaType.ANON_LINKS : ShareViaType.APP
-  );
+  const getDefaultActiveId = useCallback(() => {
+    if (survey.type !== "link") {
+      return ShareViaType.APP;
+    }
+
+    return ShareViaType.ANON_LINKS;
+  }, [survey.type]);
+
+  const [activeId, setActiveId] = useState<ShareViaType | ShareSettingsType>(getDefaultActiveId());
 
   useEffect(() => {
     if (open) {
@@ -202,11 +210,19 @@ export const ShareSurveyModal = ({
     }
   }, [open, modalView]);
 
+  // Ensure active tab is not disabled - if it is, switch to default
+  useEffect(() => {
+    const activeTab = linkTabs.find((tab) => tab.id === activeId);
+    if (activeTab?.disabled) {
+      setActiveId(getDefaultActiveId());
+    }
+  }, [activeId, linkTabs, getDefaultActiveId]);
+
   const handleOpenChange = (open: boolean) => {
     setOpen(open);
     if (!open) {
       setShowView("start");
-      setActiveId(ShareViaType.ANON_LINKS);
+      setActiveId(getDefaultActiveId());
     }
   };
 
