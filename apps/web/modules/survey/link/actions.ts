@@ -19,7 +19,7 @@ export const sendLinkSurveyEmailAction = actionClient
     const survey = await getSurveyWithMetadata(parsedInput.surveyId);
 
     if (!survey.isVerifyEmailEnabled) {
-      throw new InvalidInputError("Email verification is not enabled for this survey");
+      throw new InvalidInputError("EMAIL_VERIFICATION_NOT_ENABLED");
     }
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);

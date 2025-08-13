@@ -26,7 +26,7 @@ export const rateLimitConfigs = {
     sendLinkSurveyEmail: {
       interval: 3600,
       allowedPerInterval: 10,
-      namespace: "action:send-verify-link-survey-email",
+      namespace: "action:send-link-survey-email",
     }, // 10 per hour
   },
 };
