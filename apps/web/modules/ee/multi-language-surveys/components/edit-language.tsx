@@ -200,7 +200,7 @@ export function EditLanguage({
   };
 
   const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
-    isEditing && languages.length === project.languages.length ? (
+    isEditing ? (
       <Button onClick={onClick} size="sm" variant="secondary">
         <PlusIcon />
         {t("environments.project.languages.add_language")}
