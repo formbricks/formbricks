@@ -1,8 +1,8 @@
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { Metadata } from "next";
 
 type TBasicSurveyMetadata = {
@@ -27,7 +27,7 @@ export const getBrandColorForURL = (url: string) => url.replace(/#/g, "%23");
  */
 export const getBasicSurveyMetadata = async (
   surveyId: string,
-  languageCode?: string
+  languageCode = "default"
 ): Promise<TBasicSurveyMetadata> => {
   const survey = await getSurvey(surveyId);
 
@@ -43,16 +43,19 @@ export const getBasicSurveyMetadata = async (
 
   const metadata = survey.metadata;
   const welcomeCard = survey.welcomeCard;
+  const useDefaultLanguageCode =
+    languageCode === "default" ||
+    survey.languages.find((lang) => lang.language.code === languageCode)?.default;
 
   // Determine language code to use for metadata
-  const langCode = languageCode || "default";
+  const langCode = useDefaultLanguageCode ? "default" : languageCode;
 
   // Set title - priority: custom link metadata > welcome card > survey name
   let title = "Survey";
   if (metadata.title?.[langCode]) {
-    title = metadata.title[langCode];
-  } else if (welcomeCard.enabled && welcomeCard.headline?.default) {
-    title = welcomeCard.headline.default;
+    title = getLocalizedValue(metadata.title, langCode);
+  } else if (welcomeCard.enabled && welcomeCard.headline?.[langCode]) {
+    title = getLocalizedValue(welcomeCard.headline, langCode);
   } else {
     title = survey.name;
   }
@@ -60,21 +63,15 @@ export const getBasicSurveyMetadata = async (
   // Set description - priority: custom link metadata > welcome card > default
   let description = "Complete this survey";
   if (metadata.description?.[langCode]) {
-    description = metadata.description[langCode];
+    description = getLocalizedValue(metadata.description, langCode);
   }
 
   // Get OG image from link metadata if available
   const { ogImage } = metadata;
 
-  // Add product name in title if it's Formbricks cloud and not using custom metadata
   if (!metadata.title?.[langCode]) {
     if (IS_FORMBRICKS_CLOUD) {
       title = `${title} | Formbricks`;
-    } else {
-      const project = await getProjectByEnvironmentId(survey.environmentId);
-      if (project) {
-        title = `${title} | ${project.name}`;
-      }
     }
   }
 

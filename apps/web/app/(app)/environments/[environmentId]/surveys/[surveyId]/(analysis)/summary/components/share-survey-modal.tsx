@@ -176,7 +176,7 @@ export const ShareSurveyModal = ({
         title: t("environments.surveys.share.link_settings.title"),
         description: t("environments.surveys.share.link_settings.description"),
         componentType: LinkSettingsTab,
-        componentProps: { isReadOnly, locale: user.locale },
+        componentProps: { isReadOnly, locale: user.locale, isFormbricksCloud },
       },
     ],
     [
