@@ -43,9 +43,10 @@ export const getBasicSurveyMetadata = async (
 
   const metadata = survey.metadata;
   const welcomeCard = survey.welcomeCard;
+  const isDefaultLanguage = survey.languages.find((lang) => lang.language.code === languageCode)?.default;
 
   // Determine language code to use for metadata
-  const langCode = languageCode || "default";
+  const langCode = isDefaultLanguage || !languageCode ? "default" : languageCode;
 
   // Set title - priority: custom link metadata > welcome card > survey name
   let title = "Survey";
