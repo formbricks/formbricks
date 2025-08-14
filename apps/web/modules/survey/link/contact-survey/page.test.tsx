@@ -92,7 +92,7 @@ describe("contact-survey page", () => {
       params: Promise.resolve({ jwt: "token" }),
       searchParams: Promise.resolve({}),
     });
-    expect(meta).toEqual({ title: "Survey", description: "Complete this survey" });
+    expect(meta).toEqual({ title: "Survey", description: "Please complete this survey." });
   });
 
   test("generateMetadata returns default when verify throws", async () => {
@@ -103,7 +103,7 @@ describe("contact-survey page", () => {
       params: Promise.resolve({ jwt: "token" }),
       searchParams: Promise.resolve({}),
     });
-    expect(meta).toEqual({ title: "Survey", description: "Complete this survey" });
+    expect(meta).toEqual({ title: "Survey", description: "Please complete this survey." });
   });
 
   test("generateMetadata returns basic metadata when token valid", async () => {

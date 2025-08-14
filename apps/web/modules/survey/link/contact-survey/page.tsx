@@ -31,7 +31,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     if (!result.ok) {
       return {
         title: "Survey",
-        description: "Complete this survey",
+        description: "Please complete this survey.",
       };
     }
     const { surveyId } = result.data;
@@ -40,7 +40,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     // If the token is invalid, we'll return generic metadata
     return {
       title: "Survey",
-      description: "Complete this survey",
+      description: "Please complete this survey.",
     };
   }
 };
