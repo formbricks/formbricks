@@ -12,15 +12,9 @@ type TBasicSurveyMetadata = {
   ogImage?: string;
 };
 
-/**
- * Utility function to encode name for URL usage
- */
-export const getNameForURL = (url: string) => url.replace(/ /g, "%20");
+export const getNameForURL = (value: string) => encodeURIComponent(value);
 
-/**
- * Utility function to encode brand color for URL usage
- */
-export const getBrandColorForURL = (url: string) => url.replace(/#/g, "%23");
+export const getBrandColorForURL = (value: string) => encodeURIComponent(value);
 
 /**
  * Get basic survey metadata (title and description) based on link metadata, welcome card or survey name
@@ -51,14 +45,14 @@ export const getBasicSurveyMetadata = async (
   const langCode = useDefaultLanguageCode ? "default" : languageCode;
 
   // Set title - priority: custom link metadata > welcome card > survey name
-  let title = "Survey";
-  if (metadata.title?.[langCode]) {
-    title = getLocalizedValue(metadata.title, langCode);
-  } else if (welcomeCard.enabled && welcomeCard.headline?.[langCode]) {
-    title = getLocalizedValue(welcomeCard.headline, langCode);
-  } else {
-    title = survey.name;
-  }
+  const titleFromMetadata = metadata?.title
+    ? getLocalizedValue(metadata.title, langCode) || metadata.title.default
+    : undefined;
+  const titleFromWelcome =
+    welcomeCard?.enabled && welcomeCard.headline
+      ? getLocalizedValue(welcomeCard.headline, langCode) || welcomeCard.headline.default
+      : undefined;
+  let title = titleFromMetadata || titleFromWelcome || survey.name;
 
   // Set description - priority: custom link metadata > welcome card > default
   let description = "Please complete this survey.";
