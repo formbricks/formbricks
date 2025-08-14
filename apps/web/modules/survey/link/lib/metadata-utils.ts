@@ -55,15 +55,15 @@ export const getBasicSurveyMetadata = async (
   let title = titleFromMetadata || titleFromWelcome || survey.name;
 
   // Set description - priority: custom link metadata > welcome card > default
-  let description = "Please complete this survey.";
-  if (metadata.description?.[langCode]) {
-    description = getLocalizedValue(metadata.description, langCode);
-  }
+  const descriptionFromMetadata = metadata?.description
+    ? getLocalizedValue(metadata.description, langCode) || metadata.description.default
+    : undefined;
+  let description = descriptionFromMetadata || "Please complete this survey.";
 
   // Get OG image from link metadata if available
   const { ogImage } = metadata;
 
-  if (!metadata.title?.[langCode]) {
+  if (!titleFromMetadata) {
     if (IS_FORMBRICKS_CLOUD) {
       title = `${title} | Formbricks`;
     }
