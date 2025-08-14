@@ -11,8 +11,8 @@ on:
       IS_PRERELEASE:
         description: "Whether this is a prerelease (affects latest tag)"
         required: false
-        type: boolean
-        default: false
+        type: "boolean"
+        default: "false"
     outputs:
       VERSION:
         description: release version
