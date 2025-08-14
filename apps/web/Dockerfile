@@ -57,6 +57,7 @@ RUN pnpm build --filter=@formbricks/database
 # This mounts the secrets only during this build step without storing them in layers
 RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
+    --mount=type=secret,id=sentry_auth_token \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
@@ -88,9 +89,8 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
-# Copy the entire .next directory to preserve all sourcemaps and debug IDs
-COPY --from=installer /app/apps/web/.next ./apps/web/.next
-RUN chown -R nextjs:nextjs ./apps/web/.next && chmod -R 755 ./apps/web/.next
+COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
+RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
 
 COPY --from=installer /app/apps/web/public ./apps/web/public
 RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public

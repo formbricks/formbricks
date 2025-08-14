@@ -424,6 +424,7 @@ nextConfig.images.remotePatterns.push({
 const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
+  project: "formbricks-cloud",
 
   // Enable logging to debug sourcemap generation issues
   silent: false,
@@ -432,25 +433,7 @@ const sentryOptions = {
   widenClientFileUpload: true,
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Disable automatic release management
-  automaticVercelMonitors: false,
-  autoUploadSourceMaps: false,
-  hideSourceMaps: false,
-
-  // Disable telemetry to prevent data collection
-  telemetry: false,
-
-  // Don't automatically create releases - we handle this in GitHub Actions
-  release: {
-    create: false,
-    deploy: false,
-    setCommits: false,
-  },
-
-  // Inject Debug IDs even without DSN for later sourcemap correlation
-  injectBuildInformation: true,
+  disableLogger: false,
 };
 
 // Always enable Sentry plugin to inject Debug IDs

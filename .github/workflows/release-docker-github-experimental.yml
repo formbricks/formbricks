@@ -29,9 +29,7 @@ jobs:
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
-    outputs:
-      DOCKER_IMAGE: ${{ steps.extract_image_info.outputs.DOCKER_IMAGE }}
-      RELEASE_VERSION: ${{ steps.extract_image_info.outputs.RELEASE_VERSION }}
+
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -86,15 +84,6 @@ jobs:
           sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.VERSION }}\"/" ./apps/web/package.json
           cat ./apps/web/package.json | grep version
 
-      - name: Set Sentry environment in .env
-        run: |
-          if ! grep -q "^SENTRY_ENVIRONMENT=staging$" .env 2>/dev/null; then
-            echo "SENTRY_ENVIRONMENT=staging" >> .env
-            echo "Added SENTRY_ENVIRONMENT=staging to .env file"
-          else
-            echo "SENTRY_ENVIRONMENT=staging already exists in .env file"
-          fi
-
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
 
@@ -142,21 +131,9 @@ jobs:
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
 
-      - name: Extract image info for sourcemap upload
-        id: extract_image_info
-        run: |
-          # Use the timestamped tag (contains the VERSION) for sourcemap extraction
-          DOCKER_IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | grep "$VERSION" | head -n1 | xargs)
-          echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_OUTPUT
 
-          # Use the generated version for Sentry release
-          RELEASE_VERSION="$VERSION"
-          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-
-          echo "Docker image: $DOCKER_IMAGE"
-          echo "Release version: $RELEASE_VERSION"
-          echo "Available tags: ${{ steps.meta.outputs.tags }}"
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
@@ -172,29 +149,3 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-
-  upload-sentry-sourcemaps:
-    name: Upload Sentry Sourcemaps
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    needs:
-      - build
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          fetch-depth: 0
-
-      - name: Upload Sentry Sourcemaps
-        uses: ./.github/actions/upload-sentry-sourcemaps
-        with:
-          docker_image: ${{ needs.build.outputs.DOCKER_IMAGE }}
-          release_version: ${{ needs.build.outputs.RELEASE_VERSION }}
-          sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          environment: staging
