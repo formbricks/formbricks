@@ -17,7 +17,6 @@ jobs:
         run: |
           echo "=== Testing Boolean Logic ==="
           echo "Input IS_PRERELEASE: ${{ inputs.IS_PRERELEASE }}"
-          echo "Input type: ${{ type(inputs.IS_PRERELEASE) }}"
           echo ""
 
           echo "=== Current Logic (string comparison) ==="
@@ -32,14 +31,12 @@ jobs:
           echo "Should tag as latest: ${{ !inputs.IS_PRERELEASE }}"
           echo ""
 
-          echo "=== Test Cases ==="
+          echo "=== Expected Behavior ==="
           echo "When IS_PRERELEASE=true (pre-release):"
-          echo "  String comparison result: ${{ true != 'true' }}"
-          echo "  Boolean negation result: ${{ !true }}"
+          echo "  Should NOT tag as latest (result should be false)"
           echo ""
           echo "When IS_PRERELEASE=false (stable release):"
-          echo "  String comparison result: ${{ false != 'true' }}"
-          echo "  Boolean negation result: ${{ !false }}"
+          echo "  Should tag as latest (result should be true)"
 
       - name: Simulate Docker Metadata Tags
         run: |
