@@ -94,7 +94,6 @@ const fullUser = {
   updatedAt: new Date(),
   email: "test@example.com",
   emailVerified: null,
-  imageUrl: null,
   twoFactorEnabled: false,
   identityProvider: "email",
   organizationId: "org1",
