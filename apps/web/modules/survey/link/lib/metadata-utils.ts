@@ -86,10 +86,13 @@ export const getBasicSurveyMetadata = async (
 /**
  * Generate Open Graph metadata for survey
  */
-export const getSurveyOpenGraphMetadata = (surveyId: string, surveyName: string): Metadata => {
-  const brandColor = getBrandColorForURL(COLOR_DEFAULTS.brandColor); // Default color
+export const getSurveyOpenGraphMetadata = (
+  surveyId: string,
+  surveyName: string,
+  surveyBrandColor?: string
+): Metadata => {
   const encodedName = getNameForURL(surveyName);
-
+  const brandColor = getBrandColorForURL(surveyBrandColor ?? COLOR_DEFAULTS.brandColor);
   const ogImgURL = `/api/v1/client/og?brandColor=${brandColor}&name=${encodedName}`;
 
   return {

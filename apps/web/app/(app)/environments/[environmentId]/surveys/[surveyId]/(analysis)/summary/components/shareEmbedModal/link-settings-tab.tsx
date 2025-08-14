@@ -32,7 +32,6 @@ import { TI18nString, TSurvey, TSurveyMetadata } from "@formbricks/types/surveys
 interface LinkSettingsTabProps {
   isReadOnly: boolean;
   locale: string;
-  isFormbricksCloud: boolean;
 }
 
 interface LinkSettingsFormData {
@@ -41,7 +40,7 @@ interface LinkSettingsFormData {
   ogImage?: string;
 }
 
-export const LinkSettingsTab = ({ isReadOnly, locale, isFormbricksCloud }: LinkSettingsTabProps) => {
+export const LinkSettingsTab = ({ isReadOnly, locale }: LinkSettingsTabProps) => {
   const { t } = useTranslate();
   const { survey } = useSurvey();
   const enabledLanguages = getEnabledLanguages(survey.languages);
@@ -151,7 +150,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isFormbricksCloud }: LinkS
       name: "title",
       label: t("environments.surveys.share.link_settings.link_title"),
       description: t("environments.surveys.share.link_settings.link_title_description"),
-      placeholder: isFormbricksCloud ? `${survey.name} | Formbricks` : survey.name,
+      placeholder: survey.name,
     },
     {
       name: "description",

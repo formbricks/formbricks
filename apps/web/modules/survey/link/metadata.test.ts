@@ -60,7 +60,7 @@ describe("getMetadataForLinkSurvey", () => {
 
     expect(getSurveyMetadata).toHaveBeenCalledWith(mockSurveyId);
     expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined);
-    expect(getSurveyOpenGraphMetadata).toHaveBeenCalledWith(mockSurveyId, mockSurveyName);
+    expect(getSurveyOpenGraphMetadata).toHaveBeenCalledWith(mockSurveyId, mockSurveyName, undefined);
 
     expect(result).toEqual({
       title: mockSurveyName,
