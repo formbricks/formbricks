@@ -1,9 +1,7 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
+import { TApiV1Authentication } from "@/app/lib/api/with-api-logging";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { Session } from "next-auth";
-import { NextRequest } from "next/server";
 
 export const checkForRequiredFields = (
   environmentId: string,
@@ -23,19 +21,21 @@ export const checkForRequiredFields = (
   }
 };
 
-export const checkAuth = async (session: Session | null, environmentId: string, request: NextRequest) => {
-  if (!session) {
-    //check whether its using API key
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
+export const checkAuth = async (authentication: TApiV1Authentication, environmentId: string) => {
+  if (!authentication) {
+    return responses.notAuthenticatedResponse();
+  }
 
+  if ("user" in authentication) {
+    const isUserAuthorized = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
+    if (!isUserAuthorized) {
+      return responses.unauthorizedResponse();
+    }
+  } else if ("hashedApiKey" in authentication) {
     if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
       return responses.unauthorizedResponse();
     }
   } else {
-    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-    if (!isUserAuthorized) {
-      return responses.unauthorizedResponse();
-    }
+    return responses.notAuthenticatedResponse();
   }
 };

@@ -30,6 +30,15 @@ runs:
         set -euo pipefail
         echo "📦 Extracting sourcemaps from Docker image: ${{ inputs.docker_image }}"
 
+        # Validate docker image format (basic validation)
+        if [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+:[a-zA-Z0-9._-]+$ ]] && [[ ! "$DOCKER_IMAGE" =~ ^[a-zA-Z0-9._/-]+@sha256:[A-Fa-f0-9]{64}$ ]]; then
+          echo "❌ Error: Invalid docker image format. Must be in format 'image:tag' or 'image@sha256:hash'"
+          echo "Provided: ${DOCKER_IMAGE}"
+          exit 1
+        fi
+
+        echo "📦 Extracting sourcemaps from Docker image: ${DOCKER_IMAGE}"
+
         # Create temporary container from the AMD64 image for universal Linux compatibility
         echo "Creating temporary container from AMD64 platform..."
         CONTAINER_ID=$(docker create --platform linux/amd64 "${{ inputs.docker_image }}")
@@ -45,7 +54,7 @@ runs:
           # Remove the container if it exists (ignore errors if already removed)
           if [ -n "$CONTAINER_ID" ]; then
             docker rm -f "$CONTAINER_ID" 2>/dev/null || true
-            echo "Container $CONTAINER_ID removed"
+            echo "Container ${CONTAINER_ID} removed"
           fi
           
           # Exit with the original exit code to preserve script success/failure status

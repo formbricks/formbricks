@@ -20,11 +20,6 @@ const Loading = () => {
       ],
     },
     {
-      title: t("common.avatar"),
-      description: t("environments.settings.profile.organization_identification"),
-      skeletonLines: [{ classes: "h-10 w-10" }, { classes: "h-8 w-24" }],
-    },
-    {
       title: t("environments.settings.profile.delete_account"),
       description: t("environments.settings.profile.confirm_delete_account"),
       skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],

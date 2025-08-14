@@ -31,6 +31,10 @@
       {
         "language": "pt-PT",
         "path": "./apps/web/locales/pt-PT.json"
+      },
+      {
+        "language": "ro-RO",
+        "path": "./apps/web/locales/ro-RO.json"
       }
     ],
     "forceMode": "OVERRIDE"

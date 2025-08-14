@@ -172,6 +172,15 @@ vi.mock("./shareEmbedModal/success-view", () => ({
   ),
 }));
 
+// Mock LinkSettingsTab
+vi.mock("./shareEmbedModal/link-settings-tab", () => ({
+  LinkSettingsTab: ({ survey, isReadOnly, locale }: any) => (
+    <div data-testid="link-settings-tab">
+      LinkSettings for {survey.id} - ReadOnly: {isReadOnly.toString()} - Locale: {locale}
+    </div>
+  ),
+}));
+
 // Mock lucide-react icons
 vi.mock("lucide-react", async (importOriginal) => {
   const actual = (await importOriginal()) as any;
@@ -184,6 +193,7 @@ vi.mock("lucide-react", async (importOriginal) => {
     SmartphoneIcon: () => <svg data-testid="smartphone-icon" />,
     SquareStack: () => <svg data-testid="square-stack-icon" />,
     UserIcon: () => <svg data-testid="user-icon" />,
+    Settings: () => <svg data-testid="settings-icon" />,
   };
 });
 
@@ -227,6 +237,7 @@ const mockSurvey: TSurvey = {
   recaptcha: null,
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
+  metadata: {},
 };
 
 const mockAppSurvey: TSurvey = {
@@ -239,7 +250,6 @@ const mockUser: TUser = {
   name: "Test User",
   email: "test@example.com",
   emailVerified: new Date(),
-  imageUrl: "https://example.com/avatar.jpg",
   twoFactorEnabled: false,
   identityProvider: "email",
   createdAt: new Date(),
@@ -270,6 +280,7 @@ const defaultProps = {
   segments: mockSegments,
   isContactsEnabled: true,
   isFormbricksCloud: false,
+  isReadOnly: false,
 };
 
 describe("ShareSurveyModal", () => {
@@ -392,7 +403,6 @@ describe("ShareSurveyModal", () => {
   });
 
   test("resets to start view when modal is closed and reopened", async () => {
-    const user = userEvent.setup();
     const { rerender } = render(<ShareSurveyModal {...defaultProps} modalView="share" />);
 
     expect(screen.getByTestId("share-view")).toBeInTheDocument();
@@ -467,5 +477,41 @@ describe("ShareSurveyModal", () => {
     expect(screen.getByTestId("tab-container")).toBeInTheDocument();
     expect(screen.getByTestId("app-tab")).toBeInTheDocument();
     expect(screen.queryByTestId("share-view")).not.toBeInTheDocument();
+  });
+
+  test("includes link settings tab in share tabs for link surveys", () => {
+    render(<ShareSurveyModal {...defaultProps} modalView="share" />);
+
+    const shareView = screen.getByTestId("share-view");
+    expect(shareView).toBeInTheDocument();
+
+    // Check that tabs are rendered and include link settings
+    const tabsContainer = screen.getByTestId("tabs");
+    expect(tabsContainer).toBeInTheDocument();
+
+    // Look for the link-settings tab button
+    expect(screen.getByTestId("tab-link-settings")).toBeInTheDocument();
+  });
+
+  test("does not include link settings for app surveys", () => {
+    render(<ShareSurveyModal {...defaultProps} survey={mockAppSurvey} modalView="share" />);
+
+    // App surveys should render TabContainer, not ShareView with link settings
+    expect(screen.getByTestId("tab-container")).toBeInTheDocument();
+    expect(screen.getByTestId("app-tab")).toBeInTheDocument();
+    expect(screen.queryByTestId("share-view")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("tab-link-settings")).not.toBeInTheDocument();
+  });
+
+  test("handles locale prop correctly for link settings", () => {
+    const customProps = {
+      ...defaultProps,
+      modalView: "share" as const,
+    };
+
+    render(<ShareSurveyModal {...customProps} />);
+
+    // Verify that ShareView is rendered (which would contain LinkSettingsTab)
+    expect(screen.getByTestId("share-view")).toBeInTheDocument();
   });
 });

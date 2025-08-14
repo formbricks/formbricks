@@ -206,7 +206,6 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           emailVerified: user.emailVerified,
-          imageUrl: user.imageUrl,
         };
       },
     }),

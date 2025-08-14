@@ -28,7 +28,6 @@ describe("ResponseTimeline", () => {
     name: "Test User",
     createdAt: new Date(),
     updatedAt: new Date(),
-    imageUrl: null,
     objective: null,
     role: "founder",
     email: "test@example.com",
@@ -57,7 +56,6 @@ describe("ResponseTimeline", () => {
     singleUseId: null,
     language: "en",
     ttc: {},
-    notes: [],
     tags: [],
   };
 

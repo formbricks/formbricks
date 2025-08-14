@@ -104,7 +104,7 @@ export const FollowUpModal = ({
 
     const openTextAndContactQuestions = questions.filter((question) => {
       if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
-        return true;
+        return question.email.show;
       }
 
       if (question.type === TSurveyQuestionTypeEnum.OpenText) {

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
 
-export const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"]);
+export const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT", "ro-RO"]);
 
 export type TUserLocale = z.infer<typeof ZUserLocale>;
 export const ZUserObjective = z.enum([
@@ -48,7 +48,6 @@ export const ZUser = z.object({
   name: ZUserName,
   email: ZUserEmail,
   emailVerified: z.date().nullable(),
-  imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
   identityProvider: ZUserIdentityProvider,
   createdAt: z.date(),
@@ -70,7 +69,6 @@ export const ZUserUpdateInput = z.object({
   password: ZUserPassword.optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
-  imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
   locale: ZUserLocale.optional(),
   lastLoginAt: z.date().nullish(),

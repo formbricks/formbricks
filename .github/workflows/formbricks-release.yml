@@ -7,12 +7,13 @@ on:
 permissions:
   contents: read
 
-env:
-  ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
-
 jobs:
   docker-build:
     name: Build & release docker image
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     uses: ./.github/workflows/release-docker-github.yml
     secrets: inherit
     with:
@@ -20,6 +21,9 @@ jobs:
 
   helm-chart-release:
     name: Release Helm Chart
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/release-helm-chart.yml
     secrets: inherit
     needs:
@@ -29,6 +33,9 @@ jobs:
 
   deploy-formbricks-cloud:
     name: Deploy Helm Chart to Formbricks Cloud
+    permissions:
+      contents: read
+      id-token: write
     secrets: inherit
     uses: ./.github/workflows/deploy-formbricks-cloud.yml
     needs:
@@ -36,7 +43,7 @@ jobs:
       - helm-chart-release
     with:
       VERSION: v${{ needs.docker-build.outputs.VERSION }}
-      ENVIRONMENT: ${{ env.ENVIRONMENT }}
+      ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
 
   upload-sentry-sourcemaps:
     name: Upload Sentry Sourcemaps
@@ -47,8 +54,13 @@ jobs:
       - docker-build
       - deploy-formbricks-cloud
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
@@ -59,4 +71,4 @@ jobs:
           docker_image: ghcr.io/formbricks/formbricks:v${{ needs.docker-build.outputs.VERSION }}
           release_version: v${{ needs.docker-build.outputs.VERSION }}
           sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          environment: ${{ env.ENVIRONMENT }}
+          environment: ${{ github.event.release.prerelease && 'staging' || 'production' }}

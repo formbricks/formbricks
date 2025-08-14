@@ -5,8 +5,6 @@ import {
   verifyUserPassword,
 } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/lib/user";
 import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
-import { deleteFile } from "@/lib/storage/service";
-import { getFileNameWithIdFromUrl } from "@/lib/storage/utils";
 import { getUser, updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -15,8 +13,6 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendForgotPasswordEmail, sendVerificationNewEmail } from "@/modules/email";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
 import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import {
   TUserPersonalInfoUpdateInput,
@@ -93,58 +89,6 @@ export const updateUserAction = authenticatedActionClient.schema(ZUserPersonalIn
       ctx.auditLoggingCtx.newObject = newObject;
 
       return true;
-    }
-  )
-);
-
-const ZUpdateAvatarAction = z.object({
-  avatarUrl: z.string(),
-});
-
-export const updateAvatarAction = authenticatedActionClient.schema(ZUpdateAvatarAction).action(
-  withAuditLogging(
-    "updated",
-    "user",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const oldObject = await getUser(ctx.user.id);
-      const result = await updateUser(ctx.user.id, { imageUrl: parsedInput.avatarUrl });
-      ctx.auditLoggingCtx.userId = ctx.user.id;
-      ctx.auditLoggingCtx.oldObject = oldObject;
-      ctx.auditLoggingCtx.newObject = result;
-      return result;
-    }
-  )
-);
-
-const ZRemoveAvatarAction = z.object({
-  environmentId: ZId,
-});
-
-export const removeAvatarAction = authenticatedActionClient.schema(ZRemoveAvatarAction).action(
-  withAuditLogging(
-    "updated",
-    "user",
-    async ({ ctx, parsedInput }: { ctx: AuthenticatedActionClientCtx; parsedInput: Record<string, any> }) => {
-      const oldObject = await getUser(ctx.user.id);
-      const imageUrl = ctx.user.imageUrl;
-      if (!imageUrl) {
-        throw new Error("Image not found");
-      }
-
-      const fileName = getFileNameWithIdFromUrl(imageUrl);
-      if (!fileName) {
-        throw new Error("Invalid filename");
-      }
-
-      const deletionResult = await deleteFile(parsedInput.environmentId, "public", fileName);
-      if (!deletionResult.success) {
-        throw new Error("Deletion failed");
-      }
-      const result = await updateUser(ctx.user.id, { imageUrl: null });
-      ctx.auditLoggingCtx.userId = ctx.user.id;
-      ctx.auditLoggingCtx.oldObject = oldObject;
-      ctx.auditLoggingCtx.newObject = result;
-      return result;
     }
   )
 );

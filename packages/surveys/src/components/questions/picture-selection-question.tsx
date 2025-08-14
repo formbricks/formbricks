@@ -3,6 +3,7 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
+import { ImageDownIcon } from "@/components/icons/image-down-icon";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getOriginalFileNameFromUrl } from "@/lib/storage";
@@ -199,23 +200,7 @@ export function PictureSelectionQuestion({
                     }}
                     className="fb-absolute fb-bottom-4 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100 fb-z-20">
                     <span className="fb-sr-only">Open in new tab</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                      className="lucide lucide-image-down-icon lucide-image-down">
-                      <path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" />
-                      <path d="m14 19 3 3v-5.5" />
-                      <path d="m17 22 3-3" />
-                      <circle cx="9" cy="9" r="2" />
-                    </svg>
+                    <ImageDownIcon />
                   </a>
                 </div>
               ))}

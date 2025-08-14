@@ -7,6 +7,7 @@ import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { Button } from "@/modules/ui/components/button";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProjectConfigChannel } from "@formbricks/types/project";
@@ -43,6 +44,7 @@ export const SurveysList = ({
   currentProjectChannel,
   locale,
 }: SurveysListProps) => {
+  const router = useRouter();
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -124,7 +126,10 @@ export const SurveysList = ({
   const handleDeleteSurvey = async (surveyId: string) => {
     const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
     setSurveys(newSurveys);
-    if (newSurveys.length === 0) setIsFetching(true);
+    if (newSurveys.length === 0) {
+      setIsFetching(true);
+      router.refresh();
+    }
   };
 
   const triggerRefresh = useCallback(() => {

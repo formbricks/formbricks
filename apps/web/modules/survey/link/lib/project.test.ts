@@ -44,6 +44,7 @@ describe("getProjectByEnvironmentId", () => {
       linkSurveyBranding: true,
       logo: null,
       styling: {},
+      name: "Test Project",
     };
 
     vi.mocked(prisma.project.findFirst).mockResolvedValueOnce(mockProject as any);
@@ -63,6 +64,7 @@ describe("getProjectByEnvironmentId", () => {
         linkSurveyBranding: true,
         logo: true,
         styling: true,
+        name: true,
       },
     });
   });

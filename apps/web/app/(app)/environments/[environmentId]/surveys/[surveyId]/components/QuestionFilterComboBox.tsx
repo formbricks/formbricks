@@ -33,6 +33,7 @@ type QuestionFilterComboBoxProps = {
   type?: TSurveyQuestionTypeEnum | Omit<OptionsType, OptionsType.QUESTIONS>;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
+  fieldId?: string;
 };
 
 export const QuestionFilterComboBox = ({
@@ -45,6 +46,7 @@ export const QuestionFilterComboBox = ({
   type,
   handleRemoveMultiSelect,
   disabled = false,
+  fieldId,
 }: QuestionFilterComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
   const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
@@ -74,6 +76,9 @@ export const QuestionFilterComboBox = ({
   const isDisabledComboBox =
     (type === TSurveyQuestionTypeEnum.NPS || type === TSurveyQuestionTypeEnum.Rating) &&
     (filterValue === "Submitted" || filterValue === "Skipped");
+
+  // Check if this is a URL field with string comparison operations that require text input
+  const isTextInputField = type === OptionsType.META && fieldId === "url";
 
   const filteredOptions = options?.filter((o) =>
     (typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o)
@@ -161,70 +166,80 @@ export const QuestionFilterComboBox = ({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-      <Command ref={commandRef} className="h-10 overflow-visible bg-transparent">
-        <div
-          className={clsx(
-            "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm"
-          )}>
-          {filterComboBoxValue && filterComboBoxValue.length > 0 ? (
-            filterComboBoxItem
-          ) : (
+      {isTextInputField ? (
+        <Input
+          type="text"
+          value={typeof filterComboBoxValue === "string" ? filterComboBoxValue : ""}
+          onChange={(e) => onChangeFilterComboBoxValue(e.target.value)}
+          disabled={disabled || !filterValue}
+          className="h-9 rounded-l-none border-none bg-white text-sm focus:ring-offset-0"
+        />
+      ) : (
+        <Command ref={commandRef} className="h-10 overflow-visible bg-transparent">
+          <div
+            className={clsx(
+              "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm"
+            )}>
+            {filterComboBoxValue && filterComboBoxValue.length > 0 ? (
+              filterComboBoxItem
+            ) : (
+              <button
+                type="button"
+                onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
+                disabled={disabled || isDisabledComboBox || !filterValue}
+                className={clsx(
+                  "flex-1 text-left text-slate-400",
+                  disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
+                )}>
+                {t("common.select")}...
+              </button>
+            )}
             <button
               type="button"
               onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
               disabled={disabled || isDisabledComboBox || !filterValue}
               className={clsx(
-                "flex-1 text-left text-slate-400",
+                "ml-2 flex items-center justify-center",
                 disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
               )}>
-              {t("common.select")}...
+              {open ? (
+                <ChevronUp className="h-4 w-4 opacity-50" />
+              ) : (
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              )}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
-            disabled={disabled || isDisabledComboBox || !filterValue}
-            className={clsx(
-              "ml-2 flex items-center justify-center",
-              disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
-            )}>
-            {open ? (
-              <ChevronUp className="h-4 w-4 opacity-50" />
-            ) : (
-              <ChevronDown className="h-4 w-4 opacity-50" />
+          </div>
+          <div className="relative mt-2 h-full">
+            {open && (
+              <div className="animate-in absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
+                <CommandList>
+                  <div className="p-2">
+                    <Input
+                      type="text"
+                      autoFocus
+                      placeholder={t("common.search") + "..."}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-md border border-slate-300 p-2 text-sm focus:border-slate-300"
+                    />
+                  </div>
+                  <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
+                  <CommandGroup>
+                    {filteredOptions?.map((o, index) => (
+                      <CommandItem
+                        key={`option-${typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}-${index}`}
+                        onSelect={() => commandItemOnSelect(o)}
+                        className="cursor-pointer">
+                        {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </div>
             )}
-          </button>
-        </div>
-        <div className="relative mt-2 h-full">
-          {open && (
-            <div className="animate-in absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-              <CommandList>
-                <div className="p-2">
-                  <Input
-                    type="text"
-                    autoFocus
-                    placeholder={t("common.search") + "..."}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 p-2 text-sm focus:border-slate-300"
-                  />
-                </div>
-                <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
-                <CommandGroup>
-                  {filteredOptions?.map((o, index) => (
-                    <CommandItem
-                      key={`option-${typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}-${index}`}
-                      onSelect={() => commandItemOnSelect(o)}
-                      className="cursor-pointer">
-                      {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </div>
-          )}
-        </div>
-      </Command>
+          </div>
+        </Command>
+      )}
     </div>
   );
 };

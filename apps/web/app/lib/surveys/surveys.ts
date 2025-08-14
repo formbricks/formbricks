@@ -47,6 +47,18 @@ const filterOptions = {
   ranking: ["Filled out", "Skipped"],
 };
 
+// URL/meta text operators mapping
+const META_OP_MAP = {
+  Equals: "equals",
+  "Not equals": "notEquals",
+  Contains: "contains",
+  "Does not contain": "doesNotContain",
+  "Starts with": "startsWith",
+  "Does not start with": "doesNotStartWith",
+  "Ends with": "endsWith",
+  "Does not end with": "doesNotEndWith",
+} as const;
+
 // creating the options for the filtering to be selected there are 4 types questions, attributes, tags and metadata
 export const generateQuestionAndFilterOptions = (
   survey: TSurvey,
@@ -165,7 +177,7 @@ export const generateQuestionAndFilterOptions = (
     Object.keys(meta).forEach((m) => {
       questionFilterOptions.push({
         type: "Meta",
-        filterOptions: ["Equals", "Not equals"],
+        filterOptions: m === "url" ? Object.keys(META_OP_MAP) : ["Equals", "Not equals"],
         filterComboBoxOptions: meta[m],
         id: m,
       });
@@ -481,17 +493,23 @@ export const getFormattedFilters = (
   if (meta.length) {
     meta.forEach(({ filterType, questionType }) => {
       if (!filters.meta) filters.meta = {};
-      if (!filterType.filterComboBoxValue) return;
-      if (filterType.filterValue === "Equals") {
-        filters.meta[questionType.label ?? ""] = {
-          op: "equals",
-          value: filterType.filterComboBoxValue as string,
-        };
-      } else if (filterType.filterValue === "Not equals") {
-        filters.meta[questionType.label ?? ""] = {
-          op: "notEquals",
-          value: filterType.filterComboBoxValue as string,
-        };
+
+      // For text input cases (URL filtering)
+      if (typeof filterType.filterComboBoxValue === "string" && filterType.filterComboBoxValue.length > 0) {
+        const value = filterType.filterComboBoxValue.trim();
+        const op = META_OP_MAP[filterType.filterValue as keyof typeof META_OP_MAP];
+        if (op) {
+          filters.meta[questionType.label ?? ""] = { op, value };
+        }
+      }
+      // For dropdown/select cases (existing metadata fields)
+      else if (Array.isArray(filterType.filterComboBoxValue) && filterType.filterComboBoxValue.length > 0) {
+        const value = filterType.filterComboBoxValue[0]; // Take first selected value
+        if (filterType.filterValue === "Equals") {
+          filters.meta[questionType.label ?? ""] = { op: "equals", value };
+        } else if (filterType.filterValue === "Not equals") {
+          filters.meta[questionType.label ?? ""] = { op: "notEquals", value };
+        }
       }
     });
   }

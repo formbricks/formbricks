@@ -157,6 +157,46 @@ describe("Response Utils", () => {
         },
       ]);
     });
+
+    test("meta: URL string comparison operations", () => {
+      const testCases = [
+        {
+          name: "contains",
+          criteria: { meta: { url: { op: "contains" as const, value: "example.com" } } },
+          expected: { meta: { path: ["url"], string_contains: "example.com" } },
+        },
+        {
+          name: "doesNotContain",
+          criteria: { meta: { url: { op: "doesNotContain" as const, value: "test.com" } } },
+          expected: { NOT: { meta: { path: ["url"], string_contains: "test.com" } } },
+        },
+        {
+          name: "startsWith",
+          criteria: { meta: { url: { op: "startsWith" as const, value: "https://" } } },
+          expected: { meta: { path: ["url"], string_starts_with: "https://" } },
+        },
+        {
+          name: "doesNotStartWith",
+          criteria: { meta: { url: { op: "doesNotStartWith" as const, value: "http://" } } },
+          expected: { NOT: { meta: { path: ["url"], string_starts_with: "http://" } } },
+        },
+        {
+          name: "endsWith",
+          criteria: { meta: { url: { op: "endsWith" as const, value: ".com" } } },
+          expected: { meta: { path: ["url"], string_ends_with: ".com" } },
+        },
+        {
+          name: "doesNotEndWith",
+          criteria: { meta: { url: { op: "doesNotEndWith" as const, value: ".org" } } },
+          expected: { NOT: { meta: { path: ["url"], string_ends_with: ".org" } } },
+        },
+      ];
+
+      testCases.forEach(({ criteria, expected }) => {
+        const result = buildWhereClause(baseSurvey as TSurvey, criteria);
+        expect(result.AND).toEqual([{ AND: [expected] }]);
+      });
+    });
   });
 
   describe("buildWhereClause – data‐field filter operations", () => {
@@ -367,7 +407,6 @@ describe("Response Utils", () => {
         finished: true,
         createdAt: new Date(),
         updatedAt: new Date(),
-        notes: [],
         tags: [],
       },
     ];
@@ -418,7 +457,6 @@ describe("Response Utils", () => {
         finished: true,
         createdAt: new Date(),
         updatedAt: new Date(),
-        notes: [],
         tags: [],
       },
     ];
@@ -497,9 +535,97 @@ describe("Response Utils", () => {
       expect(result.os).toContain("MacOS");
     });
 
+    test("should extract URL data correctly", () => {
+      const responses = [
+        {
+          contactAttributes: {},
+          data: {},
+          meta: {
+            url: "https://example.com/page1",
+            source: "direct",
+          },
+        },
+        {
+          contactAttributes: {},
+          data: {},
+          meta: {
+            url: "https://test.com/page2?param=value",
+            source: "google",
+          },
+        },
+      ];
+      const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
+      expect(result.url).toEqual([]);
+      expect(result.source).toContain("direct");
+      expect(result.source).toContain("google");
+    });
+
+    test("should handle mixed meta data with URLs", () => {
+      const responses = [
+        {
+          contactAttributes: {},
+          data: {},
+          meta: {
+            userAgent: { browser: "Chrome", device: "desktop" },
+            url: "https://formbricks.com/dashboard",
+            country: "US",
+          },
+        },
+        {
+          contactAttributes: {},
+          data: {},
+          meta: {
+            userAgent: { browser: "Safari", device: "mobile" },
+            url: "https://formbricks.com/surveys/123",
+            country: "UK",
+          },
+        },
+      ];
+      const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
+      expect(result.browser).toContain("Chrome");
+      expect(result.browser).toContain("Safari");
+      expect(result.device).toContain("desktop");
+      expect(result.device).toContain("mobile");
+      expect(result.url).toEqual([]);
+      expect(result.country).toContain("US");
+      expect(result.country).toContain("UK");
+    });
+
     test("should handle empty responses", () => {
       const result = getResponseMeta([]);
       expect(result).toEqual({});
+    });
+
+    test("should ignore empty or null URL values", () => {
+      const responses = [
+        {
+          contactAttributes: {},
+          data: {},
+          meta: {
+            url: "",
+            source: "direct",
+          },
+        },
+        {
+          contactAttributes: {},
+          data: {},
+          meta: {
+            url: null as any,
+            source: "newsletter",
+          },
+        },
+        {
+          contactAttributes: {},
+          data: {},
+          meta: {
+            url: "https://valid.com",
+            source: "google",
+          },
+        },
+      ];
+      const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
+      expect(result.url).toEqual([]);
+      expect(result.source).toEqual(expect.arrayContaining(["direct", "newsletter", "google"]));
     });
   });
 
