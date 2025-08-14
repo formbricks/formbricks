@@ -552,14 +552,14 @@ const getLeftOperandValue = (
           if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentQuestion.rows.length) {
             return undefined;
           }
-          const row = getLocalizedValue(currentQuestion.rows[rowIndex], selectedLanguage);
+          const row = getLocalizedValue(currentQuestion.rows[rowIndex].label, selectedLanguage);
 
           const rowValue = responseValue[row];
           if (rowValue === "") return "";
 
           if (rowValue) {
             const columnIndex = currentQuestion.columns.findIndex((column) => {
-              return getLocalizedValue(column, selectedLanguage) === rowValue;
+              return getLocalizedValue(column.label, selectedLanguage) === rowValue;
             });
             if (columnIndex === -1) return undefined;
             return columnIndex.toString();

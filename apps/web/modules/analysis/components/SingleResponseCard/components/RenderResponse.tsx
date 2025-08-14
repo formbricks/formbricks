@@ -100,7 +100,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
           <>
             {(question as TSurveyMatrixQuestion).rows.map((row) => {
               const languagCode = getLanguageCode(survey.languages, language);
-              const rowValueInSelectedLanguage = getLocalizedValue(row, languagCode);
+              const rowValueInSelectedLanguage = getLocalizedValue(row.label, languagCode);
               if (!responseData[rowValueInSelectedLanguage]) return null;
               return (
                 <p

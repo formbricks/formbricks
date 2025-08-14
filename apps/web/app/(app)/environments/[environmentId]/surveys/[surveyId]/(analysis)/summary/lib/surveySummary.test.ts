@@ -1327,8 +1327,17 @@ describe("Matrix question type tests", () => {
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Rate these aspects" },
       required: true,
-      rows: [{ default: "Speed" }, { default: "Quality" }, { default: "Price" }],
-      columns: [{ default: "Poor" }, { default: "Average" }, { default: "Good" }, { default: "Excellent" }],
+      rows: [
+        { id: "row-1", label: { default: "Speed" } },
+        { id: "row-2", label: { default: "Quality" } },
+        { id: "row-3", label: { default: "Price" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Poor" } },
+        { id: "col-2", label: { default: "Average" } },
+        { id: "col-3", label: { default: "Good" } },
+        { id: "col-4", label: { default: "Excellent" } },
+      ],
     };
 
     const survey = {
@@ -1410,15 +1419,15 @@ describe("Matrix question type tests", () => {
       headline: { default: "Rate these aspects", es: "Califica estos aspectos" },
       required: true,
       rows: [
-        { default: "Speed", es: "Velocidad" },
-        { default: "Quality", es: "Calidad" },
-        { default: "Price", es: "Precio" },
+        { id: "row-1", label: { default: "Speed", es: "Velocidad" } },
+        { id: "row-2", label: { default: "Quality", es: "Calidad" } },
+        { id: "row-3", label: { default: "Price", es: "Precio" } },
       ],
       columns: [
-        { default: "Poor", es: "Malo" },
-        { default: "Average", es: "Promedio" },
-        { default: "Good", es: "Bueno" },
-        { default: "Excellent", es: "Excelente" },
+        { id: "col-1", label: { default: "Poor", es: "Malo" } },
+        { id: "col-2", label: { default: "Average", es: "Promedio" } },
+        { id: "col-3", label: { default: "Good", es: "Bueno" } },
+        { id: "col-4", label: { default: "Excellent", es: "Excelente" } },
       ],
     };
 
@@ -1587,8 +1596,16 @@ describe("Matrix question type tests", () => {
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Rate these aspects" },
       required: true,
-      rows: [{ default: "Speed" }, { default: "Quality" }, { default: "Price" }],
-      columns: [{ default: "Poor" }, { default: "Average" }, { default: "Good" }],
+      rows: [
+        { id: "row-1", label: { default: "Speed" } },
+        { id: "row-2", label: { default: "Quality" } },
+        { id: "row-3", label: { default: "Price" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Poor" } },
+        { id: "col-2", label: { default: "Average" } },
+        { id: "col-3", label: { default: "Good" } },
+      ],
     };
 
     const survey = {
@@ -1721,8 +1738,16 @@ describe("Matrix question type tests", () => {
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Rate these aspects" },
       required: true,
-      rows: [{ default: "Speed" }, { default: "Quality" }, { default: "Price" }],
-      columns: [{ default: "Poor" }, { default: "Average" }, { default: "Good" }],
+      rows: [
+        { id: "row-1", label: { default: "Speed" } },
+        { id: "row-2", label: { default: "Quality" } },
+        { id: "row-3", label: { default: "Price" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Poor" } },
+        { id: "col-2", label: { default: "Average" } },
+        { id: "col-3", label: { default: "Good" } },
+      ],
     };
 
     const survey = {
@@ -1785,8 +1810,14 @@ describe("Matrix question type tests", () => {
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Rate these aspects" },
       required: true,
-      rows: [{ default: "Speed" }, { default: "Quality" }],
-      columns: [{ default: "Poor" }, { default: "Good" }],
+      rows: [
+        { id: "row-1", label: { default: "Speed" } },
+        { id: "row-2", label: { default: "Quality" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Poor" } },
+        { id: "col-2", label: { default: "Good" } },
+      ],
     };
 
     const survey = {
@@ -1849,12 +1880,12 @@ describe("Matrix question type tests", () => {
       headline: { default: "Rate these aspects", fr: "Évaluez ces aspects" },
       required: true,
       rows: [
-        { default: "Speed", fr: "Vitesse" },
-        { default: "Quality", fr: "Qualité" },
+        { id: "row-1", label: { default: "Speed", fr: "Vitesse" } },
+        { id: "row-2", label: { default: "Quality", fr: "Qualité" } },
       ],
       columns: [
-        { default: "Poor", fr: "Médiocre" },
-        { default: "Good", fr: "Bon" },
+        { id: "col-1", label: { default: "Poor", fr: "Médiocre" } },
+        { id: "col-2", label: { default: "Good", fr: "Bon" } },
       ],
     };
 

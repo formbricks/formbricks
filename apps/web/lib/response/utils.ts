@@ -625,7 +625,7 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
     const headline = getLocalizedValue(question.headline, "default") ?? question.id;
     if (question.type === "matrix") {
       return question.rows.map((row) => {
-        return `${idx + 1}. ${headline} - ${getLocalizedValue(row, "default")}`;
+        return `${idx + 1}. ${headline} - ${getLocalizedValue(row.label, "default")}`;
       });
     } else if (
       question.type === "multipleChoiceMulti" ||
@@ -692,8 +692,8 @@ export const getResponsesJson = (
         questionHeadline.forEach((headline, index) => {
           if (answer) {
             const row = question.rows[index];
-            if (row && row.default && answer[row.default] !== undefined) {
-              jsonData[idx][headline] = answer[row.default];
+            if (row && row.label.default && answer[row.label.default] !== undefined) {
+              jsonData[idx][headline] = answer[row.label.default];
             } else {
               jsonData[idx][headline] = "";
             }

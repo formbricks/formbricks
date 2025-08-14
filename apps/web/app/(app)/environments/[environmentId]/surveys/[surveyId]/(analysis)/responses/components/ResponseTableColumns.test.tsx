@@ -147,8 +147,14 @@ const mockSurvey = {
       id: "q2matrix",
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Matrix Question" },
-      rows: [{ default: "Row1" }, { default: "Row2" }],
-      columns: [{ default: "Col1" }, { default: "Col2" }],
+      rows: [
+        { id: "row-1", label: { default: "Row1" } },
+        { id: "row-2", label: { default: "Row2" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Col1" } },
+        { id: "col-2", label: { default: "Col2" } },
+      ],
       required: false,
     } as unknown as TSurveyQuestion,
     {

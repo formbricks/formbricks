@@ -74,7 +74,7 @@ const getQuestionColumnsData = (
     case "matrix":
       return question.rows.map((matrixRow) => {
         return {
-          accessorKey: matrixRow.default,
+          accessorKey: matrixRow.label.default,
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -83,14 +83,14 @@ const getQuestionColumnsData = (
                   <span className="truncate">
                     {getLocalizedValue(question.headline, "default") +
                       " - " +
-                      getLocalizedValue(matrixRow, "default")}
+                      getLocalizedValue(matrixRow.label, "default")}
                   </span>
                 </div>
               </div>
             );
           },
           cell: ({ row }) => {
-            const responseValue = row.original.responseData[matrixRow.default];
+            const responseValue = row.original.responseData[matrixRow.label.default];
             if (typeof responseValue === "string") {
               return <p className="text-slate-900">{responseValue}</p>;
             }

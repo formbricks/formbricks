@@ -59,7 +59,7 @@ vi.mock("@/lib/cn", () => ({
   cn: (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(" "),
 }));
 vi.mock("@/lib/i18n/utils", () => ({
-  getLocalizedValue: vi.fn((val, _) => val),
+  getLocalizedValue: vi.fn((val, _) => val["default"]),
   getLanguageCode: vi.fn().mockReturnValue("default"),
 }));
 
@@ -178,7 +178,18 @@ describe("RenderResponse", () => {
   });
 
   test("renders Matrix response", () => {
-    const question = { id: "q1", type: "matrix", rows: ["row1", "row2"] } as any;
+    const question = {
+      id: "q1",
+      type: "matrix",
+      rows: [
+        { id: "row1", label: { default: "row1" } },
+        { id: "row2", label: { default: "row2" } },
+      ],
+      columns: [
+        { id: "col1", label: { default: "answer1" } },
+        { id: "col2", label: { default: "answer2" } },
+      ],
+    } as any;
     // getLocalizedValue returns the row value itself
     const responseData = { row1: "answer1", row2: "answer2" };
     render(
