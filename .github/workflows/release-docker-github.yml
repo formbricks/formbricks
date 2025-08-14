@@ -109,7 +109,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             # Only tag as 'latest' for stable releases (not prereleases)
-            type=raw,value=latest,enable=${{ inputs.IS_PRERELEASE != 'true' }}
+            type=raw,value=latest,enable=${{ !inputs.IS_PRERELEASE  }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
