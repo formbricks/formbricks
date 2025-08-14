@@ -34,6 +34,7 @@ interface ShareViewProps {
     componentProps: any;
     title: string;
     description?: string;
+    disabled?: boolean;
   }>;
   activeId: ShareViaType | ShareSettingsType;
   setActiveId: React.Dispatch<React.SetStateAction<ShareViaType | ShareSettingsType>>;
@@ -109,12 +110,13 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                             onClick={() => setActiveId(tab.id)}
                             className={cn(
                               "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                              tab.id === activeId
+                              tab.id === activeId && !tab.disabled
                                 ? "bg-slate-100 font-medium text-slate-900"
                                 : "text-slate-700"
                             )}
                             tooltip={tab.label}
-                            isActive={tab.id === activeId}>
+                            isActive={tab.id === activeId}
+                            disabled={tab.disabled}>
                             <tab.icon className="h-4 w-4 text-slate-700" />
                             <span>{tab.label}</span>
                           </SidebarMenuButton>
@@ -136,9 +138,10 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                 <Button
                   variant="ghost"
                   onClick={() => setActiveId(tab.id)}
+                  disabled={tab.disabled}
                   className={cn(
                     "rounded-md px-4 py-2",
-                    tab.id === activeId
+                    tab.id === activeId && !tab.disabled
                       ? "bg-white text-slate-900 shadow-sm hover:bg-white"
                       : "border-transparent text-slate-700 hover:text-slate-900"
                   )}>
