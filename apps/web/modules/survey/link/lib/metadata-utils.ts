@@ -35,7 +35,7 @@ export const getBasicSurveyMetadata = async (
   if (!survey) {
     return {
       title: "Survey",
-      description: "Complete this survey",
+      description: "Please complete this survey.",
       survey: null,
       ogImage: undefined,
     };
@@ -61,7 +61,7 @@ export const getBasicSurveyMetadata = async (
   }
 
   // Set description - priority: custom link metadata > welcome card > default
-  let description = "Complete this survey";
+  let description = "Please complete this survey.";
   if (metadata.description?.[langCode]) {
     description = getLocalizedValue(metadata.description, langCode);
   }

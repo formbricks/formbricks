@@ -20,7 +20,7 @@ vi.mock("./lib/metadata-utils", () => ({
 describe("getMetadataForLinkSurvey", () => {
   const mockSurveyId = "survey-123";
   const mockSurveyName = "Test Survey";
-  const mockDescription = "Complete this survey";
+  const mockDescription = "Please complete this survey.";
   const mockOgImageUrl = "https://example.com/custom-image.png";
 
   beforeEach(() => {

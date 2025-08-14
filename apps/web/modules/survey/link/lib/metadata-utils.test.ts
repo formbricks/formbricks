@@ -77,7 +77,7 @@ describe("Metadata Utils", () => {
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(result).toEqual({
         title: "Survey",
-        description: "Complete this survey",
+        description: "Please complete this survey.",
         survey: null,
         ogImage: undefined,
       });
@@ -110,7 +110,7 @@ describe("Metadata Utils", () => {
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(result).toEqual({
         title: "Welcome Headline",
-        description: "Complete this survey",
+        description: "Please complete this survey.",
         survey: mockSurvey,
         ogImage: undefined,
       });
@@ -133,7 +133,7 @@ describe("Metadata Utils", () => {
 
       expect(result).toEqual({
         title: "Test Survey",
-        description: "Complete this survey",
+        description: "Please complete this survey.",
         survey: mockSurvey,
         ogImage: undefined,
       });

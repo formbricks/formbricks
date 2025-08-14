@@ -156,7 +156,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale }: LinkSettingsTabProps) =>
       name: "description",
       label: t("environments.surveys.share.link_settings.link_description"),
       description: t("environments.surveys.share.link_settings.link_description_description"),
-      placeholder: "Complete this survey",
+      placeholder: "Please complete this survey.",
     },
   ];
 
