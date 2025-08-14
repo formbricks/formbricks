@@ -9,7 +9,7 @@ import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import { createResponse, getResponsesByEnvironmentIds } from "./lib/response";
+import { checkDisplayIdForResponse, createResponse, getResponsesByEnvironmentIds } from "./lib/response";
 
 export const GET = withV1ApiWrapper({
   handler: async ({
@@ -130,6 +130,16 @@ export const POST = withV1ApiWrapper({
         return {
           response: responses.unauthorizedResponse(),
         };
+      }
+
+      if (responseInput?.displayId) {
+        const isDisplayIdAlreadyAssigned = await checkDisplayIdForResponse(responseInput);
+
+        if (isDisplayIdAlreadyAssigned) {
+          return {
+            response: responses.badRequestResponse("Display Id already exits"),
+          };
+        }
       }
 
       const surveyResult = await validateSurvey(responseInput, environmentId);
