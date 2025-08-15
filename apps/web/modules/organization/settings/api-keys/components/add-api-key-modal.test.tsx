@@ -194,11 +194,91 @@ describe("AddApiKeyModal", () => {
     expect(screen.getAllByRole("button", { name: "" })).toHaveLength(1);
   });
 
+  test("removes permissions from middle of list without breaking indices", async () => {
+    render(<AddApiKeyModal {...defaultProps} />);
+
+    // Add first permission
+    const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton);
+
+    // Add second permission
+    await userEvent.click(addButton);
+
+    // Add third permission
+    await userEvent.click(addButton);
+
+    // Verify we have 3 permission rows
+    let deleteButtons = screen.getAllByRole("button", { name: "" }); // Trash icons
+    expect(deleteButtons).toHaveLength(3);
+
+    // Remove the middle permission (index 1)
+    await userEvent.click(deleteButtons[1]);
+
+    // Verify we now have 2 permission rows
+    deleteButtons = screen.getAllByRole("button", { name: "" });
+    expect(deleteButtons).toHaveLength(2);
+
+    // Try to remove the second remaining permission (this was previously index 2, now index 1)
+    await userEvent.click(deleteButtons[1]);
+
+    // Verify we now have 1 permission row
+    deleteButtons = screen.getAllByRole("button", { name: "" });
+    expect(deleteButtons).toHaveLength(1);
+
+    // Remove the last remaining permission
+    await userEvent.click(deleteButtons[0]);
+
+    // Verify no permission rows remain
+    expect(screen.queryAllByRole("button", { name: "" })).toHaveLength(0);
+  });
+
+  test("can modify permissions after deleting items from list", async () => {
+    render(<AddApiKeyModal {...defaultProps} />);
+
+    // Add multiple permissions
+    const addButton = screen.getByRole("button", { name: /add_permission/i });
+    await userEvent.click(addButton); // First permission
+    await userEvent.click(addButton); // Second permission
+    await userEvent.click(addButton); // Third permission
+
+    // Verify we have 3 permission rows
+    let deleteButtons = screen.getAllByRole("button", { name: "" });
+    expect(deleteButtons).toHaveLength(3);
+
+    // Remove the first permission (index 0)
+    await userEvent.click(deleteButtons[0]);
+
+    // Verify we now have 2 permission rows
+    deleteButtons = screen.getAllByRole("button", { name: "" });
+    expect(deleteButtons).toHaveLength(2);
+
+    // Try to modify the first remaining permission (which was originally index 1, now index 0)
+    const projectDropdowns = screen.getAllByRole("button", { name: /Project 1/i });
+    expect(projectDropdowns.length).toBeGreaterThan(0);
+
+    await userEvent.click(projectDropdowns[0]);
+
+    // Wait for dropdown content and select 'Project 2'
+    const project2Option = await screen.findByRole("menuitem", { name: "Project 2" });
+    await userEvent.click(project2Option);
+
+    // Verify project selection by checking the updated button text
+    const updatedButton = await screen.findByRole("button", { name: "Project 2" });
+    expect(updatedButton).toBeInTheDocument();
+
+    // Add another permission to verify the list is still functional
+    await userEvent.click(addButton);
+
+    // Verify we now have 3 permission rows again
+    deleteButtons = screen.getAllByRole("button", { name: "" });
+    expect(deleteButtons).toHaveLength(3);
+  });
+
   test("submits form with correct data", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
     // Fill in label
-    const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
+    const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack");
     await userEvent.type(labelInput, "Test API Key");
 
     const addButton = screen.getByRole("button", { name: /add_permission/i });
