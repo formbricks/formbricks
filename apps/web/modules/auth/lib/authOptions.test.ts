@@ -148,7 +148,6 @@ describe("authOptions", () => {
         email: mockUser.email,
         password: mockHashedPassword,
         emailVerified: new Date(),
-        imageUrl: "http://example.com/avatar.png",
         twoFactorEnabled: false,
       };
 
@@ -161,7 +160,6 @@ describe("authOptions", () => {
         id: fakeUser.id,
         email: fakeUser.email,
         emailVerified: fakeUser.emailVerified,
-        imageUrl: fakeUser.imageUrl,
       });
     });
 

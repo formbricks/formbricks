@@ -51,7 +51,6 @@ export const getSSOProviders = () => [
         id: profile.sub,
         name: profile.name,
         email: profile.email,
-        image: profile.picture,
       };
     },
   },
@@ -76,7 +75,6 @@ export const getSSOProviders = () => [
         id: profile.id,
         email: profile.email,
         name: [profile.firstName, profile.lastName].filter(Boolean).join(" "),
-        image: null,
       };
     },
     options: {
