@@ -33,6 +33,10 @@ RUN chmod +x /tmp/read-secrets.sh
 ARG NODE_OPTIONS="--max_old_space_size=8192"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
 
+# Target architecture - automatically provided by Docker in multi-platform builds
+# but needs explicit declaration for some build systems (like Depot)
+ARG TARGETARCH
+
 # Set the working directory
 WORKDIR /app
 
