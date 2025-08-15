@@ -7,12 +7,13 @@ on:
 permissions:
   contents: read
 
-env:
-  ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
-
 jobs:
   docker-build:
     name: Build & release docker image
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     uses: ./.github/workflows/release-docker-github.yml
     secrets: inherit
     with:
@@ -20,6 +21,9 @@ jobs:
 
   helm-chart-release:
     name: Release Helm Chart
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/release-helm-chart.yml
     secrets: inherit
     needs:
@@ -29,6 +33,9 @@ jobs:
 
   deploy-formbricks-cloud:
     name: Deploy Helm Chart to Formbricks Cloud
+    permissions:
+      contents: read
+      id-token: write
     secrets: inherit
     uses: ./.github/workflows/deploy-formbricks-cloud.yml
     needs:
@@ -36,7 +43,7 @@ jobs:
       - helm-chart-release
     with:
       VERSION: v${{ needs.docker-build.outputs.VERSION }}
-      ENVIRONMENT: ${{ env.ENVIRONMENT }}
+      ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
 
   upload-sentry-sourcemaps:
     name: Upload Sentry Sourcemaps
@@ -64,4 +71,4 @@ jobs:
           docker_image: ghcr.io/formbricks/formbricks:v${{ needs.docker-build.outputs.VERSION }}
           release_version: v${{ needs.docker-build.outputs.VERSION }}
           sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          environment: ${{ env.ENVIRONMENT }}
+          environment: ${{ github.event.release.prerelease && 'staging' || 'production' }}
