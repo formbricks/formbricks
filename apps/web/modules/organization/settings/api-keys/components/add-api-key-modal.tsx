@@ -95,7 +95,6 @@ export const AddApiKeyModal = ({
     return [];
   };
 
-  // Initialize with one permission by default
   const [selectedPermissions, setSelectedPermissions] = useState<PermissionRecord[]>([]);
 
   const projectOptions: ProjectOption[] = projects.map((project) => ({
