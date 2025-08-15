@@ -45,18 +45,16 @@ export const getBasicSurveyMetadata = async (
   const langCode = useDefaultLanguageCode ? "default" : languageCode;
 
   // Set title - priority: custom link metadata > welcome card > survey name
-  const titleFromMetadata = metadata?.title
-    ? getLocalizedValue(metadata.title, langCode) || metadata.title.default
-    : undefined;
+  const titleFromMetadata = metadata?.title ? getLocalizedValue(metadata.title, langCode) || "" : undefined;
   const titleFromWelcome =
     welcomeCard?.enabled && welcomeCard.headline
-      ? getLocalizedValue(welcomeCard.headline, langCode) || welcomeCard.headline.default
+      ? getLocalizedValue(welcomeCard.headline, langCode) || ""
       : undefined;
   let title = titleFromMetadata || titleFromWelcome || survey.name;
 
-  // Set description - priority: custom link metadata > welcome card > default
+  // Set description - priority: custom link metadata > default
   const descriptionFromMetadata = metadata?.description
-    ? getLocalizedValue(metadata.description, langCode) || metadata.description.default
+    ? getLocalizedValue(metadata.description, langCode) || ""
     : undefined;
   let description = descriptionFromMetadata || "Please complete this survey.";
 

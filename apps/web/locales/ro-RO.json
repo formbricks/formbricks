@@ -1706,10 +1706,8 @@
           "language_help_text": "Meta datele sunt încărcate pe baza valorii `lang` din URL.",
           "link_description": "Descriere legătură",
           "link_description_description": "Descrierile între 55-200 de caractere au cele mai bune performanțe.",
-          "link_description_placeholder": "Ajutați-ne să ne îmbunătățim împărtășindu-vă gândurile.",
           "link_title": "Titlu link",
           "link_title_description": "Titlurile scurte funcționează cel mai bine ca Meta Title-uri.",
-          "link_title_placeholder": "Chestionar de feedback al clienților",
           "preview_image": "Previzualizare imagine",
           "preview_image_description": "Imaginile panoramice cu dimensiuni de fișier mici (<4MB) au cel mai bun randament.",
           "title": "Setări link"
