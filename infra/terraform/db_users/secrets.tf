@@ -22,7 +22,7 @@ resource "aws_secretsmanager_secret_version" "db_user_secrets" {
     username = each.key
     password = random_password.db_user_secrets[each.key].result
     dbname   = local.rds_database_name
-    port     = "${data.terraform_remote_state.main.outputs.rds["stage"].cluster_port}"
+    port     = data.terraform_remote_state.main.outputs.rds["stage"].cluster_port
   })
 }
 
@@ -45,7 +45,7 @@ resource "aws_secretsmanager_secret_policy" "db_user_secrets" {
 
           },
           ArnNotEquals = {
-            "aws:PrincipalArn" = "${module.lambda_rotate_db_secret.lambda_function_arn}"
+            "aws:PrincipalArn" = module.lambda_rotate_db_secret.lambda_function_arn
           }
         }
       }

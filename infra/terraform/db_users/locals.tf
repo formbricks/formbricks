@@ -1,7 +1,7 @@
 locals {
   env_roles = {
-    staging    = { dev_users = "ro", ops_users = "rw", admin_users = "admin" }
-    production = { dev_users = "ro", ops_users = "ro", admin_users = "admin" }
+    staging    = { dev_users = "ro", ops_users = "rw", sa_rw_users = "rw", sa_ro_users = "ro", admin_users = "admin" }
+    production = { dev_users = "ro", ops_users = "ro", sa_rw_users = "rw", sa_ro_users = "ro", admin_users = "admin" }
   }
 
   # List of application user identities
@@ -15,6 +15,9 @@ locals {
     admin_users = [
       "johannes",
       "matti",
+    ]
+    sa_rw_users = [
+      "formbricks-app",
     ]
   }
 
