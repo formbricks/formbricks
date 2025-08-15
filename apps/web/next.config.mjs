@@ -425,6 +425,7 @@ const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
   project: "formbricks-cloud",
+  org: "formbricks",
 
   // Enable logging to debug sourcemap generation issues
   silent: false,
