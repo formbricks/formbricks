@@ -77,7 +77,7 @@ describe("Metadata Utils", () => {
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(result).toEqual({
         title: "Survey",
-        description: "Complete this survey",
+        description: "Please complete this survey.",
         survey: null,
         ogImage: undefined,
       });
@@ -108,10 +108,9 @@ describe("Metadata Utils", () => {
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
-      expect(getProjectByEnvironmentId).toHaveBeenCalledWith(mockEnvironmentId);
       expect(result).toEqual({
-        title: "Welcome Headline | Test Project",
-        description: "Complete this survey",
+        title: "Welcome Headline",
+        description: "Please complete this survey.",
         survey: mockSurvey,
         ogImage: undefined,
       });
@@ -129,13 +128,12 @@ describe("Metadata Utils", () => {
       } as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
-      vi.mocked(getProjectByEnvironmentId).mockResolvedValue({ name: "Test Project" } as any);
 
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
       expect(result).toEqual({
-        title: "Test Survey | Test Project",
-        description: "Complete this survey",
+        title: "Test Survey",
+        description: "Please complete this survey.",
         survey: mockSurvey,
         ogImage: undefined,
       });

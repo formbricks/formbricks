@@ -1,8 +1,8 @@
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { Metadata } from "next";
 
 type TBasicSurveyMetadata = {
@@ -12,22 +12,16 @@ type TBasicSurveyMetadata = {
   ogImage?: string;
 };
 
-/**
- * Utility function to encode name for URL usage
- */
-export const getNameForURL = (url: string) => url.replace(/ /g, "%20");
+export const getNameForURL = (value: string) => encodeURIComponent(value);
 
-/**
- * Utility function to encode brand color for URL usage
- */
-export const getBrandColorForURL = (url: string) => url.replace(/#/g, "%23");
+export const getBrandColorForURL = (value: string) => encodeURIComponent(value);
 
 /**
  * Get basic survey metadata (title and description) based on link metadata, welcome card or survey name
  */
 export const getBasicSurveyMetadata = async (
   surveyId: string,
-  languageCode?: string
+  languageCode = "default"
 ): Promise<TBasicSurveyMetadata> => {
   const survey = await getSurvey(surveyId);
 
@@ -35,7 +29,7 @@ export const getBasicSurveyMetadata = async (
   if (!survey) {
     return {
       title: "Survey",
-      description: "Complete this survey",
+      description: "Please complete this survey.",
       survey: null,
       ogImage: undefined,
     };
@@ -43,38 +37,33 @@ export const getBasicSurveyMetadata = async (
 
   const metadata = survey.metadata;
   const welcomeCard = survey.welcomeCard;
+  const useDefaultLanguageCode =
+    languageCode === "default" ||
+    survey.languages.find((lang) => lang.language.code === languageCode)?.default;
 
   // Determine language code to use for metadata
-  const langCode = languageCode || "default";
+  const langCode = useDefaultLanguageCode ? "default" : languageCode;
 
   // Set title - priority: custom link metadata > welcome card > survey name
-  let title = "Survey";
-  if (metadata.title?.[langCode]) {
-    title = metadata.title[langCode];
-  } else if (welcomeCard.enabled && welcomeCard.headline?.default) {
-    title = welcomeCard.headline.default;
-  } else {
-    title = survey.name;
-  }
+  const titleFromMetadata = metadata?.title ? getLocalizedValue(metadata.title, langCode) || "" : undefined;
+  const titleFromWelcome =
+    welcomeCard?.enabled && welcomeCard.headline
+      ? getLocalizedValue(welcomeCard.headline, langCode) || ""
+      : undefined;
+  let title = titleFromMetadata || titleFromWelcome || survey.name;
 
   // Set description - priority: custom link metadata > welcome card > default
-  let description = "Complete this survey";
-  if (metadata.description?.[langCode]) {
-    description = metadata.description[langCode];
-  }
+  const descriptionFromMetadata = metadata?.description
+    ? getLocalizedValue(metadata.description, langCode) || ""
+    : undefined;
+  let description = descriptionFromMetadata || "Please complete this survey.";
 
   // Get OG image from link metadata if available
   const { ogImage } = metadata;
 
-  // Add product name in title if it's Formbricks cloud and not using custom metadata
-  if (!metadata.title?.[langCode]) {
+  if (!titleFromMetadata) {
     if (IS_FORMBRICKS_CLOUD) {
       title = `${title} | Formbricks`;
-    } else {
-      const project = await getProjectByEnvironmentId(survey.environmentId);
-      if (project) {
-        title = `${title} | ${project.name}`;
-      }
     }
   }
 
@@ -89,10 +78,13 @@ export const getBasicSurveyMetadata = async (
 /**
  * Generate Open Graph metadata for survey
  */
-export const getSurveyOpenGraphMetadata = (surveyId: string, surveyName: string): Metadata => {
-  const brandColor = getBrandColorForURL(COLOR_DEFAULTS.brandColor); // Default color
+export const getSurveyOpenGraphMetadata = (
+  surveyId: string,
+  surveyName: string,
+  surveyBrandColor?: string
+): Metadata => {
   const encodedName = getNameForURL(surveyName);
-
+  const brandColor = getBrandColorForURL(surveyBrandColor ?? COLOR_DEFAULTS.brandColor);
   const ogImgURL = `/api/v1/client/og?brandColor=${brandColor}&name=${encodedName}`;
 
   return {
