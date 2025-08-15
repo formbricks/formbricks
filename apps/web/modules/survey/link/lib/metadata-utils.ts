@@ -52,7 +52,7 @@ export const getBasicSurveyMetadata = async (
       : undefined;
   let title = titleFromMetadata || titleFromWelcome || survey.name;
 
-  // Set description - priority: custom link metadata > welcome card > default
+  // Set description - priority: custom link metadata > default
   const descriptionFromMetadata = metadata?.description
     ? getLocalizedValue(metadata.description, langCode) || ""
     : undefined;
