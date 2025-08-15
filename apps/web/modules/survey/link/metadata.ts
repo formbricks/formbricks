@@ -15,9 +15,10 @@ export const getMetadataForLinkSurvey = async (
 
   // Get enhanced metadata that includes custom link metadata
   const { title, description, ogImage } = await getBasicSurveyMetadata(surveyId, languageCode);
+  const surveyBrandColor = survey.styling?.brandColor?.light;
 
   // Use the shared function for creating the base metadata but override with custom data
-  const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title);
+  const baseMetadata = getSurveyOpenGraphMetadata(survey.id, title, surveyBrandColor);
 
   // Override with the custom image URL
   if (baseMetadata.openGraph) {
