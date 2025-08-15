@@ -1706,10 +1706,8 @@
           "language_help_text": "Les métadonnées sont chargées en fonction de la valeur « lang » dans l'URL.",
           "link_description": "Description du lien",
           "link_description_description": "« Les descriptions entre 55 et 200 caractères donnent les meilleurs résultats. »",
-          "link_description_placeholder": "Aidez-nous à nous améliorer en partageant vos pensées.",
           "link_title": "Titre du lien",
           "link_title_description": "Les titres courts fonctionnent mieux comme titres méta.",
-          "link_title_placeholder": "Sondage de Retour Clients",
           "preview_image": "Aperçu de l'image",
           "preview_image_description": "Les images en paysage avec de petites tailles de fichier (<4MB) fonctionnent le mieux.",
           "title": "Paramètres de lien"

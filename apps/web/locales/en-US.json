@@ -1706,10 +1706,8 @@
           "language_help_text": "The meta data is loaded based on the `lang` value in the URL.",
           "link_description": "Link description",
           "link_description_description": "Descriptions between 55-200 characters perform best.",
-          "link_description_placeholder": "Help us improve by sharing your thoughts.",
           "link_title": "Link title",
           "link_title_description": "Short titles perform best as Meta Titles.",
-          "link_title_placeholder": "Customer Feedback Survey",
           "preview_image": "Preview image",
           "preview_image_description": "Landscape images with small file sizes (<4MB) perform best.",
           "title": "Link settings"
