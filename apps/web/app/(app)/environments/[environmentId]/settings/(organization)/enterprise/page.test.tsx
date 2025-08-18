@@ -126,7 +126,6 @@ const mockUser = {
   createdAt: new Date(),
   updatedAt: new Date(),
   emailVerified: new Date(),
-  imageUrl: "",
   twoFactorEnabled: false,
   identityProvider: "email",
   notificationSettings: { alert: {} },

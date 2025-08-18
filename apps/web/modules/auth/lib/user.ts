@@ -1,4 +1,3 @@
-import { isValidImageFile } from "@/lib/fileValidation";
 import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -10,10 +9,6 @@ import { TUserCreateInput, TUserUpdateInput, ZUserEmail, ZUserUpdateInput } from
 
 export const updateUser = async (id: string, data: TUserUpdateInput) => {
   validateInputs([id, ZId], [data, ZUserUpdateInput.partial()]);
-
-  if (data.imageUrl && !isValidImageFile(data.imageUrl)) {
-    throw new InvalidInputError("Invalid image file");
-  }
 
   try {
     const updatedUser = await prisma.user.update({

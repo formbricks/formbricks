@@ -23,5 +23,10 @@ export const rateLimitConfigs = {
   actions: {
     emailUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:email" }, // 3 per hour
     surveyFollowUp: { interval: 3600, allowedPerInterval: 50, namespace: "action:followup" }, // 50 per hour
+    sendLinkSurveyEmail: {
+      interval: 3600,
+      allowedPerInterval: 10,
+      namespace: "action:send-link-survey-email",
+    }, // 10 per hour
   },
 };

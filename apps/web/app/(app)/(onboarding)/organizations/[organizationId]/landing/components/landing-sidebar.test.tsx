@@ -45,7 +45,7 @@ afterEach(() => {
 });
 
 describe("LandingSidebar component", () => {
-  const user = { id: "u1", name: "Alice", email: "alice@example.com", imageUrl: "" } as any;
+  const user = { id: "u1", name: "Alice", email: "alice@example.com" } as any;
   const organization = { id: "o1", name: "orgOne" } as any;
   const organizations = [
     { id: "o2", name: "betaOrg" },
