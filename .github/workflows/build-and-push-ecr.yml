@@ -71,13 +71,13 @@ jobs:
           fi
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@f4df6a9f2d6f0d7f2e5e2a3819a3b765c50f5c1e # v4.0.2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
           aws-region: ${{ env.ECR_REGION }}
 
       - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@4010a3100b92a6d233f570b78d30c20f1baf3055 # v1.7.0
+        uses: aws-actions/amazon-ecr-login@v1
 
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
