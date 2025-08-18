@@ -94,6 +94,9 @@ export const isValueIncomplete = (
 ) => {
   // Define a list of IDs for which a default value needs to be checked.
   const labelIds = [
+    "row",
+    "column",
+    "choice",
     "label",
     "headline",
     "subheader",
