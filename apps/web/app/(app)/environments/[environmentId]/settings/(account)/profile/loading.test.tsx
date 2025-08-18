@@ -49,15 +49,12 @@ describe("Loading", () => {
     );
 
     const loadingCards = screen.getAllByTestId("loading-card");
-    expect(loadingCards).toHaveLength(3);
+    expect(loadingCards).toHaveLength(2);
 
     expect(loadingCards[0]).toHaveTextContent("environments.settings.profile.personal_information");
     expect(loadingCards[0]).toHaveTextContent("environments.settings.profile.update_personal_info");
 
-    expect(loadingCards[1]).toHaveTextContent("common.avatar");
-    expect(loadingCards[1]).toHaveTextContent("environments.settings.profile.organization_identification");
-
-    expect(loadingCards[2]).toHaveTextContent("environments.settings.profile.delete_account");
-    expect(loadingCards[2]).toHaveTextContent("environments.settings.profile.confirm_delete_account");
+    expect(loadingCards[1]).toHaveTextContent("environments.settings.profile.delete_account");
+    expect(loadingCards[1]).toHaveTextContent("environments.settings.profile.confirm_delete_account");
   });
 });

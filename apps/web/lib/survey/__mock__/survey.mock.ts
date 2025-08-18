@@ -122,7 +122,6 @@ export const mockUser: TUser = {
   name: "mock User",
   email: "test@unit.com",
   emailVerified: currentDate,
-  imageUrl: "https://www.google.com",
   createdAt: currentDate,
   updatedAt: currentDate,
   twoFactorEnabled: false,

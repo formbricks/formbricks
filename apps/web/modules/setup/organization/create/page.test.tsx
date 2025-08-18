@@ -131,7 +131,6 @@ describe("CreateOrganizationPage", () => {
     name: "Test User",
     email: "test@example.com",
     emailVerified: null,
-    imageUrl: null,
     twoFactorEnabled: false,
     identityProvider: "email" as const,
     createdAt: new Date(),

@@ -824,7 +824,6 @@ model User {
   email         String    @unique
   emailVerified DateTime? @map(name: "email_verified")
 
-  imageUrl                  String?
   twoFactorSecret           String?
   twoFactorEnabled          Boolean          @default(false)
   backupCodes               String?

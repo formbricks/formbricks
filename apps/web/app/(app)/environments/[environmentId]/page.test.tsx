@@ -37,7 +37,6 @@ describe("EnvironmentPage", () => {
       id: mockUserId,
       name: "Test User",
       email: "test@example.com",
-      imageUrl: "",
       twoFactorEnabled: false,
       identityProvider: "email",
       createdAt: new Date(),

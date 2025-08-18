@@ -1,9 +1,8 @@
-import { isValidImageFile } from "@/lib/fileValidation";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser } from "@formbricks/types/user";
 import { updateUser } from "./user";
 
@@ -24,7 +23,6 @@ describe("updateUser", () => {
     id: "user-123",
     name: "Test User",
     email: "test@example.com",
-    imageUrl: "https://example.com/image.png",
     createdAt: new Date(),
     updatedAt: new Date(),
     role: "project_manager",
@@ -41,7 +39,6 @@ describe("updateUser", () => {
   });
 
   test("successfully updates a user", async () => {
-    vi.mocked(isValidImageFile).mockReturnValue(true);
     vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
 
     const updateData = { name: "Updated Name" };
@@ -55,7 +52,6 @@ describe("updateUser", () => {
         name: true,
         email: true,
         emailVerified: true,
-        imageUrl: true,
         createdAt: true,
         updatedAt: true,
         role: true,
@@ -72,17 +68,7 @@ describe("updateUser", () => {
     expect(result).toEqual(mockUser);
   });
 
-  test("throws InvalidInputError when image file is invalid", async () => {
-    vi.mocked(isValidImageFile).mockReturnValue(false);
-
-    const updateData = { imageUrl: "invalid-image.xyz" };
-    await expect(updateUser("user-123", updateData)).rejects.toThrow(InvalidInputError);
-    expect(prisma.user.update).not.toHaveBeenCalled();
-  });
-
   test("throws ResourceNotFoundError when user does not exist", async () => {
-    vi.mocked(isValidImageFile).mockReturnValue(true);
-
     const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
       code: PrismaErrorType.RecordDoesNotExist,
       clientVersion: "1.0.0",
@@ -96,8 +82,6 @@ describe("updateUser", () => {
   });
 
   test("re-throws other errors", async () => {
-    vi.mocked(isValidImageFile).mockReturnValue(true);
-
     const otherError = new Error("Some other error");
     vi.mocked(prisma.user.update).mockRejectedValue(otherError);
 
