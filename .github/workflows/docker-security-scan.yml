@@ -17,6 +17,7 @@ jobs:
   scan:
     name: Vulnerability Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -31,11 +32,15 @@ jobs:
       - name: Determine ref and commit for upload
         id: gitref
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
-            echo "ref=refs/heads/${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
-            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
+            echo "ref=refs/heads/${HEAD_BRANCH}" >> "$GITHUB_OUTPUT"
+            echo "sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
           else
             echo "ref=${GITHUB_REF}" >> "$GITHUB_OUTPUT"
             echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
