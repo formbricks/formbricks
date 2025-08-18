@@ -13,7 +13,7 @@ permissions:
   id-token: write
 
 env:
-  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_REGION: ${{ vars.ECR_REGION }}
   # ECR settings are sourced from repository/environment variables for portability across envs/forks
   ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
@@ -62,11 +62,11 @@ jobs:
         env:
           ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
           ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
-          AWS_REGION: ${{ env.AWS_REGION }}
+          ECR_REGION: ${{ env.ECR_REGION }}
         run: |
           set -euo pipefail
-          if [[ -z "${ECR_REGISTRY}" || -z "${ECR_REPOSITORY}" || -z "${AWS_REGION}" ]]; then
-            echo "AWS_REGION, ECR_REGISTRY and ECR_REPOSITORY must be set via repository or environment variables (Settings → Variables)."
+          if [[ -z "${ECR_REGISTRY}" || -z "${ECR_REPOSITORY}" || -z "${ECR_REGION}" ]]; then
+            echo "ECR_REGION, ECR_REGISTRY and ECR_REPOSITORY must be set via repository or environment variables (Settings → Variables)."
             exit 1
           fi
 
@@ -74,7 +74,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@f4df6a9f2d6f0d7f2e5e2a3819a3b765c50f5c1e # v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ env.ECR_REGION }}
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@4010a3100b92a6d233f570b78d30c20f1baf3055 # v1.7.0
