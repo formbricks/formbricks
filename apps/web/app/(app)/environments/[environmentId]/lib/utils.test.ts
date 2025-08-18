@@ -1,10 +1,10 @@
 // apps/web/lib/utils/version.test.ts
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { isNewerVersion, parseVersion } from "./utils";
 
 describe("Version utilities", () => {
   describe("parseVersion", () => {
-    it("should parse valid semantic versions", () => {
+    test("should parse valid semantic versions", () => {
       expect(parseVersion("1.2.3")).toEqual({
         major: 1,
         minor: 2,
@@ -19,14 +19,14 @@ describe("Version utilities", () => {
       });
     });
 
-    it("should return null for invalid versions", () => {
+    test("should return null for invalid versions", () => {
       expect(parseVersion("invalid")).toBeNull();
       expect(parseVersion("1.2")).toBeNull();
     });
   });
 
   describe("isNewerVersion", () => {
-    it("should correctly identify newer versions", () => {
+    test("should correctly identify newer versions", () => {
       expect(isNewerVersion("1.0.0", "1.0.1")).toBe(true);
       expect(isNewerVersion("1.0.0", "1.1.0")).toBe(true);
       expect(isNewerVersion("1.0.0", "2.0.0")).toBe(true);
@@ -35,12 +35,12 @@ describe("Version utilities", () => {
       expect(isNewerVersion("1.0.0", "1.0.0")).toBe(false);
     });
 
-    it("should handle version prefixes", () => {
+    test("should handle version prefixes", () => {
       expect(isNewerVersion("v1.0.0", "v1.0.1")).toBe(true);
       expect(isNewerVersion("1.0.0", "v1.0.1")).toBe(true);
     });
 
-    it("should handle prerelease versions", () => {
+    test("should handle prerelease versions", () => {
       expect(isNewerVersion("1.0.0-beta.1", "1.0.0")).toBe(true);
       expect(isNewerVersion("1.0.0", "1.0.0-beta.1")).toBe(false);
     });
