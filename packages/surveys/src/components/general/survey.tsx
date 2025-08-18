@@ -76,6 +76,7 @@ export function Survey({
   getRecaptchaToken,
   isSpamProtectionEnabled,
   dir = "auto",
+  setDir,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -762,13 +763,16 @@ export function Survey({
                   "fb-relative fb-w-full",
                   isCloseButtonVisible || isLanguageSwitchVisible ? "fb-h-8" : "fb-h-5"
                 )}>
-                <div className="fb-flex fb-items-center fb-justify-end fb-absolute fb-top-0 fb-right-0">
+                <div className={cn("fb-flex fb-items-center fb-justify-end fb-w-full")}>
                   {isLanguageSwitchVisible && (
                     <LanguageSwitch
+                      survey={localSurvey}
                       surveyLanguages={localSurvey.languages}
                       setSelectedLanguageCode={setselectedLanguage}
                       hoverColor={styling.inputColor?.light ?? "#f8fafc"}
                       borderRadius={styling.roundness ?? 8}
+                      setDir={setDir}
+                      dir={dir}
                     />
                   )}
                   {isLanguageSwitchVisible && isCloseButtonVisible && (
