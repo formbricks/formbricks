@@ -1,4 +1,3 @@
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
@@ -23,7 +22,7 @@ vi.mock("@/modules/survey/link/lib/project", () => ({
 
 // Mock constants
 vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: vi.fn(() => false),
+  IS_FORMBRICKS_CLOUD: false,
   WEBAPP_URL: "https://test.formbricks.com",
 }));
 
@@ -78,8 +77,9 @@ describe("Metadata Utils", () => {
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(result).toEqual({
         title: "Survey",
-        description: "Complete this survey",
+        description: "Please complete this survey.",
         survey: null,
+        ogImage: undefined,
       });
     });
 
@@ -88,6 +88,7 @@ describe("Metadata Utils", () => {
         id: mockSurveyId,
         environmentId: mockEnvironmentId,
         name: "Test Survey",
+        metadata: {},
         welcomeCard: {
           enabled: true,
           timeToFinish: false,
@@ -107,11 +108,11 @@ describe("Metadata Utils", () => {
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
-      expect(getProjectByEnvironmentId).toHaveBeenCalledWith(mockEnvironmentId);
       expect(result).toEqual({
-        title: "Welcome Headline | Formbricks",
-        description: "Welcome Description",
+        title: "Welcome Headline",
+        description: "Please complete this survey.",
         survey: mockSurvey,
+        ogImage: undefined,
       });
     });
 
@@ -120,31 +121,41 @@ describe("Metadata Utils", () => {
         id: mockSurveyId,
         environmentId: mockEnvironmentId,
         name: "Test Survey",
+        metadata: {},
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
       } as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
-      vi.mocked(getProjectByEnvironmentId).mockResolvedValue({ name: "Test Project" } as any);
 
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
       expect(result).toEqual({
-        title: "Test Survey | Formbricks",
-        description: "Complete this survey",
+        title: "Test Survey",
+        description: "Please complete this survey.",
         survey: mockSurvey,
+        ogImage: undefined,
       });
     });
 
     test("adds Formbricks to title when IS_FORMBRICKS_CLOUD is true", async () => {
-      // Change the mock for this specific test
-      (IS_FORMBRICKS_CLOUD as unknown as ReturnType<typeof vi.fn>).mockReturnValue(true);
+      // Temporarily modify the mocked module
+      vi.doMock("@/lib/constants", () => ({
+        IS_FORMBRICKS_CLOUD: true,
+        WEBAPP_URL: "https://test.formbricks.com",
+      }));
+
+      // Re-import the function to use the updated mock
+      const { getBasicSurveyMetadata: getBasicSurveyMetadataWithCloudMock } = await import(
+        "./metadata-utils"
+      );
 
       const mockSurvey = {
         id: mockSurveyId,
         environmentId: mockEnvironmentId,
         name: "Test Survey",
+        metadata: {},
         welcomeCard: {
           enabled: false,
         } as TSurveyWelcomeCard,
@@ -152,12 +163,15 @@ describe("Metadata Utils", () => {
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
 
-      const result = await getBasicSurveyMetadata(mockSurveyId);
+      const result = await getBasicSurveyMetadataWithCloudMock(mockSurveyId);
 
       expect(result.title).toBe("Test Survey | Formbricks");
 
       // Reset the mock
-      (IS_FORMBRICKS_CLOUD as unknown as ReturnType<typeof vi.fn>).mockReturnValue(false);
+      vi.doMock("@/lib/constants", () => ({
+        IS_FORMBRICKS_CLOUD: false,
+        WEBAPP_URL: "https://test.formbricks.com",
+      }));
     });
   });
 

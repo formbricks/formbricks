@@ -10,7 +10,6 @@ import {
   getLanguage,
   getProject,
   getResponse,
-  getResponseNote,
   getSegment,
   getSurvey,
   getTag,
@@ -102,15 +101,6 @@ export const getOrganizationIdFromTagId = async (tagId: string) => {
   }
 
   return await getOrganizationIdFromEnvironmentId(tag.environmentId);
-};
-
-export const getOrganizationIdFromResponseNoteId = async (responseNoteId: string) => {
-  const responseNote = await getResponseNote(responseNoteId);
-  if (!responseNote) {
-    throw new ResourceNotFoundError("responseNote", responseNoteId);
-  }
-
-  return await getOrganizationIdFromResponseId(responseNote.responseId);
 };
 
 export const getOrganizationIdFromSegmentId = async (segmentId: string) => {
@@ -274,15 +264,6 @@ export const getProjectIdFromResponseId = async (responseId: string) => {
   }
 
   return await getProjectIdFromSurveyId(response.surveyId);
-};
-
-export const getProjectIdFromResponseNoteId = async (responseNoteId: string) => {
-  const responseNote = await getResponseNote(responseNoteId);
-  if (!responseNote) {
-    throw new ResourceNotFoundError("responseNote", responseNoteId);
-  }
-
-  return await getProjectIdFromResponseId(responseNote.responseId);
 };
 
 export const getProductIdFromContactId = async (contactId: string) => {

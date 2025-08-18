@@ -82,7 +82,7 @@ export const LandingSidebar = ({
             id="userDropdownTrigger"
             className="w-full rounded-br-xl border-t p-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
             <div tabIndex={0} className={cn("flex cursor-pointer flex-row items-center gap-3")}>
-              <ProfileAvatar userId={user.id} imageUrl={user.imageUrl} />
+              <ProfileAvatar userId={user.id} />
               <>
                 <div className="grow overflow-hidden">
                   <p

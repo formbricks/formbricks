@@ -90,7 +90,6 @@ export const mapResponsesToTableData = (
       : t("environments.surveys.responses.not_completed"),
     responseId: response.id,
     tags: response.tags,
-    notes: response.notes,
     variables: survey.variables.reduce(
       (acc, curr) => {
         return Object.assign(acc, { [curr.id]: response.variables[curr.id] });
@@ -101,6 +100,7 @@ export const mapResponsesToTableData = (
     language: response.language,
     person: response.contact,
     contactAttributes: response.contactAttributes,
+    meta: response.meta,
   }));
 };
 

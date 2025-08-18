@@ -131,7 +131,7 @@ module "ebs_csi_driver_irsa" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.33.1"
+  version = "20.37.2"
 
   cluster_name    = "${local.name}-eks"
   cluster_version = "1.32"
@@ -149,7 +149,7 @@ module "eks" {
       most_recent = true
     }
     aws-ebs-csi-driver = {
-      most_recent              = true
+      addon_version            = "v1.46.0-eksbuild.1"
       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
     }
     kube-proxy = {
@@ -278,125 +278,125 @@ output "karpenter_node_role" {
 
 
 
-resource "helm_release" "karpenter_crds" {
-  name                = "karpenter-crds"
-  repository          = "oci://public.ecr.aws/karpenter"
-  repository_username = data.aws_ecrpublic_authorization_token.token.user_name
-  repository_password = data.aws_ecrpublic_authorization_token.token.password
-  chart               = "karpenter-crd"
-  version             = "1.3.1"
-  namespace           = local.karpenter_namespace
-  values = [
-    <<-EOT
-    webhook:
-      enabled: true
-      serviceNamespace: ${local.karpenter_namespace}
-    EOT
-  ]
-}
+# resource "helm_release" "karpenter_crds" {
+#   name                = "karpenter-crds"
+#   repository          = "oci://public.ecr.aws/karpenter"
+#   repository_username = data.aws_ecrpublic_authorization_token.token.user_name
+#   repository_password = data.aws_ecrpublic_authorization_token.token.password
+#   chart               = "karpenter-crd"
+#   version             = "1.3.1"
+#   namespace           = local.karpenter_namespace
+#   values = [
+#     <<-EOT
+#     webhook:
+#       enabled: true
+#       serviceNamespace: ${local.karpenter_namespace}
+#     EOT
+#   ]
+# }
 
-resource "helm_release" "karpenter" {
-  name                = "karpenter"
-  repository          = "oci://public.ecr.aws/karpenter"
-  repository_username = data.aws_ecrpublic_authorization_token.token.user_name
-  repository_password = data.aws_ecrpublic_authorization_token.token.password
-  chart               = "karpenter"
-  version             = "1.3.1"
-  namespace           = local.karpenter_namespace
-  skip_crds           = true
+# resource "helm_release" "karpenter" {
+#   name                = "karpenter"
+#   repository          = "oci://public.ecr.aws/karpenter"
+#   repository_username = data.aws_ecrpublic_authorization_token.token.user_name
+#   repository_password = data.aws_ecrpublic_authorization_token.token.password
+#   chart               = "karpenter"
+#   version             = "1.3.1"
+#   namespace           = local.karpenter_namespace
+#   skip_crds           = true
+#
+#   values = [
+#     <<-EOT
+#     nodeSelector:
+#       karpenter.sh/controller: 'true'
+#     dnsPolicy: Default
+#     settings:
+#       clusterName: ${module.eks.cluster_name}
+#       clusterEndpoint: ${module.eks.cluster_endpoint}
+#       interruptionQueue: ${module.karpenter.queue_name}
+#     EOT
+#   ]
+# }
+#
+# resource "kubernetes_manifest" "ec2_node_class" {
+#   manifest = {
+#     apiVersion = "karpenter.k8s.aws/v1"
+#     kind       = "EC2NodeClass"
+#     metadata = {
+#       name = "default"
+#     }
+#     spec = {
+#       amiSelectorTerms = [
+#         {
+#           alias = "bottlerocket@latest"
+#         }
+#       ]
+#       role = module.karpenter.node_iam_role_name
+#       subnetSelectorTerms = [
+#         {
+#           tags = {
+#             "karpenter.sh/discovery" = "${local.name}-eks"
+#           }
+#         }
+#       ]
+#       securityGroupSelectorTerms = [
+#         {
+#           tags = {
+#             "karpenter.sh/discovery" = "${local.name}-eks"
+#           }
+#         }
+#       ]
+#       tags = {
+#         "karpenter.sh/discovery" = "${local.name}-eks"
+#       }
+#     }
+#   }
+# }
 
-  values = [
-    <<-EOT
-    nodeSelector:
-      karpenter.sh/controller: 'true'
-    dnsPolicy: Default
-    settings:
-      clusterName: ${module.eks.cluster_name}
-      clusterEndpoint: ${module.eks.cluster_endpoint}
-      interruptionQueue: ${module.karpenter.queue_name}
-    EOT
-  ]
-}
-
-resource "kubernetes_manifest" "ec2_node_class" {
-  manifest = {
-    apiVersion = "karpenter.k8s.aws/v1"
-    kind       = "EC2NodeClass"
-    metadata = {
-      name = "default"
-    }
-    spec = {
-      amiSelectorTerms = [
-        {
-          alias = "bottlerocket@latest"
-        }
-      ]
-      role = module.karpenter.node_iam_role_name
-      subnetSelectorTerms = [
-        {
-          tags = {
-            "karpenter.sh/discovery" = "${local.name}-eks"
-          }
-        }
-      ]
-      securityGroupSelectorTerms = [
-        {
-          tags = {
-            "karpenter.sh/discovery" = "${local.name}-eks"
-          }
-        }
-      ]
-      tags = {
-        "karpenter.sh/discovery" = "${local.name}-eks"
-      }
-    }
-  }
-}
-
-resource "kubernetes_manifest" "node_pool" {
-  manifest = {
-    apiVersion = "karpenter.sh/v1"
-    kind       = "NodePool"
-    metadata = {
-      name = "default"
-    }
-    spec = {
-      template = {
-        spec = {
-          nodeClassRef = {
-            group = "karpenter.k8s.aws"
-            kind  = "EC2NodeClass"
-            name  = "default"
-          }
-          requirements = [
-            {
-              key      = "karpenter.k8s.aws/instance-family"
-              operator = "In"
-              values   = ["c8g", "c7g", "m8g", "m7g", "r8g", "r7g"]
-            },
-            {
-              key      = "karpenter.k8s.aws/instance-cpu"
-              operator = "In"
-              values   = ["2", "4", "8"]
-            },
-            {
-              key      = "karpenter.k8s.aws/instance-hypervisor"
-              operator = "In"
-              values   = ["nitro"]
-            }
-          ]
-        }
-      }
-      limits = {
-        cpu = 1000
-      }
-      disruption = {
-        consolidationPolicy = "WhenEmptyOrUnderutilized"
-        consolidateAfter    = "30s"
-      }
-    }
-  }
-}
+# resource "kubernetes_manifest" "node_pool" {
+#   manifest = {
+#     apiVersion = "karpenter.sh/v1"
+#     kind       = "NodePool"
+#     metadata = {
+#       name = "default"
+#     }
+#     spec = {
+#       template = {
+#         spec = {
+#           nodeClassRef = {
+#             group = "karpenter.k8s.aws"
+#             kind  = "EC2NodeClass"
+#             name  = "default"
+#           }
+#           requirements = [
+#             {
+#               key      = "karpenter.k8s.aws/instance-family"
+#               operator = "In"
+#               values   = ["c8g", "c7g", "m8g", "m7g", "r8g", "r7g"]
+#             },
+#             {
+#               key      = "karpenter.k8s.aws/instance-cpu"
+#               operator = "In"
+#               values   = ["2", "4", "8"]
+#             },
+#             {
+#               key      = "karpenter.k8s.aws/instance-hypervisor"
+#               operator = "In"
+#               values   = ["nitro"]
+#             }
+#           ]
+#         }
+#       }
+#       limits = {
+#         cpu = 1000
+#       }
+#       disruption = {
+#         consolidationPolicy = "WhenEmptyOrUnderutilized"
+#         consolidateAfter    = "30s"
+#       }
+#     }
+#   }
+# }
 
 module "eks_blueprints_addons" {
   source  = "aws-ia/eks-blueprints-addons/aws"

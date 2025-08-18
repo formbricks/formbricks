@@ -57,7 +57,6 @@ export const ZUser = z.object({
   Omit<
     User,
     | "emailVerified"
-    | "imageUrl"
     | "twoFactorSecret"
     | "twoFactorEnabled"
     | "backupCodes"
@@ -66,7 +65,6 @@ export const ZUser = z.object({
     | "identityProviderAccountId"
     | "memberships"
     | "accounts"
-    | "responseNotes"
     | "groupId"
     | "invitesCreated"
     | "invitesAccepted"

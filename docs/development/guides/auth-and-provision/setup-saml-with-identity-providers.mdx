@@ -13,6 +13,8 @@ This guide explains the settings you need to use to configure SAML with your Ide
 
 **Entity ID / Identifier / Audience URI / Audience Restriction:** [https://saml.formbricks.com](https://saml.formbricks.com)
 
+> **Note:** [https://saml.formbricks.com](https://saml.formbricks.com) is hardcoded in Formbricks — do not replace it with your instance URL. It is the fixed SP Entity ID and must match exactly as shown in SAML assertions.
+
 **Response:** Signed
 
 **Assertion Signature:** Signed
@@ -77,7 +79,7 @@ This guide explains the settings you need to use to configure SAML with your Ide
   </Step>
   <Step title="Enter the SAML Integration Settings as shown and click Next">
     - **Single Sign-On URL**: `https://<your-formbricks-instance>/api/auth/saml/callback` or `http://localhost:3000/api/auth/saml/callback` (if you are running Formbricks locally)
-    - **Audience URI (SP Entity ID)**: `https://saml.formbricks.com`
+    - **Audience URI (SP Entity ID)**: `https://saml.formbricks.com` (hardcoded; do not replace with your instance URL)
     <img src="/images/development/guides/auth-and-provision/okta/saml-integration-settings.webp" />
   </Step>
   <Step title="Fill the fields mapping as shown and click Next">
