@@ -18,10 +18,39 @@ interface SurveyRecord {
   }[];
 }
 
-const CHUNK_SIZE = 10000;
-
 const isMatrixChoice = (choice: unknown): choice is MatrixChoice => {
   return typeof choice === "object" && choice !== null && "id" in choice && "label" in choice;
+};
+
+const normalizeChoice = (choice: I18nString | MatrixChoice): MatrixChoice => {
+  // If already a MatrixChoice with id and label, return as-is
+  if (isMatrixChoice(choice)) return choice;
+
+  // Otherwise, treat as I18nString and normalize with cuid2
+  return {
+    id: createId(),
+    label: choice,
+  };
+};
+
+const processMatrixQuestion = (question: SurveyRecord["questions"][0]): boolean => {
+  const rows = question.rows ?? [];
+  const columns = question.columns ?? [];
+
+  const rowsNeedUpdate = rows.some((r) => !isMatrixChoice(r));
+  const colsNeedUpdate = columns.some((c) => !isMatrixChoice(c));
+
+  if (rowsNeedUpdate || colsNeedUpdate) {
+    const newRows = rowsNeedUpdate ? rows.map((r) => normalizeChoice(r)) : rows;
+    const newColumns = colsNeedUpdate ? columns.map((c) => normalizeChoice(c)) : columns;
+
+    Object.assign(question, {
+      rows: newRows,
+      columns: newColumns,
+    });
+    return true;
+  }
+  return false;
 };
 
 export const addsIdToMatrixQuestionLabels: MigrationScript = {
@@ -41,74 +70,41 @@ export const addsIdToMatrixQuestionLabels: MigrationScript = {
       return;
     }
 
-    let updatedCount = 0;
-    const updatePromises: { id: string; questions: Record<string, unknown>[] }[] = [];
+    // Process surveys and collect updates
+    const updates: { id: string; questions: SurveyRecord["questions"] }[] = [];
 
     for (const survey of matrixSurveys) {
-      const questions = survey.questions;
       let shouldUpdate = false;
 
-      for (let qIdx = 0; qIdx < questions.length; qIdx++) {
-        const question = questions[qIdx];
-        if ((question as { type?: string }).type !== "matrix") continue;
-
-        const rows = question.rows ?? [];
-        const columns = question.columns ?? [];
-
-        const normalizeChoice = (choice: I18nString | MatrixChoice): MatrixChoice => {
-          // If already a MatrixChoice with id and label, return as-is
-          if (isMatrixChoice(choice)) return choice;
-
-          // Otherwise, treat as I18nString and normalize
-          return {
-            id: createId(),
-            label: choice,
-          };
-        };
-
-        const rowsNeedUpdate = rows.some((r) => !isMatrixChoice(r));
-
-        const colsNeedUpdate = columns.some((c) => !isMatrixChoice(c));
-
-        const newRows = rowsNeedUpdate ? rows.map((r) => normalizeChoice(r)) : rows;
-        const newColumns = colsNeedUpdate ? columns.map((c) => normalizeChoice(c)) : columns;
-
-        if (rowsNeedUpdate || colsNeedUpdate) {
-          questions[qIdx] = {
-            ...question,
-            rows: newRows,
-            columns: newColumns,
-          };
-          shouldUpdate = true;
+      for (const question of survey.questions) {
+        if ((question as { type?: string }).type === "matrix") {
+          const wasUpdated = processMatrixQuestion(question);
+          if (wasUpdated) shouldUpdate = true;
         }
       }
 
       if (shouldUpdate) {
-        updatedCount++;
-        updatePromises.push({
-          id: survey.id,
-          questions,
-        });
+        updates.push({ id: survey.id, questions: survey.questions });
       }
     }
 
-    if (updatePromises.length > 0) {
-      const chunkSize = Math.min(CHUNK_SIZE, updatePromises.length);
-      for (let i = 0; i < updatePromises.length; i += chunkSize) {
-        const chunk = updatePromises.slice(i, i + chunkSize);
-        await Promise.all(
-          chunk.map(
-            (update) =>
-              tx.$executeRaw`
-                  UPDATE "Survey"
-                  SET questions = ${JSON.stringify(update.questions)}::jsonb
-                  WHERE id = ${update.id}
-                `
-          )
-        );
-      }
+    if (updates.length === 0) {
+      logger.info("No surveys needed updating");
+      return;
     }
 
-    logger.info(`Updated ${updatedCount.toString()} surveys to add ids to matrix question labels`);
+    // Execute all updates in a single SQL statement using VALUES
+    const valuesList = updates
+      .map((update) => `('${update.id}', '${JSON.stringify(update.questions).replace(/'/g, "''")}'::jsonb)`)
+      .join(", ");
+
+    const result = await tx.$executeRawUnsafe(`
+        UPDATE "Survey" 
+        SET questions = v.questions
+        FROM (VALUES ${valuesList}) AS v(id, questions)
+        WHERE "Survey".id = v.id
+      `);
+
+    logger.info(`Updated ${result.toString()} surveys to add ids to matrix question labels`);
   },
 };
