@@ -14,9 +14,9 @@ permissions:
 
 env:
   AWS_REGION: eu-central-1
-  # Static ECR settings for this repo. Prefer moving these to repo/environment variables if you want to change per environment.
-  ECR_REGISTRY: 715841356175.dkr.ecr.eu-central-1.amazonaws.com
-  ECR_REPOSITORY: formbricks/formbricks-cloud
+  # ECR settings are sourced from repository/environment variables for portability across envs/forks
+  ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
   DOCKERFILE: apps/web/Dockerfile
   CONTEXT: .
 
@@ -24,6 +24,7 @@ jobs:
   build-and-push:
     name: Build and Push
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -32,6 +33,41 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate image tag input
+        shell: bash
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "❌ Image tag is required (non-empty)."
+            exit 1
+          fi
+          if (( ${#IMAGE_TAG} > 128 )); then
+            echo "❌ Image tag must be at most 128 characters."
+            exit 1
+          fi
+          if [[ ! "${IMAGE_TAG}" =~ ^[a-z0-9._-]+$ ]]; then
+            echo "❌ Image tag may only contain lowercase letters, digits, '.', '_' and '-'."
+            exit 1
+          fi
+          if [[ "${IMAGE_TAG}" =~ ^[.-] || "${IMAGE_TAG}" =~ [.-]$ ]]; then
+            echo "❌ Image tag must not start or end with '.' or '-'."
+            exit 1
+          fi
+
+      - name: Validate required variables
+        shell: bash
+        env:
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${ECR_REGISTRY}" || -z "${ECR_REPOSITORY}" ]]; then
+            echo "ECR_REGISTRY and ECR_REPOSITORY must be set via repository or environment variables (Settings → Variables)."
+            exit 1
+          fi
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@f4df6a9f2d6f0d7f2e5e2a3819a3b765c50f5c1e # v4.0.2
