@@ -18,6 +18,23 @@ jobs:
     name: Vulnerability Scan
     runs-on: ubuntu-latest
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Determine ref and commit for upload
+        id: gitref
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            echo "ref=refs/heads/${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${GITHUB_REF}" >> "$GITHUB_OUTPUT"
+            echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          fi
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
@@ -35,6 +52,9 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@a4e1a019f5e24960714ff6296aee04b736cbc3cf # v3.29.6
-        if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
+        if: ${{ always() }}
         with:
           sarif_file: "trivy-results.sarif"
+          ref: ${{ steps.gitref.outputs.ref }}
+          sha: ${{ steps.gitref.outputs.sha }}
+          category: "trivy-container-scan"
