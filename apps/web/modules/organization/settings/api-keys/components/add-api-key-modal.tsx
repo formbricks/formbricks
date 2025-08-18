@@ -230,12 +230,9 @@ export const AddApiKeyModal = ({
             <div className="space-y-2">
               <Label>{t("environments.project.api_keys.project_access")}</Label>
               <div className="space-y-2">
-                {/* Permission rows */}
                 {selectedPermissions.map((permission, index) => {
                   return (
-                    // eslint-disable-next-line react/no-array-index-key
-                    <div key={index} className="flex items-center gap-2">
-                      {/* Project dropdown */}
+                    <div key={index + permission.projectId} className="flex items-center gap-2">
                       <div className="w-1/3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -263,8 +260,6 @@ export const AddApiKeyModal = ({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-
-                      {/* Environment dropdown */}
                       <div className="w-1/3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -294,8 +289,6 @@ export const AddApiKeyModal = ({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-
-                      {/* Permission level dropdown */}
                       <div className="w-1/3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -325,16 +318,16 @@ export const AddApiKeyModal = ({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-
-                      {/* Delete button */}
-                      <button type="button" className="p-2" onClick={() => removePermission(index)}>
+                      <button
+                        type="button"
+                        className="p-2"
+                        onClick={() => removePermission(index)}
+                        aria-label={`${t("common.delete")} ${t("environments.settings.api_keys.permission")}`}>
                         <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
                       </button>
                     </div>
                   );
                 })}
-
-                {/* Add permission button */}
                 <Button type="button" variant="outline" onClick={addPermission}>
                   <span className="mr-2">+</span> {t("environments.settings.api_keys.add_permission")}
                 </Button>

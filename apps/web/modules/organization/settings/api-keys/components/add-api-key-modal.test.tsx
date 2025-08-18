@@ -149,10 +149,10 @@ describe("AddApiKeyModal", () => {
 
   test("handles label input", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
-    const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
+    const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack");
 
     await userEvent.type(labelInput, "Test API Key");
-    expect(labelInput.value).toBe("Test API Key");
+    expect((labelInput as HTMLInputElement).value).toBe("Test API Key");
   });
 
   test("handles permission changes", async () => {
@@ -184,14 +184,19 @@ describe("AddApiKeyModal", () => {
     await userEvent.click(addButton);
 
     // Verify new permission row is added
-    const deleteButtons = screen.getAllByRole("button", { name: "" }); // Trash icons
+    const deleteButtons = await screen.findAllByRole("button", {
+      name: "common.delete environments.settings.api_keys.permission",
+    });
     expect(deleteButtons).toHaveLength(2);
 
     // Remove the new permission
     await userEvent.click(deleteButtons[1]);
 
     // Check that only the original permission row remains
-    expect(screen.getAllByRole("button", { name: "" })).toHaveLength(1);
+    const remainingDeleteButtons = await screen.findAllByRole("button", {
+      name: "common.delete environments.settings.api_keys.permission",
+    });
+    expect(remainingDeleteButtons).toHaveLength(1);
   });
 
   test("removes permissions from middle of list without breaking indices", async () => {
@@ -208,28 +213,36 @@ describe("AddApiKeyModal", () => {
     await userEvent.click(addButton);
 
     // Verify we have 3 permission rows
-    let deleteButtons = screen.getAllByRole("button", { name: "" }); // Trash icons
+    let deleteButtons = await screen.findAllByRole("button", {
+      name: "common.delete environments.settings.api_keys.permission",
+    });
     expect(deleteButtons).toHaveLength(3);
 
     // Remove the middle permission (index 1)
     await userEvent.click(deleteButtons[1]);
 
     // Verify we now have 2 permission rows
-    deleteButtons = screen.getAllByRole("button", { name: "" });
+    deleteButtons = await screen.findAllByRole("button", {
+      name: "common.delete environments.settings.api_keys.permission",
+    });
     expect(deleteButtons).toHaveLength(2);
 
     // Try to remove the second remaining permission (this was previously index 2, now index 1)
     await userEvent.click(deleteButtons[1]);
 
     // Verify we now have 1 permission row
-    deleteButtons = screen.getAllByRole("button", { name: "" });
+    deleteButtons = await screen.findAllByRole("button", {
+      name: "common.delete environments.settings.api_keys.permission",
+    });
     expect(deleteButtons).toHaveLength(1);
 
     // Remove the last remaining permission
     await userEvent.click(deleteButtons[0]);
 
     // Verify no permission rows remain
-    expect(screen.queryAllByRole("button", { name: "" })).toHaveLength(0);
+    expect(
+      screen.queryAllByRole("button", { name: "common.delete environments.settings.api_keys.permission" })
+    ).toHaveLength(0);
   });
 
   test("can modify permissions after deleting items from list", async () => {
@@ -242,14 +255,18 @@ describe("AddApiKeyModal", () => {
     await userEvent.click(addButton); // Third permission
 
     // Verify we have 3 permission rows
-    let deleteButtons = screen.getAllByRole("button", { name: "" });
+    let deleteButtons = await screen.findAllByRole("button", {
+      name: "common.delete environments.settings.api_keys.permission",
+    });
     expect(deleteButtons).toHaveLength(3);
 
     // Remove the first permission (index 0)
     await userEvent.click(deleteButtons[0]);
 
     // Verify we now have 2 permission rows
-    deleteButtons = screen.getAllByRole("button", { name: "" });
+    deleteButtons = await screen.findAllByRole("button", {
+      name: "common.delete environments.settings.api_keys.permission",
+    });
     expect(deleteButtons).toHaveLength(2);
 
     // Try to modify the first remaining permission (which was originally index 1, now index 0)
@@ -270,7 +287,9 @@ describe("AddApiKeyModal", () => {
     await userEvent.click(addButton);
 
     // Verify we now have 3 permission rows again
-    deleteButtons = screen.getAllByRole("button", { name: "" });
+    deleteButtons = await screen.findAllByRole("button", {
+      name: "common.delete environments.settings.api_keys.permission",
+    });
     expect(deleteButtons).toHaveLength(3);
   });
 
@@ -358,7 +377,7 @@ describe("AddApiKeyModal", () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
     // Type something into the label
-    const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
+    const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack");
     await userEvent.type(labelInput, "Test API Key");
 
     // Click the cancel button
@@ -367,7 +386,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify modal is closed and form is reset
     expect(mockSetOpen).toHaveBeenCalledWith(false);
-    expect(labelInput.value).toBe("");
+    expect((labelInput as HTMLInputElement).value).toBe("");
   });
 
   test("updates permission field (non-environmentId)", async () => {
