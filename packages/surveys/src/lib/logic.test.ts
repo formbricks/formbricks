@@ -109,12 +109,12 @@ describe("Survey Logic", () => {
         subheader: { default: "Matrix question" },
         required: true,
         rows: [
-          { default: "Row 1", es: "Fila 1" },
-          { default: "Row 2", es: "Fila 2" },
+          { id: "row1", label: { default: "Row 1", es: "Fila 1" } },
+          { id: "row2", label: { default: "Row 2", es: "Fila 2" } },
         ],
         columns: [
-          { default: "Column 1", es: "Columna 1" },
-          { default: "Column 2", es: "Columna 2" },
+          { id: "col1", label: { default: "Column 1", es: "Columna 1" } },
+          { id: "col2", label: { default: "Column 2", es: "Columna 2" } },
         ],
         shuffleOption: "none",
       },
