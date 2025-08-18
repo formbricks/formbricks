@@ -13,7 +13,7 @@ permissions:
   id-token: write
 
 env:
-  AWS_REGION: eu-central-1
+  AWS_REGION: ${{ vars.AWS_REGION }}
   # ECR settings are sourced from repository/environment variables for portability across envs/forks
   ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
@@ -62,10 +62,11 @@ jobs:
         env:
           ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
           ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
         run: |
           set -euo pipefail
-          if [[ -z "${ECR_REGISTRY}" || -z "${ECR_REPOSITORY}" ]]; then
-            echo "ECR_REGISTRY and ECR_REPOSITORY must be set via repository or environment variables (Settings → Variables)."
+          if [[ -z "${ECR_REGISTRY}" || -z "${ECR_REPOSITORY}" || -z "${AWS_REGION}" ]]; then
+            echo "AWS_REGION, ECR_REGISTRY and ECR_REPOSITORY must be set via repository or environment variables (Settings → Variables)."
             exit 1
           fi
 
