@@ -142,7 +142,7 @@ export function MultipleChoiceMultiQuestion({
       : question.required;
   };
 
-  const otherOptionDir = !otherValue ? dir : "auto";
+  const otherOptionInputDir = !otherValue ? dir : "auto";
 
   return (
     <ScrollableContainer>
@@ -195,9 +195,10 @@ export function MultipleChoiceMultiQuestion({
                       }
                     }}
                     autoFocus={idx === 0 && autoFocusEnabled}>
-                    <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
+                    <span className="fb-flex fb-items-center fb-text-sm">
                       <input
                         type="checkbox"
+                        dir={dir}
                         id={choice.id}
                         name={question.id}
                         tabIndex={-1}
@@ -217,7 +218,10 @@ export function MultipleChoiceMultiQuestion({
                         }
                         required={getIsRequired()}
                       />
-                      <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
+                      <span
+                        id={`${choice.id}-label`}
+                        className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
+                        dir="auto">
                         {getLocalizedValue(choice.label, languageCode)}
                       </span>
                     </span>
@@ -239,9 +243,10 @@ export function MultipleChoiceMultiQuestion({
                       document.getElementById(otherOption.id)?.focus();
                     }
                   }}>
-                  <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
+                  <span className="fb-flex fb-items-center fb-text-sm">
                     <input
                       type="checkbox"
+                      dir={dir}
                       tabIndex={-1}
                       id={otherOption.id}
                       name={question.id}
@@ -261,14 +266,17 @@ export function MultipleChoiceMultiQuestion({
                       }}
                       checked={otherSelected}
                     />
-                    <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
+                    <span
+                      id={`${otherOption.id}-label`}
+                      className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
+                      dir="auto">
                       {getLocalizedValue(otherOption.label, languageCode)}
                     </span>
                   </span>
                   {otherSelected ? (
                     <input
                       ref={otherSpecify}
-                      dir={otherOptionDir}
+                      dir={otherOptionInputDir}
                       id={`${otherOption.id}-label`}
                       maxLength={250}
                       name={question.id}

@@ -212,6 +212,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Date ? (
     <DateQuestion
@@ -314,6 +315,7 @@ export function QuestionConditional({
       currentQuestionId={currentQuestionId}
       autoFocusEnabled={autoFocusEnabled}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
     <RankingQuestion
@@ -346,6 +348,7 @@ export function QuestionConditional({
       currentQuestionId={currentQuestionId}
       autoFocusEnabled={autoFocusEnabled}
       isBackButtonHidden={isBackButtonHidden}
+      dir={dir}
     />
   ) : null;
 }

@@ -102,7 +102,7 @@ export function MultipleChoiceSingleQuestion({
     }
   }, [otherSelected]);
 
-  const otherOptionDir = !value ? dir : "auto";
+  const otherOptionInputDir = !value ? dir : "auto";
 
   return (
     <ScrollableContainer>
@@ -137,7 +137,6 @@ export function MultipleChoiceSingleQuestion({
                 if (!choice || choice.id === "other") return;
                 return (
                   <label
-                    dir="auto"
                     key={choice.id}
                     tabIndex={isCurrent ? 0 : -1}
                     className={cn(
@@ -162,7 +161,7 @@ export function MultipleChoiceSingleQuestion({
                         id={choice.id}
                         name={question.id}
                         value={getLocalizedValue(choice.label, languageCode)}
-                        dir="auto"
+                        dir={dir}
                         className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                         aria-labelledby={`${choice.id}-label`}
                         onChange={() => {
@@ -172,7 +171,10 @@ export function MultipleChoiceSingleQuestion({
                         checked={value === getLocalizedValue(choice.label, languageCode)}
                         required={question.required ? idx === 0 : undefined}
                       />
-                      <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
+                      <span
+                        id={`${choice.id}-label`}
+                        className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
+                        dir="auto">
                         {getLocalizedValue(choice.label, languageCode)}
                       </span>
                     </span>
@@ -181,7 +183,6 @@ export function MultipleChoiceSingleQuestion({
               })}
               {otherOption ? (
                 <label
-                  dir="auto"
                   tabIndex={isCurrent ? 0 : -1}
                   className={cn(
                     value === getLocalizedValue(otherOption.label, languageCode)
@@ -197,10 +198,10 @@ export function MultipleChoiceSingleQuestion({
                       document.getElementById(otherOption.id)?.focus();
                     }
                   }}>
-                  <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
+                  <span className="fb-flex fb-items-center fb-text-sm">
                     <input
                       tabIndex={-1}
-                      dir="auto"
+                      dir={dir}
                       type="radio"
                       id={otherOption.id}
                       name={question.id}
@@ -213,7 +214,10 @@ export function MultipleChoiceSingleQuestion({
                       }}
                       checked={otherSelected}
                     />
-                    <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
+                    <span
+                      id={`${otherOption.id}-label`}
+                      className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
+                      dir="auto">
                       {getLocalizedValue(otherOption.label, languageCode)}
                     </span>
                   </span>
@@ -221,7 +225,7 @@ export function MultipleChoiceSingleQuestion({
                     <input
                       ref={otherSpecify}
                       id={`${otherOption.id}-label`}
-                      dir={otherOptionDir}
+                      dir={otherOptionInputDir}
                       name={question.id}
                       pattern=".*\S+.*"
                       value={value}
