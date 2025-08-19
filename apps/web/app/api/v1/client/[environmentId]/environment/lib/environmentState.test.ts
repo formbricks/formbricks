@@ -272,7 +272,7 @@ describe("getEnvironmentState", () => {
     getEnvironmentState(environmentId);
 
     expect(withCache).toHaveBeenCalledWith(expect.any(Function), {
-      key: "fb:env:env-123:state",
+      key: "fb:env:test-environment-id:state",
       ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
     });
   });
