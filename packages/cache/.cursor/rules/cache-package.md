@@ -20,7 +20,7 @@ This is the unified Redis cache package for Formbricks. It will centralize all c
 ## Code Standards
 
 ### File Organization (Current Implementation)
-```
+```text
 src/
 ├── index.ts          # Main exports
 ├── factory.ts        # Redis client and service factory
