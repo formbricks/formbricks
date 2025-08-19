@@ -1,4 +1,4 @@
-import { Survey, SurveyStatus, SurveyType } from "@prisma/client";
+import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
