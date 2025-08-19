@@ -4,7 +4,6 @@
   "type": "module",
   "version": "0.1.0",
   "homepage": "https://formbricks.com",
-  "license": "MIT",
   "description": "Unified Redis cache for Formbricks",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,8 +27,8 @@
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
-    "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/cache.json",
     "build": "tsc && vite build",
     "test": "vitest run",
