@@ -185,7 +185,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify new permission row is added
     const deleteButtons = await screen.findAllByRole("button", {
-      name: "common.delete environments.settings.api_keys.permission",
+      name: "environments.project.api_keys.delete_permission",
     });
     expect(deleteButtons).toHaveLength(2);
 
@@ -194,7 +194,7 @@ describe("AddApiKeyModal", () => {
 
     // Check that only the original permission row remains
     const remainingDeleteButtons = await screen.findAllByRole("button", {
-      name: "common.delete environments.settings.api_keys.permission",
+      name: "environments.project.api_keys.delete_permission",
     });
     expect(remainingDeleteButtons).toHaveLength(1);
   });
@@ -214,7 +214,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify we have 3 permission rows
     let deleteButtons = await screen.findAllByRole("button", {
-      name: "common.delete environments.settings.api_keys.permission",
+      name: "environments.project.api_keys.delete_permission",
     });
     expect(deleteButtons).toHaveLength(3);
 
@@ -223,7 +223,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify we now have 2 permission rows
     deleteButtons = await screen.findAllByRole("button", {
-      name: "common.delete environments.settings.api_keys.permission",
+      name: "environments.project.api_keys.delete_permission",
     });
     expect(deleteButtons).toHaveLength(2);
 
@@ -232,7 +232,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify we now have 1 permission row
     deleteButtons = await screen.findAllByRole("button", {
-      name: "common.delete environments.settings.api_keys.permission",
+      name: "environments.project.api_keys.delete_permission",
     });
     expect(deleteButtons).toHaveLength(1);
 
@@ -241,7 +241,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify no permission rows remain
     expect(
-      screen.queryAllByRole("button", { name: "common.delete environments.settings.api_keys.permission" })
+      screen.queryAllByRole("button", { name: "environments.project.api_keys.delete_permission" })
     ).toHaveLength(0);
   });
 
@@ -256,7 +256,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify we have 3 permission rows
     let deleteButtons = await screen.findAllByRole("button", {
-      name: "common.delete environments.settings.api_keys.permission",
+      name: "environments.project.api_keys.delete_permission",
     });
     expect(deleteButtons).toHaveLength(3);
 
@@ -265,7 +265,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify we now have 2 permission rows
     deleteButtons = await screen.findAllByRole("button", {
-      name: "common.delete environments.settings.api_keys.permission",
+      name: "environments.project.api_keys.delete_permission",
     });
     expect(deleteButtons).toHaveLength(2);
 
@@ -288,7 +288,7 @@ describe("AddApiKeyModal", () => {
 
     // Verify we now have 3 permission rows again
     deleteButtons = await screen.findAllByRole("button", {
-      name: "common.delete environments.settings.api_keys.permission",
+      name: "environments.project.api_keys.delete_permission",
     });
     expect(deleteButtons).toHaveLength(3);
   });

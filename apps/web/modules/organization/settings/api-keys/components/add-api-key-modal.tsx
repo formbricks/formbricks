@@ -322,7 +322,7 @@ export const AddApiKeyModal = ({
                         type="button"
                         className="p-2"
                         onClick={() => removePermission(index)}
-                        aria-label={`${t("common.delete")} ${t("environments.settings.api_keys.permission")}`}>
+                        aria-label={t("environments.project.api_keys.delete_permission")}>
                         <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
                       </button>
                     </div>
