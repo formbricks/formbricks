@@ -60,7 +60,7 @@ export function createRedisClientFromEnv(): RedisClient {
  * @param redis - Optional Redis client. If not provided, creates one from environment
  * @returns Promise that resolves to a CacheService instance
  */
-export async function createCacheService(redis?: RedisClient): Promise<{ client: RedisClient }> {
+export async function createCacheService(redis?: RedisClient): Promise<RedisClient> {
   const client = redis ?? createRedisClientFromEnv();
 
   if (!client.isOpen) {
@@ -73,7 +73,5 @@ export async function createCacheService(redis?: RedisClient): Promise<{ client:
     }
   }
 
-  return {
-    client,
-  };
+  return client;
 }

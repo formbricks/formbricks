@@ -65,7 +65,7 @@ try {
 ## Testing Standards
 
 ### Unit Test Requirements
-- **100% Coverage**: Every public function must have unit tests.
+- **85% Coverage**: Every public function must have unit tests.
 - **Collocated Tests**: Place `*.test.ts` files next to source files.
 - **Mock External Dependencies**: Mock Redis client and logger in tests.
 - **Test Edge Cases**: Include error conditions, empty responses, connection failures.
@@ -141,8 +141,8 @@ logger.error("Initial Redis connection failed:", err);
 ### Development Dependencies
 - **`@formbricks/config-typescript`**: Shared TypeScript config
 - **`@formbricks/eslint-config`**: Shared ESLint config
-- **`vite@6.3.5`**: Build tool for ES/CJS output
-- **`vitest@3.1.3`**: Testing framework
+- **`vite`**: Build tool for ES/CJS output
+- **`vitest`**: Testing framework
 - **`@vitest/coverage-v8`**: Coverage reporting
 
 ## Build and Deployment
@@ -174,7 +174,7 @@ logger.error("Initial Redis connection failed:", err);
 export function createRedisClientFromEnv(): RedisClient;
 
 // Create cache service with optional client injection
-export async function createCacheService(redis?: RedisClient): Promise<{ client: RedisClient }>;
+export async function createCacheService(redis?: RedisClient): Promise<RedisClient>;
 
 // Redis client type export
 export type RedisClient = RedisClientType;

@@ -58,7 +58,7 @@ describe("@formbricks/cache factory", () => {
 
       const service = await createCacheService(mockClient as unknown as RedisClient);
       expect(service).toBeDefined();
-      expect(service.client).toBe(mockClient);
+      expect(service).toBe(mockClient);
     });
 
     test("should connect client if not open", async () => {
