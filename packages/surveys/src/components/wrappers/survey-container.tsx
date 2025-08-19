@@ -21,7 +21,7 @@ export function SurveyContainer({
   onClose,
   clickOutside,
   isOpen = true,
-  dir,
+  dir = "auto",
 }: Readonly<SurveyContainerProps>) {
   const modalRef = useRef<HTMLDivElement>(null);
   const isCenter = placement === "center";
@@ -76,7 +76,7 @@ export function SurveyContainer({
   }
 
   return (
-    <div id="fbjs" className="fb-formbricks-form" dir={dir ?? "auto"}>
+    <div id="fbjs" className="fb-formbricks-form" dir={dir}>
       <div
         aria-live="assertive"
         className={cn(

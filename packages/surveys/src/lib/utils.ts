@@ -184,8 +184,6 @@ export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCo
     if (welcomeCardHeadline) {
       return isRTL(welcomeCardHeadline);
     }
-
-    return false;
   }
 
   for (const question of survey.questions) {

@@ -174,7 +174,7 @@ export function Survey({
     !getSetIsResponseSendingFinished
   );
   const [isSurveyFinished, setIsSurveyFinished] = useState(false);
-  const [selectedLanguage, setselectedLanguage] = useState(languageCode);
+  const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
@@ -321,7 +321,7 @@ export function Survey({
   }, [getSetIsResponseSendingFinished]);
 
   useEffect(() => {
-    setselectedLanguage(languageCode);
+    setSelectedLanguage(languageCode);
   }, [languageCode]);
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -768,7 +768,7 @@ export function Survey({
                     <LanguageSwitch
                       survey={localSurvey}
                       surveyLanguages={localSurvey.languages}
-                      setSelectedLanguageCode={setselectedLanguage}
+                      setSelectedLanguageCode={setSelectedLanguage}
                       hoverColor={styling.inputColor?.light ?? "#f8fafc"}
                       borderRadius={styling.roundness ?? 8}
                       setDir={setDir}

@@ -218,10 +218,7 @@ export function MultipleChoiceMultiQuestion({
                         }
                         required={getIsRequired()}
                       />
-                      <span
-                        id={`${choice.id}-label`}
-                        className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
-                        dir="auto">
+                      <span id={`${choice.id}-label`} className="fb-mx-3 fb-grow fb-font-medium" dir="auto">
                         {getLocalizedValue(choice.label, languageCode)}
                       </span>
                     </span>
