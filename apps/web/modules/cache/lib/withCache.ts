@@ -1,4 +1,5 @@
 import "server-only";
+import { type CacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { getCache } from "./service";
 
@@ -7,7 +8,7 @@ import { getCache } from "./service";
  */
 
 type CacheOptions = {
-  key: string;
+  key: CacheKey;
   ttl: number; // TTL in milliseconds
 };
 
@@ -19,7 +20,7 @@ type CacheOptions = {
  * const getCachedEnvironment = withCache(
  *   () => fetchEnvironmentFromDB(environmentId),
  *   {
- *     key: `env:${environmentId}`,
+ *     key: createCacheKey.environment.state(environmentId),
  *     ttl: 3600000 // 1 hour in milliseconds
  *   }
  * );
@@ -72,7 +73,7 @@ export const withCache = <T>(fn: () => Promise<T>, options: CacheOptions): (() =
  * Simple cache invalidation helper
  * Prefer explicit key invalidation over complex tag systems
  */
-export const invalidateCache = async (keys: string | string[]): Promise<void> => {
+export const invalidateCache = async (keys: CacheKey | CacheKey[]): Promise<void> => {
   const cache = await getCache();
   const keyArray = Array.isArray(keys) ? keys : [keys];
 

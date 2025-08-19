@@ -116,7 +116,7 @@ const mockSurveys: TSurvey[] = [
     variables: [],
     createdBy: null,
     recaptcha: { enabled: false, threshold: 0.5 },
-  },
+  } as unknown as TSurvey,
 ];
 
 const mockActionClasses: TActionClass[] = [
@@ -272,7 +272,7 @@ describe("getEnvironmentState", () => {
     getEnvironmentState(environmentId);
 
     expect(withCache).toHaveBeenCalledWith(expect.any(Function), {
-      key: `fb:env:${environmentId}:state`,
+      key: "fb:env:env-123:state",
       ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
     });
   });
