@@ -10,11 +10,14 @@ export const parseVersion = (version: string): VersionInfo | null => {
   // Remove 'v' prefix if present
   const cleanVersion = version.replace(/^v/, "");
 
-  // Regex for semantic versioning with optional prerelease and build metadata
+  // Regex for semantic versioning with optional patch, prerelease and build metadata
+  // Supports both 2-part (1.2) and 3-part (1.2.3) versions
+  // NOSONAR
+  // this is a valid regex for semantic versioning
   const semverRegex =
-    /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
+    /^(\d+)\.(\d+)(?:\.(\d+))?(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 
-  const match = cleanVersion.match(semverRegex);
+  const match = semverRegex.exec(cleanVersion);
   if (!match) {
     console.warn(`Invalid version format: ${version}`);
     return null;
@@ -23,7 +26,7 @@ export const parseVersion = (version: string): VersionInfo | null => {
   return {
     major: parseInt(match[1], 10),
     minor: parseInt(match[2], 10),
-    patch: parseInt(match[3], 10),
+    patch: match[3] ? parseInt(match[3], 10) : 0, // Default to 0 if patch is missing
     prerelease: match[4],
     build: match[5],
   };
