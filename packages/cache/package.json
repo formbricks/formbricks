@@ -6,7 +6,7 @@
   "homepage": "https://formbricks.com",
   "description": "Unified Redis cache for Formbricks",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
@@ -21,7 +21,7 @@
     "dist"
   ],
   "exports": {
-    "types": "./dist/index.d.ts",
+    "types": "./dist/src/index.d.ts",
     "import": "./dist/index.js",
     "require": "./dist/index.cjs"
   },
