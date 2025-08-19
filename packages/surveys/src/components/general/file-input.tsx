@@ -182,7 +182,8 @@ export function FileInput({
 
     // filter out files that are not allowed
     const validFiles = fileArray.filter((file) => {
-      const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
+      const fileExtension = file.name.split(".").pop()?.toLowerCase() as TAllowedFileExtension;
+      if (!fileExtension || fileExtension === file.name.toLowerCase()) return false;
 
       if (allowedFileExtensions) {
         return allowedFileExtensions.includes(fileExtension);
