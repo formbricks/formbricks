@@ -1,6 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "../button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipRenderer, TooltipTrigger } from "./index";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./index";
 
 interface StoryOptions {
   side: "top" | "right" | "bottom" | "left";
@@ -211,57 +211,6 @@ export const CustomStyling: StoryObj = {
     docs: {
       description: {
         story: "Customize the appearance of tooltips with custom CSS classes.",
-      },
-    },
-  },
-};
-
-// ==== TooltipRenderer Stories ====
-
-interface TooltipRendererStoryOptions {
-  shouldRender: boolean;
-}
-
-type TooltipRendererStoryProps = React.ComponentProps<typeof TooltipRenderer> & TooltipRendererStoryOptions;
-
-const renderTooltipRenderer = (args: TooltipRendererStoryProps) => {
-  const { tooltipContent, children, shouldRender = true, ...props } = args;
-
-  return (
-    <TooltipRenderer {...props} tooltipContent={tooltipContent} shouldRender={shouldRender}>
-      <Button variant="outline">{children}</Button>
-    </TooltipRenderer>
-  );
-};
-
-export const TooltipRendererDefault: StoryObj<TooltipRendererStoryProps> = {
-  render: renderTooltipRenderer,
-  args: {
-    tooltipContent: "Using the TooltipRenderer convenience component",
-    children: "Renderer component",
-    shouldRender: true,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "The TooltipRenderer is a convenience component that wraps the composite tooltip components.",
-      },
-    },
-  },
-};
-
-export const TooltipRendererDisabled: StoryObj<TooltipRendererStoryProps> = {
-  render: renderTooltipRenderer,
-  args: {
-    tooltipContent: "This won't show",
-    children: "Disabled tooltip",
-    shouldRender: false,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          "TooltipRenderer with shouldRender=false only renders the children without tooltip functionality.",
       },
     },
   },
