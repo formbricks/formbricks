@@ -123,6 +123,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: 3.2.2
         version: 3.2.2(react@19.1.0)
+      '@formbricks/cache':
+        specifier: workspace:*
+        version: link:../../packages/cache
       '@formbricks/database':
         specifier: workspace:*
         version: link:../../packages/database

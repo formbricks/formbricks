@@ -3,7 +3,7 @@
 ## Package Overview
 This is the unified Redis cache package for Formbricks. It will centralize all caching operations into a single, Redis-backed solution, replacing the previous dual Redis/in-memory setup.
 
-## Architecture Principles (Implemented in Task 1)
+## Architecture Principles
 
 ### 1. Redis-Only Strategy
 - **Mandatory Redis**: All deployments MUST use Redis. No fallback to in-memory caching.
@@ -12,6 +12,9 @@ This is the unified Redis cache package for Formbricks. It will centralize all c
 ### 2. Type Safety
 - **Strict TypeScript**: All code must pass strict TypeScript compilation.
 - **Explicit Types**: Prefer explicit type annotations over inference for public APIs.
+- **Branded Cache Keys**: Use `CacheKey` branded type to prevent raw string usage.
+- **Compile-time Safety**: TypeScript prevents using raw strings where `CacheKey` is expected.
+
 
 ### 3. Dependency Injection
 - **Redis Client Injection**: Accept Redis client as parameter for testability.
@@ -24,7 +27,11 @@ This is the unified Redis cache package for Formbricks. It will centralize all c
 src/
 ├── index.ts          # Main exports
 ├── factory.ts        # Redis client and service factory
+├── cache-keys.ts     # Cache key generators with branded types
 └── *.test.ts         # Unit tests (collocated with source)
+types/
+├── keys.ts           # Branded CacheKey type definition
+└── *.test.ts         # Type tests
 ```
 
 ### Naming Conventions
@@ -37,9 +44,11 @@ src/
 ```typescript
 // ✅ GOOD - Named exports from index.ts
 export { createCacheService, createRedisClientFromEnv, type RedisClient } from "./factory";
+export { createCacheKey } from "./cache-keys";
+export type { CacheKey } from "../types/keys";
 
 // ✅ GOOD - Import from package root
-import { createCacheService } from "@formbricks/cache";
+import { createCacheService, createCacheKey } from "@formbricks/cache";
 
 // ❌ BAD - Deep imports
 import { createCacheService } from "@formbricks/cache/dist/factory";
@@ -180,6 +189,32 @@ export async function createCacheService(redis?: RedisClient): Promise<RedisClie
 export type RedisClient = RedisClientType;
 ```
 
+### Cache Key Functions
+```typescript
+// Branded type for type-safe cache keys
+export type CacheKey = string & { readonly __brand: "CacheKey" };
+
+// Type-safe cache key generators
+export const createCacheKey = {
+  environment: {
+    state: (environmentId: string): CacheKey,
+    config: (environmentId: string): CacheKey,
+    segments: (environmentId: string): CacheKey,
+  },
+  organization: {
+    billing: (organizationId: string): CacheKey,
+  },
+  license: {
+    status: (organizationId: string): CacheKey,
+    previous_result: (organizationId: string): CacheKey,
+  },
+  rateLimit: {
+    core: (namespace: string, identifier: string, windowStart: number): CacheKey,
+  },
+  custom: (namespace: "analytics", identifier: string, subResource?: string): CacheKey,
+};
+```
+
 ### Usage Patterns
 ```typescript
 // ✅ Basic client creation
@@ -190,4 +225,9 @@ const service = await createCacheService();
 
 // ✅ Service creation with custom client (for testing)
 const service = await createCacheService(mockClient);
+
+// ✅ Type-safe cache key generation
+const envKey = createCacheKey.environment.state("env-123");
+const rateLimitKey = createCacheKey.rateLimit.core("api", "user-456", 1640995200);
+const customKey = createCacheKey.custom("analytics", "user-789", "daily-stats");
 ```

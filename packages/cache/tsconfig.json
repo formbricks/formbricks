@@ -8,5 +8,5 @@
   },
   "exclude": ["node_modules"],
   "extends": "@formbricks/config-typescript/js-library.json",
-  "include": ["src", "package.json", "types"]
+  "include": ["src", "types", "package.json"]
 }

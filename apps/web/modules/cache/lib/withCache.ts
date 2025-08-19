@@ -80,6 +80,3 @@ export const invalidateCache = async (keys: string | string[]): Promise<void> =>
 
   logger.info("Cache invalidated", { keys: keyArray });
 };
-
-// Re-export cache key utilities for backwards compatibility
-export { createCacheKey, validateCacheKey, parseCacheKey } from "./cacheKeys";

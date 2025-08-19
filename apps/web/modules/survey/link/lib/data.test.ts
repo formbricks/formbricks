@@ -1,9 +1,9 @@
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import { withCache } from "@/modules/cache/lib/withCache";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -17,14 +17,12 @@ import {
 } from "./data";
 
 // Mock dependencies
-vi.mock("@/modules/cache/lib/cacheKeys", () => ({
+vi.mock("@formbricks/cache", () => ({
   createCacheKey: {
-    survey: {
-      metadata: vi.fn(),
-    },
     organization: {
       billing: vi.fn(),
     },
+    custom: vi.fn(),
   },
 }));
 

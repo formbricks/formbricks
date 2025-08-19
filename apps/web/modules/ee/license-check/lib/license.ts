@@ -1,7 +1,6 @@
 import "server-only";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import { getCache } from "@/modules/cache/lib/service";
 import {
   TEnterpriseLicenseDetails,
@@ -11,6 +10,7 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { z } from "zod";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 
