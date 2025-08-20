@@ -1,0 +1,189 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { EndingCardSelector } from "./ending-card-selector";
+
+// Mock Radix UI Select components
+vi.mock("@/modules/ui/components/select", () => ({
+  Select: ({ children, value, onValueChange }: any) => (
+    <div data-testid="select" data-value={value} onClick={() => onValueChange?.("test-value")}>
+      {children}
+    </div>
+  ),
+  SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
+  SelectGroup: ({ children }: any) => <div data-testid="select-group">{children}</div>,
+  SelectItem: ({ children, value }: any) => (
+    <div data-testid="select-item" data-value={value}>
+      {children}
+    </div>
+  ),
+  SelectTrigger: ({ children }: any) => <div data-testid="select-trigger">{children}</div>,
+  SelectValue: ({ placeholder }: any) => <div data-testid="select-value">{placeholder}</div>,
+}));
+
+// Mock localization utils
+vi.mock("@/lib/i18n/utils", () => ({
+  getLocalizedValue: (value: any, locale: string) => {
+    if (typeof value === "object" && value !== null) {
+      return value[locale] || value.default || "Test Headline";
+    }
+    return value || "Test Headline";
+  },
+}));
+
+describe("EndingCardSelector", () => {
+  const mockOnChange = vi.fn();
+
+  const mockSurveyWithEndings: TSurvey = {
+    id: "survey1",
+    endings: [
+      {
+        id: "ending1",
+        type: "endScreen",
+        headline: { default: "Thank you!" },
+        subheader: { default: "Survey complete" },
+      },
+      {
+        id: "ending2",
+        type: "endScreen",
+        headline: { default: "Survey Complete" },
+        subheader: { default: "Thanks for participating" },
+      },
+      {
+        id: "redirect1",
+        type: "redirectToUrl",
+        url: "https://example.com",
+      },
+      {
+        id: "redirect2",
+        type: "redirectToUrl",
+        url: "https://test.com",
+      },
+    ],
+  } as TSurvey;
+
+  const mockSurveyEmpty: TSurvey = {
+    id: "survey2",
+    endings: [],
+  } as TSurvey;
+
+  beforeEach(() => {
+    mockOnChange.mockClear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  test("renders select component", () => {
+    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+
+    expect(screen.getByTestId("select")).toBeInTheDocument();
+    expect(screen.getByTestId("select-trigger")).toBeInTheDocument();
+    expect(screen.getByTestId("select-value")).toBeInTheDocument();
+  });
+
+  test("shows placeholder when no value selected", () => {
+    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+
+    expect(screen.getByText("Select ending card")).toBeInTheDocument();
+  });
+
+  test("displays ending card options", () => {
+    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+
+    // Should show ending card section
+    expect(screen.getByText("Ending Card")).toBeInTheDocument();
+
+    // Should show ending card items
+    const endingItems = screen.getAllByTestId("select-item");
+    const endingCardItems = endingItems.filter(
+      (item) => item.getAttribute("data-value") === "ending1" || item.getAttribute("data-value") === "ending2"
+    );
+    expect(endingCardItems).toHaveLength(2);
+  });
+
+  test("displays redirect URL options", () => {
+    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+
+    // Should show redirect URL section
+    expect(screen.getByText("Redirect to URL")).toBeInTheDocument();
+
+    // Should show redirect items with generic labels
+    expect(screen.getByText("Redirect to URL 1")).toBeInTheDocument();
+    expect(screen.getByText("Redirect to URL 2")).toBeInTheDocument();
+  });
+
+  test("calls onChange when selection is made", async () => {
+    const user = userEvent.setup();
+
+    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+
+    const select = screen.getByTestId("select");
+    await user.click(select);
+
+    expect(mockOnChange).toHaveBeenCalledWith("test-value");
+  });
+
+  test("handles survey with no endings", () => {
+    render(<EndingCardSelector survey={mockSurveyEmpty} value="" onChange={mockOnChange} />);
+
+    expect(screen.getByTestId("select")).toBeInTheDocument();
+    expect(screen.queryByText("Ending Card")).not.toBeInTheDocument();
+    expect(screen.queryByText("Redirect to URL")).not.toBeInTheDocument();
+  });
+
+  test("handles undefined endings array", () => {
+    const surveyWithUndefinedEndings = {
+      id: "survey3",
+      endings: undefined,
+    } as TSurvey;
+
+    render(<EndingCardSelector survey={surveyWithUndefinedEndings} value="" onChange={mockOnChange} />);
+
+    expect(screen.getByTestId("select")).toBeInTheDocument();
+    expect(screen.queryByText("Ending Card")).not.toBeInTheDocument();
+    expect(screen.queryByText("Redirect to URL")).not.toBeInTheDocument();
+  });
+
+  test("filters endings correctly by type", () => {
+    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+
+    // Should only show endScreen endings in ending card section
+    const endingCardSection = screen.getByText("Ending Card").closest("[data-testid='select-group']");
+    expect(endingCardSection).toBeInTheDocument();
+
+    // Should only show redirectToUrl endings in redirect section
+    const redirectSection = screen.getByText("Redirect to URL").closest("[data-testid='select-group']");
+    expect(redirectSection).toBeInTheDocument();
+  });
+
+  test("shows correct value when selected", () => {
+    render(<EndingCardSelector survey={mockSurveyWithEndings} value="ending1" onChange={mockOnChange} />);
+
+    const select = screen.getByTestId("select");
+    expect(select).toHaveAttribute("data-value", "ending1");
+  });
+
+  test("handles ending without headline gracefully", () => {
+    const surveyWithEndingNoHeadline: TSurvey = {
+      id: "survey4",
+      endings: [
+        {
+          id: "ending3",
+          type: "endScreen",
+          // No headline property
+          subheader: { default: "Just subheader" },
+        },
+      ],
+    } as TSurvey;
+
+    render(<EndingCardSelector survey={surveyWithEndingNoHeadline} value="" onChange={mockOnChange} />);
+
+    // Should still render the component without errors
+    expect(screen.getByTestId("select")).toBeInTheDocument();
+    expect(screen.getByText("Ending Card")).toBeInTheDocument();
+  });
+});

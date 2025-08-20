@@ -8,6 +8,7 @@ import {
   TSurveyLogic,
   TSurveyLogicAction,
   TSurveyLogicActions,
+  TSurveyMatrixQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import {
@@ -26,9 +27,11 @@ import {
   getConditionOperatorOptions,
   getConditionValueOptions,
   getDefaultOperatorForQuestion,
+  getFormatLeftOperandValue,
   getMatchValueProps,
   getSurveyFollowUpActionDefaultBody,
   hasJumpToQuestionAction,
+  isUsedInQuota,
   replaceEndingCardHeadlineRecall,
 } from "./utils";
 
@@ -1148,6 +1151,259 @@ describe("Survey Editor Utils", () => {
       const result = findEndingCardUsedInLogic(survey, "ending1");
 
       expect(result).toBe(-1);
+    });
+  });
+
+  describe("getFormatLeftOperandValue", () => {
+    test("returns formatted value for matrix question with row", () => {
+      const survey = createMockSurvey();
+      const matrixQuestion: TSurveyMatrixQuestion = {
+        id: "matrix1",
+        type: TSurveyQuestionTypeEnum.Matrix,
+        headline: { default: "Matrix Question" },
+        required: false,
+        shuffleOption: "none",
+        rows: [{ default: "Row 1" }, { default: "Row 2" }],
+        columns: [{ default: "Column 1" }, { default: "Column 2" }],
+      };
+      survey.questions.push(matrixQuestion);
+
+      const condition: TSingleCondition = {
+        id: "condition1",
+        leftOperand: {
+          type: "question",
+          value: "matrix1",
+          meta: { row: "row1" },
+        },
+        operator: "equals",
+        rightOperand: { type: "static", value: "col1" },
+      };
+
+      const result = getFormatLeftOperandValue(condition, survey);
+
+      expect(result).toBe("matrix1.row1");
+    });
+
+    test("returns question id for non-matrix question", () => {
+      const survey = createMockSurvey();
+      const condition: TSingleCondition = {
+        id: "condition1",
+        leftOperand: {
+          type: "question",
+          value: "question1",
+        },
+        operator: "equals",
+        rightOperand: { type: "static", value: "choice1" },
+      };
+
+      const result = getFormatLeftOperandValue(condition, survey);
+
+      expect(result).toBe("question1");
+    });
+
+    test("returns value for variable type", () => {
+      const survey = createMockSurvey();
+      const condition: TSingleCondition = {
+        id: "condition1",
+        leftOperand: {
+          type: "variable",
+          value: "userType",
+        },
+        operator: "equals",
+        rightOperand: { type: "static", value: "premium" },
+      };
+
+      const result = getFormatLeftOperandValue(condition, survey);
+
+      expect(result).toBe("userType");
+    });
+
+    test("returns value for hiddenField type", () => {
+      const survey = createMockSurvey();
+      const condition: TSingleCondition = {
+        id: "condition1",
+        leftOperand: {
+          type: "hiddenField",
+          value: "userId",
+        },
+        operator: "equals",
+        rightOperand: { type: "static", value: "123" },
+      };
+
+      const result = getFormatLeftOperandValue(condition, survey);
+
+      expect(result).toBe("userId");
+    });
+
+    test("returns question id for matrix question without row meta", () => {
+      const survey = createMockSurvey();
+      const matrixQuestion: TSurveyMatrixQuestion = {
+        id: "matrix1",
+        type: TSurveyQuestionTypeEnum.Matrix,
+        headline: { default: "Matrix Question" },
+        required: false,
+        shuffleOption: "none",
+        rows: [{ default: "Row 1" }, { default: "Row 2" }],
+        columns: [{ default: "Column 1" }, { default: "Column 2" }],
+      };
+      survey.questions.push(matrixQuestion);
+
+      const condition: TSingleCondition = {
+        id: "condition1",
+        leftOperand: {
+          type: "question",
+          value: "matrix1",
+        },
+        operator: "equals",
+        rightOperand: { type: "static", value: "col1" },
+      };
+
+      const result = getFormatLeftOperandValue(condition, survey);
+
+      expect(result).toBe("matrix1");
+    });
+  });
+
+  describe("isUsedInQuota", () => {
+    const mockQuota = {
+      id: "quota1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      surveyId: "survey123",
+      name: "Test Quota",
+      limit: 100,
+      conditions: {
+        connector: "and" as const,
+        criteria: [],
+      },
+      action: "endSurvey" as const,
+      endingCardId: null,
+      redirectUrl: null,
+      countPartialSubmissions: false,
+    };
+
+    test("returns true when question is used in leftOperand", () => {
+      const quota = {
+        ...mockQuota,
+        conditions: {
+          connector: "and" as const,
+          criteria: [
+            {
+              id: "condition1",
+              leftOperand: { type: "question" as const, value: "question1" },
+              operator: "equals" as const,
+              rightOperand: { type: "static" as const, value: "choice1" },
+            },
+          ],
+        },
+      };
+
+      const result = isUsedInQuota(quota, "question1");
+
+      expect(result).toBe(true);
+    });
+
+    test("returns true when question is used in rightOperand", () => {
+      const quota = {
+        ...mockQuota,
+        conditions: {
+          connector: "and" as const,
+          criteria: [
+            {
+              id: "condition1",
+              leftOperand: { type: "variable" as const, value: "userType" },
+              operator: "equals" as const,
+              rightOperand: { type: "question" as const, value: "question1" },
+            },
+          ],
+        },
+      };
+
+      const result = isUsedInQuota(quota, "question1");
+
+      expect(result).toBe(true);
+    });
+
+    test("returns false when question is not used in quota", () => {
+      const quota = {
+        ...mockQuota,
+        conditions: {
+          connector: "and" as const,
+          criteria: [
+            {
+              id: "condition1",
+              leftOperand: { type: "question" as const, value: "question2" },
+              operator: "equals" as const,
+              rightOperand: { type: "static" as const, value: "choice1" },
+            },
+          ],
+        },
+      };
+
+      const result = isUsedInQuota(quota, "question1");
+
+      expect(result).toBe(false);
+    });
+
+    test("returns false when quota has no conditions", () => {
+      const quota = {
+        ...mockQuota,
+        conditions: {
+          connector: "and" as const,
+          criteria: [],
+        },
+      };
+
+      const result = isUsedInQuota(quota, "question1");
+
+      expect(result).toBe(false);
+    });
+
+    test("returns true when question is used in multiple conditions", () => {
+      const quota = {
+        ...mockQuota,
+        conditions: {
+          connector: "or" as const,
+          criteria: [
+            {
+              id: "condition1",
+              leftOperand: { type: "question" as const, value: "question2" },
+              operator: "equals" as const,
+              rightOperand: { type: "static" as const, value: "choice1" },
+            },
+            {
+              id: "condition2",
+              leftOperand: { type: "variable" as const, value: "userType" },
+              operator: "equals" as const,
+              rightOperand: { type: "question" as const, value: "question1" },
+            },
+          ],
+        },
+      };
+
+      const result = isUsedInQuota(quota, "question1");
+
+      expect(result).toBe(true);
+    });
+
+    test("handles condition without rightOperand", () => {
+      const quota = {
+        ...mockQuota,
+        conditions: {
+          connector: "and" as const,
+          criteria: [
+            {
+              id: "condition1",
+              leftOperand: { type: "question" as const, value: "question1" },
+              operator: "isSubmitted" as const,
+            },
+          ],
+        },
+      };
+
+      const result = isUsedInQuota(quota, "question1");
+
+      expect(result).toBe(true);
     });
   });
 });
