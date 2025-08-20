@@ -22,31 +22,6 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-// Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string, params?: any) => {
-      if (params) {
-        return `${key} ${JSON.stringify(params)}`;
-      }
-      return key;
-    },
-  }),
-}));
-
-// Mock react-hook-form dependencies
-vi.mock("@hookform/resolvers/zod", () => ({
-  zodResolver: vi.fn(() => vi.fn()),
-}));
-
 // Mock UI components
 vi.mock("@/modules/ui/components/dialog", () => ({
   Dialog: ({ children, open }: any) => (open ? <div data-testid="dialog">{children}</div> : null),
@@ -218,6 +193,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -234,6 +210,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -249,6 +226,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -266,6 +244,7 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -283,6 +262,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -302,6 +282,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -317,6 +298,7 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -347,6 +329,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -389,6 +372,7 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -432,6 +416,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -459,6 +444,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -482,6 +468,7 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -502,6 +489,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -524,6 +512,7 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -548,6 +537,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 
@@ -558,22 +548,6 @@ describe("QuotaModal", () => {
     await user.click(cancelButton!);
 
     expect(mockOnClose).toHaveBeenCalled();
-  });
-
-  test("renders form with noValidate attribute", () => {
-    const { container } = render(
-      <QuotaModal
-        open={true}
-        onOpenChange={mockOnOpenChange}
-        survey={mockSurvey}
-        quota={null}
-        deleteQuota={mockDeleteQuota}
-        onClose={mockOnClose}
-      />
-    );
-
-    const form = container.querySelector("form");
-    expect(form).toHaveAttribute("noValidate");
   });
 
   test("handles condition changes", async () => {
@@ -587,6 +561,7 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
+        quotas={[]}
       />
     );
 

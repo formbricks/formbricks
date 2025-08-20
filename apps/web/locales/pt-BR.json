@@ -1512,6 +1512,7 @@
           "count_partial_submissions_description": "Incluir respondentes que atendem aos critérios de cota, mas não completaram a pesquisa",
           "delete_quota_confirmation_text": "Isso irá apagar permanentemente a cota {quotaName}.",
           "delete_quota_confirmation_title": "Apagar cota?",
+          "duplicate_quota_name_toast": "Cota com o nome \"{name}\" já existe para esta pesquisa",
           "edit_quota": "Editar cota",
           "end_survey_for_matching_participants": "Encerrar a pesquisa para participantes correspondentes",
           "failed_to_create_quota_toast": "Falha ao criar a cota",

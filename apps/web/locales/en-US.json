@@ -1512,6 +1512,7 @@
           "count_partial_submissions_description": "Include respondents that match the quota criteria but did not complete the survey",
           "delete_quota_confirmation_text": "This will permanently delete the quota {quotaName}.",
           "delete_quota_confirmation_title": "Delete quota?",
+          "duplicate_quota_name_toast": "Quota with name \"{name}\" already exist for this survey",
           "edit_quota": "Edit quota",
           "end_survey_for_matching_participants": "End survey for matching participants",
           "failed_to_create_quota_toast": "Failed to create quota",

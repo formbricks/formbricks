@@ -1512,6 +1512,7 @@
           "count_partial_submissions_description": "包括符合配額標準但未完成問卷的受訪者",
           "delete_quota_confirmation_text": "這將永久刪除配額 {quotaName}。",
           "delete_quota_confirmation_title": "刪除 配額？",
+          "duplicate_quota_name_toast": "名字為 \"{name}\" 的 配額 已 存在 在 此 調查",
           "edit_quota": "編輯 配額",
           "end_survey_for_matching_participants": "結束問卷調查 對於 符合條件的參加者",
           "failed_to_create_quota_toast": "無法創建 配額",

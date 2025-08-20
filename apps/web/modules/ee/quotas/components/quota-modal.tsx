@@ -30,6 +30,7 @@ import {
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { PieChart, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -55,7 +56,7 @@ const quotaFormSchema = ZSurveyQuota.omit({
   surveyId: true,
 }).superRefine((data, ctx) => {
   // Validate ending card when action is endSurvey
-  if (data.action === "endSurvey" && data.endingCardId === null) {
+  if (data.action === "endSurvey" && (data.endingCardId === null || data.endingCardId === "")) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["action"],
@@ -72,16 +73,35 @@ interface QuotaModalProps {
   deleteQuota: (quota: TSurveyQuota) => void;
   quota?: TSurveyQuota | null;
   onClose: () => void;
+  quotas: TSurveyQuota[];
 }
 
-export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onClose }: QuotaModalProps) => {
+export const QuotaModal = ({
+  open,
+  onOpenChange,
+  survey,
+  quota,
+  deleteQuota,
+  onClose,
+  quotas,
+}: QuotaModalProps) => {
   const router = useRouter();
+  const isEditing = !!quota;
   const { t } = useTranslate();
   const defaultValues = useMemo(() => {
     return {
       name: quota?.name || "New Quota",
       limit: quota?.limit || 1,
-      conditions: quota?.conditions || { connector: "and", criteria: [] },
+      conditions: quota?.conditions || {
+        connector: "and",
+        criteria: [
+          {
+            id: createId(),
+            leftOperand: { type: "question", value: survey.questions[0]?.id },
+            operator: "equals",
+          },
+        ],
+      },
       action: quota?.action || "endSurvey",
       endingCardId: quota?.endingCardId || null,
       countPartialSubmissions: quota?.countPartialSubmissions || false,
@@ -91,7 +111,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
   const form = useForm<QuotaFormData>({
     defaultValues,
     resolver: zodResolver(quotaFormSchema),
-    mode: "onChange",
+    mode: "onSubmit",
     criteriaMode: "all",
   });
 
@@ -99,7 +119,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     handleSubmit,
     reset,
     watch,
-    formState: { isSubmitting, isDirty },
+    formState: { isSubmitting, isDirty, isValid },
   } = form;
 
   useEffect(() => {
@@ -130,6 +150,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     if (updateQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_updated_successfull_toast"));
       router.refresh();
+      onClose();
     } else {
       toast.error(t("environments.surveys.edit.quotas.failed_to_update_quota_toast"));
     }
@@ -139,6 +160,11 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
   const onSubmit = useCallback(
     async (data: QuotaFormData) => {
       if (!quota) {
+        // If creating a new quota, check if the name is already taken
+        if (quotas.some((q) => q.name === data.name)) {
+          toast.error(t("environments.surveys.edit.quotas.duplicate_quota_name_toast", { name: data.name }));
+          return;
+        }
         await handleQuotaCreated({
           surveyId: survey.id,
           name: data.name,
@@ -163,14 +189,12 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
         );
       }
     },
-    [quota, survey.id, reset]
+    [quota, survey.id, handleQuotaCreated, handleQuotaUpdate]
   );
-
-  const isEditing = !!quota;
 
   const handleConditionsChange = useCallback(
     (newConditions: TSurveyQuotaConditions) => {
-      form.setValue("conditions", newConditions, { shouldDirty: true });
+      form.setValue("conditions", newConditions, { shouldDirty: true, shouldValidate: true });
     },
     [form]
   );
@@ -188,20 +212,20 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent>
         <FormProvider {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-            <DialogHeader>
-              <PieChart className="h-5 w-5" />
-              <DialogTitle>
-                {isEditing
-                  ? t("environments.surveys.edit.quotas.edit_quota")
-                  : t("environments.surveys.edit.quotas.new_quota")}
-              </DialogTitle>
-              <DialogDescription>{t("common.quotas_description")}</DialogDescription>
-            </DialogHeader>
+          <DialogHeader>
+            <PieChart className="h-5 w-5" />
+            <DialogTitle>
+              {isEditing
+                ? t("environments.surveys.edit.quotas.edit_quota")
+                : t("environments.surveys.edit.quotas.new_quota")}
+            </DialogTitle>
+            <DialogDescription>{t("common.quotas_description")}</DialogDescription>
+          </DialogHeader>
 
-            <DialogBody className="space-y-6 px-1">
+          <DialogBody className="space-y-6 px-1">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Quota Name Field */}
               <FormField
                 control={form.control}
@@ -234,7 +258,6 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
                           {...field}
                           type="number"
                           min="1"
-                          max="1000000"
                           className="w-32 bg-white"
                           onChange={(e) => {
                             const value = e.target.value;
@@ -312,7 +335,16 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
                                 <EndingCardSelector
                                   survey={survey}
                                   value={endingCardField.value || ""}
-                                  onChange={endingCardField.onChange}
+                                  onChange={(value) => {
+                                    form.setValue("endingCardId", value, {
+                                      shouldDirty: true,
+                                      shouldValidate: true,
+                                    });
+                                    form.setValue("action", "endSurvey", {
+                                      shouldDirty: true,
+                                      shouldValidate: true,
+                                    });
+                                  }}
                                 />
                               </FormControl>
                             </div>
@@ -344,42 +376,46 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
                   </FormItem>
                 )}
               />
-            </DialogBody>
+            </form>
+          </DialogBody>
 
-            {/* Footer */}
-            <DialogFooter className="flex justify-between">
-              <div>
-                {isEditing ? (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() => {
-                      deleteQuota(quota);
-                      onClose();
-                    }}
-                    className="flex items-center gap-2"
-                    disabled={isSubmitting}>
-                    <Trash2Icon className="h-4 w-4" />
-                    {t("common.delete")}
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      reset();
-                      onClose();
-                    }}
-                    disabled={isSubmitting}>
-                    {t("common.cancel")}
-                  </Button>
-                )}
-              </div>
-              <Button type="submit" loading={isSubmitting} disabled={isSubmitting || !isDirty}>
-                {t("environments.surveys.edit.quotas.save_quota")}
-              </Button>
-            </DialogFooter>
-          </form>
+          {/* Footer */}
+          <DialogFooter className="flex justify-between">
+            <div>
+              {isEditing ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    deleteQuota(quota);
+                    onClose();
+                  }}
+                  className="flex items-center gap-2"
+                  disabled={isSubmitting}>
+                  <Trash2Icon className="h-4 w-4" />
+                  {t("common.delete")}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    reset();
+                    onClose();
+                  }}
+                  disabled={isSubmitting}>
+                  {t("common.cancel")}
+                </Button>
+              )}
+            </div>
+            <Button
+              type="submit"
+              loading={isSubmitting}
+              disabled={isSubmitting || !isDirty || !isValid}
+              onClick={form.handleSubmit(onSubmit)}>
+              {t("environments.surveys.edit.quotas.save_quota")}
+            </Button>
+          </DialogFooter>
         </FormProvider>
       </DialogContent>
     </Dialog>

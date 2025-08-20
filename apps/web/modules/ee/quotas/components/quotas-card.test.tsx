@@ -12,33 +12,12 @@ vi.mock("@/modules/ee/quotas/actions", () => ({
   deleteQuotaAction: vi.fn(),
 }));
 
-// Mock Next.js router
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    refresh: vi.fn(),
-    push: vi.fn(),
-    replace: vi.fn(),
-  }),
-}));
-
 // Mock react-hot-toast
 vi.mock("react-hot-toast", () => ({
   default: {
     success: vi.fn(),
     error: vi.fn(),
   },
-}));
-
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string, params?: any) => {
-      if (params) {
-        return `${key} ${JSON.stringify(params)}`;
-      }
-      return key;
-    },
-  }),
 }));
 
 // Mock @formkit/auto-animate/react
@@ -151,7 +130,7 @@ describe("QuotasCard", () => {
         inputType: "text",
       },
     ],
-  } as TSurvey;
+  } as unknown as TSurvey;
 
   const mockQuotas: TSurveyQuota[] = [
     {
@@ -162,7 +141,6 @@ describe("QuotasCard", () => {
       conditions: { connector: "and", criteria: [] },
       action: "endSurvey",
       endingCardId: null,
-      redirectUrl: null,
       countPartialSubmissions: false,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -175,7 +153,6 @@ describe("QuotasCard", () => {
       conditions: { connector: "or", criteria: [] },
       action: "continueSurvey",
       endingCardId: "ending1",
-      redirectUrl: null,
       countPartialSubmissions: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -217,7 +194,6 @@ describe("QuotasCard", () => {
   test("shows no quotas message when enabled but no quotas exist", () => {
     render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={[]} />);
 
-    expect(screen.getByText("environments.surveys.edit.quotas.no_quotas_description")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.quotas.add_quota")).toBeInTheDocument();
   });
 
@@ -275,7 +251,7 @@ describe("QuotasCard", () => {
   test("deletes quota when confirmed", async () => {
     const user = userEvent.setup();
 
-    vi.mocked(deleteQuotaAction).mockResolvedValue({ data: { success: true } });
+    vi.mocked(deleteQuotaAction).mockResolvedValue({ data: mockQuotas[0], serverError: undefined });
 
     render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
 
@@ -298,7 +274,7 @@ describe("QuotasCard", () => {
   test("shows success toast on successful delete", async () => {
     const user = userEvent.setup();
 
-    vi.mocked(deleteQuotaAction).mockResolvedValue({ data: { success: true } });
+    vi.mocked(deleteQuotaAction).mockResolvedValue({ data: mockQuotas[0], serverError: undefined });
 
     render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
 
@@ -318,7 +294,7 @@ describe("QuotasCard", () => {
   test("shows error toast on failed delete", async () => {
     const user = userEvent.setup();
 
-    vi.mocked(deleteQuotaAction).mockResolvedValue({ data: null, error: "Failed" });
+    vi.mocked(deleteQuotaAction).mockResolvedValue({ serverError: "Failed" });
 
     render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
 
@@ -412,7 +388,10 @@ describe("QuotasCard", () => {
 
     // Make delete action slow
     vi.mocked(deleteQuotaAction).mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ data: { success: true } }), 1000))
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ data: mockQuotas[0], serverError: undefined }), 1000)
+        )
     );
 
     render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);

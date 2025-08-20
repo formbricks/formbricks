@@ -1512,6 +1512,7 @@
           "count_partial_submissions_description": "Includeți respondenții care îndeplinesc criteriile de cotă dar nu au completat sondajul",
           "delete_quota_confirmation_text": "Acest lucru va șterge definitiv cota {quotaName}.",
           "delete_quota_confirmation_title": "Șterge cota?",
+          "duplicate_quota_name_toast": "Cota cu numele \"{name}\" există deja pentru acest sondaj",
           "edit_quota": "Editează cota",
           "end_survey_for_matching_participants": "Încheiere sondaj pentru participanții eligibili",
           "failed_to_create_quota_toast": "Eșec la crearea cotei",

@@ -113,9 +113,7 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
                   <QuotaList quotas={quotas} onEdit={handleEditQuota} deleteQuota={setQuotaToDelete} />
                 ) : (
                   <div className="rounded-lg border p-3 text-center">
-                    <p className="mb-4 text-sm text-slate-600">
-                      {t("environments.surveys.edit.quotas.no_quotas_description")}
-                    </p>
+                    <p className="mb-4 text-sm text-slate-600">{t("common.quotas_description")}</p>
                     <Button variant="secondary" size="sm" onClick={() => setIsQuotaModalOpen(true)}>
                       <PlusIcon className="mr-2 h-4 w-4" />
                       {t("environments.surveys.edit.quotas.add_quota")}
@@ -154,6 +152,7 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
             setIsQuotaModalOpen(false);
             setActiveQuota(null);
           }}
+          quotas={quotas}
         />
       )}
       <ConfirmationModal

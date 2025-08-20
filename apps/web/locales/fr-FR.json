@@ -1512,6 +1512,7 @@
           "count_partial_submissions_description": "Inclure les répondants qui correspondent aux critères de quota mais n'ont pas terminé le sondage",
           "delete_quota_confirmation_text": "Cela supprimera définitivement le quota {quotaName}.",
           "delete_quota_confirmation_title": "Supprimer le quota ?",
+          "duplicate_quota_name_toast": "Le quota avec le nom \"{name}\" existe déjà pour ce sondage",
           "edit_quota": "Modifier le quota",
           "end_survey_for_matching_participants": "Terminer l'enquête pour les participants correspondants",
           "failed_to_create_quota_toast": "Échec de la création du quota",

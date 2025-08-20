@@ -1,9 +1,8 @@
 "use client";
 
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
-import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { TSurveyQuotaConditions } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -40,24 +39,6 @@ export const QuotaConditionBuilder = ({ survey, conditions, onChange }: QuotaCon
     () => createQuotaConditionsCallbacks(genericConditions, handleGenericChange),
     [genericConditions, handleGenericChange]
   );
-
-  // Initialize first condition on mount if empty
-  useEffect(() => {
-    if (conditions.criteria.length === 0 && survey.questions.length > 0) {
-      const firstQuestion = survey.questions[0];
-      const newConditions: TSurveyQuotaConditions = {
-        connector: "and",
-        criteria: [
-          {
-            id: createId(),
-            leftOperand: { type: "question", value: firstQuestion.id },
-            operator: "equals",
-          },
-        ],
-      };
-      onChange(newConditions);
-    }
-  }, [survey.questions, conditions.criteria.length, onChange]);
 
   return (
     <div className="space-y-4">

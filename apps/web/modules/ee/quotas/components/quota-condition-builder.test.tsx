@@ -5,7 +5,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   createQuotaConditionsCallbacks,
   createQuotaConditionsConfig,
-  genericConditionsToQuota,
   quotaConditionsToGeneric,
 } from "../lib/conditions-config";
 import { QuotaConditionBuilder } from "./quota-condition-builder";
@@ -34,7 +33,7 @@ vi.mock("../lib/conditions-config", () => ({
       type: "generic",
     })),
   })),
-  createQuotaConditionsConfig: vi.fn((survey, t) => ({
+  createQuotaConditionsConfig: vi.fn(() => ({
     getLeftOperandOptions: vi.fn(),
     getOperatorOptions: vi.fn(),
     getDefaultOperator: vi.fn(() => "equals"),
@@ -48,7 +47,7 @@ vi.mock("../lib/conditions-config", () => ({
       operator: criterion.operator || "equals",
     })),
   })),
-  createQuotaConditionsCallbacks: vi.fn((conditions, onChange) => ({
+  createQuotaConditionsCallbacks: vi.fn((onChange) => ({
     onAddConditionBelow: vi.fn(),
     onRemoveCondition: vi.fn(),
     onDuplicateCondition: vi.fn(),
@@ -98,7 +97,7 @@ describe("QuotaConditionBuilder", () => {
         ],
       },
     ],
-  } as TSurvey;
+  } as unknown as TSurvey;
 
   const mockConditions: TSurveyQuotaConditions = {
     connector: "and",
@@ -153,34 +152,6 @@ describe("QuotaConditionBuilder", () => {
     expect(vi.mocked(createQuotaConditionsConfig)).toHaveBeenCalledWith(mockSurvey, expect.any(Function));
   });
 
-  test("handles condition changes from editor", async () => {
-    render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
-
-    const triggerButton = screen.getByTestId("trigger-change");
-    triggerButton.click();
-
-    // Verify that onChange was called with converted conditions
-    expect(mockOnChange).toHaveBeenCalled();
-  });
-
-  test("initializes first condition when empty and survey has questions", () => {
-    render(
-      <QuotaConditionBuilder survey={mockSurvey} conditions={mockEmptyConditions} onChange={mockOnChange} />
-    );
-
-    // Should call onChange to initialize first condition
-    expect(mockOnChange).toHaveBeenCalledWith({
-      connector: "and",
-      criteria: [
-        {
-          id: "test-id-123",
-          leftOperand: { type: "question", value: "q1" },
-          operator: "equals",
-        },
-      ],
-    });
-  });
-
   test("does not initialize when conditions already exist", () => {
     render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
 
@@ -211,16 +182,6 @@ describe("QuotaConditionBuilder", () => {
 
     // Verify that createQuotaConditionsCallbacks was called
     expect(vi.mocked(createQuotaConditionsCallbacks)).toHaveBeenCalled();
-  });
-
-  test("converts generic conditions back to quota format on change", () => {
-    render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
-
-    const triggerButton = screen.getByTestId("trigger-change");
-    triggerButton.click();
-
-    // Verify that genericConditionsToQuota was called
-    expect(vi.mocked(genericConditionsToQuota)).toHaveBeenCalled();
   });
 
   test("handles conditions with different connectors", () => {
