@@ -13,7 +13,7 @@ const meta: Meta<StoryProps> = {
     docs: {
       description: {
         component:
-          "The **Logo** component displays the Formbricks logo with scalable SVG graphics. It includes both the variant, image or wordmark, perfect for headers, navigation, and branding areas.",
+          "** Logo ** renders the Formbricks brand as scalable SVG.It supports two variants('image' and 'wordmark') and is suitable for headers, navigation, and other branding areas.",
       },
     },
   },
