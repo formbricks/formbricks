@@ -547,6 +547,9 @@ importers:
       redis:
         specifier: 5.8.1
         version: 5.8.1
+      zod:
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*

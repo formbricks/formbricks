@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { type RedisClient, createCacheService, createRedisClientFromEnv } from "./index";
+import { type RedisClient, createCacheService, createRedisClientFromEnv } from "./factory";
 
 // Mock the redis module
 vi.mock("redis", () => ({
@@ -58,7 +58,8 @@ describe("@formbricks/cache factory", () => {
 
       const service = await createCacheService(mockClient as unknown as RedisClient);
       expect(service).toBeDefined();
-      expect(service).toBe(mockClient);
+      expect(service.constructor.name).toBe("CacheService");
+      expect(mockClient.connect).not.toHaveBeenCalled();
     });
 
     test("should connect client if not open", async () => {
@@ -68,7 +69,9 @@ describe("@formbricks/cache factory", () => {
         connect: vi.fn().mockResolvedValue(undefined),
       };
 
-      await createCacheService(mockClient as unknown as RedisClient);
+      const service = await createCacheService(mockClient as unknown as RedisClient);
+      expect(service).toBeDefined();
+      expect(service.constructor.name).toBe("CacheService");
       expect(mockClient.connect).toHaveBeenCalled();
     });
   });

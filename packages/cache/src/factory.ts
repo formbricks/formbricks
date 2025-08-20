@@ -1,5 +1,6 @@
 import { type RedisClientType, createClient } from "redis";
 import { logger } from "@formbricks/logger";
+import { CacheService } from "./service";
 
 export type RedisClient = RedisClientType;
 
@@ -60,7 +61,7 @@ export function createRedisClientFromEnv(): RedisClient {
  * @param redis - Optional Redis client. If not provided, creates one from environment
  * @returns Promise that resolves to a CacheService instance
  */
-export async function createCacheService(redis?: RedisClient): Promise<RedisClient> {
+export async function createCacheService(redis?: RedisClient): Promise<CacheService> {
   const client = redis ?? createRedisClientFromEnv();
 
   if (!client.isOpen) {
@@ -73,5 +74,5 @@ export async function createCacheService(redis?: RedisClient): Promise<RedisClie
     }
   }
 
-  return client;
+  return new CacheService(client);
 }
