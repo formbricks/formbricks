@@ -11,9 +11,9 @@ export default defineConfig({
       fileName: "index",
       formats: ["es", "cjs"],
     },
-    // rollupOptions: {
-    //   external: ["@aws-sdk/client-s3", "@aws-sdk/s3-presigned-post", "@aws-sdk/s3-request-presigner"],
-    // },
+    rollupOptions: {
+      external: ["@aws-sdk/client-s3", "@aws-sdk/s3-presigned-post", "@aws-sdk/s3-request-presigner"],
+    },
   },
   test: {
     environment: "node",

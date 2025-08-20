@@ -32,6 +32,7 @@
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
     "build": "tsc && vite build",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "go": "vite build --watch --mode dev"
   },
   "author": "Formbricks <hola@formbricks.com>",
