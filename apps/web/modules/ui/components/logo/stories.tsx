@@ -1,11 +1,7 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
 import { Logo } from "./index";
 
-interface StoryOptions {
-  showLabel: boolean;
-}
-
-type StoryProps = React.ComponentProps<typeof Logo> & StoryOptions;
+type StoryProps = React.ComponentProps<typeof Logo>;
 
 const meta: Meta<StoryProps> = {
   title: "UI/Logo",
@@ -17,20 +13,21 @@ const meta: Meta<StoryProps> = {
     docs: {
       description: {
         component:
-          "The **Logo** component displays the Formbricks wordmark logo with scalable SVG graphics. It includes both the brand icon and text, perfect for headers, navigation, and branding areas.",
+          "The **Logo** component displays the Formbricks logo with scalable SVG graphics. It includes both the variant, image or wordmark, perfect for headers, navigation, and branding areas.",
       },
     },
   },
   argTypes: {
-    showLabel: {
-      control: "boolean",
-      description: "Show descriptive label below logo",
+    variant: {
+      control: "select",
+      options: ["image", "wordmark"],
+      description: "The variant of the logo to display",
       table: {
         category: "Appearance",
-        type: { summary: "boolean" },
-        defaultValue: { summary: "false" },
+        type: { summary: "string" },
+        defaultValue: { summary: "wordmark" },
       },
-      order: 2,
+      order: 1,
     },
     className: {
       control: "text",
@@ -48,34 +45,30 @@ export default meta;
 type Story = StoryObj<StoryProps>;
 
 const renderLogoWithOptions = (args: StoryProps) => {
-  const { showLabel, ...logoProps } = args;
+  const { ...logoProps } = args;
 
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <Logo {...logoProps} />
-      {showLabel && <p className={`text-sm font-medium`}>Formbricks Wordmark Logo</p>}
-    </div>
-  );
+  return <Logo {...logoProps} />;
 };
 
 export const Default: Story = {
   render: renderLogoWithOptions,
   args: {
-    showLabel: false,
     className: "h-20",
   },
 };
 
-export const WithLabel: Story = {
+export const Image: Story = {
   render: renderLogoWithOptions,
   args: {
-    showLabel: true,
+    className: "h-20",
+    variant: "image",
   },
-  parameters: {
-    docs: {
-      description: {
-        story: "Logo with descriptive label for better context in design documentation.",
-      },
-    },
+};
+
+export const Wordmark: Story = {
+  render: renderLogoWithOptions,
+  args: {
+    className: "h-20",
+    variant: "wordmark",
   },
 };

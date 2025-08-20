@@ -11,7 +11,7 @@ export const FormWrapper = ({ children }: FormWrapperProps) => {
       <div className="mx-auto w-full max-w-sm rounded-xl bg-white p-8 shadow-xl lg:w-96">
         <div className="mb-8 text-center">
           <Link target="_blank" href="https://formbricks.com?utm_source=ce" rel="noopener noreferrer">
-            <Logo className="mx-auto w-3/4" />
+            <Logo className="mx-auto w-3/4" variant="wordmark" />
           </Link>
         </div>
         {children}
