@@ -12,6 +12,7 @@ import {
   getConditionOperatorOptions,
   getConditionValueOptions,
   getDefaultOperatorForQuestion,
+  getFormatLeftOperandValue,
   getMatchValueProps,
 } from "@/modules/survey/editor/lib/utils";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
@@ -52,21 +53,11 @@ export function LogicEditorConditions({
   const { t } = useTranslate();
 
   const config: TConditionsEditorConfig<TSingleCondition> = {
-    getLeftOperandOptions: () => getConditionValueOptions(localSurvey, questionIdx, t),
+    getLeftOperandOptions: () => getConditionValueOptions(localSurvey, t, questionIdx),
     getOperatorOptions: (condition) => getConditionOperatorOptions(condition, localSurvey, t),
-    getValueProps: (condition) => getMatchValueProps(condition, localSurvey, questionIdx, t),
+    getValueProps: (condition) => getMatchValueProps(condition, localSurvey, t, questionIdx),
     getDefaultOperator: () => getDefaultOperatorForQuestion(question, t),
-    formatLeftOperandValue: (condition) => {
-      if (condition.leftOperand.type === "question") {
-        const questionEntity = localSurvey.questions.find((q) => q.id === condition.leftOperand.value);
-        if (questionEntity && questionEntity.type === TSurveyQuestionTypeEnum.Matrix) {
-          if (condition.leftOperand?.meta?.row !== undefined) {
-            return `${condition.leftOperand.value}.${condition.leftOperand.meta.row}`;
-          }
-        }
-      }
-      return condition.leftOperand.value;
-    },
+    formatLeftOperandValue: (condition) => getFormatLeftOperandValue(condition, localSurvey),
   };
 
   const callbacks: TConditionsEditorCallbacks<TSingleCondition> = {

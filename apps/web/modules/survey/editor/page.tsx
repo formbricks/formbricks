@@ -9,9 +9,11 @@ import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attri
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   getIsContactsEnabled,
+  getIsQuotasEnabled,
   getIsSpamProtectionEnabled,
   getMultiLanguagePermission,
 } from "@/modules/ee/license-check/lib/utils";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
@@ -68,7 +70,8 @@ export const SurveyEditorPage = async (props) => {
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
   const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organizationBilling.plan);
   const isSpamProtectionAllowed = await getIsSpamProtectionEnabled(organizationBilling.plan);
-
+  const isQuotasAllowed = await getIsQuotasEnabled();
+  const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
   const userEmail = await getUserEmail(session.user.id);
   const projectLanguages = await getProjectLanguages(projectWithTeamIds.id);
 
@@ -113,6 +116,8 @@ export const SurveyEditorPage = async (props) => {
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
       userEmail={userEmail}
       teamMemberDetails={teamMemberDetails}
+      isQuotasAllowed={isQuotasAllowed}
+      quotas={quotas}
     />
   );
 };

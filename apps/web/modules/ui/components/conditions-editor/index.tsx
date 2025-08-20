@@ -231,11 +231,13 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
               icon={<CopyIcon className="h-4 w-4" />}>
               {t("common.duplicate")}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => callbacks.onCreateGroup(condition.id)}
-              icon={<WorkflowIcon className="h-4 w-4" />}>
-              {t("environments.surveys.edit.create_group")}
-            </DropdownMenuItem>
+            {callbacks.onCreateGroup && (
+              <DropdownMenuItem
+                onClick={() => callbacks.onCreateGroup?.(condition.id)}
+                icon={<WorkflowIcon className="h-4 w-4" />}>
+                {t("environments.surveys.edit.create_group")}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
