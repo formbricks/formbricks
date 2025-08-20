@@ -113,7 +113,7 @@ export const getConditionValueOptions = (
   const questionOptions: TComboboxOption[] = [];
 
   questions
-    .filter((_, idx) => (currQuestionIdx ? idx <= currQuestionIdx : true))
+    .filter((_, idx) => (typeof currQuestionIdx === "undefined" ? true : idx <= currQuestionIdx))
     .forEach((question) => {
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         // Rows submenu

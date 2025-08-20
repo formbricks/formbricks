@@ -431,7 +431,7 @@ describe("Survey Editor Utils", () => {
   describe("getConditionValueOptions", () => {
     test("returns grouped options with questions, variables and hidden fields", () => {
       const survey = createMockSurvey();
-      const result = getConditionValueOptions(survey, 2, mockT);
+      const result = getConditionValueOptions(survey, mockT, 2);
 
       expect(result).toHaveLength(3); // questions, variables, hidden fields
 
@@ -450,7 +450,7 @@ describe("Survey Editor Utils", () => {
 
     test("handles matrix questions properly", () => {
       const survey = createMockSurvey();
-      const result = getConditionValueOptions(survey, 9, mockT);
+      const result = getConditionValueOptions(survey, mockT, 9);
 
       // Find matrix question options
       const matrixOptions = result[0].options.filter(
@@ -463,8 +463,8 @@ describe("Survey Editor Utils", () => {
     test("filters questions correctly based on the current question index", () => {
       const survey = createMockSurvey();
       // Check with different current question indexes
-      const result1 = getConditionValueOptions(survey, 0, mockT);
-      const result9 = getConditionValueOptions(survey, 9, mockT);
+      const result1 = getConditionValueOptions(survey, mockT, 0);
+      const result9 = getConditionValueOptions(survey, mockT, 9);
 
       // First question should only have itself
       expect(result1[0].options.length).toBe(1);
@@ -634,7 +634,7 @@ describe("Survey Editor Utils", () => {
         operator: "isSkipped",
       };
 
-      const result = getMatchValueProps(condition, survey, 5, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 5);
 
       expect(result.show).toBe(false);
     });
@@ -646,7 +646,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "question", value: "question1" },
       };
 
-      const result = getMatchValueProps(condition, survey, 5, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 5);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(true);
@@ -660,7 +660,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "question", value: "question3" },
       };
 
-      const result = getMatchValueProps(condition, survey, 5, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 5);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(false);
@@ -674,7 +674,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "question", value: "question9" },
       };
 
-      const result = getMatchValueProps(condition, survey, 9, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 9);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(false);
@@ -688,7 +688,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "question", value: "question2" },
       };
 
-      const result = getMatchValueProps(condition, survey, 5, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 5);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(false);
@@ -702,7 +702,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "question", value: "question7" },
       };
 
-      const result = getMatchValueProps(condition, survey, 7, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 7);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(false);
@@ -716,7 +716,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "question", value: "question5" },
       };
 
-      const result = getMatchValueProps(condition, survey, 5, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 5);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(true);
@@ -730,7 +730,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "question", value: "question10" },
       };
 
-      const result = getMatchValueProps(condition, survey, 9, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 9);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(false);
@@ -744,7 +744,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "variable", value: "var1" },
       };
 
-      const result = getMatchValueProps(condition, survey, 5, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 5);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(true);
@@ -758,7 +758,7 @@ describe("Survey Editor Utils", () => {
         leftOperand: { type: "variable", value: "var2" },
       };
 
-      const result = getMatchValueProps(condition, survey, 5, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 5);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(true);
@@ -769,7 +769,7 @@ describe("Survey Editor Utils", () => {
       const survey = createMockSurvey();
       const condition = createMockCondition("hiddenField");
 
-      const result = getMatchValueProps(condition, survey, 5, mockT);
+      const result = getMatchValueProps(condition, survey, mockT, 5);
 
       expect(result.show).toBe(true);
       expect(result.showInput).toBe(true);
