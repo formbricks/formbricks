@@ -80,23 +80,22 @@ export const AddApiKeyModal = ({
   const [selectedOrganizationAccess, setSelectedOrganizationAccess] =
     useState<TOrganizationAccess>(defaultOrganizationAccess);
 
-  const getInitialPermissions = () => {
+  const getInitialPermissions = (): PermissionRecord[] => {
     if (projects.length > 0 && projects[0].environments.length > 0) {
-      return {
-        "permission-0": {
+      return [
+        {
           projectId: projects[0].id,
           environmentId: projects[0].environments[0].id,
           permission: ApiKeyPermission.read,
           projectName: projects[0].name,
           environmentType: projects[0].environments[0].type,
         },
-      };
+      ];
     }
-    return {} as Record<string, PermissionRecord>;
+    return [];
   };
 
-  // Initialize with one permission by default
-  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>({});
+  const [selectedPermissions, setSelectedPermissions] = useState<PermissionRecord[]>([]);
 
   const projectOptions: ProjectOption[] = projects.map((project) => ({
     id: project.id,
@@ -104,58 +103,54 @@ export const AddApiKeyModal = ({
   }));
 
   const removePermission = (index: number) => {
-    const updatedPermissions = { ...selectedPermissions };
-    delete updatedPermissions[`permission-${index}`];
+    const updatedPermissions = [...selectedPermissions];
+    updatedPermissions.splice(index, 1);
     setSelectedPermissions(updatedPermissions);
   };
 
   const addPermission = () => {
-    const newIndex = Object.keys(selectedPermissions).length;
-    const initialPermission = getInitialPermissions()["permission-0"];
-    if (initialPermission) {
-      setSelectedPermissions({
-        ...selectedPermissions,
-        [`permission-${newIndex}`]: initialPermission,
-      });
+    const initialPermissions = getInitialPermissions();
+    if (initialPermissions.length > 0) {
+      setSelectedPermissions([...selectedPermissions, initialPermissions[0]]);
     }
   };
 
-  const updatePermission = (key: string, field: string, value: string) => {
-    const project = projects.find((p) => p.id === selectedPermissions[key].projectId);
+  const updatePermission = (index: number, field: string, value: string) => {
+    const updatedPermissions = [...selectedPermissions];
+    const project = projects.find((p) => p.id === updatedPermissions[index].projectId);
     const environment = project?.environments.find((env) => env.id === value);
 
-    setSelectedPermissions({
-      ...selectedPermissions,
-      [key]: {
-        ...selectedPermissions[key],
-        [field]: value,
-        ...(field === "environmentId" && environment ? { environmentType: environment.type } : {}),
-      },
-    });
+    updatedPermissions[index] = {
+      ...updatedPermissions[index],
+      [field]: value,
+      ...(field === "environmentId" && environment ? { environmentType: environment.type } : {}),
+    };
+
+    setSelectedPermissions(updatedPermissions);
   };
 
   // Update environment when project changes
-  const updateProjectAndEnvironment = (key: string, projectId: string) => {
+  const updateProjectAndEnvironment = (index: number, projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     if (project && project.environments.length > 0) {
       const environment = project.environments[0];
-      setSelectedPermissions({
-        ...selectedPermissions,
-        [key]: {
-          ...selectedPermissions[key],
-          projectId,
-          environmentId: environment.id,
-          projectName: project.name,
-          environmentType: environment.type,
-        },
-      });
+      const updatedPermissions = [...selectedPermissions];
+
+      updatedPermissions[index] = {
+        ...updatedPermissions[index],
+        projectId,
+        environmentId: environment.id,
+        projectName: project.name,
+        environmentType: environment.type,
+      };
+
+      setSelectedPermissions(updatedPermissions);
     }
   };
 
   const checkForDuplicatePermissions = () => {
-    const permissions = Object.values(selectedPermissions);
-    const uniquePermissions = new Set(permissions.map((p) => `${p.projectId}-${p.environmentId}`));
-    return uniquePermissions.size !== permissions.length;
+    const uniquePermissions = new Set(selectedPermissions.map((p) => `${p.projectId}-${p.environmentId}`));
+    return uniquePermissions.size !== selectedPermissions.length;
   };
 
   const submitAPIKey = async () => {
@@ -167,7 +162,7 @@ export const AddApiKeyModal = ({
     }
 
     // Convert permissions to the format expected by the API
-    const environmentPermissions = Object.values(selectedPermissions).map((permission) => ({
+    const environmentPermissions = selectedPermissions.map((permission) => ({
       environmentId: permission.environmentId,
       permission: permission.permission,
     }));
@@ -179,7 +174,7 @@ export const AddApiKeyModal = ({
     });
 
     reset();
-    setSelectedPermissions({});
+    setSelectedPermissions([]);
     setSelectedOrganizationAccess(defaultOrganizationAccess);
   };
 
@@ -196,7 +191,7 @@ export const AddApiKeyModal = ({
     }
 
     // Check if at least one project permission is set or one organization access toggle is ON
-    const hasProjectAccess = Object.keys(selectedPermissions).length > 0;
+    const hasProjectAccess = selectedPermissions.length > 0;
 
     const hasOrganizationAccess = Object.values(selectedOrganizationAccess).some((accessGroup) =>
       Object.values(accessGroup).some((value) => value === true)
@@ -235,13 +230,9 @@ export const AddApiKeyModal = ({
             <div className="space-y-2">
               <Label>{t("environments.project.api_keys.project_access")}</Label>
               <div className="space-y-2">
-                {/* Permission rows */}
-                {Object.keys(selectedPermissions).map((key) => {
-                  const permissionIndex = parseInt(key.split("-")[1]);
-                  const permission = selectedPermissions[key];
+                {selectedPermissions.map((permission, index) => {
                   return (
-                    <div key={key} className="flex items-center gap-2">
-                      {/* Project dropdown */}
+                    <div key={index + permission.projectId} className="flex items-center gap-2">
                       <div className="w-1/3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -261,7 +252,7 @@ export const AddApiKeyModal = ({
                               <DropdownMenuItem
                                 key={option.id}
                                 onClick={() => {
-                                  updateProjectAndEnvironment(key, option.id);
+                                  updateProjectAndEnvironment(index, option.id);
                                 }}>
                                 {option.name}
                               </DropdownMenuItem>
@@ -269,8 +260,6 @@ export const AddApiKeyModal = ({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-
-                      {/* Environment dropdown */}
                       <div className="w-1/3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -292,7 +281,7 @@ export const AddApiKeyModal = ({
                               <DropdownMenuItem
                                 key={env.id}
                                 onClick={() => {
-                                  updatePermission(key, "environmentId", env.id);
+                                  updatePermission(index, "environmentId", env.id);
                                 }}>
                                 {env.type}
                               </DropdownMenuItem>
@@ -300,8 +289,6 @@ export const AddApiKeyModal = ({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-
-                      {/* Permission level dropdown */}
                       <div className="w-1/3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -323,7 +310,7 @@ export const AddApiKeyModal = ({
                               <DropdownMenuItem
                                 key={option}
                                 onClick={() => {
-                                  updatePermission(key, "permission", option);
+                                  updatePermission(index, "permission", option);
                                 }}>
                                 {option}
                               </DropdownMenuItem>
@@ -331,16 +318,16 @@ export const AddApiKeyModal = ({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-
-                      {/* Delete button */}
-                      <button type="button" className="p-2" onClick={() => removePermission(permissionIndex)}>
+                      <button
+                        type="button"
+                        className="p-2"
+                        onClick={() => removePermission(index)}
+                        aria-label={t("environments.project.api_keys.delete_permission")}>
                         <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
                       </button>
                     </div>
                   );
                 })}
-
-                {/* Add permission button */}
                 <Button type="button" variant="outline" onClick={addPermission}>
                   <span className="mr-2">+</span> {t("environments.settings.api_keys.add_permission")}
                 </Button>
@@ -397,7 +384,7 @@ export const AddApiKeyModal = ({
               onClick={() => {
                 setOpen(false);
                 reset();
-                setSelectedPermissions({});
+                setSelectedPermissions([]);
               }}>
               {t("common.cancel")}
             </Button>
