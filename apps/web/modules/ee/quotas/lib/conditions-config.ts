@@ -22,8 +22,7 @@ export function createQuotaConditionsConfig(
 ): TConditionsEditorConfig<TSingleCondition> {
   return {
     getLeftOperandOptions: () => getConditionValueOptions(survey, t),
-    getOperatorOptions: (condition: TSingleCondition) =>
-      getConditionOperatorOptions(condition as TSingleCondition, survey, t),
+    getOperatorOptions: (condition: TSingleCondition) => getConditionOperatorOptions(condition, survey, t),
     getValueProps: (condition: TSingleCondition) => getMatchValueProps(condition, survey, t),
     getDefaultOperator: () => "equals",
     formatLeftOperandValue: (condition) => getFormatLeftOperandValue(condition, survey),
@@ -99,7 +98,7 @@ export function genericConditionsToQuota(genericConditions: TQuotaConditionGroup
 
     // Convert back from string arrays if needed
     if (Array.isArray(rightOperand)) {
-      rightOperand = rightOperand as string[];
+      rightOperand = rightOperand;
     } else if (typeof rightOperand === "string" && rightOperand !== "") {
       // Try to parse numbers
       const numValue = Number(rightOperand);
@@ -111,7 +110,7 @@ export function genericConditionsToQuota(genericConditions: TQuotaConditionGroup
     return {
       id: condition.id,
       leftOperand: {
-        type: condition.leftOperand.type as "question" | "hiddenField" | "variable",
+        type: condition.leftOperand.type,
         value: condition.leftOperand.value,
       },
       operator: condition.operator,
@@ -135,7 +134,7 @@ export function genericConditionsToQuota(genericConditions: TQuotaConditionGroup
         result.push(...flattenConditions(item as TQuotaConditionGroup));
       } else {
         // It's a condition
-        result.push(item as TSingleCondition);
+        result.push(item);
       }
     }
 
