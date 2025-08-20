@@ -41,8 +41,8 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@/modules/ui/components/formbricks-logo", () => ({
-  FormbricksLogo: () => <div data-testid="formbricks-logo">FormbricksLogo</div>,
+vi.mock("@/modules/ui/components/logo", () => ({
+  Logo: () => <div data-testid="logo">Logo</div>,
 }));
 
 vi.mock("@/modules/ui/components/button", () => ({
