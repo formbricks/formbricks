@@ -12,7 +12,12 @@ export default defineConfig({
       formats: ["es", "cjs"],
     },
     rollupOptions: {
-      external: ["@aws-sdk/client-s3", "@aws-sdk/s3-presigned-post", "@aws-sdk/s3-request-presigner"],
+      external: [
+        "@aws-sdk/client-s3",
+        "@aws-sdk/s3-presigned-post",
+        "@aws-sdk/s3-request-presigner",
+        "@formbricks/logger",
+      ],
     },
   },
   test: {
@@ -20,6 +25,8 @@ export default defineConfig({
     globals: true,
     coverage: {
       reporter: ["text", "json", "html", "lcov"],
+      exclude: ["src/types/**"],
+      include: ["src/**/*.ts"],
     },
   },
   plugins: [dts({ rollupTypes: true }) as PluginOption],

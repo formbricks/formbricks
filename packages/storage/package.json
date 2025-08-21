@@ -4,7 +4,6 @@
   "type": "module",
   "version": "0.1.0",
   "homepage": "https://formbricks.com",
-  "license": "MIT",
   "description": "Storage Controller for Formbricks",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,8 +26,8 @@
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
-    "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
     "build": "tsc && vite build",
     "test": "vitest run",
@@ -37,6 +36,7 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
+    "@formbricks/logger": "workspace:*",
     "@aws-sdk/client-s3": "3.864.0",
     "@aws-sdk/s3-presigned-post": "3.864.0",
     "@aws-sdk/s3-request-presigner": "3.864.0"

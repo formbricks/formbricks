@@ -42,6 +42,18 @@
       "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
     },
+    "@formbricks/storage#build": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/storage#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/storage#test": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/storage#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/surveys#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]

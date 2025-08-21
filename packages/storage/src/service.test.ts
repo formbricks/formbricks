@@ -36,16 +36,13 @@ describe("service.ts", () => {
   });
 
   const mockConstants = {
-    IS_FORMBRICKS_CLOUD: false,
-    MAX_SIZES: {
-      standard: 1024 * 1024 * 10, // 10MB
-      big: 1024 * 1024 * 1024, // 1GB
-    },
     S3_BUCKET_NAME: "test-bucket",
   };
 
+  const mockMaxSize = 1024 * 1024 * 10; // 10MB
+
   describe("getSignedUploadUrl", () => {
-    test("should create presigned upload URL for non-Formbricks cloud environment", async () => {
+    test("should create presigned upload URL", async () => {
       // Mock constants for non-cloud environment
       vi.doMock("./constants", () => mockConstants);
 
@@ -59,101 +56,97 @@ describe("service.ts", () => {
 
       const { getSignedUploadUrl } = await import("./service");
 
-      const result = await getSignedUploadUrl("test-file.jpg", "image/jpeg", "uploads/images", false);
+      const result = await getSignedUploadUrl("test-file.jpg", "image/jpeg", "uploads/images", mockMaxSize);
 
       expect(mockCreatePresignedPost).toHaveBeenCalledWith(expect.any(Object), {
-        Expires: 10 * 60,
+        Expires: 2 * 60,
         Bucket: mockConstants.S3_BUCKET_NAME,
         Key: "uploads/images/test-file.jpg",
         Fields: {
           "Content-Type": "image/jpeg",
           "Content-Encoding": "base64",
         },
-        Conditions: undefined, // No conditions for non-cloud
+        Conditions: [["content-length-range", 0, mockMaxSize]],
       });
 
-      expect(result).toEqual({
-        signedUrl: mockResponse.url,
-        presignedFields: mockResponse.fields,
-      });
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toEqual({
+          signedUrl: mockResponse.url,
+          presignedFields: mockResponse.fields,
+        });
+      }
     });
 
-    test("should create presigned upload URL for Formbricks cloud with standard size", async () => {
-      vi.doMock("./constants", () => ({
-        ...mockConstants,
-        IS_FORMBRICKS_CLOUD: true,
-      }));
-
-      const mockResponse = {
-        fields: { policy: "test-policy" },
-        url: "https://example.com",
-      };
-
-      mockCreatePresignedPost.mockResolvedValueOnce(mockResponse);
-
-      const { getSignedUploadUrl } = await import("./service");
-
-      const result = await getSignedUploadUrl("document.pdf", "application/pdf", "documents", false);
-
-      expect(mockCreatePresignedPost).toHaveBeenCalledWith(expect.any(Object), {
-        Expires: 10 * 60,
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Key: "documents/document.pdf",
-        Fields: {
-          "Content-Type": "application/pdf",
-          "Content-Encoding": "base64",
-        },
-        Conditions: [["content-length-range", 0, mockConstants.MAX_SIZES.standard]],
-      });
-
-      expect(result).toEqual({
-        signedUrl: mockResponse.url,
-        presignedFields: mockResponse.fields,
-      });
-    });
-
-    test("should create presigned upload URL for Formbricks cloud with big file size", async () => {
-      vi.doMock("./constants", () => ({
-        ...mockConstants,
-        IS_FORMBRICKS_CLOUD: true,
-      }));
-
-      const mockResponse = {
-        fields: { signature: "test-signature" },
-        url: "https://example.com",
-      };
-
-      mockCreatePresignedPost.mockResolvedValueOnce(mockResponse);
-
-      const { getSignedUploadUrl } = await import("./service");
-
-      const result = await getSignedUploadUrl("large-video.mp4", "video/mp4", "videos", true);
-
-      expect(mockCreatePresignedPost).toHaveBeenCalledWith(expect.any(Object), {
-        Expires: 10 * 60,
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Key: "videos/large-video.mp4",
-        Fields: {
-          "Content-Type": "video/mp4",
-          "Content-Encoding": "base64",
-        },
-        Conditions: [["content-length-range", 0, mockConstants.MAX_SIZES.big]],
-      });
-
-      expect(result).toEqual({
-        signedUrl: mockResponse.url,
-        presignedFields: mockResponse.fields,
-      });
-    });
-
-    test("should handle undefined bucket name", async () => {
+    test("should return error if bucket name is not set", async () => {
       vi.doMock("./constants", () => ({
         ...mockConstants,
         S3_BUCKET_NAME: undefined,
       }));
 
+      const { getSignedUploadUrl } = await import("./service");
+
+      const result = await getSignedUploadUrl("test.txt", "text/plain", "text", mockMaxSize);
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+        expect(result.error.message).toBe("S3 bucket name is not set");
+      }
+    });
+
+    test("should return error if s3Client is null", async () => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => undefined),
+      }));
+
+      const { getSignedUploadUrl } = await import("./service");
+
+      const result = await getSignedUploadUrl("test.txt", "text/plain", "text", mockMaxSize);
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_client_error");
+        expect(result.error.message).toBe("S3 client is not set");
+      }
+    });
+
+    test("should handle createPresignedPost throwing an error", async () => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
+      }));
+
+      mockCreatePresignedPost.mockRejectedValueOnce(new Error("AWS Error"));
+
+      const { getSignedUploadUrl } = await import("./service");
+
+      const result = await getSignedUploadUrl("test.txt", "text/plain", "text", mockMaxSize);
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("unknown");
+        expect(result.error.message).toBe("Failed to get signed upload URL");
+      }
+    });
+
+    test("should create presigned upload URL without maxSize", async () => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
+      }));
+
       const mockResponse = {
-        fields: {},
+        fields: { key: "test-field" },
         url: "https://example.com",
       };
 
@@ -161,55 +154,62 @@ describe("service.ts", () => {
 
       const { getSignedUploadUrl } = await import("./service");
 
-      await getSignedUploadUrl("test.txt", "text/plain", "text", false);
+      const result = await getSignedUploadUrl("test-file.jpg", "image/jpeg", "uploads/images");
 
       expect(mockCreatePresignedPost).toHaveBeenCalledWith(expect.any(Object), {
-        Expires: 10 * 60,
-        Bucket: "", // Should default to empty string
-        Key: "text/test.txt",
-        Fields: {
-          "Content-Type": "text/plain",
-          "Content-Encoding": "base64",
-        },
-        Conditions: undefined,
-      });
-    });
-
-    test("should use default value for isBiggerFileUploadAllowed parameter", async () => {
-      vi.doMock("./constants", () => ({
-        ...mockConstants,
-        IS_FORMBRICKS_CLOUD: true,
-      }));
-
-      const mockResponse = {
-        fields: {},
-        url: "https://test.com",
-      };
-
-      mockCreatePresignedPost.mockResolvedValueOnce(mockResponse);
-
-      const { getSignedUploadUrl } = await import("./service");
-
-      // Call without isBiggerFileUploadAllowed parameter (should default to false)
-      await getSignedUploadUrl("test.jpg", "image/jpeg", "images");
-
-      expect(mockCreatePresignedPost).toHaveBeenCalledWith(expect.any(Object), {
-        Expires: 10 * 60,
+        Expires: 2 * 60,
         Bucket: mockConstants.S3_BUCKET_NAME,
-        Key: "images/test.jpg",
+        Key: "uploads/images/test-file.jpg",
         Fields: {
           "Content-Type": "image/jpeg",
           "Content-Encoding": "base64",
         },
-        Conditions: [["content-length-range", 0, mockConstants.MAX_SIZES.standard]],
+        Conditions: undefined,
       });
+
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toEqual({
+          signedUrl: mockResponse.url,
+          presignedFields: mockResponse.fields,
+        });
+      }
     });
   });
 
   describe("getSignedDownloadUrl", () => {
+    test("should return error if bucket name is not set", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+        S3_BUCKET_NAME: undefined,
+      }));
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
+      }));
+
+      const { getSignedDownloadUrl } = await import("./service");
+
+      const result = await getSignedDownloadUrl("documents/important-file.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+        expect(result.error.message).toBe("S3 bucket name is not set");
+      }
+    });
+
     test("should create signed download URL", async () => {
       vi.doMock("./constants", () => ({
         ...mockConstants,
+      }));
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
       }));
 
       const mockSignedUrl = "https://example.com/important-file.pdf?signature=abc123";
@@ -230,12 +230,21 @@ describe("service.ts", () => {
         { expiresIn: 60 * 30 } // 30 minutes
       );
 
-      expect(result).toBe(mockSignedUrl);
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toBe(mockSignedUrl);
+      }
     });
 
     test("should handle different file keys", async () => {
       vi.doMock("./constants", () => ({
         ...mockConstants,
+      }));
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
       }));
 
       mockGetSignedUrl.mockResolvedValueOnce("https://example.com/nested/file.jpg");
@@ -249,9 +258,72 @@ describe("service.ts", () => {
         Key: "path/to/nested/file.jpg",
       });
     });
+
+    test("should return error if s3Client is null", async () => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => undefined),
+      }));
+
+      const { getSignedDownloadUrl } = await import("./service");
+
+      const result = await getSignedDownloadUrl("test-file.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_client_error");
+        expect(result.error.message).toBe("S3 client is not set");
+      }
+    });
+
+    test("should handle getSignedUrl throwing an error", async () => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
+      }));
+
+      mockGetSignedUrl.mockRejectedValueOnce(new Error("AWS Error"));
+
+      const { getSignedDownloadUrl } = await import("./service");
+
+      const result = await getSignedDownloadUrl("test-file.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("unknown");
+        expect(result.error.message).toBe("Failed to get signed download URL");
+      }
+    });
   });
 
   describe("deleteFile", () => {
+    test("should return error if bucket name is not set", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+        S3_BUCKET_NAME: undefined,
+      }));
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
+      }));
+
+      const { deleteFile } = await import("./service");
+
+      const result = await deleteFile("test-file.txt");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+        expect(result.error.message).toBe("S3 bucket name is not set");
+      }
+    });
+
     test("should delete file from S3", async () => {
       vi.doMock("./constants", () => ({
         ...mockConstants,
@@ -267,7 +339,7 @@ describe("service.ts", () => {
 
       const { deleteFile } = await import("./service");
 
-      await deleteFile("files/to-delete.txt");
+      const result = await deleteFile("files/to-delete.txt");
 
       expect(mockDeleteObjectCommand).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
@@ -275,6 +347,12 @@ describe("service.ts", () => {
       });
 
       expect(mockS3Client.send).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toBeUndefined();
+      }
     });
 
     test("should handle different file keys for deletion", async () => {
@@ -292,12 +370,18 @@ describe("service.ts", () => {
 
       const { deleteFile } = await import("./service");
 
-      await deleteFile("deep/nested/path/file.zip");
+      const result = await deleteFile("deep/nested/path/file.zip");
 
       expect(mockDeleteObjectCommand).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
         Key: "deep/nested/path/file.zip",
       });
+
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toBeUndefined();
+      }
     });
 
     test("should not return anything", async () => {
@@ -315,9 +399,56 @@ describe("service.ts", () => {
 
       const { deleteFile } = await import("./service");
 
-      await deleteFile("test-file.txt");
+      const result = await deleteFile("test-file.txt");
 
       expect(mockS3Client.send).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toBeUndefined();
+      }
+    });
+
+    test("should return error if s3Client is null", async () => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => undefined),
+      }));
+
+      const { deleteFile } = await import("./service");
+
+      const result = await deleteFile("test-file.txt");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_client_error");
+        expect(result.error.message).toBe("S3 client is not set");
+      }
+    });
+
+    test("should handle s3Client.send throwing an error", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(new Error("AWS Error")),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFile } = await import("./service");
+
+      const result = await deleteFile("test-file.txt");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("unknown");
+        expect(result.error.message).toBe("Failed to delete file");
+      }
     });
   });
 });

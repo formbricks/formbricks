@@ -4,8 +4,3 @@ export const S3_REGION = process.env.S3_REGION;
 export const S3_ENDPOINT_URL = process.env.S3_ENDPOINT_URL;
 export const S3_FORCE_PATH_STYLE = process.env.S3_FORCE_PATH_STYLE === "1";
 export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME;
-export const IS_FORMBRICKS_CLOUD = process.env.IS_FORMBRICKS_CLOUD === "1";
-export const MAX_SIZES = {
-  standard: 1024 * 1024 * 10, // 10MB
-  big: 1024 * 1024 * 1024, // 1GB
-} as const;

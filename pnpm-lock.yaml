@@ -735,6 +735,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: 3.864.0
         version: 3.864.0
+      '@formbricks/logger':
+        specifier: workspace:*
+        version: link:../logger
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*

@@ -122,54 +122,5 @@ describe("constants.ts", () => {
         expect(S3_FORCE_PATH_STYLE).toBe(false);
       });
     });
-
-    describe("IS_FORMBRICKS_CLOUD", () => {
-      test("should be true when IS_FORMBRICKS_CLOUD is '1'", async () => {
-        process.env.IS_FORMBRICKS_CLOUD = "1";
-
-        const { IS_FORMBRICKS_CLOUD } = await import("./constants");
-
-        expect(IS_FORMBRICKS_CLOUD).toBe(true);
-      });
-
-      test("should be false when IS_FORMBRICKS_CLOUD is '0'", async () => {
-        process.env.IS_FORMBRICKS_CLOUD = "0";
-
-        const { IS_FORMBRICKS_CLOUD } = await import("./constants");
-
-        expect(IS_FORMBRICKS_CLOUD).toBe(false);
-      });
-
-      test("should be false when IS_FORMBRICKS_CLOUD is undefined", async () => {
-        delete process.env.IS_FORMBRICKS_CLOUD;
-
-        const { IS_FORMBRICKS_CLOUD } = await import("./constants");
-
-        expect(IS_FORMBRICKS_CLOUD).toBe(false);
-      });
-    });
-  });
-
-  describe("MAX_SIZES constant", () => {
-    test("should export correct MAX_SIZES object", async () => {
-      const { MAX_SIZES } = await import("./constants");
-
-      expect(MAX_SIZES).toEqual({
-        standard: 1024 * 1024 * 10, // 10MB
-        big: 1024 * 1024 * 1024, // 1GB
-      });
-    });
-
-    test("should have standard size of 10MB", async () => {
-      const { MAX_SIZES } = await import("./constants");
-
-      expect(MAX_SIZES.standard).toBe(10485760); // 10 * 1024 * 1024
-    });
-
-    test("should have big size of 1GB", async () => {
-      const { MAX_SIZES } = await import("./constants");
-
-      expect(MAX_SIZES.big).toBe(1073741824); // 1024 * 1024 * 1024
-    });
   });
 });

@@ -21,6 +21,7 @@ describe("client.ts", () => {
     S3_ACCESS_KEY: "test-access-key",
     S3_SECRET_KEY: "test-secret-key",
     S3_REGION: "us-east-1",
+    S3_BUCKET_NAME: "test-bucket",
     S3_ENDPOINT_URL: undefined,
     S3_FORCE_PATH_STYLE: false,
   };
@@ -41,9 +42,15 @@ describe("client.ts", () => {
           secretAccessKey: mockConstants.S3_SECRET_KEY,
         },
         region: mockConstants.S3_REGION,
+        endpoint: mockConstants.S3_ENDPOINT_URL,
         forcePathStyle: mockConstants.S3_FORCE_PATH_STYLE,
       });
-      expect(client).toBeDefined();
+
+      expect(client.ok).toBe(true);
+
+      if (client.ok) {
+        expect(client.data).toBeDefined();
+      }
     });
 
     test("should create S3 client with endpoint URL", async () => {
@@ -67,10 +74,15 @@ describe("client.ts", () => {
         endpoint: "https://custom-endpoint.com",
         forcePathStyle: true,
       });
-      expect(client).toBeDefined();
+
+      expect(client.ok).toBe(true);
+
+      if (client.ok) {
+        expect(client.data).toBeDefined();
+      }
     });
 
-    test("should throw error when access key is missing", async () => {
+    test("should return error when access key is missing", async () => {
       // Mock constants with missing access key
       vi.doMock("./constants", () => ({
         ...mockConstants,
@@ -79,10 +91,16 @@ describe("client.ts", () => {
 
       const { createS3ClientFromEnv } = await import("./client");
 
-      expect(() => createS3ClientFromEnv()).toThrow("S3 credentials are not set");
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+        expect(result.error.message).toBe("S3 credentials are not set");
+      }
     });
 
-    test("should throw error when secret key is missing", async () => {
+    test("should return error when secret key is missing", async () => {
       // Mock constants with missing secret key
       vi.doMock("./constants", () => ({
         ...mockConstants,
@@ -91,10 +109,16 @@ describe("client.ts", () => {
 
       const { createS3ClientFromEnv } = await import("./client");
 
-      expect(() => createS3ClientFromEnv()).toThrow("S3 credentials are not set");
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+        expect(result.error.message).toBe("S3 credentials are not set");
+      }
     });
 
-    test("should throw error when both credentials are missing", async () => {
+    test("should return error when both credentials are missing", async () => {
       // Mock constants with no credentials
       vi.doMock("./constants", () => ({
         ...mockConstants,
@@ -104,10 +128,16 @@ describe("client.ts", () => {
 
       const { createS3ClientFromEnv } = await import("./client");
 
-      expect(() => createS3ClientFromEnv()).toThrow("S3 credentials are not set");
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+        expect(result.error.message).toBe("S3 credentials are not set");
+      }
     });
 
-    test("should throw error when credentials are empty strings", async () => {
+    test("should return error when credentials are empty strings", async () => {
       // Mock constants with empty string credentials
       vi.doMock("./constants", () => ({
         ...mockConstants,
@@ -117,10 +147,16 @@ describe("client.ts", () => {
 
       const { createS3ClientFromEnv } = await import("./client");
 
-      expect(() => createS3ClientFromEnv()).toThrow("S3 credentials are not set");
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+        expect(result.error.message).toBe("S3 credentials are not set");
+      }
     });
 
-    test("should handle mixed empty and undefined credentials", async () => {
+    test("should return error when mixed empty and undefined credentials", async () => {
       // Mock constants with mixed empty and undefined
       vi.doMock("./constants", () => ({
         ...mockConstants,
@@ -130,7 +166,13 @@ describe("client.ts", () => {
 
       const { createS3ClientFromEnv } = await import("./client");
 
-      expect(() => createS3ClientFromEnv()).toThrow("S3 credentials are not set");
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+        expect(result.error.message).toBe("S3 credentials are not set");
+      }
     });
 
     test("should handle empty endpoint URL", async () => {
@@ -142,7 +184,7 @@ describe("client.ts", () => {
 
       const { createS3ClientFromEnv } = await import("./client");
 
-      const client = createS3ClientFromEnv();
+      const result = createS3ClientFromEnv();
 
       expect(mockS3Client).toHaveBeenCalledWith({
         credentials: {
@@ -150,9 +192,14 @@ describe("client.ts", () => {
           secretAccessKey: mockConstants.S3_SECRET_KEY,
         },
         region: mockConstants.S3_REGION,
+        endpoint: "",
         forcePathStyle: mockConstants.S3_FORCE_PATH_STYLE,
       });
-      expect(client).toBeDefined();
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeDefined();
+      }
     });
   });
 
@@ -183,13 +230,14 @@ describe("client.ts", () => {
           secretAccessKey: mockConstants.S3_SECRET_KEY,
         },
         region: mockConstants.S3_REGION,
+        endpoint: mockConstants.S3_ENDPOINT_URL,
         forcePathStyle: mockConstants.S3_FORCE_PATH_STYLE,
       });
 
       expect(result).toBeDefined();
     });
 
-    test("should throw error when creating from env fails and no client provided", async () => {
+    test("should return undefined when creating from env fails and no client provided", async () => {
       // Mock constants with missing credentials
       vi.doMock("./constants", () => ({
         ...mockConstants,
@@ -199,7 +247,9 @@ describe("client.ts", () => {
 
       const { createS3Client } = await import("./client");
 
-      expect(() => createS3Client()).toThrow("S3 credentials are not set");
+      const result = createS3Client();
+
+      expect(result).toBeUndefined();
     });
   });
 });
