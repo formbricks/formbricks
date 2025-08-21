@@ -66,4 +66,6 @@ export const GET = async (req: Request) => {
   if (result) {
     return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/google-sheets`);
   }
+
+  return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");
 };
