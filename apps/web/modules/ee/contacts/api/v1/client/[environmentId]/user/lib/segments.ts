@@ -1,9 +1,9 @@
 import { validateInputs } from "@/lib/utils/validate";
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import { withCache } from "@/modules/cache/lib/withCache";
 import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";

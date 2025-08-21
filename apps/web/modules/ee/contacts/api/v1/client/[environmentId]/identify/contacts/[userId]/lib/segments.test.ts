@@ -15,7 +15,7 @@ vi.mock("@/modules/cache/lib/withCache", () => ({
   withCache: vi.fn((fn) => fn), // Just execute the function without caching for tests
 }));
 
-vi.mock("@/modules/cache/lib/cacheKeys", () => ({
+vi.mock("@formbricks/cache", () => ({
   createCacheKey: {
     environment: {
       segments: vi.fn((environmentId) => `segments-${environmentId}`),

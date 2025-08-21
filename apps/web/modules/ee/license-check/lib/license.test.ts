@@ -30,7 +30,7 @@ vi.mock("@/modules/cache/lib/service", () => ({
 }));
 
 // Mock the createCacheKey functions
-vi.mock("@/modules/cache/lib/cacheKeys", () => ({
+vi.mock("@formbricks/cache", () => ({
   createCacheKey: {
     license: {
       status: (identifier: string) => `fb:license:${identifier}:status`,

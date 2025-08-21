@@ -5,8 +5,8 @@ import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@/lib/posthogServer";
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import { withCache } from "@/modules/cache/lib/withCache";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TJsEnvironmentState } from "@formbricks/types/js";

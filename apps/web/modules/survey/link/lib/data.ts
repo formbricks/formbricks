@@ -1,9 +1,9 @@
 import "server-only";
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
 import { withCache } from "@/modules/cache/lib/withCache";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";

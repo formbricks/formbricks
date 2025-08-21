@@ -1,5 +1,6 @@
-import { createCacheKey, withCache } from "@/modules/cache/lib/withCache";
+import { withCache } from "@/modules/cache/lib/withCache";
 import { PostHog } from "posthog-node";
+import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
 import { IS_POSTHOG_CONFIGURED, IS_PRODUCTION, POSTHOG_API_HOST, POSTHOG_API_KEY } from "./constants";
