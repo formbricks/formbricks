@@ -6,7 +6,6 @@ import { DeleteDialog } from "./index";
 
 interface StoryOptions {
   triggerText: string;
-  bodyText: string;
   hasChildren: boolean;
   numberOfListItems: number;
   childrenContent: string;
@@ -20,7 +19,7 @@ const meta: Meta<StoryProps> = {
   tags: ["autodocs"],
   parameters: {
     layout: "centered",
-    controls: { sort: "alpha", exclude: [] },
+    controls: { sort: "alpha", exclude: ["open", "children", "setOpen", "onDelete", "onSave"] },
     docs: {
       description: {
         component:
@@ -29,13 +28,12 @@ const meta: Meta<StoryProps> = {
     },
   },
   argTypes: {
-    open: {
-      control: "boolean",
-      description: "Controls the open state of the dialog",
+    text: {
+      control: "text",
+      description: "Text for the dialog",
       table: {
-        category: "Behavior",
-        type: { summary: "boolean" },
-        defaultValue: { summary: "false" },
+        category: "Content",
+        type: { summary: "string" },
       },
       order: 1,
     },
@@ -126,15 +124,6 @@ const meta: Meta<StoryProps> = {
       },
       order: 2,
     },
-    bodyText: {
-      control: "text",
-      description: "Main description text in dialog body",
-      table: {
-        category: "Content",
-        type: { summary: "string" },
-      },
-      order: 3,
-    },
     hasChildren: {
       control: "boolean",
       description: "Whether to show additional children content",
@@ -193,7 +182,6 @@ const RenderDeleteDialog = (args: StoryProps) => {
   // Extract story options
   const {
     triggerText = "Delete Item",
-    bodyText,
     hasChildren = false,
     numberOfListItems = 3,
     childrenContent = "Additional content",
@@ -233,7 +221,7 @@ const RenderDeleteDialog = (args: StoryProps) => {
           onSave?.();
           setIsOpen(false);
         }}
-        text={bodyText || text}
+        text={text}
         isDeleting={isDeleting}
         isSaving={isSaving}
         useSaveInsteadOfCancel={useSaveInsteadOfCancel}
@@ -249,7 +237,7 @@ export const Default: Story = {
   args: {
     triggerText: "Delete Survey",
     deleteWhat: "Survey",
-    bodyText: "All responses and analytics data will be permanently lost.",
+    text: "All responses and analytics data will be permanently lost.",
     hasChildren: false,
     numberOfListItems: 0,
     childrenContent: "",
@@ -265,7 +253,7 @@ export const Deleting: Story = {
   args: {
     triggerText: "Delete User Account",
     deleteWhat: "User Account",
-    bodyText: "This will permanently delete the user account and all associated data.",
+    text: "This will permanently delete the user account and all associated data.",
     hasChildren: false,
     numberOfListItems: 0,
     childrenContent: "",
@@ -288,7 +276,7 @@ export const Disabled: Story = {
   args: {
     triggerText: "Delete Project",
     deleteWhat: "Project",
-    bodyText: "This project cannot be deleted because it has active surveys.",
+    text: "This project cannot be deleted because it has active surveys.",
     hasChildren: false,
     numberOfListItems: 0,
     childrenContent: "",
@@ -311,7 +299,7 @@ export const WithChildren: Story = {
   args: {
     triggerText: "Delete Environment",
     deleteWhat: "Environment",
-    bodyText: "Deleting this environment will affect the following:",
+    text: "Deleting this environment will affect the following:",
     hasChildren: true,
     numberOfListItems: 4,
     childrenContent: "This action will cascade to related resources:",
@@ -334,7 +322,7 @@ export const SaveInsteadOfCancel: Story = {
   args: {
     triggerText: "Delete Response",
     deleteWhat: "Response",
-    bodyText: "You have unsaved changes. Save them before deleting this response?",
+    text: "You have unsaved changes. Save them before deleting this response?",
     hasChildren: false,
     numberOfListItems: 0,
     childrenContent: "",
@@ -357,7 +345,7 @@ export const SavingState: Story = {
   args: {
     triggerText: "Delete with Save",
     deleteWhat: "Document",
-    bodyText: "You have unsaved changes. Save them before deleting?",
+    text: "You have unsaved changes. Save them before deleting?",
     hasChildren: false,
     numberOfListItems: 0,
     childrenContent: "",
@@ -380,8 +368,7 @@ export const LongText: Story = {
   args: {
     triggerText: "Delete Integration",
     deleteWhat: "API Integration",
-    bodyText:
-      "This action will permanently delete the API integration and all its configuration settings. This includes webhook endpoints, authentication tokens, data mappings, and historical sync logs. Connected third-party services will no longer receive data from this integration, and any automated workflows dependent on this integration will be disrupted. Please ensure you have backed up any necessary configuration data before proceeding.",
+    text: "This action will permanently delete the API integration and all its configuration settings. This includes webhook endpoints, authentication tokens, data mappings, and historical sync logs. Connected third-party services will no longer receive data from this integration, and any automated workflows dependent on this integration will be disrupted. Please ensure you have backed up any necessary configuration data before proceeding.",
     hasChildren: true,
     numberOfListItems: 5,
     childrenContent: "The following connected services and data will be affected:",
