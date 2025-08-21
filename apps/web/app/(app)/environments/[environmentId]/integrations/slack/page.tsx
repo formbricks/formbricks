@@ -27,7 +27,7 @@ const Page = async (props) => {
   const locale = await findMatchingLocale();
 
   if (isReadOnly) {
-    return redirect("./");
+    return redirect(`/environments/${params.environmentId}/integrations`);
   }
 
   return (
