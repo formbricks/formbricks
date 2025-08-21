@@ -33,3 +33,8 @@ export interface S3ClientError {
   code: "s3_client_error";
   message: string;
 }
+
+export interface FileNotFoundError {
+  code: "file_not_found_error";
+  message: string;
+}

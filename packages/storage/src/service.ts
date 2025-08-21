@@ -1,10 +1,11 @@
-import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { type PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@formbricks/logger";
 import { createS3Client } from "./client";
 import { S3_BUCKET_NAME } from "./constants";
 import {
+  type FileNotFoundError,
   type Result,
   type S3ClientError,
   type S3CredentialsError,
@@ -87,11 +88,11 @@ export const getSignedUploadUrl = async (
 /**
  * Get a signed URL for a file in S3
  * @param fileKey - The key of the file in S3
- * @returns A Result containing the signed URL or an error: S3CredentialsError | S3ClientError | UnknownError
+ * @returns A Result containing the signed URL or an error: S3CredentialsError | S3ClientError | FileNotFoundError | UnknownError
  */
 export const getSignedDownloadUrl = async (
   fileKey: string
-): Promise<Result<string, S3CredentialsError | S3ClientError | UnknownError>> => {
+): Promise<Result<string, S3CredentialsError | S3ClientError | FileNotFoundError | UnknownError>> => {
   try {
     if (!s3Client) {
       return err({
@@ -104,6 +105,32 @@ export const getSignedDownloadUrl = async (
       return err({
         code: "s3_credentials_error",
         message: "S3 bucket name is not set",
+      });
+    }
+
+    // Check if file exists before generating signed URL
+    const headObjectCommand = new HeadObjectCommand({
+      Bucket: S3_BUCKET_NAME,
+      Key: fileKey,
+    });
+
+    try {
+      await s3Client.send(headObjectCommand);
+    } catch (headError: unknown) {
+      logger.error("Failed to check if file exists", headError);
+      if (
+        (headError as Error).name === "NotFound" ||
+        (headError as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404
+      ) {
+        return err({
+          code: "file_not_found_error",
+          message: `File not found: ${fileKey}`,
+        });
+      }
+
+      return err({
+        code: "unknown",
+        message: `Failed to get signed download URL for file: ${fileKey}`,
       });
     }
 

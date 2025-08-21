@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 vi.mock("@aws-sdk/client-s3", () => ({
   DeleteObjectCommand: vi.fn(),
   GetObjectCommand: vi.fn(),
+  HeadObjectCommand: vi.fn(),
 }));
 
 vi.mock("@aws-sdk/s3-presigned-post", () => ({
@@ -26,6 +27,7 @@ vi.mock("./client", () => ({
 
 const mockDeleteObjectCommand = vi.mocked(DeleteObjectCommand);
 const mockGetObjectCommand = vi.mocked(GetObjectCommand);
+const mockHeadObjectCommand = vi.mocked(HeadObjectCommand);
 const mockCreatePresignedPost = vi.mocked(createPresignedPost);
 const mockGetSignedUrl = vi.mocked(getSignedUrl);
 
@@ -206,10 +208,16 @@ describe("service.ts", () => {
       vi.doMock("./constants", () => ({
         ...mockConstants,
       }));
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({}) // HeadObjectCommand response (file exists)
+          .mockResolvedValueOnce({}), // Any other send calls
+      };
+
       vi.doMock("./client", () => ({
-        createS3Client: vi.fn(() => ({
-          send: vi.fn(),
-        })),
+        createS3Client: vi.fn(() => mockS3Client),
       }));
 
       const mockSignedUrl = "https://example.com/important-file.pdf?signature=abc123";
@@ -218,6 +226,11 @@ describe("service.ts", () => {
       const { getSignedDownloadUrl } = await import("./service");
 
       const result = await getSignedDownloadUrl("documents/important-file.pdf");
+
+      expect(mockHeadObjectCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Key: "documents/important-file.pdf",
+      });
 
       expect(mockGetObjectCommand).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
@@ -241,10 +254,16 @@ describe("service.ts", () => {
       vi.doMock("./constants", () => ({
         ...mockConstants,
       }));
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({}) // HeadObjectCommand response (file exists)
+          .mockResolvedValueOnce({}), // Any other send calls
+      };
+
       vi.doMock("./client", () => ({
-        createS3Client: vi.fn(() => ({
-          send: vi.fn(),
-        })),
+        createS3Client: vi.fn(() => mockS3Client),
       }));
 
       mockGetSignedUrl.mockResolvedValueOnce("https://example.com/nested/file.jpg");
@@ -252,6 +271,11 @@ describe("service.ts", () => {
       const { getSignedDownloadUrl } = await import("./service");
 
       await getSignedDownloadUrl("path/to/nested/file.jpg");
+
+      expect(mockHeadObjectCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Key: "path/to/nested/file.jpg",
+      });
 
       expect(mockGetObjectCommand).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
@@ -279,10 +303,16 @@ describe("service.ts", () => {
 
     test("should handle getSignedUrl throwing an error", async () => {
       vi.doMock("./constants", () => mockConstants);
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({}) // HeadObjectCommand response (file exists)
+          .mockResolvedValueOnce({}), // Any other send calls
+      };
+
       vi.doMock("./client", () => ({
-        createS3Client: vi.fn(() => ({
-          send: vi.fn(),
-        })),
+        createS3Client: vi.fn(() => mockS3Client),
       }));
 
       mockGetSignedUrl.mockRejectedValueOnce(new Error("AWS Error"));
@@ -296,6 +326,64 @@ describe("service.ts", () => {
       if (!result.ok) {
         expect(result.error.code).toBe("unknown");
         expect(result.error.message).toBe("Failed to get signed download URL");
+      }
+    });
+
+    test("should return file not found error when file does not exist", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const notFoundError = new Error("Not Found");
+      notFoundError.name = "NotFound";
+
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(notFoundError),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getSignedDownloadUrl } = await import("./service");
+
+      const result = await getSignedDownloadUrl("non-existent-file.pdf");
+
+      expect(mockHeadObjectCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Key: "non-existent-file.pdf",
+      });
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("file_not_found_error");
+        expect(result.error.message).toBe("File not found: non-existent-file.pdf");
+      }
+    });
+
+    test("should return file not found error when S3 returns 404", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const notFoundError = {
+        $metadata: { httpStatusCode: 404 },
+      };
+
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(notFoundError),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getSignedDownloadUrl } = await import("./service");
+
+      const result = await getSignedDownloadUrl("another-non-existent-file.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("file_not_found_error");
+        expect(result.error.message).toBe("File not found: another-non-existent-file.pdf");
       }
     });
   });
