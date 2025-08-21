@@ -99,7 +99,11 @@ const getLeftOperandValue = (
       const responseValue = data[leftOperand.value];
 
       if (currentQuestion.type === "openText" && currentQuestion.inputType === "number") {
-        return Number(responseValue) || undefined;
+        if (responseValue === undefined) return undefined;
+        if (typeof responseValue === "string" && responseValue.trim() === "") return undefined;
+
+        const numberValue = typeof responseValue === "number" ? responseValue : Number(responseValue);
+        return isNaN(numberValue) ? undefined : numberValue;
       }
 
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
@@ -150,14 +154,14 @@ const getLeftOperandValue = (
             return undefined;
           }
 
-          const row = getLocalizedValue(currentQuestion.rows[rowIndex], selectedLanguage);
+          const row = getLocalizedValue(currentQuestion.rows[rowIndex].label, selectedLanguage);
 
           const rowValue = responseValue[row];
           if (rowValue === "") return "";
 
           if (rowValue) {
             const columnIndex = currentQuestion.columns.findIndex((column) => {
-              return getLocalizedValue(column, selectedLanguage) === rowValue;
+              return getLocalizedValue(column.label, selectedLanguage) === rowValue;
             });
 
             if (columnIndex === -1) return undefined;

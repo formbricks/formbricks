@@ -36,8 +36,8 @@ export const getMatrixLabel = (
   type: "row" | "column"
 ): TI18nString => {
   const matrixQuestion = question as TSurveyMatrixQuestion;
-  const labels = type === "row" ? matrixQuestion.rows : matrixQuestion.columns;
-  return labels[idx] || createI18nString("", surveyLanguageCodes);
+  const matrixFields = type === "row" ? matrixQuestion.rows : matrixQuestion.columns;
+  return matrixFields[idx]?.label || createI18nString("", surveyLanguageCodes);
 };
 
 export const getWelcomeCardText = (
@@ -94,6 +94,9 @@ export const isValueIncomplete = (
 ) => {
   // Define a list of IDs for which a default value needs to be checked.
   const labelIds = [
+    "row",
+    "column",
+    "choice",
     "label",
     "headline",
     "subheader",

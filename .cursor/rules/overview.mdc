@@ -1,0 +1,74 @@
+---
+alwaysApply: true
+---
+
+### Formbricks Monorepo Overview
+
+- **Project**: Formbricks — open‑source survey and experience management platform. Repo: [formbricks/formbricks](https://github.com/formbricks/formbricks)
+- **Monorepo**: Turborepo + pnpm workspaces. Root configs: [package.json](mdc:package.json), [turbo.json](mdc:turbo.json)
+- **Core app**: Next.js app in `apps/web` with Prisma, Auth.js, TailwindCSS, Vitest, Playwright. Enterprise modules live in [apps/web/modules/ee](mdc:apps/web/modules/ee)
+- **Datastores**: PostgreSQL + Redis. Local dev via [docker-compose.dev.yml](mdc:docker-compose.dev.yml); Prisma schema at [packages/database/schema.prisma](mdc:packages/database/schema.prisma)
+- **Docs & Ops**: Docs in `docs/` (Mintlify), Helm in `helm-chart/`, IaC in `infra/`
+
+### Apps
+
+- **apps/web**: Next.js product application (API, UI, SSO, i18n, emails, uploads, integrations)
+- **apps/storybook**: Storybook for UI components; a11y addon + Vite builder
+
+### Packages
+
+- **@formbricks/database** (`packages/database`): Prisma schema, DB scripts, migrations, data layer
+- **@formbricks/js-core** (`packages/js-core`): Core runtime for web embed / async loader
+- **@formbricks/surveys** (`packages/surveys`): Embeddable survey rendering and helpers
+- **@formbricks/logger** (`packages/logger`): Shared logging (pino) + Zod types
+- **@formbricks/types** (`packages/types`): Shared types (Zod, Prisma clients)
+- **@formbricks/i18n-utils** (`packages/i18n-utils`): i18n helpers and build output
+- **@formbricks/eslint-config** (`packages/config-eslint`): Central ESLint config (Next, TS, Vitest, Prettier)
+- **@formbricks/config-typescript** (`packages/config-typescript`): Central TS config and types
+- **@formbricks/vite-plugins** (`packages/vite-plugins`): Internal Vite plugins
+- **packages/android, packages/ios**: Native SDKs (built with platform toolchains)
+
+### Enterprise‑ready by design
+
+- **Quality & safety**: Strict TypeScript, repo‑wide ESLint + Prettier, lint‑staged + Husky, CI checks, typed env validation
+- **Security‑first**: Auth.js, SSO/SAML/OIDC, session controls, rate limiting, Sentry, structured logging
+
+### Accessible by design
+
+- **UI foundations**: Radix UI, TailwindCSS, Storybook with `@storybook/addon-a11y`, keyboard and screen‑reader‑friendly components
+
+### Root pnpm commands
+
+```bash
+pnpm clean:all           # Clean turbo cache, node_modules, lockfile, coverage, out
+pnpm clean               # Clean turbo cache, node_modules, coverage, out
+pnpm build               # Build all packages/apps (turbo)
+pnpm build:dev           # Dev-optimized builds (where supported)
+pnpm dev                 # Run all dev servers in parallel
+pnpm start               # Start built apps/services
+pnpm go                  # Start DB (docker compose) and run long-running dev tasks
+pnpm generate            # Run generators (e.g., Prisma, API specs)
+pnpm lint                # Lint all
+pnpm format              # Prettier write across repo
+pnpm test                # Unit tests
+pnpm test:coverage       # Unit tests with coverage
+pnpm test:e2e            # Playwright tests
+pnpm test-e2e:azure      # Playwright tests with Azure config
+pnpm storybook           # Run Storybook
+pnpm db:up               # Start local Postgres/Redis via docker compose
+pnpm db:down             # Stop local DB stack
+pnpm db:start            # Project-level DB setup choreography
+pnpm db:push             # Prisma db push (accept data loss in package script)
+pnpm db:migrate:dev      # Apply dev migrations
+pnpm db:migrate:deploy   # Apply prod migrations
+pnpm fb-migrate-dev      # Create DB migration (database package) and prisma generate
+pnpm tolgee-pull         # Pull translation keys for current branch and format
+```
+
+### Essentials for every prompt
+
+- **Tech stack**: Next.js, React 19, TypeScript, Prisma, Zod, TailwindCSS, Turborepo, Vitest, Playwright
+- **Environments**: See `.env.example`. Many tasks require DB up and env variables set
+- **Licensing**: Core under AGPLv3; Enterprise code in `apps/web/modules/ee` (included in Docker, unlocked via Enterprise License Key)
+
+For deeper details, consult per‑package `package.json` and scripts (e.g., [apps/web/package.json](mdc:apps/web/package.json)).
