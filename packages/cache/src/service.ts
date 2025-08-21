@@ -70,7 +70,8 @@ export class CacheService {
 
     try {
       if (keyArray.length > 0) {
-        await this.redis.del(keyArray);
+        // eslint-disable-next-line prefer-spread -- we can only use spread if we cast to any before
+        await this.redis.del.apply(this.redis, keyArray);
       }
     } catch (error) {
       logger.error("Cache delete operation failed", { keys: keyArray, error });

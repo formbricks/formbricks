@@ -128,7 +128,7 @@ describe("CacheService", () => {
 
       await cacheService.del(key);
 
-      expect(mockRedis.del).toHaveBeenCalledWith([key]);
+      expect(mockRedis.del).toHaveBeenCalledWith(key);
     });
 
     test("should delete multiple keys", async () => {
@@ -136,7 +136,7 @@ describe("CacheService", () => {
 
       await cacheService.del(keys);
 
-      expect(mockRedis.del).toHaveBeenCalledWith(keys);
+      expect(mockRedis.del).toHaveBeenCalledWith(asCacheKey("test:key1"), asCacheKey("test:key2"));
     });
 
     test("should be idempotent (not throw if key missing)", async () => {

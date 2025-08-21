@@ -7,7 +7,11 @@ export const ZCacheKey = z
   .min(1, "Cache key cannot be empty")
   .refine((key) => key.trim().length > 0, "Cache key cannot be empty or whitespace only");
 
-export const ZTtlMs = z.number().positive("TTL must be greater than 0");
+export const ZTtlMs = z
+  .number()
+  .int()
+  .min(1000, "TTL must be at least 1000ms (1 second)")
+  .finite("TTL must be finite");
 
 // Default error class for cache validation
 export class CacheValidationError extends Error {

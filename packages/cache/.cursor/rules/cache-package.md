@@ -276,20 +276,20 @@ export const createCacheKey = {
 const cache = await createCacheService();
 
 // ✅ Direct cache operations
-await cache.set(createCacheKey.user.profile("123"), userData, 300000);
-const user = await cache.get<User>(createCacheKey.user.profile("123"));
+await cache.set(createCacheKey.environment.config("env-123"), envData, 7200000); // 2 hours
+const config = await cache.get<EnvironmentConfig>(createCacheKey.environment.config("env-123"));
 
 // ✅ Cache-aside pattern
 const data = await cache.withCache(
   () => fetchFromDB(id),
   createCacheKey.environment.state(id),
-  300000 // 5 minutes
+  7200000 // 2 hours
 );
 
 // ✅ Multiple key deletion
 await cache.del([
-  createCacheKey.user.profile("123"),
-  createCacheKey.user.preferences("123")
+  createCacheKey.environment.config("env-123"),
+  createCacheKey.environment.segments("env-123")
 ]);
 
 // ✅ Service creation with custom client (for testing)
@@ -364,6 +364,6 @@ makeCacheKey("")                              // Error: Parts cannot be empty
 "@formbricks/cache#lint": { "dependsOn": ["@formbricks/logger#build"] },
 "@formbricks/cache#test": { "dependsOn": ["@formbricks/logger#build"] },
 "@formbricks/cache#test:coverage": { "dependsOn": ["@formbricks/logger#build"] },
-"@formbricks/cache#build": { "dependsOn": ["@formbricks/logger#build"] }
+"@formbricks/cache#build": { "dependsOn": ["@formbricks/logger#build"] },
 "@formbricks/cache#go": { "dependsOn": ["@formbricks/logger#build"] }
 ```
