@@ -384,10 +384,10 @@ describe("QuotaModal", () => {
       expect(vi.mocked(updateQuotaAction)).toHaveBeenCalledWith({
         quotaId: "quota1",
         quota: expect.objectContaining({
-          surveyId: "survey1",
           name: "Test Quota",
           limit: 100,
         }),
+        surveyId: "survey1",
       });
     });
   });

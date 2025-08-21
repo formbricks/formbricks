@@ -82,6 +82,7 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
 const ZUpdateQuotaAction = z.object({
   quotaId: ZId,
   quota: ZSurveyQuotaUpdateInput,
+  surveyId: ZId,
 });
 
 export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAction).action(
@@ -95,7 +96,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZUpdateQuotaAction>;
     }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,

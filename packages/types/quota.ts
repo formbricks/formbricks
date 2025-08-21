@@ -38,7 +38,12 @@ export type TSurveyQuota = z.infer<typeof ZSurveyQuota>;
 export const ZSurveyQuotaCreateInput = ZSurveyQuota.omit({ id: true, createdAt: true, updatedAt: true });
 export type TSurveyQuotaCreateInput = z.infer<typeof ZSurveyQuotaCreateInput>;
 
-export const ZSurveyQuotaUpdateInput = ZSurveyQuota.omit({ id: true, createdAt: true, updatedAt: true });
+export const ZSurveyQuotaUpdateInput = ZSurveyQuota.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  surveyId: true,
+});
 export type TSurveyQuotaUpdateInput = z.infer<typeof ZSurveyQuotaUpdateInput>;
 
 export const ZResponseQuotaLink = z.object({

@@ -146,6 +146,7 @@ export const QuotaModal = ({
     const updateQuotaActionResult = await updateQuotaAction({
       quotaId,
       quota: updatedQuota,
+      surveyId: survey.id,
     });
     if (updateQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_updated_successfull_toast"));
@@ -183,7 +184,6 @@ export const QuotaModal = ({
             action: data.action,
             endingCardId: data.endingCardId || null,
             countPartialSubmissions: data.countPartialSubmissions,
-            surveyId: survey.id,
           },
           quota.id
         );
