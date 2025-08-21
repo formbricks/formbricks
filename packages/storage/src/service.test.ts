@@ -166,7 +166,7 @@ describe("service.ts", () => {
           "Content-Type": "image/jpeg",
           "Content-Encoding": "base64",
         },
-        Conditions: undefined,
+        Conditions: [["content-length-range", 0, mockMaxSize]],
       });
 
       expect(result.ok).toBe(true);

@@ -1,5 +1,9 @@
 import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-import { type PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
+import {
+  type PresignedPost,
+  type PresignedPostOptions,
+  createPresignedPost,
+} from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@formbricks/logger";
 import {
@@ -29,12 +33,12 @@ export const getSignedUploadUrl = async (
   fileName: string,
   contentType: string,
   filePath: string,
-  maxSize?: number
+  maxSize: number = 1024 * 1024 * 10 // 10MB
 ): Promise<
   Result<
     {
       signedUrl: string;
-      presignedFields: PresignedPostOptions["Fields"];
+      presignedFields: PresignedPost["fields"];
     },
     UnknownError | S3CredentialsError | S3ClientError
   >
