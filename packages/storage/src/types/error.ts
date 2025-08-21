@@ -7,7 +7,7 @@ export interface ResultError<T> {
 
 export interface ResultOk<T> {
   ok: true;
-  value: T;
+  data: T;
 }
 
 export const ok = <T, E>(data: T): Result<T, E> => ({ ok: true, data });
