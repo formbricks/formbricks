@@ -5,6 +5,12 @@
 export type CacheKey = string & { readonly __brand: "CacheKey" };
 
 /**
+ * Possible namespaces for custom cache keys
+ * Add new namespaces here as they are introduced
+ */
+export type CustomCacheNamespace = "analytics";
+
+/**
  * Internal helper to cast a string to CacheKey type
  * This should only be used within cache key generators
  * @internal
