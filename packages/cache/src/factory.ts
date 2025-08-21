@@ -33,7 +33,7 @@ export function createRedisClientFromEnv(): RedisClient {
   });
 
   client.on("error", (err) => {
-    logger.error("Redis client error:", err);
+    logger.error(err, "Redis client error");
   });
 
   client.on("connect", () => {
@@ -68,7 +68,7 @@ export async function createCacheService(redis?: RedisClient): Promise<CacheServ
     try {
       await client.connect();
     } catch (err) {
-      logger.error("Initial Redis connection failed:", err);
+      logger.error(err, "Initial Redis connection failed");
       throw err;
     }
   }

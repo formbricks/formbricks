@@ -41,7 +41,7 @@ export class CacheService {
         });
       }
     } catch (error) {
-      logger.error("Cache get operation failed", { key, error });
+      logger.error({ error, key }, "Cache get operation failed");
       return err({
         code: ErrorCode.RedisOperationError,
       });
@@ -67,7 +67,7 @@ export class CacheService {
       await this.redis.setEx(key, Math.floor(ttlMs / 1000), serialized);
       return ok(undefined);
     } catch (error) {
-      logger.error("Cache set operation failed", { key, ttlMs, error });
+      logger.error({ error, key, ttlMs }, "Cache set operation failed");
       return err({
         code: ErrorCode.RedisOperationError,
       });
@@ -94,7 +94,7 @@ export class CacheService {
       }
       return ok(undefined);
     } catch (error) {
-      logger.error("Cache delete operation failed", { keys, error });
+      logger.error({ error, keys }, "Cache delete operation failed");
       return err({
         code: ErrorCode.RedisOperationError,
       });
@@ -120,7 +120,7 @@ export class CacheService {
       const cacheResult = await this.get<T>(key);
       if (!cacheResult.ok) {
         // Cache operation failed, try to get fresh data
-        logger.debug("Cache get operation failed, fetching fresh data", { key, error: cacheResult.error });
+        logger.debug({ error: cacheResult.error, key }, "Cache get operation failed, fetching fresh data");
       } else if (cacheResult.data !== null) {
         // Cache hit
         return ok(cacheResult.data);
@@ -132,15 +132,12 @@ export class CacheService {
       // Try to store in cache for next time (don't fail if cache set fails)
       const setResult = await this.set(key, fresh, ttlMs);
       if (!setResult.ok) {
-        logger.error("Failed to cache fresh data, but returning result", { key, error: setResult.error });
+        logger.error({ error: setResult.error, key }, "Failed to cache fresh data, but returning result");
       }
 
       return ok(fresh);
     } catch (fnError) {
-      logger.error("Function execution failed", {
-        key,
-        functionError: fnError,
-      });
+      logger.error({ error: fnError, key }, "Function execution failed");
       return err({
         code: ErrorCode.Unknown,
       });

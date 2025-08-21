@@ -28,11 +28,14 @@ export function validateInputs<T extends readonly [unknown, z.ZodType<unknown>][
   for (const [value, schema] of pairs) {
     const result = schema.safeParse(value);
     if (!result.success) {
-      logger.error("Cache validation failed", {
-        value,
-        error: result.error.issues[0]?.message || "Unknown validation error",
-        validationErrors: result.error.issues,
-      });
+      logger.error(
+        {
+          value,
+          error: result.error.issues[0]?.message || "Unknown validation error",
+          validationErrors: result.error.issues,
+        },
+        "Cache validation failed"
+      );
       return err({
         code: ErrorCode.CacheValidationError,
       });
