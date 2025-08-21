@@ -97,9 +97,7 @@ export function genericConditionsToQuota(genericConditions: TQuotaConditionGroup
     let rightOperand = condition.rightOperand?.value ?? null;
 
     // Convert back from string arrays if needed
-    if (Array.isArray(rightOperand)) {
-      rightOperand = rightOperand;
-    } else if (typeof rightOperand === "string" && rightOperand !== "") {
+    if (typeof rightOperand === "string" && rightOperand !== "") {
       // Try to parse numbers
       const numValue = Number(rightOperand);
       if (!isNaN(numValue) && numValue.toString() === rightOperand) {

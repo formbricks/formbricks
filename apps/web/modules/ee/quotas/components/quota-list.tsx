@@ -2,12 +2,12 @@
 
 import { createQuotaAction } from "@/modules/ee/quotas/actions";
 import { Button } from "@/modules/ui/components/button";
-import { Label } from "@radix-ui/react-dropdown-menu";
+import { Label } from "@/modules/ui/components/label";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSurveyQuota, TSurveyQuotaCreateInput } from "@formbricks/types/quota";
 
 interface QuotaListProps {
   quotas: TSurveyQuota[];
@@ -20,12 +20,13 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota }: QuotaListProps) => {
   const { t } = useTranslate();
 
   const duplicateQuota = async (quota: TSurveyQuota) => {
-    const duplicateQuota = {
-      ...quota,
+    const { id, createdAt, updatedAt, ...rest } = quota;
+    const quotaInput: TSurveyQuotaCreateInput = {
+      ...rest,
       name: `${quota.name} (Copy)`,
     };
     const duplicateQuotaActionResult = await createQuotaAction({
-      quota: duplicateQuota,
+      quota: quotaInput,
     });
     if (duplicateQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_duplicated_successfull_toast"));

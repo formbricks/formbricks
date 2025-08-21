@@ -71,7 +71,7 @@ export const SurveyEditorPage = async (props) => {
   const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organizationBilling.plan);
   const isSpamProtectionAllowed = await getIsSpamProtectionEnabled(organizationBilling.plan);
   const isQuotasAllowed = await getIsQuotasEnabled();
-  const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
+  const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
   const userEmail = await getUserEmail(session.user.id);
   const projectLanguages = await getProjectLanguages(projectWithTeamIds.id);
 

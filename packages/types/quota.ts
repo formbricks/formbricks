@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZId } from "./common";
 import { ZSingleCondition } from "./surveys/types";
 
 // Connector type for combining criteria with AND/OR logic
@@ -21,15 +22,15 @@ export type TResponseQuotaLinkStatus = z.infer<typeof ZResponseQuotaLinkStatus>;
 
 // Survey quota model
 export const ZSurveyQuota = z.object({
-  id: z.string().cuid(),
+  id: ZId,
   createdAt: z.date(),
   updatedAt: z.date(),
-  surveyId: z.string(),
+  surveyId: ZId,
   name: z.string().min(1, { message: "Quota name is required" }),
   limit: z.number().positive().min(1, { message: "Limit must be greater than 0" }),
   conditions: ZSurveyQuotaConditions,
   action: ZSurveyQuotaAction,
-  endingCardId: z.string().nullable(),
+  endingCardId: ZId.nullable(),
   countPartialSubmissions: z.boolean(),
 });
 export type TSurveyQuota = z.infer<typeof ZSurveyQuota>;
@@ -41,8 +42,8 @@ export const ZSurveyQuotaUpdateInput = ZSurveyQuota.omit({ id: true, createdAt: 
 export type TSurveyQuotaUpdateInput = z.infer<typeof ZSurveyQuotaUpdateInput>;
 
 export const ZResponseQuotaLink = z.object({
-  responseId: z.string(),
-  quotaId: z.string(),
+  responseId: ZId,
+  quotaId: ZId,
   status: ZResponseQuotaLinkStatus,
 });
 export type TResponseQuotaLink = z.infer<typeof ZResponseQuotaLink>;
