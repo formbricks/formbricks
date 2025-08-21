@@ -11,11 +11,20 @@ Unified Redis cache package for Formbricks. Provides a type-safe, Redis-only cac
 
 ### 2. Type Safety & Validation
 - **Strict TypeScript**: All code must pass strict TypeScript compilation.
+- **Explicit Types**: Prefer explicit type annotations over inference for public APIs.
 - **Branded Cache Keys**: Use `CacheKey` branded type to prevent raw string usage.
+- **Compile-time Safety**: TypeScript prevents using raw strings where `CacheKey` is expected.
+
+### 3. Runtime Validation
+- **makeCacheKey Utility**: Internal utility function provides runtime validation for all cache keys.
+- **Structure Validation**: Regex patterns validate cache key format (`fb:resource:identifier[:subresource]*`).
+- **Empty Parts Prevention**: Throws errors for empty parts to prevent malformed keys.
+- **Consistent Error Messages**: All validation errors use standardized error messages.
+- **Type-safe Namespace**: `CustomCacheNamespace` union type restricts valid custom namespaces.
 - **Zod Validation**: Runtime validation using Zod schemas for cache keys and TTL values.
 - **Custom Error Types**: `CacheValidationError` for validation failures.
 
-### 3. Factory Pattern
+### 4. Factory Pattern & Dependency Injection
 - **Service Creation**: `createCacheService()` returns ready-to-use `CacheService` instances.
 - **Redis Client Injection**: Accept Redis client as parameter for testability.
 - **Complete Setup**: Factory handles Redis connection + service instantiation.
@@ -29,9 +38,12 @@ src/
 ├── factory.ts        # Redis client and CacheService factory
 ├── service.ts        # Core CacheService class
 ├── cache-keys.ts     # Cache key generators with branded types
+├── utils/
+│   ├── key.ts        # makeCacheKey utility with runtime validation
+│   └── key.test.ts   # Tests for makeCacheKey utility
 └── *.test.ts         # Unit tests (collocated with source)
 types/
-├── keys.ts           # Branded CacheKey type definition
+├── keys.ts           # Branded CacheKey type & CustomCacheNamespace
 ├── service.ts        # Validation schemas and utilities
 └── *.test.ts         # Type and validation tests
 ```
@@ -119,10 +131,13 @@ export class CacheService {
 ## Testing Standards
 
 ### Unit Test Requirements
-- **85% Coverage**: Comprehensive test coverage for all public methods.
+- **Comprehensive Coverage**: All public functions and utilities must have thorough unit tests.
 - **Collocated Tests**: Place `*.test.ts` files next to source files.
-- **Mock Dependencies**: Mock Redis client and logger in tests.
-- **Validation Testing**: Test all Zod validation schemas and error conditions.
+- **Mock External Dependencies**: Mock Redis client and logger in tests.
+- **Test Edge Cases**: Include error conditions, empty responses, connection failures.
+- **Validation Testing**: Test all Zod validation schemas and runtime validation scenarios (empty parts, invalid structures).
+- **Type Safety Testing**: Verify branded types work correctly across all scenarios.
+- **Integration Testing**: Test internal integration between utilities and main functions.
 
 ### Test Structure
 ```typescript
@@ -192,7 +207,7 @@ logger.warn("Corrupted cache data detected, treating as cache miss", {
 ## Dependencies
 
 ### Production Dependencies
-- **`redis@5.8.1`**: Official Redis client 
+- **`redis@5.8.1`**: Official Redis client
 - **`@formbricks/logger`**: Internal logging package
 - **`zod@3.24.4`**: Runtime validation
 
@@ -217,12 +232,24 @@ export async function createCacheService(redis?: RedisClient): Promise<CacheServ
 export type RedisClient = RedisClientType;
 ```
 
-### Cache Key Generation
+### Cache Key Types and Functions
 ```typescript
-// Branded type for compile-time safety
+// Branded type for type-safe cache keys
 export type CacheKey = string & { readonly __brand: "CacheKey" };
 
-// Type-safe cache key generators
+// Type-safe namespace for custom cache keys
+export type CustomCacheNamespace = "analytics";
+
+// Internal utility with runtime validation (not exported)
+// Located in src/utils/key.ts
+const makeCacheKey = (...parts: [first: string, ...rest: string[]]): CacheKey => {
+  // Automatic fb: prefix addition
+  // Runtime validation with regex
+  // Empty parts prevention
+  // Structure validation
+};
+
+// Type-safe cache key generators (uses makeCacheKey internally)
 export const createCacheKey = {
   environment: {
     state: (environmentId: string): CacheKey,
@@ -239,7 +266,7 @@ export const createCacheKey = {
   rateLimit: {
     core: (namespace: string, identifier: string, windowStart: number): CacheKey,
   },
-  custom: (namespace: "analytics", identifier: string, subResource?: string): CacheKey,
+  custom: (namespace: CustomCacheNamespace, identifier: string, subResource?: string): CacheKey,
 };
 ```
 
@@ -264,7 +291,63 @@ await cache.del([
   createCacheKey.user.profile("123"),
   createCacheKey.user.preferences("123")
 ]);
+
+// ✅ Service creation with custom client (for testing)
+const service = await createCacheService(mockClient);
+
+// ✅ Type-safe cache key generation with automatic validation
+const envKey = createCacheKey.environment.state("env-123");
+// Result: "fb:env:env-123:state" (CacheKey type)
+
+const rateLimitKey = createCacheKey.rateLimit.core("api", "user-456", 1640995200);
+// Result: "fb:rate_limit:api:user-456:1640995200" (CacheKey type)
+
+const customKey = createCacheKey.custom("analytics", "user-789", "daily-stats");
+// Result: "fb:analytics:user-789:daily-stats" (CacheKey type)
+
+// ✅ Runtime validation prevents errors
+const customKeyNoSub = createCacheKey.custom("analytics", "user-xyz");
+// Result: "fb:analytics:user-xyz" (CacheKey type)
+
+// ❌ Runtime validation catches errors
+createCacheKey.environment.state(""); 
+// Throws: "Invalid Cache key: Parts cannot be empty"
+
+createCacheKey.custom("analytics", "user-123", "");
+// Throws: "Invalid Cache key: Parts cannot be empty"
+
+// ❌ TypeScript prevents invalid namespaces at compile time
+createCacheKey.custom("invalid", "user-123"); 
+// TypeScript Error: Argument of type '"invalid"' is not assignable to parameter of type 'CustomCacheNamespace'
 ```
+
+### makeCacheKey Utility Principles
+
+- **Location**: Internal utility in `src/utils/key.ts` - not exported from package
+- **Purpose**: Provides consistent runtime validation for all cache key generation
+- **Structure**: Validates `fb:resource:identifier[:subresource]*` pattern with regex
+- **Error Handling**: Throws descriptive errors for validation failures
+
+### Validation Rules
+
+```typescript
+// ✅ GOOD - Valid cache key patterns
+makeCacheKey("env", "123", "state")           // "fb:env:123:state"
+makeCacheKey("user", "456")                   // "fb:user:456"
+makeCacheKey("rate_limit", "api", "user", "123") // "fb:rate_limit:api:user:123"
+
+// ❌ BAD - Invalid patterns that throw errors
+makeCacheKey("fb", "test")                    // Error: Don't include 'fb' prefix
+makeCacheKey("env", "", "state")              // Error: Parts cannot be empty
+makeCacheKey("")                              // Error: Parts cannot be empty
+```
+
+### CustomCacheNamespace Management
+
+- **Type Definition**: Located in `types/keys.ts` as union type
+- **Current Namespaces**: `"analytics"`
+- **Extension**: Add new namespaces to union type as needed
+- **Validation**: TypeScript enforces valid namespaces at compile time
 
 ## Build Configuration
 
