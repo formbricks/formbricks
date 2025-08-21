@@ -108,7 +108,7 @@ export const S3_ENDPOINT_URL = process.env.S3_ENDPOINT_URL;
 export const S3_FORCE_PATH_STYLE = process.env.S3_FORCE_PATH_STYLE === "1";
 export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME;
 
-// ✅ Validate required environment variables
+// ✅ Validate in a function (e.g., inside createS3ClientFromEnv)
 if (!S3_ACCESS_KEY || !S3_SECRET_KEY || !S3_BUCKET_NAME || !S3_REGION) {
   return err({
     code: "s3_credentials_error",
@@ -532,29 +532,6 @@ const DOWNLOAD_URL_EXPIRY = 3600; // 1 hour for downloads
 
 // ❌ Don't use excessively long expiration
 const LONG_EXPIRY = 86400 * 7; // 7 days - security risk
-```
-
-## Security Best Practices
-
-### File Upload Validation
-
-Always validate file uploads with appropriate conditions:
-
-```typescript
-// ✅ Comprehensive upload conditions
-const conditions = [
-  ["content-length-range", 0, maxSize || DEFAULT_MAX_SIZE],
-  ["eq", "$Content-Type", contentType],
-  ["starts-with", "$key", filePath], // Restrict upload path
-];
-
-// ✅ Validate content type
-if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
-  return err({
-    code: "validation_error",
-    message: "Invalid content type",
-  });
-}
 ```
 
 ### Error Message Safety
