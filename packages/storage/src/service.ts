@@ -2,9 +2,8 @@ import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-s
 import { type PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@formbricks/logger";
-import { createS3Client } from "./client";
-import { S3_BUCKET_NAME } from "./constants";
 import {
+  ErrorCode,
   type FileNotFoundError,
   type Result,
   type S3ClientError,
@@ -12,7 +11,9 @@ import {
   type UnknownError,
   err,
   ok,
-} from "./types/error";
+} from "../types/error";
+import { createS3Client } from "./client";
+import { S3_BUCKET_NAME } from "./constants";
 
 const s3Client = createS3Client();
 
@@ -42,7 +43,7 @@ export const getSignedUploadUrl = async (
     if (!s3Client) {
       logger.error("Failed to get signed upload URL: S3 client is not set");
       return err({
-        code: "s3_client_error",
+        code: ErrorCode.S3ClientError,
         message: "S3 client is not set",
       });
     }
@@ -54,7 +55,7 @@ export const getSignedUploadUrl = async (
     if (!S3_BUCKET_NAME) {
       logger.error("Failed to get signed upload URL: S3 bucket name is not set");
       return err({
-        code: "s3_credentials_error",
+        code: ErrorCode.S3CredentialsError,
         message: "S3 bucket name is not set",
       });
     }
@@ -77,7 +78,7 @@ export const getSignedUploadUrl = async (
   } catch (error) {
     logger.error("Failed to get signed upload URL", { error });
     const unknownError: UnknownError = {
-      code: "unknown",
+      code: ErrorCode.Unknown,
       message: "Failed to get signed upload URL",
     };
 
@@ -96,14 +97,14 @@ export const getSignedDownloadUrl = async (
   try {
     if (!s3Client) {
       return err({
-        code: "s3_client_error",
+        code: ErrorCode.S3ClientError,
         message: "S3 client is not set",
       });
     }
 
     if (!S3_BUCKET_NAME) {
       return err({
-        code: "s3_credentials_error",
+        code: ErrorCode.S3CredentialsError,
         message: "S3 bucket name is not set",
       });
     }
@@ -123,15 +124,12 @@ export const getSignedDownloadUrl = async (
         (headError as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404
       ) {
         return err({
-          code: "file_not_found_error",
+          code: ErrorCode.FileNotFoundError,
           message: `File not found: ${fileKey}`,
         });
       }
 
-      return err({
-        code: "unknown",
-        message: `Failed to get signed download URL for file: ${fileKey}`,
-      });
+      logger.warn("HeadObject check failed; proceeding to sign download URL", { error: headError, fileKey });
     }
 
     const getObjectCommand = new GetObjectCommand({
@@ -143,7 +141,7 @@ export const getSignedDownloadUrl = async (
   } catch (error) {
     logger.error("Failed to get signed download URL", { error });
     const unknownError: UnknownError = {
-      code: "unknown",
+      code: ErrorCode.Unknown,
       message: "Failed to get signed download URL",
     };
 
@@ -162,14 +160,14 @@ export const deleteFile = async (
   try {
     if (!s3Client) {
       return err({
-        code: "s3_client_error",
+        code: ErrorCode.S3ClientError,
         message: "S3 client is not set",
       });
     }
 
     if (!S3_BUCKET_NAME) {
       return err({
-        code: "s3_credentials_error",
+        code: ErrorCode.S3CredentialsError,
         message: "S3 bucket name is not set",
       });
     }
@@ -186,7 +184,7 @@ export const deleteFile = async (
     logger.error("Failed to delete file", { error });
 
     const unknownError: UnknownError = {
-      code: "unknown",
+      code: ErrorCode.Unknown,
       message: "Failed to delete file",
     };
 

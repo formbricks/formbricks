@@ -1,5 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { logger } from "@formbricks/logger";
+import { ErrorCode, type Result, type S3CredentialsError, type UnknownError, err, ok } from "../types/error";
 import {
   S3_ACCESS_KEY,
   S3_BUCKET_NAME,
@@ -8,7 +9,6 @@ import {
   S3_REGION,
   S3_SECRET_KEY,
 } from "./constants";
-import { type Result, type S3CredentialsError, type UnknownError, err, ok } from "./types/error";
 
 /**
  * Create an S3 client from environment variables
@@ -19,7 +19,7 @@ export const createS3ClientFromEnv = (): Result<S3Client, S3CredentialsError | U
     if (!S3_ACCESS_KEY || !S3_SECRET_KEY || !S3_BUCKET_NAME || !S3_REGION) {
       logger.error("S3 Client: S3 credentials are not set");
       return err({
-        code: "s3_credentials_error",
+        code: ErrorCode.S3CredentialsError,
         message: "S3 credentials are not set",
       });
     }
@@ -35,7 +35,7 @@ export const createS3ClientFromEnv = (): Result<S3Client, S3CredentialsError | U
   } catch (error) {
     logger.error("Error creating S3 client from environment variables", { error });
     return err({
-      code: "unknown",
+      code: ErrorCode.Unknown,
       message: "Error creating S3 client from environment variables",
     });
   }

@@ -19,22 +19,29 @@ export const err = <E = Error>(error: E): ResultError<E> => ({
   error,
 });
 
+export enum ErrorCode {
+  Unknown = "unknown",
+  S3CredentialsError = "s3_credentials_error",
+  S3ClientError = "s3_client_error",
+  FileNotFoundError = "file_not_found_error",
+}
+
 export interface UnknownError {
-  code: "unknown";
+  code: ErrorCode.Unknown;
   message: string;
 }
 
 export interface S3CredentialsError {
-  code: "s3_credentials_error";
+  code: ErrorCode.S3CredentialsError;
   message: string;
 }
 
 export interface S3ClientError {
-  code: "s3_client_error";
+  code: ErrorCode.S3ClientError;
   message: string;
 }
 
 export interface FileNotFoundError {
-  code: "file_not_found_error";
+  code: ErrorCode.FileNotFoundError;
   message: string;
 }

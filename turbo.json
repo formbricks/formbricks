@@ -45,6 +45,11 @@
     "@formbricks/storage#build": {
       "dependsOn": ["@formbricks/logger#build"]
     },
+    "@formbricks/storage#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/storage#build"],
+      "persistent": true
+    },
     "@formbricks/storage#lint": {
       "dependsOn": ["@formbricks/logger#build"]
     },
