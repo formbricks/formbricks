@@ -197,6 +197,7 @@
     "e_commerce": "E-Commerce",
     "edit": "Bearbeiten",
     "email": "E-Mail",
+    "ending_card": "Abschluss-Karte",
     "enterprise_license": "Enterprise Lizenz",
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
@@ -1530,6 +1531,7 @@
           "quota_updated_successfull_toast": "Kontingent erfolgreich aktualisiert",
           "response_limit": "Antwortlimit",
           "save_quota": "Quote speichern",
+          "select_ending_card": "Abschlusskarte auswählen",
           "upgrade_prompt_title": "Verwende Quoten mit einem höheren Plan",
           "when_quota_has_been_reached": "Wenn das Kontingent erreicht ist"
         },

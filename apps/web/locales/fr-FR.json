@@ -197,6 +197,7 @@
     "e_commerce": "E-commerce",
     "edit": "Modifier",
     "email": "Email",
+    "ending_card": "Carte de fin",
     "enterprise_license": "Licence d'entreprise",
     "environment_not_found": "Environnement non trouvé",
     "environment_notice": "Vous êtes actuellement dans l'environnement {environment}.",
@@ -1530,6 +1531,7 @@
           "quota_updated_successfull_toast": "Quota mis à jour avec succès",
           "response_limit": "Limite de réponse",
           "save_quota": "Enregistrer quota",
+          "select_ending_card": "Sélectionner la carte de fin",
           "upgrade_prompt_title": "Utilisez des quotas avec un plan supérieur",
           "when_quota_has_been_reached": "Quand le quota est atteint"
         },

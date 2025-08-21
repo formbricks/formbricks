@@ -197,6 +197,7 @@
     "e_commerce": "電子商務",
     "edit": "編輯",
     "email": "電子郵件",
+    "ending_card": "結尾卡片",
     "enterprise_license": "企業授權",
     "environment_not_found": "找不到環境",
     "environment_notice": "您目前在 '{'environment'}' 環境中。",
@@ -1530,6 +1531,7 @@
           "quota_updated_successfull_toast": "配額已成功更新",
           "response_limit": "回應上限",
           "save_quota": "儲存 配額",
+          "select_ending_card": "選取結尾卡片",
           "upgrade_prompt_title": "使用 額度 與 更高 的 計劃",
           "when_quota_has_been_reached": "當 配額 已達"
         },

@@ -197,6 +197,7 @@
     "e_commerce": "Comerț electronic",
     "edit": "Editare",
     "email": "Email",
+    "ending_card": "Cardul de finalizare",
     "enterprise_license": "Licență Întreprindere",
     "environment_not_found": "Mediul nu a fost găsit",
     "environment_notice": "Te afli în prezent în mediul {environment}",
@@ -1530,6 +1531,7 @@
           "quota_updated_successfull_toast": "\"Cota actualizată cu succes!\"",
           "response_limit": "Limită răspunsuri",
           "save_quota": "Salvează cota",
+          "select_ending_card": "Selectează cardul de finalizare",
           "upgrade_prompt_title": "Folosește cote cu un plan superior",
           "when_quota_has_been_reached": "Când cota a fost atinsă"
         },

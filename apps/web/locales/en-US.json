@@ -197,6 +197,7 @@
     "e_commerce": "E-Commerce",
     "edit": "Edit",
     "email": "Email",
+    "ending_card": "Ending card",
     "enterprise_license": "Enterprise License",
     "environment_not_found": "Environment not found",
     "environment_notice": "You're currently in the {environment} environment.",
@@ -1530,6 +1531,7 @@
           "quota_updated_successfull_toast": "Quota updated successfully",
           "response_limit": "Response limit",
           "save_quota": "Save quota",
+          "select_ending_card": "Select ending card",
           "upgrade_prompt_title": "Use quotas with a higher plan",
           "when_quota_has_been_reached": "When quota has been reached"
         },

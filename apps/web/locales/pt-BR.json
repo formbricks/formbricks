@@ -197,6 +197,7 @@
     "e_commerce": "comércio eletrônico",
     "edit": "Editar",
     "email": "Email",
+    "ending_card": "Cartão de encerramento",
     "enterprise_license": "Licença Empresarial",
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Você está atualmente no ambiente {environment}.",
@@ -1530,6 +1531,7 @@
           "quota_updated_successfull_toast": "Cota atualizada com sucesso",
           "response_limit": "Limite de Resposta",
           "save_quota": "Salvar cota",
+          "select_ending_card": "Selecione cartão de final",
           "upgrade_prompt_title": "Use cotas com um plano superior",
           "when_quota_has_been_reached": "Quando a cota for atingida"
         },

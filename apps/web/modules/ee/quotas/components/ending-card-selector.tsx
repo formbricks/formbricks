@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { useTranslate } from "@tolgee/react";
 import { HandshakeIcon, Undo2Icon } from "lucide-react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -20,7 +21,7 @@ interface EndingCardSelectorProps {
 
 export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelectorProps) => {
   const availableEndings = survey.endings || [];
-
+  const { t } = useTranslate();
   const endingCards = availableEndings.filter((ending) => ending.type === "endScreen");
   const redirectToUrls = availableEndings.filter((ending) => ending.type === "redirectToUrl");
 
@@ -28,14 +29,14 @@ export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelect
     <div className="space-y-1 text-sm">
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger>
-          <SelectValue placeholder="Select ending card" />
+          <SelectValue placeholder={t("environments.surveys.edit.quotas.select_ending_card")} />
         </SelectTrigger>
         <SelectContent>
           {endingCards.length > 0 && (
             <SelectGroup>
               <div className="flex items-center gap-2 p-2 text-sm text-slate-500">
                 <HandshakeIcon className="h-4 w-4" />
-                <span>Ending Card</span>
+                <span>{t("common.ending_card")}</span>
               </div>
               {/* Custom endings */}
               {endingCards.map((ending) => (
@@ -49,11 +50,11 @@ export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelect
             <SelectGroup>
               <div className="flex items-center gap-2 p-2 text-sm text-slate-500">
                 <Undo2Icon className="h-4 w-4" />
-                <span>Redirect to URL</span>
+                <span>{t("environments.surveys.edit.redirect_to_url")}</span>
               </div>
-              {redirectToUrls.map((ending, index) => (
+              {redirectToUrls.map((ending) => (
                 <SelectItem key={ending.id} value={ending.id}>
-                  Redirect to URL {index + 1}
+                  {ending.label}
                 </SelectItem>
               ))}
             </SelectGroup>

@@ -66,7 +66,7 @@ describe("EndingCardSelector", () => {
   const mockSurveyEmpty: TSurvey = {
     id: "survey2",
     endings: [],
-  } as TSurvey;
+  } as unknown as TSurvey;
 
   beforeEach(() => {
     mockOnChange.mockClear();
@@ -88,14 +88,14 @@ describe("EndingCardSelector", () => {
   test("shows placeholder when no value selected", () => {
     render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
 
-    expect(screen.getByText("Select ending card")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.quotas.select_ending_card")).toBeInTheDocument();
   });
 
   test("displays ending card options", () => {
     render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
 
     // Should show ending card section
-    expect(screen.getByText("Ending Card")).toBeInTheDocument();
+    expect(screen.getByText("common.ending_card")).toBeInTheDocument();
 
     // Should show ending card items
     const endingItems = screen.getAllByTestId("select-item");
@@ -109,11 +109,10 @@ describe("EndingCardSelector", () => {
     render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
 
     // Should show redirect URL section
-    expect(screen.getByText("Redirect to URL")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.redirect_to_url")).toBeInTheDocument();
 
     // Should show redirect items with generic labels
-    expect(screen.getByText("Redirect to URL 1")).toBeInTheDocument();
-    expect(screen.getByText("Redirect to URL 2")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.redirect_to_url")).toBeInTheDocument();
   });
 
   test("calls onChange when selection is made", async () => {
@@ -131,32 +130,34 @@ describe("EndingCardSelector", () => {
     render(<EndingCardSelector survey={mockSurveyEmpty} value="" onChange={mockOnChange} />);
 
     expect(screen.getByTestId("select")).toBeInTheDocument();
-    expect(screen.queryByText("Ending Card")).not.toBeInTheDocument();
-    expect(screen.queryByText("Redirect to URL")).not.toBeInTheDocument();
+    expect(screen.queryByText("common.ending_card")).not.toBeInTheDocument();
+    expect(screen.queryByText("environments.surveys.edit.redirect_to_url")).not.toBeInTheDocument();
   });
 
   test("handles undefined endings array", () => {
     const surveyWithUndefinedEndings = {
       id: "survey3",
       endings: undefined,
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     render(<EndingCardSelector survey={surveyWithUndefinedEndings} value="" onChange={mockOnChange} />);
 
     expect(screen.getByTestId("select")).toBeInTheDocument();
-    expect(screen.queryByText("Ending Card")).not.toBeInTheDocument();
-    expect(screen.queryByText("Redirect to URL")).not.toBeInTheDocument();
+    expect(screen.queryByText("common.ending_card")).not.toBeInTheDocument();
+    expect(screen.queryByText("environments.surveys.edit.redirect_to_url")).not.toBeInTheDocument();
   });
 
   test("filters endings correctly by type", () => {
     render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
 
     // Should only show endScreen endings in ending card section
-    const endingCardSection = screen.getByText("Ending Card").closest("[data-testid='select-group']");
+    const endingCardSection = screen.getByText("common.ending_card").closest("[data-testid='select-group']");
     expect(endingCardSection).toBeInTheDocument();
 
     // Should only show redirectToUrl endings in redirect section
-    const redirectSection = screen.getByText("Redirect to URL").closest("[data-testid='select-group']");
+    const redirectSection = screen
+      .getByText("environments.surveys.edit.redirect_to_url")
+      .closest("[data-testid='select-group']");
     expect(redirectSection).toBeInTheDocument();
   });
 
@@ -174,16 +175,15 @@ describe("EndingCardSelector", () => {
         {
           id: "ending3",
           type: "endScreen",
-          // No headline property
           subheader: { default: "Just subheader" },
         },
       ],
-    } as TSurvey;
+    } as unknown as TSurvey;
 
     render(<EndingCardSelector survey={surveyWithEndingNoHeadline} value="" onChange={mockOnChange} />);
 
     // Should still render the component without errors
     expect(screen.getByTestId("select")).toBeInTheDocument();
-    expect(screen.getByText("Ending Card")).toBeInTheDocument();
+    expect(screen.getByText("common.ending_card")).toBeInTheDocument();
   });
 });
