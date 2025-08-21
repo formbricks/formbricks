@@ -21,7 +21,7 @@ const s3Client = createS3Client();
  * @param fileName - The name of the file to upload
  * @param contentType - The content type of the file
  * @param filePath - The path to the file in S3
- * @param isBiggerFileUploadAllowed - Whether to allow uploading bigger files
+ * @param maxSize - The maximum size of the file to upload or undefined if no limit is desired
  * @returns A Result containing the signed URL and presigned fields or an error: UnknownError | S3CredentialsError | S3ClientError
  */
 export const getSignedUploadUrl = async (
