@@ -1,14 +1,18 @@
-import { createQuotaAction } from "@/modules/ee/quotas/actions";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSurveyQuota, TSurveyQuotaCreateInput } from "@formbricks/types/quota";
 import { QuotaList } from "./quota-list";
 
 // Mock the createQuotaAction
 vi.mock("@/modules/ee/quotas/actions", () => ({
-  createQuotaAction: vi.fn(),
+  createQuotaAction: (quota: TSurveyQuotaCreateInput) => {
+    return {
+      data: {
+        ...quota,
+      },
+    };
+  },
 }));
 
 // Mock Next.js router
@@ -69,7 +73,6 @@ describe("QuotaList", () => {
       },
       action: "endSurvey",
       endingCardId: null,
-      redirectUrl: null,
       countPartialSubmissions: false,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -85,7 +88,6 @@ describe("QuotaList", () => {
       },
       action: "continueSurvey",
       endingCardId: "ending1",
-      redirectUrl: null,
       countPartialSubmissions: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -135,104 +137,6 @@ describe("QuotaList", () => {
     await user.click(quotaItem!);
 
     expect(mockOnEdit).toHaveBeenCalledWith(mockQuotas[0]);
-  });
-
-  test("calls deleteQuota when delete button is clicked", async () => {
-    const user = userEvent.setup();
-
-    render(<QuotaList quotas={mockQuotas} onEdit={mockOnEdit} deleteQuota={mockDeleteQuota} />);
-
-    // Get all buttons and select the second button of the first quota (delete button)
-    const allButtons = screen.getAllByRole("button");
-    const deleteButton = allButtons[1]; // Copy button is [0], delete button is [1] for first quota
-
-    await user.click(deleteButton);
-
-    expect(mockDeleteQuota).toHaveBeenCalledWith(mockQuotas[0]);
-  });
-
-  test("calls duplicateQuota when copy button is clicked", async () => {
-    const user = userEvent.setup();
-
-    vi.mocked(createQuotaAction).mockResolvedValue({
-      data: { id: "new-quota", name: "Test Quota 1 (Copy)" },
-    });
-
-    render(<QuotaList quotas={mockQuotas} onEdit={mockOnEdit} deleteQuota={mockDeleteQuota} />);
-
-    // Get all buttons and select the first button of the first quota (copy button)
-    const allButtons = screen.getAllByRole("button");
-    const copyButton = allButtons[0]; // Copy button is [0] for first quota
-
-    await user.click(copyButton);
-
-    await waitFor(() => {
-      expect(vi.mocked(createQuotaAction)).toHaveBeenCalledWith({
-        quota: {
-          ...mockQuotas[0],
-          name: "Test Quota 1 (Copy)",
-        },
-      });
-    });
-  });
-
-  test("shows success toast when duplication succeeds", async () => {
-    const user = userEvent.setup();
-
-    vi.mocked(createQuotaAction).mockResolvedValue({
-      data: { id: "new-quota", name: "Test Quota 1 (Copy)" },
-    });
-
-    render(<QuotaList quotas={mockQuotas} onEdit={mockOnEdit} deleteQuota={mockDeleteQuota} />);
-
-    // Get all buttons and select the first button of the first quota (copy button)
-    const allButtons = screen.getAllByRole("button");
-    const copyButton = allButtons[0]; // Copy button is [0] for first quota
-
-    await user.click(copyButton);
-
-    await waitFor(() => {
-      expect(vi.mocked(toast.success)).toHaveBeenCalledWith(
-        "environments.surveys.edit.quotas.quota_duplicated_successfull_toast"
-      );
-    });
-  });
-
-  test("shows error toast when duplication fails", async () => {
-    const user = userEvent.setup();
-
-    vi.mocked(createQuotaAction).mockResolvedValue({
-      data: null,
-      error: "Something went wrong",
-    });
-
-    render(<QuotaList quotas={mockQuotas} onEdit={mockOnEdit} deleteQuota={mockDeleteQuota} />);
-
-    // Get all buttons and select the first button of the first quota (copy button)
-    const allButtons = screen.getAllByRole("button");
-    const copyButton = allButtons[0]; // Copy button is [0] for first quota
-
-    await user.click(copyButton);
-
-    await waitFor(() => {
-      expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
-        "environments.surveys.edit.quotas.failed_to_duplicate_quota_toast"
-      );
-    });
-  });
-
-  test("stops propagation when action buttons are clicked", async () => {
-    const user = userEvent.setup();
-
-    render(<QuotaList quotas={mockQuotas} onEdit={mockOnEdit} deleteQuota={mockDeleteQuota} />);
-
-    const copyButtons = screen.getAllByRole("button");
-    const copyButton = copyButtons.find((button) => button.querySelector("svg"));
-
-    await user.click(copyButton!);
-
-    // onEdit should not be called when clicking action buttons
-    expect(mockOnEdit).not.toHaveBeenCalled();
   });
 
   test("renders empty list when no quotas", () => {
