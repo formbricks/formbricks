@@ -175,7 +175,7 @@ export default meta;
 type Story = StoryObj<typeof DeleteDialog> & { args: StoryOptions };
 
 // Create a render function for interactive dialogs
-const renderDeleteDialog = (args: StoryProps) => {
+const RenderDeleteDialog = (args: StoryProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Extract component props
@@ -237,15 +237,15 @@ const renderDeleteDialog = (args: StoryProps) => {
         isDeleting={isDeleting}
         isSaving={isSaving}
         useSaveInsteadOfCancel={useSaveInsteadOfCancel}
-        disabled={disabled}
-        children={children}
-      />
+        disabled={disabled}>
+        {children}
+      </DeleteDialog>
     </div>
   );
 };
 
 export const Default: Story = {
-  render: renderDeleteDialog,
+  render: RenderDeleteDialog,
   args: {
     triggerText: "Delete Survey",
     deleteWhat: "Survey",
@@ -261,7 +261,7 @@ export const Default: Story = {
 };
 
 export const Deleting: Story = {
-  render: renderDeleteDialog,
+  render: RenderDeleteDialog,
   args: {
     triggerText: "Delete User Account",
     deleteWhat: "User Account",
@@ -284,7 +284,7 @@ export const Deleting: Story = {
 };
 
 export const Disabled: Story = {
-  render: renderDeleteDialog,
+  render: RenderDeleteDialog,
   args: {
     triggerText: "Delete Project",
     deleteWhat: "Project",
@@ -307,7 +307,7 @@ export const Disabled: Story = {
 };
 
 export const WithChildren: Story = {
-  render: renderDeleteDialog,
+  render: RenderDeleteDialog,
   args: {
     triggerText: "Delete Environment",
     deleteWhat: "Environment",
@@ -330,7 +330,7 @@ export const WithChildren: Story = {
 };
 
 export const SaveInsteadOfCancel: Story = {
-  render: renderDeleteDialog,
+  render: RenderDeleteDialog,
   args: {
     triggerText: "Delete Response",
     deleteWhat: "Response",
@@ -353,7 +353,7 @@ export const SaveInsteadOfCancel: Story = {
 };
 
 export const SavingState: Story = {
-  render: renderDeleteDialog,
+  render: RenderDeleteDialog,
   args: {
     triggerText: "Delete with Save",
     deleteWhat: "Document",
@@ -376,7 +376,7 @@ export const SavingState: Story = {
 };
 
 export const LongText: Story = {
-  render: renderDeleteDialog,
+  render: RenderDeleteDialog,
   args: {
     triggerText: "Delete Integration",
     deleteWhat: "API Integration",
