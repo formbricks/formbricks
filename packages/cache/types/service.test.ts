@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { CacheValidationError, ZCacheKey, ZTtlMs, validateInputs } from "./service";
+import { ZCacheKey, ZTtlMs, validateInputs } from "./service";
 
 // Mock logger
 vi.mock("@formbricks/logger", () => ({
@@ -59,40 +59,41 @@ describe("Cache validation", () => {
     });
   });
 
-  describe("CacheValidationError", () => {
-    test("should create error with correct name and message", () => {
-      const error = new CacheValidationError("Test error");
-
-      expect(error.name).toBe("CacheValidationError");
-      expect(error.message).toBe("Test error");
-      expect(error).toBeInstanceOf(Error);
-    });
-  });
-
   describe("validateInputs", () => {
-    test("should validate valid inputs", () => {
-      const [key, ttl] = validateInputs(["test-key", ZCacheKey], [5000, ZTtlMs]);
+    test("should validate valid inputs and return Result with data", () => {
+      const result = validateInputs(["test-key", ZCacheKey], [5000, ZTtlMs]);
 
-      expect(key).toBe("test-key");
-      expect(ttl).toBe(5000);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(["test-key", 5000]);
+      }
     });
 
-    test("should throw CacheValidationError for invalid cache key", () => {
-      expect(() => {
-        validateInputs(["", ZCacheKey]);
-      }).toThrow(CacheValidationError);
+    test("should return error for invalid cache key", () => {
+      const result = validateInputs(["", ZCacheKey]);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("cache_validation_error");
+      }
     });
 
-    test("should throw CacheValidationError for invalid TTL", () => {
-      expect(() => {
-        validateInputs(["valid-key", ZCacheKey], [500, ZTtlMs]);
-      }).toThrow(CacheValidationError);
+    test("should return error for invalid TTL", () => {
+      const result = validateInputs(["valid-key", ZCacheKey], [500, ZTtlMs]);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("cache_validation_error");
+      }
     });
 
     test("should validate single input", () => {
-      const [key] = validateInputs(["valid-key", ZCacheKey]);
+      const result = validateInputs(["valid-key", ZCacheKey]);
 
-      expect(key).toBe("valid-key");
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(["valid-key"]);
+      }
     });
   });
 });

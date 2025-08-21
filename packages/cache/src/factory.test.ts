@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { type RedisClient, createCacheService, createRedisClientFromEnv } from "./factory";
+import type { RedisClient } from "../types/client";
+import { createCacheService, createRedisClientFromEnv } from "./factory";
 
 // Mock the redis module
 vi.mock("redis", () => ({

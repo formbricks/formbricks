@@ -1,8 +1,7 @@
-import { type RedisClientType, createClient } from "redis";
+import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
+import type { RedisClient } from "../types/client";
 import { CacheService } from "./service";
-
-export type RedisClient = RedisClientType;
 
 /**
  * Creates a Redis client from the REDIS_URL environment variable

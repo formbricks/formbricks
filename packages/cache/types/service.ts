@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
+import type { CacheError, Result } from "./error";
+import { ErrorCode, err, ok } from "./error";
 
 // Validation schemas for cache service
 export const ZCacheKey = z
@@ -13,30 +15,30 @@ export const ZTtlMs = z
   .min(1000, "TTL must be at least 1000ms (1 second)")
   .finite("TTL must be finite");
 
-// Default error class for cache validation
-export class CacheValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "CacheValidationError";
-  }
-}
-
 /**
- * Validate inputs using Zod schemas following project standards
+ * Generic validation function using Zod schemas with Result types
+ * @param pairs - Array of [value, schema] tuples to validate
+ * @returns Result with validated data or CacheValidationError
  */
 export function validateInputs<T extends readonly [unknown, z.ZodType<unknown>][]>(
   ...pairs: T
-): { [K in keyof T]: T[K] extends readonly [unknown, z.ZodType<infer U>] ? U : never } {
+): Result<{ [K in keyof T]: T[K] extends readonly [unknown, z.ZodType<infer U>] ? U : never }, CacheError> {
   const results: unknown[] = [];
 
   for (const [value, schema] of pairs) {
     const result = schema.safeParse(value);
     if (!result.success) {
-      logger.error(result.error, "Cache validation failed");
-      throw new CacheValidationError("Cache validation failed");
+      logger.error("Cache validation failed", {
+        value,
+        error: result.error.issues[0]?.message || "Unknown validation error",
+        validationErrors: result.error.issues,
+      });
+      return err({
+        code: ErrorCode.CacheValidationError,
+      });
     }
     results.push(result.data);
   }
 
-  return results as { [K in keyof T]: T[K] extends readonly [unknown, z.ZodType<infer U>] ? U : never };
+  return ok(results as { [K in keyof T]: T[K] extends readonly [unknown, z.ZodType<infer U>] ? U : never });
 }
