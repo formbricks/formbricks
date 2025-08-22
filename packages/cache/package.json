@@ -38,7 +38,8 @@
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
     "@formbricks/logger": "workspace:*",
-    "redis": "5.8.1"
+    "redis": "5.8.1",
+    "zod": "3.24.4"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

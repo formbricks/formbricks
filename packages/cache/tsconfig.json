@@ -1,8 +1,12 @@
 {
   "compilerOptions": {
     "allowImportingTsExtensions": true,
+    "baseUrl": ".",
     "isolatedModules": true,
     "noEmit": true,
+    "paths": {
+      "@/*": ["./*"]
+    },
     "resolveJsonModule": true,
     "strict": true
   },
