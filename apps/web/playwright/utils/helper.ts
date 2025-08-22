@@ -758,12 +758,16 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("heading", { name: params.npsQuestion.question }).click();
   await page.getByRole("button", { name: "Toggle advanced settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
+  await page.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: params.npsQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: ">", exact: true }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: "2" }).click();
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
+  await page.locator("#condition-0-1-conditionValue").click();
+  await page.getByRole("option", { name: params.npsQuestion.question }).click();
   await page.locator("#condition-0-1-conditionOperator").click();
   await page.getByRole("option", { name: "<", exact: true }).click();
   await page.locator("#condition-0-1-conditionMatchValue").click();
