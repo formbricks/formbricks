@@ -88,13 +88,13 @@ export const HiddenFieldsCard = ({
       return;
     }
 
-    const isHiddenFieldUsedInQuota = quotas.filter((quota) => isUsedInQuota(quota, undefined, fieldId));
+    const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { hiddenFieldId: fieldId }));
 
-    if (isHiddenFieldUsedInQuota.length > 0) {
+    if (quotaIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.fieldId_is_used_in_quota_please_remove_it_from_quota_first", {
           fieldId,
-          quotaName: isHiddenFieldUsedInQuota.map((quota) => quota.name)[0],
+          quotaName: quotas[quotaIdx].name,
         })
       );
       return;

@@ -43,6 +43,10 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
     });
     if (deleteQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_deleted_successfull_toast"));
+      // Clear activeQuota if we're deleting the currently active quota
+      if (activeQuota?.id === quotaId) {
+        setActiveQuota(null);
+      }
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(deleteQuotaActionResult);
@@ -115,7 +119,13 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
                 ) : (
                   <div className="rounded-lg border p-3 text-center">
                     <p className="mb-4 text-sm text-slate-500">{t("common.quotas_description")}</p>
-                    <Button variant="secondary" size="sm" onClick={() => setIsQuotaModalOpen(true)}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setIsQuotaModalOpen(true);
+                        setActiveQuota(null);
+                      }}>
                       <PlusIcon className="mr-2 h-4 w-4" />
                       {t("environments.surveys.edit.quotas.add_quota")}
                     </Button>

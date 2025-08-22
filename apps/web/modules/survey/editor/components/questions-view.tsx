@@ -275,12 +275,12 @@ export const QuestionsView = ({
       return;
     }
 
-    const checkQuota = quotas.filter((quota) => isUsedInQuota(quota, questionId));
-    if (checkQuota.length > 0) {
+    const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { questionId }));
+    if (quotaIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.question_used_in_quota", {
           questionIndex: questionIdx + 1,
-          quotaName: checkQuota.map((quota) => quota.name)[0],
+          quotaName: quotas[quotaIdx].name,
         })
       );
       return;

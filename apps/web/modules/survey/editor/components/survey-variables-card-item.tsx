@@ -94,15 +94,13 @@ export const SurveyVariablesCardItem = ({
       return;
     }
 
-    const isVariableUsedInQuota = quotas.filter((quota) =>
-      isUsedInQuota(quota, undefined, undefined, variableToDelete.id)
-    );
+    const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { variableId: variableToDelete.id }));
 
-    if (isVariableUsedInQuota.length > 0) {
+    if (quotaIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.variable_is_used_in_quota_please_remove_it_from_quota_first", {
           variableName: variableToDelete.name,
-          quotaName: isVariableUsedInQuota.map((quota) => quota.name)[0],
+          quotaName: quotas[quotaIdx].name,
         })
       );
       return;

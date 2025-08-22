@@ -32,7 +32,6 @@ interface ConditionsEditorProps {
   config: TConditionsEditorConfig;
   callbacks: TConditionsEditorCallbacks;
   depth?: number;
-  hideRemoveButton?: boolean;
 }
 
 export function ConditionsEditor({
@@ -40,7 +39,6 @@ export function ConditionsEditor({
   config,
   callbacks,
   depth = 0,
-  hideRemoveButton = false,
 }: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
@@ -103,7 +101,6 @@ export function ConditionsEditor({
                 config={config}
                 callbacks={callbacks}
                 depth={depth + 1}
-                hideRemoveButton={true}
               />
             </div>
 
@@ -228,13 +225,12 @@ export function ConditionsEditor({
               icon={<PlusIcon className="h-4 w-4" />}>
               {t("environments.surveys.edit.add_condition_below")}
             </DropdownMenuItem>
-            {!hideRemoveButton && (
-              <DropdownMenuItem
-                onClick={() => callbacks.onRemoveCondition(condition.id)}
-                icon={<TrashIcon className="h-4 w-4" />}>
-                {t("common.remove")}
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem
+              disabled={conditions.conditions.length === 1}
+              onClick={() => callbacks.onRemoveCondition(condition.id)}
+              icon={<TrashIcon className="h-4 w-4" />}>
+              {t("common.remove")}
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => callbacks.onDuplicateCondition(condition.id)}
               icon={<CopyIcon className="h-4 w-4" />}>

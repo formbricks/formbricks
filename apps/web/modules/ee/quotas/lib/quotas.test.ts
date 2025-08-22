@@ -2,12 +2,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import {
-  DatabaseError,
-  InvalidInputError,
-  ResourceNotFoundError,
-  ValidationError,
-} from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TSurveyQuota, TSurveyQuotaCreateInput, TSurveyQuotaUpdateInput } from "@formbricks/types/quota";
 import { createQuota, deleteQuota, getQuotas, updateQuota } from "./quotas";
 

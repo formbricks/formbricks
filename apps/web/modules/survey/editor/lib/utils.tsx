@@ -1209,9 +1209,15 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
 
 export const isUsedInQuota = (
   quota: TSurveyQuota,
-  questionId?: TSurveyQuestionId,
-  hiddenFieldId?: string,
-  variableId?: string
+  {
+    questionId,
+    hiddenFieldId,
+    variableId,
+  }: {
+    questionId?: TSurveyQuestionId;
+    hiddenFieldId?: string;
+    variableId?: string;
+  }
 ): boolean => {
   if (questionId) {
     return quota.conditions.criteria.some(

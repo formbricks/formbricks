@@ -17,15 +17,9 @@ interface QuotaConditionBuilderProps {
   survey: TSurvey;
   conditions: TSurveyQuotaConditions;
   onChange: (conditions: TSurveyQuotaConditions) => void;
-  hideRemoveButton: boolean;
 }
 
-export const QuotaConditionBuilder = ({
-  survey,
-  conditions,
-  onChange,
-  hideRemoveButton,
-}: QuotaConditionBuilderProps) => {
+export const QuotaConditionBuilder = ({ survey, conditions, onChange }: QuotaConditionBuilderProps) => {
   const { t } = useTranslate();
 
   // Convert quota conditions to generic format
@@ -48,12 +42,7 @@ export const QuotaConditionBuilder = ({
 
   return (
     <div className="space-y-4">
-      <ConditionsEditor
-        conditions={genericConditions}
-        config={config}
-        callbacks={callbacks}
-        hideRemoveButton={hideRemoveButton}
-      />
+      <ConditionsEditor conditions={genericConditions} config={config} callbacks={callbacks} />
     </div>
   );
 };

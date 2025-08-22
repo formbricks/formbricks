@@ -123,7 +123,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     }
   }, [open, defaultValues]);
 
-  const handleQuotaCreated = async (quota: TSurveyQuotaCreateInput) => {
+  const handleCreateQuota = async (quota: TSurveyQuotaCreateInput) => {
     const createQuotaActionResult = await createQuotaAction({
       quota: quota,
     });
@@ -137,7 +137,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     }
   };
 
-  const handleQuotaUpdate = async (updatedQuota: TSurveyQuotaUpdateInput, quotaId: string) => {
+  const handleUpdateQuota = async (updatedQuota: TSurveyQuotaUpdateInput, quotaId: string) => {
     const updateQuotaActionResult = await updateQuotaAction({
       quotaId,
       quota: updatedQuota,
@@ -155,31 +155,24 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
   // Handle form submission
   const onSubmit = useCallback(
     async (data: QuotaFormData) => {
+      let payload = {
+        name: data.name.trim(),
+        limit: data.limit,
+        conditions: data.conditions,
+        action: data.action,
+        endingCardId: data.endingCardId || null,
+        countPartialSubmissions: data.countPartialSubmissions,
+      };
       if (!quota) {
-        await handleQuotaCreated({
+        await handleCreateQuota({
+          ...payload,
           surveyId: survey.id,
-          name: data.name.trim(),
-          limit: data.limit,
-          conditions: data.conditions,
-          action: data.action,
-          endingCardId: data.endingCardId || null,
-          countPartialSubmissions: data.countPartialSubmissions,
         });
       } else {
-        await handleQuotaUpdate(
-          {
-            name: data.name.trim(),
-            limit: data.limit,
-            conditions: data.conditions,
-            action: data.action,
-            endingCardId: data.endingCardId || null,
-            countPartialSubmissions: data.countPartialSubmissions,
-          },
-          quota.id
-        );
+        await handleUpdateQuota(payload, quota.id);
       }
     },
-    [quota, survey.id, handleQuotaCreated, handleQuotaUpdate]
+    [quota, survey.id, handleCreateQuota, handleUpdateQuota]
   );
 
   const handleConditionsChange = useCallback(
@@ -282,7 +275,6 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
                             survey={survey}
                             conditions={field.value}
                             onChange={handleConditionsChange}
-                            hideRemoveButton={field.value.criteria.length === 1}
                           />
                         )}
                       </FormControl>
