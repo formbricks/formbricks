@@ -11,16 +11,16 @@ import {
 } from "@/modules/ui/components/select";
 import { useTranslate } from "@tolgee/react";
 import { HandshakeIcon, Undo2Icon } from "lucide-react";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurveyEndings } from "@formbricks/types/surveys/types";
 
 interface EndingCardSelectorProps {
-  survey: TSurvey;
+  endings: TSurveyEndings;
   value: string;
   onChange: (value: string) => void;
 }
 
-export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelectorProps) => {
-  const availableEndings = survey.endings || [];
+export const EndingCardSelector = ({ endings, value, onChange }: EndingCardSelectorProps) => {
+  const availableEndings = endings;
   const { t } = useTranslate();
   const endingCards = availableEndings.filter((ending) => ending.type === "endScreen");
   const redirectToUrls = availableEndings.filter((ending) => ending.type === "redirectToUrl");

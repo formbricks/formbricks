@@ -275,9 +275,14 @@ export const QuestionsView = ({
       return;
     }
 
-    const checkQuota = quotas.some((quota) => isUsedInQuota(quota, questionId));
-    if (checkQuota) {
-      toast.error(t("environments.surveys.edit.question_used_in_quota"));
+    const checkQuota = quotas.filter((quota) => isUsedInQuota(quota, questionId));
+    if (checkQuota.length > 0) {
+      toast.error(
+        t("environments.surveys.edit.question_used_in_quota", {
+          questionIndex: questionIdx + 1,
+          quotaName: checkQuota.map((quota) => quota.name)[0],
+        })
+      );
       return;
     }
 
@@ -518,6 +523,7 @@ export const QuestionsView = ({
               setLocalSurvey={setLocalSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
+              quotas={quotas}
             />
 
             <SurveyVariablesCard
@@ -525,6 +531,7 @@ export const QuestionsView = ({
               setLocalSurvey={setLocalSurvey}
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
+              quotas={quotas}
             />
 
             <MultiLanguageCard

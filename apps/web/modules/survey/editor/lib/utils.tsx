@@ -1207,12 +1207,38 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
   );
 };
 
-export const isUsedInQuota = (quota: TSurveyQuota, questionId: TSurveyQuestionId): boolean => {
-  return quota.conditions.criteria.some(
-    (condition) =>
-      (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "question", questionId)) ||
-      isUsedInLeftOperand(condition.leftOperand, "question", questionId)
-  );
+export const isUsedInQuota = (
+  quota: TSurveyQuota,
+  questionId?: TSurveyQuestionId,
+  hiddenFieldId?: string,
+  variableId?: string
+): boolean => {
+  if (questionId) {
+    return quota.conditions.criteria.some(
+      (condition) =>
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "question", questionId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "question", questionId)
+    );
+  }
+
+  if (hiddenFieldId) {
+    return quota.conditions.criteria.some(
+      (condition) =>
+        (condition.rightOperand &&
+          isUsedInRightOperand(condition.rightOperand, "hiddenField", hiddenFieldId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "hiddenField", hiddenFieldId)
+    );
+  }
+
+  if (variableId) {
+    return quota.conditions.criteria.some(
+      (condition) =>
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "variable", variableId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "variable", variableId)
+    );
+  }
+
+  return false;
 };
 
 export const findOptionUsedInLogic = (

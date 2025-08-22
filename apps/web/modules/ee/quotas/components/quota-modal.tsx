@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
 import { Button } from "@/modules/ui/components/button";
@@ -73,18 +74,9 @@ interface QuotaModalProps {
   deleteQuota: (quota: TSurveyQuota) => void;
   quota?: TSurveyQuota | null;
   onClose: () => void;
-  quotas: TSurveyQuota[];
 }
 
-export const QuotaModal = ({
-  open,
-  onOpenChange,
-  survey,
-  quota,
-  deleteQuota,
-  onClose,
-  quotas,
-}: QuotaModalProps) => {
+export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onClose }: QuotaModalProps) => {
   const router = useRouter();
   const isEditing = !!quota;
   const { t } = useTranslate();
@@ -136,24 +128,25 @@ export const QuotaModal = ({
     if (createQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_created_successfull_toast"));
       router.refresh();
+      onClose();
     } else {
-      toast.error(t("environments.surveys.edit.quotas.failed_to_create_quota_toast"));
+      const errorMessage = getFormattedErrorMessage(createQuotaActionResult);
+      toast.error(errorMessage);
     }
-    onClose();
   };
 
   const handleQuotaUpdate = async (updatedQuota: TSurveyQuotaUpdateInput, quotaId: string) => {
     const updateQuotaActionResult = await updateQuotaAction({
       quotaId,
       quota: updatedQuota,
-      surveyId: survey.id,
     });
     if (updateQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_updated_successfull_toast"));
       router.refresh();
       onClose();
     } else {
-      toast.error(t("environments.surveys.edit.quotas.failed_to_update_quota_toast"));
+      const errorMessage = getFormattedErrorMessage(updateQuotaActionResult);
+      toast.error(errorMessage);
     }
   };
 
@@ -161,14 +154,9 @@ export const QuotaModal = ({
   const onSubmit = useCallback(
     async (data: QuotaFormData) => {
       if (!quota) {
-        // If creating a new quota, check if the name is already taken
-        if (quotas.some((q) => q.name === data.name)) {
-          toast.error(t("environments.surveys.edit.quotas.duplicate_quota_name_toast", { name: data.name }));
-          return;
-        }
         await handleQuotaCreated({
           surveyId: survey.id,
-          name: data.name,
+          name: data.name.trim(),
           limit: data.limit,
           conditions: data.conditions,
           action: data.action,
@@ -178,7 +166,7 @@ export const QuotaModal = ({
       } else {
         await handleQuotaUpdate(
           {
-            name: data.name,
+            name: data.name.trim(),
             limit: data.limit,
             conditions: data.conditions,
             action: data.action,
@@ -271,7 +259,7 @@ export const QuotaModal = ({
                             field.onBlur();
                           }}
                         />
-                        <span className="text-sm text-slate-500">{t("common.responses")}</span>
+                        <span className="text-sm text-slate-500">{t("common.response_s")}</span>
                       </div>
                     </FormControl>
                   </FormItem>
@@ -292,6 +280,7 @@ export const QuotaModal = ({
                             survey={survey}
                             conditions={field.value}
                             onChange={handleConditionsChange}
+                            hideRemoveButton={field.value.criteria.length === 1}
                           />
                         )}
                       </FormControl>
@@ -333,7 +322,7 @@ export const QuotaModal = ({
                             <div className="space-y-2">
                               <FormControl>
                                 <EndingCardSelector
-                                  survey={survey}
+                                  endings={survey.endings}
                                   value={endingCardField.value || ""}
                                   onChange={(value) => {
                                     form.setValue("endingCardId", value, {
@@ -413,7 +402,7 @@ export const QuotaModal = ({
               loading={isSubmitting}
               disabled={isSubmitting || !isDirty || !isValid}
               onClick={form.handleSubmit(onSubmit)}>
-              {t("environments.surveys.edit.quotas.save_quota")}
+              {t("common.save")}
             </Button>
           </DialogFooter>
         </FormProvider>

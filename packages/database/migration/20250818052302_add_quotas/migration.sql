@@ -30,6 +30,9 @@ CREATE TABLE "ResponseQuotaLink" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "SurveyQuota_surveyId_name_key" ON "SurveyQuota"("surveyId", "name");
+
+-- CreateIndex
 CREATE INDEX "SurveyQuota_surveyId_idx" ON "SurveyQuota"("surveyId");
 
 -- CreateIndex

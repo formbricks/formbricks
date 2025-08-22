@@ -17,13 +17,19 @@ interface QuotaConditionBuilderProps {
   survey: TSurvey;
   conditions: TSurveyQuotaConditions;
   onChange: (conditions: TSurveyQuotaConditions) => void;
+  hideRemoveButton: boolean;
 }
 
-export const QuotaConditionBuilder = ({ survey, conditions, onChange }: QuotaConditionBuilderProps) => {
+export const QuotaConditionBuilder = ({
+  survey,
+  conditions,
+  onChange,
+  hideRemoveButton,
+}: QuotaConditionBuilderProps) => {
   const { t } = useTranslate();
 
   // Convert quota conditions to generic format
-  const genericConditions = useMemo(() => quotaConditionsToGeneric(conditions, survey), [conditions, survey]);
+  const genericConditions = useMemo(() => quotaConditionsToGeneric(conditions), [conditions]);
 
   // Create configuration for the conditions editor
   const config = useMemo(() => createQuotaConditionsConfig(survey, t), [survey]);
@@ -36,13 +42,18 @@ export const QuotaConditionBuilder = ({ survey, conditions, onChange }: QuotaCon
 
   // Create callbacks for the conditions editor
   const callbacks = useMemo(
-    () => createQuotaConditionsCallbacks(genericConditions, handleGenericChange),
-    [genericConditions, handleGenericChange]
+    () => createQuotaConditionsCallbacks(genericConditions, handleGenericChange, survey, t),
+    [genericConditions, handleGenericChange, survey, t]
   );
 
   return (
     <div className="space-y-4">
-      <ConditionsEditor conditions={genericConditions} config={config} callbacks={callbacks} />
+      <ConditionsEditor
+        conditions={genericConditions}
+        config={config}
+        callbacks={callbacks}
+        hideRemoveButton={hideRemoveButton}
+      />
     </div>
   );
 };

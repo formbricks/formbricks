@@ -32,9 +32,16 @@ interface ConditionsEditorProps {
   config: TConditionsEditorConfig;
   callbacks: TConditionsEditorCallbacks;
   depth?: number;
+  hideRemoveButton?: boolean;
 }
 
-export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: ConditionsEditorProps) {
+export function ConditionsEditor({
+  conditions,
+  config,
+  callbacks,
+  depth = 0,
+  hideRemoveButton = false,
+}: ConditionsEditorProps) {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
 
@@ -133,6 +140,7 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
 
     const leftOperandOptions = config.getLeftOperandOptions();
     const operatorOptions = config.getOperatorOptions(condition);
+    const onCreateGroup = callbacks.onCreateGroup;
     const { show = false, options, showInput = false, inputType } = config.getValueProps(condition);
 
     const allowMultiSelect = [
@@ -221,19 +229,21 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
               icon={<PlusIcon className="h-4 w-4" />}>
               {t("environments.surveys.edit.add_condition_below")}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => callbacks.onRemoveCondition(condition.id)}
-              icon={<TrashIcon className="h-4 w-4" />}>
-              {t("common.remove")}
-            </DropdownMenuItem>
+            {!hideRemoveButton && (
+              <DropdownMenuItem
+                onClick={() => callbacks.onRemoveCondition(condition.id)}
+                icon={<TrashIcon className="h-4 w-4" />}>
+                {t("common.remove")}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={() => callbacks.onDuplicateCondition(condition.id)}
               icon={<CopyIcon className="h-4 w-4" />}>
               {t("common.duplicate")}
             </DropdownMenuItem>
-            {callbacks.onCreateGroup && (
+            {onCreateGroup && (
               <DropdownMenuItem
-                onClick={() => callbacks.onCreateGroup?.(condition.id)}
+                onClick={() => onCreateGroup(condition.id)}
                 icon={<WorkflowIcon className="h-4 w-4" />}>
                 {t("environments.surveys.edit.create_group")}
               </DropdownMenuItem>

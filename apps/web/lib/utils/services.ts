@@ -368,3 +368,12 @@ export const getSegment = reactCache(async (segmentId: string): Promise<{ enviro
     throw error;
   }
 });
+
+export const getQuota = reactCache(async (quotaId: string): Promise<{ surveyId: string } | null> => {
+  validateInputs([quotaId, ZId]);
+  const quota = await prisma.surveyQuota.findUnique({
+    where: { id: quotaId },
+    select: { surveyId: true },
+  });
+  return quota;
+});

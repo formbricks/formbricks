@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteQuotaAction } from "@/modules/ee/quotas/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -39,13 +40,13 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
     setIsDeletingQuota(true);
     const deleteQuotaActionResult = await deleteQuotaAction({
       quotaId: quotaId,
-      surveyId: localSurvey.id,
     });
     if (deleteQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_deleted_successfull_toast"));
       router.refresh();
     } else {
-      toast.error(t("environments.surveys.edit.quotas.failed_to_delete_quota_toast"));
+      const errorMessage = getFormattedErrorMessage(deleteQuotaActionResult);
+      toast.error(errorMessage);
     }
     setQuotaToDelete(null);
     setIsDeletingQuota(false);
@@ -113,7 +114,7 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
                   <QuotaList quotas={quotas} onEdit={handleEditQuota} deleteQuota={setQuotaToDelete} />
                 ) : (
                   <div className="rounded-lg border p-3 text-center">
-                    <p className="mb-4 text-sm text-slate-600">{t("common.quotas_description")}</p>
+                    <p className="mb-4 text-sm text-slate-500">{t("common.quotas_description")}</p>
                     <Button variant="secondary" size="sm" onClick={() => setIsQuotaModalOpen(true)}>
                       <PlusIcon className="mr-2 h-4 w-4" />
                       {t("environments.surveys.edit.quotas.add_quota")}
@@ -152,7 +153,6 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
             setIsQuotaModalOpen(false);
             setActiveQuota(null);
           }}
-          quotas={quotas}
         />
       )}
       <ConfirmationModal

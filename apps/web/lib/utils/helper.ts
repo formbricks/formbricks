@@ -9,6 +9,7 @@ import {
   getInvite,
   getLanguage,
   getProject,
+  getQuota,
   getResponse,
   getSegment,
   getSurvey,
@@ -346,6 +347,15 @@ export const getEnvironmentIdFromTagId = async (tagId: string) => {
   }
 
   return tag.environmentId;
+};
+
+export const getSurveyIdFromQuotaId = async (quotaId: string) => {
+  const quota = await getQuota(quotaId);
+  if (!quota) {
+    throw new ResourceNotFoundError("quota", quotaId);
+  }
+
+  return quota.surveyId;
 };
 
 export const isStringMatch = (query: string, value: string): boolean => {

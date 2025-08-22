@@ -433,6 +433,7 @@ model SurveyQuota {
   quotaLinks              ResponseQuotaLink[]
   countPartialSubmissions Boolean             @default(false)
 
+  @@unique([surveyId, name])
   @@index([surveyId])
 }
 

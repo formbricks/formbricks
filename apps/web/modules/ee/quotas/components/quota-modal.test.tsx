@@ -193,7 +193,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -210,7 +209,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -226,7 +224,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -244,7 +241,6 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -262,7 +258,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -282,7 +277,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -298,7 +292,6 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -329,7 +322,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -372,7 +364,6 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -416,7 +407,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -444,7 +434,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -468,7 +457,6 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -489,7 +477,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -512,7 +499,6 @@ describe("QuotaModal", () => {
         quota={mockQuota}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -537,7 +523,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
@@ -561,7 +546,6 @@ describe("QuotaModal", () => {
         quota={null}
         deleteQuota={mockDeleteQuota}
         onClose={mockOnClose}
-        quotas={[]}
       />
     );
 
