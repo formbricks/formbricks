@@ -24,6 +24,7 @@ interface ConsentQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function ConsentQuestion({
@@ -40,6 +41,7 @@ export function ConsentQuestion({
   currentQuestionId,
   autoFocusEnabled,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<ConsentQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -76,7 +78,6 @@ export function ConsentQuestion({
         <HtmlBody htmlString={getLocalizedValue(question.html, languageCode) || ""} />
         <label
           ref={consentRef}
-          dir="auto"
           tabIndex={isCurrent ? 0 : -1}
           id={`${question.id}-label`}
           onKeyDown={(e) => {
@@ -91,6 +92,7 @@ export function ConsentQuestion({
           <input
             tabIndex={-1}
             type="checkbox"
+            dir={dir}
             id={question.id}
             name={question.id}
             value={getLocalizedValue(question.label, languageCode)}
@@ -106,7 +108,7 @@ export function ConsentQuestion({
             aria-labelledby={`${question.id}-label`}
             required={question.required}
           />
-          <span id={`${question.id}-label`} className="fb-ml-3 fb-mr-3 fb-font-medium">
+          <span id={`${question.id}-label`} className="fb-ml-3 fb-mr-3 fb-font-medium fb-flex-1" dir="auto">
             {getLocalizedValue(question.label, languageCode)}
           </span>
         </label>

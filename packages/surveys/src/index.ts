@@ -34,13 +34,23 @@ export const renderSurvey = (props: SurveyContainerProps) => {
 
     const { placement, darkOverlay, onClose, clickOutside, ...surveyInlineProps } = props;
 
-    render(h(RenderSurvey, surveyInlineProps), element);
+    render(
+      h(RenderSurvey, {
+        ...surveyInlineProps,
+      }),
+      element
+    );
   } else {
     const modalContainer = document.createElement("div");
     modalContainer.id = "formbricks-modal-container";
     document.body.appendChild(modalContainer);
 
-    render(h(RenderSurvey, props), modalContainer);
+    render(
+      h(RenderSurvey, {
+        ...props,
+      }),
+      modalContainer
+    );
   }
 };
 

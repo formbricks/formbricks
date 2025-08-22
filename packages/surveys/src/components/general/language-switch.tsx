@@ -1,24 +1,32 @@
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
-import { cn } from "@/lib/utils";
+import { checkIfSurveyIsRTL, cn } from "@/lib/utils";
 import { useRef, useState } from "preact/hooks";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 
 interface LanguageSwitchProps {
+  survey: TJsEnvironmentStateSurvey;
   surveyLanguages: TSurveyLanguage[];
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
   hoverColor?: string;
   borderRadius?: number;
+  dir?: "ltr" | "rtl" | "auto";
+  setDir?: (dir: "ltr" | "rtl" | "auto") => void;
 }
+
 export function LanguageSwitch({
+  survey,
   surveyLanguages,
   setSelectedLanguageCode,
   setFirstRender,
   hoverColor,
   borderRadius,
+  dir = "auto",
+  setDir,
 }: LanguageSwitchProps) {
   const hoverColorWithOpacity = hoverColor ?? mixColor("#000000", "#ffffff", 0.8);
 
@@ -34,11 +42,14 @@ export function LanguageSwitch({
   })?.language.code;
 
   const changeLanguage = (languageCode: string) => {
-    if (languageCode === defaultLanguageCode) {
-      setSelectedLanguageCode("default");
-    } else {
-      setSelectedLanguageCode(languageCode);
+    const calculatedLanguageCode = languageCode === defaultLanguageCode ? "default" : languageCode;
+    setSelectedLanguageCode(calculatedLanguageCode);
+
+    if (setDir) {
+      const calculateDir = checkIfSurveyIsRTL(survey, calculatedLanguageCode) ? "rtl" : "auto";
+      setDir?.(calculateDir);
     }
+
     if (setFirstRender) {
       //for lexical editor
       setFirstRender(true);
@@ -74,7 +85,10 @@ export function LanguageSwitch({
       </button>
       {showLanguageDropdown ? (
         <div
-          className="fb-bg-brand fb-text-on-brand fb-absolute fb-right-8 fb-top-10 fb-space-y-2 fb-rounded-md fb-p-2 fb-text-xs"
+          className={cn(
+            "fb-bg-brand fb-text-on-brand fb-absolute fb-top-10 fb-space-y-2 fb-rounded-md fb-p-2 fb-text-xs",
+            dir === "rtl" ? "fb-left-8" : "fb-right-8"
+          )}
           ref={languageDropdownRef}>
           {surveyLanguages.map((surveyLanguage) => {
             if (!surveyLanguage.enabled) return;

@@ -27,6 +27,7 @@ interface AddressQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   autoFocusEnabled: boolean;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function AddressQuestion({
@@ -43,6 +44,7 @@ export function AddressQuestion({
   currentQuestionId,
   autoFocusEnabled,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<AddressQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -170,6 +172,7 @@ export function AddressQuestion({
                       ref={index === 0 ? addressRef : null}
                       tabIndex={isCurrent ? 0 : -1}
                       aria-label={field.label}
+                      dir={!safeValue[index] ? dir : "auto"}
                     />
                   </div>
                 )
