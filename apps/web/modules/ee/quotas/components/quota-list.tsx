@@ -41,10 +41,14 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota }: QuotaListProps) => {
   return (
     <div className="space-y-3">
       {quotas.map((quota) => (
-        <button
+        // Using div instead of button to avoid nested button HTML validation errors
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/prefer-tag-over-role
+        <div
           key={quota.id}
-          className="flex w-full cursor-pointer items-center justify-between rounded-lg bg-slate-50 p-4 transition-colors"
-          onClick={() => onEdit(quota)}>
+          className="flex w-full cursor-pointer items-center justify-between rounded-lg bg-slate-50 p-4 transition-colors hover:bg-slate-100"
+          onClick={() => onEdit(quota)}
+          role="button"
+          tabIndex={0}>
           <div className="text-left">
             <Label className="text-sm font-medium text-slate-800">{quota.name}</Label>
             <div className="mt-1 text-sm text-slate-500">
@@ -77,7 +81,7 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota }: QuotaListProps) => {
               <Trash2Icon className="h-4 w-4" />
             </Button>
           </div>
-        </button>
+        </div>
       ))}
     </div>
   );

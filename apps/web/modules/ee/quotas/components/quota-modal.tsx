@@ -35,7 +35,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { PieChart, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -116,6 +116,12 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
 
   // Watch form values for conditional logic
   const action = watch("action");
+
+  useEffect(() => {
+    if (open) {
+      form.reset(defaultValues);
+    }
+  }, [open, defaultValues]);
 
   const handleQuotaCreated = async (quota: TSurveyQuotaCreateInput) => {
     const createQuotaActionResult = await createQuotaAction({
