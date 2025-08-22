@@ -106,9 +106,13 @@ export function createSharedConditionsFactory(
   const callbacks: TConditionsEditorCallbacks<TSingleCondition> = {
     // Creates and adds a new empty condition below the specified condition
     onAddConditionBelow: (resourceId: string) => {
+      // When adding a condition in the context of a specific question, default to that question
+      const defaultLeftOperandValue =
+        questionIdx !== undefined ? survey.questions[questionIdx]?.id || "" : "";
+
       const newCondition: TSingleCondition = {
         id: createId(),
-        leftOperand: { value: "", type: "question" },
+        leftOperand: { value: defaultLeftOperandValue, type: "question" },
         operator: getDefaultOperator(),
       };
 
