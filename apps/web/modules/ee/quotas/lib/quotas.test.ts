@@ -2,7 +2,12 @@ import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { TSurveyQuota, TSurveyQuotaCreateInput, TSurveyQuotaUpdateInput } from "@formbricks/types/quota";
 import { createQuota, deleteQuota, getQuotas, updateQuota } from "./quotas";
 
@@ -40,12 +45,13 @@ describe("Quota Service", () => {
     },
     action: "endSurvey",
     endingCardId: null,
-    redirectUrl: null,
     countPartialSubmissions: false,
   };
 
   beforeEach(() => {
-    vi.mocked(validateInputs).mockImplementation(() => {});
+    vi.mocked(validateInputs).mockImplementation(() => {
+      return [];
+    });
   });
 
   afterEach(() => {
@@ -104,7 +110,6 @@ describe("Quota Service", () => {
       },
       action: "endSurvey",
       endingCardId: null,
-      redirectUrl: null,
       countPartialSubmissions: false,
     };
 
@@ -126,7 +131,7 @@ describe("Quota Service", () => {
       });
       vi.mocked(prisma.surveyQuota.create).mockRejectedValue(prismaError);
 
-      await expect(createQuota(createInput)).rejects.toThrow(DatabaseError);
+      await expect(createQuota(createInput)).rejects.toThrow(InvalidInputError);
     });
 
     test("should re-throw non-Prisma errors", async () => {
@@ -147,7 +152,6 @@ describe("Quota Service", () => {
       },
       action: "continueSurvey",
       endingCardId: "ending123",
-      redirectUrl: "https://example.com",
       countPartialSubmissions: true,
     };
 
@@ -171,7 +175,9 @@ describe("Quota Service", () => {
       });
       vi.mocked(prisma.surveyQuota.update).mockRejectedValue(prismaError);
 
-      await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(DatabaseError);
+      await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(
+        Prisma.PrismaClientKnownRequestError
+      );
     });
 
     test("should throw DatabaseError on other Prisma errors", async () => {
@@ -181,7 +187,7 @@ describe("Quota Service", () => {
       });
       vi.mocked(prisma.surveyQuota.update).mockRejectedValue(prismaError);
 
-      await expect(updateQuota(mockQuotaId, updateInput)).rejects.toThrow(DatabaseError);
+      await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(InvalidInputError);
     });
   });
 

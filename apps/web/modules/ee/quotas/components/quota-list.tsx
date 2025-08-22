@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction } from "@/modules/ee/quotas/actions";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -32,7 +33,8 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota }: QuotaListProps) => {
       toast.success(t("environments.surveys.edit.quotas.quota_duplicated_successfull_toast"));
       router.refresh();
     } else {
-      toast.error(t("environments.surveys.edit.quotas.failed_to_duplicate_quota_toast"));
+      const errorMessage = getFormattedErrorMessage(duplicateQuotaActionResult);
+      toast.error(errorMessage);
     }
   };
 

@@ -373,12 +373,11 @@ describe("QuotaModal", () => {
 
     await waitFor(() => {
       expect(vi.mocked(updateQuotaAction)).toHaveBeenCalledWith({
-        quotaId: "quota1",
         quota: expect.objectContaining({
           name: "Test Quota",
           limit: 100,
         }),
-        surveyId: "survey1",
+        quotaId: "quota1",
       });
     });
   });
@@ -442,9 +441,7 @@ describe("QuotaModal", () => {
     form!.dispatchEvent(submitEvent);
 
     await waitFor(() => {
-      expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
-        "environments.surveys.edit.quotas.failed_to_create_quota_toast"
-      );
+      expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Failed");
     });
   });
 

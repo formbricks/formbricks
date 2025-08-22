@@ -27,6 +27,7 @@ vi.mock("@/modules/ui/components/conditions-editor", () => ({
 // Mock the conditions config functions
 vi.mock("../lib/conditions-config", () => ({
   quotaConditionsToGeneric: vi.fn((conditions) => ({
+    id: "root",
     connector: conditions.connector,
     criteria: conditions.criteria.map((criterion: any) => ({
       ...criterion,
@@ -47,16 +48,11 @@ vi.mock("../lib/conditions-config", () => ({
       operator: criterion.operator || "equals",
     })),
   })),
-  createQuotaConditionsCallbacks: vi.fn((onChange) => ({
+  createQuotaConditionsCallbacks: vi.fn(() => ({
     onAddConditionBelow: vi.fn(),
     onRemoveCondition: vi.fn(),
     onDuplicateCondition: vi.fn(),
-    onUpdateCondition: vi.fn((id, updates) => {
-      onChange({
-        connector: "and",
-        criteria: [{ id, ...updates }],
-      });
-    }),
+    onUpdateCondition: vi.fn(),
     onToggleGroupConnector: vi.fn(),
   })),
 }));
@@ -127,23 +123,44 @@ describe("QuotaConditionBuilder", () => {
   });
 
   test("renders conditions editor", () => {
-    render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
+    render(
+      <QuotaConditionBuilder
+        survey={mockSurvey}
+        conditions={mockConditions}
+        onChange={mockOnChange}
+        hideRemoveButton={false}
+      />
+    );
 
     expect(screen.getByTestId("conditions-editor")).toBeInTheDocument();
   });
 
   test("passes converted conditions to editor", () => {
-    render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
+    render(
+      <QuotaConditionBuilder
+        survey={mockSurvey}
+        conditions={mockConditions}
+        onChange={mockOnChange}
+        hideRemoveButton={false}
+      />
+    );
 
     const conditionsData = screen.getByTestId("conditions-data");
     expect(conditionsData).toBeInTheDocument();
 
     // Verify that quotaConditionsToGeneric was called
-    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(mockConditions, mockSurvey);
+    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(mockConditions);
   });
 
   test("creates configuration for conditions editor", () => {
-    render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
+    render(
+      <QuotaConditionBuilder
+        survey={mockSurvey}
+        conditions={mockConditions}
+        onChange={mockOnChange}
+        hideRemoveButton={false}
+      />
+    );
 
     const configData = screen.getByTestId("config-data");
     expect(configData).toBeInTheDocument();
@@ -153,7 +170,14 @@ describe("QuotaConditionBuilder", () => {
   });
 
   test("does not initialize when conditions already exist", () => {
-    render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
+    render(
+      <QuotaConditionBuilder
+        survey={mockSurvey}
+        conditions={mockConditions}
+        onChange={mockOnChange}
+        hideRemoveButton={false}
+      />
+    );
 
     // Should not call onChange for initialization when conditions exist
     expect(mockOnChange).not.toHaveBeenCalled();
@@ -170,6 +194,7 @@ describe("QuotaConditionBuilder", () => {
         survey={surveyWithoutQuestions}
         conditions={mockEmptyConditions}
         onChange={mockOnChange}
+        hideRemoveButton={false}
       />
     );
 
@@ -178,7 +203,14 @@ describe("QuotaConditionBuilder", () => {
   });
 
   test("creates callbacks for conditions editor", () => {
-    render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
+    render(
+      <QuotaConditionBuilder
+        survey={mockSurvey}
+        conditions={mockConditions}
+        onChange={mockOnChange}
+        hideRemoveButton={false}
+      />
+    );
 
     // Verify that createQuotaConditionsCallbacks was called
     expect(vi.mocked(createQuotaConditionsCallbacks)).toHaveBeenCalled();
@@ -197,9 +229,16 @@ describe("QuotaConditionBuilder", () => {
       ],
     };
 
-    render(<QuotaConditionBuilder survey={mockSurvey} conditions={orConditions} onChange={mockOnChange} />);
+    render(
+      <QuotaConditionBuilder
+        survey={mockSurvey}
+        conditions={orConditions}
+        onChange={mockOnChange}
+        hideRemoveButton={false}
+      />
+    );
 
-    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(orConditions, mockSurvey);
+    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(orConditions);
   });
 
   test("handles multiple criteria", () => {
@@ -222,11 +261,16 @@ describe("QuotaConditionBuilder", () => {
     };
 
     render(
-      <QuotaConditionBuilder survey={mockSurvey} conditions={multipleConditions} onChange={mockOnChange} />
+      <QuotaConditionBuilder
+        survey={mockSurvey}
+        conditions={multipleConditions}
+        onChange={mockOnChange}
+        hideRemoveButton={false}
+      />
     );
 
     expect(screen.getByTestId("conditions-editor")).toBeInTheDocument();
 
-    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(multipleConditions, mockSurvey);
+    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(multipleConditions);
   });
 });

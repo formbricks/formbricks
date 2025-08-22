@@ -5,7 +5,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyQuota, TSurveyQuotaCreateInput, TSurveyQuotaUpdateInput } from "@formbricks/types/quota";
 
 export const getQuotas = reactCache(async (surveyId: string): Promise<TSurveyQuota[]> => {
@@ -60,6 +60,9 @@ export const updateQuota = async (quota: TSurveyQuotaUpdateInput, id: string): P
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
         throw new InvalidInputError("Quota with this name already exists");
+      }
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        throw new ResourceNotFoundError("Quota not found", error.message);
       }
     }
     throw error;

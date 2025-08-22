@@ -78,7 +78,7 @@ describe("EndingCardSelector", () => {
   });
 
   test("renders select component", () => {
-    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+    render(<EndingCardSelector endings={mockSurveyWithEndings.endings} value="" onChange={mockOnChange} />);
 
     expect(screen.getByTestId("select")).toBeInTheDocument();
     expect(screen.getByTestId("select-trigger")).toBeInTheDocument();
@@ -86,13 +86,13 @@ describe("EndingCardSelector", () => {
   });
 
   test("shows placeholder when no value selected", () => {
-    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+    render(<EndingCardSelector endings={mockSurveyWithEndings.endings} value="" onChange={mockOnChange} />);
 
     expect(screen.getByText("environments.surveys.edit.quotas.select_ending_card")).toBeInTheDocument();
   });
 
   test("displays ending card options", () => {
-    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+    render(<EndingCardSelector endings={mockSurveyWithEndings.endings} value="" onChange={mockOnChange} />);
 
     // Should show ending card section
     expect(screen.getByText("common.ending_card")).toBeInTheDocument();
@@ -106,7 +106,7 @@ describe("EndingCardSelector", () => {
   });
 
   test("displays redirect URL options", () => {
-    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+    render(<EndingCardSelector endings={mockSurveyWithEndings.endings} value="" onChange={mockOnChange} />);
 
     // Should show redirect URL section
     expect(screen.getByText("environments.surveys.edit.redirect_to_url")).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe("EndingCardSelector", () => {
   test("calls onChange when selection is made", async () => {
     const user = userEvent.setup();
 
-    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+    render(<EndingCardSelector endings={mockSurveyWithEndings.endings} value="" onChange={mockOnChange} />);
 
     const select = screen.getByTestId("select");
     await user.click(select);
@@ -127,20 +127,7 @@ describe("EndingCardSelector", () => {
   });
 
   test("handles survey with no endings", () => {
-    render(<EndingCardSelector survey={mockSurveyEmpty} value="" onChange={mockOnChange} />);
-
-    expect(screen.getByTestId("select")).toBeInTheDocument();
-    expect(screen.queryByText("common.ending_card")).not.toBeInTheDocument();
-    expect(screen.queryByText("environments.surveys.edit.redirect_to_url")).not.toBeInTheDocument();
-  });
-
-  test("handles undefined endings array", () => {
-    const surveyWithUndefinedEndings = {
-      id: "survey3",
-      endings: undefined,
-    } as unknown as TSurvey;
-
-    render(<EndingCardSelector survey={surveyWithUndefinedEndings} value="" onChange={mockOnChange} />);
+    render(<EndingCardSelector endings={mockSurveyEmpty.endings} value="" onChange={mockOnChange} />);
 
     expect(screen.getByTestId("select")).toBeInTheDocument();
     expect(screen.queryByText("common.ending_card")).not.toBeInTheDocument();
@@ -148,7 +135,7 @@ describe("EndingCardSelector", () => {
   });
 
   test("filters endings correctly by type", () => {
-    render(<EndingCardSelector survey={mockSurveyWithEndings} value="" onChange={mockOnChange} />);
+    render(<EndingCardSelector endings={mockSurveyWithEndings.endings} value="" onChange={mockOnChange} />);
 
     // Should only show endScreen endings in ending card section
     const endingCardSection = screen.getByText("common.ending_card").closest("[data-testid='select-group']");
@@ -162,7 +149,9 @@ describe("EndingCardSelector", () => {
   });
 
   test("shows correct value when selected", () => {
-    render(<EndingCardSelector survey={mockSurveyWithEndings} value="ending1" onChange={mockOnChange} />);
+    render(
+      <EndingCardSelector endings={mockSurveyWithEndings.endings} value="ending1" onChange={mockOnChange} />
+    );
 
     const select = screen.getByTestId("select");
     expect(select).toHaveAttribute("data-value", "ending1");
@@ -180,7 +169,9 @@ describe("EndingCardSelector", () => {
       ],
     } as unknown as TSurvey;
 
-    render(<EndingCardSelector survey={surveyWithEndingNoHeadline} value="" onChange={mockOnChange} />);
+    render(
+      <EndingCardSelector endings={surveyWithEndingNoHeadline.endings} value="" onChange={mockOnChange} />
+    );
 
     // Should still render the component without errors
     expect(screen.getByTestId("select")).toBeInTheDocument();

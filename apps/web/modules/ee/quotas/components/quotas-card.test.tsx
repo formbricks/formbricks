@@ -11,15 +11,6 @@ import { QuotasCard } from "./quotas-card";
 vi.mock("@/modules/ee/quotas/actions", () => ({
   deleteQuotaAction: vi.fn(),
 }));
-
-// Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  default: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 // Mock @formkit/auto-animate/react
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [null, () => {}],
@@ -266,7 +257,6 @@ describe("QuotasCard", () => {
     await waitFor(() => {
       expect(vi.mocked(deleteQuotaAction)).toHaveBeenCalledWith({
         quotaId: "quota1",
-        surveyId: "survey1",
       });
     });
   });
@@ -305,9 +295,7 @@ describe("QuotasCard", () => {
     await user.click(confirmButton);
 
     await waitFor(() => {
-      expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
-        "environments.surveys.edit.quotas.failed_to_delete_quota_toast"
-      );
+      expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Failed");
     });
   });
 
