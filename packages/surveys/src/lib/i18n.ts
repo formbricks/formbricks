@@ -6,7 +6,7 @@ const isI18nObject = (obj: any): obj is TI18nString => {
 };
 
 // Matches \r\n, \n, \r, and their HTML entity variants
-const ESCAPED_NEWLINES = /\\r\\n|\\n|\\r|&#10;|&#13;/g;
+const ESCAPED_NEWLINES = /\\r\\n|&#13;&#10;|\\n|\\r|&#10;|&#13;/g;
 
 export const unescapeNewlines = (s: string): string => s.replace(ESCAPED_NEWLINES, "\n");
 
