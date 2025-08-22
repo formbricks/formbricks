@@ -4,9 +4,10 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
+  getOrganizationIdFromQuotaId,
   getOrganizationIdFromSurveyId,
+  getProjectIdFromQuotaId,
   getProjectIdFromSurveyId,
-  getSurveyIdFromQuotaId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -36,8 +37,7 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
         throw new OperationNotAllowedError("Quotas are not enabled");
       }
 
-      const surveyId = await getSurveyIdFromQuotaId(parsedInput.quotaId);
-      const organizationId = await getOrganizationIdFromSurveyId(surveyId);
+      const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -48,7 +48,7 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
           },
           {
             type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(surveyId),
+            projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
             minPermission: "readWrite",
           },
         ],
@@ -86,8 +86,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
         throw new OperationNotAllowedError("Quotas are not enabled");
       }
 
-      const surveyId = await getSurveyIdFromQuotaId(parsedInput.quotaId);
-      const organizationId = await getOrganizationIdFromSurveyId(surveyId);
+      const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -98,7 +97,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
           },
           {
             type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(surveyId),
+            projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
             minPermission: "readWrite",
           },
         ],
