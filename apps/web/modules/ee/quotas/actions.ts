@@ -72,7 +72,7 @@ const ZUpdateQuotaAction = z.object({
 
 export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAction).action(
   withAuditLogging(
-    "created",
+    "updated",
     "quota",
     async ({
       ctx,
@@ -106,6 +106,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       const result = await updateQuota(parsedInput.quota, parsedInput.quotaId);
+      ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
       ctx.auditLoggingCtx.newObject = result;
       return result;
     }
@@ -151,6 +152,7 @@ export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAc
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       const result = await createQuota(parsedInput.quota);
+      ctx.auditLoggingCtx.quotaId = result.id;
       ctx.auditLoggingCtx.newObject = result;
       return result;
     }

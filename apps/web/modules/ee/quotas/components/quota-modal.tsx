@@ -35,7 +35,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { PieChart, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
