@@ -55,7 +55,7 @@ export function createSharedConditionsFactory(
   const { survey, t, questionIdx, getDefaultOperator, includeCreateGroup = false } = params;
   const { onConditionsChange, onEmptyConditions } = updateCallbacks;
 
-  // Shared matrix question handling logic
+  // Handles special update logic for matrix questions, setting appropriate operators and metadata
   const handleMatrixQuestionUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {
     if (updates.leftOperand && updates.leftOperand.type === "question") {
       const type = updates.leftOperand.meta?.type as TDynamicLogicField;
@@ -104,6 +104,7 @@ export function createSharedConditionsFactory(
   };
 
   const callbacks: TConditionsEditorCallbacks<TSingleCondition> = {
+    // Creates and adds a new empty condition below the specified condition
     onAddConditionBelow: (resourceId: string) => {
       const newCondition: TSingleCondition = {
         id: createId(),
@@ -118,6 +119,7 @@ export function createSharedConditionsFactory(
       });
     },
 
+    // Removes a condition and triggers empty handler if no conditions remain
     onRemoveCondition: (resourceId: string) => {
       onConditionsChange((conditions) => {
         const conditionsCopy = structuredClone(conditions);
@@ -133,6 +135,7 @@ export function createSharedConditionsFactory(
       });
     },
 
+    // Creates an exact copy of the specified condition
     onDuplicateCondition: (resourceId: string) => {
       onConditionsChange((conditions) => {
         const conditionsCopy = structuredClone(conditions);
@@ -141,6 +144,7 @@ export function createSharedConditionsFactory(
       });
     },
 
+    // Updates a condition with new values, handling matrix questions specially
     onUpdateCondition: (resourceId: string, updates: Partial<TSingleCondition>) => {
       // Try matrix question handling first
       if (handleMatrixQuestionUpdate(resourceId, updates)) {
@@ -155,6 +159,7 @@ export function createSharedConditionsFactory(
       });
     },
 
+    // Toggles the logical connector (AND/OR) for a condition group
     onToggleGroupConnector: (groupId: string) => {
       onConditionsChange((conditions) => {
         const conditionsCopy = structuredClone(conditions);
@@ -166,6 +171,7 @@ export function createSharedConditionsFactory(
 
   // Add onCreateGroup if needed
   if (includeCreateGroup) {
+    // Creates a new condition group from an existing condition
     callbacks.onCreateGroup = (resourceId: string) => {
       onConditionsChange((conditions) => {
         const conditionsCopy = structuredClone(conditions);
@@ -182,6 +188,7 @@ export function createSharedConditionsFactory(
 export type TQuotaConditionGroup = TGenericConditionGroup<TSingleCondition>;
 
 // Conversion functions for quota conditions (moved from conditions-config.ts)
+// Converts quota-specific condition format to generic condition group format
 export const quotaConditionsToGeneric = (quotaConditions: TSurveyQuotaConditions): TQuotaConditionGroup => {
   return {
     id: "root",
@@ -190,7 +197,9 @@ export const quotaConditionsToGeneric = (quotaConditions: TSurveyQuotaConditions
   };
 };
 
+// Converts generic condition group format back to quota-specific condition format
 export const genericConditionsToQuota = (genericConditions: TQuotaConditionGroup): TSurveyQuotaConditions => {
+  // Helper function to ensure proper condition structure for quota conditions
   const convertCondition = (condition: TSingleCondition): TSingleCondition => {
     const leftOperand = condition.leftOperand;
     return {

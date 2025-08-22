@@ -41,7 +41,7 @@ export function ConditionsEditor({
   callbacks,
   depth = 0,
   hideRemoveButton = false,
-}: ConditionsEditorProps) {
+}: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
 
@@ -103,6 +103,7 @@ export function ConditionsEditor({
                 config={config}
                 callbacks={callbacks}
                 depth={depth + 1}
+                hideRemoveButton={true}
               />
             </div>
 
@@ -152,17 +153,15 @@ export function ConditionsEditor({
       "isAnyOf",
     ].includes(condition.operator);
 
+    const getConnector = () => {
+      if (index > 0) return <div>{connector}</div>;
+      if (parentConditionGroup.conditions.length === 1) return <div>When</div>;
+      return <div />;
+    };
+
     return (
       <div key={condition.id} className="flex items-center gap-x-2">
-        <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">
-          {index > 0 ? (
-            <div>{connector}</div>
-          ) : parentConditionGroup.conditions.length === 1 ? (
-            <div>When</div>
-          ) : (
-            <div />
-          )}
-        </div>
+        <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">{getConnector()}</div>
 
         <div className="grid w-full flex-1 grid-cols-12 gap-x-2">
           <div className="col-span-4">

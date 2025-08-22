@@ -114,10 +114,6 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     formState: { isSubmitting, isDirty, isValid },
   } = form;
 
-  useEffect(() => {
-    reset(defaultValues);
-  }, [reset, open, defaultValues]);
-
   // Watch form values for conditional logic
   const action = watch("action");
 

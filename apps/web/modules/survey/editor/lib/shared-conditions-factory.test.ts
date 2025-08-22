@@ -411,6 +411,25 @@ describe("shared-conditions-factory", () => {
       result.callbacks.onUpdateCondition(resourceId, updates);
 
       expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
+      const updater = mockConditionsChange.mock.calls[0][0] as (c: TConditionGroup) => TConditionGroup;
+      const initial: TConditionGroup = {
+        id: "root",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            leftOperand: { value: "matrix-question", type: "question" },
+            operator: "equals",
+            rightOperand: { value: "x", type: "static" },
+          } as TSingleCondition,
+        ],
+      };
+      const updated = updater(structuredClone(initial));
+      expect(updated.conditions[0]).toMatchObject({
+        operator: "isEmpty",
+        leftOperand: { value: "matrix-question", type: "question", meta: { row: "row1" } },
+        rightOperand: undefined,
+      });
     });
 
     test("should not handle non-matrix question update", () => {

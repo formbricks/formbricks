@@ -9,9 +9,11 @@ import {
   getSurveyIdFromQuotaId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuota, deleteQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZSurveyQuotaCreateInput, ZSurveyQuotaUpdateInput } from "@formbricks/types/quota";
 
 const ZDeleteQuotaAction = z.object({
@@ -29,6 +31,11 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZDeleteQuotaAction>;
     }) => {
+      const isQuotasEnabled = await getIsQuotasEnabled();
+      if (!isQuotasEnabled) {
+        throw new OperationNotAllowedError("Quotas are not enabled");
+      }
+
       const surveyId = await getSurveyIdFromQuotaId(parsedInput.quotaId);
       const organizationId = await getOrganizationIdFromSurveyId(surveyId);
       await checkAuthorizationUpdated({
@@ -74,6 +81,11 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZUpdateQuotaAction>;
     }) => {
+      const isQuotasEnabled = await getIsQuotasEnabled();
+      if (!isQuotasEnabled) {
+        throw new OperationNotAllowedError("Quotas are not enabled");
+      }
+
       const surveyId = await getSurveyIdFromQuotaId(parsedInput.quotaId);
       const organizationId = await getOrganizationIdFromSurveyId(surveyId);
       await checkAuthorizationUpdated({
@@ -115,6 +127,11 @@ export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZCreateQuotaAction>;
     }) => {
+      const isQuotasEnabled = await getIsQuotasEnabled();
+      if (!isQuotasEnabled) {
+        throw new OperationNotAllowedError("Quotas are not enabled");
+      }
+
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
