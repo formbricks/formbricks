@@ -82,7 +82,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
   const { t } = useTranslate();
   const defaultValues = useMemo(() => {
     return {
-      name: quota?.name || "New Quota",
+      name: quota?.name || t("environments.surveys.edit.quotas.new_quota"),
       limit: quota?.limit || 1,
       conditions: quota?.conditions || {
         connector: "and",
@@ -98,7 +98,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
       endingCardId: quota?.endingCardId || null,
       countPartialSubmissions: quota?.countPartialSubmissions || false,
     };
-  }, [quota]);
+  }, [quota, survey, t]);
 
   const form = useForm<QuotaFormData>({
     defaultValues,
