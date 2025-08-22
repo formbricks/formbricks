@@ -12,6 +12,7 @@ export enum ErrorCode {
   RedisConnectionError = "redis_connection_error",
   RedisOperationError = "redis_operation_error",
   CacheCorruptionError = "cache_corruption_error",
+  RedisConfigurationError = "redis_configuration_error",
 }
 
 // Generic error type for all cache operations

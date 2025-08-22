@@ -1,8 +1,10 @@
+import type { RedisClient } from "@/types/client";
+import { type CacheError, ErrorCode, type Result, err, ok } from "@/types/error";
+import type { CacheKey } from "@/types/keys";
+import { ZCacheKey } from "@/types/keys";
+import { ZTtlMs } from "@/types/service";
 import { logger } from "@formbricks/logger";
-import type { RedisClient } from "../types/client";
-import { type CacheError, ErrorCode, type Result, err, ok } from "../types/error";
-import type { CacheKey } from "../types/keys";
-import { ZCacheKey, ZTtlMs, validateInputs } from "../types/service";
+import { validateInputs } from "./utils/validation";
 
 /**
  * Core cache service providing basic Redis operations with JSON serialization
@@ -42,6 +44,28 @@ export class CacheService {
       }
     } catch (error) {
       logger.error({ error, key }, "Cache get operation failed");
+      return err({
+        code: ErrorCode.RedisOperationError,
+      });
+    }
+  }
+
+  /**
+   * Check if a key exists in cache (for distinguishing cache miss from cached null)
+   * @param key - Cache key to check
+   * @returns Result containing boolean indicating if key exists
+   */
+  async exists(key: CacheKey): Promise<Result<boolean, CacheError>> {
+    const validation = validateInputs([key, ZCacheKey]);
+    if (!validation.ok) {
+      return validation;
+    }
+
+    try {
+      const exists = await this.redis.exists(key);
+      return ok(exists > 0);
+    } catch (error) {
+      logger.error({ error, key }, "Cache exists operation failed");
       return err({
         code: ErrorCode.RedisOperationError,
       });
@@ -108,8 +132,11 @@ export class CacheService {
    * @param ttlMs - Time to live in milliseconds
    * @returns Result containing cached result or fresh result from function
    */
-  async withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<Result<T, CacheError>> {
-    // Validate inputs upfront
+  async withCache<T>(
+    fn: () => Promise<T>,
+    key: CacheKey,
+    ttlMs: number
+  ): Promise<Result<T | null, CacheError>> {
     const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
     if (!validation.ok) {
       return validation;
@@ -122,8 +149,19 @@ export class CacheService {
         // Cache operation failed, try to get fresh data
         logger.debug({ error: cacheResult.error, key }, "Cache get operation failed, fetching fresh data");
       } else if (cacheResult.data !== null) {
-        // Cache hit
+        // Cache hit with non-null value
         return ok(cacheResult.data);
+      } else {
+        // Got null - could be cache miss or cached null, check if key exists
+        const existsResult = await this.exists(key);
+        if (existsResult.ok && existsResult.data) {
+          // Key exists, so this is a cached null value
+          return ok(null);
+        } else if (!existsResult.ok) {
+          // Exists check failed, log and continue to execute function
+          logger.debug({ error: existsResult.error, key }, "Cache exists check failed, fetching fresh data");
+        }
+        // Key doesn't exist (cache miss) or exists check failed - continue to execute function
       }
 
       // Cache miss or cache error - execute function

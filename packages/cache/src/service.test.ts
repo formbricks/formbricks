@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import type { RedisClient } from "../types/client";
 import { ErrorCode } from "../types/error";
-import { asCacheKey } from "../types/keys";
+import type { CacheKey } from "../types/keys";
 import { CacheService } from "./service";
 
 // Mock logger
@@ -19,6 +19,7 @@ interface MockRedisClient {
   get: ReturnType<typeof vi.fn>;
   setEx: ReturnType<typeof vi.fn>;
   del: ReturnType<typeof vi.fn>;
+  exists: ReturnType<typeof vi.fn>;
 }
 
 describe("CacheService", () => {
@@ -30,13 +31,14 @@ describe("CacheService", () => {
       get: vi.fn(),
       setEx: vi.fn(),
       del: vi.fn(),
+      exists: vi.fn(),
     };
     cacheService = new CacheService(mockRedis as unknown as RedisClient);
   });
 
   describe("get", () => {
     test("should return parsed JSON value when found", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const value = { data: "test" };
       mockRedis.get.mockResolvedValue(JSON.stringify(value));
 
@@ -50,7 +52,7 @@ describe("CacheService", () => {
     });
 
     test("should return null when key not found", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       mockRedis.get.mockResolvedValue(null);
 
       const result = await cacheService.get(key);
@@ -62,7 +64,7 @@ describe("CacheService", () => {
     });
 
     test("should return error when JSON parse fails (corrupted data)", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const corruptedValue = "invalid json {broken";
       mockRedis.get.mockResolvedValue(corruptedValue);
 
@@ -85,7 +87,7 @@ describe("CacheService", () => {
     });
 
     test("should return validation error for empty key", async () => {
-      const key = asCacheKey("");
+      const key = "" as CacheKey;
 
       const result = await cacheService.get(key);
 
@@ -96,7 +98,7 @@ describe("CacheService", () => {
     });
 
     test("should return validation error for whitespace-only key", async () => {
-      const key = asCacheKey("   ");
+      const key = "   " as CacheKey;
 
       const result = await cacheService.get(key);
 
@@ -107,9 +109,47 @@ describe("CacheService", () => {
     });
   });
 
+  describe("exists", () => {
+    test("should return true when key exists", async () => {
+      const key = "test:key" as CacheKey;
+      mockRedis.exists.mockResolvedValue(1);
+
+      const result = await cacheService.exists(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(true);
+      }
+      expect(mockRedis.exists).toHaveBeenCalledWith(key);
+    });
+
+    test("should return false when key does not exist", async () => {
+      const key = "test:key" as CacheKey;
+      mockRedis.exists.mockResolvedValue(0);
+
+      const result = await cacheService.exists(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(false);
+      }
+    });
+
+    test("should return validation error for empty key", async () => {
+      const key = "" as CacheKey;
+
+      const result = await cacheService.exists(key);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.CacheValidationError);
+      }
+    });
+  });
+
   describe("set", () => {
     test("should store JSON serialized value with TTL", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const value = { data: "test" };
       const ttlMs = 60000;
 
@@ -120,7 +160,7 @@ describe("CacheService", () => {
     });
 
     test("should convert TTL from milliseconds to seconds", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const value = "test";
       const ttlMs = 5500; // 5.5 seconds
 
@@ -131,7 +171,7 @@ describe("CacheService", () => {
     });
 
     test("should return validation error for invalid TTL", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const value = "test";
 
       const result1 = await cacheService.set(key, value, 0);
@@ -147,7 +187,7 @@ describe("CacheService", () => {
     });
 
     test("should return validation error for empty key", async () => {
-      const key = asCacheKey("");
+      const key = "" as CacheKey;
       const value = "test";
 
       const result = await cacheService.set(key, value, 1000);
@@ -161,7 +201,7 @@ describe("CacheService", () => {
 
   describe("del", () => {
     test("should delete single key", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
 
       const result = await cacheService.del([key]);
 
@@ -170,7 +210,7 @@ describe("CacheService", () => {
     });
 
     test("should delete multiple keys", async () => {
-      const keys = [asCacheKey("test:key1"), asCacheKey("test:key2")];
+      const keys = ["test:key1", "test:key2"] as CacheKey[];
 
       const result = await cacheService.del(keys);
 
@@ -179,7 +219,7 @@ describe("CacheService", () => {
     });
 
     test("should be idempotent (not throw if key missing)", async () => {
-      const key = asCacheKey("nonexistent:key");
+      const key = "nonexistent:key" as CacheKey;
       mockRedis.del.mockResolvedValue(0);
 
       const result = await cacheService.del([key]);
@@ -195,7 +235,7 @@ describe("CacheService", () => {
     });
 
     test("should return validation error for empty key in array", async () => {
-      const keys = [asCacheKey("valid:key"), asCacheKey("")];
+      const keys = ["valid:key", ""] as CacheKey[];
 
       const result = await cacheService.del(keys);
 
@@ -208,7 +248,7 @@ describe("CacheService", () => {
 
   describe("withCache", () => {
     test("should return cached value when available", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const cachedValue = { data: "cached" };
       const fn = vi.fn().mockResolvedValue({ data: "fresh" });
 
@@ -224,11 +264,12 @@ describe("CacheService", () => {
     });
 
     test("should compute and cache value when cache miss", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const freshValue = { data: "fresh" };
       const fn = vi.fn().mockResolvedValue(freshValue);
 
       mockRedis.get.mockResolvedValue(null);
+      mockRedis.exists.mockResolvedValue(0); // Key doesn't exist
 
       const result = await cacheService.withCache(fn, key, 60000);
 
@@ -241,7 +282,7 @@ describe("CacheService", () => {
     });
 
     test("should return fresh value when cache operation fails", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const freshValue = { data: "fresh" };
       const fn = vi.fn().mockResolvedValue(freshValue);
 
@@ -256,8 +297,43 @@ describe("CacheService", () => {
       expect(fn).toHaveBeenCalledOnce();
     });
 
+    test("should return cached null value without executing function", async () => {
+      const key = "test:key" as CacheKey;
+      const fn = vi.fn().mockResolvedValue({ data: "fresh" });
+
+      // Mock Redis returning stringified null (cached null value)
+      mockRedis.get.mockResolvedValue("null");
+      mockRedis.exists.mockResolvedValue(1); // Key exists
+
+      const result = await cacheService.withCache(fn, key, 60000);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeNull();
+      }
+      expect(fn).not.toHaveBeenCalled(); // Function should not be executed
+    });
+
+    test("should execute function and cache null result", async () => {
+      const key = "test:key" as CacheKey;
+      const fn = vi.fn().mockResolvedValue(null); // Function returns null
+
+      // Mock cache miss
+      mockRedis.get.mockResolvedValue(null);
+      mockRedis.exists.mockResolvedValue(0); // Key doesn't exist
+
+      const result = await cacheService.withCache(fn, key, 60000);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeNull();
+      }
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
+    });
+
     test("should return error when function fails", async () => {
-      const key = asCacheKey("test:key");
+      const key = "test:key" as CacheKey;
       const fn = vi.fn().mockRejectedValue(new Error("Function failed"));
 
       mockRedis.get.mockRejectedValue(new Error("Redis connection failed"));
