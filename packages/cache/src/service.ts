@@ -87,7 +87,9 @@ export class CacheService {
     }
 
     try {
-      const serialized = JSON.stringify(value);
+      // Normalize undefined to null to maintain consistent cached-null semantics
+      const normalizedValue = value === undefined ? null : value;
+      const serialized = JSON.stringify(normalizedValue);
       await this.redis.setEx(key, Math.floor(ttlMs / 1000), serialized);
       return ok(undefined);
     } catch (error) {

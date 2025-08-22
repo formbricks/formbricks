@@ -170,6 +170,28 @@ describe("CacheService", () => {
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 5, JSON.stringify(value));
     });
 
+    test("should normalize undefined to null and store as JSON", async () => {
+      const key = "test:key" as CacheKey;
+      const value = undefined;
+      const ttlMs = 60000;
+
+      const result = await cacheService.set(key, value, ttlMs);
+
+      expect(result.ok).toBe(true);
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
+    });
+
+    test("should store null values as JSON", async () => {
+      const key = "test:key" as CacheKey;
+      const value = null;
+      const ttlMs = 60000;
+
+      const result = await cacheService.set(key, value, ttlMs);
+
+      expect(result.ok).toBe(true);
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
+    });
+
     test("should return validation error for invalid TTL", async () => {
       const key = "test:key" as CacheKey;
       const value = "test";
@@ -329,6 +351,25 @@ describe("CacheService", () => {
         expect(result.data).toBeNull();
       }
       expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
+    });
+
+    test("should execute function and cache undefined result as null", async () => {
+      const key = "test:key" as CacheKey;
+      const fn = vi.fn().mockResolvedValue(undefined); // Function returns undefined
+
+      // Mock cache miss
+      mockRedis.get.mockResolvedValue(null);
+      mockRedis.exists.mockResolvedValue(0); // Key doesn't exist
+
+      const result = await cacheService.withCache(fn, key, 60000);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeUndefined();
+      }
+      expect(fn).toHaveBeenCalledOnce();
+      // undefined should be normalized to null in cache
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
     });
 
