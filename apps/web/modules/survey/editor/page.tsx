@@ -64,18 +64,23 @@ export const SurveyEditorPage = async (props) => {
   }
 
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
-  const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
+  const [locale, userEmail] = await Promise.all([
+    getUserLocale(session.user.id),
+    getUserEmail(session.user.id),
+  ]);
 
   const isUserTargetingAllowed = await getIsContactsEnabled();
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
-  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organizationBilling.plan);
-  const isSpamProtectionAllowed = await getIsSpamProtectionEnabled(organizationBilling.plan);
+  const [isMultiLanguageAllowed, isSurveyFollowUpsAllowed, isSpamProtectionAllowed] = await Promise.all([
+    getMultiLanguagePermission(organizationBilling.plan),
+    getSurveyFollowUpsPermission(organizationBilling.plan),
+    getIsSpamProtectionEnabled(organizationBilling.plan),
+  ]);
   const isQuotasAllowed = await getIsQuotasEnabled();
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
-  const userEmail = await getUserEmail(session.user.id);
-  const projectLanguages = await getProjectLanguages(projectWithTeamIds.id);
-
-  const teamMemberDetails = await getTeamMemberDetails(projectWithTeamIds.teamIds);
+  const [projectLanguages, teamMemberDetails] = await Promise.all([
+    getProjectLanguages(projectWithTeamIds.id),
+    getTeamMemberDetails(projectWithTeamIds.teamIds),
+  ]);
 
   if (
     !survey ||
