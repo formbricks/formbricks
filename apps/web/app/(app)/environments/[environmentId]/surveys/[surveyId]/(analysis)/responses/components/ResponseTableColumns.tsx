@@ -284,13 +284,15 @@ export const generateResponseTableColumns = (
               <CircleHelpIcon className="h-3 w-3 text-slate-500" strokeWidth={1.5} />
             </TooltipTrigger>
             <TooltipContent side="bottom" className="font-normal">
-              {t("environments.surveys.responses.how_to_identify_users")}
-              <Link
-                className="underline underline-offset-2 hover:text-slate-900"
-                href="https://formbricks.com/docs/app-surveys/user-identification"
-                target="_blank">
-                {t("common.app_survey")}
-              </Link>
+              <div className="space-y-2">
+                <p>{t("environments.surveys.responses.how_to_identify_users") || "How to identify users"}</p>
+                <Link
+                  className="text-blue-600 underline underline-offset-2 hover:text-slate-900"
+                  href="https://formbricks.com/docs/app-surveys/user-identification"
+                  target="_blank">
+                  {t("common.learn_more") || "Learn more"}
+                </Link>
+              </div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
