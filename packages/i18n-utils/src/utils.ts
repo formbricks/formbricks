@@ -651,7 +651,7 @@ export const iso639Languages: TIso639Language[] = [
       "zh-Hant-TW": "西弗里斯蘭語",
       "pt-PT": "Frísio ocidental",
       "ro-RO": "Frisian",
-      "ja-JP": "オランダ語",
+      "ja-JP": "西フリジア語",
     },
   },
   {
@@ -1080,7 +1080,7 @@ export const iso639Languages: TIso639Language[] = [
       "zh-Hant-TW": "格陵蘭語",
       "pt-PT": "Kalaallisut; Greenlandic",
       "ro-RO": "Kalaallisut; Greenlandic",
-      "ja-JP": "グリーンランド語；グリーンランド語",
+      "ja-JP": "カラリスット語（グリーンランド語）",
     },
   },
   {
@@ -1470,7 +1470,7 @@ export const iso639Languages: TIso639Language[] = [
       "zh-Hant-TW": "巴克摩挪威語；挪威巴克摩語",
       "pt-PT": "Bokmål, Norueguês; Bokmål Norueguês",
       "ro-RO": "Bokmål, Norueguês; Bokmål Norueguês",
-      "ja-JP": "ノルウェー語 ボクマール方言；ボクマール, ノルウェー語",
+      "ja-JP": "ノルウェー語（ブークモール）",
     },
   },
   {
@@ -1535,7 +1535,7 @@ export const iso639Languages: TIso639Language[] = [
       "zh-Hant-TW": "挪威尼諾斯克語；尼諾斯克語，挪威語",
       "pt-PT": "Norwegian Nynorsk; Nynorsk, Norwegian",
       "ro-RO": "Norvegian Nynorsk; Nynorsk, Norvegian",
-      "ja-JP": "ノルウェー語 ニーノシュク方言；ニーノシュク, ノルウェー語",
+      "ja-JP": "ノルウェー語（ニーノシュク）",
     },
   },
   {
@@ -1600,7 +1600,7 @@ export const iso639Languages: TIso639Language[] = [
       "zh-Hant-TW": "奧克語（1500 年後）",
       "pt-PT": "Occitano (pós 1500)",
       "ro-RO": "Occitano (pós 1500)",
-      "ja-JP": "オシュティアン語(1500年後)",
+      "ja-JP": "オック語（1500年以降）",
     },
   },
   {
@@ -1730,7 +1730,7 @@ export const iso639Languages: TIso639Language[] = [
       "zh-Hant-TW": "蓋丘亞語",
       "pt-PT": "Quechua",
       "ro-RO": "Quechua",
-      "ja-JP": "キチェ語",
+      "ja-JP": "ケチュア語",
     },
   },
   {
@@ -2393,7 +2393,7 @@ export const iso639Languages: TIso639Language[] = [
       "zh-Hant-TW": "簡體中文",
       "pt-PT": "Chinês (Simplificado)",
       "ro-RO": "Chinês (Simplificado)",
-      "ja-JP": "簡体字",
+      "ja-JP": "中国語（簡体字）",
     },
   },
   {
@@ -2406,7 +2406,7 @@ export const iso639Languages: TIso639Language[] = [
       "zh-Hant-TW": "繁體中文",
       "pt-PT": "Chinês (Tradicional)",
       "ro-RO": "Chinês (Tradicional)",
-      "ja-JP": "繁体字",
+      "ja-JP": "中国語（繁体字）",
     },
   },
   {
