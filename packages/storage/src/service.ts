@@ -3,7 +3,7 @@ import {
   DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
-  ListObjectsCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import {
   type PresignedPost,
@@ -188,33 +188,44 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
       });
     }
 
-    const listObjectsCommand = new ListObjectsCommand({
-      Bucket: S3_BUCKET_NAME,
-      Prefix: prefix,
-    });
+    const keys: { Key: string }[] = [];
+    let continuationToken: string | undefined;
 
-    const listObjectsOutput = await s3Client.send(listObjectsCommand);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition -- We want to loop until the continuation token is undefined
+    while (true) {
+      const listObjectsCommand = new ListObjectsV2Command({
+        Bucket: S3_BUCKET_NAME,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      });
 
-    if (!listObjectsOutput.Contents) {
+      const page = await s3Client.send(listObjectsCommand);
+      const pageKeys = page.Contents?.flatMap((obj) => (obj.Key ? [{ Key: obj.Key }] : [])) ?? [];
+      keys.push(...pageKeys);
+
+      continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+
+      if (!continuationToken) {
+        break;
+      }
+    }
+
+    if (keys.length === 0) {
       return ok(undefined);
     }
 
-    const objectsToDelete = listObjectsOutput.Contents.map((obj) => {
-      return { Key: obj.Key };
-    });
+    for (let i = 0; i < keys.length; i += 1000) {
+      const batch = keys.slice(i, i + 1000);
 
-    if (!objectsToDelete.length) {
-      return ok(undefined);
+      const deleteObjectsCommand = new DeleteObjectsCommand({
+        Bucket: S3_BUCKET_NAME,
+        Delete: {
+          Objects: batch,
+        },
+      });
+
+      await s3Client.send(deleteObjectsCommand);
     }
-
-    const deleteObjectsCommand = new DeleteObjectsCommand({
-      Bucket: S3_BUCKET_NAME,
-      Delete: {
-        Objects: objectsToDelete,
-      },
-    });
-
-    await s3Client.send(deleteObjectsCommand);
 
     return ok(undefined);
   } catch (error) {

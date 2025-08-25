@@ -3,7 +3,7 @@ import {
   DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
-  ListObjectsCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -15,7 +15,7 @@ vi.mock("@aws-sdk/client-s3", () => ({
   DeleteObjectsCommand: vi.fn(),
   GetObjectCommand: vi.fn(),
   HeadObjectCommand: vi.fn(),
-  ListObjectsCommand: vi.fn(),
+  ListObjectsV2Command: vi.fn(),
 }));
 
 vi.mock("@aws-sdk/s3-presigned-post", () => ({
@@ -37,7 +37,7 @@ const mockDeleteObjectCommand = vi.mocked(DeleteObjectCommand);
 const mockDeleteObjectsCommand = vi.mocked(DeleteObjectsCommand);
 const mockGetObjectCommand = vi.mocked(GetObjectCommand);
 const mockHeadObjectCommand = vi.mocked(HeadObjectCommand);
-const mockListObjectsCommand = vi.mocked(ListObjectsCommand);
+const mockListObjectsV2Command = vi.mocked(ListObjectsV2Command);
 const mockCreatePresignedPost = vi.mocked(createPresignedPost);
 const mockGetSignedUrl = vi.mocked(getSignedUrl);
 
@@ -605,9 +605,10 @@ describe("service.ts", () => {
 
       const result = await deleteFilesByPrefix("uploads/images/");
 
-      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
         Prefix: "uploads/images/",
+        ContinuationToken: undefined,
       });
 
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
@@ -649,9 +650,10 @@ describe("service.ts", () => {
 
       const result = await deleteFilesByPrefix("uploads/non-existent/");
 
-      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
         Prefix: "uploads/non-existent/",
+        ContinuationToken: undefined,
       });
 
       // Should not call DeleteObjectsCommand when no files found
@@ -684,9 +686,10 @@ describe("service.ts", () => {
 
       const result = await deleteFilesByPrefix("uploads/empty/");
 
-      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
         Prefix: "uploads/empty/",
+        ContinuationToken: undefined,
       });
 
       // Should not call DeleteObjectsCommand when Contents is empty
@@ -722,9 +725,10 @@ describe("service.ts", () => {
 
       const result = await deleteFilesByPrefix("surveys/123/responses/");
 
-      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
         Prefix: "surveys/123/responses/",
+        ContinuationToken: undefined,
       });
 
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
@@ -779,9 +783,10 @@ describe("service.ts", () => {
 
       const result = await deleteFilesByPrefix("uploads/test/");
 
-      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
         Prefix: "uploads/test/",
+        ContinuationToken: undefined,
       });
 
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
@@ -796,6 +801,204 @@ describe("service.ts", () => {
       if (!result.ok) {
         expect(result.error.code).toBe("unknown");
       }
+    });
+
+    test("should handle pagination with multiple pages", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({
+            Contents: [{ Key: "page1/file1.jpg" }, { Key: "page1/file2.png" }],
+            IsTruncated: true,
+            NextContinuationToken: "token123",
+          })
+          .mockResolvedValueOnce({
+            Contents: [{ Key: "page2/file3.gif" }, { Key: "page2/file4.pdf" }],
+            IsTruncated: false,
+          })
+          .mockResolvedValueOnce({}), // DeleteObjectsCommand response
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/paginated/");
+
+      // First page call
+      expect(mockListObjectsV2Command).toHaveBeenNthCalledWith(1, {
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Prefix: "uploads/paginated/",
+        ContinuationToken: undefined,
+      });
+
+      // Second page call
+      expect(mockListObjectsV2Command).toHaveBeenNthCalledWith(2, {
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Prefix: "uploads/paginated/",
+        ContinuationToken: "token123",
+      });
+
+      // Should call list objects twice for pagination
+      expect(mockListObjectsV2Command).toHaveBeenCalledTimes(2);
+
+      // Should delete all objects from both pages
+      expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Delete: {
+          Objects: [
+            { Key: "page1/file1.jpg" },
+            { Key: "page1/file2.png" },
+            { Key: "page2/file3.gif" },
+            { Key: "page2/file4.pdf" },
+          ],
+        },
+      });
+
+      expect(result.ok).toBe(true);
+    });
+
+    test("should handle batching when more than 1000 objects", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      // Create 1500 files to test batching
+      const files = Array.from({ length: 1500 }, (_, i) => ({
+        Key: `batch/file${(i + 1).toString()}.txt`,
+      }));
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({
+            Contents: files,
+            IsTruncated: false,
+          })
+          .mockResolvedValueOnce({}) // First batch delete
+          .mockResolvedValueOnce({}), // Second batch delete
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("batch/");
+
+      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Prefix: "batch/",
+        ContinuationToken: undefined,
+      });
+
+      // Should call DeleteObjectsCommand twice for batching
+      expect(mockDeleteObjectsCommand).toHaveBeenCalledTimes(2);
+
+      // First batch: 1000 objects
+      expect(mockDeleteObjectsCommand).toHaveBeenNthCalledWith(1, {
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Delete: {
+          Objects: files.slice(0, 1000),
+        },
+      });
+
+      // Second batch: remaining 500 objects
+      expect(mockDeleteObjectsCommand).toHaveBeenNthCalledWith(2, {
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Delete: {
+          Objects: files.slice(1000, 1500),
+        },
+      });
+
+      expect(result.ok).toBe(true);
+    });
+
+    test("should handle pagination with empty pages", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({
+            Contents: [{ Key: "file1.txt" }],
+            IsTruncated: true,
+            NextContinuationToken: "token123",
+          })
+          .mockResolvedValueOnce({
+            Contents: [], // Empty page
+            IsTruncated: false,
+          })
+          .mockResolvedValueOnce({}), // DeleteObjectsCommand response
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("mixed/");
+
+      expect(mockListObjectsV2Command).toHaveBeenCalledTimes(2);
+
+      // Should only delete the file from first page
+      expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Delete: {
+          Objects: [{ Key: "file1.txt" }],
+        },
+      });
+
+      expect(result.ok).toBe(true);
+    });
+
+    test("should handle files with undefined Key gracefully", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({
+            Contents: [
+              { Key: "valid-file.txt" },
+              { Key: undefined }, // Invalid key
+              { Key: "another-valid-file.pdf" },
+              {}, // Object without Key property
+            ],
+            IsTruncated: false,
+          })
+          .mockResolvedValueOnce({}), // DeleteObjectsCommand response
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("mixed-keys/");
+
+      // Should only delete objects with valid keys
+      expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Delete: {
+          Objects: [{ Key: "valid-file.txt" }, { Key: "another-valid-file.pdf" }],
+        },
+      });
+
+      expect(result.ok).toBe(true);
     });
   });
 });
