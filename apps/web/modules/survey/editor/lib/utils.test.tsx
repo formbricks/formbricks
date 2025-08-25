@@ -1298,7 +1298,7 @@ describe("Survey Editor Utils", () => {
         },
       };
 
-      const result = isUsedInQuota(quota, "question1");
+      const result = isUsedInQuota(quota, { questionId: "question1" });
 
       expect(result).toBe(true);
     });
@@ -1319,7 +1319,7 @@ describe("Survey Editor Utils", () => {
         },
       };
 
-      const result = isUsedInQuota(quota, "question1");
+      const result = isUsedInQuota(quota, { questionId: "question1" });
 
       expect(result).toBe(true);
     });
@@ -1381,7 +1381,7 @@ describe("Survey Editor Utils", () => {
         },
       };
 
-      const result = isUsedInQuota(quota, "question1");
+      const result = isUsedInQuota(quota, { questionId: "question1" });
 
       expect(result).toBe(true);
     });
@@ -1401,7 +1401,7 @@ describe("Survey Editor Utils", () => {
         },
       };
 
-      const result = isUsedInQuota(quota, "question1");
+      const result = isUsedInQuota(quota, { questionId: "question1" });
 
       expect(result).toBe(true);
     });
