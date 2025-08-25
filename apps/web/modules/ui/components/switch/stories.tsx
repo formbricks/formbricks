@@ -83,7 +83,7 @@ export const DefaultWithLabel: Story = {
     <div className="flex items-center space-x-2">
       <Switch {...args} />
       <Label htmlFor="switch-with-label" className="cursor-pointer">
-        Toggle setting
+        Switch Text
       </Label>
     </div>
   ),
@@ -117,16 +117,14 @@ export const Disabled: Story = {
     id: "disabled-switch",
     disabled: true,
   },
-  decorators: [
-    (Story) => (
-      <div className="flex items-center space-x-2">
-        <Story />
-        <Label htmlFor="disabled-switch" className="cursor-pointer">
-          Disabled setting
-        </Label>
-      </div>
-    ),
-  ],
+  render: (args) => (
+    <div className="flex items-center space-x-2">
+      <Switch {...args} />
+      <Label htmlFor="disabled-switch" className="cursor-pointer">
+        Switch Text
+      </Label>
+    </div>
+  ),
   parameters: {
     docs: {
       description: {
@@ -138,23 +136,23 @@ export const Disabled: Story = {
 
 export const RightAligned: Story = {
   args: {
-    id: "right-aligned-switch",
+    id: "right-aligned",
   },
-  decorators: [
-    (Story) => (
-      <div className="flex w-64 items-center justify-between rounded-lg border p-4">
-        <Label htmlFor="right-aligned-switch" className="cursor-pointer">
-          Dark mode
+  render: (args) => (
+    <div className="flex w-80 justify-between rounded-lg border p-4">
+      <div className="flex flex-col">
+        <Label htmlFor="right-aligned" className="cursor-pointer font-medium">
+          Switch Text
         </Label>
-        <Story />
+        <p className="text-sm text-slate-500">This is a switch description.</p>
       </div>
-    ),
-  ],
+      <Switch {...args} />
+    </div>
+  ),
   parameters: {
     docs: {
       description: {
-        story:
-          "Switch positioned on the right side with label on the left, commonly used in settings panels.",
+        story: "Right-aligned switch with label and description, ideal for settings with additional context.",
       },
     },
   },
