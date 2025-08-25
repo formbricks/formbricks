@@ -26,22 +26,6 @@ export enum ErrorCode {
   FileNotFoundError = "file_not_found_error",
 }
 
-export interface UnknownError {
-  code: ErrorCode.Unknown;
-  message: string;
-}
-
-export interface S3CredentialsError {
-  code: ErrorCode.S3CredentialsError;
-  message: string;
-}
-
-export interface S3ClientError {
-  code: ErrorCode.S3ClientError;
-  message: string;
-}
-
-export interface FileNotFoundError {
-  code: ErrorCode.FileNotFoundError;
-  message: string;
+export interface StorageError {
+  code: ErrorCode;
 }

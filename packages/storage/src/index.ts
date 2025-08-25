@@ -1,1 +1,1 @@
-export { deleteFile, getSignedDownloadUrl, getSignedUploadUrl } from "./service";
+export { deleteFile, getSignedDownloadUrl, getSignedUploadUrl, deleteFilesByPrefix } from "./service";

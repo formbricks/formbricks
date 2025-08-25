@@ -1,4 +1,10 @@
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  ListObjectsCommand,
+} from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -6,8 +12,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 // Mock AWS SDK modules
 vi.mock("@aws-sdk/client-s3", () => ({
   DeleteObjectCommand: vi.fn(),
+  DeleteObjectsCommand: vi.fn(),
   GetObjectCommand: vi.fn(),
   HeadObjectCommand: vi.fn(),
+  ListObjectsCommand: vi.fn(),
 }));
 
 vi.mock("@aws-sdk/s3-presigned-post", () => ({
@@ -26,8 +34,10 @@ vi.mock("./client", () => ({
 }));
 
 const mockDeleteObjectCommand = vi.mocked(DeleteObjectCommand);
+const mockDeleteObjectsCommand = vi.mocked(DeleteObjectsCommand);
 const mockGetObjectCommand = vi.mocked(GetObjectCommand);
 const mockHeadObjectCommand = vi.mocked(HeadObjectCommand);
+const mockListObjectsCommand = vi.mocked(ListObjectsCommand);
 const mockCreatePresignedPost = vi.mocked(createPresignedPost);
 const mockGetSignedUrl = vi.mocked(getSignedUrl);
 
@@ -95,7 +105,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("s3_credentials_error");
-        expect(result.error.message).toBe("S3 bucket name is not set");
       }
     });
 
@@ -113,7 +122,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("s3_client_error");
-        expect(result.error.message).toBe("S3 client is not set");
       }
     });
 
@@ -135,7 +143,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("unknown");
-        expect(result.error.message).toBe("Failed to get signed upload URL");
       }
     });
 
@@ -200,7 +207,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("s3_credentials_error");
-        expect(result.error.message).toBe("S3 bucket name is not set");
       }
     });
 
@@ -297,7 +303,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("s3_client_error");
-        expect(result.error.message).toBe("S3 client is not set");
       }
     });
 
@@ -325,7 +330,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("unknown");
-        expect(result.error.message).toBe("Failed to get signed download URL");
       }
     });
 
@@ -356,7 +360,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("file_not_found_error");
-        expect(result.error.message).toBe("File not found: non-existent-file.pdf");
       }
     });
 
@@ -383,7 +386,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("file_not_found_error");
-        expect(result.error.message).toBe("File not found: another-non-existent-file.pdf");
       }
     });
   });
@@ -408,7 +410,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("s3_credentials_error");
-        expect(result.error.message).toBe("S3 bucket name is not set");
       }
     });
 
@@ -512,7 +513,6 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("s3_client_error");
-        expect(result.error.message).toBe("S3 client is not set");
       }
     });
 
@@ -535,7 +535,266 @@ describe("service.ts", () => {
 
       if (!result.ok) {
         expect(result.error.code).toBe("unknown");
-        expect(result.error.message).toBe("Failed to delete file");
+      }
+    });
+  });
+
+  describe("deleteFilesByPrefix", () => {
+    test("should return error if bucket name is not set", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+        S3_BUCKET_NAME: undefined,
+      }));
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/images/");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+      }
+    });
+
+    test("should return error if s3Client is null", async () => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => undefined),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/images/");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_client_error");
+      }
+    });
+
+    test("should delete multiple files with given prefix", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({
+            Contents: [
+              { Key: "uploads/images/file1.jpg" },
+              { Key: "uploads/images/file2.png" },
+              { Key: "uploads/images/subfolder/file3.gif" },
+            ],
+          })
+          .mockResolvedValueOnce({}), // DeleteObjectsCommand response
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/images/");
+
+      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Prefix: "uploads/images/",
+      });
+
+      expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Delete: {
+          Objects: [
+            { Key: "uploads/images/file1.jpg" },
+            { Key: "uploads/images/file2.png" },
+            { Key: "uploads/images/subfolder/file3.gif" },
+          ],
+        },
+      });
+
+      expect(mockS3Client.send).toHaveBeenCalledTimes(2);
+
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toBeUndefined();
+      }
+    });
+
+    test("should handle empty result list (no files found)", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const mockS3Client = {
+        send: vi.fn().mockResolvedValueOnce({
+          Contents: undefined, // No files found
+        }),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/non-existent/");
+
+      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Prefix: "uploads/non-existent/",
+      });
+
+      // Should not call DeleteObjectsCommand when no files found
+      expect(mockDeleteObjectsCommand).not.toHaveBeenCalled();
+      expect(mockS3Client.send).toHaveBeenCalledTimes(1);
+
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toBeUndefined();
+      }
+    });
+
+    test("should handle empty Contents array", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const mockS3Client = {
+        send: vi.fn().mockResolvedValueOnce({
+          Contents: [], // Empty array
+        }),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/empty/");
+
+      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Prefix: "uploads/empty/",
+      });
+
+      // Should not call DeleteObjectsCommand when Contents is empty
+      expect(mockDeleteObjectsCommand).not.toHaveBeenCalled();
+      expect(mockS3Client.send).toHaveBeenCalledTimes(1);
+
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toBeUndefined();
+      }
+    });
+
+    test("should handle different prefix patterns", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({
+            Contents: [{ Key: "surveys/123/responses/response1.json" }],
+          })
+          .mockResolvedValueOnce({}),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("surveys/123/responses/");
+
+      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Prefix: "surveys/123/responses/",
+      });
+
+      expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Delete: {
+          Objects: [{ Key: "surveys/123/responses/response1.json" }],
+        },
+      });
+
+      expect(result.ok).toBe(true);
+    });
+
+    test("should handle ListObjectsCommand throwing an error", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(new Error("AWS ListObjects Error")),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/test/");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("unknown");
+      }
+    });
+
+    test("should handle DeleteObjectsCommand throwing an error", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const mockS3Client = {
+        send: vi
+          .fn()
+          .mockResolvedValueOnce({
+            Contents: [{ Key: "test-file.txt" }],
+          })
+          .mockRejectedValueOnce(new Error("AWS Delete Error")), // DeleteObjectsCommand fails
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/test/");
+
+      expect(mockListObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Prefix: "uploads/test/",
+      });
+
+      expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Delete: {
+          Objects: [{ Key: "test-file.txt" }],
+        },
+      });
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("unknown");
       }
     });
   });

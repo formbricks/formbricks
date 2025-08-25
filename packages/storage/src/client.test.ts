@@ -96,7 +96,6 @@ describe("client.ts", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("s3_credentials_error");
-        expect(result.error.message).toBe("S3 credentials are not set");
       }
     });
 
@@ -114,7 +113,6 @@ describe("client.ts", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("s3_credentials_error");
-        expect(result.error.message).toBe("S3 credentials are not set");
       }
     });
 
@@ -133,7 +131,6 @@ describe("client.ts", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("s3_credentials_error");
-        expect(result.error.message).toBe("S3 credentials are not set");
       }
     });
 
@@ -152,7 +149,6 @@ describe("client.ts", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("s3_credentials_error");
-        expect(result.error.message).toBe("S3 credentials are not set");
       }
     });
 
@@ -171,7 +167,6 @@ describe("client.ts", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("s3_credentials_error");
-        expect(result.error.message).toBe("S3 credentials are not set");
       }
     });
 
