@@ -11,6 +11,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import type { ComponentProps } from "react";
 import { Button } from "../button";
 import {
   DropdownMenu,
@@ -34,7 +35,7 @@ interface StoryOptions {
   triggerVariant: "default" | "outline" | "ghost" | "secondary";
 }
 
-type StoryProps = React.ComponentProps<typeof DropdownMenuContent> & StoryOptions;
+type StoryProps = ComponentProps<typeof DropdownMenuContent> & StoryOptions;
 
 const meta: Meta<StoryProps> = {
   title: "UI/DropdownMenu",
