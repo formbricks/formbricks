@@ -1,5 +1,5 @@
 import { formatDistance, intlFormat } from "date-fns";
-import { de, enUS, fr, pt, ptBR, ro, zhTW } from "date-fns/locale";
+import { de, enUS, fr, ja, pt, ptBR, ro, zhTW } from "date-fns/locale";
 import { TUserLocale } from "@formbricks/types/user";
 
 export const convertDateString = (dateString: string | null) => {
@@ -97,6 +97,8 @@ const getLocaleForTimeSince = (locale: TUserLocale) => {
       return pt;
     case "ro-RO":
       return ro;
+    case "ja-JP":
+      return ja;
   }
 };
 
