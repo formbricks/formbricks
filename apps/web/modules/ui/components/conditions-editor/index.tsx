@@ -34,7 +34,12 @@ interface ConditionsEditorProps {
   depth?: number;
 }
 
-export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: ConditionsEditorProps) {
+export function ConditionsEditor({
+  conditions,
+  config,
+  callbacks,
+  depth = 0,
+}: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
 
@@ -133,6 +138,7 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
 
     const leftOperandOptions = config.getLeftOperandOptions();
     const operatorOptions = config.getOperatorOptions(condition);
+    const onCreateGroup = callbacks.onCreateGroup;
     const { show = false, options, showInput = false, inputType } = config.getValueProps(condition);
 
     const allowMultiSelect = [
@@ -144,17 +150,15 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
       "isAnyOf",
     ].includes(condition.operator);
 
+    const getConnector = () => {
+      if (index > 0) return <div>{connector}</div>;
+      if (parentConditionGroup.conditions.length === 1) return <div>When</div>;
+      return <div />;
+    };
+
     return (
       <div key={condition.id} className="flex items-center gap-x-2">
-        <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">
-          {index > 0 ? (
-            <div>{connector}</div>
-          ) : parentConditionGroup.conditions.length === 1 ? (
-            <div>When</div>
-          ) : (
-            <div />
-          )}
-        </div>
+        <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">{getConnector()}</div>
 
         <div className="grid w-full flex-1 grid-cols-12 gap-x-2">
           <div className="col-span-4">
@@ -222,6 +226,7 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
               {t("environments.surveys.edit.add_condition_below")}
             </DropdownMenuItem>
             <DropdownMenuItem
+              disabled={conditions.conditions.length === 1}
               onClick={() => callbacks.onRemoveCondition(condition.id)}
               icon={<TrashIcon className="h-4 w-4" />}>
               {t("common.remove")}
@@ -231,11 +236,13 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
               icon={<CopyIcon className="h-4 w-4" />}>
               {t("common.duplicate")}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => callbacks.onCreateGroup(condition.id)}
-              icon={<WorkflowIcon className="h-4 w-4" />}>
-              {t("environments.surveys.edit.create_group")}
-            </DropdownMenuItem>
+            {onCreateGroup && (
+              <DropdownMenuItem
+                onClick={() => onCreateGroup(condition.id)}
+                icon={<WorkflowIcon className="h-4 w-4" />}>
+                {t("environments.surveys.edit.create_group")}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

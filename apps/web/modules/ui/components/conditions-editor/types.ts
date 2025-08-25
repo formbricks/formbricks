@@ -31,7 +31,7 @@ export interface TConditionsEditorCallbacks<T extends TGenericCondition = TGener
   onAddConditionBelow: (resourceId: string) => void;
   onRemoveCondition: (resourceId: string) => void;
   onDuplicateCondition: (resourceId: string) => void;
-  onCreateGroup: (resourceId: string) => void;
+  onCreateGroup?: (resourceId: string) => void;
   onUpdateCondition: (resourceId: string, updates: Partial<T>) => void;
   onToggleGroupConnector: (groupId: string) => void;
 }

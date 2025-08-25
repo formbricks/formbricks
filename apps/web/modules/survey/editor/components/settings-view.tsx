@@ -1,4 +1,5 @@
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
+import { QuotasCard } from "@/modules/ee/quotas/components/quotas-card";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { HowToSendCard } from "@/modules/survey/editor/components/how-to-send-card";
 import { RecontactOptionsCard } from "@/modules/survey/editor/components/recontact-options-card";
@@ -8,6 +9,7 @@ import { TargetingLockedCard } from "@/modules/survey/editor/components/targetin
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -24,6 +26,8 @@ interface SettingsViewProps {
   isSpamProtectionAllowed: boolean;
   projectPermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
+  isQuotasAllowed: boolean;
+  quotas: TSurveyQuota[];
 }
 
 export const SettingsView = ({
@@ -37,8 +41,10 @@ export const SettingsView = ({
   membershipRole,
   isUserTargetingAllowed = false,
   isSpamProtectionAllowed,
+  isQuotasAllowed,
   projectPermission,
   isFormbricksCloud,
+  quotas,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -75,6 +81,12 @@ export const SettingsView = ({
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
         projectPermission={projectPermission}
+      />
+      <QuotasCard
+        localSurvey={localSurvey}
+        isQuotasEnabled={isQuotasAllowed}
+        isFormbricksCloud={isFormbricksCloud}
+        quotas={quotas}
       />
 
       <ResponseOptionsCard

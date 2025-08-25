@@ -18,6 +18,7 @@ const ZEnterpriseLicenseFeatures = z.object({
   auditLogs: z.boolean(),
   multiLanguageSurveys: z.boolean(),
   accessControl: z.boolean(),
+  quotas: z.boolean(),
 });
 
 export type TEnterpriseLicenseFeatures = z.infer<typeof ZEnterpriseLicenseFeatures>;

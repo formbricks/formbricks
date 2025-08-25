@@ -55,6 +55,7 @@ const getSpecificFeatureFlag = async (
     | "auditLogs"
     | "multiLanguageSurveys"
     | "accessControl"
+    | "quotas"
   >
 ): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
@@ -76,6 +77,10 @@ export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
 
 export const getIsSsoEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("sso");
+};
+
+export const getIsQuotasEnabled = async (): Promise<boolean> => {
+  return getSpecificFeatureFlag("quotas");
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
