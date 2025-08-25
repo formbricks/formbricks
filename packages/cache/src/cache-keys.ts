@@ -1,4 +1,4 @@
-import { type CacheKey, type CustomCacheNamespace } from "../types/keys";
+import { type CacheKey, type CustomCacheNamespace } from "@/types/keys";
 import { makeCacheKey } from "./utils/key";
 
 /**

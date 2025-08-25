@@ -1,16 +1,20 @@
-import { type RedisClientType, createClient } from "redis";
+import type { RedisClient } from "@/types/client";
+import { type CacheError, ErrorCode, type Result, err, ok } from "@/types/error";
+import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
-
-export type RedisClient = RedisClientType;
+import { CacheService } from "./service";
 
 /**
  * Creates a Redis client from the REDIS_URL environment variable
- * @throws Error If REDIS_URL is not set
+ * @returns Result containing RedisClient or RedisConfigurationError if REDIS_URL is not set
  */
-export function createRedisClientFromEnv(): RedisClient {
+export function createRedisClientFromEnv(): Result<RedisClient, CacheError> {
   const url = process.env.REDIS_URL;
   if (!url) {
-    throw new Error("REDIS_URL is required for @formbricks/cache");
+    logger.error("REDIS_URL is required to create the Redis client");
+    return err({
+      code: ErrorCode.RedisConfigurationError,
+    });
   }
 
   const client = createClient({
@@ -32,8 +36,8 @@ export function createRedisClientFromEnv(): RedisClient {
     },
   });
 
-  client.on("error", (err) => {
-    logger.error("Redis client error:", err);
+  client.on("error", (error) => {
+    logger.error(error, "Redis client error");
   });
 
   client.on("connect", () => {
@@ -52,26 +56,38 @@ export function createRedisClientFromEnv(): RedisClient {
     logger.info("Redis client disconnected");
   });
 
-  return client as RedisClient;
+  return ok(client as RedisClient);
 }
 
 /**
  * Creates a cache service instance with the provided or environment Redis client
  * @param redis - Optional Redis client. If not provided, creates one from environment
- * @returns Promise that resolves to a CacheService instance
+ * @returns Promise that resolves to Result containing CacheService or CacheError
  */
-export async function createCacheService(redis?: RedisClient): Promise<RedisClient> {
-  const client = redis ?? createRedisClientFromEnv();
+export async function createCacheService(redis?: RedisClient): Promise<Result<CacheService, CacheError>> {
+  let client: RedisClient;
+
+  if (redis) {
+    client = redis;
+  } else {
+    const clientResult = createRedisClientFromEnv();
+    if (!clientResult.ok) {
+      return clientResult; // Return the error from createRedisClientFromEnv
+    }
+    client = clientResult.data;
+  }
 
   if (!client.isOpen) {
     // Connect immediately and handle initial connection failures
     try {
       await client.connect();
-    } catch (err) {
-      logger.error("Initial Redis connection failed:", err);
-      throw err;
+    } catch (error) {
+      logger.error(error, "Initial Redis connection failed");
+      return err({
+        code: ErrorCode.RedisConnectionError,
+      });
     }
   }
 
-  return client;
+  return ok(new CacheService(client));
 }

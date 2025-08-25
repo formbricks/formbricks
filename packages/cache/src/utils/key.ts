@@ -1,4 +1,5 @@
-import { type CacheKey } from "../../types/keys";
+import type { CacheKey } from "@/types/keys";
+import { logger } from "@formbricks/logger";
 
 /**
  * Helper function to create cache keys with runtime validation
@@ -13,11 +14,13 @@ import { type CacheKey } from "../../types/keys";
  */
 export const makeCacheKey = (...parts: [first: string, ...rest: string[]]): CacheKey => {
   if (parts[0] === "fb") {
+    logger.error("Invalid Cache key: Do not include 'fb' prefix, it's added automatically");
     throw new Error("Invalid Cache key: Do not include 'fb' prefix, it's added automatically");
   }
 
   // Check for empty parts
   if (parts.some((part) => part.length === 0)) {
+    logger.error("Invalid Cache key: Parts cannot be empty");
     throw new Error("Invalid Cache key: Parts cannot be empty");
   }
 
@@ -25,6 +28,7 @@ export const makeCacheKey = (...parts: [first: string, ...rest: string[]]): Cach
 
   // Valid format: starts with "fb:", has valid structure
   if (!/^fb:(?:[^:]+)(?::[^:]+)*$/.test(key)) {
+    logger.error("Invalid Cache key: Invalid structure");
     throw new Error("Invalid Cache key: Invalid structure");
   }
 

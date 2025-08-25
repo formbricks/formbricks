@@ -1,224 +1,125 @@
 # @formbricks/cache Package Rules
 
-## Package Overview
-This is the unified Redis cache package for Formbricks. It will centralize all caching operations into a single, Redis-backed solution, replacing the previous dual Redis/in-memory setup.
+## Core Principles
 
-## Architecture Principles
+### Redis-Only Architecture
+- **Mandatory Redis**: All deployments MUST use Redis via `REDIS_URL` environment variable
+- **Factory Pattern**: Use `createCacheService()` - never export `CacheService` class directly
+- **Result Types**: All operations return `Result<T, CacheError>` instead of throwing exceptions
 
-### 1. Redis-Only Strategy
-- **Mandatory Redis**: All deployments MUST use Redis. No fallback to in-memory caching.
-- **Environment-driven**: Redis connection configured via `REDIS_URL` environment variable only.
+### Type Safety & Validation
+- **Branded Cache Keys**: Use `CacheKey` type to prevent raw string usage
+- **Runtime Validation**: Use `validateInputs()` function with Zod schemas
+- **Error Codes**: Use `ErrorCode` enum for consistent error categorization
 
-### 2. Type Safety
-- **Strict TypeScript**: All code must pass strict TypeScript compilation.
-- **Explicit Types**: Prefer explicit type annotations over inference for public APIs.
-- **Branded Cache Keys**: Use `CacheKey` branded type to prevent raw string usage.
-- **Compile-time Safety**: TypeScript prevents using raw strings where `CacheKey` is expected.
+## File Organization
 
-### 3. Runtime Validation
-- **makeCacheKey Utility**: Internal utility function provides runtime validation for all cache keys.
-- **Structure Validation**: Regex patterns validate cache key format (`fb:resource:identifier[:subresource]*`).
-- **Empty Parts Prevention**: Throws errors for empty parts to prevent malformed keys.
-- **Consistent Error Messages**: All validation errors use standardized error messages.
-- **Type-safe Namespace**: `CustomCacheNamespace` union type restricts valid custom namespaces.
-
-### 4. Dependency Injection
-- **Redis Client Injection**: Accept Redis client as parameter for testability.
-- **Factory Pattern**: Use factory functions for service creation.
-
-## Code Standards
-
-### File Organization (Current Implementation)
 ```text
 src/
-├── index.ts          # Main exports
-├── factory.ts        # Redis client and service factory
+├── index.ts          # Main exports (factory only, no CacheService class)
+├── factory.ts        # Redis client factory and CacheService factory
+├── service.ts        # Core CacheService class with Result types
 ├── cache-keys.ts     # Cache key generators with branded types
-├── utils/
-│   ├── key.ts        # makeCacheKey utility with runtime validation
-│   └── key.test.ts   # Tests for makeCacheKey utility
-└── *.test.ts         # Unit tests (collocated with source)
+├── utils/key.ts      # makeCacheKey utility (not exported)
+└── *.test.ts         # Unit tests
 types/
 ├── keys.ts           # Branded CacheKey type & CustomCacheNamespace
+├── client.ts         # RedisClient type definition
+├── service.ts        # Zod schemas and validateInputs function
+├── error.ts          # Result type system and error definitions
 └── *.test.ts         # Type tests
 ```
 
-### Naming Conventions
-- **Functions**: Use camelCase (e.g., `createCacheService`, `getCacheKey`)
-- **Types**: Use PascalCase (e.g., `RedisClient`, `CacheKey`)
-- **Constants**: Use UPPER_SNAKE_CASE (e.g., `CACHE_PACKAGE_VERSION`)
-- **Files**: Use kebab-case for multi-word files (e.g., `cache-keys.ts`)
+## Required Patterns
 
-### Import/Export Patterns (Implemented)
+### Factory Pattern Usage
 ```typescript
-// ✅ GOOD - Named exports from index.ts
-export { createCacheService, createRedisClientFromEnv, type RedisClient } from "./factory";
-export { createCacheKey } from "./cache-keys";
-export type { CacheKey } from "../types/keys";
+// ✅ GOOD - Use factory
+import { createCacheService } from "@formbricks/cache";
+const cacheService = createCacheService();
 
-// ✅ GOOD - Import from package root
-import { createCacheService, createCacheKey } from "@formbricks/cache";
-
-// ❌ BAD - Deep imports
-import { createCacheService } from "@formbricks/cache/dist/factory";
+// ❌ BAD - CacheService not exported
+import { CacheService } from "@formbricks/cache"; // Won't work!
 ```
 
-## Error Handling
-
-### Redis Connection Errors
-- **Graceful Failures**: Log errors but allow application to continue where possible.
-- **Reconnection Strategy**: Implement exponential backoff with persistent retry.
-- **Clear Error Messages**: Include context in error messages for debugging.
-
+### Result Type Error Handling
 ```typescript
-// ✅ GOOD
-try {
-  await client.connect();
-} catch (err) {
-  logger.error("Initial Redis connection failed:", err);
-  throw new Error(`Failed to connect to Redis: ${err instanceof Error ? err.message : 'Unknown error'}`);
+// ✅ GOOD - All operations return Result<T, CacheError>
+const result = await cacheService.get<UserData>(key);
+if (!result.ok) {
+  switch (result.error.code) {
+    case ErrorCode.CacheValidationError:
+    case ErrorCode.RedisOperationError:
+    case ErrorCode.CacheCorruptionError:
+      // Handle based on error code
+  }
+  return;
+}
+const data = result.data; // Type-safe access
+```
+
+### Validation Pattern
+```typescript
+// ✅ GOOD - Use validateInputs for all validation
+const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
+if (!validation.ok) {
+  return validation; // Propagate error
+}
+const [validatedKey, validatedTtl] = validation.data;
+
+// ❌ BAD - Don't use separate validation calls
+```
+
+### Error Interface
+```typescript
+// Unified error interface - just error code
+export interface CacheError {
+  code: ErrorCode;
+}
+
+// Error codes enum
+export enum ErrorCode {
+  Unknown = "unknown",
+  CacheValidationError = "cache_validation_error",
+  RedisConnectionError = "redis_connection_error",
+  RedisOperationError = "redis_operation_error", 
+  CacheCorruptionError = "cache_corruption_error",
 }
 ```
 
-## Testing Standards
+## Validation Standards
 
-### Unit Test Requirements
-- **Comprehensive Coverage**: All public functions and utilities must have thorough unit tests.
-- **Collocated Tests**: Place `*.test.ts` files next to source files.
-- **Mock External Dependencies**: Mock Redis client and logger in tests.
-- **Test Edge Cases**: Include error conditions, empty responses, connection failures.
-- **Validation Testing**: Test all runtime validation scenarios (empty parts, invalid structures).
-- **Type Safety Testing**: Verify branded types work correctly across all scenarios.
-- **Integration Testing**: Test internal integration between utilities and main functions.
-
-### Test Structure
+### Zod Schemas (types/service.ts)
 ```typescript
-// ✅ GOOD - Descriptive test structure
-describe("createCacheService", () => {
-  test("should create service with provided client", async () => {
-    // Test implementation
-  });
-  
-  test("should connect client if not open", async () => {
-    // Test implementation
-  });
-});
+// Cache key validation
+export const ZCacheKey = z.string().min(1, "Cache key cannot be empty").refine(
+  (key) => key.trim().length > 0,
+  "Cache key cannot be empty or whitespace only"
+);
+
+// TTL validation (minimum 1000ms for Redis conversion)
+export const ZTtlMs = z
+  .number()
+  .int()
+  .min(1000, "TTL must be at least 1000ms (1 second)")
+  .finite("TTL must be finite");
 ```
 
-### Mock Patterns
+### Generic Validation Function
 ```typescript
-// ✅ GOOD - Proper mock interface
-interface MockRedisClient {
-  isOpen: boolean;
-  on: ReturnType<typeof vi.fn>;
-  connect: ReturnType<typeof vi.fn>;
-}
-
-// ✅ GOOD - Type-safe casting
-const mockClient = mockRedisClient as unknown as RedisClient;
+// Single validation function for all scenarios
+export function validateInputs<T extends readonly [unknown, z.ZodType<unknown>][]>(
+  ...pairs: T
+): Result<
+  { [K in keyof T]: T[K] extends readonly [unknown, z.ZodType<infer U>] ? U : never },
+  CacheError
+>;
 ```
 
-## Performance Guidelines (Implemented)
+## Cache Key Generation
 
-### Connection Management
-- **Reconnection Strategy**: Exponential backoff for first 5 attempts (max 5s), then 30s intervals.
-- **Connection Events**: Comprehensive logging for all Redis connection events.
-- **Lazy Connection**: Connect only when needed via `createCacheService`.
-
-## Security Requirements (Implemented)
-
-### Access Control
-- **Environment Variables**: Use `REDIS_URL` for connection configuration.
-- **No Hardcoded Credentials**: Never commit credentials to code.
-- **Error Handling**: Throw clear errors when `REDIS_URL` is missing.
-
-## Migration Guidelines (Planned)
-
-### From Legacy Cache
-- **Future Implementation**: Will replace `apps/web/modules/cache/` completely.
-- **API Compatibility**: Future cache service will maintain existing cache operation patterns.
-
-## Logging Standards (Implemented)
-
-### Log Levels
-- **info**: Connection status, reconnection attempts
-- **error**: Connection failures, Redis client errors
-
-### Log Format (Current Implementation)
+### Key Generators (cache-keys.ts)
 ```typescript
-// Connection logging
-logger.info("Redis client connected");
-logger.info(`Redis reconnection attempt ${String(retries)}`);
-logger.error("Redis client error:", err);
-logger.error("Initial Redis connection failed:", err);
-```
-
-## Dependencies (Current Implementation)
-
-### Production Dependencies
-- **`redis@5.8.1`**: Official Redis client 
-- **`@formbricks/logger`**: Internal logging package
-
-### Development Dependencies
-- **`@formbricks/config-typescript`**: Shared TypeScript config
-- **`@formbricks/eslint-config`**: Shared ESLint config
-- **`vite`**: Build tool for ES/CJS output
-- **`vitest`**: Testing framework
-- **`@vitest/coverage-v8`**: Coverage reporting
-
-## Build and Deployment
-
-### Package Configuration
-- **ES Modules**: Primary export format (`"type": "module"`)
-- **CommonJS**: Secondary for compatibility
-- **Type Definitions**: Generated via `vite-plugin-dts`
-- **External Dependencies**: `redis` and `@formbricks/logger` externalized in build
-
-### Turbo Configuration (Added)
-```json
-"@formbricks/cache#lint": {
-  "dependsOn": ["@formbricks/logger#build"]
-},
-"@formbricks/cache#test": {
-  "dependsOn": ["@formbricks/logger#build"]
-},
-"@formbricks/cache#test:coverage": {
-  "dependsOn": ["@formbricks/logger#build"]
-}
-```
-
-## API
-
-### Factory Functions
-```typescript
-// Create Redis client from environment
-export function createRedisClientFromEnv(): RedisClient;
-
-// Create cache service with optional client injection
-export async function createCacheService(redis?: RedisClient): Promise<RedisClient>;
-
-// Redis client type export
-export type RedisClient = RedisClientType;
-```
-
-### Cache Key Types and Functions
-```typescript
-// Branded type for type-safe cache keys
-export type CacheKey = string & { readonly __brand: "CacheKey" };
-
-// Type-safe namespace for custom cache keys
-export type CustomCacheNamespace = "analytics";
-
-// Internal utility with runtime validation (not exported)
-// Located in src/utils/key.ts
-const makeCacheKey = (...parts: [first: string, ...rest: string[]]): CacheKey => {
-  // Automatic fb: prefix addition
-  // Runtime validation with regex
-  // Empty parts prevention
-  // Structure validation
-};
-
-// Type-safe cache key generators (uses makeCacheKey internally)
 export const createCacheKey = {
   environment: {
     state: (environmentId: string): CacheKey,
@@ -239,69 +140,92 @@ export const createCacheKey = {
 };
 ```
 
-### Usage Patterns
-```typescript
-// ✅ Basic client creation
-const client = createRedisClientFromEnv(); // Requires REDIS_URL env var
+### Internal Key Utility (utils/key.ts)
+- **Not exported** from package - internal only
+- **Validates** `fb:resource:identifier[:subresource]*` pattern
+- **Prevents empty parts** and malformed keys
+- **Runtime validation** with regex patterns
 
-// ✅ Service creation with environment client
-const service = await createCacheService();
-
-// ✅ Service creation with custom client (for testing)
-const service = await createCacheService(mockClient);
-
-// ✅ Type-safe cache key generation with automatic validation
-const envKey = createCacheKey.environment.state("env-123");
-// Result: "fb:env:env-123:state" (CacheKey type)
-
-const rateLimitKey = createCacheKey.rateLimit.core("api", "user-456", 1640995200);
-// Result: "fb:rate_limit:api:user-456:1640995200" (CacheKey type)
-
-const customKey = createCacheKey.custom("analytics", "user-789", "daily-stats");
-// Result: "fb:analytics:user-789:daily-stats" (CacheKey type)
-
-// ✅ Runtime validation prevents errors
-const customKeyNoSub = createCacheKey.custom("analytics", "user-xyz");
-// Result: "fb:analytics:user-xyz" (CacheKey type)
-
-// ❌ Runtime validation catches errors
-createCacheKey.environment.state(""); 
-// Throws: "Invalid Cache key: Parts cannot be empty"
-
-createCacheKey.custom("analytics", "user-123", "");
-// Throws: "Invalid Cache key: Parts cannot be empty"
-
-// ❌ TypeScript prevents invalid namespaces at compile time
-createCacheKey.custom("invalid", "user-123"); 
-// TypeScript Error: Argument of type '"invalid"' is not assignable to parameter of type 'CustomCacheNamespace'
-```
-
-## Validation Standards
-
-### makeCacheKey Utility Principles
-
-- **Location**: Internal utility in `src/utils/key.ts` - not exported from package
-- **Purpose**: Provides consistent runtime validation for all cache key generation
-- **Structure**: Validates `fb:resource:identifier[:subresource]*` pattern with regex
-- **Error Handling**: Throws descriptive errors for validation failures
-
-### Validation Rules
+## Service API Methods
 
 ```typescript
-// ✅ GOOD - Valid cache key patterns
-makeCacheKey("env", "123", "state")           // "fb:env:123:state"
-makeCacheKey("user", "456")                   // "fb:user:456"
-makeCacheKey("rate_limit", "api", "user", "123") // "fb:rate_limit:api:user:123"
-
-// ❌ BAD - Invalid patterns that throw errors
-makeCacheKey("fb", "test")                    // Error: Don't include 'fb' prefix
-makeCacheKey("env", "", "state")              // Error: Parts cannot be empty
-makeCacheKey("")                              // Error: Parts cannot be empty
+// All methods return Result<T, CacheError>
+await cacheService.get<T>(key): Promise<Result<T | null, CacheError>>
+await cacheService.set(key, value, ttlMs): Promise<Result<void, CacheError>>
+await cacheService.del(keys: CacheKey[]): Promise<Result<void, CacheError>>
+await cacheService.withCache<T>(fn, key, ttlMs): Promise<Result<T, CacheError>>
 ```
 
-### CustomCacheNamespace Management
+## Logging Standards
 
-- **Type Definition**: Located in `types/keys.ts` as union type
-- **Current Namespaces**: `"analytics"`
-- **Extension**: Add new namespaces to union type as needed
-- **Validation**: TypeScript enforces valid namespaces at compile time
+### Error Logging Strategy
+- **Detailed logging at source** - Log full context where errors occur
+- **Clean Result objects** - Only error codes in Result, not messages
+- **Level strategy**:
+  - `debug`: Cache GET failures in withCache (expected fallback)
+  - `error`: Cache SET failures in withCache (unexpected when fresh data available)
+  - `warn`: Data corruption (concerning but recoverable)
+  - `error`: Direct operation failures
+
+```typescript
+// ✅ GOOD - Rich logging, clean Result
+logger.error("Cache validation failed", { 
+  value, 
+  error: "TTL must be at least 1000ms",
+  validationErrors: [...] 
+});
+return err({ code: ErrorCode.CacheValidationError });
+```
+
+## Testing Requirements
+
+### Mock Patterns
+```typescript
+// Mock logger with all levels
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
+// Mock Redis client
+interface MockRedisClient {
+  get: ReturnType<typeof vi.fn>;
+  setEx: ReturnType<typeof vi.fn>;
+  del: ReturnType<typeof vi.fn>;
+}
+```
+
+### Test Structure
+- **Test all Result error cases** - Validation, Redis, corruption errors
+- **Test edge cases** - Empty arrays, invalid TTLs, malformed keys
+- **Mock external dependencies** - Redis client, logger
+- **Array-based deletion** - Test `del([key1, key2])` pattern
+
+## Import/Export Standards
+
+```typescript
+// ✅ GOOD - Package root exports
+export { createCacheService, createRedisClientFromEnv } from "./factory";
+export { createCacheKey } from "./cache-keys";
+export type { CacheKey } from "../types/keys";
+export type { RedisClient } from "../types/client";
+export type { Result, CacheError, ErrorCode } from "../types/error";
+
+// ❌ BAD - Don't export CacheService class
+// export { CacheService } from "./service"; // Never do this!
+```
+
+## Key Rules Summary
+
+1. **Factory Pattern**: Always use `createCacheService()`, never export `CacheService` class
+2. **Result Types**: All operations return `Result<T, CacheError>` - no throwing exceptions
+3. **Validation**: Use `validateInputs()` function for all input validation
+4. **Error Interface**: Single `CacheError` interface with just `code` field
+5. **Logging**: Rich logging at source, clean Results for consumers
+6. **TTL Minimum**: 1000ms minimum for Redis conversion (ms → seconds)
+7. **Array Deletion**: `del()` method always accepts arrays
+8. **Type Safety**: Branded `CacheKey` type prevents raw string usage
