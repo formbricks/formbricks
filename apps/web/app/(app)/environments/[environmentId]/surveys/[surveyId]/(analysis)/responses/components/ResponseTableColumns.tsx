@@ -289,7 +289,8 @@ export const generateResponseTableColumns = (
                 <Link
                   className="text-blue-600 underline underline-offset-2 hover:text-slate-900"
                   href="https://formbricks.com/docs/app-surveys/user-identification"
-                  target="_blank">
+                  target="_blank"
+                  rel="noopener noreferrer">
                   {t("common.learn_more") || "Learn more"}
                 </Link>
               </div>
