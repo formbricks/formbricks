@@ -179,6 +179,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
               description={t("environments.project.look.add_background_color_description")}
               childBorder
               customContainerClass="p-0"
+              childrenContainerClass="overflow-visible"
               disabled={!isEditing}>
               {isBgColorEnabled && (
                 <div className="px-2">

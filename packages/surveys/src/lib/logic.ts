@@ -99,7 +99,11 @@ const getLeftOperandValue = (
       const responseValue = data[leftOperand.value];
 
       if (currentQuestion.type === "openText" && currentQuestion.inputType === "number") {
-        return Number(responseValue) || undefined;
+        if (responseValue === undefined) return undefined;
+        if (typeof responseValue === "string" && responseValue.trim() === "") return undefined;
+
+        const numberValue = typeof responseValue === "number" ? responseValue : Number(responseValue);
+        return isNaN(numberValue) ? undefined : numberValue;
       }
 
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {

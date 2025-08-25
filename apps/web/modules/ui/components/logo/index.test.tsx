@@ -8,33 +8,59 @@ describe("Logo", () => {
     cleanup();
   });
 
-  test("renders correctly", () => {
-    const { container } = render(<Logo />);
-    const svg = container.querySelector("svg");
+  describe("default variant", () => {
+    test("renders default logo correctly", () => {
+      const { container } = render(<Logo />);
+      const svg = container.querySelector("svg");
 
-    expect(svg).toBeInTheDocument();
-    expect(svg).toHaveAttribute("viewBox", "0 0 697 150");
-    expect(svg).toHaveAttribute("fill", "none");
-    expect(svg).toHaveAttribute("xmlns", "http://www.w3.org/2000/svg");
+      expect(svg).toBeInTheDocument();
+    });
   });
 
-  test("accepts and passes through props", () => {
-    const testClassName = "test-class";
-    const { container } = render(<Logo className={testClassName} />);
-    const svg = container.querySelector("svg");
+  describe("image variant", () => {
+    test("renders image logo correctly", () => {
+      const { container } = render(<Logo variant="image" />);
+      const svg = container.querySelector("svg");
 
-    expect(svg).toBeInTheDocument();
-    expect(svg).toHaveAttribute("class", testClassName);
+      expect(svg).toBeInTheDocument();
+    });
+
+    test("renders image logo with className correctly", () => {
+      const testClassName = "test-class";
+      const { container } = render(<Logo variant="image" className={testClassName} />);
+      const svg = container.querySelector("svg");
+
+      expect(svg).toBeInTheDocument();
+      expect(svg).toHaveAttribute("class", testClassName);
+    });
   });
 
-  test("contains expected svg elements", () => {
-    const { container } = render(<Logo />);
-    const svg = container.querySelector("svg");
+  describe("wordmark variant", () => {
+    test("renders wordmark logo correctly", () => {
+      const { container } = render(<Logo variant="wordmark" />);
+      const svg = container.querySelector("svg");
 
-    expect(svg?.querySelectorAll("path").length).toBeGreaterThan(0);
-    expect(svg?.querySelector("line")).toBeInTheDocument();
-    expect(svg?.querySelectorAll("mask").length).toBe(2);
-    expect(svg?.querySelectorAll("filter").length).toBe(3);
-    expect(svg?.querySelectorAll("linearGradient").length).toBe(6);
+      expect(svg).toBeInTheDocument();
+    });
+
+    test("renders wordmark logo with className correctly", () => {
+      const testClassName = "test-class";
+      const { container } = render(<Logo variant="wordmark" className={testClassName} />);
+      const svg = container.querySelector("svg");
+
+      expect(svg).toBeInTheDocument();
+      expect(svg).toHaveAttribute("class", testClassName);
+    });
+
+    test("contains expected svg elements", () => {
+      const { container } = render(<Logo variant="wordmark" />);
+      const svg = container.querySelector("svg");
+
+      expect(svg?.querySelectorAll("path").length).toBeGreaterThan(0);
+      expect(svg?.querySelector("line")).toBeInTheDocument();
+      expect(svg?.querySelectorAll("mask").length).toBe(2);
+      expect(svg?.querySelectorAll("filter").length).toBe(3);
+      expect(svg?.querySelectorAll("linearGradient").length).toBe(6);
+    });
   });
 });

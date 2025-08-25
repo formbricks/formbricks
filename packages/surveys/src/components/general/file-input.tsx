@@ -4,7 +4,7 @@ import { getMimeType, isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
-import { type TAllowedFileExtension } from "@formbricks/types/common";
+import { type TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 
@@ -182,11 +182,14 @@ export function FileInput({
 
     // filter out files that are not allowed
     const validFiles = fileArray.filter((file) => {
-      const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
+      const fileExtension = file.name.split(".").pop()?.toLowerCase() as TAllowedFileExtension;
+      if (!fileExtension || fileExtension === file.name.toLowerCase()) return false;
+
       if (allowedFileExtensions) {
         return allowedFileExtensions.includes(fileExtension);
       }
-      return true;
+
+      return Object.values(ZAllowedFileExtension.enum).includes(fileExtension);
     });
 
     if (!validFiles.length) {

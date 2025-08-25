@@ -747,6 +747,7 @@
         "api_key_label": "Etichetă Cheie API",
         "api_key_security_warning": "Din motive de securitate, cheia API va fi afișată o singură dată după creare. Vă rugăm să o copiați imediat la destinație.",
         "api_key_updated": "Cheie API actualizată",
+        "delete_permission": "Șterge permisiunea",
         "duplicate_access": "Accesul dublu la proiect nu este permis",
         "no_api_keys_yet": "Nu aveți încă chei API",
         "no_env_permissions_found": "Nu s-au găsit permisiuni pentru mediu",
