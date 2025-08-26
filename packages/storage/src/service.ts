@@ -1,9 +1,10 @@
 import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
+  type DeleteObjectsCommandOutput,
   GetObjectCommand,
   HeadObjectCommand,
-  ListObjectsV2Command,
+  paginateListObjectsV2,
 } from "@aws-sdk/client-s3";
 import {
   type PresignedPost,
@@ -189,33 +190,28 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
     }
 
     const keys: { Key: string }[] = [];
-    let continuationToken: string | undefined;
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition -- We want to loop until the continuation token is undefined
-    while (true) {
-      const listObjectsCommand = new ListObjectsV2Command({
+    const paginator = paginateListObjectsV2(
+      { client: s3Client },
+      {
         Bucket: S3_BUCKET_NAME,
         Prefix: prefix,
-        ContinuationToken: continuationToken,
-      });
+      }
+    );
 
-      const page = await s3Client.send(listObjectsCommand);
+    for await (const page of paginator) {
       const pageKeys = page.Contents?.flatMap((obj) => (obj.Key ? [{ Key: obj.Key }] : [])) ?? [];
       keys.push(...pageKeys);
-
-      continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
-
-      if (!continuationToken) {
-        break;
-      }
     }
 
     if (keys.length === 0) {
       return ok(undefined);
     }
 
-    for (let i = 0; i < keys.length; i += 1000) {
-      const batch = keys.slice(i, i + 1000);
+    const deletionPromises: Promise<DeleteObjectsCommandOutput>[] = [];
+
+    for (let i = 0; i < keys.length; i += 100) {
+      const batch = keys.slice(i, i + 100);
 
       const deleteObjectsCommand = new DeleteObjectsCommand({
         Bucket: S3_BUCKET_NAME,
@@ -224,7 +220,39 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
         },
       });
 
-      await s3Client.send(deleteObjectsCommand);
+      deletionPromises.push(s3Client.send(deleteObjectsCommand));
+    }
+
+    const results = await Promise.all(deletionPromises);
+
+    // Check for partial failures and log them
+    let totalErrors = 0;
+    let totalDeleted = 0;
+
+    for (const result of results) {
+      if (result.Deleted) {
+        totalDeleted += result.Deleted.length;
+        logger.debug({ count: result.Deleted.length }, "Successfully deleted objects in batch");
+      }
+
+      if (result.Errors && result.Errors.length > 0) {
+        totalErrors += result.Errors.length;
+        logger.error(
+          {
+            errors: result.Errors.map((e) => ({
+              key: e.Key,
+              code: e.Code,
+              message: e.Message,
+            })),
+          },
+          "Some objects failed to delete"
+        );
+      }
+    }
+
+    // Log the issues
+    if (totalErrors > 0) {
+      logger.warn({ totalErrors, totalDeleted }, "Bulk delete completed with some failures");
     }
 
     return ok(undefined);
