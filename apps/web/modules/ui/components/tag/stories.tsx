@@ -71,6 +71,7 @@ export const Default: Story = {
     tagName: "Customer Feedback",
     allowDelete: true,
     highlight: false,
+    onDelete: () => {},
   },
 };
 
@@ -108,6 +109,7 @@ export const LongText: Story = {
   args: {
     ...Default.args,
     tagName: "This is a very long tag name that might overflow",
+    onDelete: () => {},
   },
   parameters: {
     docs: {
