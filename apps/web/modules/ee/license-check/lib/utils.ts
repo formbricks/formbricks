@@ -80,7 +80,8 @@ export const getIsSsoEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsQuotasEnabled = async (): Promise<boolean> => {
-  return getSpecificFeatureFlag("quotas");
+  return true;
+  // return getSpecificFeatureFlag("quotas");
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {

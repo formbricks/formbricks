@@ -4,6 +4,7 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/comp
 import { getSurveySummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import { QuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/quotas-summary";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -25,8 +26,11 @@ const defaultSurveySummary: TSurveySummary = {
     startsPercentage: 0,
     totalResponses: 0,
     ttcAverage: 0,
+    quotasCompleted: 0,
+    quotasCompletedPercentage: 0,
   },
   dropOff: [],
+  quotas: [],
   summary: [],
 };
 
@@ -50,7 +54,8 @@ export const SummaryPage = ({
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(
     initialSurveySummary || defaultSurveySummary
   );
-  const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+
+  const [tab, setTab] = useState<"dropOffs" | "quotas" | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
@@ -106,13 +111,9 @@ export const SummaryPage = ({
 
   return (
     <>
-      <SummaryMetadata
-        surveySummary={surveySummary.meta}
-        showDropOffs={showDropOffs}
-        setShowDropOffs={setShowDropOffs}
-        isLoading={isLoading}
-      />
-      {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
+      <SummaryMetadata surveySummary={surveySummary.meta} isLoading={isLoading} tab={tab} setTab={setTab} />
+      {tab === "dropOffs" && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
+      {tab === "quotas" && <QuotasSummary quotas={surveySummary.quotas} />}
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
       </div>

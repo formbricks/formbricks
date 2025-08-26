@@ -52,3 +52,14 @@ export const ZResponseQuotaLink = z.object({
   status: ZResponseQuotaLinkStatus,
 });
 export type TResponseQuotaLink = z.infer<typeof ZResponseQuotaLink>;
+
+export const ZQuotasResponseFilters = z.object({
+  createdAt: z
+    .object({
+      min: z.date().optional(),
+      max: z.date().optional(),
+    })
+    .optional(),
+});
+
+export type TQuotasResponseFilters = z.infer<typeof ZQuotasResponseFilters>;

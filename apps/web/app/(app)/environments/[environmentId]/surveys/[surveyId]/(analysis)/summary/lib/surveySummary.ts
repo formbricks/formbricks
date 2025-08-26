@@ -1,4 +1,5 @@
 import "server-only";
+import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -55,7 +56,8 @@ interface TSurveySummaryResponse {
 
 export const getSurveySummaryMeta = (
   responses: TSurveySummaryResponse[],
-  displayCount: number
+  displayCount: number,
+  quotas: TSurveySummary["quotas"]
 ): TSurveySummary["meta"] => {
   const completedResponses = responses.filter((response) => response.finished).length;
 
@@ -75,6 +77,9 @@ export const getSurveySummaryMeta = (
   const dropOffPercentage = responseCount > 0 ? (dropOffCount / responseCount) * 100 : 0;
   const ttcAverage = ttcResponseCount > 0 ? ttcSum / ttcResponseCount : 0;
 
+  const quotasCompleted = quotas.filter((quota) => quota.count >= quota.limit).length;
+  const quotasCompletedPercentage = quotas.length > 0 ? (quotasCompleted / quotas.length) * 100 : 0;
+
   return {
     displayCount: displayCount || 0,
     totalResponses: responseCount,
@@ -84,6 +89,8 @@ export const getSurveySummaryMeta = (
     dropOffCount,
     dropOffPercentage: convertFloatTo2Decimal(dropOffPercentage),
     ttcAverage: convertFloatTo2Decimal(ttcAverage),
+    quotasCompleted,
+    quotasCompletedPercentage,
   };
 };
 
@@ -939,13 +946,22 @@ export const getSurveySummary = reactCache(
         ...(hasFilter && { responseIds }),
       });
 
+      const quotas = await getQuotasSummary(surveyId, {
+        createdAt: filterCriteria?.createdAt,
+      });
+
       const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
       const [meta, questionWiseSummary] = await Promise.all([
-        getSurveySummaryMeta(responses, displayCount),
+        getSurveySummaryMeta(responses, displayCount, quotas),
         getQuestionSummary(survey, responses, dropOff),
       ]);
 
-      return { meta, dropOff, summary: questionWiseSummary };
+      return {
+        meta,
+        dropOff,
+        summary: questionWiseSummary,
+        quotas,
+      };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

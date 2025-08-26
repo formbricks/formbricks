@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { TQuotasResponseFilters } from "@formbricks/types/quota";
 
 export const deleteResponsesAndDisplaysForSurvey = async (
   surveyId: string
@@ -26,6 +27,59 @@ export const deleteResponsesAndDisplaysForSurvey = async (
       deletedResponsesCount: deletedResponsesCount.count,
       deletedDisplaysCount: deletedDisplaysCount.count,
     };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getQuotasSummary = async (surveyId: string, filters?: TQuotasResponseFilters) => {
+  try {
+    const quotas = await prisma.surveyQuota.findMany({
+      where: {
+        surveyId: surveyId,
+      },
+      select: {
+        _count: {
+          select: {
+            quotaLinks: {
+              where: {
+                status: "screenedIn",
+
+                ...(filters?.createdAt && {
+                  response: {
+                    createdAt: {
+                      gte: filters.createdAt.min,
+                      lte: filters.createdAt.max,
+                    },
+                  },
+                }),
+              },
+            },
+          },
+        },
+        id: true,
+        name: true,
+        limit: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return quotas.map((quota) => {
+      const { _count, ...rest } = quota;
+      const count = _count.quotaLinks;
+
+      return {
+        ...rest,
+        count,
+        percentage: (count / quota.limit) * 100,
+      };
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
