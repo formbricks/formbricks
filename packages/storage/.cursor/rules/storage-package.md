@@ -92,6 +92,15 @@ export const createS3ClientFromEnv = (): Result<S3Client, StorageError> => {
 
 // ✅ Module-level client instance
 const s3Client = createS3Client();
+// ✅ Module-level client instance (optional)
+let s3Client: S3Client | null = null;
+const clientResult = createS3ClientFromEnv();
+if (clientResult.ok) {
+  s3Client = clientResult.value;
+} else {
+  // handle or log configuration error here
+  s3Client = null;
+}
 ```
 
 ## Service Function Patterns

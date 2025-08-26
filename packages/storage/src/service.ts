@@ -189,13 +189,21 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
       });
     }
 
+    const normalizedPrefix = prefix.trim();
+    if (!normalizedPrefix || normalizedPrefix === "/") {
+      logger.error({ prefix }, "Refusing to delete files with an empty or root prefix");
+      return err({
+        code: ErrorCode.InvalidInput,
+      });
+    }
+
     const keys: { Key: string }[] = [];
 
     const paginator = paginateListObjectsV2(
       { client: s3Client },
       {
         Bucket: S3_BUCKET_NAME,
-        Prefix: prefix,
+        Prefix: normalizedPrefix,
       }
     );
 

@@ -1,13 +1,17 @@
+/* eslint-disable @typescript-eslint/require-await -- used for mocking*/
 import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
-  ListObjectsV2Command,
+  type ListObjectsV2CommandOutput,
+  paginateListObjectsV2,
 } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+
+type Paginator<T> = AsyncGenerator<T, undefined, unknown>;
 
 // Mock AWS SDK modules
 vi.mock("@aws-sdk/client-s3", () => ({
@@ -15,7 +19,7 @@ vi.mock("@aws-sdk/client-s3", () => ({
   DeleteObjectsCommand: vi.fn(),
   GetObjectCommand: vi.fn(),
   HeadObjectCommand: vi.fn(),
-  ListObjectsV2Command: vi.fn(),
+  paginateListObjectsV2: vi.fn(),
 }));
 
 vi.mock("@aws-sdk/s3-presigned-post", () => ({
@@ -37,7 +41,7 @@ const mockDeleteObjectCommand = vi.mocked(DeleteObjectCommand);
 const mockDeleteObjectsCommand = vi.mocked(DeleteObjectsCommand);
 const mockGetObjectCommand = vi.mocked(GetObjectCommand);
 const mockHeadObjectCommand = vi.mocked(HeadObjectCommand);
-const mockListObjectsV2Command = vi.mocked(ListObjectsV2Command);
+const mockPaginateListObjectsV2 = vi.mocked(paginateListObjectsV2);
 const mockCreatePresignedPost = vi.mocked(createPresignedPost);
 const mockGetSignedUrl = vi.mocked(getSignedUrl);
 
@@ -585,31 +589,39 @@ describe("service.ts", () => {
       }));
 
       const mockS3Client = {
-        send: vi
-          .fn()
-          .mockResolvedValueOnce({
-            Contents: [
-              { Key: "uploads/images/file1.jpg" },
-              { Key: "uploads/images/file2.png" },
-              { Key: "uploads/images/subfolder/file3.gif" },
-            ],
-          })
-          .mockResolvedValueOnce({}), // DeleteObjectsCommand response
+        send: vi.fn().mockResolvedValueOnce({}), // DeleteObjectsCommand response
       };
 
       vi.doMock("./client", () => ({
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return pages with files
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            Contents: [
+              { Key: "uploads/images/file1.jpg" },
+              { Key: "uploads/images/file2.png" },
+              { Key: "uploads/images/subfolder/file3.gif" },
+            ],
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("uploads/images/");
 
-      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Prefix: "uploads/images/",
-        ContinuationToken: undefined,
-      });
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "uploads/images/",
+        }
+      );
 
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
@@ -622,7 +634,7 @@ describe("service.ts", () => {
         },
       });
 
-      expect(mockS3Client.send).toHaveBeenCalledTimes(2);
+      expect(mockS3Client.send).toHaveBeenCalledTimes(1);
 
       expect(result.ok).toBe(true);
 
@@ -637,28 +649,39 @@ describe("service.ts", () => {
       }));
 
       const mockS3Client = {
-        send: vi.fn().mockResolvedValueOnce({
-          Contents: undefined, // No files found
-        }),
+        send: vi.fn(),
       };
 
       vi.doMock("./client", () => ({
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return empty pages
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            Contents: undefined, // No files found
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("uploads/non-existent/");
 
-      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Prefix: "uploads/non-existent/",
-        ContinuationToken: undefined,
-      });
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "uploads/non-existent/",
+        }
+      );
 
       // Should not call DeleteObjectsCommand when no files found
       expect(mockDeleteObjectsCommand).not.toHaveBeenCalled();
-      expect(mockS3Client.send).toHaveBeenCalledTimes(1);
+      expect(mockS3Client.send).not.toHaveBeenCalled();
 
       expect(result.ok).toBe(true);
 
@@ -673,28 +696,39 @@ describe("service.ts", () => {
       }));
 
       const mockS3Client = {
-        send: vi.fn().mockResolvedValueOnce({
-          Contents: [], // Empty array
-        }),
+        send: vi.fn(),
       };
 
       vi.doMock("./client", () => ({
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return empty array
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            Contents: [], // Empty array
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("uploads/empty/");
 
-      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Prefix: "uploads/empty/",
-        ContinuationToken: undefined,
-      });
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "uploads/empty/",
+        }
+      );
 
       // Should not call DeleteObjectsCommand when Contents is empty
       expect(mockDeleteObjectsCommand).not.toHaveBeenCalled();
-      expect(mockS3Client.send).toHaveBeenCalledTimes(1);
+      expect(mockS3Client.send).not.toHaveBeenCalled();
 
       expect(result.ok).toBe(true);
 
@@ -709,27 +743,35 @@ describe("service.ts", () => {
       }));
 
       const mockS3Client = {
-        send: vi
-          .fn()
-          .mockResolvedValueOnce({
-            Contents: [{ Key: "surveys/123/responses/response1.json" }],
-          })
-          .mockResolvedValueOnce({}),
+        send: vi.fn().mockResolvedValueOnce({}), // DeleteObjectsCommand response
       };
 
       vi.doMock("./client", () => ({
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return a single file
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            Contents: [{ Key: "surveys/123/responses/response1.json" }],
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("surveys/123/responses/");
 
-      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Prefix: "surveys/123/responses/",
-        ContinuationToken: undefined,
-      });
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "surveys/123/responses/",
+        }
+      );
 
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
@@ -767,27 +809,35 @@ describe("service.ts", () => {
       vi.doMock("./constants", () => mockConstants);
 
       const mockS3Client = {
-        send: vi
-          .fn()
-          .mockResolvedValueOnce({
-            Contents: [{ Key: "test-file.txt" }],
-          })
-          .mockRejectedValueOnce(new Error("AWS Delete Error")), // DeleteObjectsCommand fails
+        send: vi.fn().mockRejectedValueOnce(new Error("AWS Delete Error")), // DeleteObjectsCommand fails
       };
 
       vi.doMock("./client", () => ({
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return files
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            Contents: [{ Key: "test-file.txt" }],
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("uploads/test/");
 
-      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Prefix: "uploads/test/",
-        ContinuationToken: undefined,
-      });
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "uploads/test/",
+        }
+      );
 
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
         Bucket: mockConstants.S3_BUCKET_NAME,
@@ -809,44 +859,40 @@ describe("service.ts", () => {
       }));
 
       const mockS3Client = {
-        send: vi
-          .fn()
-          .mockResolvedValueOnce({
-            Contents: [{ Key: "page1/file1.jpg" }, { Key: "page1/file2.png" }],
-            IsTruncated: true,
-            NextContinuationToken: "token123",
-          })
-          .mockResolvedValueOnce({
-            Contents: [{ Key: "page2/file3.gif" }, { Key: "page2/file4.pdf" }],
-            IsTruncated: false,
-          })
-          .mockResolvedValueOnce({}), // DeleteObjectsCommand response
+        send: vi.fn().mockResolvedValueOnce({}), // DeleteObjectsCommand response
       };
 
       vi.doMock("./client", () => ({
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return multiple pages
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          // First page
+          yield {
+            Contents: [{ Key: "page1/file1.jpg" }, { Key: "page1/file2.png" }],
+          };
+          // Second page
+          yield {
+            Contents: [{ Key: "page2/file3.gif" }, { Key: "page2/file4.pdf" }],
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("uploads/paginated/");
 
-      // First page call
-      expect(mockListObjectsV2Command).toHaveBeenNthCalledWith(1, {
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Prefix: "uploads/paginated/",
-        ContinuationToken: undefined,
-      });
-
-      // Second page call
-      expect(mockListObjectsV2Command).toHaveBeenNthCalledWith(2, {
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Prefix: "uploads/paginated/",
-        ContinuationToken: "token123",
-      });
-
-      // Should call list objects twice for pagination
-      expect(mockListObjectsV2Command).toHaveBeenCalledTimes(2);
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "uploads/paginated/",
+        }
+      );
 
       // Should delete all objects from both pages
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
@@ -877,10 +923,6 @@ describe("service.ts", () => {
       const mockS3Client = {
         send: vi
           .fn()
-          .mockResolvedValueOnce({
-            Contents: files,
-            IsTruncated: false,
-          })
           .mockResolvedValueOnce({}) // First batch delete
           .mockResolvedValueOnce({}), // Second batch delete
       };
@@ -889,15 +931,28 @@ describe("service.ts", () => {
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return large file set
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            Contents: files,
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("batch/");
 
-      expect(mockListObjectsV2Command).toHaveBeenCalledWith({
-        Bucket: mockConstants.S3_BUCKET_NAME,
-        Prefix: "batch/",
-        ContinuationToken: undefined,
-      });
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "batch/",
+        }
+      );
 
       // Should call DeleteObjectsCommand twice for batching
       expect(mockDeleteObjectsCommand).toHaveBeenCalledTimes(2);
@@ -921,35 +976,78 @@ describe("service.ts", () => {
       expect(result.ok).toBe(true);
     });
 
+    test("should handle empty prefix", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("invalid_input");
+      }
+    });
+
+    test("should handle root prefix", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("/");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("invalid_input");
+      }
+    });
+
     test("should handle pagination with empty pages", async () => {
       vi.doMock("./constants", () => ({
         ...mockConstants,
       }));
 
       const mockS3Client = {
-        send: vi
-          .fn()
-          .mockResolvedValueOnce({
-            Contents: [{ Key: "file1.txt" }],
-            IsTruncated: true,
-            NextContinuationToken: "token123",
-          })
-          .mockResolvedValueOnce({
-            Contents: [], // Empty page
-            IsTruncated: false,
-          })
-          .mockResolvedValueOnce({}), // DeleteObjectsCommand response
+        send: vi.fn().mockResolvedValueOnce({}), // DeleteObjectsCommand response
       };
 
       vi.doMock("./client", () => ({
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return mixed pages (one with files, one empty)
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          // First page with files
+          yield {
+            Contents: [{ Key: "file1.txt" }],
+          };
+          // Second page empty
+          yield {
+            Contents: [], // Empty page
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("mixed/");
 
-      expect(mockListObjectsV2Command).toHaveBeenCalledTimes(2);
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "mixed/",
+        }
+      );
 
       // Should only delete the file from first page
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({
@@ -968,27 +1066,40 @@ describe("service.ts", () => {
       }));
 
       const mockS3Client = {
-        send: vi
-          .fn()
-          .mockResolvedValueOnce({
-            Contents: [
-              { Key: "valid-file.txt" },
-              { Key: undefined }, // Invalid key
-              { Key: "another-valid-file.pdf" },
-              {}, // Object without Key property
-            ],
-            IsTruncated: false,
-          })
-          .mockResolvedValueOnce({}), // DeleteObjectsCommand response
+        send: vi.fn().mockResolvedValueOnce({}), // DeleteObjectsCommand response
       };
 
       vi.doMock("./client", () => ({
         createS3Client: vi.fn(() => mockS3Client),
       }));
 
+      // Mock paginator to return mixed valid and invalid keys
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            Contents: [
+              { Key: "valid-file.txt" },
+              { Key: undefined }, // Invalid key
+              { Key: "another-valid-file.pdf" },
+              {}, // Object without Key property
+            ],
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
       const { deleteFilesByPrefix } = await import("./service");
 
       const result = await deleteFilesByPrefix("mixed-keys/");
+
+      expect(mockPaginateListObjectsV2).toHaveBeenCalledWith(
+        { client: mockS3Client },
+        {
+          Bucket: mockConstants.S3_BUCKET_NAME,
+          Prefix: "mixed-keys/",
+        }
+      );
 
       // Should only delete objects with valid keys
       expect(mockDeleteObjectsCommand).toHaveBeenCalledWith({

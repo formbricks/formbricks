@@ -24,6 +24,7 @@ export enum ErrorCode {
   S3CredentialsError = "s3_credentials_error",
   S3ClientError = "s3_client_error",
   FileNotFoundError = "file_not_found_error",
+  InvalidInput = "invalid_input",
 }
 
 export interface StorageError {
