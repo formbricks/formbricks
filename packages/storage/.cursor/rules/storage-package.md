@@ -66,18 +66,18 @@ await deleteFilesByPrefix("surveys/456/responses/"); // Deletes all response fil
 ### Error Handling Strategy
 
 ```typescript
-// All functions use consistent error types
+// All functions use consistent error types (see types/error.ts)
 type StorageError = {
-  code: "unknown" | "s3_client_error" | "s3_credentials_error" | "file_not_found_error";
+  code: ErrorCode; // e.g., ErrorCode.S3ClientError, ErrorCode.S3CredentialsError
 };
 
 // Consumers handle errors explicitly
 const result = await deleteFilesByPrefix("path/");
 if (!result.ok) {
   switch (result.error.code) {
-    case "s3_credentials_error":
+    case ErrorCode.S3CredentialsError:
     // Handle missing/invalid credentials
-    case "file_not_found_error":
+    case ErrorCode.FileNotFoundError:
     // Handle missing files
     default:
     // Handle unexpected errors
@@ -260,25 +260,25 @@ const s3Client = new S3Client({
 ### `getSignedUploadUrl(fileName, contentType, filePath, maxSize?)`
 
 **Purpose**: Generate presigned POST URL for secure client-side uploads
-**Returns**: `{ signedUrl: string, presignedFields: Record<string, string> }`
+**Returns**: `Result<{ signedUrl: string; presignedFields: Record<string, string> }, StorageError>`
 **Use Case**: File uploads from browser without exposing S3 credentials
 
 ### `getSignedDownloadUrl(fileKey)`
 
 **Purpose**: Generate temporary download URL for private files
-**Returns**: `string` (temporary URL valid for 30 minutes)
+**Returns**: `Result<string, StorageError>` (temporary URL valid for 30 minutes)
 **Use Case**: Serving private files without making S3 bucket public
 
 ### `deleteFile(fileKey)`
 
 **Purpose**: Delete a single file from S3
-**Returns**: `void` on success
+**Returns**: `Result<void, StorageError>`
 **Use Case**: Remove uploaded files when user deletes content
 
 ### `deleteFilesByPrefix(prefix)`
 
 **Purpose**: Bulk delete all files matching a prefix pattern
-**Returns**: `void` on success (partial failures are logged but don't fail operation)
+**Returns**: `Result<{ deletedCount: number; partialFailures?: string[] }, StorageError>`
 **Use Case**: Cleanup entire folders when surveys/users are deleted
 
 Remember: This package is designed to be **infrastructure-agnostic** and **error-resilient**. It should work seamlessly whether you're using AWS S3, MinIO for local development, or any other S3-compatible storage provider.
