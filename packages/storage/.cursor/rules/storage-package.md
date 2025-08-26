@@ -1,369 +1,284 @@
 # Storage Package Rules for Formbricks
 
-## Package Overview
+## Package Purpose & Design Philosophy
 
-The `@formbricks/storage` package provides S3-compatible cloud storage functionality for Formbricks. It handles file uploads, downloads, single/bulk deletions with comprehensive error handling and type safety.
+The `@formbricks/storage` package provides a **type-safe, environment-agnostic S3 storage abstraction** for Formbricks. It's designed as a standalone library that can work with any S3-compatible storage provider (AWS S3, MinIO, LocalStack, etc.).
 
-## Core Functions
+### Key Design Decisions
 
-### Available Operations
+1. **Result Type Pattern**: All operations return `Result<T, StorageError>` instead of throwing exceptions, enabling explicit error handling
+2. **Environment-based Configuration**: Zero hardcoded values - all configuration comes from environment variables
+3. **Graceful Degradation**: When S3 is unavailable, the package fails gracefully without crashing the application
+4. **Minimal Dependencies**: Only includes necessary AWS SDK packages, avoiding the bloated umbrella package
+5. **Internal Implementation Hiding**: Only exports the public API, keeping client creation and constants internal
 
-- `getSignedUploadUrl` - Generate presigned URLs for file uploads
-- `getSignedDownloadUrl` - Generate signed URLs for file downloads
-- `deleteFile` - Delete a single file from S3
-- `deleteFilesByPrefix` - Bulk delete files by prefix with pagination
+## Core Use Cases
 
-## Architecture Patterns
-
-### Result Type System
-
-All storage operations use Result type pattern:
+### File Upload Flow
 
 ```typescript
-// ✅ Use Result<T, StorageError> for all operations
-export const storageOperation = async (): Promise<Result<Data, StorageError>> => {
-  try {
-    if (!s3Client) {
-      return err({ code: ErrorCode.S3ClientError });
-    }
-    return ok(data);
-  } catch (error) {
-    logger.error({ error }, "Operation failed");
-    return err({ code: ErrorCode.Unknown });
-  }
-};
-```
+// Generate presigned URL for secure client-side uploads
+const uploadResult = await getSignedUploadUrl(
+  "user-avatar.jpg",
+  "image/jpeg",
+  "users/123/avatars",
+  5 * 1024 * 1024 // 5MB limit
+);
 
-### Error Types
-
-Use predefined ErrorCode enum:
-
-```typescript
-// ✅ Standard error codes
-enum ErrorCode {
-  Unknown = "unknown",
-  S3ClientError = "s3_client_error",
-  S3CredentialsError = "s3_credentials_error",
-  FileNotFoundError = "file_not_found_error",
-}
-
-interface StorageError {
-  code: ErrorCode;
+if (uploadResult.ok) {
+  // Client uploads directly to S3 using signed URL
+  const { signedUrl, presignedFields } = uploadResult.data;
 }
 ```
 
-## S3 Client Configuration
-
-### Environment Variables
-
-All configuration from environment variables:
+### File Download Flow
 
 ```typescript
-// ✅ Required variables
-export const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY;
-export const S3_SECRET_KEY = process.env.S3_SECRET_KEY;
-export const S3_REGION = process.env.S3_REGION;
-export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME;
-export const S3_ENDPOINT_URL = process.env.S3_ENDPOINT_URL;
-export const S3_FORCE_PATH_STYLE = process.env.S3_FORCE_PATH_STYLE === "1";
-```
+// Generate temporary download links for private files
+const downloadResult = await getSignedDownloadUrl("users/123/avatars/user-avatar.jpg");
 
-### Client Creation
-
-Use factory pattern with Result type:
-
-```typescript
-// ✅ Factory function
-export const createS3ClientFromEnv = (): Result<S3Client, StorageError> => {
-  // Validate credentials
-  if (!S3_ACCESS_KEY || !S3_SECRET_KEY || !S3_BUCKET_NAME || !S3_REGION) {
-    return err({ code: ErrorCode.S3CredentialsError });
-  }
-
-  const s3ClientInstance = new S3Client({
-    credentials: { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY },
-    region: S3_REGION,
-    endpoint: S3_ENDPOINT_URL,
-    forcePathStyle: S3_FORCE_PATH_STYLE,
-  });
-
-  return ok(s3ClientInstance);
-};
-
-// ✅ Module-level client instance
-const s3Client = createS3Client();
-// ✅ Module-level client instance (optional)
-let s3Client: S3Client | null = null;
-const clientResult = createS3ClientFromEnv();
-if (clientResult.ok) {
-  s3Client = clientResult.value;
-} else {
-  // handle or log configuration error here
-  s3Client = null;
+if (downloadResult.ok) {
+  // Redirect user to temporary download URL (expires in 30 minutes)
+  return redirect(downloadResult.data);
 }
 ```
 
-## Service Function Patterns
-
-### Standard Function Structure
+### Cleanup Operations
 
 ```typescript
-/**
- * Function description
- * @param param - Parameter description
- * @returns Result containing data or StorageError
- */
-export const functionName = async (param: string): Promise<Result<Data, StorageError>> => {
-  try {
-    // Client validation
-    if (!s3Client) {
-      return err({ code: ErrorCode.S3ClientError });
-    }
+// Single file deletion
+await deleteFile("users/123/temp/upload.pdf");
 
-    if (!S3_BUCKET_NAME) {
-      return err({ code: ErrorCode.S3CredentialsError });
-    }
+// Bulk cleanup (handles pagination automatically)
+await deleteFilesByPrefix("surveys/456/responses/"); // Deletes all response files
+```
 
-    // AWS SDK operation
-    const command = new SomeCommand({ Bucket: S3_BUCKET_NAME /* params */ });
-    const response = await s3Client.send(command);
+## Package Architecture
 
-    return ok(response);
-  } catch (error) {
-    logger.error({ error }, "Operation failed");
-    return err({ code: ErrorCode.Unknown });
-  }
+### Module Responsibilities
+
+- **`service.ts`**: Core business logic - the four main operations
+- **`client.ts`**: S3 client factory with environment validation
+- **`constants.ts`**: Environment variable exports (internal use only)
+- **`types/error.ts`**: Result type system and error definitions
+- **`index.ts`**: Public API exports (consumers only see this)
+
+### Error Handling Strategy
+
+```typescript
+// All functions use consistent error types
+type StorageError = {
+  code: "unknown" | "s3_client_error" | "s3_credentials_error" | "file_not_found_error";
 };
-```
 
-### Bulk Operations Pattern
-
-For operations requiring pagination and batch processing:
-
-```typescript
-// ✅ Use pagination and batching for bulk operations
-export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, StorageError>> => {
-  try {
-    // Standard validation
-    if (!s3Client || !S3_BUCKET_NAME) {
-      return err({ code: ErrorCode.S3ClientError });
-    }
-
-    // Collect keys with pagination
-    const keys: { Key: string }[] = [];
-    const paginator = paginateListObjectsV2({ client: s3Client }, { Bucket: S3_BUCKET_NAME, Prefix: prefix });
-
-    for await (const page of paginator) {
-      const pageKeys = page.Contents?.flatMap((obj) => (obj.Key ? [{ Key: obj.Key }] : [])) ?? [];
-      keys.push(...pageKeys);
-    }
-
-    if (keys.length === 0) {
-      return ok(undefined);
-    }
-
-    // Batch deletions (max 1000 per batch)
-    const deletionPromises: Promise<DeleteObjectsCommandOutput>[] = [];
-
-    for (let i = 0; i < keys.length; i += 1000) {
-      const batch = keys.slice(i, i + 1000);
-      const deleteCommand = new DeleteObjectsCommand({
-        Bucket: S3_BUCKET_NAME,
-        Delete: { Objects: batch },
-      });
-      deletionPromises.push(s3Client.send(deleteCommand));
-    }
-
-    // Process all batches concurrently
-    const results = await Promise.all(deletionPromises);
-
-    // Log partial failures
-    let totalErrors = 0;
-    for (const result of results) {
-      if (result.Errors?.length) {
-        totalErrors += result.Errors.length;
-        logger.error({ errors: result.Errors }, "Some objects failed to delete");
-      }
-    }
-
-    if (totalErrors > 0) {
-      logger.warn({ totalErrors }, "Bulk delete completed with some failures");
-    }
-
-    return ok(undefined);
-  } catch (error) {
-    logger.error({ error }, "Failed to delete files by prefix");
-    return err({ code: ErrorCode.Unknown });
+// Consumers handle errors explicitly
+const result = await deleteFilesByPrefix("path/");
+if (!result.ok) {
+  switch (result.error.code) {
+    case "s3_credentials_error":
+    // Handle missing/invalid credentials
+    case "file_not_found_error":
+    // Handle missing files
+    default:
+    // Handle unexpected errors
   }
-};
+}
 ```
 
-## AWS SDK v3 Patterns
+## Environment Configuration
 
-### Command Usage
+### Required Variables
+
+```bash
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
+S3_REGION=us-east-1
+S3_BUCKET_NAME=formbricks-storage
+```
+
+### Optional Variables (for non-AWS providers)
+
+```bash
+S3_ENDPOINT_URL=http://localhost:9000  # MinIO/LocalStack
+S3_FORCE_PATH_STYLE=1                  # Required for MinIO
+```
+
+### Configuration Validation
+
+- Validation happens at **client creation time**, not at startup
+- Missing credentials result in `s3_credentials_error`
+- Invalid credentials are detected during first operation
+
+## Bulk Operations Design
+
+### Why Pagination + Batching?
+
+S3 has two key limitations:
+
+1. **ListObjects** returns max 1000 objects per request → Use pagination
+2. **DeleteObjects** accepts max 1000 objects per request → Use batching
+
+### Implementation Pattern
 
 ```typescript
-// ✅ Import specific commands
-import {
-  DeleteObjectCommand,
-  DeleteObjectsCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  paginateListObjectsV2,
-} from "@aws-sdk/client-s3";
-import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+// 1. Paginate through all objects with prefix
+const paginator = paginateListObjectsV2(client, { Bucket, Prefix });
+for await (const page of paginator) {
+  // Collect all keys
+}
 
-// Single file operations
-const deleteCommand = new DeleteObjectCommand({
-  Bucket: S3_BUCKET_NAME,
-  Key: fileKey,
-});
+// 2. Batch deletions in groups of 1000
+for (let i = 0; i < keys.length; i += 1000) {
+  const batch = keys.slice(i, i + 1000);
+  await s3Client.send(new DeleteObjectsCommand({ Delete: { Objects: batch } }));
+}
 
-// Bulk operations
-const deleteObjectsCommand = new DeleteObjectsCommand({
-  Bucket: S3_BUCKET_NAME,
-  Delete: { Objects: batchKeys },
-});
-
-// Presigned URLs
-const { url, fields } = await createPresignedPost(s3Client, {
-  Bucket: S3_BUCKET_NAME,
-  Key: filePath,
-  Expires: 120, // 2 minutes
-  Conditions: [["content-length-range", 0, maxSize]],
-});
+// 3. Handle partial failures gracefully
+// Log errors but don't fail the entire operation
 ```
 
-## Exports and Package Structure
+## Integration Patterns
 
-### Selective Exports
+### In Formbricks Web App
 
 ```typescript
-// ✅ packages/storage/src/index.ts - Only export public API
-export { deleteFile, deleteFilesByPrefix, getSignedDownloadUrl, getSignedUploadUrl } from "./service";
+// Survey file cleanup when survey is deleted
+await deleteFilesByPrefix(`surveys/${surveyId}/`);
 
-export type { StorageError } from "./types/error";
+// Response file cleanup when response is deleted
+await deleteFilesByPrefix(`surveys/${surveyId}/responses/${responseId}/`);
 
-// ❌ Don't export internals
-// export { createS3Client } from "./client";
-// export { S3_BUCKET_NAME } from "./constants";
+// User avatar upload
+const uploadUrl = await getSignedUploadUrl(file.name, file.type, `users/${userId}/avatars`, maxAvatarSize);
 ```
 
-### Dependencies
+### Testing Strategy
+
+- **Mock the entire `@aws-sdk/client-s3` module** - don't try to mock individual operations
+- **Use `paginateListObjectsV2` mocks** with async generators for bulk operations
+- **Test error scenarios** - missing credentials, network failures, partial deletions
+- **Mock environment variables** consistently across tests
+
+## Performance Considerations
+
+### Presigned URL Expiration
+
+- **Upload URLs**: 2 minutes (short for security)
+- **Download URLs**: 30 minutes (balance between security and UX)
+
+### Bulk Operation Optimization
+
+- **Concurrent batch processing**: Delete batches in parallel using `Promise.all()`
+- **Memory efficient pagination**: Process one page at a time, don't load all keys into memory
+- **Partial failure handling**: Continue processing even if some batches fail
+
+### Client Reuse
+
+- **Single client instance** created at module level
+- **Avoid recreating clients** for each operation
+- **Fail fast** if client creation fails due to missing credentials
+
+## Common Pitfalls & Solutions
+
+### ❌ Don't expose internal details
+
+```typescript
+// Wrong - exposes implementation
+export { S3_BUCKET_NAME, createS3Client } from "./internal";
+```
+
+### ✅ Keep implementation internal
+
+```typescript
+// Correct - only expose business operations
+export { deleteFile, getSignedUploadUrl } from "./service";
+```
+
+### ❌ Don't use generic error handling
+
+```typescript
+// Wrong - loses error context
+catch (error) {
+  throw new Error("Something went wrong");
+}
+```
+
+### ✅ Use specific error types
+
+```typescript
+// Correct - categorize errors appropriately
+catch (error) {
+  logger.error({ error }, "S3 operation failed");
+  return err({ code: ErrorCode.S3ClientError });
+}
+```
+
+### ❌ Don't hardcode configuration
+
+```typescript
+// Wrong - not environment-agnostic
+const s3Client = new S3Client({
+  region: "us-east-1",
+  endpoint: "https://s3.amazonaws.com",
+});
+```
+
+### ✅ Use environment variables
+
+```typescript
+// Correct - works with any S3-compatible provider
+const s3Client = new S3Client({
+  region: S3_REGION,
+  endpoint: S3_ENDPOINT_URL,
+  forcePathStyle: S3_FORCE_PATH_STYLE,
+});
+```
+
+## Dependencies & Versioning
+
+### AWS SDK Strategy
+
+- **Use specific packages** (`@aws-sdk/client-s3`) not umbrella package (`aws-sdk`)
+- **Pin exact versions** to avoid breaking changes
+- **External dependencies**: All AWS SDK packages are externalized in build
+
+### Package Structure
 
 ```json
-// ✅ Specific AWS SDK packages
-"dependencies": {
-  "@aws-sdk/client-s3": "3.864.0",
-  "@aws-sdk/s3-presigned-post": "3.864.0",
-  "@aws-sdk/s3-request-presigner": "3.864.0",
-  "@formbricks/logger": "workspace:*"
+{
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
 }
 ```
 
-## Testing Patterns
+## Function Reference
 
-### Environment Mocking
+### `getSignedUploadUrl(fileName, contentType, filePath, maxSize?)`
 
-```typescript
-// ✅ Test setup
-beforeEach(() => {
-  vi.stubEnv("S3_ACCESS_KEY", "test-key");
-  vi.stubEnv("S3_SECRET_KEY", "test-secret");
-  vi.stubEnv("S3_REGION", "us-east-1");
-  vi.stubEnv("S3_BUCKET_NAME", "test-bucket");
-});
+**Purpose**: Generate presigned POST URL for secure client-side uploads
+**Returns**: `{ signedUrl: string, presignedFields: Record<string, string> }`
+**Use Case**: File uploads from browser without exposing S3 credentials
 
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
-```
+### `getSignedDownloadUrl(fileKey)`
 
-### AWS SDK Mocking
+**Purpose**: Generate temporary download URL for private files
+**Returns**: `string` (temporary URL valid for 30 minutes)
+**Use Case**: Serving private files without making S3 bucket public
 
-```typescript
-// ✅ Mock AWS SDK commands
-const mockS3Client = {
-  send: vi.fn(),
-};
+### `deleteFile(fileKey)`
 
-vi.mock("@aws-sdk/client-s3", () => ({
-  S3Client: vi.fn(() => mockS3Client),
-  DeleteObjectCommand: vi.fn(),
-  DeleteObjectsCommand: vi.fn(),
-}));
-```
+**Purpose**: Delete a single file from S3
+**Returns**: `void` on success
+**Use Case**: Remove uploaded files when user deletes content
 
-## Logging Standards
+### `deleteFilesByPrefix(prefix)`
 
-Use Formbricks logger with appropriate context:
+**Purpose**: Bulk delete all files matching a prefix pattern
+**Returns**: `void` on success (partial failures are logged but don't fail operation)
+**Use Case**: Cleanup entire folders when surveys/users are deleted
 
-```typescript
-// ✅ Error logging
-logger.error({ error, fileKey }, "Failed to delete file");
-
-// ✅ Warning for partial failures
-logger.warn({ totalErrors, totalDeleted }, "Bulk delete completed with failures");
-
-// ✅ Debug for detailed info
-logger.debug({ count: result.Deleted?.length }, "Successfully deleted batch");
-```
-
-## Common Patterns
-
-### File Existence Check
-
-```typescript
-// ✅ Check file exists before operations
-const headObjectCommand = new HeadObjectCommand({
-  Bucket: S3_BUCKET_NAME,
-  Key: fileKey,
-});
-
-try {
-  await s3Client.send(headObjectCommand);
-} catch (error) {
-  if (error.name === "NotFound" || error.$metadata?.httpStatusCode === 404) {
-    return err({ code: ErrorCode.FileNotFoundError });
-  }
-}
-```
-
-### Batch Processing
-
-```typescript
-// ✅ Process large datasets in batches
-const BATCH_SIZE = 1000; // S3 delete limit
-for (let i = 0; i < items.length; i += BATCH_SIZE) {
-  const batch = items.slice(i, i + BATCH_SIZE);
-  // Process batch
-}
-```
-
-### Concurrent Operations
-
-```typescript
-// ✅ Use Promise.all for concurrent operations
-const promises = batches.map((batch) => processBatch(batch));
-const results = await Promise.all(promises);
-```
-
-## Usage Guidelines
-
-When consuming the storage package:
-
-```typescript
-// ✅ Import and handle results properly
-import { deleteFilesByPrefix, deleteFile } from "@formbricks/storage";
-
-const result = await deleteFilesByPrefix("surveys/123/");
-if (!result.ok) {
-  logger.error({ error: result.error }, "Failed to delete survey files");
-  return; // Handle error appropriately
-}
-
-// Operation successful
-```
-
-Remember: Always validate S3 client availability, use Result types consistently, handle partial failures in bulk operations, and follow batch processing patterns for large datasets.
+Remember: This package is designed to be **infrastructure-agnostic** and **error-resilient**. It should work seamlessly whether you're using AWS S3, MinIO for local development, or any other S3-compatible storage provider.
