@@ -28,11 +28,11 @@ import {
 
 interface StoryOptions {
   showIcons: boolean;
-  numberOfMenuItems: number;
   menuItemType: "default" | "checkbox" | "radio";
   showLabel: boolean;
   labelText: string;
   triggerVariant: "default" | "outline" | "ghost" | "secondary";
+  disabled: boolean;
 }
 
 type StoryProps = ComponentProps<typeof DropdownMenuContent> & StoryOptions;
@@ -95,17 +95,6 @@ const meta: Meta<StoryProps> = {
       },
       order: 3,
     },
-
-    numberOfMenuItems: {
-      control: { type: "number", min: 1, max: 10, step: 1 },
-      description: "Number of menu items to display",
-      table: {
-        category: "Content",
-        type: { summary: "number" },
-        defaultValue: { summary: "4" },
-      },
-      order: 2,
-    },
     menuItemType: {
       control: "select",
       options: ["default", "checkbox", "radio"],
@@ -127,6 +116,16 @@ const meta: Meta<StoryProps> = {
       },
       order: 5,
     },
+    disabled: {
+      control: "boolean",
+      description: "Whether the menu is disabled",
+      table: {
+        category: "Behavior",
+        type: { summary: "boolean" },
+        defaultValue: { summary: "false" },
+      },
+      order: 4,
+    },
   },
 };
 
@@ -141,15 +140,15 @@ const renderDropdownMenu = (args: StoryProps) => {
     className,
     triggerVariant = "outline",
     showIcons = true,
-    numberOfMenuItems = 4,
     menuItemType = "default",
     showLabel = false,
     labelText = "Survey Actions",
+    disabled = false,
     ...contentProps
   } = args;
 
   // Ensure we have the right number of items
-  const menuItems = Array.from({ length: numberOfMenuItems }, (_, i) => `Menu Item ${i + 1}`);
+  const menuItems = Array.from({ length: 8 }, (_, i) => `Menu Item ${i + 1}`);
 
   // Get appropriate icons based on menu type
   const iconSet = [Edit3, Copy, Share, Download, Trash2, Eye, BarChart, Users, Settings];
@@ -161,7 +160,7 @@ const renderDropdownMenu = (args: StoryProps) => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild disabled={disabled}>
         <Button variant={triggerVariant} size="icon">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
@@ -187,7 +186,7 @@ const renderDropdownMenu = (args: StoryProps) => {
             })}
           </DropdownMenuRadioGroup>
         )}
-        <DropdownMenuGroup defaultValue={menuItems[0]}>
+        <DropdownMenuGroup>
           {(menuItemType === "default" || menuItemType === "checkbox") &&
             menuItems.map((label, index) => {
               const IconComponent = showIcons ? iconSet[index % iconSet.length] : undefined;
@@ -233,11 +232,17 @@ export const Default: Story = {
   args: {
     triggerVariant: "outline",
     showIcons: true,
-    numberOfMenuItems: 4,
     menuItemType: "default",
     showLabel: false,
     labelText: "Survey Actions",
     sideOffset: 4,
+  },
+};
+
+export const Disabled: Story = {
+  render: renderDropdownMenu,
+  args: {
+    disabled: true,
   },
 };
 
@@ -246,7 +251,6 @@ export const Checkbox: Story = {
   args: {
     triggerVariant: "outline",
     showIcons: true,
-    numberOfMenuItems: 4,
     menuItemType: "checkbox",
     showLabel: false,
     labelText: "Survey Actions",
@@ -259,7 +263,6 @@ export const Radio: Story = {
   args: {
     triggerVariant: "outline",
     showIcons: true,
-    numberOfMenuItems: 4,
     menuItemType: "radio",
     showLabel: false,
     labelText: "Survey Actions",
@@ -272,7 +275,6 @@ export const WithLabel: Story = {
   args: {
     triggerVariant: "outline",
     showIcons: true,
-    numberOfMenuItems: 5,
     menuItemType: "default",
     showLabel: true,
     labelText: "Survey Actions",
@@ -292,7 +294,6 @@ export const ManyItems: Story = {
   args: {
     triggerVariant: "outline",
     showIcons: true,
-    numberOfMenuItems: 8,
     menuItemType: "default",
     showLabel: true,
     labelText: "All Actions",
