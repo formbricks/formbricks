@@ -210,8 +210,8 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
 
     const deletionPromises: Promise<DeleteObjectsCommandOutput>[] = [];
 
-    for (let i = 0; i < keys.length; i += 100) {
-      const batch = keys.slice(i, i + 100);
+    for (let i = 0; i < keys.length; i += 1000) {
+      const batch = keys.slice(i, i + 1000);
 
       const deleteObjectsCommand = new DeleteObjectsCommand({
         Bucket: S3_BUCKET_NAME,
