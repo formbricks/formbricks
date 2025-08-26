@@ -2,263 +2,266 @@
 
 ## Package Overview
 
-The `@formbricks/storage` package provides S3-compatible cloud storage functionality for Formbricks. It's a standalone TypeScript library that handles file uploads, downloads, and deletions with comprehensive error handling and type safety.
+The `@formbricks/storage` package provides S3-compatible cloud storage functionality for Formbricks. It handles file uploads, downloads, single/bulk deletions with comprehensive error handling and type safety.
 
-## Key Files
+## Core Functions
 
-### Core Storage Infrastructure
+### Available Operations
 
-- [packages/storage/src/service.ts](mdc:packages/storage/src/service.ts) - Main storage service with S3 operations
-- [packages/storage/src/client.ts](mdc:packages/storage/src/client.ts) - S3 client creation and configuration
-- [packages/storage/src/constants.ts](mdc:packages/storage/src/constants.ts) - Environment variable exports
-- [packages/storage/src/types/error.ts](mdc:packages/storage/src/types/error.ts) - Result type system and error definitions
-- [packages/storage/src/index.ts](mdc:packages/storage/src/index.ts) - Package exports
-
-### Configuration Files
-
-- [packages/storage/package.json](mdc:packages/storage/package.json) - Package configuration with AWS SDK dependencies
-- [packages/storage/vite.config.ts](mdc:packages/storage/vite.config.ts) - Build configuration for library bundling
-- [packages/storage/tsconfig.json](mdc:packages/storage/tsconfig.json) - TypeScript configuration
+- `getSignedUploadUrl` - Generate presigned URLs for file uploads
+- `getSignedDownloadUrl` - Generate signed URLs for file downloads
+- `deleteFile` - Delete a single file from S3
+- `deleteFilesByPrefix` - Bulk delete files by prefix with pagination
 
 ## Architecture Patterns
 
-### Package Structure
-
-```
-packages/storage/
-├── src/
-│   ├── client.ts          # S3 client creation and configuration
-│   ├── service.ts         # Core storage operations (upload, download, delete)
-│   ├── constants.ts       # Environment variable exports
-│   ├── index.ts          # Package exports
-│   ├── types/
-│   │   └── error.ts      # Result type system and error definitions
-│   ├── *.test.ts         # Unit tests for each module
-└── dist/                 # Built library output
-```
-
 ### Result Type System
 
-All storage operations use a Result type pattern for comprehensive error handling:
+All storage operations use Result type pattern:
 
 ```typescript
-// ✅ Use Result<T, E> for all async operations
-export const storageOperation = async (): Promise<
-  Result<SuccessData, UnknownError | S3CredentialsError | S3ClientError>
-> => {
+// ✅ Use Result<T, StorageError> for all operations
+export const storageOperation = async (): Promise<Result<Data, StorageError>> => {
   try {
-    // Implementation
+    if (!s3Client) {
+      return err({ code: ErrorCode.S3ClientError });
+    }
     return ok(data);
   } catch (error) {
-    logger.error("Operation failed", { error });
-    return err({
-      code: "unknown",
-      message: "Operation failed",
-    });
+    logger.error({ error }, "Operation failed");
+    return err({ code: ErrorCode.Unknown });
   }
 };
-
-// ✅ Handle Results properly in calling code
-const result = await storageOperation();
-if (!result.ok) {
-  // Handle error
-  return result; // Propagate error
-}
-// Use result.data
 ```
 
-### Error Type Definitions
+### Error Types
 
-Always use the predefined error types:
+Use predefined ErrorCode enum:
 
 ```typescript
-// ✅ Standard error types
-interface UnknownError {
-  code: "unknown";
-  message: string;
+// ✅ Standard error codes
+enum ErrorCode {
+  Unknown = "unknown",
+  S3ClientError = "s3_client_error",
+  S3CredentialsError = "s3_credentials_error",
+  FileNotFoundError = "file_not_found_error",
 }
 
-interface S3CredentialsError {
-  code: "s3_credentials_error";
-  message: string;
+interface StorageError {
+  code: ErrorCode;
 }
-
-interface S3ClientError {
-  code: "s3_client_error";
-  message: string;
-}
-
-// ✅ Use ok() and err() utility functions
-return ok(successData);
-return err({ code: "s3_client_error", message: "Failed to connect" });
 ```
 
-## S3 Client Patterns
+## S3 Client Configuration
 
-### Environment Configuration
+### Environment Variables
 
-All S3 configuration comes from environment variables:
+All configuration from environment variables:
 
 ```typescript
-// ✅ Export environment variables from constants.ts
+// ✅ Required variables
 export const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY;
 export const S3_SECRET_KEY = process.env.S3_SECRET_KEY;
 export const S3_REGION = process.env.S3_REGION;
+export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME;
 export const S3_ENDPOINT_URL = process.env.S3_ENDPOINT_URL;
 export const S3_FORCE_PATH_STYLE = process.env.S3_FORCE_PATH_STYLE === "1";
-export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME;
-
-// ✅ Validate in a function (e.g., inside createS3ClientFromEnv)
-if (!S3_ACCESS_KEY || !S3_SECRET_KEY || !S3_BUCKET_NAME || !S3_REGION) {
-  return err({
-    code: "s3_credentials_error",
-    message: "S3 credentials are not set",
-  });
-}
 ```
 
-### Client Creation Pattern
+### Client Creation
 
-Use the factory pattern for S3 client creation:
+Use factory pattern with Result type:
 
 ```typescript
-// ✅ Factory function with Result type
-export const createS3ClientFromEnv = (): Result<S3Client, S3CredentialsError | UnknownError> => {
-  try {
-    // Validation and client creation
-    const s3ClientInstance = new S3Client({
-      credentials: { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY },
-      region: S3_REGION,
-      endpoint: S3_ENDPOINT_URL,
-      forcePathStyle: S3_FORCE_PATH_STYLE,
-    });
-
-    return ok(s3ClientInstance);
-  } catch (error) {
-    logger.error("Error creating S3 client", { error });
-    return err({ code: "unknown", message: "Error creating S3 client" });
+// ✅ Factory function
+export const createS3ClientFromEnv = (): Result<S3Client, StorageError> => {
+  // Validate credentials
+  if (!S3_ACCESS_KEY || !S3_SECRET_KEY || !S3_BUCKET_NAME || !S3_REGION) {
+    return err({ code: ErrorCode.S3CredentialsError });
   }
+
+  const s3ClientInstance = new S3Client({
+    credentials: { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY },
+    region: S3_REGION,
+    endpoint: S3_ENDPOINT_URL,
+    forcePathStyle: S3_FORCE_PATH_STYLE,
+  });
+
+  return ok(s3ClientInstance);
 };
 
-// ✅ Wrapper function for fallback handling
-export const createS3Client = (): S3Client | undefined => {
-  const result = createS3ClientFromEnv();
-  return result.ok ? result.data : undefined;
-};
+// ✅ Module-level client instance
+const s3Client = createS3Client();
 ```
 
 ## Service Function Patterns
 
-### Function Signature Standards
-
-All service functions follow consistent patterns:
+### Standard Function Structure
 
 ```typescript
-// ✅ Comprehensive TSDoc comments
 /**
- * Get a signed URL for uploading a file to S3
- * @param fileName - The name of the file to upload
- * @param contentType - The content type of the file
- * @param filePath - The path to the file in S3
- * @param maxSize - Maximum file size allowed (optional)
- * @returns A Result containing the signed URL and presigned fields or an error
+ * Function description
+ * @param param - Parameter description
+ * @returns Result containing data or StorageError
  */
-export const getSignedUploadUrl = async (
-  fileName: string,
-  contentType: string,
-  filePath: string,
-  maxSize?: number
-): Promise<
-  Result<
-    {
-      signedUrl: string;
-      presignedFields: PresignedPostOptions["Fields"];
-    },
-    UnknownError | S3CredentialsError | S3ClientError
-  >
-> => {
-  // Implementation
-};
-```
-
-### Error Handling Patterns
-
-Always validate inputs and handle S3 client errors:
-
-```typescript
-// ✅ Standard validation and error handling
-export const storageFunction = async (param: string): Promise<Result<Data, Errors>> => {
+export const functionName = async (param: string): Promise<Result<Data, StorageError>> => {
   try {
     // Client validation
     if (!s3Client) {
-      logger.error("S3 client is not available");
-      return err({
-        code: "s3_credentials_error",
-        message: "S3 credentials are not set",
-      });
+      return err({ code: ErrorCode.S3ClientError });
     }
 
-    // AWS SDK operations with error handling
-    const command = new SomeS3Command({
-      /* params */
-    });
+    if (!S3_BUCKET_NAME) {
+      return err({ code: ErrorCode.S3CredentialsError });
+    }
+
+    // AWS SDK operation
+    const command = new SomeCommand({ Bucket: S3_BUCKET_NAME /* params */ });
     const response = await s3Client.send(command);
 
     return ok(response);
   } catch (error) {
-    logger.error("S3 operation failed", { error, param });
-
-    // Categorize errors appropriately
-    if (error.name === "CredentialsError") {
-      return err({
-        code: "s3_credentials_error",
-        message: "Invalid S3 credentials",
-      });
-    }
-
-    return err({
-      code: "s3_client_error",
-      message: `S3 operation failed: ${error.message}`,
-    });
+    logger.error({ error }, "Operation failed");
+    return err({ code: ErrorCode.Unknown });
   }
 };
 ```
 
-## Testing Standards
+### Bulk Operations Pattern
 
-### Test File Organization
-
-Each source file should have a corresponding test file:
+For operations requiring pagination and batch processing:
 
 ```typescript
-// ✅ Test file naming: [module].test.ts
-// packages/storage/src/client.test.ts
-// packages/storage/src/service.test.ts
-// packages/storage/src/constants.test.ts
+// ✅ Use pagination and batching for bulk operations
+export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, StorageError>> => {
+  try {
+    // Standard validation
+    if (!s3Client || !S3_BUCKET_NAME) {
+      return err({ code: ErrorCode.S3ClientError });
+    }
 
-// ✅ Test structure
-describe("Storage Client", () => {
-  describe("createS3ClientFromEnv", () => {
-    it("should create S3 client with valid credentials", () => {
-      // Test implementation
-    });
+    // Collect keys with pagination
+    const keys: { Key: string }[] = [];
+    const paginator = paginateListObjectsV2({ client: s3Client }, { Bucket: S3_BUCKET_NAME, Prefix: prefix });
 
-    it("should return error with missing credentials", () => {
-      // Test implementation
-    });
-  });
+    for await (const page of paginator) {
+      const pageKeys = page.Contents?.flatMap((obj) => (obj.Key ? [{ Key: obj.Key }] : [])) ?? [];
+      keys.push(...pageKeys);
+    }
+
+    if (keys.length === 0) {
+      return ok(undefined);
+    }
+
+    // Batch deletions (max 1000 per batch)
+    const deletionPromises: Promise<DeleteObjectsCommandOutput>[] = [];
+
+    for (let i = 0; i < keys.length; i += 1000) {
+      const batch = keys.slice(i, i + 1000);
+      const deleteCommand = new DeleteObjectsCommand({
+        Bucket: S3_BUCKET_NAME,
+        Delete: { Objects: batch },
+      });
+      deletionPromises.push(s3Client.send(deleteCommand));
+    }
+
+    // Process all batches concurrently
+    const results = await Promise.all(deletionPromises);
+
+    // Log partial failures
+    let totalErrors = 0;
+    for (const result of results) {
+      if (result.Errors?.length) {
+        totalErrors += result.Errors.length;
+        logger.error({ errors: result.Errors }, "Some objects failed to delete");
+      }
+    }
+
+    if (totalErrors > 0) {
+      logger.warn({ totalErrors }, "Bulk delete completed with some failures");
+    }
+
+    return ok(undefined);
+  } catch (error) {
+    logger.error({ error }, "Failed to delete files by prefix");
+    return err({ code: ErrorCode.Unknown });
+  }
+};
+```
+
+## AWS SDK v3 Patterns
+
+### Command Usage
+
+```typescript
+// ✅ Import specific commands
+import {
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  paginateListObjectsV2,
+} from "@aws-sdk/client-s3";
+import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+// Single file operations
+const deleteCommand = new DeleteObjectCommand({
+  Bucket: S3_BUCKET_NAME,
+  Key: fileKey,
+});
+
+// Bulk operations
+const deleteObjectsCommand = new DeleteObjectsCommand({
+  Bucket: S3_BUCKET_NAME,
+  Delete: { Objects: batchKeys },
+});
+
+// Presigned URLs
+const { url, fields } = await createPresignedPost(s3Client, {
+  Bucket: S3_BUCKET_NAME,
+  Key: filePath,
+  Expires: 120, // 2 minutes
+  Conditions: [["content-length-range", 0, maxSize]],
 });
 ```
 
-### Mock Environment Variables
+## Exports and Package Structure
 
-Always mock environment variables in tests:
+### Selective Exports
 
 ```typescript
-// ✅ Mock environment setup
+// ✅ packages/storage/src/index.ts - Only export public API
+export { deleteFile, deleteFilesByPrefix, getSignedDownloadUrl, getSignedUploadUrl } from "./service";
+
+export type { StorageError } from "./types/error";
+
+// ❌ Don't export internals
+// export { createS3Client } from "./client";
+// export { S3_BUCKET_NAME } from "./constants";
+```
+
+### Dependencies
+
+```json
+// ✅ Specific AWS SDK packages
+"dependencies": {
+  "@aws-sdk/client-s3": "3.864.0",
+  "@aws-sdk/s3-presigned-post": "3.864.0",
+  "@aws-sdk/s3-request-presigner": "3.864.0",
+  "@formbricks/logger": "workspace:*"
+}
+```
+
+## Testing Patterns
+
+### Environment Mocking
+
+```typescript
+// ✅ Test setup
 beforeEach(() => {
-  vi.stubEnv("S3_ACCESS_KEY", "test-access-key");
-  vi.stubEnv("S3_SECRET_KEY", "test-secret-key");
+  vi.stubEnv("S3_ACCESS_KEY", "test-key");
+  vi.stubEnv("S3_SECRET_KEY", "test-secret");
   vi.stubEnv("S3_REGION", "us-east-1");
   vi.stubEnv("S3_BUCKET_NAME", "test-bucket");
 });
@@ -268,320 +271,90 @@ afterEach(() => {
 });
 ```
 
-## Build Configuration
-
-### Vite Library Setup
-
-Configure vite for library bundling with external dependencies:
+### AWS SDK Mocking
 
 ```typescript
-// ✅ vite.config.ts pattern
-export default defineConfig({
-  build: {
-    lib: {
-      entry: resolve(__dirname, "src/index.ts"),
-      name: "formbricksStorage",
-      fileName: "index",
-      formats: ["es", "cjs"], // Both ESM and CommonJS
-    },
-    rollupOptions: {
-      // Externalize AWS SDK and Formbricks dependencies
-      external: [
-        "@aws-sdk/client-s3",
-        "@aws-sdk/s3-presigned-post",
-        "@aws-sdk/s3-request-presigner",
-        "@formbricks/logger",
-      ],
-    },
-  },
-  test: {
-    environment: "node",
-    globals: true,
-    coverage: {
-      reporter: ["text", "json", "html", "lcov"],
-      exclude: ["src/types/**"], // Exclude type definitions
-      include: ["src/**/*.ts"],
-    },
-  },
-  plugins: [dts({ rollupTypes: true })], // Generate type declarations
-});
-```
+// ✅ Mock AWS SDK commands
+const mockS3Client = {
+  send: vi.fn(),
+};
 
-### Package.json Configuration
-
-Essential package.json fields for the storage library:
-
-```json
-{
-  "exports": {
-    "import": "./dist/index.js",
-    "require": "./dist/index.cjs",
-    "types": "./dist/index.d.ts"
-  },
-  "files": ["dist"],
-  "main": "./dist/index.js",
-  "name": "@formbricks/storage",
-  "private": true,
-  "scripts": {
-    "build": "tsc && vite build",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
-  },
-  "type": "module",
-  "types": "./dist/index.d.ts"
-}
-```
-
-## AWS SDK Integration
-
-### Dependency Management
-
-Use specific AWS SDK packages, not the umbrella package:
-
-```json
-// ✅ Specific AWS SDK dependencies
-"dependencies": {
-  "@aws-sdk/client-s3": "3.864.0",
-  "@aws-sdk/s3-presigned-post": "3.864.0",
-  "@aws-sdk/s3-request-presigner": "3.864.0"
-}
-
-// ❌ Don't use umbrella package
-"dependencies": {
-  "aws-sdk": "..." // Too large and unnecessary
-}
-```
-
-### Command Patterns
-
-Use the AWS SDK v3 command pattern:
-
-```typescript
-// ✅ AWS SDK v3 command pattern
-import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
-// Delete operation
-const deleteCommand = new DeleteObjectCommand({
-  Bucket: S3_BUCKET_NAME,
-  Key: filePath,
-});
-await s3Client.send(deleteCommand);
-
-// Presigned URL for download
-const getCommand = new GetObjectCommand({
-  Bucket: S3_BUCKET_NAME,
-  Key: filePath,
-});
-const signedUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
-
-// Presigned POST for upload
-const { url, fields } = await createPresignedPost(s3Client, {
-  Bucket: S3_BUCKET_NAME,
-  Key: filePath,
-  Conditions: [
-    ["content-length-range", 0, maxSize || DEFAULT_MAX_SIZE],
-    ["eq", "$Content-Type", contentType],
-  ],
-  Expires: 3600,
-});
-```
-
-## Export Patterns
-
-### Selective Exports
-
-Only export the main service functions:
-
-```typescript
-// ✅ packages/storage/src/index.ts
-export { deleteFile, getSignedDownloadUrl, getSignedUploadUrl } from "./service";
-
-// ❌ Don't export internal utilities
-// export { createS3Client } from "./client"; // Internal only
-// export { S3_BUCKET_NAME } from "./constants"; // Internal only
-```
-
-### Type Exports
-
-Export types that consumers might need:
-
-```typescript
-// ✅ Export relevant types if needed by consumers
-export type { Result, UnknownError, S3CredentialsError, S3ClientError } from "./types/error";
+vi.mock("@aws-sdk/client-s3", () => ({
+  S3Client: vi.fn(() => mockS3Client),
+  DeleteObjectCommand: vi.fn(),
+  DeleteObjectsCommand: vi.fn(),
+}));
 ```
 
 ## Logging Standards
 
-### Use Formbricks Logger
-
-Always use the Formbricks logger for consistency:
+Use Formbricks logger with appropriate context:
 
 ```typescript
-// ✅ Import and use Formbricks logger
-import { logger } from "@formbricks/logger";
+// ✅ Error logging
+logger.error({ error, fileKey }, "Failed to delete file");
 
-// Error logging with context
-logger.error("S3 operation failed", {
-  operation: "upload",
-  fileName,
-  error: error.message,
+// ✅ Warning for partial failures
+logger.warn({ totalErrors, totalDeleted }, "Bulk delete completed with failures");
+
+// ✅ Debug for detailed info
+logger.debug({ count: result.Deleted?.length }, "Successfully deleted batch");
+```
+
+## Common Patterns
+
+### File Existence Check
+
+```typescript
+// ✅ Check file exists before operations
+const headObjectCommand = new HeadObjectCommand({
+  Bucket: S3_BUCKET_NAME,
+  Key: fileKey,
 });
 
-// Warning for recoverable issues
-logger.warn("S3 client fallback used", { reason: "credentials_error" });
-```
-
-### Logging Levels
-
-Use appropriate logging levels:
-
-```typescript
-// ✅ Error for failures that need attention
-logger.error("Critical S3 operation failed", { error });
-
-// ✅ Warn for recoverable issues
-logger.warn("S3 credentials not set, client unavailable");
-
-// ✅ Debug for development (avoid in production)
-logger.debug("S3 operation successful", { operation, duration });
-
-// ❌ Avoid info logging for routine operations
-// logger.info("File uploaded successfully"); // Too verbose
-```
-
-## Common Pitfalls to Avoid
-
-1. **Don't expose internal implementation details** - Keep client creation and constants internal
-2. **Always validate S3 client availability** - Check for undefined client before operations
-3. **Use specific error types** - Don't use generic Error objects
-4. **Handle AWS SDK errors appropriately** - Categorize errors by type
-5. **Don't hardcode S3 configuration** - Always use environment variables
-6. **Include comprehensive TSDoc** - Document all parameters and return types
-7. **Test error scenarios** - Test both success and failure cases
-8. **Use Result types consistently** - Never throw exceptions in service functions
-9. **Version pin AWS SDK dependencies** - Avoid breaking changes from updates
-10. **Keep package.json focused** - Only include necessary dependencies and scripts
-
-## Environment Variables
-
-### Required Variables
-
-The storage package requires these environment variables:
-
-```bash
-# ✅ Required S3 configuration
-S3_ACCESS_KEY=your-access-key
-S3_SECRET_KEY=your-secret-key
-S3_REGION=us-east-1
-S3_BUCKET_NAME=your-bucket-name
-
-# ✅ Optional S3 configuration
-S3_ENDPOINT_URL=https://s3.amazonaws.com  # For custom endpoints
-S3_FORCE_PATH_STYLE=1                     # For minio/localstack compatibility
-```
-
-### Validation Strategy
-
-Always validate required environment variables at startup:
-
-```typescript
-// ✅ Fail fast on missing required variables
-const requiredVars = [S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME, S3_REGION];
-const missingVars = requiredVars.filter(v => !v);
-
-if (missingVars.length > 0) {
-  return err({
-    code: "s3_credentials_error",
-    message: "Required S3 environment variables are not set",
-  });
+try {
+  await s3Client.send(headObjectCommand);
+} catch (error) {
+  if (error.name === "NotFound" || error.$metadata?.httpStatusCode === 404) {
+    return err({ code: ErrorCode.FileNotFoundError });
+  }
 }
 ```
 
-## Performance Considerations
-
-### S3 Client Reuse
-
-Create S3 client once and reuse:
+### Batch Processing
 
 ```typescript
-// ✅ Single client instance
-const s3Client = createS3Client(); // Created once at module level
-
-// ✅ Reuse in all operations
-export const uploadFile = async () => {
-  if (!s3Client) return err(/* credentials error */);
-  // Use s3Client
-};
-
-// ❌ Don't create new clients for each operation
-export const uploadFile = async () => {
-  const client = createS3Client(); // Inefficient
-};
-```
-
-### Presigned URL Expiration
-
-Use appropriate expiration times:
-
-```typescript
-// ✅ Reasonable expiration times
-const UPLOAD_URL_EXPIRY = 3600; // 1 hour for uploads
-const DOWNLOAD_URL_EXPIRY = 3600; // 1 hour for downloads
-
-// ❌ Don't use excessively long expiration
-const LONG_EXPIRY = 86400 * 7; // 7 days - security risk
-```
-
-### Error Message Safety
-
-Don't expose sensitive information in error messages:
-
-```typescript
-// ✅ Safe error messages
-return err({
-  code: "s3_client_error",
-  message: "File operation failed", // Generic message
-});
-
-// ❌ Don't expose internal details
-return err({
-  code: "s3_client_error",
-  message: `AWS Error: ${awsError.message}`, // May contain sensitive info
-});
-```
-
-## Integration Guidelines
-
-### Usage in Other Packages
-
-When using the storage package in other Formbricks packages:
-
-```typescript
-// ✅ Import specific functions
-import { deleteFile, getSignedUploadUrl } from "@formbricks/storage";
-
-// ✅ Handle Result types properly
-const uploadResult = await getSignedUploadUrl(fileName, contentType, filePath);
-if (!uploadResult.ok) {
-  // Handle error appropriately
-  throw new Error(uploadResult.error.message);
-}
-
-// Use uploadResult.data
-const { signedUrl, presignedFields } = uploadResult.data;
-```
-
-### Dependency Declaration
-
-Add storage package as workspace dependency:
-
-```json
-// ✅ In dependent package's package.json
-"dependencies": {
-  "@formbricks/storage": "workspace:*"
+// ✅ Process large datasets in batches
+const BATCH_SIZE = 1000; // S3 delete limit
+for (let i = 0; i < items.length; i += BATCH_SIZE) {
+  const batch = items.slice(i, i + BATCH_SIZE);
+  // Process batch
 }
 ```
 
-Remember: The storage package is designed to be a self-contained, reusable library that provides type-safe S3 operations with comprehensive error handling. Follow these patterns to maintain consistency and reliability across the Formbricks storage infrastructure.
+### Concurrent Operations
+
+```typescript
+// ✅ Use Promise.all for concurrent operations
+const promises = batches.map((batch) => processBatch(batch));
+const results = await Promise.all(promises);
+```
+
+## Usage Guidelines
+
+When consuming the storage package:
+
+```typescript
+// ✅ Import and handle results properly
+import { deleteFilesByPrefix, deleteFile } from "@formbricks/storage";
+
+const result = await deleteFilesByPrefix("surveys/123/");
+if (!result.ok) {
+  logger.error({ error: result.error }, "Failed to delete survey files");
+  return; // Handle error appropriately
+}
+
+// Operation successful
+```
+
+Remember: Always validate S3 client availability, use Result types consistently, handle partial failures in bulk operations, and follow batch processing patterns for large datasets.
