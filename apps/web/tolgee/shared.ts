@@ -4,7 +4,7 @@ import { DevTools, Tolgee } from "@tolgee/web";
 const apiKey = process.env.NEXT_PUBLIC_TOLGEE_API_KEY;
 const apiUrl = process.env.NEXT_PUBLIC_TOLGEE_API_URL;
 
-export const ALL_LANGUAGES = ["en-US", "de-DE", "fr-FR", "pt-BR", "pt-PT", "zh-Hant-TW"];
+export const ALL_LANGUAGES = ["en-US", "de-DE", "fr-FR", "pt-BR", "pt-PT", "zh-Hant-TW", "ro-RO", "ja-JP"];
 
 export const DEFAULT_LANGUAGE = "en-US";
 
@@ -23,6 +23,7 @@ export function TolgeeBase() {
         "pt-PT": () => import("@/locales/pt-PT.json"),
         "zh-Hant-TW": () => import("@/locales/zh-Hant-TW.json"),
         "ro-RO": () => import("@/locales/ro-RO.json"),
+        "ja-JP": () => import("@/locales/ja-JP.json"),
       },
     });
 }
