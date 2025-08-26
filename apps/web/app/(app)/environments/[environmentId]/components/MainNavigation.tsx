@@ -2,6 +2,7 @@
 
 import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
+import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -229,7 +230,7 @@ export const MainNavigation = ({
         const latestVersionTag = res.data;
         const currentVersionTag = `v${packageJson.version}`;
 
-        if (currentVersionTag !== latestVersionTag) {
+        if (isNewerVersion(currentVersionTag, latestVersionTag)) {
           setLatestVersion(latestVersionTag);
         }
       }
