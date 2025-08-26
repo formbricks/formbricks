@@ -189,6 +189,18 @@ const ZResponseFilterCriteriaFilledOut = z.object({
   op: z.literal("filledOut"),
 });
 
+const ZQuotasFilterCriteriaScreenedIn = z.object({
+  op: z.literal("screenedIn"),
+});
+
+const ZQuotasFilterCriteriaScreenedOut = z.object({
+  op: z.literal("screenedOut"),
+});
+
+const ZQuotasFilterCriteriaScreenedOutNotInQuota = z.object({
+  op: z.literal("screenedOutNotInQuota"),
+});
+
 export const ZResponseFilterCriteria = z.object({
   finished: z.boolean().optional(),
   responseIds: z.array(ZId).optional(),
@@ -262,6 +274,16 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaDoesNotStartWith,
         ZResponseFilterCriteriaEndsWith,
         ZResponseFilterCriteriaDoesNotEndWith,
+      ])
+    )
+    .optional(),
+
+  quotas: z
+    .record(
+      z.union([
+        ZQuotasFilterCriteriaScreenedIn,
+        ZQuotasFilterCriteriaScreenedOut,
+        ZQuotasFilterCriteriaScreenedOutNotInQuota,
       ])
     )
     .optional(),

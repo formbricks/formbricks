@@ -593,6 +593,43 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
       id: { in: filterCriteria.responseIds },
     });
   }
+
+  // For quota filters
+  if (filterCriteria?.quotas) {
+    const quotaFilters: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.quotas).forEach(([quotaId, { op }]) => {
+      if (op === "screenedOutNotInQuota") {
+        // Responses that don't have any quota link with this quota
+        quotaFilters.push({
+          NOT: {
+            quotaLinks: {
+              some: {
+                quotaId,
+              },
+            },
+          },
+        });
+      } else {
+        // Responses that have a quota link with this quota and the specified status
+        quotaFilters.push({
+          quotaLinks: {
+            some: {
+              quotaId,
+              status: op,
+            },
+          },
+        });
+      }
+    });
+
+    if (quotaFilters.length > 0) {
+      whereClause.push({
+        AND: quotaFilters,
+      });
+    }
+  }
+
   return { AND: whereClause };
 };
 
