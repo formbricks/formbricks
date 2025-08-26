@@ -46,15 +46,6 @@ const meta: Meta<typeof Switch> = {
       },
       order: 1,
     },
-    id: {
-      control: "text",
-      description: "ID for the switch element",
-      table: {
-        category: "Accessibility",
-        type: { summary: "string" },
-      },
-      order: 1,
-    },
   },
 };
 
@@ -62,9 +53,6 @@ export default meta;
 type Story = StoryObj<typeof Switch>;
 
 export const Default: Story = {
-  args: {
-    id: "default-switch",
-  },
   render: (args) => <Switch {...args} />,
   parameters: {
     docs: {
@@ -92,21 +80,6 @@ export const DefaultWithLabel: Story = {
       description: {
         story:
           "Switch with label accompanying it. The label is clickable and properly associated with the switch by the id attribute.",
-      },
-    },
-  },
-};
-
-export const WithoutLabel: Story = {
-  args: {
-    "aria-label": "Toggle feature",
-  },
-  render: (args) => <Switch {...args} />,
-  parameters: {
-    docs: {
-      description: {
-        story:
-          "Switch without accompanying label. Make sure to provide an aria-label for accessibility when no visible label is present.",
       },
     },
   },
