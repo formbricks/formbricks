@@ -121,7 +121,7 @@ export const CreateProjectModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
+      <DialogContent unconstrained={true}>
         <DialogHeader>
           <DialogTitle>{t("common.create_project")}</DialogTitle>
           <DialogDescription>{t("common.project_creation_description")}</DialogDescription>
