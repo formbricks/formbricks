@@ -597,8 +597,14 @@ describe("surveyLogic", () => {
           type: TSurveyQuestionTypeEnum.Matrix,
           headline: { default: "Matrix Question" },
           required: true,
-          rows: [{ default: "Row 1" }, { default: "Row 2" }],
-          columns: [{ default: "Column 1" }, { default: "Column 2" }],
+          rows: [
+            { id: "row-1", label: { default: "Row 1" } },
+            { id: "row-2", label: { default: "Row 2" } },
+          ],
+          columns: [
+            { id: "col-1", label: { default: "Column 1" } },
+            { id: "col-2", label: { default: "Column 2" } },
+          ],
           buttonLabel: { default: "Next" },
           shuffleOption: "none",
         },

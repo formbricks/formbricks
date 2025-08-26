@@ -736,8 +736,8 @@ export const getQuestionSummary = async (
         break;
       }
       case TSurveyQuestionTypeEnum.Matrix: {
-        const rows = question.rows.map((row) => getLocalizedValue(row, "default"));
-        const columns = question.columns.map((column) => getLocalizedValue(column, "default"));
+        const rows = question.rows.map((row) => getLocalizedValue(row.label, "default"));
+        const columns = question.columns.map((column) => getLocalizedValue(column.label, "default"));
         let totalResponseCount = 0;
 
         // Initialize count object
@@ -755,13 +755,15 @@ export const getQuestionSummary = async (
           if (selectedResponses) {
             totalResponseCount++;
             question.rows.forEach((row) => {
-              const localizedRow = getLocalizedValue(row, responseLanguageCode);
+              const localizedRow = getLocalizedValue(row.label, responseLanguageCode);
               const colValue = question.columns.find((column) => {
-                return getLocalizedValue(column, responseLanguageCode) === selectedResponses[localizedRow];
+                return (
+                  getLocalizedValue(column.label, responseLanguageCode) === selectedResponses[localizedRow]
+                );
               });
-              const colValueInDefaultLanguage = getLocalizedValue(colValue, "default");
+              const colValueInDefaultLanguage = getLocalizedValue(colValue?.label, "default");
               if (colValueInDefaultLanguage && columns.includes(colValueInDefaultLanguage)) {
-                countMap[getLocalizedValue(row, "default")][colValueInDefaultLanguage] += 1;
+                countMap[getLocalizedValue(row.label, "default")][colValueInDefaultLanguage] += 1;
               }
             });
           }

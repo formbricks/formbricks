@@ -135,8 +135,8 @@ export function OpenTextQuestion({
               tabIndex={isCurrent ? 0 : -1}
               aria-label="textarea"
               id={question.id}
-              placeholder={getLocalizedValue(question.placeholder, languageCode)}
-              dir={computedDir}
+              placeholder={getLocalizedValue(question.placeholder, languageCode, true)}
+              dir={dir}
               required={question.required}
               value={value}
               onInput={(e) => {

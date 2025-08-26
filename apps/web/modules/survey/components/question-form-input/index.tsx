@@ -85,6 +85,10 @@ export const QuestionFormInput = ({
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
+  const inputId = useMemo(() => {
+    return isChoice || isMatrixLabelColumn || isMatrixLabelRow ? id.split("-")[0] : id;
+  }, [id, isChoice, isMatrixLabelColumn, isMatrixLabelRow]);
+
   const isEndingCard = questionIdx >= localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
@@ -104,8 +108,8 @@ export const QuestionFormInput = ({
     [localSurvey.languages]
   );
   const isTranslationIncomplete = useMemo(
-    () => isValueIncomplete(id, isInvalid, surveyLanguageCodes, value),
-    [value, id, isInvalid, surveyLanguageCodes]
+    () => isValueIncomplete(inputId, isInvalid, surveyLanguageCodes, value),
+    [value, inputId, isInvalid, surveyLanguageCodes]
   );
 
   const elementText = useMemo((): TI18nString => {

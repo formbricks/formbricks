@@ -44,7 +44,7 @@
   "dependencies": {
     "@formbricks/logger": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
-    "@prisma/client": "6.7.0",
+    "@prisma/client": "6.13.0",
     "zod": "3.24.4",
     "zod-openapi": "4.2.4"
   },
@@ -53,8 +53,8 @@
     "@formbricks/eslint-config": "workspace:*",
     "dotenv-cli": "8.0.0",
     "glob": "11.0.2",
-    "prisma": "6.7.0",
-    "prisma-json-types-generator": "3.4.1",
+    "prisma": "6.13.0",
+    "prisma-json-types-generator": "3.5.2",
     "ts-node": "10.9.2",
     "vite": "6.3.5",
     "vite-plugin-dts": "4.5.3"
