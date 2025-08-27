@@ -319,7 +319,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               setOpen={() => {
                 setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }));
               }}
-              text={confirmationModalInfo.text}
+              body={confirmationModalInfo.text}
               title={confirmationModalInfo.title}
             />
           </div>
