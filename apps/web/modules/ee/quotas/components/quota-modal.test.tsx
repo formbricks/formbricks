@@ -7,6 +7,21 @@ import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { QuotaModal } from "./quota-modal";
 
+// Mock @paralleldrive/cuid2
+vi.mock("@paralleldrive/cuid2", () => ({
+  createId: () => "test-id",
+}));
+
+// Mock helper functions
+vi.mock("@/lib/utils/helper", () => ({
+  getFormattedErrorMessage: vi.fn((result: any) => result?.serverError || "Unknown error"),
+}));
+
+// Mock zodResolver
+vi.mock("@hookform/resolvers/zod", () => ({
+  zodResolver: vi.fn(() => ({})),
+}));
+
 // Mock server actions
 vi.mock("@/modules/ee/quotas/actions", () => ({
   createQuotaAction: vi.fn(),
@@ -112,6 +127,15 @@ vi.mock("@/modules/ui/components/button", () => ({
   ),
 }));
 
+vi.mock("@/modules/ui/components/confirmation-modal", () => ({
+  ConfirmationModal: ({ open, onConfirm }: any) =>
+    open ? (
+      <div data-testid="confirmation-modal" onClick={onConfirm}>
+        Confirmation Modal
+      </div>
+    ) : null,
+}));
+
 // Mock child components
 vi.mock("./ending-card-selector", () => ({
   EndingCardSelector: ({ value, onChange }: any) => (
@@ -146,10 +170,16 @@ vi.mock("react-hook-form", () => ({
     reset: vi.fn(),
     watch: vi.fn(() => "endSurvey"),
     setValue: vi.fn(),
+    getValues: vi.fn((field: string) => {
+      if (field === "conditions") {
+        return { connector: "and", criteria: [] };
+      }
+      return "";
+    }),
     control: {},
     formState: {
       isSubmitting: false,
-      isDirty: false,
+      isDirty: false, // Default to false
       errors: {},
       isValid: true,
     },
@@ -365,7 +395,6 @@ describe("QuotaModal", () => {
           conditions: { connector: "and", criteria: [] },
           countPartialSubmissions: false,
         }),
-        surveyId: "survey1",
       });
     });
   });
