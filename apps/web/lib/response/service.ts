@@ -11,6 +11,7 @@ import {
   TResponseContact,
   TResponseFilterCriteria,
   TResponseUpdateInput,
+  TResponseWithQuotas,
   ZResponseFilterCriteria,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
@@ -241,7 +242,7 @@ export const getResponses = reactCache(
     offset?: number,
     filterCriteria?: TResponseFilterCriteria,
     cursor?: string
-  ): Promise<TResponse[]> => {
+  ): Promise<TResponseWithQuotas[]> => {
     validateInputs(
       [surveyId, ZId],
       [limit, ZOptionalNumber],
@@ -268,7 +269,14 @@ export const getResponses = reactCache(
 
       const responses = await prisma.response.findMany({
         where: whereClause,
-        select: responseSelection,
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            include: {
+              quota: true,
+            },
+          },
+        },
         orderBy: [
           {
             createdAt: "desc",
@@ -281,12 +289,14 @@ export const getResponses = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TResponse[] = await Promise.all(
+      const transformedResponses: TResponseWithQuotas[] = await Promise.all(
         responses.map((responsePrisma) => {
+          const { quotaLinks, ...response } = responsePrisma;
           return {
-            ...responsePrisma,
+            ...response,
             contact: getResponseContact(responsePrisma),
             tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            quotas: quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
           };
         })
       );
@@ -347,6 +357,7 @@ export const getResponseDownloadUrl = async (
       "Response ID",
       "Timestamp",
       "Finished",
+      "Quotas",
       "Survey ID",
       "Formbricks ID (internal)",
       "User ID",

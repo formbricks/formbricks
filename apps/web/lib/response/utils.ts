@@ -6,6 +6,7 @@ import {
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
   TResponseTtc,
+  TResponseWithQuotas,
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
@@ -687,7 +688,7 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
 
 export const getResponsesJson = (
   survey: TSurvey,
-  responses: TResponse[],
+  responses: TResponseWithQuotas[],
   questionsHeadlines: string[][],
   userAttributes: string[],
   hiddenFields: string[]
@@ -701,6 +702,7 @@ export const getResponsesJson = (
       "Response ID": response.id,
       Timestamp: getFormattedDateTimeString(response.createdAt),
       Finished: response.finished ? "Yes" : "No",
+      Quotas: response.quotas?.map((quota) => quota.name).join(", ") || "",
       "Survey ID": response.surveyId,
       "Formbricks ID (internal)": response.contact?.id || "",
       "User ID": response.contact?.userId || "",

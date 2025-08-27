@@ -4,7 +4,12 @@ import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/
 import { TFnType, useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseDataValue, TResponseTableData } from "@formbricks/types/responses";
+import {
+  TResponse,
+  TResponseDataValue,
+  TResponseTableData,
+  TResponseWithQuotas,
+} from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -78,7 +83,7 @@ export const extractResponseData = (response: TResponse, survey: TSurvey): Recor
 
 // Export for testing
 export const mapResponsesToTableData = (
-  responses: TResponse[],
+  responses: TResponseWithQuotas[],
   survey: TSurvey,
   t: TFnType
 ): TResponseTableData[] => {
@@ -101,6 +106,7 @@ export const mapResponsesToTableData = (
     person: response.contact,
     contactAttributes: response.contactAttributes,
     meta: response.meta,
+    quotas: response.quotas?.map((quota) => quota.name),
   }));
 };
 

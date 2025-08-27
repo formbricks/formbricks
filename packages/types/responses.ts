@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "./common";
+import { ZSurveyQuota } from "./quota";
 import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
@@ -420,6 +421,13 @@ export const ZResponseTableData = z.object({
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
   meta: ZResponseMeta,
+  quotas: z.array(z.string()).optional(),
 });
 
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;
+
+export const ZResponseWithQuotas = ZResponse.extend({
+  quotas: z.array(ZSurveyQuota).optional(),
+});
+
+export type TResponseWithQuotas = z.infer<typeof ZResponseWithQuotas>;
