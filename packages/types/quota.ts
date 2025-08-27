@@ -39,6 +39,7 @@ export const ZSurveyQuotaCreateInput = ZSurveyQuota.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  surveyId: true,
 }).superRefine((data, ctx) => {
   // Validate ending card when action is endSurvey
   if (data.action === "endSurvey" && (data.endingCardId === null || data.endingCardId === "")) {
