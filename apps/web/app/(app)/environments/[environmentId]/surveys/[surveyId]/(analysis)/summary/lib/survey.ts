@@ -2,7 +2,6 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TQuotasResponseFilters } from "@formbricks/types/quota";
 
 export const deleteResponsesAndDisplaysForSurvey = async (
   surveyId: string
@@ -36,7 +35,7 @@ export const deleteResponsesAndDisplaysForSurvey = async (
   }
 };
 
-export const getQuotasSummary = async (surveyId: string, filters?: TQuotasResponseFilters) => {
+export const getQuotasSummary = async (surveyId: string) => {
   try {
     const quotas = await prisma.surveyQuota.findMany({
       where: {
@@ -48,15 +47,6 @@ export const getQuotasSummary = async (surveyId: string, filters?: TQuotasRespon
             quotaLinks: {
               where: {
                 status: "screenedIn",
-
-                ...(filters?.createdAt && {
-                  response: {
-                    createdAt: {
-                      gte: filters.createdAt.min,
-                      lte: filters.createdAt.max,
-                    },
-                  },
-                }),
               },
             },
           },
