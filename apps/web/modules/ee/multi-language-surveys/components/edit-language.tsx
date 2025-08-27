@@ -263,7 +263,7 @@ export function EditLanguage({
             setOpen={() => {
               setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
             }}
-            text={confirmationModal.text}
+            body={confirmationModal.text}
             title={t("environments.project.languages.remove_language")}
           />
         </div>
