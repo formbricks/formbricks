@@ -35,6 +35,10 @@
       {
         "language": "ro-RO",
         "path": "./apps/web/locales/ro-RO.json"
+      },
+      {
+        "language": "ja-JP",
+        "path": "./apps/web/locales/ja-JP.json"
       }
     ],
     "forceMode": "OVERRIDE"

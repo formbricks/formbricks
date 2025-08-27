@@ -26,7 +26,7 @@ When you generate personal links:
 3. **Single-use by default**: Each link can only be used once to prevent duplicate responses
 4. **Expiry control**: Set expiration dates to control survey access windows
 
-## Generating Personal Links
+## Generating Personal Links (UI)
 
 <Steps>
   <Step title="Access the share modal">
@@ -58,7 +58,7 @@ When you generate personal links:
   </Step>
 </Steps>
 
-## Understanding the CSV export
+### Understanding the CSV export
 
 Your downloaded CSV file contains the following columns in this order:
 
@@ -75,6 +75,10 @@ Your downloaded CSV file contains the following columns in this order:
 Use the Custom ID column to match contacts with your existing systems, and the Personal Link column for distribution via your preferred communication channels.
 </Tip>
 
+## Generating Personal Links (API)
+We also offer a way to generate Personal Links via the API. You can use two endpoints for generating Personal Links: For [individual contacts](/api-v2-reference/management-api--surveys--contact-links/get-personalized-survey-link-for-a-contact) and for a [whole segment](/api-v2-reference/management-api--surveys--contact-links/get-survey-links-for-contacts-in-a-segment).
+
+
 ## Limitations and considerations
 
 <Warning>
@@ -87,8 +91,6 @@ Keep these limitations in mind when using Personal Links
 - **CSV storage**: Generated link lists are not retained in Formbricks - download and store your CSV files securely
 
 ## Troubleshooting
-
-### Common issues
 
 <Tabs>
   <Tab title="No segments available">
