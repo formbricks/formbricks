@@ -177,3 +177,23 @@ export function isRTL(text: string): boolean {
   const rtlCharRegex = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
   return rtlCharRegex.test(text);
 }
+
+export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCode: string): boolean => {
+  if (survey.welcomeCard.enabled) {
+    const welcomeCardHeadline = survey.welcomeCard.headline?.[languageCode];
+    if (welcomeCardHeadline) {
+      return isRTL(welcomeCardHeadline);
+    }
+  }
+
+  for (const question of survey.questions) {
+    const questionHeadline = question.headline[languageCode];
+
+    // the first non-empty question headline is the survey direction
+    if (questionHeadline) {
+      return isRTL(questionHeadline);
+    }
+  }
+
+  return false;
+};

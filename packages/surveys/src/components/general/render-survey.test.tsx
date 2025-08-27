@@ -34,7 +34,10 @@ describe("RenderSurvey", () => {
   test("renders with default props and handles close", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
-    const survey = { endings: [{ id: "e1", type: "question" }] } as any;
+    const survey = {
+      endings: [{ id: "e1", type: "question" }],
+      welcomeCard: { enabled: true, headline: { en: "Welcome" } },
+    } as any;
 
     render(
       (
@@ -66,7 +69,10 @@ describe("RenderSurvey", () => {
   test("onFinished skips close if redirectToUrl", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
-    const survey = { endings: [{ id: "e1", type: "redirectToUrl" }] } as any;
+    const survey = {
+      endings: [{ id: "e1", type: "redirectToUrl" }],
+      welcomeCard: { enabled: true, headline: { en: "Welcome" } },
+    } as any;
 
     render(
       (
@@ -91,7 +97,10 @@ describe("RenderSurvey", () => {
   test("onFinished closes after delay for non-redirect endings", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
-    const survey = { endings: [{ id: "e1", type: "question" }] } as any;
+    const survey = {
+      endings: [{ id: "e1", type: "question" }],
+      welcomeCard: { enabled: true, headline: { en: "Welcome" } },
+    } as any;
 
     render(
       (
@@ -118,7 +127,10 @@ describe("RenderSurvey", () => {
   test("onFinished does not auto-close when inline mode", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
-    const survey = { endings: [] } as any;
+    const survey = {
+      endings: [],
+      welcomeCard: { enabled: true, headline: { en: "Welcome" } },
+    } as any;
 
     render(
       (
@@ -143,7 +155,10 @@ describe("RenderSurvey", () => {
   test("close clears any pending onFinished timeout", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
-    const survey = { endings: [{ id: "e1", type: "question" }] } as any;
+    const survey = {
+      endings: [{ id: "e1", type: "question" }],
+      welcomeCard: { enabled: true, headline: { en: "Welcome" } },
+    } as any;
     const { unmount } = render(
       (
         <RenderSurvey
@@ -178,7 +193,10 @@ describe("RenderSurvey", () => {
   test("double close only schedules one onClose", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
-    const survey = { endings: [{ id: "e1", type: "question" }] } as any;
+    const survey = {
+      endings: [{ id: "e1", type: "question" }],
+      welcomeCard: { enabled: true, headline: { en: "Welcome" } },
+    } as any;
 
     render(
       (
@@ -212,7 +230,11 @@ describe("RenderSurvey", () => {
   test("cleanup on unmount clears pending timers (useEffect)", () => {
     const onClose = vi.fn();
     const onFinished = vi.fn();
-    const survey = { endings: [{ id: "e1", type: "question" }] } as any;
+    const survey = {
+      endings: [{ id: "e1", type: "question" }],
+      welcomeCard: { enabled: true, headline: { en: "Welcome" } },
+    } as any;
+
     const { unmount } = render(
       (
         <RenderSurvey
