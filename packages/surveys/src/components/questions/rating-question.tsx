@@ -38,6 +38,7 @@ interface RatingQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function RatingQuestion({
@@ -53,6 +54,7 @@ export function RatingQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  dir = "auto",
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
@@ -160,8 +162,16 @@ export function RatingQuestion({
                         value === number
                           ? "fb-bg-accent-selected-bg fb-border-border-highlight fb-z-10 fb-border"
                           : "fb-border-border",
-                        a.length === number ? "fb-rounded-r-custom fb-border-r" : "",
-                        number === 1 ? "fb-rounded-l-custom" : "",
+                        a.length === number
+                          ? dir === "rtl"
+                            ? "fb-rounded-l-custom fb-border-l"
+                            : "fb-rounded-r-custom fb-border-r"
+                          : "",
+                        number === 1
+                          ? dir === "rtl"
+                            ? "fb-rounded-r-custom fb-border-r"
+                            : "fb-rounded-l-custom fb-border-l"
+                          : "",
                         hoveredNumber === number ? "fb-bg-accent-bg" : "",
                         question.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
                         "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
@@ -245,11 +255,11 @@ export function RatingQuestion({
                 </span>
               ))}
             </div>
-            <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
-              <p className="fb-w-1/2 fb-text-left" dir="auto">
+            <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-gap-8">
+              <p className="fb-max-w-[50%]" dir="auto">
                 {getLocalizedValue(question.lowerLabel, languageCode)}
               </p>
-              <p className="fb-w-1/2 fb-text-right" dir="auto">
+              <p className="fb-max-w-[50%]" dir="auto">
                 {getLocalizedValue(question.upperLabel, languageCode)}
               </p>
             </div>
