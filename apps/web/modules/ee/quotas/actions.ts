@@ -115,7 +115,6 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
 
 const ZCreateQuotaAction = z.object({
   quota: ZSurveyQuotaCreateInput,
-  surveyId: ZId,
 });
 
 export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAction).action(
@@ -141,7 +140,7 @@ export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAc
           },
           {
             type: "projectTeam",
-            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+            projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
             minPermission: "readWrite",
           },
         ],

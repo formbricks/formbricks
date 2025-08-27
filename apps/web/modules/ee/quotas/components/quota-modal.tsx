@@ -114,7 +114,6 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     async (quota: TSurveyQuotaCreateInput) => {
       const createQuotaActionResult = await createQuotaAction({
         quota: quota,
-        surveyId: survey.id,
       });
       if (createQuotaActionResult?.data) {
         toast.success(t("environments.surveys.edit.quotas.quota_created_successfull_toast"));
