@@ -95,10 +95,9 @@ export const QuotasCard = ({
     setQuotaToDelete(null);
     setIsDeletingQuota(false);
     setActiveQuota(null);
-    setOpen(false);
   };
 
-  const handleEditQuota = (quota: TSurveyQuota) => {
+  const openEditQuotaModal = (quota: TSurveyQuota) => {
     setActiveQuota(quota);
     setIsQuotaModalOpen(true);
   };
@@ -111,7 +110,7 @@ export const QuotasCard = ({
         open={open}
         onOpenChange={setOpen}
         className="w-full rounded-lg border border-slate-300 bg-white">
-        <Collapsible.CollapsibleTrigger
+        <Collapsible.Trigger
           asChild
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
           id="quotasCardTrigger">
@@ -128,9 +127,9 @@ export const QuotasCard = ({
               <p className="mt-1 text-sm text-slate-500">{t("common.quotas_description")}</p>
             </div>
           </div>
-        </Collapsible.CollapsibleTrigger>
+        </Collapsible.Trigger>
 
-        <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
+        <Collapsible.Content className="flex flex-col" ref={parent}>
           <hr className="py-1 text-slate-600" />
           <div className="px-3 pb-3 pt-1">
             {!isQuotasEnabled ? (
@@ -157,7 +156,7 @@ export const QuotasCard = ({
             ) : (
               <div className="space-y-4">
                 {hasQuotas ? (
-                  <QuotaList quotas={quotas} onEdit={handleEditQuota} deleteQuota={setQuotaToDelete} />
+                  <QuotaList quotas={quotas} onEdit={openEditQuotaModal} deleteQuota={setQuotaToDelete} />
                 ) : (
                   <div className="rounded-lg border p-3 text-center">
                     <p className="mb-4 text-sm text-slate-500">{t("common.quotas_description")}</p>
@@ -185,7 +184,7 @@ export const QuotasCard = ({
               </div>
             )}
           </div>
-        </Collapsible.CollapsibleContent>
+        </Collapsible.Content>
       </Collapsible.Root>
 
       {isQuotasEnabled && (

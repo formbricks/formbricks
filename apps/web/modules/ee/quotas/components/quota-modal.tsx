@@ -145,9 +145,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     },
     [t, router, onClose]
   );
-
-  // Handle form submission
-  const onSubmit = async (data: TSurveyQuotaCreateInput) => {
+  const submitQuota = async (data: TSurveyQuotaCreateInput) => {
     const trimmedName = data.name.trim();
     let payload = {
       name: trimmedName || t("environments.surveys.edit.quotas.new_quota"),
@@ -164,6 +162,19 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     } else {
       await handleCreateQuota(payload);
     }
+  };
+
+  // Form submission handler with confirmation logic
+  const onSubmit = async (data: TSurveyQuotaCreateInput) => {
+    if (isEditing) {
+      const hasChangesInInclusionCriteria =
+        JSON.stringify(form.getValues("conditions")) !== JSON.stringify(quota.conditions);
+      if (hasChangesInInclusionCriteria && isValid) {
+        setOpenConfirmChangesInInclusionCriteria(true);
+        return;
+      }
+    }
+    await submitQuota(data);
   };
 
   const handleConditionsChange = useCallback(
@@ -393,25 +404,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
                     disabled={isSubmitting}>
                     {t("common.cancel")}
                   </Button>
-                  <Button
-                    type="submit"
-                    loading={isSubmitting}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (isEditing) {
-                        const hasChangesInOnclusionCriteria =
-                          JSON.stringify(form.getValues("conditions")) !== JSON.stringify(quota.conditions);
-                        if (hasChangesInOnclusionCriteria && isValid) {
-                          setOpenConfirmChangesInInclusionCriteria(true);
-                          return;
-                        } else {
-                          form.handleSubmit(onSubmit)();
-                        }
-                      } else {
-                        form.handleSubmit(onSubmit)();
-                      }
-                    }}
-                    disabled={isSubmitting || !isDirty}>
+                  <Button type="submit" loading={isSubmitting} disabled={isSubmitting || !isDirty}>
                     {t("common.save")}
                   </Button>
                 </div>
@@ -423,7 +416,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
               buttonVariant="default"
               buttonLoading={isSubmitting}
               setOpen={setOpenConfirmationModal}
-              onConfirm={form.handleSubmit(onSubmit)}
+              onConfirm={form.handleSubmit(submitQuota)}
               text={t("environments.surveys.edit.quotas.save_changes_confirmation_text")}
               buttonText={t("common.save")}
             />
@@ -433,7 +426,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
               buttonVariant="default"
               buttonLoading={isSubmitting}
               setOpen={setOpenConfirmChangesInInclusionCriteria}
-              onConfirm={form.handleSubmit(onSubmit)}
+              onConfirm={form.handleSubmit(submitQuota)}
               text={t("environments.surveys.edit.quotas.change_quota_for_public_survey_text")}
               buttonText={t("common.continue")}
             />

@@ -23,9 +23,9 @@ vi.mock("@radix-ui/react-collapsible", () => ({
       {children}
     </div>
   ),
-  CollapsibleTrigger: ({ children, asChild }: any) =>
+  Trigger: ({ children, asChild }: any) =>
     asChild ? children : <button data-testid="collapsible-trigger">{children}</button>,
-  CollapsibleContent: ({ children }: any) => <div data-testid="collapsible-content">{children}</div>,
+  Content: ({ children }: any) => <div data-testid="collapsible-content">{children}</div>,
 }));
 
 // Mock UI components
@@ -69,6 +69,26 @@ vi.mock("@/modules/ui/components/confirmation-modal", () => ({
           disabled={buttonLoading}
           data-loading={buttonLoading}>
           {buttonText}
+        </button>
+      </div>
+    ) : null,
+}));
+
+vi.mock("@/modules/ui/components/delete-dialog", () => ({
+  DeleteDialog: ({ open, onDelete, deleteWhat, text, isDeleting, setOpen, ...props }: any) =>
+    open ? (
+      <div data-testid="delete-quota-dialog" {...props}>
+        <h3>Delete {deleteWhat}</h3>
+        <p>{text}</p>
+        <button data-testid="cancel-button" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+        <button
+          data-testid="confirm-delete-button"
+          onClick={onDelete}
+          disabled={isDeleting}
+          data-loading={isDeleting}>
+          Delete
         </button>
       </div>
     ) : null,
@@ -160,7 +180,14 @@ describe("QuotasCard", () => {
   });
 
   test("renders quotas card", () => {
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     expect(screen.getByTestId("collapsible-root")).toBeInTheDocument();
     expect(screen.getByText("common.quotas")).toBeInTheDocument();
@@ -168,14 +195,23 @@ describe("QuotasCard", () => {
   });
 
   test("shows upgrade prompt when quotas not enabled", () => {
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={false} quotas={[]} />);
+    render(
+      <QuotasCard localSurvey={mockSurvey} isQuotasEnabled={false} quotas={[]} isPublicSurvey={false} />
+    );
 
     expect(screen.getByTestId("upgrade-prompt")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.quotas.upgrade_prompt_title")).toBeInTheDocument();
   });
 
   test("shows quota list when quotas enabled and quotas exist", () => {
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     expect(screen.getByTestId("quota-list")).toBeInTheDocument();
     expect(screen.getByTestId("quota-item-quota1")).toBeInTheDocument();
@@ -183,7 +219,7 @@ describe("QuotasCard", () => {
   });
 
   test("shows no quotas message when enabled but no quotas exist", () => {
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={[]} />);
+    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={[]} isPublicSurvey={false} />);
 
     expect(screen.getByText("environments.surveys.edit.quotas.add_quota")).toBeInTheDocument();
   });
@@ -191,7 +227,7 @@ describe("QuotasCard", () => {
   test("opens quota modal when add quota button is clicked (no existing quotas)", async () => {
     const user = userEvent.setup();
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={[]} />);
+    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={[]} isPublicSurvey={false} />);
 
     const addButton = screen.getByRole("button", { name: /environments.surveys.edit.quotas.add_quota/i });
     await user.click(addButton);
@@ -203,7 +239,14 @@ describe("QuotasCard", () => {
   test("opens quota modal when add quota button is clicked (with existing quotas)", async () => {
     const user = userEvent.setup();
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     const addButtons = screen.getAllByRole("button", { name: /environments.surveys.edit.quotas.add_quota/i });
     const addButton = addButtons[0]; // Should be the add button in the bottom section
@@ -216,7 +259,14 @@ describe("QuotasCard", () => {
   test("opens quota modal for editing when edit is clicked", async () => {
     const user = userEvent.setup();
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     const editButton = screen.getByTestId("edit-quota1");
     await user.click(editButton);
@@ -228,15 +278,19 @@ describe("QuotasCard", () => {
   test("shows confirmation modal when delete is clicked", async () => {
     const user = userEvent.setup();
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     const deleteButton = screen.getByTestId("delete-quota1");
     await user.click(deleteButton);
 
-    expect(screen.getByTestId("confirmation-modal")).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.surveys.edit.quotas.delete_quota_confirmation_title")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("delete-quota-dialog")).toBeInTheDocument();
   });
 
   test("deletes quota when confirmed", async () => {
@@ -244,19 +298,27 @@ describe("QuotasCard", () => {
 
     vi.mocked(deleteQuotaAction).mockResolvedValue({ data: mockQuotas[0], serverError: undefined });
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     // Click delete button
     const deleteButton = screen.getByTestId("delete-quota1");
     await user.click(deleteButton);
 
     // Confirm deletion
-    const confirmButton = screen.getByTestId("confirm-button");
+    const confirmButton = screen.getByTestId("confirm-delete-button");
     await user.click(confirmButton);
 
     await waitFor(() => {
       expect(vi.mocked(deleteQuotaAction)).toHaveBeenCalledWith({
         quotaId: "quota1",
+        surveyId: "survey1",
       });
     });
   });
@@ -266,12 +328,19 @@ describe("QuotasCard", () => {
 
     vi.mocked(deleteQuotaAction).mockResolvedValue({ data: mockQuotas[0], serverError: undefined });
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     const deleteButton = screen.getByTestId("delete-quota1");
     await user.click(deleteButton);
 
-    const confirmButton = screen.getByTestId("confirm-button");
+    const confirmButton = screen.getByTestId("confirm-delete-button");
     await user.click(confirmButton);
 
     await waitFor(() => {
@@ -286,12 +355,19 @@ describe("QuotasCard", () => {
 
     vi.mocked(deleteQuotaAction).mockResolvedValue({ serverError: "Failed" });
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     const deleteButton = screen.getByTestId("delete-quota1");
     await user.click(deleteButton);
 
-    const confirmButton = screen.getByTestId("confirm-button");
+    const confirmButton = screen.getByTestId("confirm-delete-button");
     await user.click(confirmButton);
 
     await waitFor(() => {
@@ -302,7 +378,7 @@ describe("QuotasCard", () => {
   test("closes quota modal when onClose is called", async () => {
     const user = userEvent.setup();
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={[]} />);
+    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={[]} isPublicSurvey={false} />);
 
     // Open modal
     const addButton = screen.getByRole("button", { name: /environments.surveys.edit.quotas.add_quota/i });
@@ -319,7 +395,13 @@ describe("QuotasCard", () => {
 
   test("shows correct upgrade buttons for Formbricks Cloud", () => {
     render(
-      <QuotasCard localSurvey={mockSurvey} isQuotasEnabled={false} isFormbricksCloud={true} quotas={[]} />
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={false}
+        isFormbricksCloud={true}
+        quotas={[]}
+        isPublicSurvey={false}
+      />
     );
 
     const upgradeLinks = screen.getAllByTestId("upgrade-link");
@@ -329,7 +411,13 @@ describe("QuotasCard", () => {
 
   test("shows correct upgrade buttons for self-hosted", () => {
     render(
-      <QuotasCard localSurvey={mockSurvey} isQuotasEnabled={false} isFormbricksCloud={false} quotas={[]} />
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={false}
+        isFormbricksCloud={false}
+        quotas={[]}
+        isPublicSurvey={false}
+      />
     );
 
     const upgradeLinks = screen.getAllByTestId("upgrade-link");
@@ -341,7 +429,12 @@ describe("QuotasCard", () => {
     const user = userEvent.setup();
 
     const { container } = render(
-      <QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
     );
 
     const collapsibleRoot = container.querySelector("[data-testid='collapsible-root']");
@@ -356,7 +449,12 @@ describe("QuotasCard", () => {
     const user = userEvent.setup();
 
     const { container } = render(
-      <QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
     );
 
     // Open edit modal - use container to be more specific
@@ -367,8 +465,8 @@ describe("QuotasCard", () => {
     const modalDeleteButton = screen.getByTestId("modal-delete");
     await user.click(modalDeleteButton);
 
-    // Should show confirmation modal
-    expect(screen.getByTestId("confirmation-modal")).toBeInTheDocument();
+    // Should show delete dialog
+    expect(screen.getByTestId("delete-quota-dialog")).toBeInTheDocument();
   });
 
   test("disables delete button when deletion is in progress", async () => {
@@ -382,12 +480,19 @@ describe("QuotasCard", () => {
         )
     );
 
-    render(<QuotasCard localSurvey={mockSurvey} isQuotasEnabled={true} quotas={mockQuotas} />);
+    render(
+      <QuotasCard
+        localSurvey={mockSurvey}
+        isQuotasEnabled={true}
+        quotas={mockQuotas}
+        isPublicSurvey={false}
+      />
+    );
 
     const deleteButton = screen.getByTestId("delete-quota1");
     await user.click(deleteButton);
 
-    const confirmButton = screen.getByTestId("confirm-button");
+    const confirmButton = screen.getByTestId("confirm-delete-button");
     await user.click(confirmButton);
 
     // Button should be disabled while deletion is in progress

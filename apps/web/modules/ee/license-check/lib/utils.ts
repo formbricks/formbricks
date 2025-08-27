@@ -55,7 +55,6 @@ const getSpecificFeatureFlag = async (
     | "auditLogs"
     | "multiLanguageSurveys"
     | "accessControl"
-    | "quotas"
   >
 ): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
@@ -79,9 +78,18 @@ export const getIsSsoEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("sso");
 };
 
-export const getIsQuotasEnabled = async (): Promise<boolean> => {
-  return true;
-  // return getSpecificFeatureFlag("quotas");
+export const getIsQuotasEnabled = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
+  const license = await getEnterpriseLicense();
+
+  if (IS_FORMBRICKS_CLOUD) {
+    return (
+      license.active &&
+      !!license.features?.quotas &&
+      (billingPlan === PROJECT_FEATURE_KEYS.SCALE || billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
+    );
+  }
+
+  return license.active && !!license.features?.quotas;
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {

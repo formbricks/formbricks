@@ -7,6 +7,21 @@ import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { QuotaModal } from "./quota-modal";
 
+// Mock @paralleldrive/cuid2
+vi.mock("@paralleldrive/cuid2", () => ({
+  createId: () => "test-id",
+}));
+
+// Mock helper functions
+vi.mock("@/lib/utils/helper", () => ({
+  getFormattedErrorMessage: vi.fn((result: any) => result?.serverError || "Unknown error"),
+}));
+
+// Mock zodResolver
+vi.mock("@hookform/resolvers/zod", () => ({
+  zodResolver: vi.fn(() => ({})),
+}));
+
 // Mock server actions
 vi.mock("@/modules/ee/quotas/actions", () => ({
   createQuotaAction: vi.fn(),
@@ -37,16 +52,33 @@ vi.mock("@/modules/ui/components/form", () => ({
   FormProvider: ({ children }: any) => <div data-testid="form-provider">{children}</div>,
   FormField: ({ render, name }: any) => {
     const field = {
-      value: name === "conditions" ? { connector: "and", criteria: [] } : "",
+      value:
+        name === "conditions"
+          ? { connector: "and", criteria: [] }
+          : name === "limit"
+            ? 100
+            : name === "action"
+              ? "endSurvey"
+              : name === "countPartialSubmissions"
+                ? false
+                : "",
       onChange: vi.fn(),
       onBlur: vi.fn(),
     };
-    return <div data-testid={`form-field-${name}`}>{render({ field })}</div>;
+    const fieldState = {
+      error: undefined,
+    };
+    return <div data-testid={`form-field-${name}`}>{render({ field, fieldState })}</div>;
   },
   FormItem: ({ children }: any) => <div data-testid="form-item">{children}</div>,
   FormLabel: ({ children }: any) => <label data-testid="form-label">{children}</label>,
   FormControl: ({ children }: any) => <div data-testid="form-control">{children}</div>,
   FormDescription: ({ children }: any) => <p data-testid="form-description">{children}</p>,
+  FormError: ({ children }: any) => (
+    <span data-testid="form-error" className="text-red-500">
+      {children}
+    </span>
+  ),
 }));
 
 vi.mock("@/modules/ui/components/input", () => ({
@@ -81,7 +113,11 @@ vi.mock("@/modules/ui/components/button", () => ({
   Button: ({ children, onClick, loading, disabled, type, variant }: any) => (
     <button
       data-testid="button"
-      onClick={onClick}
+      onClick={(e) => {
+        if (!disabled && !loading && onClick) {
+          onClick(e);
+        }
+      }}
       disabled={disabled || loading}
       type={type}
       data-variant={variant}
@@ -89,6 +125,15 @@ vi.mock("@/modules/ui/components/button", () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock("@/modules/ui/components/confirmation-modal", () => ({
+  ConfirmationModal: ({ open, onConfirm }: any) =>
+    open ? (
+      <div data-testid="confirmation-modal" onClick={onConfirm}>
+        Confirmation Modal
+      </div>
+    ) : null,
 }));
 
 // Mock child components
@@ -125,8 +170,19 @@ vi.mock("react-hook-form", () => ({
     reset: vi.fn(),
     watch: vi.fn(() => "endSurvey"),
     setValue: vi.fn(),
+    getValues: vi.fn((field: string) => {
+      if (field === "conditions") {
+        return { connector: "and", criteria: [] };
+      }
+      return "";
+    }),
     control: {},
-    formState: { isSubmitting: false, isDirty: true },
+    formState: {
+      isSubmitting: false,
+      isDirty: false, // Default to false
+      errors: {},
+      isValid: true,
+    },
   }),
 }));
 
@@ -335,6 +391,9 @@ describe("QuotaModal", () => {
           surveyId: "survey1",
           name: "Test Quota",
           limit: 100,
+          action: "endSurvey",
+          conditions: { connector: "and", criteria: [] },
+          countPartialSubmissions: false,
         }),
       });
     });

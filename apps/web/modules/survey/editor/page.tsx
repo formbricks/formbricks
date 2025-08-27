@@ -75,7 +75,7 @@ export const SurveyEditorPage = async (props) => {
       getMultiLanguagePermission(organizationBilling.plan),
       getSurveyFollowUpsPermission(organizationBilling.plan),
       getIsSpamProtectionEnabled(organizationBilling.plan),
-      getIsQuotasEnabled(),
+      getIsQuotasEnabled(organizationBilling.plan),
     ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];

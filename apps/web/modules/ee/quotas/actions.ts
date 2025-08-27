@@ -7,6 +7,7 @@ import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/u
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuota, deleteQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
@@ -16,6 +17,17 @@ const ZDeleteQuotaAction = z.object({
   quotaId: ZId,
   surveyId: ZId,
 });
+
+const checkQuotasEnabled = async (organizationId: string) => {
+  const organizationBilling = await getOrganizationBilling(organizationId);
+  if (!organizationBilling) {
+    throw new Error("Organization billing not found");
+  }
+  const isQuotasEnabled = await getIsQuotasEnabled(organizationBilling.plan);
+  if (!isQuotasEnabled) {
+    throw new OperationNotAllowedError("Quotas are not enabled");
+  }
+};
 
 export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAction).action(
   withAuditLogging(
@@ -28,11 +40,8 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZDeleteQuotaAction>;
     }) => {
-      const isQuotasEnabled = await getIsQuotasEnabled();
-      if (!isQuotasEnabled) {
-        throw new OperationNotAllowedError("Quotas are not enabled");
-      }
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      await checkQuotasEnabled(organizationId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -76,12 +85,8 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZUpdateQuotaAction>;
     }) => {
-      const isQuotasEnabled = await getIsQuotasEnabled();
-      if (!isQuotasEnabled) {
-        throw new OperationNotAllowedError("Quotas are not enabled");
-      }
-
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
+      await checkQuotasEnabled(organizationId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -123,12 +128,8 @@ export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZCreateQuotaAction>;
     }) => {
-      const isQuotasEnabled = await getIsQuotasEnabled();
-      if (!isQuotasEnabled) {
-        throw new OperationNotAllowedError("Quotas are not enabled");
-      }
-
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
+      await checkQuotasEnabled(organizationId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
