@@ -129,7 +129,7 @@ export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAc
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZCreateQuotaAction>;
     }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
       await checkQuotasEnabled(organizationId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
