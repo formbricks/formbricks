@@ -23,9 +23,9 @@ vi.mock("@radix-ui/react-collapsible", () => ({
       {children}
     </div>
   ),
-  CollapsibleTrigger: ({ children, asChild }: any) =>
+  Trigger: ({ children, asChild }: any) =>
     asChild ? children : <button data-testid="collapsible-trigger">{children}</button>,
-  CollapsibleContent: ({ children }: any) => <div data-testid="collapsible-content">{children}</div>,
+  Content: ({ children }: any) => <div data-testid="collapsible-content">{children}</div>,
 }));
 
 // Mock UI components
