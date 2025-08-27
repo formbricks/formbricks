@@ -95,7 +95,6 @@ export const QuotasCard = ({
     setQuotaToDelete(null);
     setIsDeletingQuota(false);
     setActiveQuota(null);
-    setOpen(false);
   };
 
   const openEditQuotaModal = (quota: TSurveyQuota) => {

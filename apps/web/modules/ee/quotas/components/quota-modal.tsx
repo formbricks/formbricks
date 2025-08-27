@@ -82,6 +82,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
       action: quota?.action || "endSurvey",
       endingCardId: quota?.endingCardId || survey.endings[0]?.id || null,
       countPartialSubmissions: quota?.countPartialSubmissions || false,
+      surveyId: survey.id,
     };
   }, [quota, survey]);
 
