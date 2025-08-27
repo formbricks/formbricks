@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
+import { CircleAlert } from "lucide-react";
 import React from "react";
 
 type ConfirmationModalProps = {
@@ -59,14 +60,18 @@ export const ConfirmationModal = ({
         disableCloseOnOutsideClick={!closeOnOutsideClick}
         className="max-w-[540px] space-y-4">
         <DialogHeader className="flex justify-center gap-2">
-          {Icon && <Icon className="h-4 w-4" />}
+          {Icon ? (
+            <Icon className="h-4 w-4 text-slate-500" />
+          ) : (
+            <CircleAlert className="h-4 w-4 text-slate-500" />
+          )}
           <div className="flex flex-col">
             <DialogTitle className="w-full text-left">{title}</DialogTitle>
-            {description && (
-              <DialogDescription className="w-full text-left">
-                <span className="mt-2 whitespace-pre-wrap">{description}</span>
-              </DialogDescription>
-            )}
+            <DialogDescription className="w-full text-left">
+              <span className="mt-2 whitespace-pre-wrap">
+                {description || t("environments.project.general.this_action_cannot_be_undone")}
+              </span>
+            </DialogDescription>
           </div>
         </DialogHeader>
 
