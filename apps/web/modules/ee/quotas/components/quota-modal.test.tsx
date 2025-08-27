@@ -37,16 +37,33 @@ vi.mock("@/modules/ui/components/form", () => ({
   FormProvider: ({ children }: any) => <div data-testid="form-provider">{children}</div>,
   FormField: ({ render, name }: any) => {
     const field = {
-      value: name === "conditions" ? { connector: "and", criteria: [] } : "",
+      value:
+        name === "conditions"
+          ? { connector: "and", criteria: [] }
+          : name === "limit"
+            ? 100
+            : name === "action"
+              ? "endSurvey"
+              : name === "countPartialSubmissions"
+                ? false
+                : "",
       onChange: vi.fn(),
       onBlur: vi.fn(),
     };
-    return <div data-testid={`form-field-${name}`}>{render({ field })}</div>;
+    const fieldState = {
+      error: undefined,
+    };
+    return <div data-testid={`form-field-${name}`}>{render({ field, fieldState })}</div>;
   },
   FormItem: ({ children }: any) => <div data-testid="form-item">{children}</div>,
   FormLabel: ({ children }: any) => <label data-testid="form-label">{children}</label>,
   FormControl: ({ children }: any) => <div data-testid="form-control">{children}</div>,
   FormDescription: ({ children }: any) => <p data-testid="form-description">{children}</p>,
+  FormError: ({ children }: any) => (
+    <span data-testid="form-error" className="text-red-500">
+      {children}
+    </span>
+  ),
 }));
 
 vi.mock("@/modules/ui/components/input", () => ({
@@ -81,7 +98,11 @@ vi.mock("@/modules/ui/components/button", () => ({
   Button: ({ children, onClick, loading, disabled, type, variant }: any) => (
     <button
       data-testid="button"
-      onClick={onClick}
+      onClick={(e) => {
+        if (!disabled && !loading && onClick) {
+          onClick(e);
+        }
+      }}
       disabled={disabled || loading}
       type={type}
       data-variant={variant}
@@ -126,7 +147,12 @@ vi.mock("react-hook-form", () => ({
     watch: vi.fn(() => "endSurvey"),
     setValue: vi.fn(),
     control: {},
-    formState: { isSubmitting: false, isDirty: true },
+    formState: {
+      isSubmitting: false,
+      isDirty: false,
+      errors: {},
+      isValid: true,
+    },
   }),
 }));
 
@@ -335,7 +361,11 @@ describe("QuotaModal", () => {
           surveyId: "survey1",
           name: "Test Quota",
           limit: 100,
+          action: "endSurvey",
+          conditions: { connector: "and", criteria: [] },
+          countPartialSubmissions: false,
         }),
+        surveyId: "survey1",
       });
     });
   });

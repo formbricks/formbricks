@@ -28,6 +28,7 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota }: QuotaListProps) => {
     };
     const duplicateQuotaActionResult = await createQuotaAction({
       quota: quotaInput,
+      surveyId: quota.surveyId,
     });
     if (duplicateQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_duplicated_successfull_toast"));
