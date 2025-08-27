@@ -4,11 +4,12 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteQuotaAction } from "@/modules/ee/quotas/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon, PlusIcon } from "lucide-react";
+import { TFnType, useTranslate } from "@tolgee/react";
+import { CheckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -22,9 +23,46 @@ interface QuotasCardProps {
   isQuotasEnabled: boolean;
   isFormbricksCloud?: boolean;
   quotas: TSurveyQuota[];
+  isPublicSurvey: boolean;
 }
 
-export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, quotas }: QuotasCardProps) => {
+const AddQuotaButton = ({
+  setIsQuotaModalOpen,
+  setActiveQuota,
+  t,
+  isPublicSurvey,
+  setOpenCreateQuotaConfirmationModal,
+}: {
+  setIsQuotaModalOpen: (open: boolean) => void;
+  setActiveQuota: (quota: TSurveyQuota | null) => void;
+  t: TFnType;
+  isPublicSurvey: boolean;
+  setOpenCreateQuotaConfirmationModal: (open: boolean) => void;
+}) => {
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      onClick={() => {
+        if (isPublicSurvey) {
+          setOpenCreateQuotaConfirmationModal(true);
+        } else {
+          setIsQuotaModalOpen(true);
+          setActiveQuota(null);
+        }
+      }}>
+      {t("environments.surveys.edit.quotas.add_quota")}
+    </Button>
+  );
+};
+
+export const QuotasCard = ({
+  localSurvey,
+  isQuotasEnabled,
+  isFormbricksCloud,
+  quotas,
+  isPublicSurvey,
+}: QuotasCardProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
@@ -32,6 +70,7 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
   const environmentId = localSurvey.environmentId;
   const [quotaToDelete, setQuotaToDelete] = useState<TSurveyQuota | null>(null);
   const [isDeletingQuota, setIsDeletingQuota] = useState(false);
+  const [openCreateQuotaConfirmationModal, setOpenCreateQuotaConfirmationModal] = useState(false);
   const router = useRouter();
 
   const [parent] = useAutoAnimate();
@@ -40,6 +79,7 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
     setIsDeletingQuota(true);
     const deleteQuotaActionResult = await deleteQuotaAction({
       quotaId: quotaId,
+      surveyId: localSurvey.id,
     });
     if (deleteQuotaActionResult?.data) {
       toast.success(t("environments.surveys.edit.quotas.quota_deleted_successfull_toast"));
@@ -54,6 +94,8 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
     }
     setQuotaToDelete(null);
     setIsDeletingQuota(false);
+    setActiveQuota(null);
+    setOpen(false);
   };
 
   const handleEditQuota = (quota: TSurveyQuota) => {
@@ -119,31 +161,25 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
                 ) : (
                   <div className="rounded-lg border p-3 text-center">
                     <p className="mb-4 text-sm text-slate-500">{t("common.quotas_description")}</p>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setIsQuotaModalOpen(true);
-                        setActiveQuota(null);
-                      }}>
-                      <PlusIcon className="mr-2 h-4 w-4" />
-                      {t("environments.surveys.edit.quotas.add_quota")}
-                    </Button>
+                    <AddQuotaButton
+                      setIsQuotaModalOpen={setIsQuotaModalOpen}
+                      setActiveQuota={setActiveQuota}
+                      t={t}
+                      isPublicSurvey={isPublicSurvey}
+                      setOpenCreateQuotaConfirmationModal={setOpenCreateQuotaConfirmationModal}
+                    />
                   </div>
                 )}
 
                 {hasQuotas && (
                   <div className="border-t pt-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setIsQuotaModalOpen(true);
-                        setActiveQuota(null);
-                      }}>
-                      <PlusIcon className="mr-2 h-4 w-4" />
-                      {t("environments.surveys.edit.quotas.add_quota")}
-                    </Button>
+                    <AddQuotaButton
+                      setIsQuotaModalOpen={setIsQuotaModalOpen}
+                      setActiveQuota={setActiveQuota}
+                      t={t}
+                      isPublicSurvey={isPublicSurvey}
+                      setOpenCreateQuotaConfirmationModal={setOpenCreateQuotaConfirmationModal}
+                    />
                   </div>
                 )}
               </div>
@@ -165,17 +201,28 @@ export const QuotasCard = ({ localSurvey, isQuotasEnabled, isFormbricksCloud, qu
           }}
         />
       )}
-      <ConfirmationModal
+      <DeleteDialog
         open={!!quotaToDelete}
         setOpen={(open) => !open && setQuotaToDelete(null)}
-        title={t("environments.surveys.edit.quotas.delete_quota_confirmation_title")}
+        deleteWhat={t("common.quota")}
         text={t("environments.surveys.edit.quotas.delete_quota_confirmation_text", {
           quotaName: `"${quotaToDelete?.name}"`,
         })}
-        onConfirm={() => quotaToDelete && handleQuotaDelete(quotaToDelete.id)}
-        buttonVariant="destructive"
-        buttonText={t("common.delete")}
-        buttonLoading={isDeletingQuota}
+        onDelete={() => quotaToDelete && handleQuotaDelete(quotaToDelete.id)}
+        isDeleting={isDeletingQuota}
+      />
+      <ConfirmationModal
+        title={t("environments.surveys.edit.quotas.create_quota_for_public_survey")}
+        text={t("environments.surveys.edit.quotas.create_quota_for_public_survey_text")}
+        open={openCreateQuotaConfirmationModal}
+        setOpen={setOpenCreateQuotaConfirmationModal}
+        onConfirm={() => {
+          setOpenCreateQuotaConfirmationModal(false);
+          setIsQuotaModalOpen(true);
+          setActiveQuota(null);
+        }}
+        buttonVariant="default"
+        buttonText={t("common.continue")}
       />
     </>
   );

@@ -3,7 +3,8 @@
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
 import { useTranslate } from "@tolgee/react";
 import { useMemo } from "react";
-import { TSurveyQuotaConditions } from "@formbricks/types/quota";
+import { FieldErrors } from "react-hook-form";
+import { TSurveyQuotaConditions, TSurveyQuotaCreateInput } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   TQuotaConditionGroup,
@@ -17,9 +18,15 @@ interface QuotaConditionBuilderProps {
   survey: TSurvey;
   conditions: TSurveyQuotaConditions;
   onChange: (conditions: TSurveyQuotaConditions) => void;
+  errors?: FieldErrors<TSurveyQuotaCreateInput>;
 }
 
-export const QuotaConditionBuilder = ({ survey, conditions, onChange }: QuotaConditionBuilderProps) => {
+export const QuotaConditionBuilder = ({
+  survey,
+  conditions,
+  onChange,
+  errors,
+}: QuotaConditionBuilderProps) => {
   const { t } = useTranslate();
 
   // Convert quota conditions to generic format
@@ -42,7 +49,12 @@ export const QuotaConditionBuilder = ({ survey, conditions, onChange }: QuotaCon
 
   return (
     <div className="space-y-4">
-      <ConditionsEditor conditions={genericConditions} config={config} callbacks={callbacks} />
+      <ConditionsEditor
+        conditions={genericConditions}
+        config={config}
+        callbacks={callbacks}
+        errors={errors}
+      />
     </div>
   );
 };

@@ -35,14 +35,25 @@ export const ZSurveyQuota = z.object({
 });
 export type TSurveyQuota = z.infer<typeof ZSurveyQuota>;
 
-export const ZSurveyQuotaCreateInput = ZSurveyQuota.omit({ id: true, createdAt: true, updatedAt: true });
+export const ZSurveyQuotaCreateInput = ZSurveyQuota.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).superRefine((data, ctx) => {
+  // Validate ending card when action is endSurvey
+  if (data.action === "endSurvey" && (data.endingCardId === null || data.endingCardId === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["action"],
+    });
+  }
+});
 export type TSurveyQuotaCreateInput = z.infer<typeof ZSurveyQuotaCreateInput>;
 
 export const ZSurveyQuotaUpdateInput = ZSurveyQuota.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  surveyId: true,
 });
 export type TSurveyQuotaUpdateInput = z.infer<typeof ZSurveyQuotaUpdateInput>;
 

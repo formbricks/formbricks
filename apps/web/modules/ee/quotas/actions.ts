@@ -3,12 +3,7 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import {
-  getOrganizationIdFromQuotaId,
-  getOrganizationIdFromSurveyId,
-  getProjectIdFromQuotaId,
-  getProjectIdFromSurveyId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuota, deleteQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
@@ -19,6 +14,7 @@ import { ZSurveyQuotaCreateInput, ZSurveyQuotaUpdateInput } from "@formbricks/ty
 
 const ZDeleteQuotaAction = z.object({
   quotaId: ZId,
+  surveyId: ZId,
 });
 
 export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAction).action(
@@ -36,8 +32,7 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
       if (!isQuotasEnabled) {
         throw new OperationNotAllowedError("Quotas are not enabled");
       }
-
-      const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -48,7 +43,7 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
           },
           {
             type: "projectTeam",
-            projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
+            projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
             minPermission: "readWrite",
           },
         ],
@@ -86,7 +81,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
         throw new OperationNotAllowedError("Quotas are not enabled");
       }
 
-      const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -97,7 +92,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
           },
           {
             type: "projectTeam",
-            projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
+            projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
             minPermission: "readWrite",
           },
         ],
@@ -106,6 +101,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
       ctx.auditLoggingCtx.organizationId = organizationId;
       const result = await updateQuota(parsedInput.quota, parsedInput.quotaId);
       ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
+      ctx.auditLoggingCtx.oldObject = parsedInput.quota;
       ctx.auditLoggingCtx.newObject = result;
       return result;
     }
