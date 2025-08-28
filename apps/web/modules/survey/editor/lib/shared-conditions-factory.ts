@@ -41,7 +41,6 @@ export interface SharedConditionsFactoryParams {
 // Callback parameters for different update patterns
 export interface ConditionsUpdateCallbacks {
   onConditionsChange: (updater: (conditions: TConditionGroup) => TConditionGroup) => void;
-  onEmptyConditions?: () => void;
 }
 
 // Factory function that creates config and callbacks for conditions editor
@@ -53,7 +52,7 @@ export function createSharedConditionsFactory(
   callbacks: TConditionsEditorCallbacks<TSingleCondition>;
 } {
   const { survey, t, questionIdx, getDefaultOperator, includeCreateGroup = false } = params;
-  const { onConditionsChange, onEmptyConditions } = updateCallbacks;
+  const { onConditionsChange } = updateCallbacks;
 
   // Handles special update logic for matrix questions, setting appropriate operators and metadata
   const handleMatrixQuestionUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {
@@ -125,21 +124,11 @@ export function createSharedConditionsFactory(
 
     // Removes a condition and triggers empty handler if no conditions remain
     onRemoveCondition: (resourceId: string) => {
-      let willBeEmpty = false;
-      let nextState: TConditionGroup | null = null;
-      // simulate
       onConditionsChange((conditions) => {
-        const copy = structuredClone(conditions);
-        removeCondition(copy, resourceId);
-        willBeEmpty = copy.conditions.length === 0;
-        nextState = copy;
-        return conditions; // no-op here; we will decide below
+        const conditionsCopy = structuredClone(conditions);
+        removeCondition(conditionsCopy, resourceId);
+        return conditionsCopy;
       });
-      if (willBeEmpty && onEmptyConditions) {
-        onEmptyConditions();
-      } else if (nextState) {
-        onConditionsChange(() => structuredClone(nextState!));
-      }
     },
 
     // Creates an exact copy of the specified condition

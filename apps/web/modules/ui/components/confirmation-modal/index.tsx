@@ -28,7 +28,14 @@ type ConfirmationModalProps = {
   closeOnOutsideClick?: boolean;
   hideCloseButton?: boolean;
   cancelButtonText?: string;
+  onCancel?: () => void;
   Icon?: React.ElementType;
+  // Secondary action button props
+  secondaryButtonText?: string;
+  onSecondaryAction?: () => void;
+  secondaryButtonVariant?: "destructive" | "default" | "secondary" | "ghost";
+  secondaryButtonLoading?: boolean;
+  secondaryButtonDisabled?: boolean;
 };
 
 export const ConfirmationModal = ({
@@ -45,12 +52,23 @@ export const ConfirmationModal = ({
   closeOnOutsideClick = true,
   hideCloseButton,
   cancelButtonText,
+  onCancel,
   Icon,
+  secondaryButtonText,
+  onSecondaryAction,
+  secondaryButtonVariant = "secondary",
+  secondaryButtonLoading = false,
+  secondaryButtonDisabled = false,
 }: ConfirmationModalProps) => {
   const { t } = useTranslate();
-  const handleButtonAction = async () => {
+  const handleButtonAction = () => {
     if (isButtonDisabled) return;
-    await onConfirm();
+    onConfirm();
+  };
+
+  const handleSecondaryAction = () => {
+    if (secondaryButtonDisabled || !onSecondaryAction) return;
+    onSecondaryAction();
   };
 
   return (
@@ -80,16 +98,58 @@ export const ConfirmationModal = ({
         </DialogBody>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>
-            {cancelButtonText || t("common.cancel")}
-          </Button>
-          <Button
-            loading={buttonLoading}
-            disabled={isButtonDisabled}
-            variant={buttonVariant}
-            onClick={handleButtonAction}>
-            {buttonText}
-          </Button>
+          {secondaryButtonText ? (
+            // Three-button layout when secondary action is present
+            <div className="flex w-full justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (onCancel) {
+                    onCancel();
+                  }
+                  setOpen(false);
+                }}>
+                {cancelButtonText || t("common.cancel")}
+              </Button>
+              <div className="flex gap-2">
+                <Button
+                  loading={secondaryButtonLoading}
+                  disabled={secondaryButtonDisabled}
+                  variant={secondaryButtonVariant}
+                  onClick={handleSecondaryAction}>
+                  {secondaryButtonText}
+                </Button>
+                <Button
+                  loading={buttonLoading}
+                  disabled={isButtonDisabled}
+                  variant={buttonVariant}
+                  onClick={handleButtonAction}>
+                  {buttonText}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // Default two-button layout
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (onCancel) {
+                    onCancel();
+                  }
+                  setOpen(false);
+                }}>
+                {cancelButtonText || t("common.cancel")}
+              </Button>
+              <Button
+                loading={buttonLoading}
+                disabled={isButtonDisabled}
+                variant={buttonVariant}
+                onClick={handleButtonAction}>
+                {buttonText}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

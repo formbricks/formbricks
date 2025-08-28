@@ -2,7 +2,6 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
-import { ChangeQuotaConfirmationModal } from "@/modules/ee/quotas/components/ChangeQuotaConfirmationModal";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -391,7 +390,6 @@ export const QuotaModal = ({
                   onClick={() => {
                     if (quota) {
                       setQuotaToDelete(quota);
-                      onClose();
                     }
                   }}
                   className="flex items-center gap-2"
@@ -433,12 +431,22 @@ export const QuotaModal = ({
               body={t("environments.surveys.edit.quotas.confirm_quota_changes_body")}
               buttonText={t("common.save")}
               cancelButtonText={t("common.discard")}
+              onCancel={() => {
+                reset();
+                onOpenChange(false);
+              }}
             />
-            <ChangeQuotaConfirmationModal
+            <ConfirmationModal
               open={openConfirmChangesInInclusionCriteria}
               setOpen={setOpenConfirmChangesInInclusionCriteria}
+              title={t("environments.surveys.edit.quotas.change_quota_for_public_survey")}
+              description={t("environments.surveys.edit.quotas.save_changes_confirmation_text")}
+              body={t("environments.surveys.edit.quotas.save_changes_confirmation_body")}
+              buttonText={t("common.continue")}
+              buttonVariant="default"
               onConfirm={form.handleSubmit(submitQuota)}
-              onDuplicate={() => {
+              secondaryButtonText={t("environments.surveys.edit.quotas.duplicate_quota")}
+              onSecondaryAction={() => {
                 if (quota) {
                   const updatedQuota = {
                     ...quota,
@@ -446,6 +454,7 @@ export const QuotaModal = ({
                   };
                   duplicateQuota(updatedQuota);
                   onOpenChange(false);
+                  setOpenConfirmChangesInInclusionCriteria(false);
                 }
               }}
             />

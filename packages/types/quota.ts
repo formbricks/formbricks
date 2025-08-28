@@ -41,7 +41,7 @@ export const ZSurveyQuotaInput = ZSurveyQuota.omit({
   if (data.action === "endSurvey" && (data.endingCardId === null || data.endingCardId === "")) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["action"], // keep same path as your original
+      path: ["action"],
       message: "endingCardId is required when action is endSurvey",
     });
   }

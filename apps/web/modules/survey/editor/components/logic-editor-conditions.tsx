@@ -40,11 +40,11 @@ export function LogicEditorConditions({
         const logicCopy = structuredClone(question.logic) ?? [];
         const logicItem = logicCopy[logicIdx];
         logicItem.conditions = updater(logicItem.conditions);
-        updateQuestion(questionIdx, { logic: logicCopy });
-      },
-      onEmptyConditions: () => {
-        const logicCopy = structuredClone(question.logic) ?? [];
-        logicCopy.splice(logicIdx, 1);
+
+        if (logicItem.conditions.conditions.length === 0) {
+          logicCopy.splice(logicIdx, 1);
+        }
+
         updateQuestion(questionIdx, { logic: logicCopy });
       },
     }

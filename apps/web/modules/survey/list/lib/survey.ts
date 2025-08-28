@@ -1,6 +1,7 @@
 import "server-only";
 import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
 import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
@@ -284,10 +285,11 @@ export const copySurveyToOtherEnvironment = async (
     const isSameEnvironment = environmentId === targetEnvironmentId;
 
     // Fetch required resources
-    const [existingEnvironment, existingProject, existingSurvey] = await Promise.all([
+    const [existingEnvironment, existingProject, existingSurvey, existingQuotas] = await Promise.all([
       doesEnvironmentExist(environmentId),
       getProjectWithLanguagesByEnvironmentId(environmentId),
       getExistingSurvey(surveyId),
+      getQuotas(surveyId),
     ]);
 
     if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
@@ -485,6 +487,18 @@ export const copySurveyToOtherEnvironment = async (
             name: followUp.name,
             trigger: followUp.trigger,
             action: followUp.action,
+          })),
+        },
+      },
+      quotas: {
+        createMany: {
+          data: existingQuotas.map((quota) => ({
+            name: quota.name,
+            logic: quota.logic,
+            limit: quota.limit,
+            action: quota.action,
+            endingCardId: quota.endingCardId,
+            countPartialSubmissions: quota.countPartialSubmissions,
           })),
         },
       },

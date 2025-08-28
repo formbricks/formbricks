@@ -165,7 +165,6 @@ describe("shared-conditions-factory", () => {
 
   const defaultCallbacks: ConditionsUpdateCallbacks = {
     onConditionsChange: mockConditionsChange,
-    onEmptyConditions: mockEmptyConditions,
   };
 
   beforeEach(() => {
@@ -329,25 +328,6 @@ describe("shared-conditions-factory", () => {
       result.callbacks.onRemoveCondition(resourceId);
 
       expect(mockConditionsChange).toHaveBeenCalledWith(expect.any(Function));
-    });
-
-    test("onRemoveCondition should call onEmptyConditions when no conditions left", () => {
-      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
-      const resourceId = "condition1";
-
-      // Mock the updater function to simulate empty conditions
-      mockConditionsChange.mockImplementation((updater) => {
-        const mockConditions: TConditionGroup = {
-          id: "root",
-          connector: "and",
-          conditions: [],
-        };
-        return updater(mockConditions);
-      });
-
-      result.callbacks.onRemoveCondition(resourceId);
-
-      expect(mockEmptyConditions).toHaveBeenCalled();
     });
 
     test("onDuplicateCondition should duplicate condition", () => {
