@@ -94,10 +94,6 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
       updatedBillingPlan = PROJECT_FEATURE_KEYS.STARTUP;
       break;
 
-    case PROJECT_FEATURE_KEYS.SCALE:
-      updatedBillingPlan = PROJECT_FEATURE_KEYS.SCALE;
-      break;
-
     case PROJECT_FEATURE_KEYS.ENTERPRISE:
       updatedBillingPlan = PROJECT_FEATURE_KEYS.ENTERPRISE;
       break;

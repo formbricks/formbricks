@@ -170,7 +170,7 @@ vi.mock("@/modules/ui/components/confirmation-modal", () => ({
     open,
     setOpen,
     title,
-    text,
+    body,
     buttonText,
     onConfirm,
     buttonVariant,
@@ -182,7 +182,7 @@ vi.mock("@/modules/ui/components/confirmation-modal", () => ({
       data-loading={buttonLoading}
       data-variant={buttonVariant}>
       <div data-testid="modal-title">{title}</div>
-      <div data-testid="modal-text">{text}</div>
+      <div data-testid="modal-text">{body}</div>
       <button type="button" onClick={onConfirm} data-testid="confirm-button">
         {buttonText}
       </button>

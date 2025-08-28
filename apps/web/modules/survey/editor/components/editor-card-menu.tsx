@@ -310,7 +310,7 @@ export const EditorCardMenu = ({
         open={logicWarningModal}
         setOpen={setLogicWarningModal}
         title={t("environments.surveys.edit.logic_error_warning")}
-        text={t("environments.surveys.edit.logic_error_warning_text")}
+        body={t("environments.surveys.edit.logic_error_warning_text")}
         buttonText={t("environments.surveys.edit.change_anyway")}
         onConfirm={onConfirm}
       />

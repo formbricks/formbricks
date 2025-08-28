@@ -34,7 +34,7 @@ interface MultiLanguageCardProps {
 }
 
 export interface ConfirmationModalProps {
-  text: string;
+  body: string;
   open: boolean;
   title: string;
   buttonText: string;
@@ -60,7 +60,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
     title: "",
     open: false,
-    text: "",
+    body: "",
     buttonText: "",
     onConfirm: () => {},
   });
@@ -154,7 +154,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         setConfirmationModalInfo({
           open: true,
           title: t("environments.surveys.edit.remove_translations"),
-          text: t("environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
+          body: t("environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
           buttonText: t("environments.surveys.edit.remove_translations"),
           buttonVariant: "destructive",
           onConfirm: () => {
@@ -319,7 +319,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               setOpen={() => {
                 setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }));
               }}
-              text={confirmationModalInfo.text}
+              body={confirmationModalInfo.body}
               title={confirmationModalInfo.title}
             />
           </div>

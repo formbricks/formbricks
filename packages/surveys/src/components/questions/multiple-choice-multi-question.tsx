@@ -6,7 +6,7 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getShuffledChoicesIds, isRTL } from "@/lib/utils";
+import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -25,6 +25,7 @@ interface MultipleChoiceMultiProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function MultipleChoiceMultiQuestion({
@@ -41,6 +42,7 @@ export function MultipleChoiceMultiQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<MultipleChoiceMultiProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -140,11 +142,7 @@ export function MultipleChoiceMultiQuestion({
       : question.required;
   };
 
-  const otherOptionDir = useMemo(() => {
-    const placeholder = getLocalizedValue(question.otherOptionPlaceholder, languageCode);
-    if (!otherValue) return isRTL(placeholder) ? "rtl" : "ltr";
-    return "auto";
-  }, [languageCode, question.otherOptionPlaceholder, otherValue]);
+  const otherOptionInputDir = !otherValue ? dir : "auto";
 
   return (
     <ScrollableContainer>
@@ -197,9 +195,10 @@ export function MultipleChoiceMultiQuestion({
                       }
                     }}
                     autoFocus={idx === 0 && autoFocusEnabled}>
-                    <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
+                    <span className="fb-flex fb-items-center fb-text-sm">
                       <input
                         type="checkbox"
+                        dir={dir}
                         id={choice.id}
                         name={question.id}
                         tabIndex={-1}
@@ -219,7 +218,7 @@ export function MultipleChoiceMultiQuestion({
                         }
                         required={getIsRequired()}
                       />
-                      <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
+                      <span id={`${choice.id}-label`} className="fb-mx-3 fb-grow fb-font-medium" dir="auto">
                         {getLocalizedValue(choice.label, languageCode)}
                       </span>
                     </span>
@@ -241,9 +240,10 @@ export function MultipleChoiceMultiQuestion({
                       document.getElementById(otherOption.id)?.focus();
                     }
                   }}>
-                  <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
+                  <span className="fb-flex fb-items-center fb-text-sm">
                     <input
                       type="checkbox"
+                      dir={dir}
                       tabIndex={-1}
                       id={otherOption.id}
                       name={question.id}
@@ -263,14 +263,17 @@ export function MultipleChoiceMultiQuestion({
                       }}
                       checked={otherSelected}
                     />
-                    <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
+                    <span
+                      id={`${otherOption.id}-label`}
+                      className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
+                      dir="auto">
                       {getLocalizedValue(otherOption.label, languageCode)}
                     </span>
                   </span>
                   {otherSelected ? (
                     <input
                       ref={otherSpecify}
-                      dir={otherOptionDir}
+                      dir={otherOptionInputDir}
                       id={`${otherOption.id}-label`}
                       maxLength={250}
                       name={question.id}
