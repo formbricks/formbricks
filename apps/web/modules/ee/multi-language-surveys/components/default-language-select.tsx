@@ -45,7 +45,7 @@ export function DefaultLanguageSelect({
                   t("environments.surveys.edit.confirm_default_language") +
                   ": " +
                   getLanguageLabel(languageCode, locale),
-                text: t(
+                body: t(
                   "environments.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
                 ),
                 buttonText: t("common.confirm"),

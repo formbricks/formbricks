@@ -53,6 +53,7 @@ export const FallbackInput = ({
                   className="placeholder:text-md h-full bg-white"
                   ref={idx === 0 ? fallbackInputRef : undefined}
                   id="fallback"
+                  autoFocus={idx === filteredRecallItems.length - 1}
                   value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ")}
                   placeholder={`${t("environments.surveys.edit.fallback_for")} ${recallItem.label}`}
                   onKeyDown={(e) => {
