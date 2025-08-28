@@ -70,6 +70,9 @@ deployment:
     app-env:
       nameSuffix: app-env
       type: secret
+    db-secrets:
+      nameSuffix: db-secrets
+      type: secret
   nodeSelector:
     karpenter.sh/capacity-type: spot
   reloadOnChange: true
@@ -103,6 +106,9 @@ externalSecret:
     app-secrets:
       dataFrom:
         key: stage/formbricks/secrets
+    db-secrets:
+      dataFrom:
+        key: stage/formbricks/terraform/rds/credentials
   refreshInterval: 1m
   secretStore:
     kind: ClusterSecretStore
