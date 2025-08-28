@@ -43,8 +43,8 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import {
   TSurveyQuota,
-  TSurveyQuotaConditions,
   TSurveyQuotaInput,
+  TSurveyQuotaLogic,
   ZSurveyQuotaAction,
   ZSurveyQuotaInput,
 } from "@formbricks/types/quota";
@@ -79,9 +79,9 @@ export const QuotaModal = ({
     return {
       name: quota?.name || "",
       limit: quota?.limit || 1,
-      conditions: quota?.conditions || {
+      logic: quota?.logic || {
         connector: "and",
-        criteria: [
+        conditions: [
           {
             id: createId(),
             leftOperand: { type: "question", value: survey.questions[0]?.id },
@@ -160,7 +160,7 @@ export const QuotaModal = ({
     let payload = {
       name: trimmedName || t("environments.surveys.edit.quotas.new_quota"),
       limit: data.limit,
-      conditions: data.conditions,
+      logic: data.logic,
       action: data.action,
       endingCardId: data.endingCardId || null,
       countPartialSubmissions: data.countPartialSubmissions,
@@ -178,7 +178,7 @@ export const QuotaModal = ({
   const onSubmit = async (data: TSurveyQuotaInput) => {
     if (isEditing) {
       const hasChangesInInclusionCriteria =
-        JSON.stringify(form.getValues("conditions")) !== JSON.stringify(quota.conditions);
+        JSON.stringify(form.getValues("logic")) !== JSON.stringify(quota.logic);
       if (hasChangesInInclusionCriteria && isValid) {
         setOpenConfirmChangesInInclusionCriteria(true);
         return;
@@ -188,8 +188,8 @@ export const QuotaModal = ({
   };
 
   const handleConditionsChange = useCallback(
-    (newConditions: TSurveyQuotaConditions) => {
-      form.setValue("conditions", newConditions, { shouldDirty: true, shouldValidate: true });
+    (newConditions: TSurveyQuotaLogic) => {
+      form.setValue("logic", newConditions, { shouldDirty: true, shouldValidate: true });
     },
     [form]
   );
@@ -283,7 +283,7 @@ export const QuotaModal = ({
               {/* Inclusion Criteria Field */}
               <FormField
                 control={control}
-                name="conditions"
+                name="logic"
                 render={({ field }) => (
                   <FormItem>
                     <div className="space-y-4 rounded-lg bg-slate-50 p-3">

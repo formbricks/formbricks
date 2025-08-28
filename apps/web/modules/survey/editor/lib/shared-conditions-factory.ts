@@ -19,7 +19,7 @@ import {
 } from "@/modules/ui/components/conditions-editor/types";
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
-import { TSurveyQuotaConditions } from "@formbricks/types/quota";
+import { TSurveyQuotaLogic } from "@formbricks/types/quota";
 import {
   TConditionGroup,
   TDynamicLogicField,
@@ -196,16 +196,16 @@ export type TQuotaConditionGroup = TGenericConditionGroup<TSingleCondition>;
 
 // Conversion functions for quota conditions (moved from conditions-config.ts)
 // Converts quota-specific condition format to generic condition group format
-export const quotaConditionsToGeneric = (quotaConditions: TSurveyQuotaConditions): TQuotaConditionGroup => {
+export const quotaConditionsToGeneric = (quotaConditions: TSurveyQuotaLogic): TQuotaConditionGroup => {
   return {
     id: "root",
     connector: quotaConditions.connector,
-    conditions: quotaConditions.criteria,
+    conditions: quotaConditions.conditions,
   };
 };
 
 // Converts generic condition group format back to quota-specific condition format
-export const genericConditionsToQuota = (genericConditions: TQuotaConditionGroup): TSurveyQuotaConditions => {
+export const genericConditionsToQuota = (genericConditions: TQuotaConditionGroup): TSurveyQuotaLogic => {
   // Helper function to ensure proper condition structure for quota conditions
   const convertCondition = (condition: TSingleCondition): TSingleCondition => {
     const leftOperand = condition.leftOperand;
@@ -223,6 +223,6 @@ export const genericConditionsToQuota = (genericConditions: TQuotaConditionGroup
 
   return {
     connector: genericConditions.connector,
-    criteria: genericConditions.conditions.map(convertCondition),
+    conditions: genericConditions.conditions.map(convertCondition),
   };
 };

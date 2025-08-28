@@ -145,8 +145,8 @@ export function ConditionsEditor({
     const onCreateGroup = callbacks.onCreateGroup;
     const { show = false, options, showInput = false, inputType } = config.getValueProps(condition);
     const quotaError =
-      quotaErrors?.conditions?.criteria?.[index]?.message ||
-      quotaErrors?.conditions?.criteria?.[index]?.rightOperand?.message;
+      quotaErrors?.logic?.conditions?.[index]?.message ||
+      quotaErrors?.logic?.conditions?.[index]?.rightOperand?.message;
 
     const allowMultiSelect = [
       "equalsOneOf",

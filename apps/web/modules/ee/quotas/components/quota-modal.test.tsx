@@ -161,7 +161,7 @@ vi.mock("react-hook-form", () => ({
       fn({
         name: "Test Quota",
         limit: 100,
-        conditions: { connector: "and", criteria: [] },
+        logic: { connector: "and", conditions: [] },
         action: "endSurvey",
         endingCardId: null,
         countPartialSubmissions: false,
@@ -171,8 +171,8 @@ vi.mock("react-hook-form", () => ({
     watch: vi.fn(() => "endSurvey"),
     setValue: vi.fn(),
     getValues: vi.fn((field: string) => {
-      if (field === "conditions") {
-        return { connector: "and", criteria: [] };
+      if (field === "logic") {
+        return { connector: "and", conditions: [] };
       }
       return "";
     }),
@@ -190,7 +190,7 @@ describe("QuotaModal", () => {
   const mockOnClose = vi.fn();
   const mockOnOpenChange = vi.fn();
   const mockDeleteQuota = vi.fn();
-
+  const mockDuplicateQuota = vi.fn();
   const mockSurvey: TSurvey = {
     id: "survey1",
     environmentId: "env1",
@@ -217,9 +217,9 @@ describe("QuotaModal", () => {
     surveyId: "survey1",
     name: "Test Quota",
     limit: 100,
-    conditions: {
+    logic: {
       connector: "and",
-      criteria: [],
+      conditions: [],
     },
     action: "endSurvey",
     endingCardId: null,
@@ -247,8 +247,9 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
         onClose={mockOnClose}
+        duplicateQuota={mockDuplicateQuota}
       />
     );
 
@@ -263,7 +264,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -278,7 +280,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -295,7 +298,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={mockQuota}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -312,14 +316,15 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
 
     expect(screen.getByTestId("form-field-name")).toBeInTheDocument();
     expect(screen.getByTestId("form-field-limit")).toBeInTheDocument();
-    expect(screen.getByTestId("form-field-conditions")).toBeInTheDocument();
+    expect(screen.getByTestId("form-field-logic")).toBeInTheDocument();
     expect(screen.getByTestId("form-field-action")).toBeInTheDocument();
     expect(screen.getByTestId("form-field-countPartialSubmissions")).toBeInTheDocument();
   });
@@ -331,12 +336,13 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
 
-    expect(screen.getByTestId("quota-condition-builder")).toBeInTheDocument();
+    expect(screen.getByTestId("form-field-logic")).toBeInTheDocument();
   });
 
   test("shows ending card selector when action is endSurvey", () => {
@@ -346,7 +352,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={mockQuota}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -361,7 +368,7 @@ describe("QuotaModal", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         name: "Test Quota",
-        conditions: { connector: "and", criteria: [] },
+        logic: { connector: "and", conditions: [] },
         action: "endSurvey",
         endingCardId: null,
         countPartialSubmissions: false,
@@ -376,7 +383,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -392,7 +400,7 @@ describe("QuotaModal", () => {
           name: "Test Quota",
           limit: 100,
           action: "endSurvey",
-          conditions: { connector: "and", criteria: [] },
+          logic: { connector: "and", conditions: [] },
           countPartialSubmissions: false,
         }),
       });
@@ -406,7 +414,7 @@ describe("QuotaModal", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         name: "Test Quota",
-        conditions: { connector: "and", criteria: [] },
+        logic: { connector: "and", conditions: [] },
         action: "endSurvey",
         endingCardId: null,
         countPartialSubmissions: false,
@@ -421,7 +429,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={mockQuota}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -448,7 +457,7 @@ describe("QuotaModal", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         name: "Test Quota",
-        conditions: { connector: "and", criteria: [] },
+        logic: { connector: "and", conditions: [] },
         action: "endSurvey",
         endingCardId: null,
         countPartialSubmissions: false,
@@ -463,7 +472,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -490,7 +500,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -511,7 +522,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={mockQuota}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -531,7 +543,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -553,7 +566,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={mockQuota}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -577,7 +591,8 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
@@ -600,12 +615,13 @@ describe("QuotaModal", () => {
         onOpenChange={mockOnOpenChange}
         survey={mockSurvey}
         quota={null}
-        deleteQuota={mockDeleteQuota}
+        setQuotaToDelete={mockDeleteQuota}
+        duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
       />
     );
 
-    const conditionBuilder = screen.getByTestId("quota-condition-builder");
+    const conditionBuilder = screen.getByTestId("form-field-logic");
     await user.click(conditionBuilder);
 
     // The click should trigger the onChange callback in the mocked component

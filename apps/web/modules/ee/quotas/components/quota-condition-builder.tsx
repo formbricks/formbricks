@@ -10,13 +10,13 @@ import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
 import { useTranslate } from "@tolgee/react";
 import { useCallback, useMemo } from "react";
 import { FieldErrors } from "react-hook-form";
-import { TSurveyQuotaConditions, TSurveyQuotaInput } from "@formbricks/types/quota";
+import { TSurveyQuotaInput, TSurveyQuotaLogic } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface QuotaConditionBuilderProps {
   survey: TSurvey;
-  conditions: TSurveyQuotaConditions;
-  onChange: (conditions: TSurveyQuotaConditions) => void;
+  conditions: TSurveyQuotaLogic;
+  onChange: (conditions: TSurveyQuotaLogic) => void;
   quotaErrors?: FieldErrors<TSurveyQuotaInput>;
 }
 

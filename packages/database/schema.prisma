@@ -426,8 +426,8 @@ model SurveyQuota {
   surveyId                String
   name                    String
   limit                   Int
-  /// [SurveyQuotaConditions]
-  conditions              Json                @default("{}")
+  /// [SurveyQuotaLogic]
+  logic                   Json                @default("{}")
   action                  SurveyQuotaAction
   endingCardId            String?
   quotaLinks              ResponseQuotaLink[]

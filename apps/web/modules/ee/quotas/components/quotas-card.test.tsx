@@ -11,6 +11,39 @@ import { QuotasCard } from "./quotas-card";
 vi.mock("@/modules/ee/quotas/actions", () => ({
   deleteQuotaAction: vi.fn(),
 }));
+
+// Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+// Mock @tolgee/react
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string, params?: any) => {
+      if (params) {
+        let result = key;
+        Object.keys(params).forEach((param) => {
+          result = result.replace(`{{${param}}}`, params[param]);
+        });
+        return result;
+      }
+      return key;
+    },
+  }),
+}));
+
+// Mock next/navigation
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+    push: vi.fn(),
+  }),
+}));
+
 // Mock @formkit/auto-animate/react
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [null, () => {}],
@@ -114,14 +147,21 @@ vi.mock("./quota-list", () => ({
 }));
 
 vi.mock("./quota-modal", () => ({
-  QuotaModal: ({ open, quota, onClose, deleteQuota }: any) =>
+  QuotaModal: ({ open, quota, onClose, setQuotaToDelete }: any) =>
     open ? (
       <div data-testid="quota-modal">
         <span data-testid="modal-quota-id">{quota?.id || "new"}</span>
         <button data-testid="modal-close" onClick={onClose}>
           Close
         </button>
-        <button data-testid="modal-delete" onClick={() => deleteQuota && deleteQuota(quota)}>
+        <button
+          data-testid="modal-delete"
+          onClick={() => {
+            if (quota && setQuotaToDelete) {
+              setQuotaToDelete(quota);
+              onClose();
+            }
+          }}>
           Delete from Modal
         </button>
       </div>
@@ -149,7 +189,7 @@ describe("QuotasCard", () => {
       surveyId: "survey1",
       name: "Test Quota 1",
       limit: 100,
-      conditions: { connector: "and", criteria: [] },
+      logic: { connector: "and", conditions: [] },
       action: "endSurvey",
       endingCardId: null,
       countPartialSubmissions: false,
@@ -161,7 +201,7 @@ describe("QuotasCard", () => {
       surveyId: "survey1",
       name: "Test Quota 2",
       limit: 50,
-      conditions: { connector: "or", criteria: [] },
+      logic: { connector: "or", conditions: [] },
       action: "continueSurvey",
       endingCardId: "ending1",
       countPartialSubmissions: true,

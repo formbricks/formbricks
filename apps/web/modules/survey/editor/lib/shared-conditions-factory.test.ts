@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TSurveyQuotaConditions } from "@formbricks/types/quota";
+import { TSurveyQuotaLogic } from "@formbricks/types/quota";
 import {
   TConditionGroup,
   TSingleCondition,
@@ -471,9 +471,9 @@ describe("shared-conditions-factory", () => {
 
   describe("quotaConditionsToGeneric", () => {
     test("should convert quota conditions to generic format", () => {
-      const quotaConditions: TSurveyQuotaConditions = {
+      const quotaConditions: TSurveyQuotaLogic = {
         connector: "and",
-        criteria: [
+        conditions: [
           {
             id: "condition1",
             leftOperand: { value: "question1", type: "question" },
@@ -494,14 +494,14 @@ describe("shared-conditions-factory", () => {
       expect(result).toEqual({
         id: "root",
         connector: "and",
-        conditions: quotaConditions.criteria,
+        conditions: quotaConditions.conditions,
       });
     });
 
     test("should handle empty criteria", () => {
-      const quotaConditions: TSurveyQuotaConditions = {
+      const quotaConditions: TSurveyQuotaLogic = {
         connector: "or",
-        criteria: [],
+        conditions: [],
       };
 
       const result = quotaConditionsToGeneric(quotaConditions);
@@ -542,7 +542,7 @@ describe("shared-conditions-factory", () => {
 
       expect(result).toEqual({
         connector: "and",
-        criteria: [
+        conditions: [
           {
             id: "condition1",
             leftOperand: { value: "question1", type: "question" },
@@ -580,7 +580,7 @@ describe("shared-conditions-factory", () => {
 
       expect(result).toEqual({
         connector: "or",
-        criteria: [
+        conditions: [
           {
             id: "condition1",
             leftOperand: { value: "variable1", type: "variable" },
@@ -602,7 +602,7 @@ describe("shared-conditions-factory", () => {
 
       expect(result).toEqual({
         connector: "and",
-        criteria: [],
+        conditions: [],
       });
     });
 
@@ -626,9 +626,9 @@ describe("shared-conditions-factory", () => {
 
       const result = genericConditionsToQuota(genericConditions);
 
-      expect(result.criteria[0].leftOperand).toHaveProperty("meta");
-      if (result.criteria[0].leftOperand.type === "question") {
-        expect(result.criteria[0].leftOperand.meta).toEqual({ row: "row1", column: "col1" });
+      expect(result.conditions[0].leftOperand).toHaveProperty("meta");
+      if (result.conditions[0].leftOperand.type === "question") {
+        expect(result.conditions[0].leftOperand.meta).toEqual({ row: "row1", column: "col1" });
       }
     });
   });
@@ -657,9 +657,9 @@ describe("shared-conditions-factory", () => {
     });
 
     test("should handle quota conditions round-trip conversion", () => {
-      const originalQuota: TSurveyQuotaConditions = {
+      const originalQuota: TSurveyQuotaLogic = {
         connector: "and",
-        criteria: [
+        conditions: [
           {
             id: "condition1",
             leftOperand: { value: "question1", type: "question" },

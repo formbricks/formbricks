@@ -1,12 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TSurveyQuotaConditions } from "@formbricks/types/quota";
+import { TSurveyQuotaLogic } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import {
-  createQuotaConditionsCallbacks,
-  createQuotaConditionsConfig,
-  quotaConditionsToGeneric,
-} from "../lib/conditions-config";
 import { QuotaConditionBuilder } from "./quota-condition-builder";
 
 // Mock the ConditionsEditor component
@@ -24,36 +19,32 @@ vi.mock("@/modules/ui/components/conditions-editor", () => ({
   ),
 }));
 
-// Mock the conditions config functions
-vi.mock("../lib/conditions-config", () => ({
+// Mock the shared conditions factory
+vi.mock("@/modules/survey/editor/lib/shared-conditions-factory", () => ({
   quotaConditionsToGeneric: vi.fn((conditions) => ({
     id: "root",
     connector: conditions.connector,
-    criteria: conditions.criteria.map((criterion: any) => ({
-      ...criterion,
-      type: "generic",
-    })),
-  })),
-  createQuotaConditionsConfig: vi.fn(() => ({
-    getLeftOperandOptions: vi.fn(),
-    getOperatorOptions: vi.fn(),
-    getDefaultOperator: vi.fn(() => "equals"),
-    formatLeftOperandValue: vi.fn(),
+    conditions: conditions.conditions,
   })),
   genericConditionsToQuota: vi.fn((genericConditions) => ({
     connector: genericConditions.connector,
-    criteria: genericConditions.criteria.map((criterion: any) => ({
-      ...criterion,
-      leftOperand: criterion.leftOperand || { type: "question", value: "q1" },
-      operator: criterion.operator || "equals",
-    })),
+    conditions: genericConditions.conditions,
   })),
-  createQuotaConditionsCallbacks: vi.fn(() => ({
-    onAddConditionBelow: vi.fn(),
-    onRemoveCondition: vi.fn(),
-    onDuplicateCondition: vi.fn(),
-    onUpdateCondition: vi.fn(),
-    onToggleGroupConnector: vi.fn(),
+  createSharedConditionsFactory: vi.fn(() => ({
+    config: {
+      getLeftOperandOptions: vi.fn(),
+      getOperatorOptions: vi.fn(),
+      getValueProps: vi.fn(),
+      getDefaultOperator: vi.fn(() => "equals"),
+      formatLeftOperandValue: vi.fn(),
+    },
+    callbacks: {
+      onAddConditionBelow: vi.fn(),
+      onRemoveCondition: vi.fn(),
+      onDuplicateCondition: vi.fn(),
+      onUpdateCondition: vi.fn(),
+      onToggleGroupConnector: vi.fn(),
+    },
   })),
 }));
 
@@ -67,6 +58,18 @@ vi.mock("@tolgee/react", () => ({
 // Mock @paralleldrive/cuid2
 vi.mock("@paralleldrive/cuid2", () => ({
   createId: () => "test-id-123",
+}));
+
+// Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 describe("QuotaConditionBuilder", () => {
@@ -95,9 +98,9 @@ describe("QuotaConditionBuilder", () => {
     ],
   } as unknown as TSurvey;
 
-  const mockConditions: TSurveyQuotaConditions = {
+  const mockConditions: TSurveyQuotaLogic = {
     connector: "and",
-    criteria: [
+    conditions: [
       {
         id: "condition1",
         leftOperand: { type: "question", value: "q1" },
@@ -107,9 +110,9 @@ describe("QuotaConditionBuilder", () => {
     ],
   };
 
-  const mockEmptyConditions: TSurveyQuotaConditions = {
+  const mockEmptyConditions: TSurveyQuotaLogic = {
     connector: "and",
-    criteria: [],
+    conditions: [],
   };
 
   beforeEach(() => {
@@ -128,24 +131,25 @@ describe("QuotaConditionBuilder", () => {
     expect(screen.getByTestId("conditions-editor")).toBeInTheDocument();
   });
 
-  test("passes converted conditions to editor", () => {
+  test("passes converted conditions to editor", async () => {
     render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
 
     const conditionsData = screen.getByTestId("conditions-data");
     expect(conditionsData).toBeInTheDocument();
-
-    // Verify that quotaConditionsToGeneric was called
-    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(mockConditions);
   });
 
-  test("creates configuration for conditions editor", () => {
+  test("creates configuration for conditions editor", async () => {
+    const { createSharedConditionsFactory } = await vi.importMock(
+      "@/modules/survey/editor/lib/shared-conditions-factory"
+    );
+
     render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
 
     const configData = screen.getByTestId("config-data");
     expect(configData).toBeInTheDocument();
 
-    // Verify that createQuotaConditionsConfig was called
-    expect(vi.mocked(createQuotaConditionsConfig)).toHaveBeenCalledWith(mockSurvey, expect.any(Function));
+    // Verify that createSharedConditionsFactory was called
+    expect(createSharedConditionsFactory).toHaveBeenCalled();
   });
 
   test("does not initialize when conditions already exist", () => {
@@ -173,17 +177,25 @@ describe("QuotaConditionBuilder", () => {
     expect(mockOnChange).not.toHaveBeenCalled();
   });
 
-  test("creates callbacks for conditions editor", () => {
+  test("creates callbacks for conditions editor", async () => {
+    const { createSharedConditionsFactory } = await vi.importMock(
+      "@/modules/survey/editor/lib/shared-conditions-factory"
+    );
+
     render(<QuotaConditionBuilder survey={mockSurvey} conditions={mockConditions} onChange={mockOnChange} />);
 
-    // Verify that createQuotaConditionsCallbacks was called
-    expect(vi.mocked(createQuotaConditionsCallbacks)).toHaveBeenCalled();
+    // Verify that createSharedConditionsFactory was called which creates both config and callbacks
+    expect(createSharedConditionsFactory).toHaveBeenCalled();
   });
 
-  test("handles conditions with different connectors", () => {
-    const orConditions: TSurveyQuotaConditions = {
+  test("handles conditions with different connectors", async () => {
+    const { quotaConditionsToGeneric } = await vi.importMock(
+      "@/modules/survey/editor/lib/shared-conditions-factory"
+    );
+
+    const orConditions: TSurveyQuotaLogic = {
       connector: "or",
-      criteria: [
+      conditions: [
         {
           id: "condition1",
           leftOperand: { type: "question", value: "q1" },
@@ -195,13 +207,17 @@ describe("QuotaConditionBuilder", () => {
 
     render(<QuotaConditionBuilder survey={mockSurvey} conditions={orConditions} onChange={mockOnChange} />);
 
-    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(orConditions);
+    expect(quotaConditionsToGeneric).toHaveBeenCalledWith(orConditions);
   });
 
-  test("handles multiple criteria", () => {
-    const multipleConditions: TSurveyQuotaConditions = {
+  test("handles multiple criteria", async () => {
+    const { quotaConditionsToGeneric } = await vi.importMock(
+      "@/modules/survey/editor/lib/shared-conditions-factory"
+    );
+
+    const multipleConditions: TSurveyQuotaLogic = {
       connector: "and",
-      criteria: [
+      conditions: [
         {
           id: "condition1",
           leftOperand: { type: "question", value: "q1" },
@@ -223,6 +239,6 @@ describe("QuotaConditionBuilder", () => {
 
     expect(screen.getByTestId("conditions-editor")).toBeInTheDocument();
 
-    expect(vi.mocked(quotaConditionsToGeneric)).toHaveBeenCalledWith(multipleConditions);
+    expect(quotaConditionsToGeneric).toHaveBeenCalledWith(multipleConditions);
   });
 });
