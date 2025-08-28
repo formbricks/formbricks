@@ -3,6 +3,7 @@
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -10,6 +11,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
+import { CircleAlert } from "lucide-react";
 import React from "react";
 
 type ConfirmationModalProps = {
@@ -17,13 +19,16 @@ type ConfirmationModalProps = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onConfirm: () => void;
-  text: string;
+  description?: string;
+  body: string;
   buttonText: string;
   isButtonDisabled?: boolean;
   buttonVariant?: "destructive" | "default";
   buttonLoading?: boolean;
   closeOnOutsideClick?: boolean;
   hideCloseButton?: boolean;
+  cancelButtonText?: string;
+  Icon?: React.ElementType;
 };
 
 export const ConfirmationModal = ({
@@ -31,13 +36,16 @@ export const ConfirmationModal = ({
   onConfirm,
   open,
   setOpen,
-  text,
+  description,
+  body,
   buttonText,
   isButtonDisabled = false,
   buttonVariant = "destructive",
   buttonLoading = false,
   closeOnOutsideClick = true,
   hideCloseButton,
+  cancelButtonText,
+  Icon,
 }: ConfirmationModalProps) => {
   const { t } = useTranslate();
   const handleButtonAction = async () => {
@@ -50,17 +58,30 @@ export const ConfirmationModal = ({
       <DialogContent
         hideCloseButton={hideCloseButton}
         disableCloseOnOutsideClick={!closeOnOutsideClick}
-        className="max-w-[540px]">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="text-slate-900">
-            <span className="mt-2 whitespace-pre-wrap">{text}</span>
-          </DialogDescription>
+        className="max-w-[540px] space-y-4">
+        <DialogHeader className="flex justify-center gap-2">
+          {Icon ? (
+            <Icon className="h-4 w-4 text-slate-500" />
+          ) : (
+            <CircleAlert className="h-4 w-4 text-slate-500" />
+          )}
+          <div className="flex flex-col">
+            <DialogTitle className="w-full text-left">{title}</DialogTitle>
+            <DialogDescription className="w-full text-left">
+              <span className="mt-2 whitespace-pre-wrap">
+                {description || t("environments.project.general.this_action_cannot_be_undone")}
+              </span>
+            </DialogDescription>
+          </div>
         </DialogHeader>
+
+        <DialogBody>
+          <p>{body}</p>
+        </DialogBody>
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>
-            {t("common.cancel")}
+            {cancelButtonText || t("common.cancel")}
           </Button>
           <Button
             loading={buttonLoading}
