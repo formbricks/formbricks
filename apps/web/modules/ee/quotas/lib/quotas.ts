@@ -86,3 +86,25 @@ export const deleteQuota = async (quotaId: string): Promise<TSurveyQuota> => {
     throw error;
   }
 };
+
+export const reduceQuotaLimits = async (quotaIds: string[]): Promise<void> => {
+  try {
+    await prisma.surveyQuota.updateMany({
+      where: {
+        id: {
+          in: quotaIds,
+        },
+      },
+      data: {
+        limit: {
+          decrement: 1,
+        },
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
