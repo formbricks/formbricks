@@ -507,6 +507,7 @@ export const QuestionsView = ({
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
                   locale={locale}
+                  quotas={quotas}
                 />
               );
             })}

@@ -11,7 +11,7 @@ import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZSurveyQuotaCreateInput, ZSurveyQuotaUpdateInput } from "@formbricks/types/quota";
+import { ZSurveyQuotaInput } from "@formbricks/types/quota";
 
 const ZDeleteQuotaAction = z.object({
   quotaId: ZId,
@@ -71,7 +71,7 @@ export const deleteQuotaAction = authenticatedActionClient.schema(ZDeleteQuotaAc
 
 const ZUpdateQuotaAction = z.object({
   quotaId: ZId,
-  quota: ZSurveyQuotaUpdateInput,
+  quota: ZSurveyQuotaInput,
 });
 
 export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAction).action(
@@ -114,7 +114,7 @@ export const updateQuotaAction = authenticatedActionClient.schema(ZUpdateQuotaAc
 );
 
 const ZCreateQuotaAction = z.object({
-  quota: ZSurveyQuotaCreateInput,
+  quota: ZSurveyQuotaInput,
 });
 
 export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAction).action(

@@ -2,6 +2,7 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
+import { ChangeQuotaConfirmationModal } from "@/modules/ee/quotas/components/ChangeQuotaConfirmationModal";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -43,9 +44,9 @@ import toast from "react-hot-toast";
 import {
   TSurveyQuota,
   TSurveyQuotaConditions,
-  TSurveyQuotaCreateInput,
-  TSurveyQuotaUpdateInput,
-  ZSurveyQuotaCreateInput,
+  TSurveyQuotaInput,
+  ZSurveyQuotaAction,
+  ZSurveyQuotaInput,
 } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { QuotaConditionBuilder } from "./quota-condition-builder";
@@ -54,12 +55,21 @@ interface QuotaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   survey: TSurvey;
-  deleteQuota: (quota: TSurveyQuota) => void;
+  setQuotaToDelete: (quota: TSurveyQuota) => void;
   quota?: TSurveyQuota | null;
   onClose: () => void;
+  duplicateQuota: (quota: TSurveyQuota) => void;
 }
 
-export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onClose }: QuotaModalProps) => {
+export const QuotaModal = ({
+  open,
+  onOpenChange,
+  survey,
+  quota,
+  setQuotaToDelete,
+  onClose,
+  duplicateQuota,
+}: QuotaModalProps) => {
   const router = useRouter();
   const isEditing = !!quota;
   const { t } = useTranslate();
@@ -86,9 +96,9 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     };
   }, [quota, survey]);
 
-  const form = useForm<TSurveyQuotaCreateInput>({
+  const form = useForm<TSurveyQuotaInput>({
     defaultValues,
-    resolver: zodResolver(ZSurveyQuotaCreateInput),
+    resolver: zodResolver(ZSurveyQuotaInput),
     mode: "onSubmit",
     criteriaMode: "all",
   });
@@ -111,7 +121,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
   }, [open, defaultValues, form]);
 
   const handleCreateQuota = useCallback(
-    async (quota: TSurveyQuotaCreateInput) => {
+    async (quota: TSurveyQuotaInput) => {
       const createQuotaActionResult = await createQuotaAction({
         quota: quota,
       });
@@ -128,7 +138,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
   );
 
   const handleUpdateQuota = useCallback(
-    async (updatedQuota: TSurveyQuotaUpdateInput, quotaId: string) => {
+    async (updatedQuota: TSurveyQuotaInput, quotaId: string) => {
       const updateQuotaActionResult = await updateQuotaAction({
         quotaId,
         quota: updatedQuota,
@@ -145,7 +155,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
     },
     [t, router, onClose]
   );
-  const submitQuota = async (data: TSurveyQuotaCreateInput) => {
+  const submitQuota = async (data: TSurveyQuotaInput) => {
     const trimmedName = data.name.trim();
     let payload = {
       name: trimmedName || t("environments.surveys.edit.quotas.new_quota"),
@@ -165,7 +175,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
   };
 
   // Form submission handler with confirmation logic
-  const onSubmit = async (data: TSurveyQuotaCreateInput) => {
+  const onSubmit = async (data: TSurveyQuotaInput) => {
     if (isEditing) {
       const hasChangesInInclusionCriteria =
         JSON.stringify(form.getValues("conditions")) !== JSON.stringify(quota.conditions);
@@ -187,11 +197,11 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
   const quotaActions = [
     {
       label: t("environments.surveys.edit.quotas.end_survey_for_matching_participants"),
-      value: "endSurvey",
+      value: ZSurveyQuotaAction.enum.endSurvey,
     },
     {
       label: t("environments.surveys.edit.quotas.continue_survey_normally"),
-      value: "continueSurvey",
+      value: ZSurveyQuotaAction.enum.continueSurvey,
     },
   ];
 
@@ -254,7 +264,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
                         className="w-32 bg-white"
                         onChange={(e) => {
                           const value = e.target.value;
-                          field.onChange(value === "" ? 0 : parseInt(value, 10));
+                          field.onChange(value === "" ? 1 : parseInt(value, 10));
                         }}
                         onBlur={(e) => {
                           const value = parseInt(e.target.value, 10);
@@ -284,7 +294,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
                             survey={survey}
                             conditions={field.value}
                             onChange={handleConditionsChange}
-                            errors={errors}
+                            quotaErrors={errors}
                           />
                         )}
                       </FormControl>
@@ -380,7 +390,7 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
                   variant="destructive"
                   onClick={() => {
                     if (quota) {
-                      deleteQuota(quota);
+                      setQuotaToDelete(quota);
                       onClose();
                     }
                   }}
@@ -416,19 +426,27 @@ export const QuotaModal = ({ open, onOpenChange, survey, quota, deleteQuota, onC
               buttonVariant="default"
               buttonLoading={isSubmitting}
               setOpen={setOpenConfirmationModal}
-              onConfirm={form.handleSubmit(submitQuota)}
-              text={t("environments.surveys.edit.quotas.save_changes_confirmation_text")}
+              onConfirm={() => {
+                setOpenConfirmationModal(false);
+                form.handleSubmit(submitQuota)();
+              }}
+              body={t("environments.surveys.edit.quotas.save_changes_confirmation_text")}
               buttonText={t("common.save")}
+              cancelButtonText={t("common.discard")}
             />
-            <ConfirmationModal
-              title={t("environments.surveys.edit.quotas.change_quota_for_public_survey")}
+            <ChangeQuotaConfirmationModal
               open={openConfirmChangesInInclusionCriteria}
-              buttonVariant="default"
-              buttonLoading={isSubmitting}
               setOpen={setOpenConfirmChangesInInclusionCriteria}
               onConfirm={form.handleSubmit(submitQuota)}
-              text={t("environments.surveys.edit.quotas.change_quota_for_public_survey_text")}
-              buttonText={t("common.continue")}
+              onDuplicate={() => {
+                if (quota) {
+                  const updatedQuota = {
+                    ...quota,
+                    ...form.getValues(),
+                  };
+                  duplicateQuota(updatedQuota);
+                }
+              }}
             />
           </FormProvider>
         </form>

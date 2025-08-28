@@ -108,7 +108,7 @@ export function createSharedConditionsFactory(
     onAddConditionBelow: (resourceId: string) => {
       // When adding a condition in the context of a specific question, default to that question
       const defaultLeftOperandValue =
-        questionIdx !== undefined ? survey.questions[questionIdx]?.id || "" : "";
+        questionIdx !== undefined ? survey.questions[questionIdx].id : survey.questions[0].id;
 
       const newCondition: TSingleCondition = {
         id: createId(),
@@ -125,18 +125,21 @@ export function createSharedConditionsFactory(
 
     // Removes a condition and triggers empty handler if no conditions remain
     onRemoveCondition: (resourceId: string) => {
+      // First check what would happen if we remove this condition
+      let willBeEmpty = false;
+
+      // We need to get the current conditions to check
       onConditionsChange((conditions) => {
         const conditionsCopy = structuredClone(conditions);
         removeCondition(conditionsCopy, resourceId);
-
-        // Check if no conditions left and call empty handler if provided
-        if (conditionsCopy.conditions.length === 0 && onEmptyConditions) {
-          onEmptyConditions();
-          return conditions; // Return original since we're removing the entire logic item
-        }
-
+        willBeEmpty = conditionsCopy.conditions.length === 0;
         return conditionsCopy;
       });
+
+      // If it would be empty and we have a handler, call it instead
+      if (willBeEmpty && onEmptyConditions) {
+        onEmptyConditions();
+      }
     },
 
     // Creates an exact copy of the specified condition
