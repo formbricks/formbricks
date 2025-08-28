@@ -1,4 +1,5 @@
 import "server-only";
+import { convertFloatTo2Decimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -67,7 +68,7 @@ export const getQuotasSummary = async (surveyId: string) => {
       return {
         ...rest,
         count,
-        percentage: (count / quota.limit) * 100,
+        percentage: convertFloatTo2Decimal((count / quota.limit) * 100),
       };
     });
   } catch (error) {

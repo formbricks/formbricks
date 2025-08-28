@@ -23,7 +23,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, barColor, he
   const maxWidth = Math.floor(Math.max(0, Math.min(progress, 1)) * 100);
 
   return (
-    <div className={cn(heightClass(), "w-full rounded-full bg-slate-200")}>
+    <div className={cn(heightClass(), "w-full overflow-hidden rounded-full bg-slate-200")}>
       <div
         className={cn("h-full rounded-full", barColor)}
         style={{ width: `${maxWidth}%`, transition: "width 0.5s ease-out" }}></div>

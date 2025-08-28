@@ -14,7 +14,7 @@ export const Quotas = ({ quotas }: QuotasProps) => {
       <p className="text-sm text-slate-500">{t("common.quotas")}</p>
       <div className="flex flex-wrap gap-2">
         {quotas.map((quota) => (
-          <ResponseBadges items={[{ value: quota.name }]} showId={false} />
+          <ResponseBadges key={quota.id} items={[{ value: quota.name }]} showId={false} />
         ))}
       </div>
     </div>
