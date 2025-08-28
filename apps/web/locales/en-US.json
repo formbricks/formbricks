@@ -1516,6 +1516,7 @@
           "change_quota_for_public_survey": "Change quota for public survey?",
           "change_quota_for_public_survey_text": "Any changes to the inclusion criteria only affect future responses. \nWe recommend to either duplicate an existing or create a new quota.",
           "confirm_quota_changes": "Confirm quota changes",
+          "confirm_quota_changes_body": "You have unsaved changes in your quota. Would you like to save them before leaving?",
           "continue_survey_normally": "Continue survey normally",
           "count_partial_submissions": "Count partial submissions",
           "count_partial_submissions_description": "Include respondents that match the quota criteria but did not complete the survey",

@@ -1516,6 +1516,7 @@
           "change_quota_for_public_survey": "更改 公開 問卷 的 額度？",
           "change_quota_for_public_survey_text": "任何 變更 包括 條件 只 影響 未來 的 回覆。\n 我們 推薦 複製 現有 的 配額 或 創建 新 的 配額。",
           "confirm_quota_changes": "確認配額變更",
+          "confirm_quota_changes_body": "您的 配額 中有 未儲存 的 變更。您 要 先 儲存 它們 再 離開 嗎？",
           "continue_survey_normally": "正常 繼續 問卷",
           "count_partial_submissions": "計算 部分提交",
           "count_partial_submissions_description": "包括符合配額標準但未完成問卷的受訪者",

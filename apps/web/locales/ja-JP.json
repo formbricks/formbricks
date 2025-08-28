@@ -1516,6 +1516,7 @@
           "change_quota_for_public_survey": "パブリック フォームのクォータを変更しますか？",
           "change_quota_for_public_survey_text": "今後の回答のみに影響します。\\n 既存のクォータを複製するか、新しいクォータを作成することをお勧めします。",
           "confirm_quota_changes": "配分の変更を確認",
+          "confirm_quota_changes_body": "クォータに未保存の変更があります。離れる前に保存しますか？",
           "continue_survey_normally": "アンケートを通常通り続行",
           "count_partial_submissions": "部分的な提出の数を数える",
           "count_partial_submissions_description": "クォータ基準を満たしているものの、調査を完了しなかった回答者を含める",

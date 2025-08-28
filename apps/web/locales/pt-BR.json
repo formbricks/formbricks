@@ -1516,6 +1516,7 @@
           "change_quota_for_public_survey": "Alterar cota para pesquisa pública?",
           "change_quota_for_public_survey_text": "Quaisquer alterações nos critérios de inclusão afetam apenas respostas futuras. \nRecomendamos duplicar uma cota existente ou criar uma nova.",
           "confirm_quota_changes": "Confirmar Alterações nas Cotas",
+          "confirm_quota_changes_body": "Você tem alterações não salvas na sua cota. Quer salvar antes de sair?",
           "continue_survey_normally": "Continuar pesquisa normalmente",
           "count_partial_submissions": "Contar respostas parciais",
           "count_partial_submissions_description": "Incluir respondentes que atendem aos critérios de cota, mas não completaram a pesquisa",

@@ -1516,6 +1516,7 @@
           "change_quota_for_public_survey": "Quote für öffentliche Umfrage ändern?",
           "change_quota_for_public_survey_text": "Jegliche Änderungen an den Einschlusskriterien betreffen nur zukünftige Antworten.\nWir empfehlen, entweder ein bestehendes Kontingent zu duplizieren oder ein neues zu erstellen.",
           "confirm_quota_changes": "Änderungen der Quoten bestätigen",
+          "confirm_quota_changes_body": "Du hast ungespeicherte Änderungen in deinem Kontingent. Möchtest Du sie speichern, bevor Du gehst?",
           "continue_survey_normally": "Umfrage normal fortsetzen",
           "count_partial_submissions": "Teilweise Abgaben zählen",
           "count_partial_submissions_description": "Einschließlich Teilnehmer, die die Quotenanforderungen erfüllen, aber die Umfrage nicht abgeschlossen haben",

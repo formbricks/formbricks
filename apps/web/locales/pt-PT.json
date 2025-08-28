@@ -1516,6 +1516,7 @@
           "change_quota_for_public_survey": "Alterar quota para inquérito público?",
           "change_quota_for_public_survey_text": "Quaisquer alterações aos critérios de inclusão afetam apenas respostas futuras. \nRecomendamos duplicar uma cota existente ou criar uma nova.",
           "confirm_quota_changes": "Confirmar Alterações das Quotas",
+          "confirm_quota_changes_body": "Tem alterações não guardadas na sua cota. Gostaria de as guardar antes de sair?",
           "continue_survey_normally": "Continua a pesquisa normalmente",
           "count_partial_submissions": "Contar submissões parciais",
           "count_partial_submissions_description": "Incluir respondentes que correspondem aos critérios de quota mas não completaram o inquérito",

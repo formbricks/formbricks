@@ -1516,6 +1516,7 @@
           "change_quota_for_public_survey": "Schimbați cota pentru sondaj public?",
           "change_quota_for_public_survey_text": "Orice modificări ale criteriilor de includere afectează doar răspunsurile viitoare. \nRecomandăm fie să duplicați un existent, fie să creați o nouă cotă.",
           "confirm_quota_changes": "Confirmă modificările cotelor",
+          "confirm_quota_changes_body": "Aveți modificări nesalvate în quota dumneavoastră. Doriți să le salvați înainte de a pleca?",
           "continue_survey_normally": "Continuă chestionarul în mod normal",
           "count_partial_submissions": "Număr contestații parțiale",
           "count_partial_submissions_description": "Includeți respondenții care îndeplinesc criteriile de cotă dar nu au completat sondajul",

@@ -1516,6 +1516,7 @@
           "change_quota_for_public_survey": "Changer le quota pour le sondage public ?",
           "change_quota_for_public_survey_text": "Les modifications apportées aux critères d'inclusion n'affectent que les réponses futures. \nNous vous recommandons soit de dupliquer un quota existant, soit d'en créer un nouveau.",
           "confirm_quota_changes": "Confirmer les modifications de quotas",
+          "confirm_quota_changes_body": "Vous avez des modifications non enregistrées dans votre quota. Souhaitez-vous les enregistrer avant de partir ?",
           "continue_survey_normally": "Continuer le sondage normalement",
           "count_partial_submissions": "Compter les soumissions partielles",
           "count_partial_submissions_description": "Inclure les répondants qui correspondent aux critères de quota mais n'ont pas terminé le sondage",
