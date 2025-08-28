@@ -1,42 +1,20 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createQuotaAction } from "@/modules/ee/quotas/actions";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon, Trash2Icon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import { TSurveyQuota, TSurveyQuotaCreateInput } from "@formbricks/types/quota";
+import { TSurveyQuota } from "@formbricks/types/quota";
 
 interface QuotaListProps {
   quotas: TSurveyQuota[];
   onEdit: (quota: TSurveyQuota) => void;
   deleteQuota: (quota: TSurveyQuota) => void;
+  duplicateQuota: (quota: TSurveyQuota) => void;
 }
 
-export const QuotaList = ({ quotas, onEdit, deleteQuota }: QuotaListProps) => {
-  const router = useRouter();
+export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: QuotaListProps) => {
   const { t } = useTranslate();
-
-  const duplicateQuota = async (quota: TSurveyQuota) => {
-    const { id, createdAt, updatedAt, ...rest } = quota;
-    const quotaInput: TSurveyQuotaCreateInput = {
-      ...rest,
-      name: `${quota.name} (Copy)`,
-    };
-    const duplicateQuotaActionResult = await createQuotaAction({
-      quota: quotaInput,
-    });
-    if (duplicateQuotaActionResult?.data) {
-      toast.success(t("environments.surveys.edit.quotas.quota_duplicated_successfull_toast"));
-      router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(duplicateQuotaActionResult);
-      toast.error(errorMessage);
-    }
-  };
 
   return (
     <div className="space-y-3">
@@ -64,21 +42,20 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota }: QuotaListProps) => {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                duplicateQuota(quota);
+                deleteQuota(quota);
               }}
               className="h-8 w-8 p-0 text-slate-500">
-              <CopyIcon className="h-4 w-4" />
+              <Trash2Icon className="h-4 w-4" />
             </Button>
-
             <Button
               variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                deleteQuota(quota);
+                duplicateQuota(quota);
               }}
               className="h-8 w-8 p-0 text-slate-500">
-              <Trash2Icon className="h-4 w-4" />
+              <CopyIcon className="h-4 w-4" />
             </Button>
           </div>
         </div>

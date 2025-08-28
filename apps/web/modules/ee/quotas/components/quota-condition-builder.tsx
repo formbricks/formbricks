@@ -1,50 +1,62 @@
 "use client";
 
-import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
-import { useTranslate } from "@tolgee/react";
-import { useMemo } from "react";
-import { FieldErrors } from "react-hook-form";
-import { TSurveyQuotaConditions, TSurveyQuotaCreateInput } from "@formbricks/types/quota";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   TQuotaConditionGroup,
-  createQuotaConditionsCallbacks,
-  createQuotaConditionsConfig,
+  createSharedConditionsFactory,
   genericConditionsToQuota,
   quotaConditionsToGeneric,
-} from "../lib/conditions-config";
+} from "@/modules/survey/editor/lib/shared-conditions-factory";
+import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
+import { useTranslate } from "@tolgee/react";
+import { useCallback, useMemo } from "react";
+import { FieldErrors } from "react-hook-form";
+import { TSurveyQuotaConditions, TSurveyQuotaInput } from "@formbricks/types/quota";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface QuotaConditionBuilderProps {
   survey: TSurvey;
   conditions: TSurveyQuotaConditions;
   onChange: (conditions: TSurveyQuotaConditions) => void;
-  errors?: FieldErrors<TSurveyQuotaCreateInput>;
+  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
 }
 
 export const QuotaConditionBuilder = ({
   survey,
   conditions,
   onChange,
-  errors,
+  quotaErrors,
 }: QuotaConditionBuilderProps) => {
   const { t } = useTranslate();
 
   // Convert quota conditions to generic format
   const genericConditions = useMemo(() => quotaConditionsToGeneric(conditions), [conditions]);
 
-  // Create configuration for the conditions editor
-  const config = useMemo(() => createQuotaConditionsConfig(survey, t), [survey]);
-
   // Handle changes from the generic editor
-  const handleGenericChange = (newGenericConditions: TQuotaConditionGroup) => {
-    const newQuotaConditions = genericConditionsToQuota(newGenericConditions);
-    onChange(newQuotaConditions);
-  };
+  const handleGenericChange = useCallback(
+    (newGenericConditions: TQuotaConditionGroup) => {
+      const newQuotaConditions = genericConditionsToQuota(newGenericConditions);
+      onChange(newQuotaConditions);
+    },
+    [onChange]
+  );
 
-  // Create callbacks for the conditions editor
-  const callbacks = useMemo(
-    () => createQuotaConditionsCallbacks(genericConditions, handleGenericChange, survey, t),
-    [genericConditions, handleGenericChange, survey, t]
+  // Create both config and callbacks in a single useMemo using the shared factory
+  const { config, callbacks } = useMemo(
+    () =>
+      createSharedConditionsFactory(
+        {
+          survey,
+          t,
+          getDefaultOperator: () => "equals",
+        },
+        {
+          onConditionsChange: (updater) => {
+            const newConditions = updater(genericConditions);
+            handleGenericChange(newConditions);
+          },
+        }
+      ),
+    [survey, t, genericConditions, handleGenericChange]
   );
 
   return (
@@ -53,7 +65,7 @@ export const QuotaConditionBuilder = ({
         conditions={genericConditions}
         config={config}
         callbacks={callbacks}
-        errors={errors}
+        quotaErrors={quotaErrors}
       />
     </div>
   );

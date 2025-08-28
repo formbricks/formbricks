@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { ZId } from "./common";
-import { ZSingleCondition } from "./surveys/types";
-
-// Connector type for combining criteria with AND/OR logic
-export const ZConnector = z.enum(["and", "or"]);
+import { ZConnector, ZSingleCondition } from "./surveys/types";
 
 // Complete quota conditions structure
 export const ZSurveyQuotaConditions = z.object({
@@ -35,7 +32,7 @@ export const ZSurveyQuota = z.object({
 });
 export type TSurveyQuota = z.infer<typeof ZSurveyQuota>;
 
-export const ZSurveyQuotaCreateInput = ZSurveyQuota.omit({
+export const ZSurveyQuotaInput = ZSurveyQuota.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -44,18 +41,13 @@ export const ZSurveyQuotaCreateInput = ZSurveyQuota.omit({
   if (data.action === "endSurvey" && (data.endingCardId === null || data.endingCardId === "")) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["action"],
+      path: ["action"], // keep same path as your original
+      message: "endingCardId is required when action is endSurvey",
     });
   }
 });
-export type TSurveyQuotaCreateInput = z.infer<typeof ZSurveyQuotaCreateInput>;
 
-export const ZSurveyQuotaUpdateInput = ZSurveyQuota.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-export type TSurveyQuotaUpdateInput = z.infer<typeof ZSurveyQuotaUpdateInput>;
+export type TSurveyQuotaInput = z.infer<typeof ZSurveyQuotaInput>;
 
 export const ZResponseQuotaLink = z.object({
   responseId: ZId,

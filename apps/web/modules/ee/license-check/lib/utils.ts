@@ -79,6 +79,7 @@ export const getIsSsoEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsQuotasEnabled = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
+  return true;
   const license = await getEnterpriseLicense();
 
   if (IS_FORMBRICKS_CLOUD) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { deleteQuotaAction } from "@/modules/ee/quotas/actions";
+import { createQuotaAction, deleteQuotaAction } from "@/modules/ee/quotas/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -13,7 +13,7 @@ import { CheckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { QuotaList } from "./quota-list";
 import { QuotaModal } from "./quota-modal";
@@ -97,6 +97,24 @@ export const QuotasCard = ({
     setActiveQuota(null);
   };
 
+  const duplicateQuota = async (quota: TSurveyQuota) => {
+    const { id, createdAt, updatedAt, ...rest } = quota;
+    const quotaInput: TSurveyQuotaInput = {
+      ...rest,
+      name: `${quota.name} (Copy)`,
+    };
+    const duplicateQuotaActionResult = await createQuotaAction({
+      quota: quotaInput,
+    });
+    if (duplicateQuotaActionResult?.data) {
+      toast.success(t("environments.surveys.edit.quotas.quota_duplicated_successfull_toast"));
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(duplicateQuotaActionResult);
+      toast.error(errorMessage);
+    }
+  };
+
   const openEditQuotaModal = (quota: TSurveyQuota) => {
     setActiveQuota(quota);
     setIsQuotaModalOpen(true);
@@ -156,7 +174,12 @@ export const QuotasCard = ({
             ) : (
               <div className="space-y-4">
                 {hasQuotas ? (
-                  <QuotaList quotas={quotas} onEdit={openEditQuotaModal} deleteQuota={setQuotaToDelete} />
+                  <QuotaList
+                    quotas={quotas}
+                    onEdit={openEditQuotaModal}
+                    deleteQuota={setQuotaToDelete}
+                    duplicateQuota={duplicateQuota}
+                  />
                 ) : (
                   <div className="rounded-lg border p-3 text-center">
                     <p className="mb-4 text-sm text-slate-500">{t("common.quotas_description")}</p>
@@ -171,7 +194,7 @@ export const QuotasCard = ({
                 )}
 
                 {hasQuotas && (
-                  <div className="border-t pt-4">
+                  <div>
                     <AddQuotaButton
                       setIsQuotaModalOpen={setIsQuotaModalOpen}
                       setActiveQuota={setActiveQuota}
@@ -193,7 +216,8 @@ export const QuotasCard = ({
           onOpenChange={setIsQuotaModalOpen}
           survey={localSurvey}
           quota={activeQuota}
-          deleteQuota={setQuotaToDelete}
+          setQuotaToDelete={setQuotaToDelete}
+          duplicateQuota={duplicateQuota}
           onClose={() => {
             setIsQuotaModalOpen(false);
             setActiveQuota(null);
@@ -212,7 +236,8 @@ export const QuotasCard = ({
       />
       <ConfirmationModal
         title={t("environments.surveys.edit.quotas.create_quota_for_public_survey")}
-        text={t("environments.surveys.edit.quotas.create_quota_for_public_survey_text")}
+        description={t("environments.surveys.edit.quotas.create_quota_for_public_survey_description")}
+        body={t("environments.surveys.edit.quotas.create_quota_for_public_survey_text")}
         open={openCreateQuotaConfirmationModal}
         setOpen={setOpenCreateQuotaConfirmationModal}
         onConfirm={() => {

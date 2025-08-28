@@ -230,7 +230,7 @@ export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean =
   return actions.some((action) => action.objective === "jumpToQuestion");
 };
 
-export const getQuestionOperatorOptions = (
+const getQuestionOperatorOptions = (
   question: TSurveyQuestion,
   t: TFnType,
   condition?: TSingleCondition
@@ -1213,10 +1213,12 @@ export const isUsedInQuota = (
     questionId,
     hiddenFieldId,
     variableId,
+    endingCardId,
   }: {
     questionId?: TSurveyQuestionId;
     hiddenFieldId?: string;
     variableId?: string;
+    endingCardId?: string;
   }
 ): boolean => {
   if (questionId) {
@@ -1242,6 +1244,10 @@ export const isUsedInQuota = (
         (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "variable", variableId)) ||
         isUsedInLeftOperand(condition.leftOperand, "variable", variableId)
     );
+  }
+
+  if (endingCardId) {
+    return quota.action === "endSurvey" && quota.endingCardId === endingCardId;
   }
 
   return false;

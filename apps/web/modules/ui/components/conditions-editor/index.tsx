@@ -21,7 +21,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import { FieldErrors } from "react-hook-form";
-import { TSurveyQuotaCreateInput } from "@formbricks/types/quota";
+import { TSurveyQuotaInput } from "@formbricks/types/quota";
 import {
   TConditionsEditorCallbacks,
   TConditionsEditorConfig,
@@ -34,7 +34,7 @@ interface ConditionsEditorProps {
   config: TConditionsEditorConfig;
   callbacks: TConditionsEditorCallbacks;
   depth?: number;
-  errors?: FieldErrors<TSurveyQuotaCreateInput>;
+  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
 }
 
 export function ConditionsEditor({
@@ -42,7 +42,7 @@ export function ConditionsEditor({
   config,
   callbacks,
   depth = 0,
-  errors,
+  quotaErrors,
 }: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
@@ -105,7 +105,6 @@ export function ConditionsEditor({
                 config={config}
                 callbacks={callbacks}
                 depth={depth + 1}
-                errors={errors}
               />
             </div>
 
@@ -145,9 +144,9 @@ export function ConditionsEditor({
     const operatorOptions = config.getOperatorOptions(condition);
     const onCreateGroup = callbacks.onCreateGroup;
     const { show = false, options, showInput = false, inputType } = config.getValueProps(condition);
-    const error =
-      errors?.conditions?.criteria?.[index]?.message ||
-      errors?.conditions?.criteria?.[index]?.rightOperand?.message;
+    const quotaError =
+      quotaErrors?.conditions?.criteria?.[index]?.message ||
+      quotaErrors?.conditions?.criteria?.[index]?.rightOperand?.message;
 
     const allowMultiSelect = [
       "equalsOneOf",
@@ -235,7 +234,7 @@ export function ConditionsEditor({
                 {t("environments.surveys.edit.add_condition_below")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={conditions.conditions.length === 1}
+                disabled={depth === 0 && conditions.conditions.length === 1}
                 onClick={() => callbacks.onRemoveCondition(condition.id)}
                 icon={<TrashIcon className="h-4 w-4" />}>
                 {t("common.remove")}
@@ -255,7 +254,7 @@ export function ConditionsEditor({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {error && <p className="text-error mt-2 w-full text-right text-sm">{error}</p>}
+        {quotaError && <p className="text-error mt-2 w-full text-right text-sm">{quotaError}</p>}
       </div>
     );
   };
