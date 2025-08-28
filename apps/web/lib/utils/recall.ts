@@ -19,6 +19,8 @@ export const extractId = (text: string): string | null => {
   }
 };
 
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // If there are multiple recall infos in a string extracts all recall question IDs from that string and construct an array out of it.
 export const extractIds = (text: string): string[] => {
   const pattern = /#recall:([A-Za-z0-9_-]+)/g;
@@ -28,26 +30,22 @@ export const extractIds = (text: string): string[] => {
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
 export const extractFallbackValue = (text: string): string => {
-  const pattern = /fallback:(\S*)#/;
+  const pattern = /fallback:([^#]*)#/;
   const match = text.match(pattern);
-  if (match && match[1]) {
-    return match[1];
-  } else {
-    return "";
-  }
+  return match?.[1] ?? "";
 };
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
 export const extractRecallInfo = (headline: string, id?: string): string | null => {
-  const idPattern = id ? id : "[A-Za-z0-9_-]+";
-  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
+  const idPattern = id ? escapeRegExp(id) : "[A-Za-z0-9_-]+";
+  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
 
 // Finds the recall information by a specific recall question ID within a text.
 export const findRecallInfoById = (text: string, id: string): string | null => {
-  const pattern = new RegExp(`#recall:${id}\\/fallback:(\\S*)#`, "g");
+  const pattern = new RegExp(`#recall:${escapeRegExp(id)}\\/fallback:([^#]*)#`, "g");
   const match = text.match(pattern);
   return match ? match[0] : null;
 };
@@ -183,7 +181,7 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
 // Constructs a fallbacks object from a text containing multiple recall and fallback patterns.
 export const getFallbackValues = (text: string): fallbacks => {
   if (!text.includes("#recall:")) return {};
-  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([\S*]+)#/g;
+  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/g;
   let match;
   const fallbacks: fallbacks = {};
 
