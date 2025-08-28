@@ -51,7 +51,7 @@ export const createQuota = async (quota: TSurveyQuotaInput): Promise<TSurveyQuot
 export const updateQuota = async (quota: TSurveyQuotaInput, id: string): Promise<TSurveyQuota> => {
   try {
     const updatedQuota = await prisma.surveyQuota.update({
-      where: { id },
+      where: { id, surveyId: quota.surveyId },
       data: quota,
     });
 

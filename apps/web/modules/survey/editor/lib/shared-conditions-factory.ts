@@ -125,20 +125,20 @@ export function createSharedConditionsFactory(
 
     // Removes a condition and triggers empty handler if no conditions remain
     onRemoveCondition: (resourceId: string) => {
-      // First check what would happen if we remove this condition
       let willBeEmpty = false;
-
-      // We need to get the current conditions to check
+      let nextState: TConditionGroup | null = null;
+      // simulate
       onConditionsChange((conditions) => {
-        const conditionsCopy = structuredClone(conditions);
-        removeCondition(conditionsCopy, resourceId);
-        willBeEmpty = conditionsCopy.conditions.length === 0;
-        return conditionsCopy;
+        const copy = structuredClone(conditions);
+        removeCondition(copy, resourceId);
+        willBeEmpty = copy.conditions.length === 0;
+        nextState = copy;
+        return conditions; // no-op here; we will decide below
       });
-
-      // If it would be empty and we have a handler, call it instead
       if (willBeEmpty && onEmptyConditions) {
         onEmptyConditions();
+      } else if (nextState) {
+        onConditionsChange(() => structuredClone(nextState!));
       }
     },
 
