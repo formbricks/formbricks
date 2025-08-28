@@ -14,7 +14,7 @@ const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
   if (IS_FORMBRICKS_CLOUD) {
-    notFound();
+    return notFound();
   }
 
   const { isMember, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
@@ -22,7 +22,7 @@ const Page = async (props) => {
   const isPricingDisabled = isMember;
 
   if (isPricingDisabled) {
-    notFound();
+    return notFound();
   }
 
   const { active: isEnterpriseEdition } = await getEnterpriseLicense();

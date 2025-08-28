@@ -42,12 +42,12 @@ const Page = async (props) => {
   const locale = await findMatchingLocale();
 
   if (isReadOnly) {
-    redirect("./");
+    return redirect("./");
   }
 
   return (
     <PageContentWrapper>
-      <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
+      <GoBackButton url={"./"} />
       <PageHeader pageTitle={t("environments.integrations.notion.notion_integration")} />
       <NotionWrapper
         enabled={enabled}
