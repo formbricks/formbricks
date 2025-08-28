@@ -430,7 +430,7 @@ export const QuotaModal = ({
                 setOpenConfirmationModal(false);
                 form.handleSubmit(submitQuota)();
               }}
-              body={t("environments.surveys.edit.quotas.save_changes_confirmation_text")}
+              body={t("environments.surveys.edit.quotas.confirm_quota_changes_body")}
               buttonText={t("common.save")}
               cancelButtonText={t("common.discard")}
             />
@@ -445,6 +445,7 @@ export const QuotaModal = ({
                     ...form.getValues(),
                   };
                   duplicateQuota(updatedQuota);
+                  onOpenChange(false);
                 }
               }}
             />
