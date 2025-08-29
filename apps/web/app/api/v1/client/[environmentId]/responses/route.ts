@@ -12,8 +12,8 @@ import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import { createResponse } from "./lib/response";
+import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TResponseWithQuotas, createResponseWithQuotaEvaluation } from "./lib/response";
 
 interface Context {
   params: Promise<{
@@ -121,7 +121,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    let response: TResponse;
+    let response: TResponseWithQuotas;
     try {
       const meta: TResponseInput["meta"] = {
         source: responseInputData?.meta?.source,
@@ -135,7 +135,7 @@ export const POST = withV1ApiWrapper({
         action: responseInputData?.meta?.action,
       };
 
-      response = await createResponse({
+      response = await createResponseWithQuotaEvaluation({
         ...responseInputData,
         meta,
       });
@@ -173,8 +173,26 @@ export const POST = withV1ApiWrapper({
       surveyType: survey.type,
     });
 
+    const quotaObj = response.quotaFull
+      ? {
+          quotaFull: true,
+          quota: {
+            id: response.quotaFull.id,
+            action: response.quotaFull.action,
+            endingCardId: response.quotaFull.endingCardId,
+          },
+        }
+      : {
+          quotaFull: false,
+        };
+
+    const responseData = {
+      id: response.id,
+      ...quotaObj,
+    };
+
     return {
-      response: responses.successResponse({ id: response.id }, true),
+      response: responses.successResponse(responseData, true),
     };
   },
 });

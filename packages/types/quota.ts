@@ -55,3 +55,20 @@ export const ZResponseQuotaLink = z.object({
   status: ZResponseQuotaLinkStatus,
 });
 export type TResponseQuotaLink = z.infer<typeof ZResponseQuotaLink>;
+
+export interface TQuotaFullEndSurvey {
+  action: "endSurvey";
+  endingCardId: string;
+}
+
+export interface TQuotaFullContinueSurvey {
+  action: "continueSurvey";
+}
+
+type TQuotaFullAction = TQuotaFullEndSurvey | TQuotaFullContinueSurvey;
+
+export type TQuotaFullResponse = {
+  quotaFull: true;
+  quotaId: string;
+  action: TSurveyQuotaAction;
+} & TQuotaFullAction;

@@ -1,0 +1,167 @@
+import "server-only";
+import { updateResponse } from "@/lib/response/service";
+import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { validateInputs } from "@/lib/utils/validate";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import { ZId } from "@formbricks/types/common";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+
+export type TQuotaFullResponse = {
+  status: "quota_full";
+  quotaId: string;
+  action: "endSurvey" | "continueSurvey";
+  endingCardId?: string;
+};
+
+/**
+ * Evaluates quotas against response data to determine screening status
+ * @param survey - Survey with questions and variables for evaluation context
+ * @param responseData - Response data to evaluate against quota conditions
+ * @param variablesData - Variables data for evaluation
+ * @param quotas - Active quota definitions for the survey
+ * @param selectedLanguage - Language for evaluation context
+ * @returns Array of evaluation results for each quota
+ */
+export const evaluateQuotas = (
+  survey: TJsEnvironmentStateSurvey,
+  responseData: TResponseData,
+  variablesData: TResponseVariables,
+  quotas: TSurveyQuota[],
+  selectedLanguage: string = "default"
+): { passedQuotas: TSurveyQuota[]; failedQuotas: TSurveyQuota[] } => {
+  const passedQuotas: TSurveyQuota[] = [];
+  const failedQuotas: TSurveyQuota[] = [];
+
+  for (const quota of quotas) {
+    const conditions = {
+      id: quota.id,
+      ...quota.logic,
+    };
+
+    const conditionsMatch = evaluateLogic(survey, responseData, variablesData, conditions, selectedLanguage);
+
+    if (conditionsMatch) {
+      passedQuotas.push(quota);
+    } else {
+      failedQuotas.push(quota);
+    }
+  }
+
+  return { passedQuotas, failedQuotas };
+};
+
+/**
+ * Upserts ResponseQuotaLink records for a response
+ * @param responseId - Response ID to link to quotas
+ * @param fullQuotaIds - IDs of quotas that are full
+ * @param otherQuotaIds - IDs of quotas that are not full
+ */
+export const upsertResponseQuotaLinks = async (
+  responseId: string,
+  fullQuota: TSurveyQuota[],
+  otherQuota: TSurveyQuota[],
+  failedQuotas: TSurveyQuota[]
+): Promise<void> => {
+  await prisma.responseQuotaLink.deleteMany({
+    where: {
+      responseId,
+      quotaId: { in: failedQuotas.map((quota) => quota.id) },
+    },
+  });
+
+  const fullQuotaIds = fullQuota.map((quota) => quota.id);
+  const otherQuotaIds = otherQuota.map((quota) => quota.id);
+
+  const upsertPromises = await Promise.all([
+    // Create new records for full quotas
+    prisma.responseQuotaLink.createMany({
+      data: fullQuotaIds.map((quotaId) => ({
+        responseId,
+        quotaId,
+        status: "screenedOut",
+      })),
+      skipDuplicates: true,
+    }),
+
+    // Update existing records for full quotas
+    prisma.responseQuotaLink.updateMany({
+      where: {
+        responseId,
+        quotaId: { in: fullQuotaIds },
+        status: { not: "screenedOut" },
+      },
+      data: {
+        status: "screenedOut",
+      },
+    }),
+
+    // Create new records for other quotas
+    prisma.responseQuotaLink.createMany({
+      data: otherQuotaIds.map((quotaId) => ({
+        responseId,
+        quotaId,
+        status: "screenedIn",
+      })),
+      skipDuplicates: true,
+    }),
+  ]);
+
+  await Promise.all(upsertPromises);
+};
+
+/**
+ * Checks if any quota is full and returns the appropriate quota-full response
+ * @param surveyId - Survey ID to check quotas for
+ * @param responseId - Response ID to check quotas for
+ * @param passedQuotas - Current evaluation results
+ * @returns Quota-full response if any quota is full, null otherwise
+ */
+export const handleQuotas = async (
+  surveyId: string,
+  responseId: string,
+  result: { passedQuotas: TSurveyQuota[]; failedQuotas: TSurveyQuota[] }
+): Promise<TSurveyQuota | null> => {
+  try {
+    validateInputs([surveyId, ZId], [responseId, ZId]);
+
+    let firstScreenedOutQuota: TSurveyQuota | null = null;
+    const fullQuota: TSurveyQuota[] = [];
+    const otherQuota: TSurveyQuota[] = [];
+
+    for (const quota of result.passedQuotas) {
+      const screenedInCount = await prisma.responseQuotaLink.count({
+        where: {
+          quotaId: quota.id,
+          status: "screenedIn",
+          response: quota.countPartialSubmissions
+            ? {} // Count all responses
+            : { finished: true }, // Only count finished responses
+        },
+      });
+
+      if (screenedInCount >= quota.limit) {
+        if (!firstScreenedOutQuota) {
+          firstScreenedOutQuota = quota;
+        }
+        fullQuota.push(quota);
+      } else {
+        otherQuota.push(quota);
+      }
+    }
+
+    await upsertResponseQuotaLinks(responseId, fullQuota, otherQuota, result.failedQuotas);
+
+    if (firstScreenedOutQuota?.action === "endSurvey") {
+      // If the quota is full and the action is to end the survey, we need to update the response to finished
+      await updateResponse(responseId, { finished: true });
+    }
+
+    return firstScreenedOutQuota;
+  } catch (error) {
+    logger.error({ error, responseId, surveyId }, "Error checking quotas full");
+    return null;
+  }
+};
