@@ -134,7 +134,7 @@ describe("MediaBackground", () => {
 
     render(<MediaBackground {...props} />);
 
-    const mobileContainer = document.querySelector(".w-\\[22rem\\]");
+    const mobileContainer = document.querySelector("[data-testid='mobile-preview-container']");
     expect(mobileContainer).toBeInTheDocument();
     expect(screen.getByTestId("child-content")).toBeInTheDocument();
   });
