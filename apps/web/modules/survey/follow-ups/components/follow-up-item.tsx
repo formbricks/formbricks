@@ -218,7 +218,7 @@ export const FollowUpItem = ({
             };
           });
         }}
-        text={t("environments.surveys.edit.follow_ups_delete_modal_text")}
+        body={t("environments.surveys.edit.follow_ups_delete_modal_text")}
         title={t("environments.surveys.edit.follow_ups_delete_modal_title")}
         buttonVariant="destructive"
       />
