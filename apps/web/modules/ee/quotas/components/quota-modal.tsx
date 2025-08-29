@@ -269,18 +269,10 @@ export const QuotaModal = ({
                       <Input
                         {...field}
                         type="number"
-                        min="1"
                         className="w-32 bg-white"
                         onChange={(e) => {
                           const value = e.target.value;
                           field.onChange(value === "" ? 1 : parseInt(value, 10));
-                        }}
-                        onBlur={(e) => {
-                          const value = parseInt(e.target.value, 10);
-                          if (isNaN(value) || value < 1) {
-                            field.onChange(1);
-                          }
-                          field.onBlur();
                         }}
                       />
                     </FormControl>
