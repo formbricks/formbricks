@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
-import { findHiddenFieldUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { findHiddenFieldUsedInLogic, isUsedInQuota } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -14,6 +14,7 @@ import { useTranslate } from "@tolgee/react";
 import { EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
 
@@ -22,6 +23,7 @@ interface HiddenFieldsCardProps {
   setLocalSurvey: (survey: TSurvey) => void;
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
+  quotas: TSurveyQuota[];
 }
 
 export const HiddenFieldsCard = ({
@@ -29,6 +31,7 @@ export const HiddenFieldsCard = ({
   localSurvey,
   setActiveQuestionId,
   setLocalSurvey,
+  quotas,
 }: HiddenFieldsCardProps) => {
   const open = activeQuestionId == "hidden";
   const [hiddenField, setHiddenField] = useState<string>("");
@@ -81,6 +84,18 @@ export const HiddenFieldsCard = ({
             questionIndex: quesIdx + 1,
           }
         )
+      );
+      return;
+    }
+
+    const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { hiddenFieldId: fieldId }));
+
+    if (quotaIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.fieldId_is_used_in_quota_please_remove_it_from_quota_first", {
+          fieldId,
+          quotaName: quotas[quotaIdx].name,
+        })
       );
       return;
     }

@@ -6,6 +6,7 @@ import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components
 import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TConditionGroup,
   TLeftOperand,
@@ -101,8 +102,8 @@ const getQuestionIconMapping = (t: TFnType) =>
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
-  currQuestionIdx: number,
-  t: TFnType
+  t: TFnType,
+  currQuestionIdx?: number // Optional in case of quotas
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   const variables = localSurvey.variables ?? [];
@@ -112,7 +113,7 @@ export const getConditionValueOptions = (
   const questionOptions: TComboboxOption[] = [];
 
   questions
-    .filter((_, idx) => idx <= currQuestionIdx)
+    .filter((_, idx) => (typeof currQuestionIdx === "undefined" ? true : idx <= currQuestionIdx))
     .forEach((question) => {
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         // Rows submenu
@@ -229,7 +230,7 @@ export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean =
   return actions.some((action) => action.objective === "jumpToQuestion");
 };
 
-const getQuestionOperatorOptions = (
+export const getQuestionOperatorOptions = (
   question: TSurveyQuestion,
   t: TFnType,
   condition?: TSingleCondition
@@ -261,6 +262,18 @@ export const getDefaultOperatorForQuestion = (
   const options = getQuestionOperatorOptions(question, t);
 
   return options[0].value.toString() as TSurveyLogicConditionsOperator;
+};
+
+export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurvey: TSurvey): string => {
+  if (condition.leftOperand.type === "question") {
+    const questionEntity = localSurvey.questions.find((q) => q.id === condition.leftOperand.value);
+    if (questionEntity && questionEntity.type === TSurveyQuestionTypeEnum.Matrix) {
+      if (condition.leftOperand?.meta?.row !== undefined) {
+        return `${condition.leftOperand.value}.${condition.leftOperand.meta.row}`;
+      }
+    }
+  }
+  return condition.leftOperand.value;
 };
 
 export const getConditionOperatorOptions = (
@@ -295,8 +308,8 @@ export const getConditionOperatorOptions = (
 export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
-  questionIdx: number,
-  t: TFnType
+  t: TFnType,
+  questionIdx?: number
 ): {
   show?: boolean;
   showInput?: boolean;
@@ -321,7 +334,9 @@ export const getMatchValueProps = (
     return { show: false, options: [] };
   }
 
-  let questions = localSurvey.questions.filter((_, idx) => idx <= questionIdx);
+  let questions = localSurvey.questions.filter((_, idx) =>
+    typeof questionIdx === "undefined" ? true : idx <= questionIdx
+  );
   let variables = localSurvey.variables ?? [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
 
@@ -1190,6 +1205,52 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
       question.logicFallback === questionId ||
       (question.id !== questionId && question.logic?.some(isUsedInLogicRule))
   );
+};
+
+export const isUsedInQuota = (
+  quota: TSurveyQuota,
+  {
+    questionId,
+    hiddenFieldId,
+    variableId,
+    endingCardId,
+  }: {
+    questionId?: TSurveyQuestionId;
+    hiddenFieldId?: string;
+    variableId?: string;
+    endingCardId?: string;
+  }
+): boolean => {
+  if (questionId) {
+    return quota.logic.conditions.some(
+      (condition) =>
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "question", questionId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "question", questionId)
+    );
+  }
+
+  if (hiddenFieldId) {
+    return quota.logic.conditions.some(
+      (condition) =>
+        (condition.rightOperand &&
+          isUsedInRightOperand(condition.rightOperand, "hiddenField", hiddenFieldId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "hiddenField", hiddenFieldId)
+    );
+  }
+
+  if (variableId) {
+    return quota.logic.conditions.some(
+      (condition) =>
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "variable", variableId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "variable", variableId)
+    );
+  }
+
+  if (endingCardId) {
+    return quota.action === "endSurvey" && quota.endingCardId === endingCardId;
+  }
+
+  return false;
 };
 
 export const findOptionUsedInLogic = (

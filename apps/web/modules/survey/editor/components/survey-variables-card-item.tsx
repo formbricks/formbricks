@@ -1,7 +1,7 @@
 "use client";
 
 import { extractRecallInfo } from "@/lib/utils/recall";
-import { findVariableUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { findVariableUsedInLogic, isUsedInQuota } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -19,6 +19,7 @@ import { TrashIcon } from "lucide-react";
 import React, { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 
 interface SurveyVariablesCardItemProps {
@@ -26,6 +27,7 @@ interface SurveyVariablesCardItemProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   mode: "create" | "edit";
+  quotas: TSurveyQuota[];
 }
 
 export const SurveyVariablesCardItem = ({
@@ -33,6 +35,7 @@ export const SurveyVariablesCardItem = ({
   localSurvey,
   setLocalSurvey,
   mode,
+  quotas,
 }: SurveyVariablesCardItemProps) => {
   const { t } = useTranslate();
   const form = useForm<TSurveyVariable>({
@@ -91,6 +94,17 @@ export const SurveyVariablesCardItem = ({
       return;
     }
 
+    const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { variableId: variableToDelete.id }));
+
+    if (quotaIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.variable_is_used_in_quota_please_remove_it_from_quota_first", {
+          variableName: variableToDelete.name,
+          quotaName: quotas[quotaIdx].name,
+        })
+      );
+      return;
+    }
     // remove recall references
     questions.forEach((question) => {
       for (const [languageCode, headline] of Object.entries(question.headline)) {

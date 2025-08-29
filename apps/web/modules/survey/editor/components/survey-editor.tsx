@@ -18,6 +18,7 @@ import { ActionClass, Environment, Language, OrganizationRole, Project } from "@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -38,7 +39,7 @@ interface SurveyEditorProps {
   isSpamProtectionAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
-  plan: TOrganizationBillingPlan;
+  isQuotasAllowed: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
   projectPermission: TTeamPermission | null;
@@ -47,6 +48,8 @@ interface SurveyEditorProps {
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
+  plan: TOrganizationBillingPlan;
+  quotas: TSurveyQuota[];
 }
 
 export const SurveyEditor = ({
@@ -65,14 +68,16 @@ export const SurveyEditor = ({
   isSpamProtectionAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
-  plan,
+  isQuotasAllowed,
   isCxMode = false,
   locale,
+  plan,
   projectPermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
   userEmail,
   teamMemberDetails,
+  quotas,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -198,6 +203,7 @@ export const SurveyEditor = ({
               locale={locale}
               responseCount={responseCount}
               setIsCautionDialogOpen={setIsCautionDialogOpen}
+              quotas={quotas}
             />
           )}
 
@@ -231,6 +237,8 @@ export const SurveyEditor = ({
               isSpamProtectionAllowed={isSpamProtectionAllowed}
               projectPermission={projectPermission}
               isFormbricksCloud={isFormbricksCloud}
+              isQuotasAllowed={isQuotasAllowed}
+              quotas={quotas}
             />
           )}
 

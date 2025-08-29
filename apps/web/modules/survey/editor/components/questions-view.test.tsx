@@ -133,6 +133,7 @@ vi.mock("@/modules/survey/editor/components/survey-variables-card", () => ({
 
 vi.mock("@/modules/survey/editor/lib/utils", () => ({
   findQuestionUsedInLogic: vi.fn(() => -1),
+  isUsedInQuota: vi.fn(() => false),
 }));
 
 vi.mock("@dnd-kit/core", async (importOriginal) => {
@@ -310,6 +311,7 @@ describe("QuestionsView", () => {
         locale={"en" as TUserLocale}
         responseCount={0}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
+        quotas={[]}
         {...props}
       />
     );
