@@ -9,9 +9,11 @@ import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attri
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   getIsContactsEnabled,
+  getIsQuotasEnabled,
   getIsSpamProtectionEnabled,
   getMultiLanguagePermission,
 } from "@/modules/ee/license-check/lib/utils";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
@@ -62,17 +64,25 @@ export const SurveyEditorPage = async (props) => {
   }
 
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
-  const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
+  const [locale, userEmail] = await Promise.all([
+    getUserLocale(session.user.id),
+    getUserEmail(session.user.id),
+  ]);
 
   const isUserTargetingAllowed = await getIsContactsEnabled();
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
-  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organizationBilling.plan);
-  const isSpamProtectionAllowed = await getIsSpamProtectionEnabled(organizationBilling.plan);
+  const [isMultiLanguageAllowed, isSurveyFollowUpsAllowed, isSpamProtectionAllowed, isQuotasAllowed] =
+    await Promise.all([
+      getMultiLanguagePermission(organizationBilling.plan),
+      getSurveyFollowUpsPermission(organizationBilling.plan),
+      getIsSpamProtectionEnabled(organizationBilling.plan),
+      getIsQuotasEnabled(organizationBilling.plan),
+    ]);
 
-  const userEmail = await getUserEmail(session.user.id);
-  const projectLanguages = await getProjectLanguages(projectWithTeamIds.id);
-
-  const teamMemberDetails = await getTeamMemberDetails(projectWithTeamIds.teamIds);
+  const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
+  const [projectLanguages, teamMemberDetails] = await Promise.all([
+    getProjectLanguages(projectWithTeamIds.id),
+    getTeamMemberDetails(projectWithTeamIds.teamIds),
+  ]);
 
   if (
     !survey ||
@@ -113,6 +123,8 @@ export const SurveyEditorPage = async (props) => {
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
       userEmail={userEmail}
       teamMemberDetails={teamMemberDetails}
+      isQuotasAllowed={isQuotasAllowed}
+      quotas={quotas}
     />
   );
 };

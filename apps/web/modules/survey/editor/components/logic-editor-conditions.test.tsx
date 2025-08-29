@@ -15,6 +15,7 @@ vi.mock("../lib/utils", () => ({
   getConditionValueOptions: vi.fn(() => []),
   getConditionOperatorOptions: vi.fn(() => []),
   getMatchValueProps: vi.fn(() => ({ show: false, options: [] })),
+  getFormatLeftOperandValue: vi.fn(() => ""),
 }));
 
 vi.mock("@formkit/auto-animate/react", () => ({

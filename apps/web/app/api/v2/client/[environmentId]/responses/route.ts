@@ -11,8 +11,7 @@ import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse } from "@formbricks/types/responses";
-import { createResponse } from "./lib/response";
+import { TResponseWithQuotas, createResponseWithQuotaEvaluation } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
 interface Context {
@@ -104,7 +103,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
-  let response: TResponse;
+  let response: TResponseWithQuotas;
   try {
     const meta: TResponseInputV2["meta"] = {
       source: responseInputData?.meta?.source,
@@ -118,7 +117,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       action: responseInputData?.meta?.action,
     };
 
-    response = await createResponse({
+    response = await createResponseWithQuotaEvaluation({
       ...responseInputData,
       meta,
     });
@@ -151,5 +150,23 @@ export const POST = async (request: Request, context: Context): Promise<Response
     surveyType: survey.type,
   });
 
-  return responses.successResponse({ id: response.id }, true);
+  const quotaObj = response.quotaFull
+    ? {
+        quotaFull: true,
+        quota: {
+          id: response.quotaFull.id,
+          action: response.quotaFull.action,
+          endingCardId: response.quotaFull.endingCardId,
+        },
+      }
+    : {
+        quotaFull: false,
+      };
+
+  const responseData = {
+    id: response.id,
+    ...quotaObj,
+  };
+
+  return responses.successResponse(responseData, true);
 };

@@ -10,6 +10,7 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { z } from "zod";
@@ -75,12 +76,13 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       ],
     });
 
-    const [tags, { contactAttributes: attributes, meta, hiddenFields }] = await Promise.all([
+    const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas] = await Promise.all([
       getTagsByEnvironmentId(survey.environmentId),
       getResponseFilteringValues(parsedInput.surveyId),
+      getQuotas(parsedInput.surveyId),
     ]);
 
-    return { environmentTags: tags, attributes, meta, hiddenFields };
+    return { environmentTags: tags, attributes, meta, hiddenFields, quotas };
   });
 
 /**

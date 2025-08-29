@@ -33,6 +33,7 @@ import {
   ListOrderedIcon,
   MessageSquareTextIcon,
   MousePointerClickIcon,
+  PieChartIcon,
   Rows3Icon,
   SmartphoneIcon,
   StarIcon,
@@ -48,6 +49,7 @@ export enum OptionsType {
   OTHERS = "Other Filters",
   META = "Meta",
   HIDDEN_FIELDS = "Hidden Fields",
+  QUOTAS = "Quotas",
 }
 
 export type QuestionOption = {
@@ -102,6 +104,9 @@ const questionIcons = {
 
   // tags
   [OptionsType.TAGS]: HashIcon,
+
+  // quotas
+  [OptionsType.QUOTAS]: PieChartIcon,
 };
 
 const getIcon = (type: string) => {
@@ -122,6 +127,8 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
         return getIcon(label);
       } else if (type === OptionsType.TAGS) {
         return getIcon(OptionsType.TAGS);
+      } else if (type === OptionsType.QUOTAS) {
+        return getIcon(OptionsType.QUOTAS);
       }
     }
   };
@@ -133,6 +140,8 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
       return "bg-brand-dark";
     } else if (type === OptionsType.TAGS) {
       return "bg-indigo-500";
+    } else if (type === OptionsType.QUOTAS) {
+      return "bg-slate-500";
     } else {
       return "bg-amber-500";
     }

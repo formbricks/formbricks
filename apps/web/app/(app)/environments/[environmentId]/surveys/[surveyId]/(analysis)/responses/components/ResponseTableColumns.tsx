@@ -305,6 +305,17 @@ export const generateResponseTableColumns = (
     },
   };
 
+  const quotasColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "quota",
+    header: t("common.quota"),
+    cell: ({ row }) => {
+      const quotas = row.original.quotas;
+      const items = quotas?.map((quota) => ({ value: quota })) ?? [];
+      return <ResponseBadges items={items} showId={false} />;
+    },
+    size: 200,
+  };
+
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
     size: 200,
@@ -392,6 +403,7 @@ export const generateResponseTableColumns = (
   const baseColumns = [
     personColumn,
     dateColumn,
+    quotasColumn,
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
     ...questionColumns,

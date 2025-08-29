@@ -53,6 +53,7 @@ const LicenseFeaturesSchema = z.object({
   auditLogs: z.boolean(),
   multiLanguageSurveys: z.boolean(),
   accessControl: z.boolean(),
+  quotas: z.boolean(),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -115,6 +116,7 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   auditLogs: false,
   multiLanguageSurveys: false,
   accessControl: false,
+  quotas: false,
 };
 
 // Helper functions

@@ -32,7 +32,7 @@ import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
+import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -40,7 +40,7 @@ import { TUser, TUserLocale } from "@formbricks/types/user";
 interface ResponseTableProps {
   data: TResponseTableData[];
   survey: TSurvey;
-  responses: TResponse[] | null;
+  responses: TResponseWithQuotas[] | null;
   environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
@@ -48,7 +48,7 @@ interface ResponseTableProps {
   fetchNextPage: () => void;
   hasMore: boolean;
   deleteResponses: (responseIds: string[]) => void;
-  updateResponse: (responseId: string, updatedResponse: TResponse) => void;
+  updateResponse: (responseId: string, updatedResponse: TResponseWithQuotas) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
 }

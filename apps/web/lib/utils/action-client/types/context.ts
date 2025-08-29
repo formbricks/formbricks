@@ -19,7 +19,7 @@ export type AuditLoggingCtx = {
   contactId?: string;
   apiKeyId?: string;
   responseId?: string;
-
+  quotaId?: string;
   teamId?: string;
   integrationId?: string;
 };

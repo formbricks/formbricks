@@ -77,6 +77,12 @@ vi.mock("@formbricks/database", () => ({
     actionClass: {
       findMany: vi.fn(),
     },
+    surveyQuota: {
+      findMany: vi.fn(),
+    },
+    organization: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -479,6 +485,12 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.surveyQuota.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+      billing: {
+        plan: "free",
+      },
+    } as any);
   });
 
   test("should copy survey to a different environment successfully", async () => {

@@ -8,16 +8,59 @@ import {
 } from "@/lib/organization/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import { calculateTtcTotal } from "@/lib/response/utils";
+import { getSurvey } from "@/lib/survey/service";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getContact } from "./contact";
+
+export type TResponseWithQuotas = TResponse & {
+  quotaFull?: TSurveyQuota;
+};
+
+export const createResponseWithQuotaEvaluation = async (
+  responseInput: TResponseInputV2
+): Promise<TResponseWithQuotas> => {
+  const response = await createResponse(responseInput);
+
+  try {
+    const [survey, quotas] = await Promise.all([
+      getSurvey(responseInput.surveyId),
+      getQuotas(responseInput.surveyId),
+    ]);
+
+    if (!survey || !quotas || quotas.length === 0) {
+      return response;
+    }
+
+    const result = evaluateQuotas(
+      survey,
+      responseInput.data,
+      responseInput.variables || {},
+      quotas,
+      responseInput.language || "default"
+    );
+
+    const quotaFull = await handleQuotas(responseInput.surveyId, response.id, result);
+
+    return {
+      ...response,
+      ...(quotaFull && { quotaFull }),
+    };
+  } catch (error) {
+    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response");
+    return response;
+  }
+};
 
 export const createResponse = async (responseInput: TResponseInputV2): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);

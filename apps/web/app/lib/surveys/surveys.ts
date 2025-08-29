@@ -9,6 +9,7 @@ import {
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
@@ -65,7 +66,8 @@ export const generateQuestionAndFilterOptions = (
   environmentTags: TTag[] | undefined,
   attributes: TSurveyContactAttributes,
   meta: TSurveyMetaFieldFilter,
-  hiddenFields: TResponseHiddenFieldsFilter
+  hiddenFields: TResponseHiddenFieldsFilter,
+  quotas: TSurveyQuota[]
 ): {
   questionOptions: QuestionOptions[];
   questionFilterOptions: QuestionFilterOptions[];
@@ -219,6 +221,22 @@ export const generateQuestionAndFilterOptions = (
   }
   questionOptions = [...questionOptions, { header: OptionsType.OTHERS, option: languageQuestion }];
 
+  if (quotas.length > 0) {
+    const quotaOptions = quotas.map((quota) => {
+      return { label: quota.name, type: OptionsType.QUOTAS, id: quota.id };
+    });
+    questionOptions = [...questionOptions, { header: OptionsType.QUOTAS, option: quotaOptions }];
+
+    quotas.forEach((quota) => {
+      questionFilterOptions.push({
+        type: "Quotas",
+        filterOptions: ["Status"],
+        filterComboBoxOptions: ["Screened in", "Screened out (overquota)", "Screened out (not in quota)"],
+        id: quota.id,
+      });
+    });
+  }
+
   return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
 };
 
@@ -236,6 +254,7 @@ export const getFormattedFilters = (
   const others: FilterValue[] = [];
   const meta: FilterValue[] = [];
   const hiddenFields: FilterValue[] = [];
+  const quotas: FilterValue[] = [];
 
   selectedFilter.filter.forEach((filter) => {
     if (filter.questionType?.type === "Questions") {
@@ -250,6 +269,8 @@ export const getFormattedFilters = (
       meta.push(filter);
     } else if (filter.questionType?.type === "Hidden Fields") {
       hiddenFields.push(filter);
+    } else if (filter.questionType?.type === "Quotas") {
+      quotas.push(filter);
     }
   });
 
@@ -510,6 +531,22 @@ export const getFormattedFilters = (
         } else if (filterType.filterValue === "Not equals") {
           filters.meta[questionType.label ?? ""] = { op: "notEquals", value };
         }
+      }
+    });
+  }
+
+  if (quotas.length) {
+    quotas.forEach(({ filterType, questionType }) => {
+      if (!filters.quotas) filters.quotas = {};
+
+      const quotaId = questionType.id ?? "";
+
+      if (filterType.filterComboBoxValue === "Screened in") {
+        filters.quotas[quotaId] = { op: "screenedIn" };
+      } else if (filterType.filterComboBoxValue === "Screened out (overquota)") {
+        filters.quotas[quotaId] = { op: "screenedOut" };
+      } else if (filterType.filterComboBoxValue === "Screened out (not in quota)") {
+        filters.quotas[quotaId] = { op: "screenedOutNotInQuota" };
       }
     });
   }
