@@ -12,7 +12,7 @@ const extractId = (text: string): string | null => {
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
 const extractFallbackValue = (text: string): string => {
-  const pattern = /fallback:(\S*)#/;
+  const pattern = /fallback:([^#]*)#/;
   const match = text.match(pattern);
   return match?.[1] ?? "";
 };
@@ -20,7 +20,7 @@ const extractFallbackValue = (text: string): string => {
 // Extracts the complete recall information (ID and fallback) from a headline string.
 const extractRecallInfo = (headline: string, id?: string): string | null => {
   const idPattern = id ?? "[A-Za-z0-9_-]+";
-  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
+  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
