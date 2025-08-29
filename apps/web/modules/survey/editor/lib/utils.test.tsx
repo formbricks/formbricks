@@ -1163,8 +1163,14 @@ describe("Survey Editor Utils", () => {
         headline: { default: "Matrix Question" },
         required: false,
         shuffleOption: "none",
-        rows: [{ default: "Row 1" }, { default: "Row 2" }],
-        columns: [{ default: "Column 1" }, { default: "Column 2" }],
+        rows: [
+          { id: "row1", label: { default: "Row 1" } },
+          { id: "row2", label: { default: "Row 2" } },
+        ],
+        columns: [
+          { id: "col1", label: { default: "Column 1" } },
+          { id: "col2", label: { default: "Column 2" } },
+        ],
       };
       survey.questions.push(matrixQuestion);
 
@@ -1243,8 +1249,14 @@ describe("Survey Editor Utils", () => {
         headline: { default: "Matrix Question" },
         required: false,
         shuffleOption: "none",
-        rows: [{ default: "Row 1" }, { default: "Row 2" }],
-        columns: [{ default: "Column 1" }, { default: "Column 2" }],
+        rows: [
+          { id: "row1", label: { default: "Row 1" } },
+          { id: "row2", label: { default: "Row 2" } },
+        ],
+        columns: [
+          { id: "col1", label: { default: "Column 1" } },
+          { id: "col2", label: { default: "Column 2" } },
+        ],
       };
       survey.questions.push(matrixQuestion);
 
@@ -1274,7 +1286,7 @@ describe("Survey Editor Utils", () => {
       limit: 100,
       conditions: {
         connector: "and" as const,
-        criteria: [],
+        conditions: [],
       },
       action: "endSurvey" as const,
       endingCardId: null,
@@ -1285,9 +1297,9 @@ describe("Survey Editor Utils", () => {
     test("returns true when question is used in leftOperand", () => {
       const quota = {
         ...mockQuota,
-        conditions: {
+        logic: {
           connector: "and" as const,
-          criteria: [
+          conditions: [
             {
               id: "condition1",
               leftOperand: { type: "question" as const, value: "question1" },
@@ -1306,9 +1318,9 @@ describe("Survey Editor Utils", () => {
     test("returns true when question is used in rightOperand", () => {
       const quota = {
         ...mockQuota,
-        conditions: {
+        logic: {
           connector: "and" as const,
-          criteria: [
+          conditions: [
             {
               id: "condition1",
               leftOperand: { type: "variable" as const, value: "userType" },
@@ -1327,9 +1339,9 @@ describe("Survey Editor Utils", () => {
     test("returns false when question is not used in quota", () => {
       const quota = {
         ...mockQuota,
-        conditions: {
+        logic: {
           connector: "and" as const,
-          criteria: [
+          conditions: [
             {
               id: "condition1",
               leftOperand: { type: "question" as const, value: "question2" },
@@ -1340,7 +1352,7 @@ describe("Survey Editor Utils", () => {
         },
       };
 
-      const result = isUsedInQuota(quota, "question1");
+      const result = isUsedInQuota(quota, { questionId: "question1" });
 
       expect(result).toBe(false);
     });
@@ -1348,13 +1360,13 @@ describe("Survey Editor Utils", () => {
     test("returns false when quota has no conditions", () => {
       const quota = {
         ...mockQuota,
-        conditions: {
+        logic: {
           connector: "and" as const,
-          criteria: [],
+          conditions: [],
         },
       };
 
-      const result = isUsedInQuota(quota, "question1");
+      const result = isUsedInQuota(quota, { questionId: "question1" });
 
       expect(result).toBe(false);
     });
@@ -1362,9 +1374,9 @@ describe("Survey Editor Utils", () => {
     test("returns true when question is used in multiple conditions", () => {
       const quota = {
         ...mockQuota,
-        conditions: {
+        logic: {
           connector: "or" as const,
-          criteria: [
+          conditions: [
             {
               id: "condition1",
               leftOperand: { type: "question" as const, value: "question2" },
@@ -1389,9 +1401,9 @@ describe("Survey Editor Utils", () => {
     test("handles condition without rightOperand", () => {
       const quota = {
         ...mockQuota,
-        conditions: {
+        logic: {
           connector: "and" as const,
-          criteria: [
+          conditions: [
             {
               id: "condition1",
               leftOperand: { type: "question" as const, value: "question1" },

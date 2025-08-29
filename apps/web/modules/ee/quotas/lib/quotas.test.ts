@@ -34,9 +34,9 @@ describe("Quota Service", () => {
     surveyId: mockSurveyId,
     name: "Test Quota",
     limit: 100,
-    conditions: {
+    logic: {
       connector: "and",
-      criteria: [],
+      conditions: [],
     },
     action: "endSurvey",
     endingCardId: null,
@@ -99,9 +99,9 @@ describe("Quota Service", () => {
       surveyId: mockSurveyId,
       name: "New Quota",
       limit: 50,
-      conditions: {
+      logic: {
         connector: "and",
-        criteria: [],
+        conditions: [],
       },
       action: "endSurvey",
       endingCardId: null,
@@ -141,9 +141,9 @@ describe("Quota Service", () => {
     const updateInput: TSurveyQuotaUpdateInput = {
       name: "Updated Quota",
       limit: 75,
-      conditions: {
+      logic: {
         connector: "or",
-        criteria: [],
+        conditions: [],
       },
       action: "continueSurvey",
       endingCardId: "ending123",

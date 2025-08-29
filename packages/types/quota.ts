@@ -3,11 +3,11 @@ import { ZId } from "./common";
 import { ZConnector, ZSingleCondition } from "./surveys/types";
 
 // Complete quota conditions structure
-export const ZSurveyQuotaConditions = z.object({
+export const ZSurveyQuotaLogic = z.object({
   connector: ZConnector,
-  criteria: z.array(ZSingleCondition),
+  conditions: z.array(ZSingleCondition),
 });
-export type TSurveyQuotaConditions = z.infer<typeof ZSurveyQuotaConditions>;
+export type TSurveyQuotaLogic = z.infer<typeof ZSurveyQuotaLogic>;
 
 // Survey quota action enum
 export const ZSurveyQuotaAction = z.enum(["endSurvey", "continueSurvey"]);
@@ -25,7 +25,7 @@ export const ZSurveyQuota = z.object({
   surveyId: ZId,
   name: z.string().min(1, { message: "Quota name is required" }),
   limit: z.number().positive().min(1, { message: "Limit must be greater than 0" }),
-  conditions: ZSurveyQuotaConditions,
+  logic: ZSurveyQuotaLogic,
   action: ZSurveyQuotaAction,
   endingCardId: ZId.nullable(),
   countPartialSubmissions: z.boolean(),
@@ -41,7 +41,7 @@ export const ZSurveyQuotaInput = ZSurveyQuota.omit({
   if (data.action === "endSurvey" && (data.endingCardId === null || data.endingCardId === "")) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["action"], // keep same path as your original
+      path: ["action"],
       message: "endingCardId is required when action is endSurvey",
     });
   }

@@ -6,7 +6,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurveyQuota, TSurveyQuotaCreateInput, TSurveyQuotaUpdateInput } from "@formbricks/types/quota";
+import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 
 export const getQuotas = reactCache(async (surveyId: string): Promise<TSurveyQuota[]> => {
   validateInputs([surveyId, ZId]);
@@ -31,7 +31,7 @@ export const getQuotas = reactCache(async (surveyId: string): Promise<TSurveyQuo
   }
 });
 
-export const createQuota = async (quota: TSurveyQuotaCreateInput): Promise<TSurveyQuota> => {
+export const createQuota = async (quota: TSurveyQuotaInput): Promise<TSurveyQuota> => {
   try {
     const newQuota = await prisma.surveyQuota.create({
       data: quota,
@@ -48,7 +48,7 @@ export const createQuota = async (quota: TSurveyQuotaCreateInput): Promise<TSurv
   }
 };
 
-export const updateQuota = async (quota: TSurveyQuotaUpdateInput, id: string): Promise<TSurveyQuota> => {
+export const updateQuota = async (quota: TSurveyQuotaInput, id: string): Promise<TSurveyQuota> => {
   try {
     const updatedQuota = await prisma.surveyQuota.update({
       where: { id },

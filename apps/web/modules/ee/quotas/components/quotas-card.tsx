@@ -95,6 +95,7 @@ export const QuotasCard = ({
     setQuotaToDelete(null);
     setIsDeletingQuota(false);
     setActiveQuota(null);
+    setIsQuotaModalOpen(false);
   };
 
   const duplicateQuota = async (quota: TSurveyQuota) => {

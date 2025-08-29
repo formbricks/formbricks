@@ -1222,7 +1222,7 @@ export const isUsedInQuota = (
   }
 ): boolean => {
   if (questionId) {
-    return quota.conditions.criteria.some(
+    return quota.logic.conditions.some(
       (condition) =>
         (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "question", questionId)) ||
         isUsedInLeftOperand(condition.leftOperand, "question", questionId)
@@ -1230,7 +1230,7 @@ export const isUsedInQuota = (
   }
 
   if (hiddenFieldId) {
-    return quota.conditions.criteria.some(
+    return quota.logic.conditions.some(
       (condition) =>
         (condition.rightOperand &&
           isUsedInRightOperand(condition.rightOperand, "hiddenField", hiddenFieldId)) ||
@@ -1239,7 +1239,7 @@ export const isUsedInQuota = (
   }
 
   if (variableId) {
-    return quota.conditions.criteria.some(
+    return quota.logic.conditions.some(
       (condition) =>
         (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "variable", variableId)) ||
         isUsedInLeftOperand(condition.leftOperand, "variable", variableId)

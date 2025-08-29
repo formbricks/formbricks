@@ -2,7 +2,6 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
-import { ChangeQuotaConfirmationModal } from "@/modules/ee/quotas/components/ChangeQuotaConfirmationModal";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -43,8 +42,8 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import {
   TSurveyQuota,
-  TSurveyQuotaConditions,
   TSurveyQuotaInput,
+  TSurveyQuotaLogic,
   ZSurveyQuotaAction,
   ZSurveyQuotaInput,
 } from "@formbricks/types/quota";
@@ -79,9 +78,9 @@ export const QuotaModal = ({
     return {
       name: quota?.name || "",
       limit: quota?.limit || 1,
-      conditions: quota?.conditions || {
+      logic: quota?.logic || {
         connector: "and",
-        criteria: [
+        conditions: [
           {
             id: createId(),
             leftOperand: { type: "question", value: survey.questions[0]?.id },
@@ -160,7 +159,7 @@ export const QuotaModal = ({
     let payload = {
       name: trimmedName || t("environments.surveys.edit.quotas.new_quota"),
       limit: data.limit,
-      conditions: data.conditions,
+      logic: data.logic,
       action: data.action,
       endingCardId: data.endingCardId || null,
       countPartialSubmissions: data.countPartialSubmissions,
@@ -178,7 +177,7 @@ export const QuotaModal = ({
   const onSubmit = async (data: TSurveyQuotaInput) => {
     if (isEditing) {
       const hasChangesInInclusionCriteria =
-        JSON.stringify(form.getValues("conditions")) !== JSON.stringify(quota.conditions);
+        JSON.stringify(form.getValues("logic")) !== JSON.stringify(quota.logic);
       if (hasChangesInInclusionCriteria && isValid) {
         setOpenConfirmChangesInInclusionCriteria(true);
         return;
@@ -188,8 +187,8 @@ export const QuotaModal = ({
   };
 
   const handleConditionsChange = useCallback(
-    (newConditions: TSurveyQuotaConditions) => {
-      form.setValue("conditions", newConditions, { shouldDirty: true, shouldValidate: true });
+    (newConditions: TSurveyQuotaLogic) => {
+      form.setValue("logic", newConditions, { shouldDirty: true, shouldValidate: true });
     },
     [form]
   );
@@ -283,7 +282,7 @@ export const QuotaModal = ({
               {/* Inclusion Criteria Field */}
               <FormField
                 control={control}
-                name="conditions"
+                name="logic"
                 render={({ field }) => (
                   <FormItem>
                     <div className="space-y-4 rounded-lg bg-slate-50 p-3">
@@ -391,7 +390,6 @@ export const QuotaModal = ({
                   onClick={() => {
                     if (quota) {
                       setQuotaToDelete(quota);
-                      onClose();
                     }
                   }}
                   className="flex items-center gap-2"
@@ -430,21 +428,33 @@ export const QuotaModal = ({
                 setOpenConfirmationModal(false);
                 form.handleSubmit(submitQuota)();
               }}
-              body={t("environments.surveys.edit.quotas.save_changes_confirmation_text")}
+              body={t("environments.surveys.edit.quotas.confirm_quota_changes_body")}
               buttonText={t("common.save")}
               cancelButtonText={t("common.discard")}
+              onCancel={() => {
+                reset();
+                onOpenChange(false);
+              }}
             />
-            <ChangeQuotaConfirmationModal
+            <ConfirmationModal
               open={openConfirmChangesInInclusionCriteria}
               setOpen={setOpenConfirmChangesInInclusionCriteria}
+              title={t("environments.surveys.edit.quotas.change_quota_for_public_survey")}
+              description={t("environments.surveys.edit.quotas.save_changes_confirmation_text")}
+              body={t("environments.surveys.edit.quotas.save_changes_confirmation_body")}
+              buttonText={t("common.continue")}
+              buttonVariant="default"
               onConfirm={form.handleSubmit(submitQuota)}
-              onDuplicate={() => {
+              secondaryButtonText={t("environments.surveys.edit.quotas.duplicate_quota")}
+              onSecondaryAction={() => {
                 if (quota) {
                   const updatedQuota = {
                     ...quota,
                     ...form.getValues(),
                   };
                   duplicateQuota(updatedQuota);
+                  onOpenChange(false);
+                  setOpenConfirmChangesInInclusionCriteria(false);
                 }
               }}
             />
