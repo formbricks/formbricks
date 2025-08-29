@@ -9,8 +9,10 @@ import {
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
+  getDefaultOperatorForQuestion,
   getFormatLeftOperandValue,
   getMatchValueProps,
+  getQuestionOperatorOptions,
 } from "@/modules/survey/editor/lib/utils";
 import {
   TConditionsEditorCallbacks,
@@ -104,11 +106,14 @@ export function createSharedConditionsFactory(
       // When adding a condition in the context of a specific question, default to that question
       const defaultLeftOperandValue =
         questionIdx !== undefined ? survey.questions[questionIdx].id : survey.questions[0].id;
-
+      const defaultOperator =
+        questionIdx !== undefined
+          ? getDefaultOperatorForQuestion(survey.questions[questionIdx], t)
+          : getDefaultOperatorForQuestion(survey.questions[0], t);
       const newCondition: TSingleCondition = {
         id: createId(),
         leftOperand: { value: defaultLeftOperandValue, type: "question" },
-        operator: getDefaultOperator(),
+        operator: defaultOperator,
       };
 
       onConditionsChange((conditions) => {
@@ -141,6 +146,21 @@ export function createSharedConditionsFactory(
       // Try matrix question handling first
       if (handleMatrixQuestionUpdate(resourceId, updates)) {
         return;
+      }
+
+      // Check if the operator is correct for the question
+      if (updates.leftOperand?.type === "question" && updates.operator) {
+        const questionId = updates.leftOperand.value.split(".")[0];
+        const question = survey.questions.find((q) => q.id === questionId);
+
+        if (question) {
+          const operatorOptions = getQuestionOperatorOptions(question, t);
+          const isValidOperator = operatorOptions.some((o) => o.value === updates.operator);
+
+          if (!isValidOperator) {
+            updates.operator = operatorOptions[0].value as TSurveyLogicConditionsOperator;
+          }
+        }
       }
 
       // Regular update

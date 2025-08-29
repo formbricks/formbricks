@@ -230,7 +230,7 @@ export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean =
   return actions.some((action) => action.objective === "jumpToQuestion");
 };
 
-const getQuestionOperatorOptions = (
+export const getQuestionOperatorOptions = (
   question: TSurveyQuestion,
   t: TFnType,
   condition?: TSingleCondition

@@ -83,6 +83,12 @@ vi.mock("@/modules/survey/editor/lib/utils", () => ({
     placeholder: "Enter value",
   }),
   getFormatLeftOperandValue: vi.fn().mockReturnValue("Formatted value"),
+  getQuestionOperatorOptions: vi.fn().mockReturnValue([
+    { value: "equals", label: "equals" },
+    { value: "notEquals", label: "not equals" },
+    { value: "isEmpty", label: "is empty" },
+  ]),
+  getDefaultOperatorForQuestion: vi.fn().mockReturnValue("equals"),
 }));
 
 vi.mock("@paralleldrive/cuid2", () => ({
@@ -155,7 +161,6 @@ describe("shared-conditions-factory", () => {
   const mockGetDefaultOperator = vi.fn((): TSurveyLogicConditionsOperator => "equals");
 
   const mockConditionsChange = vi.fn();
-  const mockEmptyConditions = vi.fn();
 
   const defaultParams: SharedConditionsFactoryParams = {
     survey: mockSurvey,
