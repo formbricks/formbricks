@@ -129,6 +129,7 @@ const cleanupGroup = (group: TConditionGroup) => {
 
   // Flatten if group has only one condition and it's a condition group
   if (group.conditions.length === 1 && isConditionGroup(group.conditions[0])) {
+    group.connector = group.conditions[0].connector || "and";
     group.conditions = group.conditions[0].conditions;
   }
 };
@@ -688,8 +689,9 @@ const performCalculation = (
       if (typeof val === "number" || typeof val === "string") {
         if (variable.type === "number" && !isNaN(Number(val))) {
           operandValue = Number(val);
+        } else {
+          operandValue = val;
         }
-        operandValue = val;
       }
       break;
   }

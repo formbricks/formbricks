@@ -435,6 +435,8 @@ describe("surveyLogic", () => {
       )
     ).toBe(true);
     expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("isSet")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("isNotEmpty")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "" }, vars, group(baseCond("isNotSet")), "en")).toBe(true);
     expect(evaluateLogic(mockSurvey, { f: "" }, vars, group(baseCond("isEmpty")), "en")).toBe(true);
     expect(
       evaluateLogic(mockSurvey, { f: "foo" }, vars, group({ ...baseCond("isAnyOf", ["foo", "bar"]) }), "en")
