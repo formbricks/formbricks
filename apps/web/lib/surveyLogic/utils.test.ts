@@ -1,12 +1,12 @@
 import { describe, expect, test, vi } from "vitest";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
   TConditionGroup,
   TSingleCondition,
   TSurveyLogic,
   TSurveyLogicAction,
+  TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
@@ -109,6 +109,7 @@ describe("surveyLogic", () => {
     languages: [],
     triggers: [],
     segment: null,
+    recaptcha: null,
   };
 
   const simpleGroup = (): TConditionGroup => ({
@@ -175,7 +176,8 @@ describe("surveyLogic", () => {
         },
       ],
     };
-    removeCondition(group, "c");
+    const result = removeCondition(group, "c");
+    expect(result).toBe(true);
     expect(group.conditions).toHaveLength(0);
   });
 
@@ -433,6 +435,8 @@ describe("surveyLogic", () => {
       )
     ).toBe(true);
     expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("isSet")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("isNotEmpty")), "en")).toBe(true);
+    expect(evaluateLogic(mockSurvey, { f: "" }, vars, group(baseCond("isNotSet")), "en")).toBe(true);
     expect(evaluateLogic(mockSurvey, { f: "" }, vars, group(baseCond("isEmpty")), "en")).toBe(true);
     expect(
       evaluateLogic(mockSurvey, { f: "foo" }, vars, group({ ...baseCond("isAnyOf", ["foo", "bar"]) }), "en")
@@ -510,7 +514,8 @@ describe("surveyLogic", () => {
     expect(group.conditions.length).toBe(2);
     toggleGroupConnector(group, "notfound");
     expect(group.connector).toBe("and");
-    removeCondition(group, "notfound");
+    const result = removeCondition(group, "notfound");
+    expect(result).toBe(false);
     expect(group.conditions.length).toBe(2);
     duplicateCondition(group, "notfound");
     expect(group.conditions.length).toBe(2);
@@ -518,6 +523,192 @@ describe("surveyLogic", () => {
     expect(group.conditions.length).toBe(2);
     updateCondition(group, "notfound", { operator: "equals" });
     expect(group.conditions.length).toBe(2);
+  });
+
+  test("removeCondition returns false when condition not found in nested groups", () => {
+    const nestedGroup: TConditionGroup = {
+      id: "nested",
+      connector: "and",
+      conditions: [
+        {
+          id: "nestedC1",
+          leftOperand: { type: "hiddenField", value: "nf1" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "nv1" },
+        },
+      ],
+    };
+
+    const group: TConditionGroup = {
+      id: "parent",
+      connector: "and",
+      conditions: [nestedGroup],
+    };
+
+    const result = removeCondition(group, "nonexistent");
+    expect(result).toBe(false);
+    expect(group.conditions).toHaveLength(1);
+  });
+
+  test("removeCondition successfully removes from nested groups and cleans up", () => {
+    const nestedGroup: TConditionGroup = {
+      id: "nested",
+      connector: "and",
+      conditions: [
+        {
+          id: "nestedC1",
+          leftOperand: { type: "hiddenField", value: "nf1" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "nv1" },
+        },
+        {
+          id: "nestedC2",
+          leftOperand: { type: "hiddenField", value: "nf2" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "nv2" },
+        },
+      ],
+    };
+
+    const otherCondition: TSingleCondition = {
+      id: "otherCondition",
+      leftOperand: { type: "hiddenField", value: "other" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "value" },
+    };
+
+    const group: TConditionGroup = {
+      id: "parent",
+      connector: "and",
+      conditions: [nestedGroup, otherCondition],
+    };
+
+    const result = removeCondition(group, "nestedC1");
+    expect(result).toBe(true);
+    expect(group.conditions).toHaveLength(2);
+    expect((group.conditions[0] as TConditionGroup).conditions).toHaveLength(1);
+    expect((group.conditions[0] as TConditionGroup).conditions[0].id).toBe("nestedC2");
+    expect(group.conditions[1].id).toBe("otherCondition");
+  });
+
+  test("removeCondition flattens group when nested group has only one condition left", () => {
+    const deeplyNestedGroup: TConditionGroup = {
+      id: "deepNested",
+      connector: "or",
+      conditions: [
+        {
+          id: "deepC1",
+          leftOperand: { type: "hiddenField", value: "df1" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "dv1" },
+        },
+      ],
+    };
+
+    const nestedGroup: TConditionGroup = {
+      id: "nested",
+      connector: "and",
+      conditions: [
+        {
+          id: "nestedC1",
+          leftOperand: { type: "hiddenField", value: "nf1" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "nv1" },
+        },
+        deeplyNestedGroup,
+      ],
+    };
+
+    const otherCondition: TSingleCondition = {
+      id: "otherCondition",
+      leftOperand: { type: "hiddenField", value: "other" },
+      operator: "equals",
+      rightOperand: { type: "static", value: "value" },
+    };
+
+    const group: TConditionGroup = {
+      id: "parent",
+      connector: "and",
+      conditions: [nestedGroup, otherCondition],
+    };
+
+    // Remove the regular condition, leaving only the deeply nested group in the nested group
+    const result = removeCondition(group, "nestedC1");
+    expect(result).toBe(true);
+
+    // The parent group should still have 2 conditions: the nested group and the other condition
+    expect(group.conditions).toHaveLength(2);
+    // The nested group should still be there but now contain only the deeply nested group
+    expect(group.conditions[0].id).toBe("nested");
+    expect((group.conditions[0] as TConditionGroup).conditions).toHaveLength(1);
+    // The nested group should contain the flattened content from the deeply nested group
+    expect((group.conditions[0] as TConditionGroup).conditions[0].id).toBe("deepC1");
+    expect(group.conditions[1].id).toBe("otherCondition");
+  });
+
+  test("removeCondition removes empty groups after cleanup", () => {
+    const emptyNestedGroup: TConditionGroup = {
+      id: "emptyNested",
+      connector: "and",
+      conditions: [
+        {
+          id: "toBeRemoved",
+          leftOperand: { type: "hiddenField", value: "f1" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v1" },
+        },
+      ],
+    };
+
+    const group: TConditionGroup = {
+      id: "parent",
+      connector: "and",
+      conditions: [
+        emptyNestedGroup,
+        {
+          id: "keepThis",
+          leftOperand: { type: "hiddenField", value: "f2" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v2" },
+        },
+      ],
+    };
+
+    // Remove the only condition from the nested group
+    const result = removeCondition(group, "toBeRemoved");
+    expect(result).toBe(true);
+
+    // The empty nested group should be removed, leaving only the other condition
+    expect(group.conditions).toHaveLength(1);
+    expect(group.conditions[0].id).toBe("keepThis");
+  });
+
+  test("deleteEmptyGroups with complex nested structure", () => {
+    const deepEmptyGroup: TConditionGroup = { id: "deepEmpty", connector: "and", conditions: [] };
+    const middleGroup: TConditionGroup = {
+      id: "middle",
+      connector: "or",
+      conditions: [deepEmptyGroup],
+    };
+    const topGroup: TConditionGroup = {
+      id: "top",
+      connector: "and",
+      conditions: [
+        middleGroup,
+        {
+          id: "validCondition",
+          leftOperand: { type: "hiddenField", value: "f" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "v" },
+        },
+      ],
+    };
+
+    deleteEmptyGroups(topGroup);
+
+    // Should remove the nested empty groups and keep only the valid condition
+    expect(topGroup.conditions).toHaveLength(1);
+    expect(topGroup.conditions[0].id).toBe("validCondition");
   });
 
   // Additional tests for complete coverage

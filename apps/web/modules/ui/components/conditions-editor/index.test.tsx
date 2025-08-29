@@ -233,12 +233,31 @@ describe("ConditionsEditor", () => {
     expect(mockCallbacks.onDuplicateCondition).toHaveBeenCalledWith("cond1");
   });
 
-  test("calls onCreateGroup from the dropdown menu", async () => {
+  test("calls onCreateGroup from the dropdown menu when enabled", async () => {
     const user = userEvent.setup();
+    render(
+      <ConditionsEditor conditions={multipleConditions} config={mockConfig} callbacks={mockCallbacks} />
+    );
+    const createGroupButtons = screen.getAllByText("environments.surveys.edit.create_group");
+    await user.click(createGroupButtons[0]); // Click the first one
+    expect(mockCallbacks.onCreateGroup).toHaveBeenCalledWith("cond1");
+  });
+
+  test("disables the 'Create Group' button when there's only one condition", () => {
     render(<ConditionsEditor conditions={singleCondition} config={mockConfig} callbacks={mockCallbacks} />);
     const createGroupButton = screen.getByText("environments.surveys.edit.create_group");
-    await user.click(createGroupButton);
-    expect(mockCallbacks.onCreateGroup).toHaveBeenCalledWith("cond1");
+    expect(createGroupButton).toBeDisabled();
+  });
+
+  test("enables the 'Create Group' button when there are multiple conditions", () => {
+    render(
+      <ConditionsEditor conditions={multipleConditions} config={mockConfig} callbacks={mockCallbacks} />
+    );
+    const createGroupButtons = screen.getAllByText("environments.surveys.edit.create_group");
+    // Both buttons should be enabled since the main group has multiple conditions
+    createGroupButtons.forEach((button) => {
+      expect(button).not.toBeDisabled();
+    });
   });
 
   test("calls onToggleGroupConnector when the connector is changed", async () => {
