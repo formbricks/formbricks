@@ -223,6 +223,7 @@ export const QuotasCard = ({
             setIsQuotaModalOpen(false);
             setActiveQuota(null);
           }}
+          hasResponses={isPublicSurvey}
         />
       )}
       <DeleteDialog
