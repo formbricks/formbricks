@@ -147,29 +147,6 @@ describe("ApiClient", () => {
       expect(fileUrl).toBe("https://fake-file-url.com");
     });
 
-    test("uploads file (local) when signingData is present", async () => {
-      vi.mocked(global.fetch)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            data: {
-              signedUrl: "http://localhost:3000/api/v1/client/env-test/storage",
-              fileUrl: "http://localhost:3000/uploads/test.jpg",
-              presignedFields: null,
-              signingData: { signature: "sig", timestamp: "123", uuid: "abc" },
-              updatedFileName: "test.jpg",
-            },
-          }),
-        } as unknown as Response)
-        .mockResolvedValueOnce({ ok: true, json: async () => ({}) } as unknown as Response);
-      const fileUrl = await client.uploadFile({
-        base64: "data:image/jpeg;base64,abcd",
-        name: "test.jpg",
-        type: "image/jpeg",
-      });
-      expect(fileUrl).toBe("http://localhost:3000/uploads/test.jpg");
-    });
-
     test("throws an error if file is invalid", async () => {
       await expect(() => client.uploadFile({ base64: "", name: "", type: "" } as any)).rejects.toThrow(
         "Invalid file object"

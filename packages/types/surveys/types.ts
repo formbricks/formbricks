@@ -1,10 +1,11 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
+import { ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
+import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import {
   FORBIDDEN_IDS,

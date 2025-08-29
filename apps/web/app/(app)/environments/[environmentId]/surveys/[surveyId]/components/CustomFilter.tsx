@@ -8,6 +8,7 @@ import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environ
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { Calendar } from "@/modules/ui/components/calendar";
 import {
   DropdownMenu,
@@ -249,9 +250,39 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     });
 
     if (responsesDownloadUrlResponse?.data) {
+      let file: File;
+
+      if (filetype === "xlsx") {
+        // Convert base64 back to binary data for XLSX files
+        const binaryString = atob(responsesDownloadUrlResponse.data.fileContents);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        file = new File([bytes], responsesDownloadUrlResponse.data.fileName, {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+      } else {
+        // For CSV files, use the string directly
+        file = new File(
+          [responsesDownloadUrlResponse.data.fileContents],
+          responsesDownloadUrlResponse.data.fileName,
+          {
+            type: "text/csv",
+          }
+        );
+      }
+
+      const { url, error } = await handleFileUpload(file, survey.environmentId);
+
+      if (error) {
+        toast.error(t("environments.surveys.responses.error_downloading_responses"));
+      }
+
       const link = document.createElement("a");
-      link.href = responsesDownloadUrlResponse.data;
-      link.download = "";
+      link.href = url;
+      link.download = responsesDownloadUrlResponse.data.fileName || `${survey.name}-${filetype}.csv`;
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

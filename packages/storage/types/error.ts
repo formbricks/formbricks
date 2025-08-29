@@ -19,7 +19,7 @@ export const err = <E = Error>(error: E): ResultError<E> => ({
   error,
 });
 
-export enum ErrorCode {
+export enum StorageErrorCode {
   Unknown = "unknown",
   S3CredentialsError = "s3_credentials_error",
   S3ClientError = "s3_client_error",
@@ -28,5 +28,5 @@ export enum ErrorCode {
 }
 
 export interface StorageError {
-  code: ErrorCode;
+  code: StorageErrorCode;
 }

@@ -1,4 +1,4 @@
-import * as fileValidation from "@/lib/fileValidation";
+import * as fileValidation from "@/modules/storage/utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";

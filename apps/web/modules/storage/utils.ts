@@ -1,7 +1,41 @@
-import { getOriginalFileNameFromUrl } from "@/lib/storage/utils";
-import { TAllowedFileExtension, ZAllowedFileExtension, mimeTypes } from "@formbricks/types/common";
+import { logger } from "@formbricks/logger";
 import { TResponseData } from "@formbricks/types/responses";
+import { TAllowedFileExtension, ZAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+
+export const getOriginalFileNameFromUrl = (fileURL: string) => {
+  try {
+    const fileNameFromURL = fileURL.startsWith("/storage/")
+      ? fileURL.split("/").pop()
+      : new URL(fileURL).pathname.split("/").pop();
+
+    const fileExt = fileNameFromURL?.split(".").pop() ?? "";
+    const originalFileName = fileNameFromURL?.split("--fid--")[0] ?? "";
+    const fileId = fileNameFromURL?.split("--fid--")[1] ?? "";
+
+    if (!fileId) {
+      const fileName = originalFileName ? decodeURIComponent(originalFileName || "") : "";
+      return fileName;
+    }
+
+    const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}` || "") : "";
+    return fileName;
+  } catch (error) {
+    logger.error(error, "Error parsing file URL");
+  }
+};
+
+export const getFileNameWithIdFromUrl = (fileURL: string) => {
+  try {
+    const fileNameFromURL = fileURL.startsWith("/storage/")
+      ? fileURL.split("/").pop()
+      : new URL(fileURL).pathname.split("/").pop();
+
+    return fileNameFromURL ? decodeURIComponent(fileNameFromURL || "") : "";
+  } catch (error) {
+    logger.error(error, "Error parsing file URL");
+  }
+};
 
 /**
  * Validates if the file extension is allowed
@@ -34,34 +68,19 @@ export const isValidFileTypeForExtension = (fileName: string, mimeType: string):
   return mimeTypes[extension] === mimeTypeLower;
 };
 
-/**
- * Validates a file for security concerns
- * @param fileName The name of the file to validate
- * @param mimeType The MIME type of the file
- * @returns {object} An object with validation result and error message if any
- */
-export const validateFile = (fileName: string, mimeType: string): { valid: boolean; error?: string } => {
-  // Check for disallowed extensions
-  if (!isAllowedFileExtension(fileName)) {
-    return { valid: false, error: "File type not allowed for security reasons." };
-  }
-
-  // Check if the file type matches the extension
-  if (!isValidFileTypeForExtension(fileName, mimeType)) {
-    return { valid: false, error: "File type doesn't match the file extension." };
-  }
-
-  return { valid: true };
-};
-
 export const validateSingleFile = (
   fileUrl: string,
   allowedFileExtensions?: TAllowedFileExtension[]
 ): boolean => {
+  console.log("validateSingleFile", fileUrl);
   const fileName = getOriginalFileNameFromUrl(fileUrl);
+  console.log("fileName", fileName);
   if (!fileName) return false;
   const extension = fileName.split(".").pop();
+  console.log("extension", extension);
   if (!extension) return false;
+  console.log("allowedFileExtensions", allowedFileExtensions);
+  console.log("includes", allowedFileExtensions?.includes(extension as TAllowedFileExtension));
   return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
 };
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { handleFileUpload } from "@/app/lib/fileUpload";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
