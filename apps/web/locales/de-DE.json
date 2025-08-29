@@ -1716,7 +1716,6 @@
         "personal_links": {
           "create_and_manage_segments": "Erstellen und verwalten Sie Ihre Segmente unter Kontakte > Segmente",
           "description": "Erstellen Sie persönliche Links für ein Segment und ordnen Sie Umfrageantworten jedem Kontakt zu.",
-          "error_generating_links": "Erstellen von Links fehlgeschlagen, bitte versuche es erneut",
           "expiry_date_description": "Sobald der Link abläuft, kann der Empfänger nicht mehr auf die Umfrage antworten.",
           "expiry_date_optional": "Ablaufdatum (optional)",
           "generate_and_download_links": "Links generieren und herunterladen",

@@ -1716,7 +1716,6 @@
         "personal_links": {
           "create_and_manage_segments": "「連絡先 > セグメント」でセグメントを作成・管理",
           "description": "セグメントの個人リンクを生成し、フォームの回答を各連絡先と照合します。",
-          "error_generating_links": "リンクの生成に失敗しました。再度お試しください。",
           "expiry_date_description": "リンクの有効期限が切れると、受信者はフォームに回答できなくなります。",
           "expiry_date_optional": "有効期限（オプション）",
           "generate_and_download_links": "リンクを生成＆ダウンロード",
