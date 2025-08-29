@@ -436,17 +436,20 @@ export const QuotaModal = ({
               buttonText={t("common.continue")}
               buttonVariant="default"
               onConfirm={form.handleSubmit(submitQuota)}
-              secondaryButtonText={t("environments.surveys.edit.quotas.duplicate_quota")}
-              onSecondaryAction={() => {
-                if (quota) {
-                  const updatedQuota = {
-                    ...quota,
-                    ...form.getValues(),
-                  };
-                  duplicateQuota(updatedQuota);
-                  onOpenChange(false);
-                  setOpenConfirmChangesInInclusionCriteria(false);
-                }
+              secondaryButton={{
+                text: t("environments.surveys.edit.quotas.duplicate_quota"),
+                variant: "secondary",
+                onAction: () => {
+                  if (quota) {
+                    const updatedQuota = {
+                      ...quota,
+                      ...form.getValues(),
+                    };
+                    duplicateQuota(updatedQuota);
+                    onOpenChange(false);
+                    setOpenConfirmChangesInInclusionCriteria(false);
+                  }
+                },
               }}
             />
           </FormProvider>
