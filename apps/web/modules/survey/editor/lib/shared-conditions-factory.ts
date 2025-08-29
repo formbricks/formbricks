@@ -57,31 +57,28 @@ export function createSharedConditionsFactory(
   // Handles special update logic for matrix questions, setting appropriate operators and metadata
   const handleMatrixQuestionUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {
     if (updates.leftOperand && updates.leftOperand.type === "question") {
-      const type = updates.leftOperand.meta?.type as TDynamicLogicField;
-      if (type === "question") {
-        const [questionId, rowId] = updates.leftOperand.value.split(".");
-        const questionEntity = survey.questions.find((q) => q.id === questionId);
+      const [questionId, rowId] = updates.leftOperand.value.split(".");
+      const questionEntity = survey.questions.find((q) => q.id === questionId);
 
-        if (questionEntity && questionEntity.type === TSurveyQuestionTypeEnum.Matrix) {
-          if (updates.leftOperand.value.includes(".")) {
-            // Matrix question with rowId is selected
-            onConditionsChange((conditions) => {
-              const conditionsCopy = structuredClone(conditions);
-              updateCondition(conditionsCopy, resourceId, {
-                leftOperand: {
-                  value: questionId,
-                  type: "question",
-                  meta: {
-                    row: rowId,
-                  },
+      if (questionEntity && questionEntity.type === TSurveyQuestionTypeEnum.Matrix) {
+        if (updates.leftOperand.value.includes(".")) {
+          // Matrix question with rowId is selected
+          onConditionsChange((conditions) => {
+            const conditionsCopy = structuredClone(conditions);
+            updateCondition(conditionsCopy, resourceId, {
+              leftOperand: {
+                value: questionId,
+                type: "question",
+                meta: {
+                  row: rowId,
                 },
-                operator: "isEmpty",
-                rightOperand: undefined,
-              });
-              return conditionsCopy;
+              },
+              operator: "isEmpty",
+              rightOperand: undefined,
             });
-            return true; // Handled
-          }
+            return conditionsCopy;
+          });
+          return true; // Handled
         }
       }
     }

@@ -206,8 +206,16 @@ export const QuotaModal = ({
     },
   ];
 
+  const handleClose = () => {
+    if (isDirty) {
+      setOpenConfirmationModal(true);
+    } else {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <FormProvider {...form}>
@@ -400,18 +408,7 @@ export const QuotaModal = ({
                   {t("common.delete")}
                 </Button>
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      if (isDirty) {
-                        setOpenConfirmationModal(true);
-                      } else {
-                        reset();
-                        onClose();
-                      }
-                    }}
-                    disabled={isSubmitting}>
+                  <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                     {t("common.cancel")}
                   </Button>
                   <Button type="submit" loading={isSubmitting} disabled={isSubmitting || !isDirty}>

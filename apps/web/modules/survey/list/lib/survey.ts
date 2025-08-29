@@ -1,6 +1,8 @@
 import "server-only";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
@@ -285,16 +287,20 @@ export const copySurveyToOtherEnvironment = async (
     const isSameEnvironment = environmentId === targetEnvironmentId;
 
     // Fetch required resources
-    const [existingEnvironment, existingProject, existingSurvey, existingQuotas] = await Promise.all([
-      doesEnvironmentExist(environmentId),
-      getProjectWithLanguagesByEnvironmentId(environmentId),
-      getExistingSurvey(surveyId),
-      getQuotas(surveyId),
-    ]);
+    const [existingEnvironment, existingProject, existingSurvey, existingQuotas, organization] =
+      await Promise.all([
+        doesEnvironmentExist(environmentId),
+        getProjectWithLanguagesByEnvironmentId(environmentId),
+        getExistingSurvey(surveyId),
+        getQuotas(surveyId),
+        getOrganizationByEnvironmentId(environmentId),
+      ]);
 
     if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
     if (!existingProject) throw new ResourceNotFoundError("Project", environmentId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
+
+    const isQuotasEnabled = await getIsQuotasEnabled(organization?.billing.plan);
 
     let targetEnvironment: string | null = null;
     let targetProject: TProjectWithLanguages | null = null;
@@ -492,14 +498,17 @@ export const copySurveyToOtherEnvironment = async (
       },
       quotas: {
         createMany: {
-          data: existingQuotas.map((quota) => ({
-            name: quota.name,
-            logic: quota.logic,
-            limit: quota.limit,
-            action: quota.action,
-            endingCardId: quota.endingCardId,
-            countPartialSubmissions: quota.countPartialSubmissions,
-          })),
+          data:
+            isQuotasEnabled && existingQuotas.length > 0
+              ? existingQuotas.map((quota) => ({
+                  name: quota.name,
+                  logic: quota.logic,
+                  limit: quota.limit,
+                  action: quota.action,
+                  endingCardId: quota.endingCardId,
+                  countPartialSubmissions: quota.countPartialSubmissions,
+                }))
+              : [],
         },
       },
     };
