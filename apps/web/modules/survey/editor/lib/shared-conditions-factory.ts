@@ -22,7 +22,6 @@ import { TFnType } from "@tolgee/react";
 import { TSurveyQuotaLogic } from "@formbricks/types/quota";
 import {
   TConditionGroup,
-  TDynamicLogicField,
   TSingleCondition,
   TSurvey,
   TSurveyLogicConditionsOperator,
