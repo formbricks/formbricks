@@ -1,13 +1,14 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { validateFile } from "@/lib/fileValidation";
+import { IS_FORMBRICKS_CLOUD, MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
+import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { NextRequest } from "next/server";
-import { ZUploadFileRequest } from "@formbricks/types/storage";
-import { uploadPrivateFile } from "./lib/uploadPrivateFile";
+import { logger } from "@formbricks/logger";
+import { TUploadPrivateFileRequest, ZUploadPrivateFileRequest } from "@formbricks/types/storage";
 
 interface Context {
   params: Promise<{
@@ -25,46 +26,37 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-// api endpoint for uploading private files
+// api endpoint for getting a s3 signed url for uploading private files
 // uploaded files will be private, only the user who has access to the environment can access the file
 // uploading private files requires no authentication
-// use this to let users upload files to a survey for example
-// this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
+// use this to let users upload files to a file upload question response for example
 
 export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
     const params = await props.params;
-    const environmentId = params.environmentId;
+    const { environmentId } = params;
 
-    const jsonInput = await req.json();
-    const inputValidation = ZUploadFileRequest.safeParse({
+    const jsonInput = (await req.json()) as Omit<TUploadPrivateFileRequest, "environmentId">;
+    const parsedInputResult = ZUploadPrivateFileRequest.safeParse({
       ...jsonInput,
       environmentId,
     });
 
-    if (!inputValidation.success) {
+    if (!parsedInputResult.success) {
+      const errorDetails = transformErrorToDetails(parsedInputResult.error);
+
+      logger.error({ error: errorDetails }, "Fields are missing or incorrectly formatted");
+
       return {
         response: responses.badRequestResponse(
-          "Invalid request",
-          transformErrorToDetails(inputValidation.error),
+          "Fields are missing or incorrectly formatted",
+          errorDetails,
           true
         ),
       };
     }
 
-    const { fileName, fileType, surveyId } = inputValidation.data;
-
-    // Perform server-side file validation
-    const fileValidation = validateFile(fileName, fileType);
-    if (!fileValidation.valid) {
-      return {
-        response: responses.badRequestResponse(
-          fileValidation.error ?? "Invalid file",
-          { fileName, fileType },
-          true
-        ),
-      };
-    }
+    const { fileName, fileType, surveyId } = parsedInputResult.data;
 
     const [survey, organization] = await Promise.all([
       getSurvey(surveyId),
@@ -83,10 +75,42 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    if (survey.environmentId !== environmentId) {
+      return {
+        response: responses.badRequestResponse(
+          "Survey does not belong to the environment",
+          { surveyId, environmentId },
+          true
+        ),
+      };
+    }
+
     const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
 
+    const maxFileUploadSize = IS_FORMBRICKS_CLOUD
+      ? isBiggerFileUploadAllowed
+        ? MAX_FILE_UPLOAD_SIZES.big
+        : MAX_FILE_UPLOAD_SIZES.standard
+      : MAX_FILE_UPLOAD_SIZES.big; // 1GB
+
+    const signedUrlResponse = await getSignedUrlForUpload(
+      fileName,
+      environmentId,
+      fileType,
+      "private",
+      maxFileUploadSize
+    );
+
+    if (!signedUrlResponse.ok) {
+      logger.error({ error: signedUrlResponse.error }, "Error getting signed url for upload");
+
+      return {
+        response: responses.internalServerErrorResponse("Internal server error"),
+      };
+    }
+
     return {
-      response: await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed),
+      response: responses.successResponse(signedUrlResponse.data),
     };
   },
 });

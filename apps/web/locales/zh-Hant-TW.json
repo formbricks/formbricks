@@ -1716,6 +1716,7 @@
         "personal_links": {
           "create_and_manage_segments": "在 聯絡人 > 分段 中建立和管理您的分段",
           "description": "為 一個 群組 生成 個人 連結，並 將 調查 回應 對應 到 每個 聯絡人。",
+          "error_generating_links": "生成連結失敗，請再試一次",
           "expiry_date_description": "一旦連結過期，收件者將無法再回應 survey。",
           "expiry_date_optional": "到期日 （可選）",
           "generate_and_download_links": "生成 & 下載 連結",

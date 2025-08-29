@@ -1716,6 +1716,7 @@
         "personal_links": {
           "create_and_manage_segments": "Crie e gerencie seus Segmentos em Contatos > Segmentos",
           "description": "Gerar links pessoais para um segmento e associar respostas de pesquisa a cada contato.",
+          "error_generating_links": "Falha ao gerar links, por favor, tente novamente",
           "expiry_date_description": "Quando o link expirar, o destinatário não poderá mais responder à pesquisa.",
           "expiry_date_optional": "Data de expiração (opcional)",
           "generate_and_download_links": "Gerar & baixar links",

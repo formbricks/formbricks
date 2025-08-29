@@ -1716,6 +1716,7 @@
         "personal_links": {
           "create_and_manage_segments": "Create and manage your Segments under Contacts > Segments",
           "description": "Generate personal links for a segment and match survey responses to each contact.",
+          "error_generating_links": "Failed to generate links, please try again",
           "expiry_date_description": "Once the link expires, the recipient cannot respond to survey any longer.",
           "expiry_date_optional": "Expiry date (optional)",
           "generate_and_download_links": "Generate & download links",

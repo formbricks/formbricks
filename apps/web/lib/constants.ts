@@ -111,18 +111,10 @@ export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
 export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
 export const S3_FORCE_PATH_STYLE = env.S3_FORCE_PATH_STYLE === "1";
 export const UPLOADS_DIR = env.UPLOADS_DIR ?? "./uploads";
-export const MAX_SIZES = {
+export const MAX_FILE_UPLOAD_SIZES = {
   standard: 1024 * 1024 * 10, // 10MB
   big: 1024 * 1024 * 1024, // 1GB
 } as const;
-
-// Function to check if the necessary S3 configuration is set up
-export const isS3Configured = () => {
-  // This function checks if the S3 bucket name environment variable is defined.
-  // The AWS SDK automatically resolves credentials through a chain,
-  // so we do not need to explicitly check for AWS credentials like access key, secret key, or region.
-  return !!S3_BUCKET_NAME;
-};
 
 // Colors for Survey Bg
 export const SURVEY_BG_COLORS = [

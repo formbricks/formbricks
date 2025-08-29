@@ -31,6 +31,7 @@
     "@formbricks/js-core": "workspace:*",
     "@formbricks/logger": "workspace:*",
     "@formbricks/surveys": "workspace:*",
+    "@formbricks/storage": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@fortedigital/nextjs-cache-handler": "1.2.0",
     "@hookform/resolvers": "5.0.1",

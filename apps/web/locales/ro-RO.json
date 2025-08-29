@@ -1716,6 +1716,7 @@
         "personal_links": {
           "create_and_manage_segments": "Creați și gestionați segmentele dvs. sub Contacte > Segmente",
           "description": "Generează linkuri personale pentru un segment și corelează răspunsurile la sondaje cu fiecare contact.",
+          "error_generating_links": "Generarea linkurilor a eșuat, vă rugăm să încercați din nou",
           "expiry_date_description": "Odată ce link-ul expiră, destinatarul nu mai poate răspunde la sondaj.",
           "expiry_date_optional": "Dată de expirare (opțional)",
           "generate_and_download_links": "Generează și descarcă legături",

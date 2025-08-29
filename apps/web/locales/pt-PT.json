@@ -1716,6 +1716,7 @@
         "personal_links": {
           "create_and_manage_segments": "Crie e gere os seus Segmentos em Contactos > Segmentos",
           "description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto.",
+          "error_generating_links": "Falha ao gerar links, por favor, tente novamente",
           "expiry_date_description": "Uma vez que o link expira, o destinatário não pode mais responder ao questionário.",
           "expiry_date_optional": "Data de expiração (opcional)",
           "generate_and_download_links": "Gerar & descarregar links",

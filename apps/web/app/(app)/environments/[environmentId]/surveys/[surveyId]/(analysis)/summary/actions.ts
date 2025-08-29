@@ -1,8 +1,6 @@
 "use server";
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
-import { WEBAPP_URL } from "@/lib/constants";
-import { putFile } from "@/lib/storage/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -218,16 +216,9 @@ export const generatePersonalLinksAction = authenticatedActionClient
     const csvContent = await convertToCsv(csvHeaders, csvData);
     const fileName = `personal-links-${parsedInput.surveyId}-${Date.now()}.csv`;
 
-    // Store file temporarily and return download URL
-    const fileBuffer = Buffer.from(csvContent);
-    await putFile(fileName, fileBuffer, "private", parsedInput.environmentId);
-
-    const downloadUrl = `${WEBAPP_URL}/storage/${parsedInput.environmentId}/private/${fileName}`;
-
     return {
-      downloadUrl,
       fileName,
-      count: csvData.length,
+      csvContent,
     };
   });
 

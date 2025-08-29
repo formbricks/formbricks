@@ -1716,6 +1716,7 @@
         "personal_links": {
           "create_and_manage_segments": "Créez et gérez vos Segments sous Contacts > Segments",
           "description": "Générez des liens personnels pour un segment et associez les réponses du sondage à chaque contact.",
+          "error_generating_links": "Échec de la génération des liens. Veuillez réessayer",
           "expiry_date_description": "Une fois le lien expiré, le destinataire ne peut plus répondre au sondage.",
           "expiry_date_optional": "Date d'expiration (facultatif)",
           "generate_and_download_links": "Générer et télécharger les liens",

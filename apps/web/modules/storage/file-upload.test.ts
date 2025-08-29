@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import * as fileUploadModule from "./fileUpload";
+import * as fileUploadModule from "./file-upload";
 
 // Mock global fetch
 const mockFetch = vi.fn();

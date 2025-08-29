@@ -4,8 +4,8 @@ import { getMimeType, isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
-import { type TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { type TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 
 interface FileInputProps {

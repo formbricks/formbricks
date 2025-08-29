@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY } from "./constants";
 
@@ -92,39 +92,3 @@ export function symmetricDecrypt(payload: string, key: string): string {
 }
 
 export const getHash = (key: string): string => createHash("sha256").update(key).digest("hex");
-
-export const generateLocalSignedUrl = (
-  fileName: string,
-  environmentId: string,
-  fileType: string
-): { signature: string; uuid: string; timestamp: number } => {
-  const uuid = randomBytes(16).toString("hex");
-  const timestamp = Date.now();
-  const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
-  const signature = createHmac("sha256", ENCRYPTION_KEY).update(data).digest("hex");
-  return { signature, uuid, timestamp };
-};
-
-export const validateLocalSignedUrl = (
-  uuid: string,
-  fileName: string,
-  environmentId: string,
-  fileType: string,
-  timestamp: number,
-  signature: string,
-  secret: string
-): boolean => {
-  const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
-  const expectedSignature = createHmac("sha256", secret).update(data).digest("hex");
-
-  if (expectedSignature !== signature) {
-    return false;
-  }
-
-  // valid for 5 minutes
-  if (Date.now() - timestamp > 1000 * 60 * 5) {
-    return false;
-  }
-
-  return true;
-};

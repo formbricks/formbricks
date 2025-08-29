@@ -5,6 +5,7 @@ import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surv
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { Button } from "@/modules/ui/components/button";
 import {
   DataTableHeader,
@@ -192,9 +193,34 @@ export const ResponseTable = ({
       });
 
       if (downloadResponse?.data) {
+        let file: File;
+
+        if (format === "xlsx") {
+          // Convert base64 back to binary data for XLSX files
+          const binaryString = atob(downloadResponse.data.fileContents);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          file = new File([bytes], downloadResponse.data.fileName, {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+        } else {
+          // For CSV files, use the string directly
+          file = new File([downloadResponse.data.fileContents], downloadResponse.data.fileName, {
+            type: "text/csv",
+          });
+        }
+
+        const { url, error } = await handleFileUpload(file, environment.id);
+
+        if (error) {
+          toast.error(t("environments.surveys.responses.error_downloading_responses"));
+        }
+
         const link = document.createElement("a");
-        link.href = downloadResponse.data;
-        link.download = "";
+        link.href = url;
+        link.download = downloadResponse.data.fileName || `${survey.name}-${format}.csv`;
 
         document.body.appendChild(link);
         link.click();

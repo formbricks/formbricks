@@ -1,6 +1,7 @@
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
@@ -158,6 +159,11 @@ vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions", (
   getResponsesDownloadUrlAction: vi.fn(),
 }));
 
+// Mock handleFileUpload
+vi.mock("@/modules/storage/file-upload", () => ({
+  handleFileUpload: vi.fn(),
+}));
+
 vi.mock("@/modules/analysis/components/SingleResponseCard/actions", () => ({
   deleteResponseAction: vi.fn(),
 }));
@@ -191,6 +197,9 @@ vi.mock("@tolgee/react", () => ({
     t: (key: string) => key,
   }),
 }));
+
+// Global mock anchor for tests
+let globalMockAnchor: any;
 
 // Define mock data for tests
 const mockProps = {
@@ -232,23 +241,78 @@ beforeEach(() => {
   // Reset all toast mocks before each test
   vi.mocked(toast.error).mockClear();
   vi.mocked(toast.success).mockClear();
+  vi.mocked(getResponsesDownloadUrlAction).mockClear();
+  vi.mocked(handleFileUpload).mockClear();
 
   // Create a mock anchor element for download tests
-  const mockAnchor = {
+  globalMockAnchor = {
     href: "",
     click: vi.fn(),
     style: {},
+    download: "",
   };
+
+  // Override the href setter to capture when it's set
+  Object.defineProperty(globalMockAnchor, "href", {
+    get() {
+      return this._href || "";
+    },
+    set(value) {
+      this._href = value;
+    },
+  });
 
   // Update how we mock the document methods to avoid infinite recursion
   const originalCreateElement = document.createElement.bind(document);
   vi.spyOn(document, "createElement").mockImplementation((tagName) => {
-    if (tagName === "a") return mockAnchor as any;
+    if (tagName === "a") return globalMockAnchor as any;
     return originalCreateElement(tagName);
   });
 
   vi.spyOn(document.body, "appendChild").mockReturnValue(null as any);
   vi.spyOn(document.body, "removeChild").mockReturnValue(null as any);
+
+  // Mock File constructor to avoid arrayBuffer issues
+  global.File = class MockFile {
+    name: string;
+    type: string;
+    size: number;
+
+    constructor(chunks: any[], name: string, options: any = {}) {
+      this.name = name;
+      this.type = options.type || "";
+      this.size = options.size || 0;
+    }
+
+    arrayBuffer() {
+      return Promise.resolve(new ArrayBuffer(0));
+    }
+  } as any;
+
+  // Mock atob for base64 decoding
+  global.atob = vi.fn((str: string) => "decoded binary string");
+
+  // Mock Uint8Array and Blob
+  global.Uint8Array = class MockUint8Array extends Array {
+    constructor(data: any) {
+      super();
+      this.length = typeof data === "number" ? data : 0;
+    }
+
+    static from(source: any) {
+      return new MockUint8Array(source.length || 0);
+    }
+  } as any;
+
+  global.Blob = class MockBlob {
+    size: number;
+    type: string;
+
+    constructor(parts: any[], options: any = {}) {
+      this.size = 0;
+      this.type = options.type || "";
+    }
+  } as any;
 });
 
 // Cleanup after each test
@@ -313,7 +377,14 @@ describe("ResponseTable", () => {
 
   test("calls downloadSelectedRows with csv format when toolbar button is clicked", async () => {
     vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
-      data: "https://download.url/file.csv",
+      data: {
+        fileContents: "mock,csv,content",
+        fileName: "survey-responses.csv",
+      },
+    });
+
+    vi.mocked(handleFileUpload).mockResolvedValueOnce({
+      url: "https://download.url/file.csv",
     });
 
     const container = document.getElementById("test-container");
@@ -321,24 +392,34 @@ describe("ResponseTable", () => {
     const downloadCsvButton = screen.getByTestId("download-csv");
     await userEvent.click(downloadCsvButton);
 
-    expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
-      surveyId: "survey1",
-      format: "csv",
-      filterCriteria: { responseIds: [] },
-    });
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+        surveyId: "survey1",
+        format: "csv",
+        filterCriteria: { responseIds: [] },
+      });
 
-    // Check if link was created and clicked
-    expect(document.createElement).toHaveBeenCalledWith("a");
-    const mockLink = document.createElement("a");
-    expect(mockLink.href).toBe("https://download.url/file.csv");
-    expect(document.body.appendChild).toHaveBeenCalled();
-    expect(mockLink.click).toHaveBeenCalled();
-    expect(document.body.removeChild).toHaveBeenCalled();
+      expect(handleFileUpload).toHaveBeenCalled();
+
+      // Check if link was created and clicked
+      expect(document.createElement).toHaveBeenCalledWith("a");
+      expect(globalMockAnchor.href).toBe("https://download.url/file.csv");
+      expect(document.body.appendChild).toHaveBeenCalled();
+      expect(globalMockAnchor.click).toHaveBeenCalled();
+      expect(document.body.removeChild).toHaveBeenCalled();
+    });
   });
 
   test("calls downloadSelectedRows with xlsx format when toolbar button is clicked", async () => {
     vi.mocked(getResponsesDownloadUrlAction).mockResolvedValueOnce({
-      data: "https://download.url/file.xlsx",
+      data: {
+        fileContents: "bW9jayB4bHN4IGNvbnRlbnQ=", // base64 encoded mock data
+        fileName: "survey-responses.xlsx",
+      },
+    });
+
+    vi.mocked(handleFileUpload).mockResolvedValueOnce({
+      url: "https://download.url/file.xlsx",
     });
 
     const container = document.getElementById("test-container");
@@ -346,19 +427,22 @@ describe("ResponseTable", () => {
     const downloadXlsxButton = screen.getByTestId("download-xlsx");
     await userEvent.click(downloadXlsxButton);
 
-    expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
-      surveyId: "survey1",
-      format: "xlsx",
-      filterCriteria: { responseIds: [] },
-    });
+    await waitFor(() => {
+      expect(getResponsesDownloadUrlAction).toHaveBeenCalledWith({
+        surveyId: "survey1",
+        format: "xlsx",
+        filterCriteria: { responseIds: [] },
+      });
 
-    // Check if link was created and clicked
-    expect(document.createElement).toHaveBeenCalledWith("a");
-    const mockLink = document.createElement("a");
-    expect(mockLink.href).toBe("https://download.url/file.xlsx");
-    expect(document.body.appendChild).toHaveBeenCalled();
-    expect(mockLink.click).toHaveBeenCalled();
-    expect(document.body.removeChild).toHaveBeenCalled();
+      expect(handleFileUpload).toHaveBeenCalled();
+
+      // Check if link was created and clicked
+      expect(document.createElement).toHaveBeenCalledWith("a");
+      expect(globalMockAnchor.href).toBe("https://download.url/file.xlsx");
+      expect(document.body.appendChild).toHaveBeenCalled();
+      expect(globalMockAnchor.click).toHaveBeenCalled();
+      expect(document.body.removeChild).toHaveBeenCalled();
+    });
   });
 
   // Test response modal

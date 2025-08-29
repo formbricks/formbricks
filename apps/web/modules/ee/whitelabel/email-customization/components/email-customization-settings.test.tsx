@@ -1,9 +1,9 @@
-import { handleFileUpload } from "@/app/lib/fileUpload";
 import {
   removeOrganizationEmailLogoUrlAction,
   sendTestEmailAction,
   updateOrganizationEmailLogoUrlAction,
 } from "@/modules/ee/whitelabel/email-customization/actions";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -18,7 +18,7 @@ vi.mock("@/modules/ee/whitelabel/email-customization/actions", () => ({
   updateOrganizationEmailLogoUrlAction: vi.fn(),
 }));
 
-vi.mock("@/app/lib/fileUpload", () => ({
+vi.mock("@/modules/storage/file-upload", () => ({
   handleFileUpload: vi.fn(),
 }));
 
