@@ -3,13 +3,14 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { validateFileUploads } from "@/lib/fileValidation";
-import { getResponse, updateResponse } from "@/lib/response/service";
+import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
+import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
@@ -111,10 +112,10 @@ export const PUT = withV1ApiWrapper({
       };
     }
 
-    // update response
+    // update response with quota evaluation
     let updatedResponse;
     try {
-      updatedResponse = await updateResponse(responseId, inputValidation.data);
+      updatedResponse = await updateResponseWithQuotaEvaluation(responseId, inputValidation.data);
     } catch (error) {
       if (error instanceof ResourceNotFoundError) {
         return {
@@ -156,8 +157,28 @@ export const PUT = withV1ApiWrapper({
         response: updatedResponse,
       });
     }
+
+    // Build quota response object
+    const quotaObj = updatedResponse.quotaFull
+      ? {
+          quotaFull: true,
+          quota: {
+            id: updatedResponse.quotaFull.id,
+            action: updatedResponse.quotaFull.action,
+            endingCardId: updatedResponse.quotaFull.endingCardId,
+          },
+        }
+      : {
+          quotaFull: false,
+        };
+
+    const responseData = {
+      id: updatedResponse.id,
+      ...quotaObj,
+    };
+
     return {
-      response: responses.successResponse({}, true),
+      response: responses.successResponse(responseData, true),
     };
   },
 });
