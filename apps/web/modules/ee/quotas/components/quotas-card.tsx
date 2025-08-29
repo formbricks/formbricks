@@ -23,20 +23,20 @@ interface QuotasCardProps {
   isQuotasEnabled: boolean;
   isFormbricksCloud?: boolean;
   quotas: TSurveyQuota[];
-  isPublicSurvey: boolean;
+  hasResponses: boolean;
 }
 
 const AddQuotaButton = ({
   setIsQuotaModalOpen,
   setActiveQuota,
   t,
-  isPublicSurvey,
+  hasResponses,
   setOpenCreateQuotaConfirmationModal,
 }: {
   setIsQuotaModalOpen: (open: boolean) => void;
   setActiveQuota: (quota: TSurveyQuota | null) => void;
   t: TFnType;
-  isPublicSurvey: boolean;
+  hasResponses: boolean;
   setOpenCreateQuotaConfirmationModal: (open: boolean) => void;
 }) => {
   return (
@@ -44,7 +44,7 @@ const AddQuotaButton = ({
       variant="secondary"
       size="sm"
       onClick={() => {
-        if (isPublicSurvey) {
+        if (hasResponses) {
           setOpenCreateQuotaConfirmationModal(true);
         } else {
           setIsQuotaModalOpen(true);
@@ -61,7 +61,7 @@ export const QuotasCard = ({
   isQuotasEnabled,
   isFormbricksCloud,
   quotas,
-  isPublicSurvey,
+  hasResponses,
 }: QuotasCardProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
@@ -188,7 +188,7 @@ export const QuotasCard = ({
                       setIsQuotaModalOpen={setIsQuotaModalOpen}
                       setActiveQuota={setActiveQuota}
                       t={t}
-                      isPublicSurvey={isPublicSurvey}
+                      hasResponses={hasResponses}
                       setOpenCreateQuotaConfirmationModal={setOpenCreateQuotaConfirmationModal}
                     />
                   </div>
@@ -200,7 +200,7 @@ export const QuotasCard = ({
                       setIsQuotaModalOpen={setIsQuotaModalOpen}
                       setActiveQuota={setActiveQuota}
                       t={t}
-                      isPublicSurvey={isPublicSurvey}
+                      hasResponses={hasResponses}
                       setOpenCreateQuotaConfirmationModal={setOpenCreateQuotaConfirmationModal}
                     />
                   </div>
@@ -223,7 +223,7 @@ export const QuotasCard = ({
             setIsQuotaModalOpen(false);
             setActiveQuota(null);
           }}
-          hasResponses={isPublicSurvey}
+          hasResponses={hasResponses}
         />
       )}
       <DeleteDialog

@@ -178,9 +178,9 @@ export const QuotaModal = ({
   // Form submission handler with confirmation logic
   const onSubmit = async (data: TSurveyQuotaInput) => {
     if (isEditing) {
-      const hasChangesInInclusionCriteria =
-        JSON.stringify(form.getValues("logic")) !== JSON.stringify(quota.logic);
-      if (hasChangesInInclusionCriteria && isValid && hasResponses) {
+      const checkIfInclusionCriteriaHasChanged =
+        hasResponses && JSON.stringify(form.getValues("logic")) !== JSON.stringify(quota.logic);
+      if (checkIfInclusionCriteriaHasChanged && isValid) {
         setOpenConfirmChangesInInclusionCriteria(true);
         return;
       }
