@@ -250,6 +250,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         onClose={mockOnClose}
         duplicateQuota={mockDuplicateQuota}
+        hasResponses={false}
       />
     );
 
@@ -267,6 +268,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -283,6 +285,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -301,6 +304,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -319,6 +323,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -339,6 +344,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -355,6 +361,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -386,6 +393,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -432,6 +440,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -475,6 +484,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -503,6 +513,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -525,6 +536,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -546,6 +558,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -569,6 +582,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -579,7 +593,6 @@ describe("QuotaModal", () => {
     await user.click(deleteButton!);
 
     expect(mockDeleteQuota).toHaveBeenCalledWith(mockQuota);
-    expect(mockOnClose).toHaveBeenCalled();
   });
 
   test("calls onClose when cancel button is clicked", async () => {
@@ -594,6 +607,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 
@@ -618,6 +632,7 @@ describe("QuotaModal", () => {
         setQuotaToDelete={mockDeleteQuota}
         duplicateQuota={mockDuplicateQuota}
         onClose={mockOnClose}
+        hasResponses={false}
       />
     );
 

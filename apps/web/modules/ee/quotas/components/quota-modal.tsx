@@ -58,6 +58,7 @@ interface QuotaModalProps {
   quota?: TSurveyQuota | null;
   onClose: () => void;
   duplicateQuota: (quota: TSurveyQuota) => void;
+  hasResponses: boolean;
 }
 
 export const QuotaModal = ({
@@ -68,6 +69,7 @@ export const QuotaModal = ({
   setQuotaToDelete,
   onClose,
   duplicateQuota,
+  hasResponses,
 }: QuotaModalProps) => {
   const router = useRouter();
   const isEditing = !!quota;
@@ -178,7 +180,7 @@ export const QuotaModal = ({
     if (isEditing) {
       const hasChangesInInclusionCriteria =
         JSON.stringify(form.getValues("logic")) !== JSON.stringify(quota.logic);
-      if (hasChangesInInclusionCriteria && isValid) {
+      if (hasChangesInInclusionCriteria && isValid && hasResponses) {
         setOpenConfirmChangesInInclusionCriteria(true);
         return;
       }
@@ -204,8 +206,16 @@ export const QuotaModal = ({
     },
   ];
 
+  const handleClose = () => {
+    if (isDirty) {
+      setOpenConfirmationModal(true);
+    } else {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <FormProvider {...form}>
@@ -398,18 +408,7 @@ export const QuotaModal = ({
                   {t("common.delete")}
                 </Button>
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      if (isDirty) {
-                        setOpenConfirmationModal(true);
-                      } else {
-                        reset();
-                        onClose();
-                      }
-                    }}
-                    disabled={isSubmitting}>
+                  <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                     {t("common.cancel")}
                   </Button>
                   <Button type="submit" loading={isSubmitting} disabled={isSubmitting || !isDirty}>

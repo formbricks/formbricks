@@ -39,6 +39,7 @@ export function LogicEditorConditions({
       onConditionsChange: (updater) => {
         const logicCopy = structuredClone(question.logic) ?? [];
         const logicItem = logicCopy[logicIdx];
+        if (!logicItem) return;
         logicItem.conditions = updater(logicItem.conditions);
 
         if (logicItem.conditions.conditions.length === 0) {
