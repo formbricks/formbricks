@@ -10,7 +10,7 @@ const meta: Meta<StoryProps> = {
   tags: ["autodocs"],
   parameters: {
     layout: "centered",
-    controls: { sort: "alpha", exclude: [] },
+    controls: { sort: "alpha", exclude: ["value", "min", "max"] },
     docs: {
       description: {
         component:
@@ -44,24 +44,6 @@ const meta: Meta<StoryProps> = {
         category: "Appearance",
         type: { summary: "string" },
         defaultValue: { summary: "" },
-      },
-    },
-    min: {
-      control: "number",
-      description: "The minimum value of the slider",
-      table: {
-        category: "Content",
-        type: { summary: "number" },
-        defaultValue: { summary: "0" },
-      },
-    },
-    max: {
-      control: "number",
-      description: "The maximum value of the slider",
-      table: {
-        category: "Content",
-        type: { summary: "number" },
-        defaultValue: { summary: "100" },
       },
     },
   },
