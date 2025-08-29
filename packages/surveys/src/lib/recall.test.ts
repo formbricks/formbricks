@@ -85,7 +85,7 @@ describe("replaceRecallInfo", () => {
   test("should handle multiple recall patterns in a single string", () => {
     const text =
       "Hi #recall:name/fallback:User#, welcome to #recall:productName/fallback:Our Product#. Your role is #recall:userRole/fallback:Member#.";
-    const expected = "Hi John Doe, welcome to #recall:productName/fallback:Our Product#. Your role is Admin.";
+    const expected = "Hi John Doe, welcome to Formbricks. Your role is Admin.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
