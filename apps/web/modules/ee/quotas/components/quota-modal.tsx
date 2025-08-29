@@ -3,6 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
+import { getDefaultOperatorForQuestion } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -86,7 +87,7 @@ export const QuotaModal = ({
           {
             id: createId(),
             leftOperand: { type: "question", value: survey.questions[0]?.id },
-            operator: "equals",
+            operator: getDefaultOperatorForQuestion(survey.questions[0], t),
           },
         ],
       },
