@@ -78,6 +78,7 @@ export const createUser = async (
   const { name, email, role, teams, isActive } = userInput;
 
   try {
+    // Resolve teams from input (by name) within this organization
     const existingTeams = teams && (await getExistingTeamsFromInput(teams, organizationId));
 
     let teamUsersToCreate;
@@ -91,6 +92,99 @@ export const createUser = async (
           },
         },
       }));
+    }
+
+    // If a user with this email already exists, upsert membership and team assignments
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        memberships: {
+          select: {
+            role: true,
+            organizationId: true,
+          },
+        },
+        teamUsers: {
+          include: {
+            team: true,
+          },
+        },
+      },
+    });
+
+    if (existingUser) {
+      // Upsert organization membership with provided role
+      await prisma.membership.upsert({
+        where: {
+          userId_organizationId: {
+            userId: existingUser.id,
+            organizationId,
+          },
+        },
+        update: {
+          role: role.toLowerCase() as OrganizationRole,
+          accepted: true,
+        },
+        create: {
+          accepted: true,
+          role: role.toLowerCase() as OrganizationRole,
+          organization: { connect: { id: organizationId } },
+          user: { connect: { id: existingUser.id } },
+        },
+      });
+
+      // Assign to teams within this organization if provided
+      if (existingTeams && existingTeams.length > 0) {
+        const existingTeamIds = new Set(existingUser.teamUsers.map((tu) => tu.team.id));
+        const createOps = existingTeams
+          .filter((team) => !existingTeamIds.has(team.id))
+          .map((team) =>
+            prisma.teamUser.create({
+              data: {
+                role: TeamUserRole.contributor,
+                user: { connect: { id: existingUser.id } },
+                team: { connect: { id: team.id } },
+              },
+            })
+          );
+        if (createOps.length > 0) {
+          await prisma.$transaction(createOps);
+        }
+      }
+
+      // Optionally update basic fields like name/isActive if provided
+      const updated = await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          name: name ?? undefined,
+          isActive: isActive ?? undefined,
+        },
+        include: {
+          memberships: {
+            select: { role: true, organizationId: true },
+          },
+          teamUsers: {
+            include: { team: true },
+          },
+        },
+      });
+
+      const returnedUser = {
+        id: updated.id,
+        createdAt: updated.createdAt,
+        updatedAt: updated.updatedAt,
+        email: updated.email,
+        name: updated.name,
+        lastLoginAt: updated.lastLoginAt,
+        isActive: updated.isActive,
+        role: updated.memberships.filter((m) => m.organizationId === organizationId)[0]?.role,
+        teams:
+          existingTeams && existingTeams.length > 0
+            ? existingTeams.map((t) => t.name)
+            : updated.teamUsers.map((tu) => tu.team.name),
+      } as TUser;
+
+      return ok(returnedUser);
     }
 
     const prismaData: Prisma.UserCreateInput = {

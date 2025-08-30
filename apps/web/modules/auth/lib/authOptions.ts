@@ -21,6 +21,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
+import jwt from "jsonwebtoken";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
@@ -206,7 +207,6 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           emailVerified: user.emailVerified,
-          imageUrl: user.imageUrl,
         };
       },
     }),
@@ -286,6 +286,89 @@ export const authOptions: NextAuthOptions = {
         return user;
       },
     }),
+    CredentialsProvider({
+      id: "external-jwt",
+      name: "External JWT",
+      credentials: {
+        jwt: {
+          label: "JWT",
+          type: "string",
+        },
+      },
+      async authorize(credentials, _req) {
+        await applyIPRateLimit(rateLimitConfigs.auth.login);
+
+        const algorithm = process.env.EXTERNAL_JWT_ALG || "RS256";
+        const publicKey = process.env.EXTERNAL_JWT_PUBLIC_KEY;
+        const sharedSecret = process.env.EXTERNAL_JWT_SECRET;
+
+        if (!credentials?.jwt) {
+          throw new Error("Missing token");
+        }
+
+        const verifyKey = algorithm.startsWith("RS") ? publicKey : sharedSecret;
+        if (!verifyKey) {
+          logger.error("External JWT not configured: missing key/secret", "auth_external_jwt_key_missing");
+          throw new Error("External JWT is not configured");
+        }
+
+        let claims: any;
+        try {
+          claims = jwt.verify(credentials.jwt, verifyKey, { algorithms: [algorithm] });
+        } catch (e) {
+          logger.error(e, "Invalid external JWT provided");
+          throw new Error("Invalid token");
+        }
+
+        const email = claims?.email as string | undefined;
+        const subject = (claims?.sub as string | undefined) || email;
+        const name = (claims?.name as string | undefined) || email;
+
+        if (!email) {
+          throw new Error("Token missing required claim: email");
+        }
+
+        // Upsert user based on email and mark as verified
+        let user;
+        try {
+          user = await prisma.user.upsert({
+            where: { email },
+            create: {
+              email,
+              name,
+              emailVerified: new Date(),
+              identityProvider: "openid",
+              identityProviderAccountId: subject || email,
+              locale: "en-US",
+            },
+            update: {
+              name,
+              identityProvider: "openid",
+              identityProviderAccountId: subject || email,
+            },
+            select: {
+              id: true,
+              email: true,
+              emailVerified: true,
+              isActive: true,
+            },
+          });
+        } catch (e) {
+          logger.error(e, "Failed to upsert user from external JWT");
+          throw new Error("Internal server error. Please try again later");
+        }
+
+        if (user.isActive === false) {
+          throw new Error("Your account is currently inactive. Please contact the organization admin.");
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          emailVerified: user.emailVerified,
+        } as any;
+      },
+    }),
     // Conditionally add enterprise SSO providers
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
@@ -319,11 +402,20 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }: { user: TUser; account: Account }) {
       const cookieStore = await cookies();
 
-      const callbackUrl = cookieStore.get("next-auth.callback-url")?.value || "";
+      // get callback url from the cookie store,
+      const callbackUrl =
+        cookieStore.get("__Secure-next-auth.callback-url")?.value ||
+        cookieStore.get("next-auth.callback-url")?.value ||
+        "";
 
-      if (account?.provider === "credentials" || account?.provider === "token") {
+      if (
+        account?.provider === "credentials" ||
+        account?.provider === "token" ||
+        account?.provider === "external-jwt"
+      ) {
         // check if user's email is verified or not
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
+          logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
         }
         await updateUserLastLoginAt(user.email);
