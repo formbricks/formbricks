@@ -255,6 +255,31 @@ EOT
     smtp_secure_enabled=0
   fi
 
+  # Prompt for MinIO storage setup
+  read -p "🗄️  Do you want to set up MinIO for file storage? This provides S3-compatible object storage. [Y/n]" minio_storage
+  minio_storage=$(echo "$minio_storage" | tr '[:upper:]' '[:lower:]')
+
+  # Set default value for MinIO storage setup
+  if [[ -z $minio_storage ]]; then
+    minio_storage="y"
+  fi
+
+  if [[ $minio_storage == "y" ]]; then
+    echo "🔑 Generating MinIO credentials..."
+    minio_root_user="formbricks-$(openssl rand -hex 4)"
+    minio_root_password=$(openssl rand -base64 20)
+    minio_bucket_name="formbricks-uploads"
+    
+    echo "✅ MinIO will be configured with:"
+    echo "   Access Key: $minio_root_user"
+    echo "   Bucket: $minio_bucket_name"
+    echo "   Web Console: https://$domain_name/minio-console (after setup)"
+  else
+    minio_root_user=""
+    minio_root_password=""
+    minio_bucket_name=""
+  fi
+
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
 
@@ -282,7 +307,18 @@ EOT
     sed -i "s|# SMTP_AUTHENTICATED:|SMTP_AUTHENTICATED: $smtp_authenticated|" docker-compose.yml
   fi
 
-  awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '
+  if [[ $minio_storage == "y" ]]; then
+    echo "🚗 Setting up MinIO S3 configuration..."
+    sed -i "s|# S3_ACCESS_KEY:|S3_ACCESS_KEY: \"$minio_root_user\"|" docker-compose.yml
+    sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$minio_root_password\"|" docker-compose.yml
+    sed -i "s|# S3_REGION:|S3_REGION: \"us-east-1\"|" docker-compose.yml
+    sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$minio_bucket_name\"|" docker-compose.yml
+    sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"https://$domain_name/minio\"|" docker-compose.yml
+    sed -i "s|S3_FORCE_PATH_STYLE: 0|S3_FORCE_PATH_STYLE: 1|" docker-compose.yml
+    echo "🚗 MinIO S3 configuration updated successfully!"
+  fi
+
+  awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" -v minio_storage="$minio_storage" -v minio_root_user="$minio_root_user" -v minio_root_password="$minio_root_password" '
 /formbricks:/,/^ *$/ {
     if ($0 ~ /depends_on:/) {
         inserting_labels=1
@@ -310,12 +346,48 @@ EOT
     next
 }
 /^volumes:/ {
+    # Add MinIO service if enabled
+    if (minio_storage == "y") {
+        print "  minio:"
+        print "    image: \"minio/minio:latest\""
+        print "    restart: always"
+        print "    container_name: \"minio\""
+        print "    command: server /data --console-address \":9001\""
+        print "    environment:"
+        print "      - MINIO_ROOT_USER=" minio_root_user
+        print "      - MINIO_ROOT_PASSWORD=" minio_root_password
+        print "    volumes:"
+        print "      - minio-data:/data"
+        print "    labels:"
+        print "      - \"traefik.enable=true\""
+        print "      # S3 API routing"
+        print "      - \"traefik.http.routers.minio-s3.rule=Host(`" domain_name "`) && PathPrefix(`/minio`)\""
+        print "      - \"traefik.http.routers.minio-s3.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.minio-s3.tls=true\""
+        print "      - \"traefik.http.routers.minio-s3.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.minio-s3.middlewares=minio-strip\""
+        print "      - \"traefik.http.middlewares.minio-strip.stripprefix.prefixes=/minio\""
+        print "      - \"traefik.http.services.minio-s3.loadbalancer.server.port=9000\""
+        print "      # Web Console routing"
+        print "      - \"traefik.http.routers.minio-console.rule=Host(`" domain_name "`) && PathPrefix(`/minio-console`)\""
+        print "      - \"traefik.http.routers.minio-console.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.minio-console.tls=true\""
+        print "      - \"traefik.http.routers.minio-console.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.minio-console.middlewares=minio-console-strip\""
+        print "      - \"traefik.http.middlewares.minio-console-strip.stripprefix.prefixes=/minio-console\""
+        print "      - \"traefik.http.services.minio-console.loadbalancer.server.port=9001\""
+        print ""
+    }
+    
     print "  traefik:"
     print "    image: \"traefik:v2.7\""
     print "    restart: always"
     print "    container_name: \"traefik\""
     print "    depends_on:"
     print "      - formbricks"
+    if (minio_storage == "y") {
+        print "      - minio"
+    }
     print "    ports:"
     print "      - \"80:80\""
     print "      - \"443:443\""
@@ -327,6 +399,12 @@ EOT
     print "      - /var/run/docker.sock:/var/run/docker.sock:ro"
     print ""
 }
+/^volumes:/ {
+    if (minio_storage == "y") {
+        print "  minio-data:"
+        print "    driver: local"
+    }
+}
 1
 ' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
 
@@ -334,10 +412,56 @@ EOT
 
 docker compose up -d
 
+# Create MinIO bucket if MinIO is enabled
+if [[ $minio_storage == "y" ]]; then
+    echo "🪣 Creating MinIO bucket '$minio_bucket_name'..."
+    
+    # Wait for MinIO to be ready
+    echo "⏳ Waiting for MinIO to start..."
+    for i in {1..30}; do
+        if docker run --rm --network formbricks_default \
+            -e MC_HOST_minio=http://$minio_root_user:$minio_root_password@minio:9000 \
+            minio/mc:latest \
+            admin info minio >/dev/null 2>&1; then
+            echo "✅ MinIO is ready!"
+            break
+        fi
+        echo "⏳ Waiting... ($i/30)"
+        sleep 2
+    done
+    
+    # Create bucket using MinIO client container
+    echo "🪣 Creating bucket '$minio_bucket_name'..."
+    docker run --rm --network formbricks_default \
+        -e MC_HOST_minio=http://$minio_root_user:$minio_root_password@minio:9000 \
+        minio/mc:latest \
+        mb minio/$minio_bucket_name --ignore-existing
+    
+    # Set bucket policy to allow uploads (optional - you might want to restrict this)
+    docker run --rm --network formbricks_default \
+        -e MC_HOST_minio=http://$minio_root_user:$minio_root_password@minio:9000 \
+        minio/mc:latest \
+        anonymous set download minio/$minio_bucket_name || true
+    
+    echo "✅ MinIO bucket '$minio_bucket_name' created successfully!"
+fi
+
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""
+
+if [[ $minio_storage == "y" ]]; then
+    echo "🗄️  MinIO Storage Setup Complete:"
+    echo "   • S3 API: https://$domain_name/minio"
+    echo "   • Web Console: https://$domain_name/minio-console"
+    echo "   • Access Key: $minio_root_user"
+    echo "   • Bucket: $minio_bucket_name (✅ automatically created)"
+    echo ""
+    echo "💡 Tip: You can manage your MinIO storage via the web console at https://$domain_name/minio-console"
+    echo ""
+fi
+
 echo "🎉 All done! Please setup your Formbricks instance by visiting your domain at https://$domain_name. You can check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'"
 
 END

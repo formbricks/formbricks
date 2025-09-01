@@ -18,9 +18,9 @@
     "generate-and-merge-api-specs": "pnpm run generate-api-specs && pnpm run merge-client-endpoints"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.804.0",
-    "@aws-sdk/s3-presigned-post": "3.804.0",
-    "@aws-sdk/s3-request-presigner": "3.804.0",
+    "@aws-sdk/client-s3": "3.879.0",
+    "@aws-sdk/s3-presigned-post": "3.879.0",
+    "@aws-sdk/s3-request-presigner": "3.879.0",
     "@boxyhq/saml-jackson": "1.45.2",
     "@dnd-kit/core": "6.3.1",
     "@dnd-kit/modifiers": "9.0.0",
