@@ -37,5 +37,5 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
     return redirect(`/environments/${prodEnvironment.id}/settings/billing`);
   }
 
-  redirect(`/environments/${prodEnvironment.id}/`);
+  return redirect(`/environments/${prodEnvironment.id}/`);
 };

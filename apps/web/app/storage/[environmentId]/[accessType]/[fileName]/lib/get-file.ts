@@ -24,7 +24,7 @@ export const getFile = async (
         },
       });
     } catch (err) {
-      notFound();
+      return notFound();
     }
   }
 
