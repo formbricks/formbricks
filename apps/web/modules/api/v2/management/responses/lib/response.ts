@@ -9,7 +9,7 @@ import {
   getOrganizationBilling,
   getOrganizationIdFromEnvironmentId,
 } from "@/modules/api/v2/management/responses/lib/organization";
-import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/utils";
+import { checkQuotasEnabled, getResponsesQuery } from "@/modules/api/v2/management/responses/lib/utils";
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
@@ -154,12 +154,16 @@ export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   const responseResult = await createResponse(environmentId, responseInput);
-
   if (!responseResult.ok) {
     return responseResult;
   }
 
   const response = responseResult.data;
+
+  const isQuotasEnabled = await checkQuotasEnabled(environmentId);
+  if (!isQuotasEnabled) {
+    return ok(response);
+  }
 
   try {
     const [survey, quotas] = await Promise.all([
@@ -180,10 +184,7 @@ export const createResponseWithQuotaEvaluation = async (
     );
 
     await handleQuotas(responseInput.surveyId, response.id, result);
-
-    return ok(response);
-  } catch (error) {
-    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response");
+  } finally {
     return ok(response);
   }
 };

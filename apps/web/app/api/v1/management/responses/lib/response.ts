@@ -1,4 +1,5 @@
 import "server-only";
+import { checkQuotasEnabled } from "@/app/api/v1/management/responses/lib/utils";
 import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
 import {
   getMonthlyOrganizationResponseCount,
@@ -66,6 +67,11 @@ export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponse> => {
   const response = await createResponse(responseInput);
+
+  const isQuotasEnabled = await checkQuotasEnabled(responseInput.environmentId);
+  if (!isQuotasEnabled) {
+    return response;
+  }
 
   try {
     const [survey, quotas] = await Promise.all([

@@ -1,4 +1,5 @@
 import "server-only";
+import { checkQuotasEnabled } from "@/app/api/v1/management/responses/lib/utils";
 import { updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
@@ -11,6 +12,16 @@ export const updateResponseWithQuotaEvaluation = async (
   responseInput: Partial<TResponseInput>
 ): Promise<TResponse> => {
   const response = await updateResponse(responseId, responseInput);
+
+  const survey = await getSurvey(response.surveyId);
+  if (!survey) {
+    return response;
+  }
+
+  const isQuotasEnabled = await checkQuotasEnabled(survey.environmentId);
+  if (!isQuotasEnabled) {
+    return response;
+  }
 
   try {
     const [survey, quotas] = await Promise.all([getSurvey(response.surveyId), getQuotas(response.surveyId)]);

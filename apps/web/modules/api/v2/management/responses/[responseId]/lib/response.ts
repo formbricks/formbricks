@@ -3,6 +3,7 @@ import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
 import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
+import { checkQuotasEnabled } from "@/modules/api/v2/management/responses/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
@@ -111,6 +112,7 @@ export const updateResponse = async (
 };
 
 export const updateResponseWithQuotaEvaluation = async (
+  environmentId: string,
   responseId: string,
   responseInput: z.infer<typeof ZResponseUpdateSchema>
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
@@ -121,6 +123,11 @@ export const updateResponseWithQuotaEvaluation = async (
   }
 
   const response = responseResult.data;
+
+  const isQuotasEnabled = await checkQuotasEnabled(environmentId);
+  if (!isQuotasEnabled) {
+    return ok(response);
+  }
 
   try {
     const [survey, quotas] = await Promise.all([getSurvey(response.surveyId), getQuotas(response.surveyId)]);
@@ -138,10 +145,7 @@ export const updateResponseWithQuotaEvaluation = async (
     );
 
     await handleQuotas(response.surveyId, response.id, result);
-
-    return ok(response);
-  } catch (error) {
-    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response update");
+  } finally {
     return ok(response);
   }
 };
