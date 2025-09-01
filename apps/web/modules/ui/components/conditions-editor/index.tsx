@@ -248,7 +248,8 @@ export function ConditionsEditor({
               {onCreateGroup && (
                 <DropdownMenuItem
                   onClick={() => onCreateGroup(condition.id)}
-                  icon={<WorkflowIcon className="h-4 w-4" />}>
+                  icon={<WorkflowIcon className="h-4 w-4" />}
+                  disabled={conditions.conditions.length <= 1}>
                   {t("environments.surveys.edit.create_group")}
                 </DropdownMenuItem>
               )}
