@@ -68,7 +68,7 @@ export const getQuotasSummary = async (surveyId: string) => {
       return {
         ...rest,
         count,
-        percentage: convertFloatTo2Decimal((count / quota.limit) * 100),
+        percentage: quota.limit > 0 ? convertFloatTo2Decimal((count / quota.limit) * 100) : 0,
       };
     });
   } catch (error) {
