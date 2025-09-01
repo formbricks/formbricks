@@ -28,6 +28,8 @@ const baseSummary = {
   startsPercentage: 75,
   totalResponses: 4,
   ttcAverage: 65000,
+  quotasCompleted: 0,
+  quotasCompletedPercentage: 0,
 };
 
 describe("SummaryMetadata", () => {
@@ -37,24 +39,19 @@ describe("SummaryMetadata", () => {
 
   test("renders loading skeletons when isLoading=true", () => {
     const { container } = render(
-      <SummaryMetadata
-        showDropOffs={false}
-        setShowDropOffs={() => {}}
-        surveySummary={baseSummary}
-        isLoading={true}
-      />
+      <SummaryMetadata tab={undefined} setTab={() => {}} surveySummary={baseSummary} isLoading={true} />
     );
 
-    expect(container.getElementsByClassName("animate-pulse")).toHaveLength(5);
+    expect(container.getElementsByClassName("animate-pulse")).toHaveLength(6);
   });
 
   test("renders all stats and formats time correctly, toggles dropOffs icon", async () => {
     const Wrapper = () => {
-      const [show, setShow] = useState(false);
+      const [show, setShow] = useState<"dropOffs" | "quotas">("dropOffs");
       return (
         <SummaryMetadata
-          showDropOffs={show}
-          setShowDropOffs={setShow}
+          tab={show ? "dropOffs" : "quotas"}
+          setTab={setShow}
           surveySummary={baseSummary}
           isLoading={false}
         />
@@ -82,12 +79,7 @@ describe("SummaryMetadata", () => {
   test("formats time correctly when < 60 seconds", () => {
     const smallSummary = { ...baseSummary, ttcAverage: 5000 };
     render(
-      <SummaryMetadata
-        showDropOffs={false}
-        setShowDropOffs={() => {}}
-        surveySummary={smallSummary}
-        isLoading={false}
-      />
+      <SummaryMetadata tab="dropOffs" setTab={() => {}} surveySummary={smallSummary} isLoading={false} />
     );
     expect(screen.getByText("5.00s")).toBeInTheDocument();
   });
@@ -95,14 +87,8 @@ describe("SummaryMetadata", () => {
   test("renders '-' for dropOffCount=0 and still toggles icon", async () => {
     const zeroSummary = { ...baseSummary, dropOffCount: 0 };
     const Wrapper = () => {
-      const [show, setShow] = useState(false);
       return (
-        <SummaryMetadata
-          showDropOffs={show}
-          setShowDropOffs={setShow}
-          surveySummary={zeroSummary}
-          isLoading={false}
-        />
+        <SummaryMetadata tab="dropOffs" setTab={() => {}} surveySummary={zeroSummary} isLoading={false} />
       );
     };
     render(<Wrapper />);
@@ -117,27 +103,13 @@ describe("SummaryMetadata", () => {
 
   test("renders '-' for displayCount=0", () => {
     const dispZero = { ...baseSummary, displayCount: 0 };
-    render(
-      <SummaryMetadata
-        showDropOffs={false}
-        setShowDropOffs={() => {}}
-        surveySummary={dispZero}
-        isLoading={false}
-      />
-    );
+    render(<SummaryMetadata tab="dropOffs" setTab={() => {}} surveySummary={dispZero} isLoading={false} />);
     expect(screen.getAllByText("-")).toHaveLength(1);
   });
 
   test("renders '-' for totalResponses=0", () => {
     const totZero = { ...baseSummary, totalResponses: 0 };
-    render(
-      <SummaryMetadata
-        showDropOffs={false}
-        setShowDropOffs={() => {}}
-        surveySummary={totZero}
-        isLoading={false}
-      />
-    );
+    render(<SummaryMetadata tab="dropOffs" setTab={() => {}} surveySummary={totZero} isLoading={false} />);
     expect(screen.getAllByText("-")).toHaveLength(1);
   });
 });

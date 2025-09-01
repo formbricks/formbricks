@@ -18,6 +18,7 @@ vi.mock("@/lib/constants", () => ({
   get IS_FORMBRICKS_CLOUD() {
     return mockIsFormbricksCloud;
   },
+  ENCRYPTION_KEY: "test",
 }));
 
 vi.mock("@/lib/organization/service", () => ({

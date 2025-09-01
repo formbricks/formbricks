@@ -43,6 +43,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
   IS_PRODUCTION: false,
+  ENCRYPTION_KEY: "test",
 }));
 
 describe("Response Lib", () => {
