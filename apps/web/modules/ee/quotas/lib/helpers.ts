@@ -23,21 +23,16 @@ export const checkQuotasEnabledV1 = async (environmentId: string): Promise<boole
 };
 
 export const checkQuotasEnabledV2 = async (environmentId: string): Promise<boolean> => {
-  try {
-    const organizationIdResult = await getOrganizationIdFromEnvironmentId(environmentId);
-    if (!organizationIdResult.ok) {
-      return false;
-    }
-
-    const billing = await getOrganizationBilling(organizationIdResult.data);
-    if (!billing.ok) {
-      return false;
-    }
-
-    const isQuotasEnabled = await getIsQuotasEnabled(billing.data.plan);
-    return isQuotasEnabled;
-  } catch (error) {
-    logger.error({ error, environmentId }, "Error checking quotas enabled in v2");
+  const organizationIdResult = await getOrganizationIdFromEnvironmentId(environmentId);
+  if (!organizationIdResult.ok) {
     return false;
   }
+
+  const billing = await getOrganizationBilling(organizationIdResult.data);
+  if (!billing.ok) {
+    return false;
+  }
+
+  const isQuotasEnabled = await getIsQuotasEnabled(billing.data.plan);
+  return isQuotasEnabled;
 };
