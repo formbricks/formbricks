@@ -57,10 +57,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.get(key);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeNull();
-      }
+      expect(result).toBeNull();
     });
 
     test("should return error when JSON parse fails (corrupted data)", async () => {
@@ -278,10 +275,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual(cachedValue);
-      }
+      expect(result).toEqual(cachedValue);
       expect(fn).not.toHaveBeenCalled();
     });
 
@@ -295,10 +289,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual(freshValue);
-      }
+      expect(result).toEqual(freshValue);
       expect(fn).toHaveBeenCalledOnce();
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, JSON.stringify(freshValue));
     });
@@ -312,10 +303,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual(freshValue);
-      }
+      expect(result).toEqual(freshValue);
       expect(fn).toHaveBeenCalledOnce();
     });
 
@@ -329,10 +317,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeNull();
-      }
+      expect(result).toBeNull();
       expect(fn).not.toHaveBeenCalled(); // Function should not be executed
     });
 
@@ -346,10 +331,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeNull();
-      }
+      expect(result).toBeNull();
       expect(fn).toHaveBeenCalledOnce();
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
     });
@@ -364,28 +346,23 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeUndefined();
-      }
+      expect(result).toBeUndefined();
       expect(fn).toHaveBeenCalledOnce();
       // undefined should be normalized to null in cache
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
     });
 
-    test("should return error when function fails", async () => {
+    test("should execute function directly when cache fails", async () => {
       const key = "test:key" as CacheKey;
-      const fn = vi.fn().mockRejectedValue(new Error("Function failed"));
+      const expectedResult = { data: "result" };
+      const fn = vi.fn().mockResolvedValue(expectedResult);
 
       mockRedis.get.mockRejectedValue(new Error("Redis connection failed"));
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe(ErrorCode.Unknown);
-        // Error details are logged on the spot, not stored in Result
-      }
+      // withCache now always returns the function result, even when cache fails
+      expect(result).toEqual(expectedResult);
       expect(fn).toHaveBeenCalledOnce();
     });
   });

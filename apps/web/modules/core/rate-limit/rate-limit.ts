@@ -1,5 +1,5 @@
+import { cache } from "@/lib/cache";
 import { RATE_LIMITING_DISABLED, SENTRY_DSN } from "@/lib/constants";
-import { getRedisClient } from "@/modules/cache/redis";
 import * as Sentry from "@sentry/nextjs";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
@@ -24,7 +24,7 @@ export const checkRateLimit = async (
 
   try {
     // Get Redis client
-    const redis = getRedisClient();
+    const redis = await cache.getRedisClient();
     if (!redis) {
       logger.debug(`Redis unavailable`);
       return ok({

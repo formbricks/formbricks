@@ -1,4 +1,4 @@
-import { withCache } from "@/modules/cache/lib/withCache";
+import { cache } from "@/lib/cache";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
@@ -26,8 +26,13 @@ vi.mock("@formbricks/cache", () => ({
   },
 }));
 
-vi.mock("@/modules/cache/lib/withCache", () => ({
-  withCache: vi.fn(),
+// Helper to create branded CacheKey for tests
+const mockCacheKey = (key: string) => key as any;
+
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    withCache: vi.fn(),
+  },
 }));
 
 vi.mock("@/modules/survey/lib/utils", () => ({
@@ -472,30 +477,28 @@ describe("data", () => {
       const organizationId = "org-1";
       const mockCacheFunction = vi.fn().mockResolvedValue(mockBilling);
 
-      vi.mocked(createCacheKey.organization.billing).mockReturnValue("billing-cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
+      vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
+      vi.mocked(cache.withCache).mockResolvedValue(mockBilling);
       vi.mocked(prisma.organization.findFirst).mockResolvedValue(mockOrganization as any);
 
       const result = await getOrganizationBilling(organizationId);
 
       expect(result).toEqual(mockBilling);
       expect(createCacheKey.organization.billing).toHaveBeenCalledWith(organizationId);
-      expect(withCache).toHaveBeenCalledWith(expect.any(Function), {
-        key: "billing-cache-key",
-        ttl: 60 * 60 * 24 * 1000,
-      });
+      expect(cache.withCache).toHaveBeenCalledWith(
+        expect.any(Function),
+        "billing-cache-key",
+        60 * 60 * 24 * 1000
+      );
     });
 
     test("should throw ResourceNotFoundError when organization not found", async () => {
       const organizationId = "nonexistent-org";
-      const mockCacheFunction = vi.fn().mockImplementation(async () => {
+      vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
+      vi.mocked(cache.withCache).mockImplementation(async (fn) => {
         vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
-        const cacheFunction = vi.mocked(withCache).mock.calls[0][0];
-        return await cacheFunction();
+        return await fn();
       });
-
-      vi.mocked(createCacheKey.organization.billing).mockReturnValue("billing-cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
 
       await expect(getOrganizationBilling(organizationId)).rejects.toThrow(ResourceNotFoundError);
       await expect(getOrganizationBilling(organizationId)).rejects.toThrow("Organization");
@@ -508,14 +511,11 @@ describe("data", () => {
         clientVersion: "5.0.0",
       });
 
-      const mockCacheFunction = vi.fn().mockImplementation(async () => {
+      vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
+      vi.mocked(cache.withCache).mockImplementation(async (fn) => {
         vi.mocked(prisma.organization.findFirst).mockRejectedValue(prismaError);
-        const cacheFunction = vi.mocked(withCache).mock.calls[0][0];
-        return await cacheFunction();
+        return await fn();
       });
-
-      vi.mocked(createCacheKey.organization.billing).mockReturnValue("billing-cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
 
       await expect(getOrganizationBilling(organizationId)).rejects.toThrow(DatabaseError);
     });
@@ -524,14 +524,11 @@ describe("data", () => {
       const organizationId = "org-1";
       const genericError = new Error("Generic error");
 
-      const mockCacheFunction = vi.fn().mockImplementation(async () => {
+      vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
+      vi.mocked(cache.withCache).mockImplementation(async (fn) => {
         vi.mocked(prisma.organization.findFirst).mockRejectedValue(genericError);
-        const cacheFunction = vi.mocked(withCache).mock.calls[0][0];
-        return await cacheFunction();
+        return await fn();
       });
-
-      vi.mocked(createCacheKey.organization.billing).mockReturnValue("billing-cache-key");
-      vi.mocked(withCache).mockReturnValue(mockCacheFunction);
 
       await expect(getOrganizationBilling(organizationId)).rejects.toThrow(genericError);
     });

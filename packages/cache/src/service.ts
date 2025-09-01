@@ -13,6 +13,15 @@ export class CacheService {
   constructor(private readonly redis: RedisClient) {}
 
   /**
+   * Get the underlying Redis client for advanced operations (e.g., Lua scripts)
+   * Use with caution - prefer cache service methods when possible
+   * @returns The Redis client instance
+   */
+  getRedisClient(): RedisClient {
+    return this.redis;
+  }
+
+  /**
    * Get a value from cache with automatic JSON deserialization
    * @param key - Cache key to retrieve
    * @returns Result containing parsed value, null if not found, or an error
@@ -129,41 +138,40 @@ export class CacheService {
 
   /**
    * Cache wrapper for functions - implements cache-aside pattern
+   * This function NEVER fails - it always returns the function result as fallback
    * @param fn - Function to cache
    * @param key - Cache key
    * @param ttlMs - Time to live in milliseconds
-   * @returns Result containing cached result or fresh result from function
+   * @returns Always returns the function result (cached or fresh)
    */
-  async withCache<T>(
-    fn: () => Promise<T>,
-    key: CacheKey,
-    ttlMs: number
-  ): Promise<Result<T | null, CacheError>> {
+  async withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<T> {
+    // Validate inputs - if invalid, just execute function directly
     const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
     if (!validation.ok) {
-      return validation;
+      logger.warn({ error: validation.error, key }, "Invalid cache inputs, executing function directly");
+      return await fn();
     }
 
     try {
       // Try to get from cache first
       const cacheResult = await this.get<T>(key);
-      if (!cacheResult.ok) {
-        // Cache operation failed, try to get fresh data
-        logger.debug({ error: cacheResult.error, key }, "Cache get operation failed, fetching fresh data");
-      } else if (cacheResult.data !== null) {
+      if (cacheResult.ok && cacheResult.data !== null) {
         // Cache hit with non-null value
-        return ok(cacheResult.data);
-      } else {
+        return cacheResult.data;
+      } else if (cacheResult.ok && cacheResult.data === null) {
         // Got null - could be cache miss or cached null, check if key exists
         const existsResult = await this.exists(key);
         if (existsResult.ok && existsResult.data) {
           // Key exists, so this is a cached null value
-          return ok(null);
-        } else if (!existsResult.ok) {
-          // Exists check failed, log and continue to execute function
-          logger.debug({ error: existsResult.error, key }, "Cache exists check failed, fetching fresh data");
+          return null as T;
         }
-        // Key doesn't exist (cache miss) or exists check failed - continue to execute function
+        // Key doesn't exist (cache miss) - continue to execute function
+      } else {
+        // Cache operation failed, log and continue to execute function
+        logger.debug(
+          { error: !cacheResult.ok ? cacheResult.error : "unknown", key },
+          "Cache get operation failed, fetching fresh data"
+        );
       }
 
       // Cache miss or cache error - execute function
@@ -172,15 +180,14 @@ export class CacheService {
       // Try to store in cache for next time (don't fail if cache set fails)
       const setResult = await this.set(key, fresh, ttlMs);
       if (!setResult.ok) {
-        logger.error({ error: setResult.error, key }, "Failed to cache fresh data, but returning result");
+        logger.debug({ error: setResult.error, key }, "Failed to cache fresh data, but returning result");
       }
 
-      return ok(fresh);
-    } catch (fnError) {
-      logger.error({ error: fnError, key }, "Function execution failed");
-      return err({
-        code: ErrorCode.Unknown,
-      });
+      return fresh;
+    } catch (error) {
+      // If anything fails, log and execute function directly
+      logger.warn({ error, key }, "Cache operation failed, executing function directly");
+      return await fn();
     }
   }
 }

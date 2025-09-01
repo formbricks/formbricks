@@ -1,5 +1,5 @@
+import { cache } from "@/lib/cache";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
-import { getRedisClient } from "@/modules/cache/redis";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
@@ -230,7 +230,7 @@ export const shouldLogAuthFailure = async (
 
   try {
     // Get Redis client
-    const redis = getRedisClient();
+    const redis = await cache.getRedisClient();
     if (!redis) {
       logger.warn("Redis not available for rate limiting, not logging due to Redis requirement");
       return false;
@@ -251,7 +251,7 @@ export const shouldLogAuthFailure = async (
       throw new Error("Redis transaction failed");
     }
 
-    const currentCount = results[1] as number;
+    const currentCount = results[1] as unknown as number;
 
     // Apply throttling logic
     if (currentCount <= AGGREGATION_THRESHOLD) {

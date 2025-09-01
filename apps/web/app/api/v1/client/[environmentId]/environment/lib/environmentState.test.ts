@@ -1,9 +1,9 @@
+import { cache } from "@/lib/cache";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@/lib/posthogServer";
-import { withCache } from "@/modules/cache/lib/withCache";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -18,7 +18,7 @@ import { getEnvironmentState } from "./environmentState";
 // Mock dependencies
 vi.mock("@/lib/organization/service");
 vi.mock("@/lib/posthogServer");
-vi.mock("@/modules/cache/lib/withCache");
+vi.mock("@/lib/cache");
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -152,8 +152,8 @@ describe("getEnvironmentState", () => {
   beforeEach(() => {
     vi.resetAllMocks();
 
-    // Mock withCache to simply execute the function without caching for tests
-    vi.mocked(withCache).mockImplementation((fn) => fn);
+    // Mock cache.withCache to simply execute the function without caching for tests
+    vi.mocked(cache.withCache).mockImplementation(async (fn) => await fn());
 
     // Default mocks for successful retrieval
     vi.mocked(getEnvironmentStateData).mockResolvedValue(mockEnvironmentStateData);
@@ -268,12 +268,13 @@ describe("getEnvironmentState", () => {
     expect(result.data.recaptchaSiteKey).toBe("mock_recaptcha_site_key");
   });
 
-  test("should use withCache for caching with correct cache key and TTL", () => {
+  test("should use cache.withCache for caching with correct cache key and TTL", () => {
     getEnvironmentState(environmentId);
 
-    expect(withCache).toHaveBeenCalledWith(expect.any(Function), {
-      key: "fb:env:test-environment-id:state",
-      ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
-    });
+    expect(cache.withCache).toHaveBeenCalledWith(
+      expect.any(Function),
+      "fb:env:test-environment-id:state",
+      5 * 60 * 1000 // 5 minutes in milliseconds
+    );
   });
 });

@@ -126,7 +126,9 @@ describe("@formbricks/cache factory", () => {
         connect: vi.fn(),
       };
 
-      const result = await createCacheService(mockClient as unknown as RedisClient);
+      // Mock the environment variable and test the factory
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const result = await createCacheService();
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -142,7 +144,9 @@ describe("@formbricks/cache factory", () => {
         connect: vi.fn().mockResolvedValue(undefined),
       };
 
-      const result = await createCacheService(mockClient as unknown as RedisClient);
+      // Mock the environment variable and test the factory
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const result = await createCacheService();
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -158,7 +162,9 @@ describe("@formbricks/cache factory", () => {
         connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
       };
 
-      const result = await createCacheService(mockClient as unknown as RedisClient);
+      // Mock the environment variable and test the factory
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const result = await createCacheService();
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
