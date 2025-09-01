@@ -4,6 +4,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { checkQuotasEnabledV1 } from "@/modules/ee/quotas/lib/helpers";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
 
@@ -41,11 +42,18 @@ export const updateResponseWithQuotaEvaluation = async (
     const quotaFull = await handleQuotas(response.surveyId, response.id, result);
 
     if (quotaFull && quotaFull.action === "endSurvey") {
+      const refreshedResponse = await prisma.response.findUnique({ where: { id: response.id } });
+
+      if (!refreshedResponse) {
+        return response;
+      }
+
       const updatedResponse = {
-        ...response,
-        finished: true,
-        endingId: quotaFull.endingCardId,
+        ...refreshedResponse,
+        tags: response.tags,
+        contact: response.contact,
       };
+
       return updatedResponse;
     }
 

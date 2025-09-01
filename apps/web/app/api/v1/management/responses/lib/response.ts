@@ -94,11 +94,18 @@ export const createResponseWithQuotaEvaluation = async (
     const quotaFull = await handleQuotas(responseInput.surveyId, response.id, result);
 
     if (quotaFull && quotaFull.action === "endSurvey") {
+      const refreshedResponse = await prisma.response.findUnique({ where: { id: response.id } });
+
+      if (!refreshedResponse) {
+        return response;
+      }
+
       const updatedResponse = {
-        ...response,
-        finished: true,
-        endingId: quotaFull.endingCardId,
+        ...refreshedResponse,
+        tags: response.tags,
+        contact: response.contact,
       };
+
       return updatedResponse;
     }
 
