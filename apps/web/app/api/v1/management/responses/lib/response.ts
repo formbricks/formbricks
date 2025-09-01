@@ -1,5 +1,4 @@
 import "server-only";
-import { checkQuotasEnabled } from "@/app/api/v1/management/responses/lib/utils";
 import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
 import {
   getMonthlyOrganizationResponseCount,
@@ -11,6 +10,7 @@ import { calculateTtcTotal } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
+import { checkQuotasEnabledV1 } from "@/modules/ee/quotas/lib/helpers";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { Prisma } from "@prisma/client";
@@ -68,7 +68,7 @@ export const createResponseWithQuotaEvaluation = async (
 ): Promise<TResponse> => {
   const response = await createResponse(responseInput);
 
-  const isQuotasEnabled = await checkQuotasEnabled(responseInput.environmentId);
+  const isQuotasEnabled = await checkQuotasEnabledV1(responseInput.environmentId);
   if (!isQuotasEnabled) {
     return response;
   }

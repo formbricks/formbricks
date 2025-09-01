@@ -9,10 +9,11 @@ import {
   getOrganizationBilling,
   getOrganizationIdFromEnvironmentId,
 } from "@/modules/api/v2/management/responses/lib/organization";
-import { checkQuotasEnabled, getResponsesQuery } from "@/modules/api/v2/management/responses/lib/utils";
+import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/utils";
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
+import { checkQuotasEnabledV2 } from "@/modules/ee/quotas/lib/helpers";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { Prisma, Response } from "@prisma/client";
@@ -160,7 +161,7 @@ export const createResponseWithQuotaEvaluation = async (
 
   const response = responseResult.data;
 
-  const isQuotasEnabled = await checkQuotasEnabled(environmentId);
+  const isQuotasEnabled = await checkQuotasEnabledV2(environmentId);
   if (!isQuotasEnabled) {
     return ok(response);
   }

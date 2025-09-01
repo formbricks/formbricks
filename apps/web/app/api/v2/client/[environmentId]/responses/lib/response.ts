@@ -11,6 +11,7 @@ import { calculateTtcTotal } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
+import { checkQuotasEnabledV2 } from "@/modules/ee/quotas/lib/helpers";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { Prisma } from "@prisma/client";
@@ -31,6 +32,11 @@ export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInputV2
 ): Promise<TResponseWithQuotas> => {
   const response = await createResponse(responseInput);
+
+  const isQuotasEnabled = await checkQuotasEnabledV2(responseInput.environmentId);
+  if (!isQuotasEnabled) {
+    return response;
+  }
 
   try {
     const [survey, quotas] = await Promise.all([

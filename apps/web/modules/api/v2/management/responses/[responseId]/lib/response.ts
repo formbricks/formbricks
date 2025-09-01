@@ -3,8 +3,8 @@ import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
 import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
-import { checkQuotasEnabled } from "@/modules/api/v2/management/responses/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { checkQuotasEnabledV2 } from "@/modules/ee/quotas/lib/helpers";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { Prisma, Response } from "@prisma/client";
@@ -12,7 +12,6 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getResponse = reactCache(async (responseId: string) => {
@@ -124,7 +123,7 @@ export const updateResponseWithQuotaEvaluation = async (
 
   const response = responseResult.data;
 
-  const isQuotasEnabled = await checkQuotasEnabled(environmentId);
+  const isQuotasEnabled = await checkQuotasEnabledV2(environmentId);
   if (!isQuotasEnabled) {
     return ok(response);
   }
