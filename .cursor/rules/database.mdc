@@ -1,12 +1,8 @@
 ---
-description: >
-  This rule provides comprehensive knowledge about the Formbricks database structure, relationships, 
-  and data patterns. It should be used **only when the agent explicitly requests database schema-level 
-  details** to support tasks such as: writing/debugging Prisma queries, designing/reviewing data models, 
-  investigating multi-tenancy behavior, creating API endpoints, or understanding data relationships.
-globs: []
-alwaysApply: agent-requested
+description: It should be used **only when the agent explicitly requests database schema-level, details** to support tasks such as: writing/debugging Prisma queries, designing/reviewing data models, investigating multi-tenancy behavior, creating API endpoints, or understanding data relationships.
+alwaysApply: false
 ---
+
 # Formbricks Database Schema Reference
 
 This rule provides a reference to the Formbricks database structure. For the most up-to-date and complete schema definitions, please refer to the schema.prisma file directly.
@@ -16,6 +12,7 @@ This rule provides a reference to the Formbricks database structure. For the mos
 Formbricks uses PostgreSQL with Prisma ORM. The schema is designed for multi-tenancy with strong data isolation between organizations.
 
 ### Core Hierarchy
+
 ```
 Organization
 └── Project
@@ -29,6 +26,7 @@ Organization
 ## Schema Reference
 
 For the complete and up-to-date database schema, please refer to:
+
 - Main schema: `packages/database/schema.prisma`
 - JSON type definitions: `packages/database/json-types.ts`
 
@@ -37,17 +35,22 @@ The schema.prisma file contains all model definitions, relationships, enums, and
 ## Data Access Patterns
 
 ### Multi-tenancy
+
 - All data is scoped by Organization
 - Environment-level isolation for surveys and contacts
 - Project-level grouping for related surveys
 
 ### Soft Deletion
+
 Some models use soft deletion patterns:
+
 - Check `isActive` fields where present
 - Use proper filtering in queries
 
 ### Cascading Deletes
+
 Configured cascade relationships:
+
 - Organization deletion cascades to all child entities
 - Survey deletion removes responses, displays, triggers
 - Contact deletion removes attributes and responses
@@ -55,6 +58,7 @@ Configured cascade relationships:
 ## Common Query Patterns
 
 ### Survey with Responses
+
 ```typescript
 // Include response count and latest responses
 const survey = await prisma.survey.findUnique({
@@ -62,40 +66,40 @@ const survey = await prisma.survey.findUnique({
   include: {
     responses: {
       take: 10,
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: "desc" },
     },
     _count: {
-      select: { responses: true }
-    }
-  }
+      select: { responses: true },
+    },
+  },
 });
 ```
 
 ### Environment Scoping
+
 ```typescript
 // Always scope by environment
 const surveys = await prisma.survey.findMany({
   where: {
     environmentId: environmentId,
     // Additional filters...
-  }
+  },
 });
 ```
 
 ### Contact with Attributes
+
 ```typescript
 const contact = await prisma.contact.findUnique({
   where: { id: contactId },
   include: {
     attributes: {
       include: {
-        attributeKey: true
-      }
-    }
-  }
+        attributeKey: true,
+      },
+    },
+  },
 });
 ```
 
 This schema supports Formbricks' core functionality: multi-tenant survey management, user targeting, response collection, and analysis, all while maintaining strict data isolation and security.
-
-

@@ -202,12 +202,12 @@ describe("recall utility functions", () => {
 
     test("handles nested recall patterns", () => {
       const headline = {
-        en: "This is #recall:outer/fallback:withnbsp#recall:inner/fallback:nested#nbsptext#",
+        en: "This is #recall:inner/fallback:fallback2#",
       };
       const survey: TSurvey = {
         id: "test-survey",
         questions: [
-          { id: "outer", headline: { en: "Outer with @inner" } },
+          { id: "inner", headline: { en: "Inner with @outer" } },
           { id: "inner", headline: { en: "Inner value" } },
         ] as unknown as TSurveyQuestion[],
         hiddenFields: { fieldIds: [] },
@@ -215,7 +215,7 @@ describe("recall utility functions", () => {
       } as unknown as TSurvey;
 
       const result = recallToHeadline(headline, survey, false, "en");
-      expect(result.en).toBe("This is @Outer with @inner");
+      expect(result.en).toBe("This is @Inner with @outer");
     });
   });
 

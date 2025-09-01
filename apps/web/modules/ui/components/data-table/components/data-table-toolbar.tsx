@@ -34,7 +34,7 @@ export const DataTableToolbar = <T,>({
   const router = useRouter();
 
   return (
-    <div className="sticky top-12 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">
+    <div className="sticky top-0 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <SelectedRowSettings
           table={table}

@@ -33,6 +33,7 @@ vi.mock("@/modules/ui/components/dialog", () => ({
   DialogTitle: vi.fn(({ children }) => <h2 data-testid="dialog-title">{children}</h2>),
   DialogDescription: vi.fn(({ children }) => <div data-testid="dialog-description">{children}</div>),
   DialogFooter: vi.fn(({ children }) => <div data-testid="dialog-footer">{children}</div>),
+  DialogBody: vi.fn(({ children }) => <div data-testid="dialog-body">{children}</div>),
 }));
 
 vi.mock("@/modules/ui/components/button", () => ({
@@ -63,7 +64,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
       />
     );
@@ -71,7 +72,7 @@ describe("ConfirmationModal", () => {
     expect(screen.getByTestId("dialog-component")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-component")).toHaveAttribute("data-open", "true");
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Test Title");
-    expect(screen.getByTestId("dialog-description")).toContainHTML("Test confirmation text");
+    expect(screen.getByTestId("dialog-body")).toContainHTML("Test confirmation text");
 
     // Check that buttons exist
     const buttons = screen.getAllByTestId("mock-button");
@@ -96,7 +97,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
       />
     );
@@ -119,7 +120,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
       />
     );
@@ -141,7 +142,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
       />
     );
@@ -163,7 +164,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
         isButtonDisabled={true}
       />
@@ -184,7 +185,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
         isButtonDisabled={true}
       />
@@ -206,7 +207,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
         buttonLoading={true}
       />
@@ -226,7 +227,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
         hideCloseButton={true}
         closeOnOutsideClick={false}
@@ -247,7 +248,7 @@ describe("ConfirmationModal", () => {
         open={true}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
         buttonVariant="default"
       />
@@ -267,7 +268,7 @@ describe("ConfirmationModal", () => {
         open={false}
         setOpen={mockSetOpen}
         onConfirm={mockOnConfirm}
-        text="Test confirmation text"
+        body="Test confirmation text"
         buttonText="Confirm Action"
       />
     );

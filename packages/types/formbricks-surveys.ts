@@ -22,6 +22,8 @@ export interface SurveyBaseProps {
   prefillResponseData?: TResponseData;
   skipPrefilled?: boolean;
   languageCode: string;
+  dir?: "ltr" | "rtl" | "auto";
+  setDir?: (dir: "ltr" | "rtl" | "auto") => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;

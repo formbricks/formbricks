@@ -27,6 +27,7 @@ interface PictureSelectionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function PictureSelectionQuestion({
@@ -42,6 +43,7 @@ export function PictureSelectionQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<PictureSelectionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(() => {
@@ -169,8 +171,9 @@ export function PictureSelectionQuestion({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
-                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
+                          "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
+                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : "",
+                          dir === "rtl" ? "fb-left-2" : "fb-right-2"
                         )}
                         required={question.required && value.length === 0}
                       />
@@ -182,8 +185,9 @@ export function PictureSelectionQuestion({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "fb-border-border fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-rounded-full fb-border",
-                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
+                          "fb-border-border fb-pointer-events-none fb-absolute fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-rounded-full fb-border",
+                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : "",
+                          dir === "rtl" ? "fb-left-2" : "fb-right-2"
                         )}
                         required={question.required && value.length ? false : question.required}
                       />
@@ -198,7 +202,10 @@ export function PictureSelectionQuestion({
                     onClick={(e) => {
                       e.stopPropagation();
                     }}
-                    className="fb-absolute fb-bottom-4 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100 fb-z-20">
+                    className={cn(
+                      "fb-absolute fb-bottom-4 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100 fb-z-20",
+                      dir === "rtl" ? "fb-left-2" : "fb-right-2"
+                    )}>
                     <span className="fb-sr-only">Open in new tab</span>
                     <ImageDownIcon />
                   </a>
