@@ -55,6 +55,7 @@ const getSpecificFeatureFlag = async (
     | "auditLogs"
     | "multiLanguageSurveys"
     | "accessControl"
+    | "quotas"
   >
 ): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
@@ -76,6 +77,15 @@ export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
 
 export const getIsSsoEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("sso");
+};
+
+export const getIsQuotasEnabled = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
+  const isEnabled = await getSpecificFeatureFlag("quotas");
+  // If the feature is enabled in the license, return true
+  if (isEnabled) return true;
+
+  // If the feature is not enabled in the license, check the fallback(Backwards compatibility)
+  return featureFlagFallback(billingPlan);
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {

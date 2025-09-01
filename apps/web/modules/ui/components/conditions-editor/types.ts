@@ -1,4 +1,5 @@
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import { TConnector } from "@formbricks/types/surveys/types";
 
 export interface TGenericCondition {
   id: string;
@@ -16,7 +17,7 @@ export interface TGenericCondition {
 
 export interface TGenericConditionGroup<T extends TGenericCondition = TGenericCondition> {
   id: string;
-  connector: "and" | "or";
+  connector: TConnector;
   conditions: (T | TGenericConditionGroup<T>)[];
 }
 
@@ -31,7 +32,7 @@ export interface TConditionsEditorCallbacks<T extends TGenericCondition = TGener
   onAddConditionBelow: (resourceId: string) => void;
   onRemoveCondition: (resourceId: string) => void;
   onDuplicateCondition: (resourceId: string) => void;
-  onCreateGroup: (resourceId: string) => void;
+  onCreateGroup?: (resourceId: string) => void;
   onUpdateCondition: (resourceId: string, updates: Partial<T>) => void;
   onToggleGroupConnector: (groupId: string) => void;
 }
