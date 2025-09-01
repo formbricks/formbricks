@@ -15,6 +15,12 @@
     "linkedin": "https://linkedin.com/company/formbricks",
     "x": "https://x.com/formbricks"
   },
+  "integrations": {
+    "posthog": {
+      "apiHost": "process.env.POSTHOG_API_HOST",
+      "apiKey": "process.env.POSTHOG_API_KEY"
+    }
+  },
   "logo": {
     "dark": "/images/logo-dark.svg",
     "light": "/images/logo-light.svg"
