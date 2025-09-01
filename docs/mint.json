@@ -17,8 +17,8 @@
   },
   "integrations": {
     "posthog": {
-      "apiHost": "process.env.POSTHOG_API_HOST",
-      "apiKey": "process.env.POSTHOG_API_KEY"
+      "apiHost": "__POSTHOG_API_HOST__",
+      "apiKey": "__POSTHOG_API_KEY__"
     }
   },
   "logo": {
