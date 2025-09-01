@@ -4,7 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { SettingsView } from "./settings-view";
 
 // Mock child components
@@ -110,7 +110,14 @@ const baseSurvey = {
   type: "app", // Default to app survey
   environmentId: "env-123",
   status: "draft",
-  questions: [],
+  questions: [
+    {
+      id: "question-123",
+      type: TSurveyQuestionTypeEnum.OpenText,
+      headline: { default: "Question 1" },
+      required: true,
+    },
+  ],
   welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
   languages: [],
   triggers: [],
