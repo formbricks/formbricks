@@ -142,13 +142,15 @@ export const PUT = withV1ApiWrapper({
       }
     }
 
+    const { quotaFull, ...responseData } = updatedResponse;
+
     // send response update to pipeline
     // don't await to not block the response
     sendToPipeline({
       event: "responseUpdated",
       environmentId: survey.environmentId,
       surveyId: survey.id,
-      response: updatedResponse,
+      response: responseData,
     });
 
     if (updatedResponse.finished) {
@@ -158,30 +160,30 @@ export const PUT = withV1ApiWrapper({
         event: "responseFinished",
         environmentId: survey.environmentId,
         surveyId: survey.id,
-        response: updatedResponse,
+        response: responseData,
       });
     }
 
-    const quotaObj = updatedResponse.quotaFull
+    const quotaObj = quotaFull
       ? {
           quotaFull: true,
           quota: {
-            id: updatedResponse.quotaFull.id,
-            action: updatedResponse.quotaFull.action,
-            endingCardId: updatedResponse.quotaFull.endingCardId,
+            id: quotaFull.id,
+            action: quotaFull.action,
+            endingCardId: quotaFull.endingCardId,
           },
         }
       : {
           quotaFull: false,
         };
 
-    const responseData = {
-      id: updatedResponse.id,
+    const responseDataWithQuota = {
+      id: responseData.id,
       ...quotaObj,
     };
 
     return {
-      response: responses.successResponse(responseData, true),
+      response: responses.successResponse(responseDataWithQuota, true),
     };
   },
 });

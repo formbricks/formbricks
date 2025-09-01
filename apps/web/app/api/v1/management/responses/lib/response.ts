@@ -91,7 +91,16 @@ export const createResponseWithQuotaEvaluation = async (
       responseInput.language || "default"
     );
 
-    await handleQuotas(responseInput.surveyId, response.id, result);
+    const quotaFull = await handleQuotas(responseInput.surveyId, response.id, result);
+
+    if (quotaFull && quotaFull.action === "endSurvey") {
+      const updatedResponse = {
+        ...response,
+        finished: true,
+        endingId: quotaFull.endingCardId,
+      };
+      return updatedResponse;
+    }
 
     return response;
   } catch (error) {

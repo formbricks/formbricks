@@ -88,7 +88,7 @@ export const getResponseContact = (
 };
 
 export const getResponsesByContactId = reactCache(
-  async (contactId: string, page?: number): Promise<TResponseWithQuotas[] | null> => {
+  async (contactId: string, page?: number): Promise<TResponseWithQuotas[]> => {
     validateInputs([contactId, ZId], [page, ZOptionalNumber]);
 
     try {
@@ -113,10 +113,6 @@ export const getResponsesByContactId = reactCache(
           createdAt: "desc",
         },
       });
-
-      if (!responsePrisma) {
-        throw new ResourceNotFoundError("Response from ContactId", contactId);
-      }
 
       let responses: TResponseWithQuotas[] = [];
 
@@ -562,17 +558,22 @@ export const deleteResponse = async (
         ...responseSelection,
         quotaLinks: {
           include: {
-            quota: true,
+            quota: {
+              select: {
+                id: true,
+              },
+            },
           },
         },
       },
     });
 
-    const response: TResponse | TResponseWithQuotas = {
-      ...responsePrisma,
+    const { quotaLinks, ...responseWithoutQuotas } = responsePrisma;
+
+    const response: TResponse = {
+      ...responseWithoutQuotas,
       contact: getResponseContact(responsePrisma),
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-      quotas: responsePrisma.quotaLinks?.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
+      tags: responseWithoutQuotas.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     if (response.displayId) {
@@ -592,13 +593,12 @@ export const deleteResponse = async (
     }
 
     if (decrementQuotas) {
-      const quotaIds = response.quotas?.map((quota) => quota.id) ?? [];
+      const quotas = quotaLinks?.map((quotaLinkPrisma) => quotaLinkPrisma.quota);
+      const quotaIds = quotas?.map((quota) => quota.id) ?? [];
       await reduceQuotaLimits(quotaIds);
     }
 
-    const { quotas, ...responseWithoutQuotas } = response;
-
-    return responseWithoutQuotas;
+    return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

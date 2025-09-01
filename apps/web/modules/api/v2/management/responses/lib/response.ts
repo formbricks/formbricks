@@ -34,10 +34,6 @@ export const getResponses = async (
       prisma.response.count({ where: whereClause }),
     ]);
 
-    if (!responses) {
-      return err({ type: "not_found", details: [{ field: "responses", issue: "not found" }] });
-    }
-
     return ok({
       data: responses,
       meta: {
@@ -184,7 +180,16 @@ export const createResponseWithQuotaEvaluation = async (
       responseInput.language || "default"
     );
 
-    await handleQuotas(responseInput.surveyId, response.id, result);
+    const quotaFull = await handleQuotas(responseInput.surveyId, response.id, result);
+
+    if (quotaFull && quotaFull.action === "endSurvey") {
+      const updatedResponse = {
+        ...response,
+        finished: true,
+        endingId: quotaFull.endingCardId,
+      };
+      return ok(updatedResponse);
+    }
 
     return ok(response);
   } catch (error) {

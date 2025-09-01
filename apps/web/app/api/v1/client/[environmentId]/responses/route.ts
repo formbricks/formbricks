@@ -152,47 +152,49 @@ export const POST = withV1ApiWrapper({
       }
     }
 
+    const { quotaFull, ...responseData } = response;
+
     sendToPipeline({
       event: "responseCreated",
       environmentId: survey.environmentId,
-      surveyId: response.surveyId,
-      response: response,
+      surveyId: responseData.surveyId,
+      response: responseData,
     });
 
     if (responseInput.finished) {
       sendToPipeline({
         event: "responseFinished",
         environmentId: survey.environmentId,
-        surveyId: response.surveyId,
-        response: response,
+        surveyId: responseData.surveyId,
+        response: responseData,
       });
     }
 
     await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
-      surveyId: response.surveyId,
+      surveyId: responseData.surveyId,
       surveyType: survey.type,
     });
 
-    const quotaObj = response.quotaFull
+    const quotaObj = quotaFull
       ? {
           quotaFull: true,
           quota: {
-            id: response.quotaFull.id,
-            action: response.quotaFull.action,
-            endingCardId: response.quotaFull.endingCardId,
+            id: quotaFull.id,
+            action: quotaFull.action,
+            endingCardId: quotaFull.endingCardId,
           },
         }
       : {
           quotaFull: false,
         };
 
-    const responseData = {
-      id: response.id,
+    const responseDataWithQuota = {
+      id: responseData.id,
       ...quotaObj,
     };
 
     return {
-      response: responses.successResponse(responseData, true),
+      response: responses.successResponse(responseDataWithQuota, true),
     };
   },
 });
