@@ -12,7 +12,7 @@ export const COLOR_DEFAULTS = {
 } as const;
 
 export const defaultStyling: TProjectStyling = {
-  allowStyleOverwrite: true,
+  allowStyleOverwrite: false,
   brandColor: {
     light: COLOR_DEFAULTS.brandColor,
   },
@@ -34,10 +34,6 @@ export const defaultStyling: TProjectStyling = {
   isLogoHidden: false,
   highlightBorderColor: undefined,
   isDarkModeEnabled: false,
-  background: {
-    bg: "#fff",
-    bgType: "color",
-  },
   roundness: 8,
   cardArrangement: {
     linkSurveys: "straight",

@@ -49,8 +49,9 @@ export const ThemeStyling = ({
   const { t } = useTranslate();
   const router = useRouter();
 
+  const allowStyleOverwrite = project.styling?.allowStyleOverwrite;
   const form = useForm<TProjectStyling>({
-    defaultValues: { ...defaultStyling, ...project.styling },
+    defaultValues: allowStyleOverwrite ? { ...defaultStyling, ...project.styling } : defaultStyling,
     resolver: zodResolver(ZProjectStyling),
   });
 
@@ -78,6 +79,8 @@ export const ThemeStyling = ({
       toast.error(errorMessage);
     }
   }, [form, project.id, router]);
+
+  const isCustomStylingEnabled = form.watch("allowStyleOverwrite");
 
   const onSubmit: SubmitHandler<TProjectStyling> = async (data) => {
     const updatedProjectResponse = await updateProjectAction({
@@ -193,7 +196,7 @@ export const ThemeStyling = ({
                 survey={previewSurvey(project.name, t) as TSurvey}
                 project={{
                   ...project,
-                  styling: form.watch(),
+                  styling: isCustomStylingEnabled ? form.watch() : defaultStyling,
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}

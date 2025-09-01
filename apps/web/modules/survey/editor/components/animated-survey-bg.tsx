@@ -76,6 +76,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
           const value = animationFiles[key];
           return (
             <button
+              type="button"
               key={key}
               onMouseEnter={() => debouncedManagePlayback(index, "play")}
               onMouseLeave={() => debouncedManagePlayback(index, "pause")}
