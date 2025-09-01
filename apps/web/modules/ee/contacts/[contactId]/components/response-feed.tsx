@@ -40,13 +40,11 @@ export const ResponseFeed = ({
   }, [responses]);
 
   const updateResponseList = (responseIds: string[]) => {
-    setFetchedResponses(responses.filter((response) => !responseIds.includes(response.id)));
+    setFetchedResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {
-    setFetchedResponses(
-      responses.map((response) => (response.id === responseId ? updatedResponse : response))
-    );
+    setFetchedResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
   return (

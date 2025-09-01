@@ -71,13 +71,11 @@ export const ResponsePage = ({
   }, [filters, page, responses, responsesPerPage, surveyId]);
 
   const updateResponseList = (responseIds: string[]) => {
-    setResponses(responses.filter((response) => !responseIds.includes(response.id)));
+    setResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {
-    if (responses) {
-      setResponses(responses.map((response) => (response.id === responseId ? updatedResponse : response)));
-    }
+    setResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
   const surveyMemoized = useMemo(() => {
