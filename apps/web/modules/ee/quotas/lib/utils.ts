@@ -9,13 +9,6 @@ import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 
-export type TQuotaFullResponse = {
-  status: "quota_full";
-  quotaId: string;
-  action: "endSurvey" | "continueSurvey";
-  endingCardId?: string;
-};
-
 /**
  * Evaluates quotas against response data to determine screening status
  * @param survey - Survey with questions and variables for evaluation context
@@ -23,7 +16,7 @@ export type TQuotaFullResponse = {
  * @param variablesData - Variables data for evaluation
  * @param quotas - Active quota definitions for the survey
  * @param selectedLanguage - Language for evaluation context
- * @returns Array of evaluation results for each quota
+ * @returns Object with passed and failed quotas
  */
 export const evaluateQuotas = (
   survey: TJsEnvironmentStateSurvey,
@@ -56,8 +49,9 @@ export const evaluateQuotas = (
 /**
  * Upserts ResponseQuotaLink records for a response
  * @param responseId - Response ID to link to quotas
- * @param fullQuotaIds - IDs of quotas that are full
- * @param otherQuotaIds - IDs of quotas that are not full
+ * @param fullQuota - IDs of quotas that are full
+ * @param otherQuota - IDs of quotas that are not full
+ * @param failedQuotas - IDs of quotas that are failed
  */
 export const upsertResponseQuotaLinks = async (
   responseId: string,
@@ -116,7 +110,7 @@ export const upsertResponseQuotaLinks = async (
  * Checks if any quota is full and returns the appropriate quota-full response
  * @param surveyId - Survey ID to check quotas for
  * @param responseId - Response ID to check quotas for
- * @param passedQuotas - Current evaluation results
+ * @param result - Current evaluation results
  * @returns Quota-full response if any quota is full, null otherwise
  */
 export const handleQuotas = async (

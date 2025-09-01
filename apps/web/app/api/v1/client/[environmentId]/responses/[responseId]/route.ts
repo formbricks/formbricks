@@ -162,7 +162,6 @@ export const PUT = withV1ApiWrapper({
       });
     }
 
-    // Build quota response object
     const quotaObj = updatedResponse.quotaFull
       ? {
           quotaFull: true,
