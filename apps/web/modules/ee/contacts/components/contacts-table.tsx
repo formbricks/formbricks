@@ -36,7 +36,7 @@ interface ContactsTableProps {
   data: TContactTableData[];
   fetchNextPage: () => void;
   hasMore: boolean;
-  deleteContacts: (contactIds: string[]) => void;
+  updateContactList: (contactIds: string[]) => void;
   isDataLoaded: boolean;
   environmentId: string;
   searchValue: string;
@@ -48,7 +48,7 @@ export const ContactsTable = ({
   data,
   fetchNextPage,
   hasMore,
-  deleteContacts,
+  updateContactList,
   isDataLoaded,
   environmentId,
   searchValue,
@@ -234,7 +234,7 @@ export const ContactsTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded ?? false}
           table={table}
-          deleteRowsAction={deleteContacts}
+          updateRowList={updateContactList}
           type="contact"
           deleteAction={deleteContact}
         />

@@ -70,7 +70,7 @@ export const ResponsePage = ({
     setPage(newPage);
   }, [filters, page, responses, responsesPerPage, surveyId]);
 
-  const deleteResponses = (responseIds: string[]) => {
+  const updateResponseList = (responseIds: string[]) => {
     setResponses(responses.filter((response) => !responseIds.includes(response.id)));
   };
 
@@ -136,7 +136,7 @@ export const ResponsePage = ({
         isReadOnly={isReadOnly}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
-        deleteResponses={deleteResponses}
+        updateResponseList={updateResponseList}
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
         locale={locale}

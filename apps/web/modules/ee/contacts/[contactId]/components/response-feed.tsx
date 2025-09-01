@@ -39,7 +39,7 @@ export const ResponseFeed = ({
     setFetchedResponses(responses);
   }, [responses]);
 
-  const deleteResponses = (responseIds: string[]) => {
+  const updateResponseList = (responseIds: string[]) => {
     setFetchedResponses(responses.filter((response) => !responseIds.includes(response.id)));
   };
 
@@ -62,7 +62,7 @@ export const ResponseFeed = ({
             user={user}
             environmentTags={environmentTags}
             environment={environment}
-            deleteResponses={deleteResponses}
+            updateResponseList={updateResponseList}
             updateResponse={updateResponse}
             locale={locale}
             projectPermission={projectPermission}
@@ -79,7 +79,7 @@ const ResponseSurveyCard = ({
   user,
   environmentTags,
   environment,
-  deleteResponses,
+  updateResponseList,
   updateResponse,
   locale,
   projectPermission,
@@ -89,7 +89,7 @@ const ResponseSurveyCard = ({
   user: TUser;
   environmentTags: TTag[];
   environment: TEnvironment;
-  deleteResponses: (responseIds: string[]) => void;
+  updateResponseList: (responseIds: string[]) => void;
   updateResponse: (responseId: string, response: TResponse) => void;
   locale: TUserLocale;
   projectPermission: TTeamPermission | null;
@@ -114,7 +114,7 @@ const ResponseSurveyCard = ({
           user={user}
           environmentTags={environmentTags}
           environment={environment}
-          deleteResponses={deleteResponses}
+          updateResponseList={updateResponseList}
           updateResponse={updateResponse}
           isReadOnly={isReadOnly}
           locale={locale}
