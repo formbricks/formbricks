@@ -1,13 +1,17 @@
+import { getSurvey } from "@/lib/survey/service";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
 import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { Prisma, Response } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getResponse = reactCache(async (responseId: string) => {
@@ -103,5 +107,41 @@ export const updateResponse = async (
       type: "internal_server_error",
       details: [{ field: "response", issue: error.message }],
     });
+  }
+};
+
+export const updateResponseWithQuotaEvaluation = async (
+  responseId: string,
+  responseInput: z.infer<typeof ZResponseUpdateSchema>
+): Promise<Result<Response, ApiErrorResponseV2>> => {
+  const responseResult = await updateResponse(responseId, responseInput);
+
+  if (!responseResult.ok) {
+    return responseResult;
+  }
+
+  const response = responseResult.data;
+
+  try {
+    const [survey, quotas] = await Promise.all([getSurvey(response.surveyId), getQuotas(response.surveyId)]);
+
+    if (!survey || !quotas || quotas.length === 0) {
+      return ok(response);
+    }
+
+    const result = evaluateQuotas(
+      survey,
+      response.data,
+      response.variables || {},
+      quotas,
+      response.language || "default"
+    );
+
+    await handleQuotas(response.surveyId, response.id, result);
+
+    return ok(response);
+  } catch (error) {
+    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response update");
+    return ok(response);
   }
 };

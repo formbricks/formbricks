@@ -8,7 +8,11 @@ import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import { createResponse, getResponses, getResponsesByEnvironmentIds } from "./lib/response";
+import {
+  createResponseWithQuotaEvaluation,
+  getResponses,
+  getResponsesByEnvironmentIds,
+} from "./lib/response";
 
 export const GET = withV1ApiWrapper({
   handler: async ({
@@ -149,7 +153,7 @@ export const POST = withV1ApiWrapper({
       }
 
       try {
-        const response = await createResponse(responseInput);
+        const response = await createResponseWithQuotaEvaluation(responseInput);
         auditLog.targetId = response.id;
         auditLog.newObject = response;
         return {
