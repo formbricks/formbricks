@@ -1,7 +1,10 @@
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/api/v2/management/responses/lib/organization";
-import { getOrganizationBilling } from "@/modules/api/v2/management/responses/lib/organization";
+import {
+  getOrganizationBilling,
+  getOrganizationIdFromEnvironmentId,
+} from "@/modules/api/v2/management/responses/lib/organization";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { logger } from "@formbricks/logger";
 
 export const checkQuotasEnabledV1 = async (environmentId: string): Promise<boolean> => {
   try {
@@ -14,6 +17,7 @@ export const checkQuotasEnabledV1 = async (environmentId: string): Promise<boole
     const isQuotasEnabled = await getIsQuotasEnabled(billingPlan);
     return isQuotasEnabled;
   } catch (error) {
+    logger.error({ error, environmentId }, "Error checking quotas enabled in v1");
     return false;
   }
 };
@@ -33,6 +37,7 @@ export const checkQuotasEnabledV2 = async (environmentId: string): Promise<boole
     const isQuotasEnabled = await getIsQuotasEnabled(billing.data.plan);
     return isQuotasEnabled;
   } catch (error) {
+    logger.error({ error, environmentId }, "Error checking quotas enabled in v2");
     return false;
   }
 };

@@ -137,9 +137,8 @@ export const handleQuotas = async (
       });
 
       if (screenedInCount >= quota.limit) {
-        if (!firstScreenedOutQuota) {
-          firstScreenedOutQuota = quota;
-        }
+        firstScreenedOutQuota ??= quota;
+
         fullQuota.push(quota);
       } else {
         otherQuota.push(quota);

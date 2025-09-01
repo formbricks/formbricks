@@ -185,7 +185,10 @@ export const createResponseWithQuotaEvaluation = async (
     );
 
     await handleQuotas(responseInput.surveyId, response.id, result);
-  } finally {
+
+    return ok(response);
+  } catch (error) {
+    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response");
     return ok(response);
   }
 };

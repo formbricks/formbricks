@@ -537,7 +537,7 @@ export const getFormattedFilters = (
 
   if (quotas.length) {
     quotas.forEach(({ filterType, questionType }) => {
-      if (!filters.quotas) filters.quotas = {};
+      filters.quotas ??= {};
 
       const quotaId = questionType.id ?? "";
 

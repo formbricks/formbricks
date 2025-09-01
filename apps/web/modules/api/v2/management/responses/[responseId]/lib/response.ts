@@ -12,6 +12,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getResponse = reactCache(async (responseId: string) => {
@@ -144,7 +145,10 @@ export const updateResponseWithQuotaEvaluation = async (
     );
 
     await handleQuotas(response.surveyId, response.id, result);
-  } finally {
+
+    return ok(response);
+  } catch (error) {
+    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response update");
     return ok(response);
   }
 };
