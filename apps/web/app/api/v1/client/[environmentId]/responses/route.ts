@@ -13,7 +13,7 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import { TResponseWithQuotas, createResponseWithQuotaEvaluation } from "./lib/response";
+import { TResponseWithQuotaFull, createResponseWithQuotaEvaluation } from "./lib/response";
 
 interface Context {
   params: Promise<{
@@ -121,7 +121,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    let response: TResponseWithQuotas;
+    let response: TResponseWithQuotaFull;
     try {
       const meta: TResponseInput["meta"] = {
         source: responseInputData?.meta?.source,

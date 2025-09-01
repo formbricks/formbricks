@@ -47,14 +47,8 @@ describe("SummaryMetadata", () => {
 
   test("renders all stats and formats time correctly, toggles dropOffs icon", async () => {
     const Wrapper = () => {
-      const [show, setShow] = useState<"dropOffs" | "quotas">("dropOffs");
       return (
-        <SummaryMetadata
-          tab={show ? "dropOffs" : "quotas"}
-          setTab={setShow}
-          surveySummary={baseSummary}
-          isLoading={false}
-        />
+        <SummaryMetadata tab={"dropOffs"} setTab={() => {}} surveySummary={baseSummary} isLoading={false} />
       );
     };
     render(<Wrapper />);

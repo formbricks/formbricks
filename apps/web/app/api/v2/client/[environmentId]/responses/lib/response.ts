@@ -24,13 +24,13 @@ import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getContact } from "./contact";
 
-export type TResponseWithQuotas = TResponse & {
+export type TResponseWithQuotaFull = TResponse & {
   quotaFull?: TSurveyQuota;
 };
 
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInputV2
-): Promise<TResponseWithQuotas> => {
+): Promise<TResponseWithQuotaFull> => {
   const response = await createResponse(responseInput);
 
   const isQuotasEnabled = await checkQuotasEnabledV2(responseInput.environmentId);

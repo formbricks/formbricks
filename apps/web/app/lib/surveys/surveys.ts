@@ -538,16 +538,16 @@ export const getFormattedFilters = (
   if (quotas.length) {
     quotas.forEach(({ filterType, questionType }) => {
       filters.quotas ??= {};
+      const quotaId = questionType.id;
+      if (!quotaId) return;
 
-      const quotaId = questionType.id ?? "";
-
-      if (filterType.filterComboBoxValue === "Screened in") {
-        filters.quotas[quotaId] = { op: "screenedIn" };
-      } else if (filterType.filterComboBoxValue === "Screened out (overquota)") {
-        filters.quotas[quotaId] = { op: "screenedOut" };
-      } else if (filterType.filterComboBoxValue === "Screened out (not in quota)") {
-        filters.quotas[quotaId] = { op: "screenedOutNotInQuota" };
-      }
+      const statusMap: Record<string, "screenedIn" | "screenedOut" | "screenedOutNotInQuota"> = {
+        "Screened in": "screenedIn",
+        "Screened out (overquota)": "screenedOut",
+        "Screened out (not in quota)": "screenedOutNotInQuota",
+      };
+      const op = statusMap[String(filterType.filterComboBoxValue)];
+      if (op) filters.quotas[quotaId] = { op };
     });
   }
 

@@ -99,6 +99,9 @@ export const getResponsesByContactId = reactCache(
         select: {
           ...responseSelection,
           quotaLinks: {
+            where: {
+              status: "screenedIn",
+            },
             include: {
               quota: true,
             },

@@ -1,4 +1,4 @@
-import { TResponseWithQuotas } from "@/app/api/v1/client/[environmentId]/responses/lib/response";
+import { TResponseWithQuotaFull } from "@/app/api/v1/client/[environmentId]/responses/lib/response";
 import { updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { checkQuotasEnabledV1 } from "@/modules/ee/quotas/lib/helpers";
@@ -11,7 +11,7 @@ export const updateResponseWithQuotaEvaluation = async (
   environmentId: string,
   responseId: string,
   responseInput: TResponseUpdateInput
-): Promise<TResponseWithQuotas> => {
+): Promise<TResponseWithQuotaFull> => {
   const response = await updateResponse(responseId, responseInput);
 
   const isQuotasEnabled = await checkQuotasEnabledV1(environmentId);

@@ -1,6 +1,6 @@
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
+import type { TSurveySummary } from "@formbricks/types/surveys/types";
 
 interface QuotasSummaryProps {
   quotas: TSurveySummary["quotas"];

@@ -149,7 +149,7 @@ export const handleQuotas = async (
 
     if (firstScreenedOutQuota?.action === "endSurvey") {
       // If the quota is full and the action is to end the survey, we need to update the response to finished
-      await updateResponse(responseId, { finished: true });
+      await updateResponse(responseId, { finished: true, endingId: firstScreenedOutQuota.endingCardId });
     }
 
     return firstScreenedOutQuota;

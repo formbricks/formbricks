@@ -123,6 +123,10 @@ export class ResponseQueue {
           ...responseUpdate,
           responseId: this.surveyState.responseId,
         });
+
+        if (!response.ok) {
+          return err(response.error);
+        }
       } else {
         response = await this.api.createResponse({
           ...responseUpdate,

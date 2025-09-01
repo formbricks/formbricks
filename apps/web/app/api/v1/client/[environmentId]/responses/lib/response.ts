@@ -60,13 +60,13 @@ export const responseSelection = {
   },
 } satisfies Prisma.ResponseSelect;
 
-export type TResponseWithQuotas = TResponse & {
+export type TResponseWithQuotaFull = TResponse & {
   quotaFull?: TSurveyQuota;
 };
 
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
-): Promise<TResponseWithQuotas> => {
+): Promise<TResponseWithQuotaFull> => {
   const response = await createResponse(responseInput);
 
   const isQuotasEnabled = await checkQuotasEnabledV1(responseInput.environmentId);

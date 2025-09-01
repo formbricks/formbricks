@@ -178,8 +178,8 @@ export const ResponseTable = ({
     }
   };
 
-  const deleteResponse = async (responseId: string, params?: Record<string, unknown>) => {
-    await deleteResponseAction({ responseId, ...params });
+  const deleteResponse = async (responseId: string, params?: { decrementQuotas?: boolean }) => {
+    await deleteResponseAction({ ...params, responseId });
   };
 
   // Handle downloading selected responses

@@ -11,7 +11,7 @@ import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponseWithQuotas, createResponseWithQuotaEvaluation } from "./lib/response";
+import { TResponseWithQuotaFull, createResponseWithQuotaEvaluation } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
 interface Context {
@@ -103,7 +103,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
-  let response: TResponseWithQuotas;
+  let response: TResponseWithQuotaFull;
   try {
     const meta: TResponseInputV2["meta"] = {
       source: responseInputData?.meta?.source,

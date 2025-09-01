@@ -21,7 +21,7 @@ type TResponseCreateResponse = {
   id: string;
 } & TResponseQuota;
 
-type TResponseUpdateResponse = Object & TResponseQuota;
+type TResponseUpdateResponse = Record<string, unknown> & TResponseQuota;
 
 // Simple API client using fetch
 export class ApiClient {
