@@ -113,7 +113,7 @@ export const ContactDataView = ({
   };
 
   // Delete selected contacts
-  const updateContactList = async (contactIds: string[]) => {
+  const updateContactList = (contactIds: string[]) => {
     setContacts((prevContacts) => prevContacts.filter((contact) => !contactIds.includes(contact.id)));
   };
 
