@@ -1632,6 +1632,7 @@
         "address_line_2": "Endereço Linha 2",
         "an_error_occurred_deleting_the_tag": "Ocorreu um erro ao eliminar a etiqueta",
         "browser": "Navegador",
+        "bulk_delete_response_quotas": "As respostas são parte das quotas deste inquérito. Como deseja gerir as quotas?",
         "city": "Cidade",
         "company": "Empresa",
         "completed": "Concluído ✅",

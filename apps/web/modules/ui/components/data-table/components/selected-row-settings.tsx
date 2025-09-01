@@ -2,6 +2,7 @@
 
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -15,12 +16,13 @@ import { useTranslate } from "@tolgee/react";
 import { ArrowDownToLineIcon, Loader2Icon, Trash2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   deleteRowsAction: (rowId: string[]) => void;
   type: "response" | "contact";
-  deleteAction: (id: string) => Promise<void>;
+  deleteAction: (id: string, params?: Record<string, unknown>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
 }
 
@@ -37,6 +39,14 @@ export const SelectedRowSettings = <T,>({
   const { t } = useTranslate();
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
 
+  const hasQuotas =
+    type === "response" &&
+    table
+      .getFilteredSelectedRowModel()
+      .rows.some((row) => (row.original as TResponseWithQuotas).quotas?.length);
+
+  const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
+
   // Toggle all rows selection
   const handleToggleAllRowsSelection = useCallback(
     (selectAll: boolean) => {
@@ -51,7 +61,9 @@ export const SelectedRowSettings = <T,>({
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
-      if (type === "response" || type === "contact") {
+      if (type === "response") {
+        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId, { decrementQuotas })));
+      } else {
         await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId)));
       }
 
@@ -156,8 +168,25 @@ export const SelectedRowSettings = <T,>({
         deleteWhat={type === "response" ? t("common.responses") : t("common.contacts")}
         onDelete={handleDelete}
         isDeleting={isDeleting}
-        text={deleteDialogText}
-      />
+        text={deleteDialogText}>
+        {hasQuotas && (
+          <div className="mt-4 flex flex-col gap-3">
+            <p className="text-sm text-slate-900">
+              {t("environments.surveys.responses.bulk_delete_response_quotas")}
+            </p>
+            <label htmlFor="decrementQuotas" className="flex cursor-pointer items-center">
+              <Checkbox
+                type="button"
+                id="decrementQuotas"
+                className="bg-white focus:ring-0"
+                checked={decrementQuotas}
+                onCheckedChange={() => setDecrementQuotas(!decrementQuotas)}
+              />
+              <span className="ml-2">{t("environments.surveys.responses.decrement_quotas")}</span>
+            </label>
+          </div>
+        )}
+      </DeleteDialog>
     </>
   );
 };

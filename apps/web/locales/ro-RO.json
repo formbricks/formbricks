@@ -1632,6 +1632,7 @@
         "address_line_2": "Adresă Linie 2",
         "an_error_occurred_deleting_the_tag": "A apărut o eroare la ștergerea etichetei",
         "browser": "Browser",
+        "bulk_delete_response_quotas": "Răspunsurile fac parte din cotele pentru acest sondaj. Cum doriți să gestionați cotele?",
         "city": "Oraș",
         "company": "Companie",
         "completed": "Finalizat ✅",

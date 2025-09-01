@@ -1632,6 +1632,7 @@
         "address_line_2": "地址 2",
         "an_error_occurred_deleting_the_tag": "刪除標籤時發生錯誤",
         "browser": "瀏覽器",
+        "bulk_delete_response_quotas": "回應 屬於 此 調查 的 配額 一部分 . 你 想 如何 處理 配額?",
         "city": "城市",
         "company": "公司",
         "completed": "已完成 ✅",

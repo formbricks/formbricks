@@ -1632,6 +1632,7 @@
         "address_line_2": "Complemento",
         "an_error_occurred_deleting_the_tag": "Ocorreu um erro ao deletar a tag",
         "browser": "navegador",
+        "bulk_delete_response_quotas": "As respostas fazem parte das cotas desta pesquisa. Como você quer gerenciar as cotas?",
         "city": "Cidade",
         "company": "empresa",
         "completed": "Concluído ✅",

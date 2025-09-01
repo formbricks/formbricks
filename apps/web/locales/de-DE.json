@@ -1632,6 +1632,7 @@
         "address_line_2": "Adresszeile 2",
         "an_error_occurred_deleting_the_tag": "Beim Löschen des Tags ist ein Fehler aufgetreten",
         "browser": "Browser",
+        "bulk_delete_response_quotas": "Die Antworten sind Teil der Quoten für diese Umfrage. Wie möchten Sie die Quoten verwalten?",
         "city": "Stadt",
         "company": "Firma",
         "completed": "Erledigt ✅",

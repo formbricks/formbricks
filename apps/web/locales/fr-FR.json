@@ -1632,6 +1632,7 @@
         "address_line_2": "Ligne d'adresse 2",
         "an_error_occurred_deleting_the_tag": "Une erreur est survenue lors de la suppression de l'étiquette.",
         "browser": "Navigateur",
+        "bulk_delete_response_quotas": "Les réponses font partie des quotas pour ce sondage. Comment voulez-vous gérer les quotas ?",
         "city": "Ville",
         "company": "Société",
         "completed": "Terminé ✅",

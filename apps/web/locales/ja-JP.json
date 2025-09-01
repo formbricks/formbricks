@@ -1632,6 +1632,7 @@
         "address_line_2": "住所2",
         "an_error_occurred_deleting_the_tag": "タグの削除中にエラーが発生しました",
         "browser": "ブラウザ",
+        "bulk_delete_response_quotas": "この回答は、このアンケートの割り当ての一部です。 割り当てをどのように処理しますか？",
         "city": "市区町村",
         "company": "会社",
         "completed": "完了 ✅",

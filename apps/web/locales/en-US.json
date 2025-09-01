@@ -1632,6 +1632,7 @@
         "address_line_2": "Address Line 2",
         "an_error_occurred_deleting_the_tag": "An error occurred deleting the tag",
         "browser": "Browser",
+        "bulk_delete_response_quotas": "The responses are part of quotas for this survey. How do you want to handle the quotas?",
         "city": "City",
         "company": "Company",
         "completed": "Completed ✅",
