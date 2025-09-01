@@ -6,6 +6,7 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
+import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TUploadPrivateFileRequest, ZUploadPrivateFileRequest } from "@formbricks/types/storage";
@@ -103,9 +104,9 @@ export const POST = withV1ApiWrapper({
 
     if (!signedUrlResponse.ok) {
       logger.error({ error: signedUrlResponse.error }, "Error getting signed url for upload");
-
+      const errorResponse = getErrorResponseFromStorageError(signedUrlResponse.error);
       return {
-        response: responses.internalServerErrorResponse("Internal server error"),
+        response: errorResponse,
       };
     }
 

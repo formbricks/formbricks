@@ -30,9 +30,11 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@formbricks/storage", () => ({
   StorageErrorCode: {
-    Unknown: "UNKNOWN",
-    FileNotFound: "FILE_NOT_FOUND",
-    FileSizeExceeded: "FILE_SIZE_EXCEEDED",
+    Unknown: "unknown",
+    S3ClientError: "s3_client_error",
+    S3CredentialsError: "s3_credentials_error",
+    FileNotFoundError: "file_not_found_error",
+    InvalidInput: "invalid_input",
   },
   deleteFile: vi.fn(),
   deleteFilesByPrefix: vi.fn(),
@@ -124,6 +126,40 @@ describe("storage service", () => {
           `https://webapp.example.com/storage/env-123/private/test-doc--fid--${mockUUID}.pdf`
         );
       }
+    });
+
+    test("should properly encode filenames with special characters like # in URL", async () => {
+      const mockSignedUrlResponse = {
+        ok: true,
+        data: {
+          signedUrl: "https://s3.example.com/upload",
+          presignedFields: { key: "value" },
+        },
+      } as MockedSignedUploadReturn;
+
+      vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
+
+      const result = await getSignedUrlForUpload(
+        "test#file.txt",
+        "env-123",
+        "text/plain",
+        "public" as TAccessType
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // The filename should be URL-encoded to prevent # from being treated as a URL fragment
+        expect(result.data.fileUrl).toBe(
+          `https://public.example.com/storage/env-123/public/test%23file--fid--${mockUUID}.txt`
+        );
+      }
+
+      expect(getSignedUploadUrl).toHaveBeenCalledWith(
+        `test#file--fid--${mockUUID}.txt`,
+        "text/plain",
+        "env-123/public",
+        1024 * 1024 * 10 // 10MB default
+      );
     });
 
     test("should handle files with multiple dots in filename", async () => {

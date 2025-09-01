@@ -277,11 +277,13 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
 
       if (error) {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
+        setIsDownloading(false);
+        return;
       }
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = responsesDownloadUrlResponse.data.fileName || `${survey.name}-${filetype}.csv`;
+      link.download = responsesDownloadUrlResponse.data.fileName || `${survey.name}-${filetype}.${filetype}`;
 
       document.body.appendChild(link);
       link.click();

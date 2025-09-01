@@ -52,7 +52,9 @@ export const getSignedUrlForUpload = async (
     return ok({
       signedUrl: signedUrlResult.data.signedUrl,
       presignedFields: signedUrlResult.data.presignedFields,
-      fileUrl: new URL(`${baseUrl}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
+      fileUrl: new URL(
+        `${baseUrl}/storage/${environmentId}/${accessType}/${encodeURIComponent(updatedFileName)}`
+      ).href,
     });
   } catch (error) {
     logger.error({ error }, "Error getting signed url for upload");

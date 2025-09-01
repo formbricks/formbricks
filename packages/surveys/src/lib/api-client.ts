@@ -104,6 +104,10 @@ export class ApiClient {
       fileUrl: string;
     };
 
+    if (!signedUrl || !presignedFields || !fileUrl) {
+      throw new Error("Invalid response");
+    }
+
     const formData = new FormData();
 
     Object.entries(presignedFields).forEach(([key, value]) => {
@@ -130,6 +134,7 @@ export class ApiClient {
       });
     } catch (err) {
       console.error("Error uploading file", err);
+      throw new Error("Network error while uploading file");
     }
 
     if (!uploadResponse.ok) {

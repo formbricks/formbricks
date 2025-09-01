@@ -131,6 +131,7 @@ export const PersonalLinksTab = ({
 
       if (error) {
         toast.error(t("environments.surveys.share.personal_links.error_generating_links"));
+        setIsGenerating(false);
         return;
       }
 

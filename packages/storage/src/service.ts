@@ -175,6 +175,11 @@ export const deleteFile = async (fileKey: string): Promise<Result<void, StorageE
   }
 };
 
+/**
+ * Delete all files by prefix
+ * @param prefix - The prefix of the files to delete
+ * @returns A Result containing the void or an error: StorageError
+ */
 export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, StorageError>> => {
   try {
     if (!s3Client) {

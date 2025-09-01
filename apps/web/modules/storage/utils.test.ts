@@ -23,7 +23,16 @@ vi.mock("@/modules/storage/utils", async () => {
 
 describe("storage utils", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+
+    // Default: derive filename from URL path for positive-path tests
+    mockGetOriginalFileNameFromUrl.mockImplementation((url: string) => {
+      try {
+        return new URL(url).pathname.split("/").filter(Boolean).pop();
+      } catch {
+        return undefined;
+      }
+    });
   });
 
   describe("isAllowedFileExtension", () => {
@@ -167,7 +176,7 @@ describe("storage utils", () => {
 
     test("should return false when file name cannot be extracted", () => {
       // Mock implementation to return null for this specific URL
-      mockGetOriginalFileNameFromUrl.mockImplementation(() => undefined);
+      mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => undefined);
 
       const responseData = {
         question1: ["https://example.com/invalid-url"],
@@ -185,7 +194,7 @@ describe("storage utils", () => {
     });
 
     test("should return false when file has no extension", () => {
-      mockGetOriginalFileNameFromUrl.mockImplementation(() => "file-without-extension");
+      mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => "file-without-extension");
 
       const responseData = {
         question1: ["https://example.com/storage/file-without-extension"],
@@ -248,22 +257,22 @@ describe("storage utils", () => {
     });
 
     test("should return false when file name cannot be extracted", () => {
-      mockGetOriginalFileNameFromUrl.mockImplementation(() => undefined);
+      mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => undefined);
       expect(isValidImageFile("https://example.com/invalid-url")).toBe(false);
     });
 
     test("should return false when file has no extension", () => {
-      mockGetOriginalFileNameFromUrl.mockImplementation(() => "image-without-extension");
+      mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => "image-without-extension");
       expect(isValidImageFile("https://example.com/image-without-extension")).toBe(false);
     });
 
     test("should return false when file name ends with a dot", () => {
-      mockGetOriginalFileNameFromUrl.mockImplementation(() => "image.");
+      mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => "image.");
       expect(isValidImageFile("https://example.com/image.")).toBe(false);
     });
 
     test("should handle case insensitivity correctly", () => {
-      mockGetOriginalFileNameFromUrl.mockImplementation(() => "image.JPG");
+      mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => "image.JPG");
       expect(isValidImageFile("https://example.com/image.JPG")).toBe(true);
     });
   });

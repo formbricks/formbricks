@@ -7,6 +7,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { deleteFile, getSignedUrlForDownload } from "@/modules/storage/service";
+import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 import { getServerSession } from "next-auth";
 import { type NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
@@ -102,13 +103,8 @@ export const GET = async (
   const signedUrlResult = await getSignedUrlForDownload(fileName, environmentId, accessType);
 
   if (!signedUrlResult.ok) {
-    if (signedUrlResult.error.code === "file_not_found_error") {
-      logger.info({ error: signedUrlResult.error }, "File not found");
-      return responses.notFoundResponse("File", fileName);
-    }
-
-    logger.error({ error: signedUrlResult.error }, "Error getting signed url for download");
-    return responses.internalServerErrorResponse("Internal server error");
+    const errorResponse = getErrorResponseFromStorageError(signedUrlResult.error, { fileName });
+    return errorResponse;
   }
 
   return new Response(null, {

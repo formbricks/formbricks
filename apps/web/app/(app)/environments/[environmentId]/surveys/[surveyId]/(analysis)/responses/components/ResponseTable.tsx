@@ -212,7 +212,9 @@ export const ResponseTable = ({
           });
         }
 
-        const { url, error } = await handleFileUpload(file, environment.id);
+        const { url, error } = await handleFileUpload(file, environment.id, [
+          format === "xlsx" ? ".xlsx" : ".csv",
+        ]);
 
         if (error) {
           toast.error(t("environments.surveys.responses.error_downloading_responses"));
@@ -220,7 +222,7 @@ export const ResponseTable = ({
 
         const link = document.createElement("a");
         link.href = url;
-        link.download = downloadResponse.data.fileName || `${survey.name}-${format}.csv`;
+        link.download = downloadResponse.data.fileName || `${survey.name}-${format}.${format}`;
 
         document.body.appendChild(link);
         link.click();
