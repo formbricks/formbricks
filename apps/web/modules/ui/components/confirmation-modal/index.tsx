@@ -14,7 +14,15 @@ import { useTranslate } from "@tolgee/react";
 import { CircleAlert } from "lucide-react";
 import React from "react";
 
-type ConfirmationModalProps = {
+interface SecondaryButtonProps {
+  text: string;
+  onAction: () => void;
+  variant?: "destructive" | "default" | "secondary" | "ghost";
+  loading?: boolean;
+  disabled?: boolean;
+}
+
+interface ConfirmationModalProps {
   title: string;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -30,19 +38,14 @@ type ConfirmationModalProps = {
   cancelButtonText?: string;
   onCancel?: () => void;
   Icon?: React.ElementType;
-  // Secondary action button props
-  secondaryButtonText?: string;
-  onSecondaryAction?: () => void;
-  secondaryButtonVariant?: "destructive" | "default" | "secondary" | "ghost";
-  secondaryButtonLoading?: boolean;
-  secondaryButtonDisabled?: boolean;
-};
+  secondaryButton?: SecondaryButtonProps;
+}
 
 export const ConfirmationModal = ({
   title,
-  onConfirm,
   open,
   setOpen,
+  onConfirm,
   description,
   body,
   buttonText,
@@ -54,22 +57,52 @@ export const ConfirmationModal = ({
   cancelButtonText,
   onCancel,
   Icon,
-  secondaryButtonText,
-  onSecondaryAction,
-  secondaryButtonVariant = "secondary",
-  secondaryButtonLoading = false,
-  secondaryButtonDisabled = false,
+  secondaryButton,
 }: ConfirmationModalProps) => {
   const { t } = useTranslate();
-  const handleButtonAction = () => {
+
+  const handleMainButtonAction = () => {
     if (isButtonDisabled) return;
     onConfirm();
   };
 
-  const handleSecondaryAction = () => {
-    if (secondaryButtonDisabled || !onSecondaryAction) return;
-    onSecondaryAction();
+  const handleSecondaryButtonAction = () => {
+    if (secondaryButton?.disabled || !secondaryButton?.onAction) return;
+    secondaryButton.onAction();
   };
+
+  const handleCancelAction = () => {
+    if (onCancel) {
+      onCancel();
+    }
+    setOpen(false);
+  };
+
+  const renderSecondaryButton = () => (
+    <Button
+      loading={secondaryButton?.loading}
+      disabled={secondaryButton?.disabled}
+      variant={secondaryButton?.variant}
+      onClick={handleSecondaryButtonAction}>
+      {secondaryButton?.text}
+    </Button>
+  );
+
+  const renderMainButton = () => (
+    <Button
+      loading={buttonLoading}
+      disabled={isButtonDisabled}
+      variant={buttonVariant}
+      onClick={handleMainButtonAction}>
+      {buttonText}
+    </Button>
+  );
+
+  const renderCancelButton = () => (
+    <Button variant="ghost" onClick={handleCancelAction}>
+      {cancelButtonText || t("common.cancel")}
+    </Button>
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -98,56 +131,20 @@ export const ConfirmationModal = ({
         </DialogBody>
 
         <DialogFooter>
-          {secondaryButtonText ? (
+          {secondaryButton ? (
             // Three-button layout when secondary action is present
             <div className="flex w-full justify-between">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (onCancel) {
-                    onCancel();
-                  }
-                  setOpen(false);
-                }}>
-                {cancelButtonText || t("common.cancel")}
-              </Button>
+              {renderCancelButton()}
               <div className="flex gap-2">
-                <Button
-                  loading={secondaryButtonLoading}
-                  disabled={secondaryButtonDisabled}
-                  variant={secondaryButtonVariant}
-                  onClick={handleSecondaryAction}>
-                  {secondaryButtonText}
-                </Button>
-                <Button
-                  loading={buttonLoading}
-                  disabled={isButtonDisabled}
-                  variant={buttonVariant}
-                  onClick={handleButtonAction}>
-                  {buttonText}
-                </Button>
+                {renderSecondaryButton()}
+                {renderMainButton()}
               </div>
             </div>
           ) : (
             // Default two-button layout
             <>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (onCancel) {
-                    onCancel();
-                  }
-                  setOpen(false);
-                }}>
-                {cancelButtonText || t("common.cancel")}
-              </Button>
-              <Button
-                loading={buttonLoading}
-                disabled={isButtonDisabled}
-                variant={buttonVariant}
-                onClick={handleButtonAction}>
-                {buttonText}
-              </Button>
+              {renderCancelButton()}
+              {renderMainButton()}
             </>
           )}
         </DialogFooter>

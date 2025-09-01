@@ -3,6 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
+import { getDefaultOperatorForQuestion } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -86,7 +87,7 @@ export const QuotaModal = ({
           {
             id: createId(),
             leftOperand: { type: "question", value: survey.questions[0]?.id },
-            operator: "equals",
+            operator: getDefaultOperatorForQuestion(survey.questions[0], t),
           },
         ],
       },
@@ -178,9 +179,9 @@ export const QuotaModal = ({
   // Form submission handler with confirmation logic
   const onSubmit = async (data: TSurveyQuotaInput) => {
     if (isEditing) {
-      const hasChangesInInclusionCriteria =
-        JSON.stringify(form.getValues("logic")) !== JSON.stringify(quota.logic);
-      if (hasChangesInInclusionCriteria && isValid && hasResponses) {
+      const checkIfInclusionCriteriaHasChanged =
+        hasResponses && JSON.stringify(form.getValues("logic")) !== JSON.stringify(quota.logic);
+      if (checkIfInclusionCriteriaHasChanged && isValid) {
         setOpenConfirmChangesInInclusionCriteria(true);
         return;
       }
@@ -269,18 +270,10 @@ export const QuotaModal = ({
                       <Input
                         {...field}
                         type="number"
-                        min="1"
                         className="w-32 bg-white"
                         onChange={(e) => {
                           const value = e.target.value;
                           field.onChange(value === "" ? 1 : parseInt(value, 10));
-                        }}
-                        onBlur={(e) => {
-                          const value = parseInt(e.target.value, 10);
-                          if (isNaN(value) || value < 1) {
-                            field.onChange(1);
-                          }
-                          field.onBlur();
                         }}
                       />
                     </FormControl>
@@ -444,17 +437,20 @@ export const QuotaModal = ({
               buttonText={t("common.continue")}
               buttonVariant="default"
               onConfirm={form.handleSubmit(submitQuota)}
-              secondaryButtonText={t("environments.surveys.edit.quotas.duplicate_quota")}
-              onSecondaryAction={() => {
-                if (quota) {
-                  const updatedQuota = {
-                    ...quota,
-                    ...form.getValues(),
-                  };
-                  duplicateQuota(updatedQuota);
-                  onOpenChange(false);
-                  setOpenConfirmChangesInInclusionCriteria(false);
-                }
+              secondaryButton={{
+                text: t("environments.surveys.edit.quotas.duplicate_quota"),
+                variant: "secondary",
+                onAction: () => {
+                  if (quota) {
+                    const updatedQuota = {
+                      ...quota,
+                      ...form.getValues(),
+                    };
+                    duplicateQuota(updatedQuota);
+                    onOpenChange(false);
+                    setOpenConfirmChangesInInclusionCriteria(false);
+                  }
+                },
               }}
             />
           </FormProvider>

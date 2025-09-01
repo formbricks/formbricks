@@ -87,7 +87,7 @@ export const SettingsView = ({
         isQuotasEnabled={isQuotasAllowed}
         isFormbricksCloud={isFormbricksCloud}
         quotas={quotas}
-        isPublicSurvey={responseCount > 0}
+        hasResponses={responseCount > 0}
       />
 
       <ResponseOptionsCard
