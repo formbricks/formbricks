@@ -190,11 +190,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         });
       }
 
-      const response = await updateResponseWithQuotaEvaluation(
-        environmentIdResult.data,
-        params.responseId,
-        body
-      );
+      const response = await updateResponseWithQuotaEvaluation(params.responseId, body);
 
       if (!response.ok) {
         return handleApiError(request, response.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error

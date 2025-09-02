@@ -11,7 +11,7 @@ interface SummaryMetadataProps {
   isLoading: boolean;
   tab: "dropOffs" | "quotas" | undefined;
   setTab: React.Dispatch<React.SetStateAction<"dropOffs" | "quotas" | undefined>>;
-  isQuotasEnabled: boolean;
+  isQuotasAllowed: boolean;
 }
 
 const StatCard = ({ label, percentage, value, tooltipText, isLoading }) => {
@@ -61,7 +61,7 @@ export const SummaryMetadata = ({
   isLoading,
   tab,
   setTab,
-  isQuotasEnabled,
+  isQuotasAllowed,
 }: SummaryMetadataProps) => {
   const {
     completedPercentage,
@@ -89,7 +89,7 @@ export const SummaryMetadata = ({
       <div
         className={cn(
           `grid gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-x-2 lg:grid-cols-3 2xl:grid-cols-5`,
-          isQuotasEnabled && "2xl:grid-cols-6"
+          isQuotasAllowed && "2xl:grid-cols-6"
         )}>
         <StatCard
           label={t("environments.surveys.summary.impressions")}
@@ -157,7 +157,7 @@ export const SummaryMetadata = ({
           isLoading={isLoading}
         />
 
-        {isQuotasEnabled && (
+        {isQuotasAllowed && (
           <TooltipProvider delayDuration={50}>
             <Tooltip>
               <TooltipTrigger onClick={() => handleTabChange("quotas")} data-testid="quotas-toggle">

@@ -1,6 +1,7 @@
 "use server";
 
 import { validateInputs } from "@/lib/utils/validate";
+import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -239,6 +240,22 @@ export const getWebhook = async (id: string): Promise<{ environmentId: string } 
     throw error;
   }
 };
+
+export const getQuota = reactCache(async (quotaId: string): Promise<{ surveyId: string } | null> => {
+  try {
+    validateInputs([quotaId, ZId]);
+
+    const quota = await getQuotaService(quotaId);
+
+    return { surveyId: quota.surveyId };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});
 
 export const getTeam = reactCache(async (teamId: string): Promise<{ organizationId: string } | null> => {
   validateInputs([teamId, ZString]);

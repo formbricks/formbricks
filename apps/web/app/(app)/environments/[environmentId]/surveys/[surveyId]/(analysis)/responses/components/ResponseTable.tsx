@@ -32,6 +32,7 @@ import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -51,7 +52,8 @@ interface ResponseTableProps {
   updateResponse: (responseId: string, updatedResponse: TResponseWithQuotas) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
-  isQuotasEnabled: boolean;
+  isQuotasAllowed: boolean;
+  quotas: TSurveyQuota[];
 }
 
 export const ResponseTable = ({
@@ -68,7 +70,8 @@ export const ResponseTable = ({
   updateResponse,
   isFetchingFirstPage,
   locale,
-  isQuotasEnabled,
+  isQuotasAllowed,
+  quotas,
 }: ResponseTableProps) => {
   const { t } = useTranslate();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -80,8 +83,9 @@ export const ResponseTable = ({
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [parent] = useAutoAnimate();
 
+  const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, isQuotasEnabled);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn);
 
   // Save settings to localStorage when they change
   useEffect(() => {

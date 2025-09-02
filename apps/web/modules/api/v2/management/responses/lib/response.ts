@@ -13,7 +13,6 @@ import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/uti
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
-import { checkQuotasEnabledV2 } from "@/modules/ee/quotas/lib/helpers";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { Prisma, Response } from "@prisma/client";
@@ -157,18 +156,15 @@ export const createResponseWithQuotaEvaluation = async (
 
   const response = responseResult.data;
 
-  const isQuotasEnabled = await checkQuotasEnabledV2(environmentId);
-  if (!isQuotasEnabled) {
-    return ok(response);
-  }
-
   try {
-    const [survey, quotas] = await Promise.all([
-      getSurvey(responseInput.surveyId),
-      getQuotas(responseInput.surveyId),
-    ]);
+    const quotas = await getQuotas(responseInput.surveyId);
 
-    if (!survey || !quotas || quotas.length === 0) {
+    if (!quotas || quotas.length === 0) {
+      return ok(response);
+    }
+
+    const survey = await getSurvey(responseInput.surveyId);
+    if (!survey) {
       return ok(response);
     }
 

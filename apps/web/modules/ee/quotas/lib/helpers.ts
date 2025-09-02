@@ -14,8 +14,8 @@ export const checkQuotasEnabledV1 = async (environmentId: string): Promise<boole
     }
     const billingPlan = organization.billing.plan;
 
-    const isQuotasEnabled = await getIsQuotasEnabled(billingPlan);
-    return isQuotasEnabled;
+    const isQuotasAllowed = await getIsQuotasEnabled(billingPlan);
+    return isQuotasAllowed;
   } catch (error) {
     logger.error({ error, environmentId }, "Error checking quotas enabled in v1");
     return false;
@@ -33,6 +33,6 @@ export const checkQuotasEnabledV2 = async (environmentId: string): Promise<boole
     return false;
   }
 
-  const isQuotasEnabled = await getIsQuotasEnabled(billing.data.plan);
-  return isQuotasEnabled;
+  const isQuotasAllowed = await getIsQuotasEnabled(billing.data.plan);
+  return isQuotasAllowed;
 };

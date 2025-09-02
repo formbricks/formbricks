@@ -154,7 +154,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient.schema(ZDelet
 
 const ZDeleteResponseAction = z.object({
   responseId: ZId,
-  decrementQuotas: z.boolean().optional().default(false),
+  decrementQuotas: z.boolean().default(false),
 });
 
 export const deleteResponseAction = authenticatedActionClient.schema(ZDeleteResponseAction).action(

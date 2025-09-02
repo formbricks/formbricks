@@ -258,7 +258,7 @@ export const generateResponseTableColumns = (
   isExpanded: boolean,
   isReadOnly: boolean,
   t: TFnType,
-  isQuotasEnabled: boolean
+  showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>
     getQuestionColumnsData(question, survey, isExpanded, t)
@@ -404,7 +404,7 @@ export const generateResponseTableColumns = (
   const baseColumns = [
     personColumn,
     dateColumn,
-    ...(isQuotasEnabled ? [quotasColumn] : []),
+    ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
     ...questionColumns,

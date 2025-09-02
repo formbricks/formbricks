@@ -40,7 +40,7 @@ interface SummaryPageProps {
   surveyId: string;
   locale: TUserLocale;
   initialSurveySummary?: TSurveySummary;
-  isQuotasEnabled: boolean;
+  isQuotasAllowed: boolean;
 }
 
 export const SummaryPage = ({
@@ -49,7 +49,7 @@ export const SummaryPage = ({
   surveyId,
   locale,
   initialSurveySummary,
-  isQuotasEnabled,
+  isQuotasAllowed,
 }: SummaryPageProps) => {
   const searchParams = useSearchParams();
 
@@ -118,10 +118,10 @@ export const SummaryPage = ({
         isLoading={isLoading}
         tab={tab}
         setTab={setTab}
-        isQuotasEnabled={isQuotasEnabled}
+        isQuotasAllowed={isQuotasAllowed}
       />
       {tab === "dropOffs" && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
-      {isQuotasEnabled && tab === "quotas" && <QuotasSummary quotas={surveySummary.quotas} />}
+      {isQuotasAllowed && tab === "quotas" && <QuotasSummary quotas={surveySummary.quotas} />}
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
       </div>

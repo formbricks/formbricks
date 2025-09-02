@@ -11,6 +11,7 @@ import { getUser } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -57,7 +58,9 @@ const Page = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const isQuotasEnabled = await getIsQuotasEnabled(organizationBilling.plan);
+  const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+
+  const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
 
   return (
     <PageContentWrapper>
@@ -88,7 +91,8 @@ const Page = async (props) => {
         responsesPerPage={RESPONSES_PER_PAGE}
         locale={locale}
         isReadOnly={isReadOnly}
-        isQuotasEnabled={isQuotasEnabled}
+        isQuotasAllowed={isQuotasAllowed}
+        quotas={quotas}
       />
     </PageContentWrapper>
   );

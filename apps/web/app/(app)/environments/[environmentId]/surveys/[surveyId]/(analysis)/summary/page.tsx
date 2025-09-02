@@ -51,7 +51,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   if (!organizationBilling) {
     throw new Error(t("common.organization_not_found"));
   }
-  const isQuotasEnabled = await getIsQuotasEnabled(organizationBilling.plan);
+  const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
 
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
   const initialSurveySummary = await getSurveySummary(surveyId);
@@ -84,7 +84,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         surveyId={params.surveyId}
         locale={user.locale ?? DEFAULT_LOCALE}
         initialSurveySummary={initialSurveySummary}
-        isQuotasEnabled={isQuotasEnabled}
+        isQuotasAllowed={isQuotasAllowed}
       />
 
       <IdBadge id={surveyId} label={t("common.survey_id")} variant="column" />

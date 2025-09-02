@@ -1,7 +1,11 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createQuotaAction, deleteQuotaAction } from "@/modules/ee/quotas/actions";
+import {
+  createQuotaAction,
+  deleteQuotaAction,
+  getQuotaResponseCountAction,
+} from "@/modules/ee/quotas/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -20,7 +24,7 @@ import { QuotaModal } from "./quota-modal";
 
 interface QuotasCardProps {
   localSurvey: TSurvey;
-  isQuotasEnabled: boolean;
+  isQuotasAllowed: boolean;
   isFormbricksCloud?: boolean;
   quotas: TSurveyQuota[];
   hasResponses: boolean;
@@ -58,7 +62,7 @@ const AddQuotaButton = ({
 
 export const QuotasCard = ({
   localSurvey,
-  isQuotasEnabled,
+  isQuotasAllowed,
   isFormbricksCloud,
   quotas,
   hasResponses,
@@ -69,6 +73,7 @@ export const QuotasCard = ({
   const [activeQuota, setActiveQuota] = useState<TSurveyQuota | null>(null);
   const environmentId = localSurvey.environmentId;
   const [quotaToDelete, setQuotaToDelete] = useState<TSurveyQuota | null>(null);
+  const [quotaResponseCount, setQuotaResponseCount] = useState(0);
   const [isDeletingQuota, setIsDeletingQuota] = useState(false);
   const [openCreateQuotaConfirmationModal, setOpenCreateQuotaConfirmationModal] = useState(false);
   const router = useRouter();
@@ -116,7 +121,16 @@ export const QuotasCard = ({
     }
   };
 
-  const openEditQuotaModal = (quota: TSurveyQuota) => {
+  const openEditQuotaModal = async (quota: TSurveyQuota) => {
+    const quotaResponseCountActionResult = await getQuotaResponseCountAction({
+      quotaId: quota.id,
+    });
+    if (quotaResponseCountActionResult?.data) {
+      setQuotaResponseCount(quotaResponseCountActionResult.data);
+    } else {
+      const errorMessage = getFormattedErrorMessage(quotaResponseCountActionResult);
+      toast.error(errorMessage);
+    }
     setActiveQuota(quota);
     setIsQuotaModalOpen(true);
   };
@@ -151,7 +165,7 @@ export const QuotasCard = ({
         <Collapsible.Content className="flex flex-col" ref={parent}>
           <hr className="py-1 text-slate-600" />
           <div className="px-3 pb-3 pt-1">
-            {!isQuotasEnabled ? (
+            {!isQuotasAllowed ? (
               <UpgradePrompt
                 title={t("environments.surveys.edit.quotas.upgrade_prompt_title")}
                 description={t("common.quotas_description")}
@@ -211,7 +225,7 @@ export const QuotasCard = ({
         </Collapsible.Content>
       </Collapsible.Root>
 
-      {isQuotasEnabled && (
+      {isQuotasAllowed && (
         <QuotaModal
           open={isQuotaModalOpen}
           onOpenChange={setIsQuotaModalOpen}
@@ -224,6 +238,7 @@ export const QuotasCard = ({
             setActiveQuota(null);
           }}
           hasResponses={hasResponses}
+          quotaResponseCount={quotaResponseCount}
         />
       )}
       <DeleteDialog

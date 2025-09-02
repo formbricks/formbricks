@@ -376,14 +376,14 @@ export const getResponseDownloadUrl = async (
     if (!organizationBilling) {
       throw new Error("Organization billing not found");
     }
-    const isQuotasEnabled = await getIsQuotasEnabled(organizationBilling.plan);
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
 
     const headers = [
       "No.",
       "Response ID",
       "Timestamp",
       "Finished",
-      ...(isQuotasEnabled ? ["Quotas"] : []),
+      ...(isQuotasAllowed ? ["Quotas"] : []),
       "Survey ID",
       "Formbricks ID (internal)",
       "User ID",

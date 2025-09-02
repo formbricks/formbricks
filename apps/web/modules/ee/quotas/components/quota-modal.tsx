@@ -60,6 +60,7 @@ interface QuotaModalProps {
   onClose: () => void;
   duplicateQuota: (quota: TSurveyQuota) => void;
   hasResponses: boolean;
+  quotaResponseCount: number;
 }
 
 export const QuotaModal = ({
@@ -71,6 +72,7 @@ export const QuotaModal = ({
   onClose,
   duplicateQuota,
   hasResponses,
+  quotaResponseCount,
 }: QuotaModalProps) => {
   const router = useRouter();
   const isEditing = !!quota;
@@ -270,6 +272,7 @@ export const QuotaModal = ({
                       <Input
                         {...field}
                         type="number"
+                        min={quotaResponseCount}
                         className="w-32 bg-white"
                         onChange={(e) => {
                           const value = e.target.value;

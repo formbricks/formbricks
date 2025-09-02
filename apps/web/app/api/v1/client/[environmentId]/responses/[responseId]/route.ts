@@ -115,11 +115,7 @@ export const PUT = withV1ApiWrapper({
     // update response with quota evaluation
     let updatedResponse;
     try {
-      updatedResponse = await updateResponseWithQuotaEvaluation(
-        survey.environmentId,
-        responseId,
-        inputValidation.data
-      );
+      updatedResponse = await updateResponseWithQuotaEvaluation(responseId, inputValidation.data);
     } catch (error) {
       if (error instanceof ResourceNotFoundError) {
         return {

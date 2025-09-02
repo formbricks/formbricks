@@ -4,7 +4,6 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
 import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { checkQuotasEnabledV2 } from "@/modules/ee/quotas/lib/helpers";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { Prisma, Response } from "@prisma/client";
@@ -112,7 +111,6 @@ export const updateResponse = async (
 };
 
 export const updateResponseWithQuotaEvaluation = async (
-  environmentId: string,
   responseId: string,
   responseInput: z.infer<typeof ZResponseUpdateSchema>
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
@@ -124,15 +122,15 @@ export const updateResponseWithQuotaEvaluation = async (
 
   const response = responseResult.data;
 
-  const isQuotasEnabled = await checkQuotasEnabledV2(environmentId);
-  if (!isQuotasEnabled) {
-    return ok(response);
-  }
-
   try {
-    const [survey, quotas] = await Promise.all([getSurvey(response.surveyId), getQuotas(response.surveyId)]);
+    const quotas = await getQuotas(response.surveyId);
 
-    if (!survey || !quotas || quotas.length === 0) {
+    if (!quotas || quotas.length === 0) {
+      return ok(response);
+    }
+
+    const survey = await getSurvey(response.surveyId);
+    if (!survey) {
       return ok(response);
     }
 

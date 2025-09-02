@@ -9,6 +9,7 @@ import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -23,7 +24,8 @@ interface ResponsePageProps {
   responsesPerPage: number;
   locale: TUserLocale;
   isReadOnly: boolean;
-  isQuotasEnabled: boolean;
+  isQuotasAllowed: boolean;
+  quotas: TSurveyQuota[];
 }
 
 export const ResponsePage = ({
@@ -35,7 +37,8 @@ export const ResponsePage = ({
   responsesPerPage,
   locale,
   isReadOnly,
-  isQuotasEnabled,
+  isQuotasAllowed,
+  quotas,
 }: ResponsePageProps) => {
   const [responses, setResponses] = useState<TResponseWithQuotas[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -142,7 +145,8 @@ export const ResponsePage = ({
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
         locale={locale}
-        isQuotasEnabled={isQuotasEnabled}
+        isQuotasAllowed={isQuotasAllowed}
+        quotas={quotas}
       />
     </>
   );

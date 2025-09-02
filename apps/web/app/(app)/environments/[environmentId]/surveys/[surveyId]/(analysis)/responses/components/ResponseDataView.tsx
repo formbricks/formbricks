@@ -4,6 +4,7 @@ import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/
 import { TFnType, useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -22,7 +23,8 @@ interface ResponseDataViewProps {
   updateResponse: (responseId: string, updatedResponse: TResponseWithQuotas) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
-  isQuotasEnabled: boolean;
+  isQuotasAllowed: boolean;
+  quotas: TSurveyQuota[];
 }
 
 // Export for testing
@@ -119,7 +121,8 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   updateResponse,
   isFetchingFirstPage,
   locale,
-  isQuotasEnabled,
+  isQuotasAllowed,
+  quotas,
 }) => {
   const { t } = useTranslate();
   const data = mapResponsesToTableData(responses, survey, t);
@@ -140,7 +143,8 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
         locale={locale}
-        isQuotasEnabled={isQuotasEnabled}
+        isQuotasAllowed={isQuotasAllowed}
+        quotas={quotas}
       />
     </div>
   );

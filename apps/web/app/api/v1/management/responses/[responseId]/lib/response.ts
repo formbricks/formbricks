@@ -1,7 +1,6 @@
 import "server-only";
 import { updateResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { checkQuotasEnabledV1 } from "@/modules/ee/quotas/lib/helpers";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
 import { prisma } from "@formbricks/database";
@@ -19,15 +18,15 @@ export const updateResponseWithQuotaEvaluation = async (
     return response;
   }
 
-  const isQuotasEnabled = await checkQuotasEnabledV1(survey.environmentId);
-  if (!isQuotasEnabled) {
-    return response;
-  }
-
   try {
-    const [survey, quotas] = await Promise.all([getSurvey(response.surveyId), getQuotas(response.surveyId)]);
+    const quotas = await getQuotas(response.surveyId);
 
-    if (!survey || !quotas || quotas.length === 0) {
+    if (!quotas || quotas.length === 0) {
+      return response;
+    }
+
+    const survey = await getSurvey(response.surveyId);
+    if (!survey) {
       return response;
     }
 
