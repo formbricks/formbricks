@@ -22,7 +22,7 @@ interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   deleteRowsAction: (rowId: string[]) => void;
   type: "response" | "contact";
-  deleteAction: (id: string, params?: Record<string, unknown>) => Promise<void>;
+  deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
 }
 

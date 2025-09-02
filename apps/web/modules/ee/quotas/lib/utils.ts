@@ -103,7 +103,7 @@ export const upsertResponseQuotaLinks = async (
     }),
   ]);
 
-  await Promise.all(upsertPromises);
+  await upsertPromises;
 };
 
 /**

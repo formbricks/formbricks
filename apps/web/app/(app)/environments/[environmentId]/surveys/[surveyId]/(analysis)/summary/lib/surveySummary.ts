@@ -941,12 +941,13 @@ export const getSurveySummary = reactCache(
 
       const responseIds = hasFilter ? responses.map((response) => response.id) : [];
 
-      const displayCount = await getDisplayCountBySurveyId(surveyId, {
-        createdAt: filterCriteria?.createdAt,
-        ...(hasFilter && { responseIds }),
-      });
-
-      const quotas = await getQuotasSummary(surveyId);
+      const [displayCount, quotas] = await Promise.all([
+        getDisplayCountBySurveyId(surveyId, {
+          createdAt: filterCriteria?.createdAt,
+          ...(hasFilter && { responseIds }),
+        }),
+        getQuotasSummary(surveyId),
+      ]);
 
       const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
       const [meta, questionWiseSummary] = await Promise.all([
