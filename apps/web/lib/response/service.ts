@@ -572,6 +572,9 @@ export const deleteResponse = async (
       select: {
         ...responseSelection,
         quotaLinks: {
+          where: {
+            status: "screenedIn",
+          },
           include: {
             quota: {
               select: {
