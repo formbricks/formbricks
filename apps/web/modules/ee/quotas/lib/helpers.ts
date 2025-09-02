@@ -6,7 +6,7 @@ type QuotaFull =
       quota: {
         id: string;
         action: TSurveyQuotaAction;
-        endingCardId: string;
+        endingCardId?: string;
       };
     }
   | {
@@ -21,7 +21,7 @@ export const createQuotaFullObject = (quota?: TSurveyQuota): QuotaFull => {
     quota: {
       id: quota.id,
       action: quota.action,
-      endingCardId: quota.endingCardId ?? "",
+      ...(quota.endingCardId ? { endingCardId: quota.endingCardId } : {}),
     },
   };
 };

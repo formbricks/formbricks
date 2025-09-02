@@ -281,6 +281,7 @@ export const ZResponseFilterCriteria = z.object({
 
   quotas: z
     .record(
+      ZId,
       z.union([
         ZQuotasFilterCriteriaScreenedIn,
         ZQuotasFilterCriteriaScreenedOut,

@@ -286,7 +286,7 @@ describe("QuotasCard", () => {
     render(
       <QuotasCard localSurvey={mockSurvey} isQuotasAllowed={true} quotas={mockQuotas} hasResponses={false} />
     );
-    vi.mocked(getQuotaResponseCountAction).mockResolvedValue({ data: 10 });
+    vi.mocked(getQuotaResponseCountAction).mockResolvedValue({ data: { count: 10 } });
     const editButton = screen.getByTestId("edit-quota1");
     await user.click(editButton);
 
@@ -445,7 +445,7 @@ describe("QuotasCard", () => {
     const { container } = render(
       <QuotasCard localSurvey={mockSurvey} isQuotasAllowed={true} quotas={mockQuotas} hasResponses={false} />
     );
-    vi.mocked(getQuotaResponseCountAction).mockResolvedValue({ data: 10 });
+    vi.mocked(getQuotaResponseCountAction).mockResolvedValue({ data: { count: 10 } });
 
     // Open edit modal - use container to be more specific
     const editButton = container.querySelector("[data-testid='edit-quota1']");

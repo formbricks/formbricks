@@ -241,7 +241,7 @@ export const getWebhook = async (id: string): Promise<{ environmentId: string } 
   }
 };
 
-export const getQuota = reactCache(async (quotaId: string): Promise<{ surveyId: string } | null> => {
+export const getQuota = reactCache(async (quotaId: string): Promise<{ surveyId: string }> => {
   try {
     validateInputs([quotaId, ZId]);
 

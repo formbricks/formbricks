@@ -71,53 +71,40 @@ export const upsertResponseQuotaLinks = async (
     const fullQuotaIds = fullQuota.map((quota) => quota.id);
     const otherQuotaIds = otherQuota.map((quota) => quota.id);
 
-    // only push when there is a quota to upsert
-    const ops: Promise<unknown>[] = [];
-
     if (fullQuotaIds.length > 0) {
       // Create new records for full quotas
-      ops.push(
-        tx.responseQuotaLink.createMany({
-          data: fullQuotaIds.map((quotaId) => ({
-            responseId,
-            quotaId,
-            status: "screenedOut",
-          })),
-          skipDuplicates: true,
-        })
-      );
+      await tx.responseQuotaLink.createMany({
+        data: fullQuotaIds.map((quotaId) => ({
+          responseId,
+          quotaId,
+          status: "screenedOut",
+        })),
+        skipDuplicates: true,
+      });
 
       // Update existing records for full quotas to screenedOut
-      ops.push(
-        tx.responseQuotaLink.updateMany({
-          where: {
-            responseId,
-            quotaId: { in: fullQuotaIds },
-            status: { not: "screenedOut" },
-          },
-          data: {
-            status: "screenedOut",
-          },
-        })
-      );
+      await tx.responseQuotaLink.updateMany({
+        where: {
+          responseId,
+          quotaId: { in: fullQuotaIds },
+          status: { not: "screenedOut" },
+        },
+        data: {
+          status: "screenedOut",
+        },
+      });
     }
 
     if (otherQuotaIds.length > 0) {
       // Create new records for other quotas
-      ops.push(
-        tx.responseQuotaLink.createMany({
-          data: otherQuotaIds.map((quotaId) => ({
-            responseId,
-            quotaId,
-            status: "screenedIn",
-          })),
-          skipDuplicates: true,
-        })
-      );
-    }
-
-    if (ops.length > 0) {
-      await Promise.all(ops);
+      tx.responseQuotaLink.createMany({
+        data: otherQuotaIds.map((quotaId) => ({
+          responseId,
+          quotaId,
+          status: "screenedIn",
+        })),
+        skipDuplicates: true,
+      });
     }
   });
 };

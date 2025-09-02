@@ -1,8 +1,23 @@
 "use client";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { ReactNode } from "react";
 
-export const StatCard = ({ label, percentage, value, tooltipText, isLoading }) => {
+interface StatCardProps {
+  label: ReactNode;
+  percentage?: number | null;
+  value: ReactNode;
+  tooltipText?: ReactNode;
+  isLoading?: boolean;
+}
+
+export const StatCard = ({
+  label,
+  percentage = null,
+  value,
+  tooltipText,
+  isLoading = false,
+}: StatCardProps) => {
   return (
     <TooltipProvider delayDuration={50}>
       <Tooltip>
