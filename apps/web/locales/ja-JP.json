@@ -169,6 +169,8 @@
     "copy": "コピー",
     "copy_code": "コードをコピー",
     "copy_link": "リンクをコピー",
+    "count_contacts": "{count, plural, other {# 件の連絡先}}",
+    "count_responses": "{count, plural, other {# 件の回答}}",
     "create_new_organization": "新しい組織を作成",
     "create_project": "プロジェクトを作成",
     "create_segment": "セグメントを作成",

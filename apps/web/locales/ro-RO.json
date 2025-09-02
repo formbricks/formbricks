@@ -169,6 +169,8 @@
     "copy": "Copiază",
     "copy_code": "Copiază codul",
     "copy_link": "Copiază legătura",
+    "count_contacts": "{value, plural, one {# contact} other {# contacte} }",
+    "count_responses": "{value, plural, one {# răspuns} other {# răspunsuri} }",
     "create_new_organization": "Creează organizație nouă",
     "create_project": "Creează proiect",
     "create_segment": "Creați segment",

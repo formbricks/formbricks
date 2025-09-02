@@ -169,6 +169,8 @@
     "copy": "複製",
     "copy_code": "複製程式碼",
     "copy_link": "複製連結",
+    "count_contacts": "{value, plural, other {{value} 聯絡人} }",
+    "count_responses": "{value, plural, other {{value} 回應} }",
     "create_new_organization": "建立新組織",
     "create_project": "建立專案",
     "create_segment": "建立區隔",

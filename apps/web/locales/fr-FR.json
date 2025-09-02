@@ -169,6 +169,8 @@
     "copy": "Copier",
     "copy_code": "Copier le code",
     "copy_link": "Copier le lien",
+    "count_contacts": "{value, plural, one {# contact} other {# contacts} }",
+    "count_responses": "{value, plural, other {# réponses}}",
     "create_new_organization": "Créer une nouvelle organisation",
     "create_project": "Créer un projet",
     "create_segment": "Créer un segment",

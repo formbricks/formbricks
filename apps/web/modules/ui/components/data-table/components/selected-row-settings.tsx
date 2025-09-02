@@ -117,7 +117,6 @@ export const SelectedRowSettings = <T,>({
           onClick={() => handleToggleAllRowsSelection(true)}>
           {t("common.select_all")}
         </Button>
-
         <Button
           variant="outline"
           size="sm"
@@ -165,7 +164,11 @@ export const SelectedRowSettings = <T,>({
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
-        deleteWhat={type === "response" ? t("common.responses") : t("common.contacts")}
+        deleteWhat={
+          type === "response"
+            ? t("common.count_responses", { value: selectedRowCount })
+            : t("common.count_contacts", { value: selectedRowCount })
+        }
         onDelete={handleDelete}
         isDeleting={isDeleting}
         text={deleteDialogText}>
