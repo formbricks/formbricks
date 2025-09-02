@@ -1,13 +1,15 @@
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { useTranslate } from "@tolgee/react";
-import { TSurveyQuota } from "@formbricks/types/quota";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
 
 interface QuotasProps {
-  quotas: TSurveyQuota[];
+  quotas: TResponseWithQuotas["quotas"];
 }
 
 export const Quotas = ({ quotas }: QuotasProps) => {
   const { t } = useTranslate();
+
+  if (!quotas) return null;
 
   return (
     <div data-testid="main-hidden-fields-div" className="mt-6 flex flex-col gap-1">

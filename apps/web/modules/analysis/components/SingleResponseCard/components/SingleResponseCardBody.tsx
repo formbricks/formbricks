@@ -122,7 +122,7 @@ export const SingleResponseCardBody = ({
         <HiddenFields hiddenFields={survey.hiddenFields} responseData={response.data} />
       )}
 
-      {response.quotas && response.quotas.length > 0 && <Quotas quotas={response.quotas} />}
+      <Quotas quotas={response.quotas} />
 
       {response.finished && (
         <div className="mt-4 flex items-center">

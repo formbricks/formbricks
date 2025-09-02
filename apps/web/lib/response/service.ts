@@ -611,8 +611,7 @@ export const deleteResponse = async (
     }
 
     if (decrementQuotas) {
-      const quotas = quotaLinks?.map((quotaLinkPrisma) => quotaLinkPrisma.quota);
-      const quotaIds = quotas?.map((quota) => quota.id) ?? [];
+      const quotaIds = quotaLinks?.map((link) => link.quota.id) ?? [];
       await reduceQuotaLimits(quotaIds);
     }
 

@@ -427,7 +427,7 @@ export const ZResponseTableData = z.object({
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;
 
 export const ZResponseWithQuotas = ZResponse.extend({
-  quotas: z.array(ZSurveyQuota).optional(),
+  quotas: z.array(ZSurveyQuota.pick({ id: true, name: true })).optional(),
 });
 
 export type TResponseWithQuotas = z.infer<typeof ZResponseWithQuotas>;
