@@ -228,7 +228,7 @@ export const getOrganizationBilling = reactCache(
     await cache.withCache(
       async () => {
         try {
-          const organization = await prisma.organization.findFirst({
+          const organization = await prisma.organization.findUnique({
             where: { id: organizationId },
             select: { billing: true },
           });

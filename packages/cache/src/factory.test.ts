@@ -121,7 +121,7 @@ describe("@formbricks/cache factory", () => {
   });
 
   describe("createCacheService", () => {
-    test("should create cache service with provided client that is already open", async () => {
+    test("should create cache service from environment with client that is already open", async () => {
       const mockClient: MockRedisClient = {
         isOpen: true,
         on: vi.fn(),
@@ -130,6 +130,9 @@ describe("@formbricks/cache factory", () => {
 
       // Mock the environment variable and test the factory
       process.env.REDIS_URL = "redis://localhost:6379";
+      // Ensure redis.createClient returns our open client
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
       const result = await createCacheService();
 
       expect(result.ok).toBe(true);

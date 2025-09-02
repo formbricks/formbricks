@@ -58,8 +58,8 @@ describe("Cache Index", () => {
 
       // createCacheService should only be called once
       expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
-      expect(mockLogger.info).toHaveBeenCalledWith("Initializing cache service...");
-      expect(mockLogger.info).toHaveBeenCalledWith("Cache service initialized successfully");
+      expect(mockLogger.debug).toHaveBeenCalledWith("Initializing cache service...");
+      expect(mockLogger.debug).toHaveBeenCalledWith("Cache service initialized successfully");
     });
 
     test("should reuse same cache instance across multiple calls", async () => {
@@ -89,13 +89,13 @@ describe("Cache Index", () => {
 
       // Cache should not be initialized yet
       expect(mockCreateCacheService).not.toHaveBeenCalled();
-      expect(mockLogger.info).not.toHaveBeenCalledWith("Initializing cache service...");
+      expect(mockLogger.debug).not.toHaveBeenCalledWith("Initializing cache service...");
 
       // First access should trigger initialization
       await cache.get("test-key");
 
       expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
-      expect(mockLogger.info).toHaveBeenCalledWith("Initializing cache service...");
+      expect(mockLogger.debug).toHaveBeenCalledWith("Initializing cache service...");
     });
 
     test("should handle concurrent initialization attempts", async () => {
@@ -334,7 +334,7 @@ describe("Cache Index", () => {
       const result = await cache.get("server-key");
 
       expect(result).toEqual({ ok: true, data: "server-value" });
-      expect(mockLogger.info).toHaveBeenCalledWith("Initializing cache service...");
+      expect(mockLogger.debug).toHaveBeenCalledWith("Initializing cache service...");
     });
   });
 });

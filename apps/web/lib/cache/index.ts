@@ -16,7 +16,7 @@ async function initializeCache(): Promise<CacheService> {
   }
 
   initializationPromise = (async () => {
-    logger.info("Initializing cache service...");
+    logger.debug("Initializing cache service...");
 
     const result = await createCacheService();
     if (!result.ok) {
@@ -24,7 +24,7 @@ async function initializeCache(): Promise<CacheService> {
       throw new Error(`Cache initialization failed: ${result.error.code}`);
     }
 
-    logger.info("Cache service initialized successfully");
+    logger.debug("Cache service initialized successfully");
     cacheInstance = result.data;
     return result.data;
   })();
@@ -32,14 +32,32 @@ async function initializeCache(): Promise<CacheService> {
   return initializationPromise;
 }
 
-// Type-safe Proxy that preserves all TypeScript benefits while avoiding double await
-export const cache: CacheService = new Proxy({} as CacheService, {
+// Expose an async-leaning service to reflect lazy init for sync members like getRedisClient
+type AsyncCacheService = Omit<CacheService, "getRedisClient"> & {
+  getRedisClient(): Promise<ReturnType<CacheService["getRedisClient"]>>;
+};
+
+export const cache: AsyncCacheService = new Proxy({} as AsyncCacheService, {
   get(_target, prop: keyof CacheService) {
-    // Return a function that matches the original method signature
-    return async (...args: any[]) => {
-      const cacheService = await initializeCache();
-      const method = cacheService[prop] as Function;
-      return method.apply(cacheService, args);
-    };
+    // Special-case: withCache must never fail; fall back to direct fn on init failure.
+    if (prop === "withCache") {
+      return async (fn: (...args: any[]) => Promise<unknown>, ...rest: any[]) => {
+        try {
+          const svc = await initializeCache();
+          // @ts-expect-error: types align at runtime
+          return svc.withCache(fn, ...rest);
+        } catch (error) {
+          logger.warn({ error }, "Cache unavailable; executing function directly");
+          return await fn();
+        }
+      };
+    }
+
+    // Default: lazily initialize and forward the call; returns a Promise for all methods
+    return (...args: any[]) =>
+      initializeCache().then((svc) => {
+        const method = (svc as any)[prop] as Function;
+        return method.apply(svc, args);
+      });
   },
 });

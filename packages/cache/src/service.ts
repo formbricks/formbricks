@@ -137,12 +137,12 @@ export class CacheService {
   }
 
   /**
-   * Cache wrapper for functions - implements cache-aside pattern
-   * This function NEVER fails - it always returns the function result as fallback
-   * @param fn - Function to cache
+   * Cache wrapper for functions (cache-aside).
+   * Never throws due to cache errors; function errors propagate without retry.
+   * @param fn - Function to execute (and optionally cache)
    * @param key - Cache key
    * @param ttlMs - Time to live in milliseconds
-   * @returns Always returns the function result (cached or fresh)
+   * @returns Cached value if present, otherwise fresh result from fn()
    */
   async withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<T> {
     // Validate inputs - if invalid, just execute function directly
@@ -152,8 +152,8 @@ export class CacheService {
       return await fn();
     }
 
+    // Try to get from cache first; do not let cache errors affect fn()
     try {
-      // Try to get from cache first
       const cacheResult = await this.get<T>(key);
       if (cacheResult.ok && cacheResult.data !== null) {
         // Cache hit with non-null value
@@ -173,21 +173,22 @@ export class CacheService {
           "Cache get operation failed, fetching fresh data"
         );
       }
+    } catch (error) {
+      logger.debug({ error, key }, "Cache get/exists threw; proceeding to compute fresh value");
+    }
 
-      // Cache miss or cache error - execute function
-      const fresh = await fn();
+    // Cache miss or cache error - execute function once
+    const fresh = await fn();
 
-      // Try to store in cache for next time (don't fail if cache set fails)
+    // Try to store in cache (best-effort)
+    try {
       const setResult = await this.set(key, fresh, ttlMs);
       if (!setResult.ok) {
         logger.debug({ error: setResult.error, key }, "Failed to cache fresh data, but returning result");
       }
-
-      return fresh;
     } catch (error) {
-      // If anything fails, log and execute function directly
-      logger.warn({ error, key }, "Cache operation failed, executing function directly");
-      return await fn();
+      logger.debug({ error, key }, "Cache set threw; returning fresh result");
     }
+    return fresh;
   }
 }

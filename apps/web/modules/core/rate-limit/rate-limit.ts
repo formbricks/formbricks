@@ -38,8 +38,8 @@ export const checkRateLimit = async (
 
     // Calculate TTL to expire exactly at window end, value in seconds
     const windowEnd = windowStart + config.interval;
-    // Convert window end from seconds to milliseconds, subtract current time, then convert back to seconds for Redis EXPIRE
-    const ttlSeconds = Math.ceil((windowEnd * 1000 - now) / 1000);
+    // Convert window end from seconds to milliseconds, subtract current time, then convert back to seconds for Redis EXPIRE (at least 1 second)
+    const ttlSeconds = Math.max(1, Math.ceil((windowEnd * 1000 - now) / 1000));
 
     // Lua script for atomic increment and conditional expire
     // This prevents race conditions between INCR and EXPIRE operations
