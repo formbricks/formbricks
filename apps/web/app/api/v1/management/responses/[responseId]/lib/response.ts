@@ -13,11 +13,6 @@ export const updateResponseWithQuotaEvaluation = async (
 ): Promise<TResponse> => {
   const response = await updateResponse(responseId, responseInput);
 
-  const survey = await getSurvey(response.surveyId);
-  if (!survey) {
-    return response;
-  }
-
   try {
     const quotas = await getQuotas(response.surveyId);
 

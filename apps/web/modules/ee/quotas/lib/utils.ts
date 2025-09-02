@@ -153,6 +153,11 @@ export const handleQuotas = async (
             where: {
               quotaId: { in: quotasCountingAll.map((q) => q.id) },
               status: "screenedIn",
+              response: {
+                id: {
+                  not: responseId,
+                },
+              },
             },
             _count: {
               responseId: true,
@@ -165,7 +170,12 @@ export const handleQuotas = async (
             where: {
               quotaId: { in: quotasCountingFinished.map((q) => q.id) },
               status: "screenedIn",
-              response: { finished: true },
+              response: {
+                id: {
+                  not: responseId,
+                },
+                finished: true,
+              },
             },
             _count: {
               responseId: true,

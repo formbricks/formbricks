@@ -194,6 +194,7 @@ export const getQuotaResponseCountAction = authenticatedActionClient
         ],
       });
 
-      return getQuotaLinkCountByQuotaId(parsedInput.quotaId);
+      const count = await getQuotaLinkCountByQuotaId(parsedInput.quotaId);
+      return { count };
     }
   );

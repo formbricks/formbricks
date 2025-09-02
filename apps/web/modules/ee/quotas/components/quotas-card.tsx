@@ -127,7 +127,7 @@ export const QuotasCard = ({
       quotaId: quota.id,
     });
     if (quotaResponseCountActionResult?.data) {
-      setQuotaResponseCount(quotaResponseCountActionResult.data);
+      setQuotaResponseCount(quotaResponseCountActionResult.data.count);
     } else {
       const errorMessage = getFormattedErrorMessage(quotaResponseCountActionResult);
       toast.error(errorMessage);
