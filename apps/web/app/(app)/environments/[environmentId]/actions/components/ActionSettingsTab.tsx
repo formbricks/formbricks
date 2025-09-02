@@ -50,7 +50,7 @@ export const ActionSettingsTab = ({
     [actionClass.id, actionClasses]
   );
 
-  const actionClassKeys = useActionClassKeys(actionClasses);
+  const actionClassKeys = useActionClassKeys(actionClasses).filter((key) => key !== actionClass.key);
 
   const form = useForm<TActionClassInput>({
     defaultValues: {

@@ -214,7 +214,7 @@ export const PricingCard = ({
         }}
         open={upgradeModalOpen}
         setOpen={setUpgradeModalOpen}
-        text={t("environments.settings.billing.switch_plan_confirmation_text", {
+        body={t("environments.settings.billing.switch_plan_confirmation_text", {
           plan: plan.name,
           price: planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly,
           period:

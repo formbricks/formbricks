@@ -1,3 +1,4 @@
+import { hasOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -13,9 +14,5 @@ export const hasOrganizationIdAndAccess = (
     return false;
   }
 
-  if (!authentication.organizationAccess?.accessControl?.[accessType]) {
-    return false;
-  }
-
-  return true;
+  return hasOrganizationAccess(authentication, accessType);
 };

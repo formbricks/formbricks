@@ -35,7 +35,7 @@ const Page = async (props) => {
   const locale = await findMatchingLocale();
 
   if (isReadOnly) {
-    redirect("./");
+    return redirect("./");
   }
 
   return (

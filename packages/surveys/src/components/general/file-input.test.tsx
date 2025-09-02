@@ -44,7 +44,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={[]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         maxSizeInMB={1}
         allowMultipleFiles={true}
       />
@@ -55,7 +55,7 @@ describe("FileInput", () => {
 
     await waitFor(() => {
       expect(onFileUpload).toHaveBeenCalledWith(expect.objectContaining({ name: "test.txt" }), {
-        allowedFileExtensions: ["plain"],
+        allowedFileExtensions: ["txt"],
         surveyId: "survey1",
       });
       expect(onUploadCallback).toHaveBeenCalledWith(["uploaded-url"]);
@@ -108,7 +108,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={initialUrls}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         allowMultipleFiles={true}
       />
     );
@@ -128,7 +128,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={["dup.txt"]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         allowMultipleFiles={true}
       />
     );
@@ -151,7 +151,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={[]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         maxSizeInMB={1}
         allowMultipleFiles={true}
       />
@@ -185,7 +185,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={[]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         maxSizeInMB={1}
         allowMultipleFiles={true}
       />
@@ -242,7 +242,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={["dup.txt"]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         allowMultipleFiles={true}
       />
     );
@@ -274,7 +274,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={[]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         maxSizeInMB={0.5} // 500KB limit
         allowMultipleFiles={true}
       />
@@ -311,7 +311,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={[]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         maxSizeInMB={0.1} // Very small limit to ensure filtering
         allowMultipleFiles={true}
       />
@@ -339,7 +339,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={initialUrls}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         allowMultipleFiles={true}
       />
     );
@@ -359,7 +359,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={[]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         allowMultipleFiles={true}
       />
     );
@@ -402,7 +402,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={[]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         maxSizeInMB={1}
         allowMultipleFiles={true}
       />
@@ -426,7 +426,7 @@ describe("FileInput", () => {
         onFileUpload={onFileUpload}
         onUploadCallback={onUploadCallback}
         fileUrls={[]}
-        allowedFileExtensions={["plain"]}
+        allowedFileExtensions={["txt"]}
         allowMultipleFiles={true}
       />
     );

@@ -297,7 +297,7 @@ export const EditEndingCard = ({
         }}
         open={openDeleteConfirmationModal}
         setOpen={setOpenDeleteConfirmationModal}
-        text={t("environments.surveys.edit.follow_ups_ending_card_delete_modal_text")}
+        body={t("environments.surveys.edit.follow_ups_ending_card_delete_modal_text")}
         title={t("environments.surveys.edit.follow_ups_ending_card_delete_modal_title")}
       />
     </div>
