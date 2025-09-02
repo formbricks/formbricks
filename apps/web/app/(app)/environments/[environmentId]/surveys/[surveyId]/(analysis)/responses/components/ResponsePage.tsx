@@ -23,6 +23,7 @@ interface ResponsePageProps {
   responsesPerPage: number;
   locale: TUserLocale;
   isReadOnly: boolean;
+  isQuotasEnabled: boolean;
 }
 
 export const ResponsePage = ({
@@ -34,6 +35,7 @@ export const ResponsePage = ({
   responsesPerPage,
   locale,
   isReadOnly,
+  isQuotasEnabled,
 }: ResponsePageProps) => {
   const [responses, setResponses] = useState<TResponseWithQuotas[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -140,6 +142,7 @@ export const ResponsePage = ({
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
         locale={locale}
+        isQuotasEnabled={isQuotasEnabled}
       />
     </>
   );

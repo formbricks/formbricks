@@ -1,6 +1,7 @@
 "use client";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { cn } from "@/modules/ui/lib/utils";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { TSurveySummary } from "@formbricks/types/surveys/types";
@@ -10,6 +11,7 @@ interface SummaryMetadataProps {
   isLoading: boolean;
   tab: "dropOffs" | "quotas" | undefined;
   setTab: React.Dispatch<React.SetStateAction<"dropOffs" | "quotas" | undefined>>;
+  isQuotasEnabled: boolean;
 }
 
 const StatCard = ({ label, percentage, value, tooltipText, isLoading }) => {
@@ -54,7 +56,13 @@ const formatTime = (ttc) => {
   return formattedValue;
 };
 
-export const SummaryMetadata = ({ surveySummary, isLoading, tab, setTab }: SummaryMetadataProps) => {
+export const SummaryMetadata = ({
+  surveySummary,
+  isLoading,
+  tab,
+  setTab,
+  isQuotasEnabled,
+}: SummaryMetadataProps) => {
   const {
     completedPercentage,
     completedResponses,
@@ -78,7 +86,11 @@ export const SummaryMetadata = ({ surveySummary, isLoading, tab, setTab }: Summa
 
   return (
     <div>
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-x-2 lg:grid-cols-3 2xl:grid-cols-6">
+      <div
+        className={cn(
+          `grid gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-x-2 lg:grid-cols-3 2xl:grid-cols-5`,
+          isQuotasEnabled && "2xl:grid-cols-6"
+        )}>
         <StatCard
           label={t("environments.surveys.summary.impressions")}
           percentage={null}
@@ -145,41 +157,43 @@ export const SummaryMetadata = ({ surveySummary, isLoading, tab, setTab }: Summa
           isLoading={isLoading}
         />
 
-        <TooltipProvider delayDuration={50}>
-          <Tooltip>
-            <TooltipTrigger onClick={() => handleTabChange("quotas")} data-testid="quotas-toggle">
-              <div
-                className="flex h-full cursor-pointer flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm"
-                id="quotas-toggle">
-                <span className="text-sm text-slate-600">
-                  {t("environments.surveys.summary.quotas_completed")}
-                  {`${Math.round(quotasCompletedPercentage)}%` !== "NaN%" && !isLoading && (
-                    <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{`${Math.round(quotasCompletedPercentage)}%`}</span>
-                  )}
-                </span>
-                <div className="flex w-full items-end justify-between">
-                  <span className="text-2xl font-bold text-slate-800">
-                    {isLoading ? (
-                      <div className="h-6 w-12 animate-pulse rounded-full bg-slate-200"></div>
-                    ) : (
-                      quotasCompletedValue
+        {isQuotasEnabled && (
+          <TooltipProvider delayDuration={50}>
+            <Tooltip>
+              <TooltipTrigger onClick={() => handleTabChange("quotas")} data-testid="quotas-toggle">
+                <div
+                  className="flex h-full cursor-pointer flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm"
+                  id="quotas-toggle">
+                  <span className="text-sm text-slate-600">
+                    {t("environments.surveys.summary.quotas_completed")}
+                    {`${Math.round(quotasCompletedPercentage)}%` !== "NaN%" && !isLoading && (
+                      <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{`${Math.round(quotasCompletedPercentage)}%`}</span>
                     )}
                   </span>
-                  {!isLoading && (
-                    <div className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100">
-                      {tab === "quotas" ? (
-                        <ChevronUpIcon className="h-4 w-4" />
+                  <div className="flex w-full items-end justify-between">
+                    <span className="text-2xl font-bold text-slate-800">
+                      {isLoading ? (
+                        <div className="h-6 w-12 animate-pulse rounded-full bg-slate-200"></div>
                       ) : (
-                        <ChevronDownIcon className="h-4 w-4" />
+                        quotasCompletedValue
                       )}
-                    </div>
-                  )}
+                    </span>
+                    {!isLoading && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100">
+                        {tab === "quotas" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>{t("environments.surveys.summary.quotas_completed_tooltip")}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+              </TooltipTrigger>
+              <TooltipContent>{t("environments.surveys.summary.quotas_completed_tooltip")}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
     </div>
   );

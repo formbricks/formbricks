@@ -1,5 +1,8 @@
 import "server-only";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
@@ -363,12 +366,24 @@ export const getResponseDownloadUrl = async (
       responses
     );
 
+    const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
+    if (!organizationId) {
+      throw new Error("Organization ID not found");
+    }
+
+    const organizationBilling = await getOrganizationBilling(organizationId);
+
+    if (!organizationBilling) {
+      throw new Error("Organization billing not found");
+    }
+    const isQuotasEnabled = await getIsQuotasEnabled(organizationBilling.plan);
+
     const headers = [
       "No.",
       "Response ID",
       "Timestamp",
       "Finished",
-      "Quotas",
+      ...(isQuotasEnabled ? ["Quotas"] : []),
       "Survey ID",
       "Formbricks ID (internal)",
       "User ID",

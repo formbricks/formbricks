@@ -51,6 +51,7 @@ interface ResponseTableProps {
   updateResponse: (responseId: string, updatedResponse: TResponseWithQuotas) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
+  isQuotasEnabled: boolean;
 }
 
 export const ResponseTable = ({
@@ -67,6 +68,7 @@ export const ResponseTable = ({
   updateResponse,
   isFetchingFirstPage,
   locale,
+  isQuotasEnabled,
 }: ResponseTableProps) => {
   const { t } = useTranslate();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -79,7 +81,7 @@ export const ResponseTable = ({
   const [parent] = useAutoAnimate();
 
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, isQuotasEnabled);
 
   // Save settings to localStorage when they change
   useEffect(() => {

@@ -22,6 +22,7 @@ interface ResponseDataViewProps {
   updateResponse: (responseId: string, updatedResponse: TResponseWithQuotas) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
+  isQuotasEnabled: boolean;
 }
 
 // Export for testing
@@ -118,6 +119,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   updateResponse,
   isFetchingFirstPage,
   locale,
+  isQuotasEnabled,
 }) => {
   const { t } = useTranslate();
   const data = mapResponsesToTableData(responses, survey, t);
@@ -138,6 +140,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
         locale={locale}
+        isQuotasEnabled={isQuotasEnabled}
       />
     </div>
   );
