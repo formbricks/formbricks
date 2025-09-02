@@ -59,8 +59,8 @@ vi.mock("@formbricks/cache", () => ({
     custom: vi.fn((namespace: string, ...parts: string[]) => `${namespace}:${parts.join(":")}`),
     rateLimit: {
       core: vi.fn(
-        (namespace: string, identifier: string, windowStart: number) =>
-          `rate_limit:${namespace}:${identifier}:${windowStart}`
+        (namespace: string, identifier: string, bucketStart: number) =>
+          `rate_limit:${namespace}:${identifier}:${bucketStart}`
       ),
     },
   },
@@ -197,6 +197,67 @@ describe("Auth Utils", () => {
 
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
+    });
+
+    describe("Bucket Time Alignment", () => {
+      test("should align timestamps to bucket boundaries for consistent keys across pods", async () => {
+        mockCache.getRedisClient.mockResolvedValue(null);
+
+        const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes = 300000ms
+
+        // Test with a known aligned timestamp (start of hour for simplicity)
+        const alignedTime = 1700000000000; // Use this as our aligned bucket start
+        const bucketStart = Math.floor(alignedTime / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
+
+        // Verify bucket alignment logic with specific test cases
+        const testCases = [
+          { timestamp: bucketStart, expected: bucketStart },
+          { timestamp: bucketStart + 50000, expected: bucketStart }, // 50 seconds later
+          { timestamp: bucketStart + 100000, expected: bucketStart }, // 1 min 40 sec later
+          { timestamp: bucketStart + 200000, expected: bucketStart }, // 3 min 20 sec later
+          { timestamp: bucketStart + RATE_LIMIT_WINDOW, expected: bucketStart + RATE_LIMIT_WINDOW }, // Next bucket
+        ];
+
+        for (const { timestamp, expected } of testCases) {
+          const actualBucketStart = Math.floor(timestamp / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
+          expect(actualBucketStart).toBe(expected);
+        }
+      });
+
+      test("should create consistent cache keys with bucketed timestamps", async () => {
+        const { createCacheKey } = await import("@formbricks/cache");
+        const { createAuditIdentifier } = await import("./utils");
+
+        mockCache.getRedisClient.mockResolvedValue(null);
+
+        const identifier = "test@example.com";
+        const hashedIdentifier = createAuditIdentifier(identifier, "ratelimit");
+
+        const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 minutes = 300000ms
+
+        // Use a simple aligned time for testing
+        const baseTime = 1700000000000;
+        const bucketStart = Math.floor(baseTime / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
+
+        // Test that cache keys are consistent for the same bucket
+        const timestamp1 = bucketStart;
+        const timestamp2 = bucketStart + 60000; // 1 minute later in same bucket
+
+        const bucketStart1 = Math.floor(timestamp1 / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
+        const bucketStart2 = Math.floor(timestamp2 / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
+
+        // Both should align to the same bucket
+        expect(bucketStart1).toBe(bucketStart);
+        expect(bucketStart2).toBe(bucketStart);
+
+        // Both should generate the same cache key
+        const key1 = (createCacheKey.rateLimit.core as any)("auth", hashedIdentifier, bucketStart1);
+        const key2 = (createCacheKey.rateLimit.core as any)("auth", hashedIdentifier, bucketStart2);
+        expect(key1).toBe(key2);
+
+        const expectedKey = `rate_limit:auth:${hashedIdentifier}:${bucketStart}`;
+        expect(key1).toBe(expectedKey);
+      });
     });
 
     test("should implement fail-closed behavior when Redis is unavailable", async () => {

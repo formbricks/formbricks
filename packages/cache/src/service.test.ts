@@ -507,7 +507,7 @@ describe("CacheService", () => {
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
     });
 
-    test("should execute function and cache undefined result as null", async () => {
+    test("should return undefined without caching when function returns undefined", async () => {
       const key = "test:key" as CacheKey;
       const fn = vi.fn().mockResolvedValue(undefined); // Function returns undefined
 
@@ -519,8 +519,37 @@ describe("CacheService", () => {
 
       expect(result).toBeUndefined();
       expect(fn).toHaveBeenCalledOnce();
-      // undefined should be normalized to null in cache
-      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
+      // undefined should NOT be cached to preserve semantics
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
+    });
+
+    test("should distinguish between null and undefined return values", async () => {
+      const nullKey = "test:null-key" as CacheKey;
+      const undefinedKey = "test:undefined-key" as CacheKey;
+
+      const nullFn = vi.fn().mockResolvedValue(null);
+      const undefinedFn = vi.fn().mockResolvedValue(undefined);
+
+      // Mock cache miss for both keys
+      mockRedis.get.mockResolvedValue(null);
+      mockRedis.exists.mockResolvedValue(0);
+
+      // Test null return value - should be cached
+      const nullResult = await cacheService.withCache(nullFn, nullKey, 60000);
+      expect(nullResult).toBeNull();
+      expect(nullFn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(nullKey, 60, "null");
+
+      // Reset mocks
+      vi.clearAllMocks();
+      mockRedis.get.mockResolvedValue(null);
+      mockRedis.exists.mockResolvedValue(0);
+
+      // Test undefined return value - should NOT be cached
+      const undefinedResult = await cacheService.withCache(undefinedFn, undefinedKey, 60000);
+      expect(undefinedResult).toBeUndefined();
+      expect(undefinedFn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
     });
 
     test("should execute function directly when cache fails", async () => {

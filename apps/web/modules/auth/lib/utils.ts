@@ -234,11 +234,11 @@ export const shouldLogAuthFailure = async (
   if (isSuccess) return true;
 
   const now = Date.now();
-  const windowStart = now - RATE_LIMIT_WINDOW;
+  const bucketStart = Math.floor(now / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
   const rateLimitKey = createCacheKey.rateLimit.core(
     "auth",
     createAuditIdentifier(identifier, "ratelimit"),
-    windowStart
+    bucketStart
   );
 
   try {
@@ -253,7 +253,7 @@ export const shouldLogAuthFailure = async (
     const multi = redis.multi();
 
     // Remove expired entries and count recent failures
-    multi.zRemRangeByScore(rateLimitKey, 0, windowStart);
+    multi.zRemRangeByScore(rateLimitKey, 0, bucketStart);
     multi.zCard(rateLimitKey);
     multi.zAdd(rateLimitKey, { score: now, value: `${now}:${randomUUID()}` });
     multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));

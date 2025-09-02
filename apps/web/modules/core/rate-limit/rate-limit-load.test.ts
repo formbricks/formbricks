@@ -159,6 +159,13 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
 
   afterAll(async () => {
     // Clean up test keys
+    isRedisAvailable = await checkRedisAvailability();
+
+    if (!isRedisAvailable) {
+      console.log("Skipping cleanup: Redis not available");
+      return;
+    }
+
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const redis = await cache.getRedisClient();
     if (redis) {
