@@ -9,4 +9,5 @@ export { createCacheKey } from "./cache-keys";
 export type { CacheKey } from "../types/keys";
 
 // Result types and error handling
-export type { Result, CacheError, ErrorCode } from "../types/error";
+export type { Result, CacheError } from "../types/error";
+export { CacheErrorClass, ErrorCode } from "../types/error";

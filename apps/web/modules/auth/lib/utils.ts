@@ -14,8 +14,15 @@ export const hashPassword = async (password: string) => {
 };
 
 export const verifyPassword = async (password: string, hashedPassword: string) => {
-  const isValid = await compare(password, hashedPassword);
-  return isValid;
+  try {
+    const isValid = await compare(password, hashedPassword);
+    return isValid;
+  } catch (error) {
+    // Log warning for debugging purposes, but don't throw to maintain security
+    logger.warn("Password verification failed due to invalid hash format", { error });
+    // Return false for invalid hashes or other bcrypt errors
+    return false;
+  }
 };
 
 /**

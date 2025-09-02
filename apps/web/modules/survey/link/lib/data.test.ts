@@ -49,6 +49,7 @@ vi.mock("@formbricks/database", () => ({
     },
     organization: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -475,11 +476,10 @@ describe("data", () => {
 
     test("should fetch organization billing successfully", async () => {
       const organizationId = "org-1";
-      const mockCacheFunction = vi.fn().mockResolvedValue(mockBilling);
 
       vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
       vi.mocked(cache.withCache).mockResolvedValue(mockBilling);
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue(mockOrganization as any);
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as any);
 
       const result = await getOrganizationBilling(organizationId);
 
@@ -496,7 +496,7 @@ describe("data", () => {
       const organizationId = "nonexistent-org";
       vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
       vi.mocked(cache.withCache).mockImplementation(async (fn) => {
-        vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
+        vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
         return await fn();
       });
 
@@ -513,7 +513,7 @@ describe("data", () => {
 
       vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
       vi.mocked(cache.withCache).mockImplementation(async (fn) => {
-        vi.mocked(prisma.organization.findFirst).mockRejectedValue(prismaError);
+        vi.mocked(prisma.organization.findUnique).mockRejectedValue(prismaError);
         return await fn();
       });
 
@@ -526,7 +526,7 @@ describe("data", () => {
 
       vi.mocked(createCacheKey.organization.billing).mockReturnValue(mockCacheKey("billing-cache-key"));
       vi.mocked(cache.withCache).mockImplementation(async (fn) => {
-        vi.mocked(prisma.organization.findFirst).mockRejectedValue(genericError);
+        vi.mocked(prisma.organization.findUnique).mockRejectedValue(genericError);
         return await fn();
       });
 

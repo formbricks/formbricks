@@ -1,5 +1,5 @@
 import type { RedisClient } from "@/types/client";
-import { type CacheError, ErrorCode, type Result, err, ok } from "@/types/error";
+import { type CacheError, CacheErrorClass, ErrorCode, type Result, err, ok } from "@/types/error";
 import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
 import { CacheService } from "./service";
@@ -60,37 +60,65 @@ export function createRedisClientFromEnv(): Result<RedisClient, CacheError> {
 }
 
 /**
- * Creates a cache service instance and connects to Redis
+ * Creates a cache service instance and connects to Redis.
+ * Returns a Result and never throws; callers must handle \{ ok: false \}.
+ * Singleton scope: per-process/per-module instance (each worker/lambda gets its own).
  * Each package using Redis should handle its own connection
  * This is a singleton to ensure only one instance of the cache service is created
  * @returns Promise that resolves to Result containing CacheService or CacheError
  */
 let singleton: CacheService | null = null;
+let initializing: Promise<CacheService> | null = null;
+
 export async function createCacheService(): Promise<Result<CacheService, CacheError>> {
-  if (singleton) {
-    return ok(singleton);
-  }
-
-  const clientResult = createRedisClientFromEnv();
-  if (!clientResult.ok) {
-    return clientResult;
-  }
-
-  const client = clientResult.data;
-
-  // Connect to Redis
-  if (!client.isOpen) {
+  if (singleton) return ok(singleton);
+  if (initializing) {
+    // return the result of the first initializing promise if it exists
     try {
-      await client.connect();
-    } catch (error) {
-      logger.error(error, "Redis connection failed");
-      return err({
-        code: ErrorCode.RedisConnectionError,
-      });
+      const svc = await initializing;
+      return ok(svc);
+    } catch (e) {
+      return err(e as CacheError);
     }
   }
 
-  singleton = new CacheService(client);
+  initializing = (async () => {
+    const clientResult = createRedisClientFromEnv();
+    if (!clientResult.ok) {
+      throw CacheErrorClass.fromCacheError(clientResult.error, "Redis client creation failed");
+    }
+    const client = clientResult.data;
+    if (!client.isOpen) {
+      try {
+        await client.connect();
+      } catch (error) {
+        logger.error(error, "Redis connection failed");
+        // Prevent zombie reconnect loops by destroying the failed client
+        try {
+          client.destroy();
+        } catch {
+          // Ignore cleanup errors - the original connection error is more important
+        }
+        throw new CacheErrorClass(ErrorCode.RedisConnectionError, "Redis connection failed");
+      }
+    }
+    const svc = new CacheService(client);
+    singleton = svc;
+    return svc;
+  })();
 
-  return ok(singleton);
+  // handles the first initializing promise
+  try {
+    const svc = await initializing;
+    return ok(svc);
+  } catch (e) {
+    initializing = null; // allow retry on next call
+    return err(e as CacheError);
+  }
+}
+
+// Test-only reset; do not export from the package entrypoint.
+export function __resetCacheFactoryForTests(): void {
+  singleton = null;
+  initializing = null;
 }

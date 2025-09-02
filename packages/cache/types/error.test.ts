@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { type CacheError, ErrorCode, type Result, err, ok } from "./error";
+import { type CacheError, CacheErrorClass, ErrorCode, type Result, err, ok } from "./error";
 
 describe("Error types and utilities", () => {
   describe("ok utility function", () => {
@@ -126,11 +126,158 @@ describe("Error types and utilities", () => {
     });
   });
 
+  describe("CacheErrorClass", () => {
+    test("should create proper Error instances with code and message", () => {
+      const error = new CacheErrorClass(ErrorCode.RedisConnectionError, "Custom error message");
+
+      expect(error).toBeInstanceOf(Error);
+      expect(error).toBeInstanceOf(CacheErrorClass);
+      expect(error.name).toBe("CacheError");
+      expect(error.message).toBe("Custom error message");
+      expect(error.code).toBe(ErrorCode.RedisConnectionError);
+      expect(error.stack).toBeDefined();
+      expect(typeof error.stack).toBe("string");
+    });
+
+    test("should create Error instances with default message", () => {
+      const error = new CacheErrorClass(ErrorCode.CacheValidationError);
+
+      expect(error).toBeInstanceOf(Error);
+      expect(error).toBeInstanceOf(CacheErrorClass);
+      expect(error.name).toBe("CacheError");
+      expect(error.message).toBe("Cache error: cache_validation_error");
+      expect(error.code).toBe(ErrorCode.CacheValidationError);
+      expect(error.stack).toBeDefined();
+    });
+
+    test("should work with all ErrorCode values", () => {
+      // Test a representative sample to avoid deep nesting warnings
+      const testCodes = [
+        ErrorCode.Unknown,
+        ErrorCode.CacheValidationError,
+        ErrorCode.RedisConnectionError,
+        ErrorCode.RedisOperationError,
+        ErrorCode.CacheCorruptionError,
+      ];
+
+      testCodes.forEach((code) => {
+        const error = new CacheErrorClass(code, `Test error for ${code}`);
+
+        expect(error.code).toBe(code);
+        expect(error.message).toBe(`Test error for ${code}`);
+        expect(error).toBeInstanceOf(Error);
+        expect(error).toBeInstanceOf(CacheErrorClass);
+      });
+    });
+
+    test("should implement CacheError interface", () => {
+      const error = new CacheErrorClass(ErrorCode.RedisOperationError, "Test message");
+
+      // Should be assignable to CacheError interface
+      const cacheError: CacheError = error;
+      expect(cacheError.code).toBe(ErrorCode.RedisOperationError);
+    });
+
+    test("should be throwable and catchable", () => {
+      expect(() => {
+        throw new CacheErrorClass(ErrorCode.CacheCorruptionError, "Data corrupted");
+      }).toThrow("Data corrupted");
+
+      try {
+        throw new CacheErrorClass(ErrorCode.RedisConnectionError, "Connection failed");
+      } catch (error) {
+        expect(error).toBeInstanceOf(CacheErrorClass);
+        expect(error).toBeInstanceOf(Error);
+        if (error instanceof CacheErrorClass) {
+          expect(error.code).toBe(ErrorCode.RedisConnectionError);
+          expect(error.message).toBe("Connection failed");
+        }
+      }
+    });
+
+    describe("fromCacheError static method", () => {
+      test("should convert plain CacheError to CacheErrorClass", () => {
+        const plainError: CacheError = { code: ErrorCode.CacheValidationError };
+        const errorClass = CacheErrorClass.fromCacheError(plainError);
+
+        expect(errorClass).toBeInstanceOf(Error);
+        expect(errorClass).toBeInstanceOf(CacheErrorClass);
+        expect(errorClass.code).toBe(ErrorCode.CacheValidationError);
+        expect(errorClass.message).toBe("Cache error: cache_validation_error");
+        expect(errorClass.name).toBe("CacheError");
+      });
+
+      test("should use custom message when provided", () => {
+        const plainError: CacheError = { code: ErrorCode.RedisOperationError };
+        const errorClass = CacheErrorClass.fromCacheError(plainError, "Custom conversion message");
+
+        expect(errorClass.code).toBe(ErrorCode.RedisOperationError);
+        expect(errorClass.message).toBe("Custom conversion message");
+        expect(errorClass).toBeInstanceOf(Error);
+        expect(errorClass).toBeInstanceOf(CacheErrorClass);
+      });
+
+      test("should preserve error code from plain object", () => {
+        // Test a few key error codes to avoid deep nesting warning
+        const testCodes = [
+          ErrorCode.CacheValidationError,
+          ErrorCode.RedisConnectionError,
+          ErrorCode.RedisOperationError,
+        ];
+
+        testCodes.forEach((code) => {
+          const plainError: CacheError = { code };
+          const errorClass = CacheErrorClass.fromCacheError(plainError, `Converted ${code}`);
+
+          expect(errorClass.code).toBe(code);
+          expect(errorClass.message).toBe(`Converted ${code}`);
+        });
+      });
+    });
+
+    test("should maintain proper prototype chain", () => {
+      const error = new CacheErrorClass(ErrorCode.Unknown, "Test error");
+
+      // Verify prototype chain
+      expect(Object.getPrototypeOf(error)).toBe(CacheErrorClass.prototype);
+      expect(Object.getPrototypeOf(CacheErrorClass.prototype)).toBe(Error.prototype);
+
+      // Verify constructor
+      expect(error.constructor).toBe(CacheErrorClass);
+    });
+
+    test("should have enumerable code property", () => {
+      const error = new CacheErrorClass(ErrorCode.RedisConnectionError, "Test");
+      const descriptor = Object.getOwnPropertyDescriptor(error, "code");
+
+      expect(descriptor).toBeDefined();
+      expect(descriptor?.enumerable).toBe(true);
+      expect(descriptor?.value).toBe(ErrorCode.RedisConnectionError);
+    });
+
+    test("should work with JSON.stringify", () => {
+      const error = new CacheErrorClass(ErrorCode.CacheValidationError, "Validation failed");
+
+      // JSON.stringify should include the code property (public field)
+      const json = JSON.stringify(error);
+      const parsed = JSON.parse(json) as Record<string, unknown>;
+
+      expect(parsed.code).toBe(ErrorCode.CacheValidationError);
+      // Note: Error's message and name are not enumerable by default in JSON.stringify
+      // Only the public 'code' property will be serialized
+      expect(parsed.code).toBeDefined();
+    });
+  });
+
   describe("Module exports", () => {
     test("should export all required types and utilities", () => {
       // Verify functions are exported
       expect(typeof ok).toBe("function");
       expect(typeof err).toBe("function");
+
+      // Verify classes are exported
+      expect(typeof CacheErrorClass).toBe("function");
+      expect(CacheErrorClass.prototype).toBeInstanceOf(Error);
 
       // Verify enum is exported
       expect(typeof ErrorCode).toBe("object");

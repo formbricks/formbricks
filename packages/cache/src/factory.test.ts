@@ -2,7 +2,7 @@ import type { RedisClient } from "@/types/client";
 import { ErrorCode } from "@/types/error";
 import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createCacheService, createRedisClientFromEnv } from "./factory";
+import { __resetCacheFactoryForTests, createCacheService, createRedisClientFromEnv } from "./factory";
 
 // Mock the redis module
 vi.mock("redis", () => ({
@@ -35,6 +35,7 @@ interface MockRedisClient {
   isOpen: boolean;
   on: ReturnType<typeof vi.fn>;
   connect: ReturnType<typeof vi.fn>;
+  destroy: ReturnType<typeof vi.fn>;
 }
 
 // Get typed mocks
@@ -44,6 +45,7 @@ describe("@formbricks/cache factory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.REDIS_URL;
+    __resetCacheFactoryForTests();
   });
 
   describe("createRedisClientFromEnv", () => {
@@ -63,6 +65,7 @@ describe("@formbricks/cache factory", () => {
         isOpen: false,
         on: vi.fn(),
         connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn().mockResolvedValue(undefined),
       };
 
       // @ts-expect-error - Mock client type incompatibility with Redis types
@@ -97,6 +100,7 @@ describe("@formbricks/cache factory", () => {
         isOpen: false,
         on: vi.fn(),
         connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn().mockResolvedValue(undefined),
       };
 
       // @ts-expect-error - Mock client type incompatibility with Redis types
@@ -139,6 +143,7 @@ describe("@formbricks/cache factory", () => {
         isOpen: false,
         on: vi.fn(),
         connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn().mockResolvedValue(undefined),
       };
 
       // @ts-expect-error - Mock client type incompatibility with Redis types
@@ -150,6 +155,139 @@ describe("@formbricks/cache factory", () => {
       if (result.ok) {
         expect(result.data).toBeDefined();
       }
+    });
+
+    test("should handle concurrent initialization safely", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+
+      const mockClient: MockRedisClient = {
+        isOpen: false,
+        on: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn().mockResolvedValue(undefined),
+      };
+
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
+
+      // Start multiple concurrent calls
+      const promises = Array(3)
+        .fill(null)
+        .map(() => createCacheService());
+      const results = await Promise.all(promises);
+
+      // All should succeed and return the same instance
+      results.forEach((result) => {
+        expect(result.ok).toBe(true);
+      });
+      if (results[0].ok && results[1].ok && results[2].ok) {
+        expect(results[0].data).toBe(results[1].data);
+        expect(results[1].data).toBe(results[2].data);
+      }
+
+      // Only one client should have been created
+      expect(mockCreateClient).toHaveBeenCalledTimes(1);
+    });
+
+    test("should allow retry after failed initialization", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+
+      const mockClient: MockRedisClient = {
+        isOpen: false,
+        on: vi.fn(),
+        connect: vi
+          .fn()
+          .mockRejectedValueOnce(new Error("Connection failed"))
+          .mockResolvedValueOnce(undefined),
+        destroy: vi.fn().mockResolvedValue(undefined),
+      };
+
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
+
+      // First call should fail
+      const firstResult = await createCacheService();
+      expect(firstResult.ok).toBe(false);
+
+      // Second call should succeed (after retry)
+      const secondResult = await createCacheService();
+      expect(secondResult.ok).toBe(true);
+    });
+
+    test("should call destroy on connection failure to prevent zombie reconnections", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+
+      const mockClient: MockRedisClient = {
+        isOpen: false,
+        on: vi.fn(),
+        connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
+        destroy: vi.fn().mockResolvedValue(undefined),
+      };
+
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
+
+      // Call should fail
+      const result = await createCacheService();
+      expect(result.ok).toBe(false);
+
+      // Verify destroy was called to prevent zombie reconnections
+      expect(mockClient.destroy).toHaveBeenCalledTimes(1);
+      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+    });
+
+    test("should handle destroy failure gracefully", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+
+      const mockClient: MockRedisClient = {
+        isOpen: false,
+        on: vi.fn(),
+        connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
+        destroy: vi.fn().mockRejectedValue(new Error("Destroy failed")),
+      };
+
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
+
+      // Call should fail but destroy failure should not interfere
+      const result = await createCacheService();
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
+      }
+
+      // Verify destroy was attempted even though it failed
+      expect(mockClient.destroy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("__resetCacheFactoryForTests", () => {
+    test("should reset singleton and initializing state", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+
+      const mockClient: MockRedisClient = {
+        isOpen: false,
+        on: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn().mockResolvedValue(undefined),
+      };
+
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
+
+      // Create initial service
+      const firstResult = await createCacheService();
+      expect(firstResult.ok).toBe(true);
+
+      // Reset the factory
+      __resetCacheFactoryForTests();
+
+      // Create another service - should create a new instance
+      const secondResult = await createCacheService();
+      expect(secondResult.ok).toBe(true);
+
+      // Should have called createClient twice (once for each service)
+      expect(mockCreateClient).toHaveBeenCalledTimes(2);
     });
   });
 });
