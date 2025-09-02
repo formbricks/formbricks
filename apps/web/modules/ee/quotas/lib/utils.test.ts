@@ -441,6 +441,11 @@ describe("Quota Utils", () => {
         where: {
           quotaId: { in: ["quota456"] },
           status: "screenedIn",
+          response: {
+            id: {
+              not: mockResponseId,
+            },
+          },
         },
         _count: {
           responseId: true,
@@ -466,7 +471,12 @@ describe("Quota Utils", () => {
         where: {
           quotaId: { in: [mockQuotaId] },
           status: "screenedIn",
-          response: { finished: true },
+          response: {
+            id: {
+              not: mockResponseId,
+            },
+            finished: true,
+          },
         },
         _count: {
           responseId: true,
