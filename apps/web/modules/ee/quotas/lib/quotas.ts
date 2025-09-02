@@ -100,10 +100,11 @@ export const deleteQuota = async (quotaId: string): Promise<TSurveyQuota> => {
     return deletedQuota;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        throw new ResourceNotFoundError("Quota not found", error.message);
+      }
+
       throw new DatabaseError(error.message);
-    }
-    if (error.code === PrismaErrorType.RecordDoesNotExist) {
-      throw new ResourceNotFoundError("Quota not found", error.message);
     }
     throw error;
   }

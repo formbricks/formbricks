@@ -2,7 +2,7 @@
 
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
-import { Quotas } from "@/modules/analysis/components/SingleResponseCard/components/quotas";
+import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon } from "lucide-react";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
@@ -122,7 +122,7 @@ export const SingleResponseCardBody = ({
         <HiddenFields hiddenFields={survey.hiddenFields} responseData={response.data} />
       )}
 
-      <Quotas quotas={response.quotas} />
+      <ResponseCardQuotas quotas={response.quotas} />
 
       {response.finished && (
         <div className="mt-4 flex items-center">

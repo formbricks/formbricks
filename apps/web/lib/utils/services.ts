@@ -249,10 +249,6 @@ export const getQuota = reactCache(async (quotaId: string): Promise<{ surveyId: 
 
     return { surveyId: quota.surveyId };
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
     throw error;
   }
 });

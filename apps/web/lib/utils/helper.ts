@@ -196,9 +196,6 @@ export const getOrganizationIdFromDocumentId = async (documentId: string) => {
 
 export const getOrganizationIdFromQuotaId = async (quotaId: string) => {
   const quota = await getQuota(quotaId);
-  if (!quota) {
-    throw new ResourceNotFoundError("quota", quotaId);
-  }
 
   return await getOrganizationIdFromSurveyId(quota.surveyId);
 };
@@ -314,9 +311,6 @@ export const getProjectIdFromWebhookId = async (webhookId: string) => {
 
 export const getProjectIdFromQuotaId = async (quotaId: string) => {
   const quota = await getQuota(quotaId);
-  if (!quota) {
-    throw new ResourceNotFoundError("quota", quotaId);
-  }
 
   return await getProjectIdFromSurveyId(quota.surveyId);
 };

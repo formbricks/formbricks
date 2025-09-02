@@ -2,9 +2,14 @@ import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
-import { TSurveyQuota, TSurveyQuotaCreateInput, TSurveyQuotaUpdateInput } from "@formbricks/types/quota";
-import { createQuota, deleteQuota, getQuotas, updateQuota } from "./quotas";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
+import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
+import { createQuota, deleteQuota, getQuota, getQuotas, reduceQuotaLimits, updateQuota } from "./quotas";
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -15,6 +20,7 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       delete: vi.fn(),
       findUnique: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
 }));
@@ -51,6 +57,35 @@ describe("Quota Service", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("getQuota", () => {
+    test("should return quota successfully", async () => {
+      vi.mocked(prisma.surveyQuota.findUnique).mockResolvedValue(mockQuota);
+      const result = await getQuota(mockQuotaId);
+      expect(result).toEqual(mockQuota);
+    });
+
+    test("should throw ResourceNotFoundError if quota not found", async () => {
+      vi.mocked(prisma.surveyQuota.findUnique).mockResolvedValue(null);
+      await expect(getQuota(mockQuotaId)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("should throw DatabaseError on Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2002",
+        clientVersion: "1.0.0",
+      });
+      vi.mocked(prisma.surveyQuota.findUnique).mockRejectedValue(prismaError);
+      await expect(getQuota(mockQuotaId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("should throw ValidationError when validateInputs fails", async () => {
+      vi.mocked(validateInputs).mockImplementation(() => {
+        throw new ValidationError("Invalid input");
+      });
+      await expect(getQuota(mockQuotaId)).rejects.toThrow(ValidationError);
+    });
   });
 
   describe("getQuotas", () => {
@@ -95,7 +130,7 @@ describe("Quota Service", () => {
   });
 
   describe("createQuota", () => {
-    const createInput: TSurveyQuotaCreateInput = {
+    const createInput: TSurveyQuotaInput = {
       surveyId: mockSurveyId,
       name: "New Quota",
       limit: 50,
@@ -138,8 +173,9 @@ describe("Quota Service", () => {
   });
 
   describe("updateQuota", () => {
-    const updateInput: TSurveyQuotaUpdateInput = {
+    const updateInput: TSurveyQuotaInput = {
       name: "Updated Quota",
+      surveyId: mockSurveyId,
       limit: 75,
       logic: {
         connector: "or",
@@ -165,14 +201,12 @@ describe("Quota Service", () => {
 
     test("should throw DatabaseError when quota not found", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: "P2025",
+        code: "P2015",
         clientVersion: "1.0.0",
       });
       vi.mocked(prisma.surveyQuota.update).mockRejectedValue(prismaError);
 
-      await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(
-        Prisma.PrismaClientKnownRequestError
-      );
+      await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("should throw DatabaseError on other Prisma errors", async () => {
@@ -183,6 +217,11 @@ describe("Quota Service", () => {
       vi.mocked(prisma.surveyQuota.update).mockRejectedValue(prismaError);
 
       await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(InvalidInputError);
+    });
+
+    test("should throw error on unknown error", async () => {
+      vi.mocked(prisma.surveyQuota.update).mockRejectedValue(new Error("Unknown error"));
+      await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(Error);
     });
   });
 
@@ -200,12 +239,12 @@ describe("Quota Service", () => {
 
     test("should throw DatabaseError when quota not found", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: "P2025",
+        code: "P2015",
         clientVersion: "1.0.0",
       });
       vi.mocked(prisma.surveyQuota.delete).mockRejectedValue(prismaError);
 
-      await expect(deleteQuota(mockQuotaId)).rejects.toThrow(DatabaseError);
+      await expect(deleteQuota(mockQuotaId)).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("should throw DatabaseError on other Prisma errors", async () => {
@@ -223,6 +262,31 @@ describe("Quota Service", () => {
       vi.mocked(prisma.surveyQuota.delete).mockRejectedValue(genericError);
 
       await expect(deleteQuota(mockQuotaId)).rejects.toThrow("Generic error");
+    });
+  });
+
+  describe("reduceQuotaLimits", () => {
+    test("should reduce quota limits successfully", async () => {
+      vi.mocked(prisma.surveyQuota.updateMany).mockResolvedValue({ count: 1 });
+      await reduceQuotaLimits([mockQuotaId]);
+      expect(prisma.surveyQuota.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [mockQuotaId] } },
+        data: { limit: { decrement: 1 } },
+      });
+    });
+
+    test("should throw DatabaseError on Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2002",
+        clientVersion: "1.0.0",
+      });
+      vi.mocked(prisma.surveyQuota.updateMany).mockRejectedValue(prismaError);
+      await expect(reduceQuotaLimits([mockQuotaId])).rejects.toThrow(DatabaseError);
+    });
+
+    test("should throw error on unknown error", async () => {
+      vi.mocked(prisma.surveyQuota.updateMany).mockRejectedValue(new Error("Unknown error"));
+      await expect(reduceQuotaLimits([mockQuotaId])).rejects.toThrow(Error);
     });
   });
 });
