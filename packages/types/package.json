@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/database": "workspace:*"
+    "@formbricks/database": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*"
   }
 }

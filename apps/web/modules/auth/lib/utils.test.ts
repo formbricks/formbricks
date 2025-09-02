@@ -42,13 +42,15 @@ vi.mock("@/lib/constants", () => ({
   REDIS_URL: "redis://localhost:6379",
 }));
 
-// Mock Redis client
-const { mockGetRedisClient } = vi.hoisted(() => ({
-  mockGetRedisClient: vi.fn(),
+// Mock cache module
+const { mockCache } = vi.hoisted(() => ({
+  mockCache: {
+    getRedisClient: vi.fn(),
+  },
 }));
 
-vi.mock("@/modules/cache/redis", () => ({
-  getRedisClient: mockGetRedisClient,
+vi.mock("@/lib/cache", () => ({
+  cache: mockCache,
 }));
 
 describe("Auth Utils", () => {
@@ -115,7 +117,7 @@ describe("Auth Utils", () => {
   describe("Rate Limiting", () => {
     test("should always allow successful authentication logging", async () => {
       // This test doesn't need Redis to be available as it short-circuits for success
-      mockGetRedisClient.mockResolvedValue(null);
+      mockCache.getRedisClient.mockResolvedValue(null);
 
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
       expect(await shouldLogAuthFailure("user@example.com", true)).toBe(true);
@@ -123,7 +125,7 @@ describe("Auth Utils", () => {
 
     test("should implement fail-closed behavior when Redis is unavailable", async () => {
       // Set Redis unavailable for this test
-      mockGetRedisClient.mockResolvedValue(null);
+      mockCache.getRedisClient.mockResolvedValue(null);
 
       const email = "rate-limit-test@example.com";
 
@@ -167,8 +169,8 @@ describe("Auth Utils", () => {
         };
 
         // Reset the Redis mock for these specific tests
-        mockGetRedisClient.mockReset();
-        mockGetRedisClient.mockReturnValue(mockRedis); // Use mockReturnValue instead of mockResolvedValue
+        mockCache.getRedisClient.mockReset();
+        mockCache.getRedisClient.mockResolvedValue(mockRedis); // Use mockResolvedValue since it's now async
       });
 
       test("should handle Redis transaction failure - !results branch", async () => {
@@ -188,15 +190,15 @@ describe("Auth Utils", () => {
         };
 
         // Reset and setup mock for this specific test
-        mockGetRedisClient.mockReset();
-        mockGetRedisClient.mockReturnValue(testMockRedis);
+        mockCache.getRedisClient.mockReset();
+        mockCache.getRedisClient.mockResolvedValue(testMockRedis);
 
         const email = "transaction-failure@example.com";
         const result = await shouldLogAuthFailure(email, false);
 
         // Function should return false when Redis transaction fails (fail-closed behavior)
         expect(result).toBe(false);
-        expect(mockGetRedisClient).toHaveBeenCalled();
+        expect(mockCache.getRedisClient).toHaveBeenCalled();
         expect(testMockRedis.multi).toHaveBeenCalled();
         expect(testMockMulti.zRemRangeByScore).toHaveBeenCalled();
         expect(testMockMulti.zCard).toHaveBeenCalled();

@@ -1,5 +1,5 @@
 import "server-only";
-import { type CacheKey, type CacheService, createCacheService } from "@formbricks/cache";
+import { type CacheService, createCacheService } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 
 // Node.js module caching ensures this only initializes once

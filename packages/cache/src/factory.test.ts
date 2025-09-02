@@ -24,7 +24,9 @@ vi.mock("./service", () => ({
     get: vi.fn(),
     set: vi.fn(),
     del: vi.fn(),
+    exists: vi.fn(),
     withCache: vi.fn(),
+    getRedisClient: vi.fn(),
   })),
 }));
 
@@ -138,38 +140,46 @@ describe("@formbricks/cache factory", () => {
     });
 
     test("should connect client if not open", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+
       const mockClient: MockRedisClient = {
         isOpen: false,
         on: vi.fn(),
         connect: vi.fn().mockResolvedValue(undefined),
       };
 
-      // Mock the environment variable and test the factory
-      process.env.REDIS_URL = "redis://localhost:6379";
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
+
       const result = await createCacheService();
 
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toBeDefined();
       }
+      expect(mockCreateClient).toHaveBeenCalled();
       expect(mockClient.connect).toHaveBeenCalled();
     });
 
     test("should return error when connection fails", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+
       const mockClient: MockRedisClient = {
         isOpen: false,
         on: vi.fn(),
         connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
       };
 
-      // Mock the environment variable and test the factory
-      process.env.REDIS_URL = "redis://localhost:6379";
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
+
       const result = await createCacheService();
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
       }
+      expect(mockCreateClient).toHaveBeenCalled();
       expect(mockClient.connect).toHaveBeenCalled();
     });
 

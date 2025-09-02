@@ -18,7 +18,11 @@ import { getEnvironmentState } from "./environmentState";
 // Mock dependencies
 vi.mock("@/lib/organization/service");
 vi.mock("@/lib/posthogServer");
-vi.mock("@/lib/cache");
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    withCache: vi.fn(),
+  },
+}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {

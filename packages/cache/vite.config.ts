@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { resolve } from "path";
-import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {

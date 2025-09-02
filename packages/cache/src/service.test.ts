@@ -57,7 +57,10 @@ describe("CacheService", () => {
 
       const result = await cacheService.get(key);
 
-      expect(result).toBeNull();
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeNull();
+      }
     });
 
     test("should return error when JSON parse fails (corrupted data)", async () => {
@@ -265,6 +268,14 @@ describe("CacheService", () => {
     });
   });
 
+  describe("getRedisClient", () => {
+    test("should return the Redis client instance", () => {
+      const result = cacheService.getRedisClient();
+
+      expect(result).toBe(mockRedis);
+    });
+  });
+
   describe("withCache", () => {
     test("should return cached value when available", async () => {
       const key = "test:key" as CacheKey;
@@ -364,6 +375,35 @@ describe("CacheService", () => {
       // withCache now always returns the function result, even when cache fails
       expect(result).toEqual(expectedResult);
       expect(fn).toHaveBeenCalledOnce();
+    });
+
+    test("should execute function directly when validation fails", async () => {
+      const invalidKey = "" as CacheKey; // Empty key should fail validation
+      const expectedResult = { data: "result" };
+      const fn = vi.fn().mockResolvedValue(expectedResult);
+
+      const result = await cacheService.withCache(fn, invalidKey, 60000);
+
+      expect(result).toEqual(expectedResult);
+      expect(fn).toHaveBeenCalledOnce();
+      // Should not attempt any cache operations when validation fails
+      expect(mockRedis.get).not.toHaveBeenCalled();
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
+    });
+
+    test("should execute function directly when TTL validation fails", async () => {
+      const key = "test:key" as CacheKey;
+      const invalidTtl = 500; // Below minimum TTL of 1000ms
+      const expectedResult = { data: "result" };
+      const fn = vi.fn().mockResolvedValue(expectedResult);
+
+      const result = await cacheService.withCache(fn, key, invalidTtl);
+
+      expect(result).toEqual(expectedResult);
+      expect(fn).toHaveBeenCalledOnce();
+      // Should not attempt any cache operations when validation fails
+      expect(mockRedis.get).not.toHaveBeenCalled();
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
     });
   });
 });
