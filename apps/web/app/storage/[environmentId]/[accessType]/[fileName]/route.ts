@@ -111,7 +111,10 @@ export const GET = async (
     status: 302,
     headers: {
       Location: signedUrlResult.data,
-      "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=300",
+      "Cache-Control":
+        accessType === "private"
+          ? "no-store, no-cache, must-revalidate"
+          : "public, max-age=300, s-maxage=300, stale-while-revalidate=300",
     },
   });
 };

@@ -63,7 +63,7 @@ export const validateSingleFile = (
 ): boolean => {
   const fileName = getOriginalFileNameFromUrl(fileUrl);
   if (!fileName) return false;
-  const extension = fileName.split(".").pop();
+  const extension = fileName.split(".").pop()?.toLowerCase();
   if (!extension) return false;
   return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
 };

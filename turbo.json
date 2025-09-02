@@ -78,10 +78,10 @@
       "persistent": true
     },
     "@formbricks/web#test": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build", "@formbricks/storage#build"]
     },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build", "@formbricks/storage#build"]
     },
     "build": {
       "dependsOn": ["^build"],
