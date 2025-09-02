@@ -8,7 +8,6 @@ import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environ
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
-import { handleFileUpload } from "@/modules/storage/file-upload";
 import { Calendar } from "@/modules/ui/components/calendar";
 import {
   DropdownMenu,
@@ -239,6 +238,15 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     setSelectingDate(DateSelected.FROM);
   };
 
+  const downloadFile = (url: string, fileName: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleDownloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
     const responseFilters = filter === FilterDownload.ALL ? {} : filters;
     setIsDownloading(true);
@@ -273,21 +281,17 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
         );
       }
 
-      const { url, error } = await handleFileUpload(file, survey.environmentId);
-
-      if (error) {
+      try {
+        const url = URL.createObjectURL(file);
+        const fileName =
+          responsesDownloadUrlResponse.data.fileName || `${survey.name}-${filetype}.${filetype}`;
+        downloadFile(url, fileName);
+        URL.revokeObjectURL(url);
+      } catch {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
         setIsDownloading(false);
         return;
       }
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = responsesDownloadUrlResponse.data.fileName || `${survey.name}-${filetype}.${filetype}`;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     } else {
       const errorMessage = getFormattedErrorMessage(responsesDownloadUrlResponse);
       toast.error(errorMessage);

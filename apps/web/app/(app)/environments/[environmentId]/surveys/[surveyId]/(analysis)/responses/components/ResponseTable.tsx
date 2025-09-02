@@ -5,7 +5,6 @@ import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surv
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
-import { handleFileUpload } from "@/modules/storage/file-upload";
 import { Button } from "@/modules/ui/components/button";
 import {
   DataTableHeader,
@@ -107,6 +106,7 @@ export const ResponseTable = ({
     () => (isFetchingFirstPage ? Array(10).fill({}) : data),
     [data, isFetchingFirstPage]
   );
+
   const tableColumns = useMemo(
     () =>
       isFetchingFirstPage
@@ -146,6 +146,15 @@ export const ResponseTable = ({
   });
 
   const defaultColumnOrder = useMemo(() => table.getAllLeafColumns().map((d) => d.id), [table]);
+
+  const downloadFile = (url: string, fileName: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Modified useEffect
   useEffect(() => {
@@ -212,21 +221,14 @@ export const ResponseTable = ({
           });
         }
 
-        const { url, error } = await handleFileUpload(file, environment.id, [
-          format === "xlsx" ? ".xlsx" : ".csv",
-        ]);
-
-        if (error) {
+        try {
+          const url = URL.createObjectURL(file);
+          const fileName = downloadResponse.data.fileName || `${survey.name}-${format}.${format}`;
+          downloadFile(url, fileName);
+          URL.revokeObjectURL(url);
+        } catch {
           toast.error(t("environments.surveys.responses.error_downloading_responses"));
         }
-
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = downloadResponse.data.fileName || `${survey.name}-${format}.${format}`;
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
       } else {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
       }

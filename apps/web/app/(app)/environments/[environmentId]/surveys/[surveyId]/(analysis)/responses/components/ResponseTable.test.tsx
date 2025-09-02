@@ -1,7 +1,6 @@
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { handleFileUpload } from "@/modules/storage/file-upload";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
@@ -244,7 +243,6 @@ beforeEach(() => {
   vi.mocked(toast.error).mockClear();
   vi.mocked(toast.success).mockClear();
   vi.mocked(getResponsesDownloadUrlAction).mockClear();
-  vi.mocked(handleFileUpload).mockClear();
 
   // Create a mock anchor element for download tests
   globalMockAnchor = {
@@ -398,10 +396,6 @@ describe("ResponseTable", () => {
       },
     });
 
-    vi.mocked(handleFileUpload).mockResolvedValueOnce({
-      url: "https://download.url/file.csv",
-    });
-
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
     const downloadCsvButton = screen.getByTestId("download-csv");
@@ -413,8 +407,6 @@ describe("ResponseTable", () => {
         format: "csv",
         filterCriteria: { responseIds: [] },
       });
-
-      expect(handleFileUpload).toHaveBeenCalled();
 
       // Check if link was created and clicked
       expect(document.createElement).toHaveBeenCalledWith("a");
@@ -433,10 +425,6 @@ describe("ResponseTable", () => {
       },
     });
 
-    vi.mocked(handleFileUpload).mockResolvedValueOnce({
-      url: "https://download.url/file.xlsx",
-    });
-
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
     const downloadXlsxButton = screen.getByTestId("download-xlsx");
@@ -448,8 +436,6 @@ describe("ResponseTable", () => {
         format: "xlsx",
         filterCriteria: { responseIds: [] },
       });
-
-      expect(handleFileUpload).toHaveBeenCalled();
 
       // Check if link was created and clicked
       expect(document.createElement).toHaveBeenCalledWith("a");
