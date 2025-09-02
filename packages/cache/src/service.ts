@@ -1,9 +1,9 @@
+import { logger } from "@formbricks/logger";
 import type { RedisClient } from "@/types/client";
 import { type CacheError, ErrorCode, type Result, err, ok } from "@/types/error";
 import type { CacheKey } from "@/types/keys";
 import { ZCacheKey } from "@/types/keys";
 import { ZTtlMs } from "@/types/service";
-import { logger } from "@formbricks/logger";
 import { validateInputs } from "./utils/validation";
 
 /**
