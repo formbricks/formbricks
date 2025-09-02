@@ -4,9 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Image tag to push (e.g., v3.16.1)"
+        description: "Image tag to push (e.g., v3.16.1, main)"
         required: true
         default: "v3.16.1"
+      deploy_production:
+        description: "Tag image for production deployment"
+        required: false
+        default: false
+        type: boolean
+      deploy_staging:
+        description: "Tag image for staging deployment"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -70,6 +80,42 @@ jobs:
             exit 1
           fi
 
+      - name: Build tag list
+        id: tags
+        shell: bash
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          DEPLOY_PRODUCTION: ${{ inputs.deploy_production }}
+          DEPLOY_STAGING: ${{ inputs.deploy_staging }}
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+        run: |
+          set -euo pipefail
+
+          # Start with the base image tag
+          TAGS="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+          # Add production tag if requested
+          if [[ "${DEPLOY_PRODUCTION}" == "true" ]]; then
+            TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:production"
+          fi
+
+          # Add staging tag if requested
+          if [[ "${DEPLOY_STAGING}" == "true" ]]; then
+            TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
+          fi
+
+          # Output for debugging
+          echo "Generated tags:"
+          echo -e "${TAGS}"
+
+          # Set output for next step (escape newlines for GitHub Actions)
+          {
+            echo "tags<<EOF"
+            echo -e "${TAGS}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a
         with:
@@ -91,9 +137,7 @@ jobs:
           file: ${{ env.DOCKERFILE }}
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ inputs.image_tag }}
-            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
+          tags: ${{ steps.tags.outputs.tags }}
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
