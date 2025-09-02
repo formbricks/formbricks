@@ -21,7 +21,7 @@ export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) 
     if (responseData[field]) {
       hiddenFieldsData.push({
         field,
-        value: responseData[field] as string,
+        value: typeof responseData[field] === "string" ? responseData[field] : "",
       });
     }
   });

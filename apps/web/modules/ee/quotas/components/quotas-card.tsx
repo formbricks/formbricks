@@ -100,6 +100,7 @@ export const QuotasCard = ({
     setQuotaToDelete(null);
     setIsDeletingQuota(false);
     setActiveQuota(null);
+    setQuotaResponseCount(0);
     setIsQuotaModalOpen(false);
   };
 
@@ -236,6 +237,7 @@ export const QuotasCard = ({
           onClose={() => {
             setIsQuotaModalOpen(false);
             setActiveQuota(null);
+            setQuotaResponseCount(0);
           }}
           hasResponses={hasResponses}
           quotaResponseCount={quotaResponseCount}
@@ -261,6 +263,7 @@ export const QuotasCard = ({
           setOpenCreateQuotaConfirmationModal(false);
           setIsQuotaModalOpen(true);
           setActiveQuota(null);
+          setQuotaResponseCount(0);
         }}
         buttonVariant="default"
         buttonText={t("common.continue")}

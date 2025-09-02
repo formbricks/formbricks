@@ -39,7 +39,13 @@ describe("SummaryMetadata", () => {
 
   test("renders loading skeletons when isLoading=true", () => {
     const { container } = render(
-      <SummaryMetadata tab={undefined} setTab={() => {}} surveySummary={baseSummary} isLoading={true} />
+      <SummaryMetadata
+        tab={undefined}
+        setTab={() => {}}
+        surveySummary={baseSummary}
+        isLoading={true}
+        isQuotasAllowed={true}
+      />
     );
 
     expect(container.getElementsByClassName("animate-pulse")).toHaveLength(6);
@@ -48,7 +54,13 @@ describe("SummaryMetadata", () => {
   test("renders all stats and formats time correctly, toggles dropOffs icon", async () => {
     const Wrapper = () => {
       return (
-        <SummaryMetadata tab={"dropOffs"} setTab={() => {}} surveySummary={baseSummary} isLoading={false} />
+        <SummaryMetadata
+          tab={"dropOffs"}
+          setTab={() => {}}
+          surveySummary={baseSummary}
+          isLoading={false}
+          isQuotasAllowed={false}
+        />
       );
     };
     render(<Wrapper />);
@@ -73,7 +85,13 @@ describe("SummaryMetadata", () => {
   test("formats time correctly when < 60 seconds", () => {
     const smallSummary = { ...baseSummary, ttcAverage: 5000 };
     render(
-      <SummaryMetadata tab="dropOffs" setTab={() => {}} surveySummary={smallSummary} isLoading={false} />
+      <SummaryMetadata
+        tab="dropOffs"
+        setTab={() => {}}
+        surveySummary={smallSummary}
+        isLoading={false}
+        isQuotasAllowed={false}
+      />
     );
     expect(screen.getByText("5.00s")).toBeInTheDocument();
   });
@@ -82,7 +100,13 @@ describe("SummaryMetadata", () => {
     const zeroSummary = { ...baseSummary, dropOffCount: 0 };
     const Wrapper = () => {
       return (
-        <SummaryMetadata tab="dropOffs" setTab={() => {}} surveySummary={zeroSummary} isLoading={false} />
+        <SummaryMetadata
+          tab="dropOffs"
+          setTab={() => {}}
+          surveySummary={zeroSummary}
+          isLoading={false}
+          isQuotasAllowed={false}
+        />
       );
     };
     render(<Wrapper />);
@@ -97,13 +121,29 @@ describe("SummaryMetadata", () => {
 
   test("renders '-' for displayCount=0", () => {
     const dispZero = { ...baseSummary, displayCount: 0 };
-    render(<SummaryMetadata tab="dropOffs" setTab={() => {}} surveySummary={dispZero} isLoading={false} />);
+    render(
+      <SummaryMetadata
+        tab="dropOffs"
+        setTab={() => {}}
+        surveySummary={dispZero}
+        isLoading={false}
+        isQuotasAllowed={false}
+      />
+    );
     expect(screen.getAllByText("-")).toHaveLength(1);
   });
 
   test("renders '-' for totalResponses=0", () => {
     const totZero = { ...baseSummary, totalResponses: 0 };
-    render(<SummaryMetadata tab="dropOffs" setTab={() => {}} surveySummary={totZero} isLoading={false} />);
+    render(
+      <SummaryMetadata
+        tab="dropOffs"
+        setTab={() => {}}
+        surveySummary={totZero}
+        isLoading={false}
+        isQuotasAllowed={false}
+      />
+    );
     expect(screen.getAllByText("-")).toHaveLength(1);
   });
 });
