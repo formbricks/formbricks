@@ -107,6 +107,74 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.CacheValidationError);
       }
     });
+
+    test("should return error when Redis operation fails", async () => {
+      const key = "test:key" as CacheKey;
+      mockRedis.get.mockRejectedValue(new Error("Redis connection failed"));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisOperationError);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error), key }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Cache get operation failed"
+      );
+    });
+
+    test("should handle string values correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = "simple string";
+      mockRedis.get.mockResolvedValue(JSON.stringify(value));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(value);
+      }
+    });
+
+    test("should handle number values correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = 42;
+      mockRedis.get.mockResolvedValue(JSON.stringify(value));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(value);
+      }
+    });
+
+    test("should handle boolean values correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = false;
+      mockRedis.get.mockResolvedValue(JSON.stringify(value));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(value);
+      }
+    });
+
+    test("should handle nested object values correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = { nested: { deeply: { value: "test" } }, array: [1, 2, 3] };
+      mockRedis.get.mockResolvedValue(JSON.stringify(value));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(value);
+      }
+    });
   });
 
   describe("exists", () => {
@@ -143,6 +211,34 @@ describe("CacheService", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe(ErrorCode.CacheValidationError);
+      }
+    });
+
+    test("should return error when Redis operation fails", async () => {
+      const key = "test:key" as CacheKey;
+      mockRedis.exists.mockRejectedValue(new Error("Redis connection failed"));
+
+      const result = await cacheService.exists(key);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisOperationError);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error), key }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Cache exists operation failed"
+      );
+    });
+
+    test("should handle multiple keys existing", async () => {
+      const key = "test:key" as CacheKey;
+      mockRedis.exists.mockResolvedValue(2); // Multiple keys exist
+
+      const result = await cacheService.exists(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(true);
       }
     });
   });
@@ -219,6 +315,42 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.CacheValidationError);
       }
     });
+
+    test("should return error when Redis operation fails", async () => {
+      const key = "test:key" as CacheKey;
+      const value = "test";
+      const ttlMs = 60000;
+      mockRedis.setEx.mockRejectedValue(new Error("Redis connection failed"));
+
+      const result = await cacheService.set(key, value, ttlMs);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisOperationError);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error), key, ttlMs }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Cache set operation failed"
+      );
+    });
+
+    test("should handle complex data types correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = {
+        string: "test",
+        number: 42,
+        boolean: true,
+        array: [1, 2, 3],
+        nested: { level: { deep: "value" } },
+        nullValue: null,
+      };
+      const ttlMs = 60000;
+
+      const result = await cacheService.set(key, value, ttlMs);
+
+      expect(result.ok).toBe(true);
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, JSON.stringify(value));
+    });
   });
 
   describe("del", () => {
@@ -265,6 +397,34 @@ describe("CacheService", () => {
       if (!result.ok) {
         expect(result.error.code).toBe(ErrorCode.CacheValidationError);
       }
+    });
+
+    test("should return error when Redis operation fails", async () => {
+      const keys = ["test:key1", "test:key2"] as CacheKey[];
+      mockRedis.del.mockRejectedValue(new Error("Redis connection failed"));
+
+      const result = await cacheService.del(keys);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisOperationError);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error), keys }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Cache delete operation failed"
+      );
+    });
+
+    test("should validate all keys before deletion", async () => {
+      const keys = ["valid:key1", "   ", "valid:key2"] as CacheKey[];
+
+      const result = await cacheService.del(keys);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.CacheValidationError);
+      }
+      expect(mockRedis.del).not.toHaveBeenCalled();
     });
   });
 

@@ -24,7 +24,7 @@ import { getEnvironmentStateData } from "./data";
 export const getEnvironmentState = async (
   environmentId: string
 ): Promise<{ data: TJsEnvironmentState["data"] }> => {
-  return await cache.withCache(
+  return cache.withCache(
     async () => {
       // Single optimized database call replacing multiple service calls
       const { environment, organization, surveys, actionClasses } =

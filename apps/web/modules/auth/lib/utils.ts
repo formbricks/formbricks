@@ -5,6 +5,7 @@ import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-log
 import * as Sentry from "@sentry/nextjs";
 import { compare, hash } from "bcryptjs";
 import { createHash, randomUUID } from "crypto";
+import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 
 export const hashPassword = async (password: string) => {
@@ -225,8 +226,13 @@ export const shouldLogAuthFailure = async (
   // Always log successful authentications
   if (isSuccess) return true;
 
-  const rateLimitKey = `rate_limit:auth:${createAuditIdentifier(identifier, "ratelimit")}`;
   const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW;
+  const rateLimitKey = createCacheKey.rateLimit.core(
+    "auth",
+    createAuditIdentifier(identifier, "ratelimit"),
+    windowStart
+  );
 
   try {
     // Get Redis client
@@ -238,7 +244,6 @@ export const shouldLogAuthFailure = async (
 
     // Use Redis for distributed rate limiting
     const multi = redis.multi();
-    const windowStart = now - RATE_LIMIT_WINDOW;
 
     // Remove expired entries and count recent failures
     multi.zRemRangeByScore(rateLimitKey, 0, windowStart);

@@ -139,7 +139,8 @@ export class CacheService {
   /**
    * Cache wrapper for functions (cache-aside).
    * Never throws due to cache errors; function errors propagate without retry.
-   * @param fn - Function to execute (and optionally cache)
+   * Must include null in T to support cached null values.
+   * @param fn - Function to execute (and optionally cache).
    * @param key - Cache key
    * @param ttlMs - Time to live in milliseconds
    * @returns Cached value if present, otherwise fresh result from fn()
@@ -169,12 +170,12 @@ export class CacheService {
       } else {
         // Cache operation failed, log and continue to execute function
         logger.debug(
-          { error: !cacheResult.ok ? cacheResult.error : "unknown", key },
+          { error: !cacheResult.ok ? cacheResult.error : "unknown", key, ttlMs },
           "Cache get operation failed, fetching fresh data"
         );
       }
     } catch (error) {
-      logger.debug({ error, key }, "Cache get/exists threw; proceeding to compute fresh value");
+      logger.debug({ error, key, ttlMs }, "Cache get/exists threw; proceeding to compute fresh value");
     }
 
     // Cache miss or cache error - execute function once
@@ -184,10 +185,13 @@ export class CacheService {
     try {
       const setResult = await this.set(key, fresh, ttlMs);
       if (!setResult.ok) {
-        logger.debug({ error: setResult.error, key }, "Failed to cache fresh data, but returning result");
+        logger.debug(
+          { error: setResult.error, key, ttlMs },
+          "Failed to cache fresh data, but returning result"
+        );
       }
     } catch (error) {
-      logger.debug({ error, key }, "Cache set threw; returning fresh result");
+      logger.debug({ error, key, ttlMs }, "Cache set threw; returning fresh result");
     }
     return fresh;
   }

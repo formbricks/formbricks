@@ -53,6 +53,19 @@ vi.mock("@/lib/cache", () => ({
   cache: mockCache,
 }));
 
+// Mock @formbricks/cache
+vi.mock("@formbricks/cache", () => ({
+  createCacheKey: {
+    custom: vi.fn((namespace: string, ...parts: string[]) => `${namespace}:${parts.join(":")}`),
+    rateLimit: {
+      core: vi.fn(
+        (namespace: string, identifier: string, windowStart: number) =>
+          `rate_limit:${namespace}:${identifier}:${windowStart}`
+      ),
+    },
+  },
+}));
+
 describe("Auth Utils", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -83,6 +96,35 @@ describe("Auth Utils", () => {
       const isValid = await verifyPassword("WrongPassword123!", hashedPassword);
       expect(isValid).toBe(false);
     });
+
+    test("should handle empty password correctly", async () => {
+      const isValid = await verifyPassword("", hashedPassword);
+      expect(isValid).toBe(false);
+    });
+
+    test("should handle empty hash correctly", async () => {
+      const isValid = await verifyPassword(password, "");
+      expect(isValid).toBe(false);
+    });
+
+    test("should generate different hashes for same password", async () => {
+      const hash1 = await hashPassword(password);
+      const hash2 = await hashPassword(password);
+
+      expect(hash1).not.toBe(hash2);
+      expect(await verifyPassword(password, hash1)).toBe(true);
+      expect(await verifyPassword(password, hash2)).toBe(true);
+    });
+
+    test("should hash complex passwords correctly", async () => {
+      const complexPassword = "MyC0mpl3x!P@ssw0rd#2024$%^&*()";
+      const hashedComplex = await hashPassword(complexPassword);
+
+      expect(typeof hashedComplex).toBe("string");
+      expect(hashedComplex.length).toBe(60);
+      expect(await verifyPassword(complexPassword, hashedComplex)).toBe(true);
+      expect(await verifyPassword("wrong", hashedComplex)).toBe(false);
+    });
   });
 
   describe("Audit Identifier Utils", () => {
@@ -111,6 +153,40 @@ describe("Auth Utils", () => {
     test("should use default prefix when none provided", () => {
       const identifier = createAuditIdentifier("test@example.com");
       expect(identifier).toMatch(/^actor_/);
+    });
+
+    test("should handle case-insensitive inputs consistently", () => {
+      const id1 = createAuditIdentifier("User@Example.COM", "email");
+      const id2 = createAuditIdentifier("user@example.com", "email");
+
+      expect(id1).toBe(id2);
+    });
+
+    test("should handle special characters in identifiers", () => {
+      const specialEmail = "user+test@example-domain.co.uk";
+      const identifier = createAuditIdentifier(specialEmail, "email");
+
+      expect(identifier).toMatch(/^email_/);
+      expect(identifier).not.toContain("user+test");
+      expect(identifier.length).toBe(38); // "email_" + 32 chars
+    });
+
+    test("should create different hashes for different prefixes", () => {
+      const input = "test@example.com";
+      const emailId = createAuditIdentifier(input, "email");
+      const ipId = createAuditIdentifier(input, "ip");
+
+      expect(emailId).not.toBe(ipId);
+      expect(emailId).toMatch(/^email_/);
+      expect(ipId).toMatch(/^ip_/);
+    });
+
+    test("should handle numeric identifiers", () => {
+      const numericId = "12345678";
+      const identifier = createAuditIdentifier(numericId, "user");
+
+      expect(identifier).toMatch(/^user_/);
+      expect(identifier).not.toContain("12345678");
     });
   });
 
@@ -390,6 +466,23 @@ describe("Auth Utils", () => {
           expect.stringContaining("rate_limit:auth:"),
           expect.any(Number)
         );
+      });
+
+      test("should handle edge case with empty identifier", async () => {
+        const result = await shouldLogAuthFailure("", false);
+        expect(result).toBe(false);
+      });
+
+      test("should handle edge case with null identifier", async () => {
+        // @ts-expect-error - Testing runtime behavior with null
+        const result = await shouldLogAuthFailure(null, false);
+        expect(result).toBe(false);
+      });
+
+      test("should handle edge case with undefined identifier", async () => {
+        // @ts-expect-error - Testing runtime behavior with undefined
+        const result = await shouldLogAuthFailure(undefined, false);
+        expect(result).toBe(false);
       });
     });
   });

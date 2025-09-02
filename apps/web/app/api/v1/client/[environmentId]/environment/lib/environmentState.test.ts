@@ -47,6 +47,15 @@ vi.mock("@/lib/constants", () => ({
   ENTERPRISE_LICENSE_KEY: "mock_enterprise_license_key",
 }));
 
+// Mock @formbricks/cache
+vi.mock("@formbricks/cache", () => ({
+  createCacheKey: {
+    environment: {
+      state: vi.fn((environmentId: string) => `fb:env:${environmentId}:state`),
+    },
+  },
+}));
+
 const environmentId = "test-environment-id";
 
 const mockProject: TJsEnvironmentStateProject = {
@@ -280,5 +289,121 @@ describe("getEnvironmentState", () => {
       "fb:env:test-environment-id:state",
       5 * 60 * 1000 // 5 minutes in milliseconds
     );
+  });
+
+  test("should handle null response limit correctly (unlimited)", async () => {
+    const unlimitedOrgData = {
+      ...mockEnvironmentStateData,
+      organization: {
+        ...mockEnvironmentStateData.organization,
+        billing: {
+          ...mockOrganization.billing,
+          limits: {
+            ...mockOrganization.billing.limits,
+            monthly: {
+              ...mockOrganization.billing.limits.monthly,
+              responses: null, // Unlimited
+            },
+          },
+        },
+      },
+    };
+    vi.mocked(getEnvironmentStateData).mockResolvedValue(unlimitedOrgData);
+    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(999999); // High count
+
+    const result = await getEnvironmentState(environmentId);
+
+    // Should return surveys even with high count since limit is null (unlimited)
+    expect(result.data.surveys).toEqual(mockSurveys);
+    expect(sendPlanLimitsReachedEventToPosthogWeekly).not.toHaveBeenCalled();
+  });
+
+  test("should propagate database update errors", async () => {
+    const incompleteEnvironmentData = {
+      ...mockEnvironmentStateData,
+      environment: {
+        ...mockEnvironmentStateData.environment,
+        appSetupCompleted: false,
+      },
+    };
+    vi.mocked(getEnvironmentStateData).mockResolvedValue(incompleteEnvironmentData);
+    vi.mocked(prisma.environment.update).mockRejectedValue(new Error("Database error"));
+
+    // Should throw error since Promise.all will fail if database update fails
+    await expect(getEnvironmentState(environmentId)).rejects.toThrow("Database error");
+  });
+
+  test("should propagate PostHog event capture errors", async () => {
+    const incompleteEnvironmentData = {
+      ...mockEnvironmentStateData,
+      environment: {
+        ...mockEnvironmentStateData.environment,
+        appSetupCompleted: false,
+      },
+    };
+    vi.mocked(getEnvironmentStateData).mockResolvedValue(incompleteEnvironmentData);
+    vi.mocked(capturePosthogEnvironmentEvent).mockRejectedValue(new Error("PostHog error"));
+
+    // Should throw error since Promise.all will fail if PostHog event capture fails
+    await expect(getEnvironmentState(environmentId)).rejects.toThrow("PostHog error");
+  });
+
+  test("should include recaptchaSiteKey when IS_RECAPTCHA_CONFIGURED is true", async () => {
+    const result = await getEnvironmentState(environmentId);
+
+    expect(result.data).toHaveProperty("recaptchaSiteKey");
+    expect(result.data.recaptchaSiteKey).toBe("mock_recaptcha_site_key");
+  });
+
+  test("should handle different survey types and statuses", async () => {
+    const mixedSurveys = [
+      ...mockSurveys,
+      {
+        ...mockSurveys[0],
+        id: "survey-web-draft",
+        type: "app", // Use valid survey type
+        status: "draft",
+      } as TSurvey,
+      {
+        ...mockSurveys[0],
+        id: "survey-link-completed",
+        type: "link",
+        status: "completed",
+      } as TSurvey,
+    ];
+
+    const modifiedData = {
+      ...mockEnvironmentStateData,
+      surveys: mixedSurveys,
+    };
+    vi.mocked(getEnvironmentStateData).mockResolvedValue(modifiedData);
+
+    const result = await getEnvironmentState(environmentId);
+
+    expect(result.data.surveys).toEqual(mixedSurveys);
+  });
+
+  test("should handle empty surveys array", async () => {
+    const emptyData = {
+      ...mockEnvironmentStateData,
+      surveys: [],
+    };
+    vi.mocked(getEnvironmentStateData).mockResolvedValue(emptyData);
+
+    const result = await getEnvironmentState(environmentId);
+
+    expect(result.data.surveys).toEqual([]);
+  });
+
+  test("should handle empty actionClasses array", async () => {
+    const emptyData = {
+      ...mockEnvironmentStateData,
+      actionClasses: [],
+    };
+    vi.mocked(getEnvironmentStateData).mockResolvedValue(emptyData);
+
+    const result = await getEnvironmentState(environmentId);
+
+    expect(result.data.actionClasses).toEqual([]);
   });
 });

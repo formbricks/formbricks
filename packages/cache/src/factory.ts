@@ -62,9 +62,15 @@ export function createRedisClientFromEnv(): Result<RedisClient, CacheError> {
 /**
  * Creates a cache service instance and connects to Redis
  * Each package using Redis should handle its own connection
+ * This is a singleton to ensure only one instance of the cache service is created
  * @returns Promise that resolves to Result containing CacheService or CacheError
  */
+let singleton: CacheService | null = null;
 export async function createCacheService(): Promise<Result<CacheService, CacheError>> {
+  if (singleton) {
+    return ok(singleton);
+  }
+
   const clientResult = createRedisClientFromEnv();
   if (!clientResult.ok) {
     return clientResult;
@@ -84,5 +90,7 @@ export async function createCacheService(): Promise<Result<CacheService, CacheEr
     }
   }
 
-  return ok(new CacheService(client));
+  singleton = new CacheService(client);
+
+  return ok(singleton);
 }

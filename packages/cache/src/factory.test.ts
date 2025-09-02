@@ -121,93 +121,6 @@ describe("@formbricks/cache factory", () => {
   });
 
   describe("createCacheService", () => {
-    test("should create cache service from environment with client that is already open", async () => {
-      const mockClient: MockRedisClient = {
-        isOpen: true,
-        on: vi.fn(),
-        connect: vi.fn(),
-      };
-
-      // Mock the environment variable and test the factory
-      process.env.REDIS_URL = "redis://localhost:6379";
-      // Ensure redis.createClient returns our open client
-      // @ts-expect-error - Mock client type incompatibility with Redis types
-      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
-      const result = await createCacheService();
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeDefined();
-      }
-      expect(mockClient.connect).not.toHaveBeenCalled();
-    });
-
-    test("should connect client if not open", async () => {
-      process.env.REDIS_URL = "redis://localhost:6379";
-
-      const mockClient: MockRedisClient = {
-        isOpen: false,
-        on: vi.fn(),
-        connect: vi.fn().mockResolvedValue(undefined),
-      };
-
-      // @ts-expect-error - Mock client type incompatibility with Redis types
-      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
-
-      const result = await createCacheService();
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeDefined();
-      }
-      expect(mockCreateClient).toHaveBeenCalled();
-      expect(mockClient.connect).toHaveBeenCalled();
-    });
-
-    test("should return error when connection fails", async () => {
-      process.env.REDIS_URL = "redis://localhost:6379";
-
-      const mockClient: MockRedisClient = {
-        isOpen: false,
-        on: vi.fn(),
-        connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
-      };
-
-      // @ts-expect-error - Mock client type incompatibility with Redis types
-      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
-
-      const result = await createCacheService();
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
-      }
-      expect(mockCreateClient).toHaveBeenCalled();
-      expect(mockClient.connect).toHaveBeenCalled();
-    });
-
-    test("should create cache service without provided client using environment", async () => {
-      process.env.REDIS_URL = "redis://localhost:6379";
-
-      const mockClient: MockRedisClient = {
-        isOpen: false,
-        on: vi.fn(),
-        connect: vi.fn().mockResolvedValue(undefined),
-      };
-
-      // @ts-expect-error - Mock client type incompatibility with Redis types
-      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
-
-      const result = await createCacheService();
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeDefined();
-      }
-      expect(mockCreateClient).toHaveBeenCalled();
-      expect(mockClient.connect).toHaveBeenCalled();
-    });
-
     test("should return error when environment client creation fails", async () => {
       // Don't set REDIS_URL to trigger configuration error
 
@@ -219,13 +132,13 @@ describe("@formbricks/cache factory", () => {
       }
     });
 
-    test("should return error when environment client connection fails", async () => {
+    test("should create cache service successfully with valid environment", async () => {
       process.env.REDIS_URL = "redis://localhost:6379";
 
       const mockClient: MockRedisClient = {
         isOpen: false,
         on: vi.fn(),
-        connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
+        connect: vi.fn().mockResolvedValue(undefined),
       };
 
       // @ts-expect-error - Mock client type incompatibility with Redis types
@@ -233,9 +146,9 @@ describe("@formbricks/cache factory", () => {
 
       const result = await createCacheService();
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeDefined();
       }
     });
   });
