@@ -125,20 +125,54 @@ export const handleQuotas = async (
     const fullQuota: TSurveyQuota[] = [];
     const otherQuota: TSurveyQuota[] = [];
 
+    const quotasCountingAll = result.passedQuotas.filter((quota) => quota.countPartialSubmissions);
+    const quotasCountingFinished = result.passedQuotas.filter((quota) => !quota.countPartialSubmissions);
+
+    type QuotaCountResult = { quotaId: string; _count: { responseId: number } };
+
+    const [countsForAll, countsForFinished] = await Promise.all([
+      quotasCountingAll.length > 0
+        ? prisma.responseQuotaLink.groupBy({
+            by: ["quotaId"],
+            where: {
+              quotaId: { in: quotasCountingAll.map((q) => q.id) },
+              status: "screenedIn",
+            },
+            _count: {
+              responseId: true,
+            },
+          })
+        : ([] as QuotaCountResult[]),
+      quotasCountingFinished.length > 0
+        ? prisma.responseQuotaLink.groupBy({
+            by: ["quotaId"],
+            where: {
+              quotaId: { in: quotasCountingFinished.map((q) => q.id) },
+              status: "screenedIn",
+              response: { finished: true },
+            },
+            _count: {
+              responseId: true,
+            },
+          })
+        : ([] as QuotaCountResult[]),
+    ]);
+
+    const quotaCounts = new Map<string, number>();
+
+    countsForAll.forEach((result) => {
+      quotaCounts.set(result.quotaId, result._count.responseId);
+    });
+
+    countsForFinished.forEach((result) => {
+      quotaCounts.set(result.quotaId, result._count.responseId);
+    });
+
     for (const quota of result.passedQuotas) {
-      const screenedInCount = await prisma.responseQuotaLink.count({
-        where: {
-          quotaId: quota.id,
-          status: "screenedIn",
-          response: quota.countPartialSubmissions
-            ? {} // Count all responses
-            : { finished: true }, // Only count finished responses
-        },
-      });
+      const screenedInCount = quotaCounts.get(quota.id) ?? 0;
 
       if (screenedInCount >= quota.limit) {
         firstScreenedOutQuota ??= quota;
-
         fullQuota.push(quota);
       } else {
         otherQuota.push(quota);
