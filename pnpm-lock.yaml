@@ -837,9 +837,6 @@ importers:
       '@formbricks/database':
         specifier: workspace:*
         version: link:../database
-      '@formbricks/eslint-config':
-        specifier: workspace:*
-        version: link:../config-eslint
 
   packages/vite-plugins:
     devDependencies:
