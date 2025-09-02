@@ -6,6 +6,7 @@ import { validateFileUploads } from "@/lib/fileValidation";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { UAParser } from "ua-parser-js";
@@ -175,18 +176,7 @@ export const POST = withV1ApiWrapper({
       surveyType: survey.type,
     });
 
-    const quotaObj = quotaFull
-      ? {
-          quotaFull: true,
-          quota: {
-            id: quotaFull.id,
-            action: quotaFull.action,
-            endingCardId: quotaFull.endingCardId,
-          },
-        }
-      : {
-          quotaFull: false,
-        };
+    const quotaObj = createQuotaFullObject(quotaFull);
 
     const responseDataWithQuota = {
       id: responseData.id,

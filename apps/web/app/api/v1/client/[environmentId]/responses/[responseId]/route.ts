@@ -6,6 +6,7 @@ import { validateFileUploads } from "@/lib/fileValidation";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
+import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -160,18 +161,7 @@ export const PUT = withV1ApiWrapper({
       });
     }
 
-    const quotaObj = quotaFull
-      ? {
-          quotaFull: true,
-          quota: {
-            id: quotaFull.id,
-            action: quotaFull.action,
-            endingCardId: quotaFull.endingCardId,
-          },
-        }
-      : {
-          quotaFull: false,
-        };
+    const quotaObj = createQuotaFullObject(quotaFull);
 
     const responseDataWithQuota = {
       id: responseData.id,

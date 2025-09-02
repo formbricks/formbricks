@@ -6,6 +6,7 @@ import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
@@ -151,18 +152,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     surveyType: survey.type,
   });
 
-  const quotaObj = quotaFull
-    ? {
-        quotaFull: true,
-        quota: {
-          id: quotaFull.id,
-          action: quotaFull.action,
-          endingCardId: quotaFull.endingCardId,
-        },
-      }
-    : {
-        quotaFull: false,
-      };
+  const quotaObj = createQuotaFullObject(quotaFull);
 
   const responseDataWithQuota = {
     id: responseData.id,
