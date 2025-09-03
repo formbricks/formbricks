@@ -161,9 +161,11 @@ export const QuotaModal = ({
   );
   const submitQuota = async (data: TSurveyQuotaInput) => {
     const trimmedName = data.name.trim();
+    const limit = data.limit < quotaResponseCount ? quotaResponseCount : data.limit;
+
     let payload = {
       name: trimmedName || t("environments.surveys.edit.quotas.new_quota"),
-      limit: data.limit,
+      limit: limit,
       logic: data.logic,
       action: data.action,
       endingCardId: data.endingCardId || null,
