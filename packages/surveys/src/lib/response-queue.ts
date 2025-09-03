@@ -59,8 +59,22 @@ export class ResponseQueue {
     if (this.isRequestInProgress || this.queue.length === 0) return;
 
     this.isRequestInProgress = true;
-
     const responseUpdate = this.queue[0];
+
+    const result = await this.sendResponseWithRetry(responseUpdate);
+
+    if (result.success) {
+      this.handleSuccessfulResponse(responseUpdate, result.quotaFullResponse);
+    } else {
+      this.handleFailedResponse(responseUpdate, result.isRecaptchaError);
+    }
+  }
+
+  private async sendResponseWithRetry(responseUpdate: TResponseUpdate): Promise<{
+    success: boolean;
+    quotaFullResponse?: TQuotaFullResponse;
+    isRecaptchaError?: boolean;
+  }> {
     let attempts = 0;
     let quotaFullResponse: TQuotaFullResponse | null = null;
 
@@ -68,49 +82,59 @@ export class ResponseQueue {
       const res = await this.sendResponse(responseUpdate);
 
       if (res.ok) {
-        // Check if response indicates quota is full
-        if (typeof res.data === "object" && res.data.quotaFull) {
+        this.queue.shift(); // remove the successfully sent response from the queue
+
+        if (this.isQuotaFullResponse(res.data)) {
           quotaFullResponse = res.data;
         }
 
-        this.queue.shift(); // remove the successfully sent response from the queue
-        break; // exit the retry loop
+        return { success: true, quotaFullResponse: quotaFullResponse || undefined };
       }
 
-      if (res.error.details?.code === RECAPTCHA_VERIFICATION_ERROR_CODE) {
-        this.isRequestInProgress = false;
-
-        if (this.config.onResponseSendingFailed) {
-          this.config.onResponseSendingFailed(responseUpdate, TResponseErrorCodesEnum.RecaptchaError);
-        }
-        return;
+      if (this.isRecaptchaError(res.error)) {
+        return { success: false, isRecaptchaError: true };
       }
 
       console.error(`Formbricks: Failed to send response. Retrying... ${attempts}`);
-      await delay(1000); // wait for 1 second before retrying
+      await delay(1000);
       attempts++;
     }
 
-    if (attempts >= this.config.retryAttempts) {
-      // Inform the user after 2 failed attempts
-      console.error("Failed to send response after 2 attempts.");
-      // If the response fails finally, inform the user
-      if (this.config.onResponseSendingFailed) {
-        this.config.onResponseSendingFailed(responseUpdate, TResponseErrorCodesEnum.ResponseSendingError);
-      }
-      this.isRequestInProgress = false;
-    } else {
-      if (responseUpdate.finished) {
-        this.config.onResponseSendingFinished?.();
-      }
-      this.isRequestInProgress = false;
+    return { success: false, isRecaptchaError: false };
+  }
 
-      if (quotaFullResponse) {
-        this.config.onQuotaFull?.(quotaFullResponse);
-      }
+  private isQuotaFullResponse(data: unknown): data is TQuotaFullResponse {
+    return typeof data === "object" && data !== null && "quotaFull" in data;
+  }
 
-      this.processQueue(); // process the next item in the queue if any
+  private isRecaptchaError(error: any): boolean {
+    return error.details?.code === RECAPTCHA_VERIFICATION_ERROR_CODE;
+  }
+
+  private handleSuccessfulResponse(responseUpdate: TResponseUpdate, quotaFullResponse?: TQuotaFullResponse) {
+    if (responseUpdate.finished) {
+      this.config.onResponseSendingFinished?.();
     }
+
+    this.isRequestInProgress = false;
+
+    if (quotaFullResponse) {
+      this.config.onQuotaFull?.(quotaFullResponse);
+    }
+
+    this.processQueue(); // process the next item in the queue if any
+  }
+
+  private handleFailedResponse(responseUpdate: TResponseUpdate, isRecaptchaError?: boolean) {
+    this.isRequestInProgress = false;
+
+    if (isRecaptchaError) {
+      this.config.onResponseSendingFailed?.(responseUpdate, TResponseErrorCodesEnum.RecaptchaError);
+      return;
+    }
+
+    console.error("Failed to send response after 2 attempts.");
+    this.config.onResponseSendingFailed?.(responseUpdate, TResponseErrorCodesEnum.ResponseSendingError);
   }
 
   async sendResponse(
