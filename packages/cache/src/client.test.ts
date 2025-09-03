@@ -1,7 +1,7 @@
-import { createClient } from "redis";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { RedisClient } from "@/types/client";
 import { ErrorCode } from "@/types/error";
+import { createClient } from "redis";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { createRedisClientFromEnv, getCacheService, resetCacheFactory } from "./client";
 
 // Mock the redis module
@@ -21,18 +21,17 @@ vi.mock("@formbricks/logger", () => ({
 
 // Mock CacheService
 vi.mock("./service", () => ({
-  CacheService: vi.fn().mockImplementation((redis) => ({
+  CacheService: vi.fn().mockImplementation((redis: RedisClient | null = null) => ({
     get: vi.fn(),
     set: vi.fn(),
     del: vi.fn(),
     exists: vi.fn(),
     withCache: vi.fn(),
     getRedisClient: vi.fn().mockImplementation(() => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- redis is typed as RedisClient
-      if (!redis?.isReady || !redis?.isOpen) {
+      if (!redis || !redis.isReady || !redis.isOpen) {
         return null;
       }
-      return redis; // eslint-disable-line @typescript-eslint/no-unsafe-return -- redis is typed as RedisClient
+      return redis;
     }),
   })),
 }));
@@ -99,6 +98,37 @@ describe("@formbricks/cache factory", () => {
       expect(mockClient.on).toHaveBeenCalledWith("connect", expect.any(Function));
       expect(mockClient.on).toHaveBeenCalledWith("ready", expect.any(Function));
       expect(mockClient.on).toHaveBeenCalledWith("end", expect.any(Function));
+    });
+
+    test("should return error when client connection fails", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+
+      const mockClient: MockRedisClient = {
+        isOpen: false,
+        isReady: false,
+        on: vi.fn(),
+        connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
+        destroy: vi.fn().mockResolvedValue(undefined),
+      };
+
+      // @ts-expect-error - Mock client type incompatibility with Redis types
+      mockCreateClient.mockReturnValue(mockClient as unknown as RedisClient);
+
+      const result = await createRedisClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
+      }
+
+      // Verify client was created and connect was attempted
+      expect(mockCreateClient).toHaveBeenCalledWith({
+        url: "redis://localhost:6379",
+        socket: {
+          connectTimeout: 3000,
+        },
+      });
+      expect(mockClient.connect).toHaveBeenCalled();
     });
   });
 
@@ -214,9 +244,8 @@ describe("@formbricks/cache factory", () => {
       expect(result.ok).toBe(false);
 
       if (!result.ok) {
-        // The error is a regular JavaScript Error, not a structured CacheError
-        expect(result.error).toBeInstanceOf(Error);
-        expect((result.error as unknown as Error).message).toContain("Connection failed");
+        // The error should be a structured CacheError from createRedisClientFromEnv
+        expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
       }
 
       expect(mockClient.connect).toHaveBeenCalledTimes(1);
@@ -240,9 +269,8 @@ describe("@formbricks/cache factory", () => {
       const result = await getCacheService();
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        // The error is a regular JavaScript Error, not a structured CacheError
-        expect(result.error).toBeInstanceOf(Error);
-        expect((result.error as unknown as Error).message).toContain("Connection failed");
+        // The error should be a structured CacheError from createRedisClientFromEnv
+        expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
       }
     });
   });

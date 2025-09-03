@@ -1,7 +1,7 @@
-import { createClient } from "redis";
-import { logger } from "@formbricks/logger";
 import type { RedisClient } from "@/types/client";
 import { type CacheError, CacheErrorClass, ErrorCode, type Result, err, ok } from "@/types/error";
+import { createClient } from "redis";
+import { logger } from "@formbricks/logger";
 import { CacheService } from "./service";
 
 // Re-export CacheService for consumers
@@ -49,9 +49,17 @@ export async function createRedisClientFromEnv(): Promise<Result<RedisClient, Ca
     logger.info("Redis client disconnected");
   });
 
-  await client.connect();
-
-  return ok(client as RedisClient);
+  try {
+    await client.connect();
+    return ok(client as RedisClient);
+  } catch (error) {
+    return err(
+      new CacheErrorClass(
+        ErrorCode.RedisConnectionError,
+        error instanceof Error ? error.message : String(error)
+      )
+    );
+  }
 }
 
 // Global singleton with globalThis for cross-module sharing
@@ -70,18 +78,18 @@ let singleton: CacheService | null = globalForCache.formbricksCache ?? null;
  */
 export async function getCacheService(): Promise<Result<CacheService, CacheError>> {
   // Return existing instance immediately
-  if (singleton && singleton.getRedisClient()?.isReady && singleton.getRedisClient()?.isOpen) {
-    return ok(singleton);
+  if (singleton) {
+    const rc = singleton.getRedisClient();
+    if (rc?.isReady && rc.isOpen) return ok(singleton);
   }
 
   // Return existing instance from globalForCache if available
-  if (
-    globalForCache.formbricksCache &&
-    globalForCache.formbricksCache.getRedisClient()?.isReady &&
-    globalForCache.formbricksCache.getRedisClient()?.isOpen
-  ) {
-    singleton = globalForCache.formbricksCache;
-    return ok(singleton);
+  if (globalForCache.formbricksCache) {
+    const rc = globalForCache.formbricksCache.getRedisClient();
+    if (rc?.isReady && rc.isOpen) {
+      singleton = globalForCache.formbricksCache;
+      return ok(globalForCache.formbricksCache);
+    }
   }
 
   // Prevent concurrent initialization
@@ -104,11 +112,11 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
     }
 
     const client = clientResult.data;
-    logger.debug("Redis connection established", { client });
+    logger.debug("Redis connection established");
     const svc = new CacheService(client);
     singleton = svc;
     globalForCache.formbricksCache = svc;
-    logger.debug("Cache service created", { svc });
+    logger.debug("Cache service created");
     return svc;
   })();
 

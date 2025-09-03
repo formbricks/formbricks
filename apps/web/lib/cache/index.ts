@@ -1,5 +1,5 @@
 import "server-only";
-import { type CacheService, getCacheService } from "@formbricks/cache";
+import { type CacheKey, type CacheService, getCacheService } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 
 /**
@@ -7,13 +7,13 @@ import { logger } from "@formbricks/logger";
  * Provides a proxy to the cache service methods
  * Lazy initializes the cache service on first use
  * Handles cache service initialization failures gracefully
- * Avoid the need to use of double awaits when using the cache service (e.g. await (await cache).get(key))
+ * Avoid the need to use double awaits when using the cache service (e.g. await (await cache).get(key))
  */
 export const cache = new Proxy({} as CacheService, {
   get(_target, prop: keyof CacheService) {
     // Special-case: withCache must never fail; fall back to direct fn on init failure.
     if (prop === "withCache") {
-      return async (fn: (...args: any[]) => Promise<unknown>, ...rest: any[]) => {
+      return async <T>(fn: () => Promise<T>, ...rest: [CacheKey, number]) => {
         try {
           const cacheServiceResult = await getCacheService();
 
@@ -30,13 +30,13 @@ export const cache = new Proxy({} as CacheService, {
     }
 
     // Default: lazily initialize and forward the call; returns a Promise for all methods
-    return async (...args: any[]) => {
+    return async (...args: Parameters<CacheService[typeof prop]>) => {
       const cacheServiceResult = await getCacheService();
 
       if (!cacheServiceResult.ok) {
         return { ok: false, error: cacheServiceResult.error };
       }
-      const method = (cacheServiceResult.data as any)[prop] as Function;
+      const method = (cacheServiceResult.data as CacheService)[prop];
 
       return await method.apply(cacheServiceResult.data, args);
     };

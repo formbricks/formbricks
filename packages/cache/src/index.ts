@@ -1,5 +1,5 @@
 // Re-export everything from factory
-export { getCacheService } from "./client";
+export { type CacheService, getCacheService } from "./client";
 
 // Export cache keys
 export { createCacheKey } from "./cache-keys";

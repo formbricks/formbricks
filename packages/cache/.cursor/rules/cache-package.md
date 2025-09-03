@@ -66,9 +66,9 @@ if (!result.ok) {
 const data = result.data; // Type-safe access
 
 // ✅ GOOD - withCache never fails, always returns function result
-const userData = await cacheService.withCache(
-  () => fetchUserFromDB(userId),
-  createCacheKey.user.profile(userId),
+const environmentData = await cacheService.withCache(
+  () => fetchEnvironmentFromDB(environmentId),
+  createCacheKey.environment.state(environmentId),
   60000
 ); // Returns T directly, handles cache errors internally
 ```
@@ -92,7 +92,7 @@ export const ZCacheKey = z.string().min(1).refine(k => k.trim().length > 0);
 export const ZTtlMs = z.number().int().min(1000).finite();
 
 // Generic validation function
-export function validateInputs<T>(...pairs: [unknown, ZodType][]): Result<T[], CacheError>;
+export function validateInputs(...pairs: [unknown, ZodType][]): Result<unknown[], CacheError>;
 ```
 
 ## Cache Key Generation
@@ -244,9 +244,9 @@ const result = await cache.get<UserData>(key);
 const success = await cache.set(key, data, ttl);
 
 // Never-failing withCache
-const userData = await cache.withCache(
-  () => fetchFromDB(userId),
-  createCacheKey.user.profile(userId),
+const environmentData = await cache.withCache(
+  () => fetchEnvironmentFromDB(environmentId),
+  createCacheKey.environment.state(environmentId),
   60000
 );
 

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { CacheKey } from "@formbricks/cache";
 
 // Create mocks
 const mockCacheService = {
@@ -52,15 +53,15 @@ describe("Cache Index", () => {
       });
 
       // Call a method multiple times
-      await cache.get("test-key-1");
-      await cache.get("test-key-2");
-      await cache.set("test-key", "value", 1000);
+      await cache.get("test-key-1" as CacheKey);
+      await cache.get("test-key-2" as CacheKey);
+      await cache.set("test-key" as CacheKey, "value", 1000);
 
       // getCacheService should be called for each operation
       expect(mockGetCacheService).toHaveBeenCalledTimes(3);
-      expect(mockCacheService.get).toHaveBeenCalledWith("test-key-1");
-      expect(mockCacheService.get).toHaveBeenCalledWith("test-key-2");
-      expect(mockCacheService.set).toHaveBeenCalledWith("test-key", "value", 1000);
+      expect(mockCacheService.get).toHaveBeenCalledWith("test-key-1" as CacheKey);
+      expect(mockCacheService.get).toHaveBeenCalledWith("test-key-2" as CacheKey);
+      expect(mockCacheService.set).toHaveBeenCalledWith("test-key" as CacheKey, "value", 1000);
     });
 
     test("should proxy all cache methods correctly", async () => {
@@ -70,14 +71,14 @@ describe("Cache Index", () => {
       });
 
       // Multiple calls should use the cache service
-      await cache.get("key1");
-      await cache.set("key2", "value", 1000);
-      await cache.del(["key3"]);
+      await cache.get("key1" as CacheKey);
+      await cache.set("key2" as CacheKey, "value", 1000);
+      await cache.del(["key3" as CacheKey]);
 
       expect(mockGetCacheService).toHaveBeenCalledTimes(3);
-      expect(mockCacheService.get).toHaveBeenCalledWith("key1");
-      expect(mockCacheService.set).toHaveBeenCalledWith("key2", "value", 1000);
-      expect(mockCacheService.del).toHaveBeenCalledWith(["key3"]);
+      expect(mockCacheService.get).toHaveBeenCalledWith("key1" as CacheKey);
+      expect(mockCacheService.set).toHaveBeenCalledWith("key2" as CacheKey, "value", 1000);
+      expect(mockCacheService.del).toHaveBeenCalledWith(["key3" as CacheKey]);
     });
   });
 
@@ -92,10 +93,10 @@ describe("Cache Index", () => {
       expect(mockGetCacheService).not.toHaveBeenCalled();
 
       // First access should trigger getCacheService call
-      await cache.get("test-key");
+      await cache.get("test-key" as CacheKey);
 
       expect(mockGetCacheService).toHaveBeenCalledTimes(1);
-      expect(mockCacheService.get).toHaveBeenCalledWith("test-key");
+      expect(mockCacheService.get).toHaveBeenCalledWith("test-key" as CacheKey);
     });
 
     test("should handle concurrent operations correctly", async () => {
@@ -105,18 +106,18 @@ describe("Cache Index", () => {
       });
 
       // Start multiple concurrent operations
-      const promise1 = cache.get("key1");
-      const promise2 = cache.set("key2", "value", 1000);
-      const promise3 = cache.exists("key3");
+      const promise1 = cache.get("key1" as CacheKey);
+      const promise2 = cache.set("key2" as CacheKey, "value", 1000);
+      const promise3 = cache.exists("key3" as CacheKey);
 
       // Wait for all operations to complete
       await Promise.all([promise1, promise2, promise3]);
 
       // Each operation should call getCacheService
       expect(mockGetCacheService).toHaveBeenCalledTimes(3);
-      expect(mockCacheService.get).toHaveBeenCalledWith("key1");
-      expect(mockCacheService.set).toHaveBeenCalledWith("key2", "value", 1000);
-      expect(mockCacheService.exists).toHaveBeenCalledWith("key3");
+      expect(mockCacheService.get).toHaveBeenCalledWith("key1" as CacheKey);
+      expect(mockCacheService.set).toHaveBeenCalledWith("key2" as CacheKey, "value", 1000);
+      expect(mockCacheService.exists).toHaveBeenCalledWith("key3" as CacheKey);
     });
   });
 
@@ -129,7 +130,7 @@ describe("Cache Index", () => {
 
       mockGetCacheService.mockResolvedValue(initError);
 
-      const result = await cache.get("test-key");
+      const result = await cache.get("test-key" as CacheKey);
 
       expect(result).toEqual({ ok: false, error: initError.error });
       expect(mockGetCacheService).toHaveBeenCalledTimes(1);
@@ -139,7 +140,7 @@ describe("Cache Index", () => {
       const networkError = new Error("Network connection failed");
       mockGetCacheService.mockRejectedValue(networkError);
 
-      await expect(cache.get("test-key")).rejects.toThrow("Network connection failed");
+      await expect(cache.get("test-key" as CacheKey)).rejects.toThrow("Network connection failed");
     });
 
     test("should handle errors consistently across different methods", async () => {
@@ -151,10 +152,10 @@ describe("Cache Index", () => {
       mockGetCacheService.mockResolvedValue(cacheError);
 
       // All methods should return the same error structure
-      const getResult = await cache.get("test-key");
-      const setResult = await cache.set("test-key", "value", 1000);
-      const delResult = await cache.del(["test-key"]);
-      const existsResult = await cache.exists("test-key");
+      const getResult = await cache.get("test-key" as CacheKey);
+      const setResult = await cache.set("test-key" as CacheKey, "value", 1000);
+      const delResult = await cache.del(["test-key" as CacheKey]);
+      const existsResult = await cache.exists("test-key" as CacheKey);
 
       expect(getResult).toEqual({ ok: false, error: cacheError.error });
       expect(setResult).toEqual({ ok: false, error: cacheError.error });
@@ -174,36 +175,36 @@ describe("Cache Index", () => {
     test("should proxy get method correctly", async () => {
       mockCacheService.get.mockResolvedValue({ ok: true, data: "cached-value" });
 
-      const result = await cache.get("test-key");
+      const result = await cache.get("test-key" as CacheKey);
 
-      expect(mockCacheService.get).toHaveBeenCalledWith("test-key");
+      expect(mockCacheService.get).toHaveBeenCalledWith("test-key" as CacheKey);
       expect(result).toEqual({ ok: true, data: "cached-value" });
     });
 
     test("should proxy set method correctly", async () => {
       mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
 
-      const result = await cache.set("test-key", "test-value", 5000);
+      const result = await cache.set("test-key" as CacheKey, "test-value", 5000);
 
-      expect(mockCacheService.set).toHaveBeenCalledWith("test-key", "test-value", 5000);
+      expect(mockCacheService.set).toHaveBeenCalledWith("test-key" as CacheKey, "test-value", 5000);
       expect(result).toEqual({ ok: true, data: undefined });
     });
 
     test("should proxy del method correctly", async () => {
       mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
 
-      const result = await cache.del(["key1", "key2"]);
+      const result = await cache.del(["key1" as CacheKey, "key2" as CacheKey]);
 
-      expect(mockCacheService.del).toHaveBeenCalledWith(["key1", "key2"]);
+      expect(mockCacheService.del).toHaveBeenCalledWith(["key1" as CacheKey, "key2" as CacheKey]);
       expect(result).toEqual({ ok: true, data: undefined });
     });
 
     test("should proxy exists method correctly", async () => {
       mockCacheService.exists.mockResolvedValue({ ok: true, data: true });
 
-      const result = await cache.exists("test-key");
+      const result = await cache.exists("test-key" as CacheKey);
 
-      expect(mockCacheService.exists).toHaveBeenCalledWith("test-key");
+      expect(mockCacheService.exists).toHaveBeenCalledWith("test-key" as CacheKey);
       expect(result).toEqual({ ok: true, data: true });
     });
 
@@ -211,9 +212,9 @@ describe("Cache Index", () => {
       const mockFn = vi.fn().mockResolvedValue("function-result");
       mockCacheService.withCache.mockResolvedValue("cached-result");
 
-      const result = await cache.withCache(mockFn, "cache-key", 3000);
+      const result = await cache.withCache(mockFn, "cache-key" as CacheKey, 3000);
 
-      expect(mockCacheService.withCache).toHaveBeenCalledWith(mockFn, "cache-key", 3000);
+      expect(mockCacheService.withCache).toHaveBeenCalledWith(mockFn, "cache-key" as CacheKey, 3000);
       expect(result).toBe("cached-result");
     });
 
@@ -225,7 +226,7 @@ describe("Cache Index", () => {
         error: { code: "CACHE_UNAVAILABLE" },
       });
 
-      const result = await cache.withCache(mockFn);
+      const result = await cache.withCache(mockFn, "cache-key" as CacheKey, 3000);
 
       expect(result).toBe("function-result");
       expect(mockFn).toHaveBeenCalledTimes(1);
@@ -238,7 +239,7 @@ describe("Cache Index", () => {
 
       mockGetCacheService.mockRejectedValue(cacheError);
 
-      const result = await cache.withCache(mockFn);
+      const result = await cache.withCache(mockFn, "cache-key" as CacheKey, 3000);
 
       expect(result).toBe("function-result");
       expect(mockFn).toHaveBeenCalledTimes(1);
@@ -262,7 +263,7 @@ describe("Cache Index", () => {
       const cacheError = new Error("Cache operation failed");
       mockCacheService.get.mockRejectedValue(cacheError);
 
-      await expect(cache.get("test-key")).rejects.toThrow("Cache operation failed");
+      await expect(cache.get("test-key" as CacheKey)).rejects.toThrow("Cache operation failed");
     });
   });
 
@@ -279,10 +280,10 @@ describe("Cache Index", () => {
       mockCacheService.exists.mockResolvedValue({ ok: true, data: true });
 
       // These should compile without type errors
-      const getValue: Promise<any> = cache.get("key");
-      const setValue: Promise<any> = cache.set("key", "value", 1000);
-      const existsValue: Promise<any> = cache.exists("key");
-      const delValue: Promise<any> = cache.del(["key"]);
+      const getValue = cache.get("key" as CacheKey);
+      const setValue = cache.set("key" as CacheKey, "value", 1000);
+      const existsValue = cache.exists("key" as CacheKey);
+      const delValue = cache.del(["key" as CacheKey]);
 
       // Verify the calls work
       await getValue;
@@ -290,10 +291,10 @@ describe("Cache Index", () => {
       await existsValue;
       await delValue;
 
-      expect(mockCacheService.get).toHaveBeenCalledWith("key");
-      expect(mockCacheService.set).toHaveBeenCalledWith("key", "value", 1000);
-      expect(mockCacheService.exists).toHaveBeenCalledWith("key");
-      expect(mockCacheService.del).toHaveBeenCalledWith(["key"]);
+      expect(mockCacheService.get).toHaveBeenCalledWith("key" as CacheKey);
+      expect(mockCacheService.set).toHaveBeenCalledWith("key" as CacheKey, "value", 1000);
+      expect(mockCacheService.exists).toHaveBeenCalledWith("key" as CacheKey);
+      expect(mockCacheService.del).toHaveBeenCalledWith(["key" as CacheKey]);
     });
   });
 
@@ -334,7 +335,7 @@ describe("Cache Index", () => {
       // Simulate server-only environment (which is already mocked by the "server-only" import)
       mockCacheService.get.mockResolvedValue({ ok: true, data: "server-value" });
 
-      const result = await cache.get("server-key");
+      const result = await cache.get("server-key" as CacheKey);
 
       expect(result).toEqual({ ok: true, data: "server-value" });
       expect(mockGetCacheService).toHaveBeenCalledTimes(1);

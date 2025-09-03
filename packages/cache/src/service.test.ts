@@ -403,6 +403,19 @@ describe("CacheService", () => {
       }
     });
 
+    test("should return error when Redis is not ready/open", async () => {
+      const keys = ["test:key1", "test:key2"] as CacheKey[];
+      mockRedis.isReady = false;
+      mockRedis.isOpen = false;
+
+      const result = await cacheService.del(keys);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
+      }
+    });
+
     test("should return error when Redis operation fails", async () => {
       const keys = ["test:key1", "test:key2"] as CacheKey[];
       mockRedis.del.mockRejectedValue(new Error("Redis connection failed"));
