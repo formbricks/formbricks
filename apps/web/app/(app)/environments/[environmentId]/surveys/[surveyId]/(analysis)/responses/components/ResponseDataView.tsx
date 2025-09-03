@@ -18,7 +18,7 @@ interface ResponseDataViewProps {
   isReadOnly: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
-  deleteResponses: (responseIds: string[]) => void;
+  updateResponseList: (responseIds: string[]) => void;
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
@@ -113,7 +113,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   isReadOnly,
   fetchNextPage,
   hasMore,
-  deleteResponses,
+  updateResponseList,
   updateResponse,
   isFetchingFirstPage,
   locale,
@@ -133,7 +133,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         environment={environment}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
-        deleteResponses={deleteResponses}
+        updateResponseList={updateResponseList}
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
         locale={locale}

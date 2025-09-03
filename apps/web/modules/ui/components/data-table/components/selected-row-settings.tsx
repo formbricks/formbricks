@@ -18,7 +18,7 @@ import { toast } from "react-hot-toast";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
-  deleteRowsAction: (rowId: string[]) => void;
+  updateRowList: (rowId: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
@@ -26,7 +26,7 @@ interface SelectedRowSettingsProps<T> {
 
 export const SelectedRowSettings = <T,>({
   table,
-  deleteRowsAction,
+  updateRowList,
   type,
   deleteAction,
   downloadRowsAction,
@@ -55,7 +55,8 @@ export const SelectedRowSettings = <T,>({
         await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId)));
       }
 
-      deleteRowsAction(rowsToBeDeleted);
+      // Update the row list UI
+      updateRowList(rowsToBeDeleted);
       toast.success(t("common.table_items_deleted_successfully", { type: capitalizeFirstLetter(type) }));
     } catch (error) {
       if (error instanceof Error) {

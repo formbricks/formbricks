@@ -176,7 +176,7 @@ const defaultProps = {
   isReadOnly: false,
   fetchNextPage: vi.fn(),
   hasMore: true,
-  deleteResponses: vi.fn(),
+  updateResponseList: vi.fn(),
   updateResponse: vi.fn(),
   isFetchingFirstPage: false,
   locale: mockLocale,
@@ -264,7 +264,7 @@ describe("ResponseDataView", () => {
     expect(responseTableMock.mock.calls[0][0].environment).toEqual(mockEnvironment);
     expect(responseTableMock.mock.calls[0][0].fetchNextPage).toBe(defaultProps.fetchNextPage);
     expect(responseTableMock.mock.calls[0][0].hasMore).toBe(true);
-    expect(responseTableMock.mock.calls[0][0].deleteResponses).toBe(defaultProps.deleteResponses);
+    expect(responseTableMock.mock.calls[0][0].updateResponseList).toBe(defaultProps.updateResponseList);
     expect(responseTableMock.mock.calls[0][0].updateResponse).toBe(defaultProps.updateResponse);
     expect(responseTableMock.mock.calls[0][0].isFetchingFirstPage).toBe(false);
     expect(responseTableMock.mock.calls[0][0].locale).toBe(mockLocale);
