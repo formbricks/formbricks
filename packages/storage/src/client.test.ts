@@ -196,6 +196,27 @@ describe("client.ts", () => {
         expect(result.data).toBeDefined();
       }
     });
+
+    test("should return unknown error when S3Client constructor throws", async () => {
+      // Provide valid credentials so we reach the constructor path
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      // Make the mocked S3Client throw on construction for this test only
+      mockS3Client.mockImplementationOnce((..._args: [S3ClientConfig] | []): S3Client => {
+        throw new Error("constructor failed");
+      });
+
+      const { createS3ClientFromEnv } = await import("./client");
+
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("unknown");
+      }
+    });
   });
 
   describe("createS3Client", () => {

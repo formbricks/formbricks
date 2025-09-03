@@ -6,6 +6,7 @@ import {
   validateSingleFile,
 } from "@/modules/storage/utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
@@ -32,6 +33,76 @@ describe("storage utils", () => {
       } catch {
         return undefined;
       }
+    });
+  });
+
+  describe("getErrorResponseFromStorageError", () => {
+    test("returns appropriate responses for each storage error code", async () => {
+      // Mock responses helper to observe calls and provide Response objects
+      vi.doMock("@/app/lib/api/response", () => ({
+        responses: {
+          notFoundResponse: vi.fn(
+            (_entity: string, _id?: string | null, _public?: boolean) => new Response(null, { status: 404 })
+          ),
+          badRequestResponse: vi.fn(
+            (_msg: string, _details?: unknown, _public?: boolean) => new Response(null, { status: 400 })
+          ),
+          internalServerErrorResponse: vi.fn(
+            (_msg: string, _public?: boolean) => new Response(null, { status: 500 })
+          ),
+        },
+      }));
+
+      const { getErrorResponseFromStorageError } = await import("@/modules/storage/utils");
+
+      // FileNotFoundError uses notFoundResponse with details.fileName or null
+      const r404 = getErrorResponseFromStorageError(
+        { code: StorageErrorCode.FileNotFoundError },
+        {
+          fileName: "file.png",
+        }
+      );
+      expect(r404.status).toBe(404);
+
+      // InvalidInput -> 400
+      const r400 = getErrorResponseFromStorageError({ code: StorageErrorCode.InvalidInput }, {
+        reason: "bad",
+      } as any);
+      expect(r400.status).toBe(400);
+
+      // S3 related and Unknown -> 500
+      const r500a = getErrorResponseFromStorageError({ code: StorageErrorCode.S3ClientError });
+      expect(r500a.status).toBe(500);
+      const r500b = getErrorResponseFromStorageError({ code: StorageErrorCode.S3CredentialsError });
+      expect(r500b.status).toBe(500);
+      const r500c = getErrorResponseFromStorageError({ code: StorageErrorCode.Unknown });
+      expect(r500c.status).toBe(500);
+
+      // Default branch (unknown string) -> 500
+      const r500d = getErrorResponseFromStorageError({ code: "something_else" as any });
+      expect(r500d.status).toBe(500);
+    });
+  });
+
+  describe("getOriginalFileNameFromUrl (actual)", () => {
+    test("extracts original name from full URL with fid and extension", async () => {
+      const { getOriginalFileNameFromUrl } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+      const url = "https://cdn.example.com/storage/env/public/photo--fid--12345.png?x=1#hash";
+      expect(getOriginalFileNameFromUrl(url)).toBe("photo.png");
+    });
+
+    test("handles /storage/ relative path and missing fid", async () => {
+      const { getOriginalFileNameFromUrl } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+      const path = "/storage/env/public/Document%20Name.pdf";
+      expect(getOriginalFileNameFromUrl(path)).toBe("/storage/env/public/Document Name.pdf");
+    });
+
+    test("returns empty string on invalid URL input", async () => {
+      const { getOriginalFileNameFromUrl } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+      expect(getOriginalFileNameFromUrl("ht!tp://%$^&")).toBe("");
     });
   });
 
