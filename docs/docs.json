@@ -689,7 +689,7 @@
     {
       "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-native",
       "permanent": true,
-      "source": "docs/developer-docs/react-native-in-app-surveys"
+      "source": "/docs/developer-docs/react-native-in-app-surveys"
     },
     {
       "destination": "/docs/api-reference/rest-api",
