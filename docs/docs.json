@@ -13,12 +13,6 @@
       "x": "https://x.com/formbricks"
     }
   },
-  "integrations": {
-    "posthog": {
-      "apiHost": "optional",
-      "apiKey": "YOUR_POSTHOG_PROJECT_API_KEY"
-    }
-  },
   "logo": {
     "dark": "/images/logo-dark.svg",
     "light": "/images/logo-light.svg"
@@ -42,7 +36,7 @@
       {
         "groups": [
           {
-            "group": "",
+            "group": "Overview",
             "pages": ["overview/introduction", "overview/what-is-formbricks", "overview/open-source"]
           }
         ],
@@ -51,7 +45,7 @@
       {
         "groups": [
           {
-            "group": "",
+            "group": "XM & Surveys",
             "pages": ["xm-and-surveys/overview"]
           },
           {
@@ -196,7 +190,7 @@
       {
         "groups": [
           {
-            "group": "",
+            "group": "Self Hosting",
             "pages": ["self-hosting/overview"]
           },
           {
@@ -271,7 +265,7 @@
       {
         "groups": [
           {
-            "group": "",
+            "group": "Development",
             "pages": ["development/overview"]
           },
           {
