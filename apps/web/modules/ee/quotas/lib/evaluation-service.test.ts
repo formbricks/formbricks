@@ -184,7 +184,7 @@ describe("Quota Evaluation Service", () => {
       expect(result).toEqual({
         shouldEndSurvey: false,
       });
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, {});
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
       expect(getSurvey).not.toHaveBeenCalled();
     });
 
@@ -204,7 +204,7 @@ describe("Quota Evaluation Service", () => {
       expect(result).toEqual({
         shouldEndSurvey: false,
       });
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, {});
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     });
 
@@ -240,7 +240,7 @@ describe("Quota Evaluation Service", () => {
         shouldEndSurvey: false,
       });
 
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, {});
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(evaluateQuotas).toHaveBeenCalledWith(
         mockSurvey,
@@ -249,7 +249,7 @@ describe("Quota Evaluation Service", () => {
         [continueSurveyQuota],
         "en"
       );
-      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult);
+      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, true);
     });
 
     test("should process quotas successfully and return shouldEndSurvey true when quota action is endSurvey", async () => {
@@ -281,7 +281,7 @@ describe("Quota Evaluation Service", () => {
         refreshedResponse: mockResponse,
       });
 
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, {});
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(evaluateQuotas).toHaveBeenCalledWith(
         mockSurvey,
@@ -290,7 +290,7 @@ describe("Quota Evaluation Service", () => {
         [mockQuota],
         "en"
       );
-      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult);
+      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, true);
       expect(prisma.response.findUnique).toHaveBeenCalledWith({
         where: { id: mockResponseId },
       });
@@ -329,7 +329,7 @@ describe("Quota Evaluation Service", () => {
         refreshedResponse: mockResponse,
       });
 
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, { countPartialSubmissions: true });
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(evaluateQuotas).toHaveBeenCalledWith(
         mockSurvey,
@@ -338,7 +338,7 @@ describe("Quota Evaluation Service", () => {
         [mockPartialSubmissionQuota],
         "default"
       );
-      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult);
+      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, false);
       expect(prisma.response.findUnique).toHaveBeenCalledWith({ where: { id: mockResponseId } });
     });
 

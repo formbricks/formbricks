@@ -38,7 +38,7 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
   } = input;
 
   try {
-    const quotas = await getQuotas(surveyId, responseFinished ? {} : { countPartialSubmissions: true });
+    const quotas = await getQuotas(surveyId);
 
     if (!quotas || quotas.length === 0) {
       return { shouldEndSurvey: false };
@@ -51,7 +51,7 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
 
     const result = evaluateQuotas(survey, data, variables, quotas, language);
 
-    const quotaFull = await handleQuotas(surveyId, responseId, result);
+    const quotaFull = await handleQuotas(surveyId, responseId, result, responseFinished);
 
     if (quotaFull && quotaFull.action === "endSurvey") {
       const refreshedResponse = await prisma.response.findUnique({

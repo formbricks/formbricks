@@ -119,14 +119,15 @@ export const upsertResponseQuotaLinks = async (
 export const handleQuotas = async (
   surveyId: string,
   responseId: string,
-  result: { passedQuotas: TSurveyQuota[]; failedQuotas: TSurveyQuota[] }
+  result: { passedQuotas: TSurveyQuota[]; failedQuotas: TSurveyQuota[] },
+  responseFinished: boolean
 ): Promise<TSurveyQuota | null> => {
   try {
     validateInputs([surveyId, ZId], [responseId, ZId]);
 
     let firstScreenedOutQuota: TSurveyQuota | null = null;
-    const fullQuota: TSurveyQuota[] = [];
-    const otherQuota: TSurveyQuota[] = [];
+    let fullQuota: TSurveyQuota[] = [];
+    let otherQuota: TSurveyQuota[] = [];
 
     const quotasCountingAll = result.passedQuotas.filter((quota) => quota.countPartialSubmissions);
     const quotasCountingFinished = result.passedQuotas.filter((quota) => !quota.countPartialSubmissions);
@@ -190,6 +191,11 @@ export const handleQuotas = async (
       } else {
         otherQuota.push(quota);
       }
+    }
+
+    if (!responseFinished) {
+      fullQuota = fullQuota.filter((quota) => quota.countPartialSubmissions);
+      otherQuota = otherQuota.filter((quota) => quota.countPartialSubmissions);
     }
 
     await upsertResponseQuotaLinks(responseId, fullQuota, otherQuota, result.failedQuotas);

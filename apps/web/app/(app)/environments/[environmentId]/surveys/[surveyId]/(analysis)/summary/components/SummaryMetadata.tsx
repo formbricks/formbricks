@@ -1,7 +1,7 @@
 "use client";
 
-import { InteractiveCard } from "@/modules/ui/components/interactive-card";
-import { StatCard } from "@/modules/ui/components/stat-card";
+import { InteractiveCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/interactive-card";
+import { StatCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/stat-card";
 import { cn } from "@/modules/ui/lib/utils";
 import { useTranslate } from "@tolgee/react";
 import { TSurveySummary } from "@formbricks/types/surveys/types";
@@ -50,7 +50,6 @@ export const SummaryMetadata = ({
   } = surveySummary;
   const { t } = useTranslate();
   const dropoffCountValue = dropOffCount === 0 ? <span>-</span> : dropOffCount;
-  const quotasCompletedValue = quotasCompleted ?? <span>-</span>;
 
   const handleTabChange = (val: "dropOffs" | "quotas") => {
     const change = tab === val ? undefined : val;
@@ -112,7 +111,7 @@ export const SummaryMetadata = ({
             tab="quotas"
             label={t("environments.surveys.summary.quotas_completed")}
             percentage={quotasCompletedPercentage}
-            value={quotasCompletedValue}
+            value={quotasCompleted}
             tooltipText={t("environments.surveys.summary.quotas_completed_tooltip")}
             isLoading={isLoading}
             onClick={() => handleTabChange("quotas")}
