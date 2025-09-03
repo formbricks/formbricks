@@ -88,7 +88,7 @@ export class ResponseQueue {
           quotaFullResponse = res.data;
         }
 
-        return { success: true, quotaFullResponse: quotaFullResponse || undefined };
+        return { success: true, quotaFullResponse: quotaFullResponse ?? undefined };
       }
 
       if (this.isRecaptchaError(res.error)) {
@@ -133,7 +133,7 @@ export class ResponseQueue {
       return;
     }
 
-    console.error("Failed to send response after 2 attempts.");
+    console.error(`Failed to send response after ${this.config.retryAttempts} attempts.`);
     this.config.onResponseSendingFailed?.(responseUpdate, TResponseErrorCodesEnum.ResponseSendingError);
   }
 
