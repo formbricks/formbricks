@@ -16,14 +16,10 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurveyQuota } from "@formbricks/types/quota";
+import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getContact } from "./contact";
-
-export type TResponseWithQuotaFull = TResponse & {
-  quotaFull?: TSurveyQuota;
-};
 
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInputV2

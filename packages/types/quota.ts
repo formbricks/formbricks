@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "./common";
+import type { TResponse } from "./responses";
 import { ZConnector, ZSingleCondition } from "./surveys/types";
 
 // Complete quota conditions structure
@@ -72,3 +73,7 @@ export type TQuotaFullResponse = {
   quotaId: string;
   action: TSurveyQuotaAction;
 } & TQuotaFullAction;
+
+export type TResponseWithQuotaFull = TResponse & {
+  quotaFull?: TSurveyQuota;
+};

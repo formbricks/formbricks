@@ -12,7 +12,8 @@ import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponseWithQuotaFull, createResponseWithQuotaEvaluation } from "./lib/response";
+import { TResponseWithQuotaFull } from "@formbricks/types/quota";
+import { createResponseWithQuotaEvaluation } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
 interface Context {

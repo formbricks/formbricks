@@ -1,6 +1,6 @@
-import { TResponseWithQuotaFull } from "@/app/api/v1/client/[environmentId]/responses/lib/response";
 import { updateResponse } from "@/lib/response/service";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
 
 export const updateResponseWithQuotaEvaluation = async (
