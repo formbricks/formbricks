@@ -38,20 +38,21 @@ describe("storage utils", () => {
 
   describe("getErrorResponseFromStorageError", () => {
     test("returns appropriate responses for each storage error code", async () => {
-      // Mock responses helper to observe calls and provide Response objects
-      vi.doMock("@/app/lib/api/response", () => ({
-        responses: {
-          notFoundResponse: vi.fn(
-            (_entity: string, _id?: string | null, _public?: boolean) => new Response(null, { status: 404 })
-          ),
-          badRequestResponse: vi.fn(
-            (_msg: string, _details?: unknown, _public?: boolean) => new Response(null, { status: 400 })
-          ),
-          internalServerErrorResponse: vi.fn(
-            (_msg: string, _public?: boolean) => new Response(null, { status: 500 })
-          ),
-        },
-      }));
+      // Spy on real module; keep behavior isolated to this test
+      const responseMod = await import("@/app/lib/api/response");
+      const spyNotFound = vi
+        .spyOn(responseMod.responses, "notFoundResponse")
+        .mockImplementation(
+          (_entity: string, _id?: string | null, _public?: boolean) => new Response(null, { status: 404 })
+        );
+      const spyBadReq = vi
+        .spyOn(responseMod.responses, "badRequestResponse")
+        .mockImplementation(
+          (_msg: string, _details?: unknown, _public?: boolean) => new Response(null, { status: 400 })
+        );
+      const spyISE = vi
+        .spyOn(responseMod.responses, "internalServerErrorResponse")
+        .mockImplementation((_msg: string, _public?: boolean) => new Response(null, { status: 500 }));
 
       const { getErrorResponseFromStorageError } = await import("@/modules/storage/utils");
 
@@ -81,6 +82,10 @@ describe("storage utils", () => {
       // Default branch (unknown string) -> 500
       const r500d = getErrorResponseFromStorageError({ code: "something_else" as any });
       expect(r500d.status).toBe(500);
+
+      spyNotFound.mockRestore();
+      spyBadReq.mockRestore();
+      spyISE.mockRestore();
     });
   });
 
