@@ -1,17 +1,14 @@
-import { getSurvey } from "@/lib/survey/service";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
 import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
-import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma, Response } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getResponse = reactCache(async (responseId: string) => {
@@ -122,41 +119,27 @@ export const updateResponseWithQuotaEvaluation = async (
 
   const response = responseResult.data;
 
-  try {
-    const quotas = await getQuotas(response.surveyId);
+  const quotaResult = await evaluateResponseQuotas({
+    surveyId: response.surveyId,
+    responseId: response.id,
+    data: response.data,
+    variables: response.variables,
+    language: response.language || "default",
+  });
 
-    if (!quotas || quotas.length === 0) {
-      return ok(response);
+  if (quotaResult.shouldEndSurvey) {
+    if (quotaResult.refreshedResponse) {
+      return ok(quotaResult.refreshedResponse);
     }
 
-    const survey = await getSurvey(response.surveyId);
-    if (!survey) {
-      return ok(response);
-    }
-
-    const result = evaluateQuotas(
-      survey,
-      response.data,
-      response.variables || {},
-      quotas,
-      response.language || "default"
-    );
-
-    const quotaFull = await handleQuotas(response.surveyId, response.id, result);
-
-    if (quotaFull && quotaFull.action === "endSurvey") {
-      const refreshedResponse = await prisma.response.findUnique({ where: { id: response.id } });
-
-      if (!refreshedResponse) {
-        return ok({ ...response, finished: true, endingId: quotaFull.endingCardId });
-      }
-
-      return ok(refreshedResponse);
-    }
-
-    return ok(response);
-  } catch (error) {
-    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response update");
-    return ok(response);
+    return ok({
+      ...response,
+      finished: true,
+      ...(quotaResult.quotaFull?.endingCardId && {
+        endingId: quotaResult.quotaFull.endingCardId,
+      }),
+    });
   }
+
+  return ok(response);
 };

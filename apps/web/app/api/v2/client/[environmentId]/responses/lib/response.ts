@@ -8,11 +8,9 @@ import {
 } from "@/lib/organization/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { getSurvey } from "@/lib/survey/service";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
-import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
-import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -32,36 +30,18 @@ export const createResponseWithQuotaEvaluation = async (
 ): Promise<TResponseWithQuotaFull> => {
   const response = await createResponse(responseInput);
 
-  try {
-    const quotas = await getQuotas(responseInput.surveyId);
+  const quotaResult = await evaluateResponseQuotas({
+    surveyId: responseInput.surveyId,
+    responseId: response.id,
+    data: responseInput.data,
+    variables: responseInput.variables,
+    language: responseInput.language,
+  });
 
-    if (!quotas || quotas.length === 0) {
-      return response;
-    }
-
-    const survey = await getSurvey(responseInput.surveyId);
-    if (!survey) {
-      return response;
-    }
-
-    const result = evaluateQuotas(
-      survey,
-      responseInput.data,
-      responseInput.variables || {},
-      quotas,
-      responseInput.language || "default"
-    );
-
-    const quotaFull = await handleQuotas(responseInput.surveyId, response.id, result);
-
-    return {
-      ...response,
-      ...(quotaFull && { quotaFull }),
-    };
-  } catch (error) {
-    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response");
-    return response;
-  }
+  return {
+    ...response,
+    ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
+  };
 };
 
 export const createResponse = async (responseInput: TResponseInputV2): Promise<TResponse> => {

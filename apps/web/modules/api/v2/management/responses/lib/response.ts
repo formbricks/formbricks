@@ -2,7 +2,6 @@ import "server-only";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { getSurvey } from "@/lib/survey/service";
 import { captureTelemetry } from "@/lib/telemetry";
 import {
   getMonthlyOrganizationResponseCount,
@@ -13,8 +12,7 @@ import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/uti
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
-import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
-import { evaluateQuotas, handleQuotas } from "@/modules/ee/quotas/lib/utils";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -156,41 +154,27 @@ export const createResponseWithQuotaEvaluation = async (
 
   const response = responseResult.data;
 
-  try {
-    const quotas = await getQuotas(responseInput.surveyId);
+  const quotaResult = await evaluateResponseQuotas({
+    surveyId: responseInput.surveyId,
+    responseId: response.id,
+    data: responseInput.data,
+    variables: responseInput.variables,
+    language: responseInput.language || "default",
+  });
 
-    if (!quotas || quotas.length === 0) {
-      return ok(response);
+  if (quotaResult.shouldEndSurvey) {
+    if (quotaResult.refreshedResponse) {
+      return ok(quotaResult.refreshedResponse);
     }
 
-    const survey = await getSurvey(responseInput.surveyId);
-    if (!survey) {
-      return ok(response);
-    }
-
-    const result = evaluateQuotas(
-      survey,
-      responseInput.data,
-      responseInput.variables || {},
-      quotas,
-      responseInput.language || "default"
-    );
-
-    const quotaFull = await handleQuotas(responseInput.surveyId, response.id, result);
-
-    if (quotaFull && quotaFull.action === "endSurvey") {
-      const refreshedResponse = await prisma.response.findUnique({ where: { id: response.id } });
-
-      if (!refreshedResponse) {
-        return ok({ ...response, finished: true, endingId: quotaFull.endingCardId });
-      }
-
-      return ok(refreshedResponse);
-    }
-
-    return ok(response);
-  } catch (error) {
-    logger.error({ error, responseId: response.id }, "Error evaluating quotas for response");
-    return ok(response);
+    return ok({
+      ...response,
+      finished: true,
+      ...(quotaResult.quotaFull?.endingCardId && {
+        endingId: quotaResult.quotaFull.endingCardId,
+      }),
+    });
   }
+
+  return ok(response);
 };
