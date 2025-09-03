@@ -12,7 +12,7 @@ export const COLOR_DEFAULTS = {
 } as const;
 
 export const defaultStyling: TProjectStyling = {
-  allowStyleOverwrite: false,
+  allowStyleOverwrite: true,
   brandColor: {
     light: COLOR_DEFAULTS.brandColor,
   },

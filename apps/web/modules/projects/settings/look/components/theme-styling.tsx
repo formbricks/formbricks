@@ -29,7 +29,7 @@ import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
-import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
+import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 
 interface ThemeStylingProps {
   project: Project;
@@ -49,9 +49,8 @@ export const ThemeStyling = ({
   const { t } = useTranslate();
   const router = useRouter();
 
-  const allowStyleOverwrite = project.styling?.allowStyleOverwrite;
   const form = useForm<TProjectStyling>({
-    defaultValues: allowStyleOverwrite ? { ...defaultStyling, ...project.styling } : defaultStyling,
+    defaultValues: { ...defaultStyling, ...project.styling },
     resolver: zodResolver(ZProjectStyling),
   });
 
@@ -79,8 +78,6 @@ export const ThemeStyling = ({
       toast.error(errorMessage);
     }
   }, [form, project.id, router]);
-
-  const isCustomStylingEnabled = form.watch("allowStyleOverwrite");
 
   const onSubmit: SubmitHandler<TProjectStyling> = async (data) => {
     const updatedProjectResponse = await updateProjectAction({
@@ -193,10 +190,10 @@ export const ThemeStyling = ({
           <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
             <div className="sticky top-4 mb-4 h-[600px]">
               <ThemeStylingPreviewSurvey
-                survey={previewSurvey(project.name, t) as TSurvey}
+                survey={previewSurvey(project.name, t)}
                 project={{
                   ...project,
-                  styling: isCustomStylingEnabled ? form.watch() : defaultStyling,
+                  styling: form.watch(),
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}
