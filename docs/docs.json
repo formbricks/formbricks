@@ -13,6 +13,12 @@
       "x": "https://x.com/formbricks"
     }
   },
+  "integrations": {
+    "posthog": {
+      "apiHost": "https://eu.i.posthog.com",
+      "apiKey": "phc_zJO1n3rjHlhqKiJ0gqLDwT4qvfWF1wzHDq2gfl0moQm"
+    }
+  },
   "logo": {
     "dark": "/images/logo-dark.svg",
     "light": "/images/logo-light.svg"
