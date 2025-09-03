@@ -24,7 +24,7 @@ interface SingleResponseCardProps {
   environmentTags: TTag[];
   environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
-  deleteResponses?: (responseIds: string[]) => void;
+  updateResponseList?: (responseIds: string[]) => void;
   isReadOnly: boolean;
   setSelectedResponseId?: (responseId: string | null) => void;
   locale: TUserLocale;
@@ -37,7 +37,7 @@ export const SingleResponseCard = ({
   environmentTags,
   environment,
   updateResponse,
-  deleteResponses,
+  updateResponseList,
   isReadOnly,
   setSelectedResponseId,
   locale,
@@ -90,7 +90,7 @@ export const SingleResponseCard = ({
         throw new Error(t("common.not_authorized"));
       }
       await deleteResponseAction({ responseId: response.id, decrementQuotas });
-      deleteResponses?.([response.id]);
+      updateResponseList?.([response.id]);
       router.refresh();
       if (setSelectedResponseId) setSelectedResponseId(null);
       toast.success(t("environments.surveys.responses.response_deleted_successfully"));
