@@ -19,6 +19,10 @@ if (SENTRY_DSN) {
 
     // Setting this option to true will print useful information to the console while you're setting up Sentry.
     debug: false,
+
+    // Disable telemetry and additional data collection
+    sendDefaultPii: false,
+    sendClientReports: false,
   });
 } else {
   logger.warn("Sentry DSN not found, Sentry will be disabled on the edge");

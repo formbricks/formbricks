@@ -187,7 +187,7 @@ describe("ResponsePage", () => {
     ).mock.calls[0][0];
 
     act(() => {
-      responseDataViewProps.deleteResponses(["response1"]);
+      responseDataViewProps.updateResponseList(["response1"]);
     });
 
     // Check if ResponseDataView is re-rendered with updated responses

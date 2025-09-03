@@ -48,7 +48,7 @@ interface ResponseTableProps {
   isReadOnly: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
-  deleteResponses: (responseIds: string[]) => void;
+  updateResponseList: (responseIds: string[]) => void;
   updateResponse: (responseId: string, updatedResponse: TResponseWithQuotas) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
@@ -66,7 +66,7 @@ export const ResponseTable = ({
   isReadOnly,
   fetchNextPage,
   hasMore,
-  deleteResponses,
+  updateResponseList,
   updateResponse,
   isFetchingFirstPage,
   locale,
@@ -227,7 +227,7 @@ export const ResponseTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded ?? false}
           table={table}
-          deleteRowsAction={deleteResponses}
+          updateRowList={updateResponseList}
           type="response"
           deleteAction={deleteResponse}
           downloadRowsAction={downloadSelectedRows}
@@ -305,7 +305,7 @@ export const ResponseTable = ({
             environmentTags={environmentTags}
             isReadOnly={isReadOnly}
             updateResponse={updateResponse}
-            deleteResponses={deleteResponses}
+            updateResponseList={updateResponseList}
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
             open={selectedResponse !== null}
