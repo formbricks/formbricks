@@ -15,6 +15,7 @@ export const updateResponseWithQuotaEvaluation = async (
     data: response.data,
     variables: response.variables,
     language: response.language || "default",
+    responseFinished: response.finished,
   });
 
   if (quotaResult.shouldEndSurvey && quotaResult.refreshedResponse) {

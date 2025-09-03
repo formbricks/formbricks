@@ -11,6 +11,7 @@ export interface QuotaEvaluationInput {
   surveyId: string;
   responseId: string;
   data: Response["data"];
+  responseFinished: boolean;
   variables?: Response["variables"];
   language?: string;
 }
@@ -27,10 +28,17 @@ export interface QuotaEvaluationResult {
  * @returns The quota evaluation result with quotaFull, shouldEndSurvey, and refreshedResponse
  */
 export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promise<QuotaEvaluationResult> => {
-  const { surveyId, responseId, data, variables = {}, language = "default" } = input;
+  const {
+    surveyId,
+    responseId,
+    data,
+    variables = {},
+    language = "default",
+    responseFinished = false,
+  } = input;
 
   try {
-    const quotas = await getQuotas(surveyId);
+    const quotas = await getQuotas(surveyId, responseFinished ? {} : { countPartialSubmissions: true });
 
     if (!quotas || quotas.length === 0) {
       return { shouldEndSurvey: false };

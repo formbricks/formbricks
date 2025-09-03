@@ -160,6 +160,7 @@ export const createResponseWithQuotaEvaluation = async (
     data: responseInput.data,
     variables: responseInput.variables,
     language: responseInput.language || "default",
+    responseFinished: response.finished,
   });
 
   if (quotaResult.shouldEndSurvey) {

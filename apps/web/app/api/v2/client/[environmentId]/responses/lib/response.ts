@@ -36,6 +36,7 @@ export const createResponseWithQuotaEvaluation = async (
     data: responseInput.data,
     variables: responseInput.variables,
     language: responseInput.language,
+    responseFinished: response.finished,
   });
 
   return {

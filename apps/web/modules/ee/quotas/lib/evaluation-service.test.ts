@@ -174,6 +174,7 @@ describe("Quota Evaluation Service", () => {
         surveyId: mockSurveyId,
         responseId: mockResponseId,
         data: mockResponseData,
+        responseFinished: true,
       };
 
       vi.mocked(getQuotas).mockResolvedValue([]);
@@ -183,7 +184,7 @@ describe("Quota Evaluation Service", () => {
       expect(result).toEqual({
         shouldEndSurvey: false,
       });
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, {});
       expect(getSurvey).not.toHaveBeenCalled();
     });
 
@@ -192,6 +193,7 @@ describe("Quota Evaluation Service", () => {
         surveyId: mockSurveyId,
         responseId: mockResponseId,
         data: mockResponseData,
+        responseFinished: true,
       };
 
       vi.mocked(getQuotas).mockResolvedValue([mockQuota]);
@@ -202,7 +204,7 @@ describe("Quota Evaluation Service", () => {
       expect(result).toEqual({
         shouldEndSurvey: false,
       });
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, {});
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     });
 
@@ -213,6 +215,7 @@ describe("Quota Evaluation Service", () => {
         data: mockResponseData,
         variables: mockVariablesData,
         language: "en",
+        responseFinished: true,
       };
 
       const continueSurveyQuota: TSurveyQuota = {
@@ -237,7 +240,7 @@ describe("Quota Evaluation Service", () => {
         shouldEndSurvey: false,
       });
 
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, {});
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(evaluateQuotas).toHaveBeenCalledWith(
         mockSurvey,
@@ -256,6 +259,7 @@ describe("Quota Evaluation Service", () => {
         data: mockResponseData,
         variables: mockVariablesData,
         language: "en",
+        responseFinished: true,
       };
 
       const evaluateResult = {
@@ -277,7 +281,7 @@ describe("Quota Evaluation Service", () => {
         refreshedResponse: mockResponse,
       });
 
-      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId);
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, {});
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(evaluateQuotas).toHaveBeenCalledWith(
         mockSurvey,
@@ -292,6 +296,52 @@ describe("Quota Evaluation Service", () => {
       });
     });
 
+    test("should process quotas successfully and return shouldEndSurvey true when quota action is endSurvey and responseFinished is false", async () => {
+      const input: QuotaEvaluationInput = {
+        surveyId: mockSurveyId,
+        responseId: mockResponseId,
+        data: mockResponseData,
+        variables: mockVariablesData,
+        responseFinished: false,
+      };
+
+      const mockPartialSubmissionQuota = {
+        ...mockQuota,
+        countPartialSubmissions: true,
+      };
+
+      const evaluateResult = {
+        passedQuotas: [mockPartialSubmissionQuota],
+        failedQuotas: [],
+      };
+
+      vi.mocked(getQuotas).mockResolvedValue([mockPartialSubmissionQuota]);
+      vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
+      vi.mocked(evaluateQuotas).mockReturnValue(evaluateResult);
+      vi.mocked(handleQuotas).mockResolvedValue(mockPartialSubmissionQuota);
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockResponse);
+
+      const result = await evaluateResponseQuotas(input);
+
+      expect(result).toEqual({
+        quotaFull: mockPartialSubmissionQuota,
+        shouldEndSurvey: true,
+        refreshedResponse: mockResponse,
+      });
+
+      expect(getQuotas).toHaveBeenCalledWith(mockSurveyId, { countPartialSubmissions: true });
+      expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
+      expect(evaluateQuotas).toHaveBeenCalledWith(
+        mockSurvey,
+        mockResponseData,
+        mockVariablesData,
+        [mockPartialSubmissionQuota],
+        "default"
+      );
+      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult);
+      expect(prisma.response.findUnique).toHaveBeenCalledWith({ where: { id: mockResponseId } });
+    });
+
     test("should return shouldEndSurvey false when handleQuotas returns null", async () => {
       const input: QuotaEvaluationInput = {
         surveyId: mockSurveyId,
@@ -299,6 +349,7 @@ describe("Quota Evaluation Service", () => {
         data: mockResponseData,
         variables: mockVariablesData,
         language: "en",
+        responseFinished: true,
       };
 
       const evaluateResult = {
@@ -324,6 +375,7 @@ describe("Quota Evaluation Service", () => {
         surveyId: mockSurveyId,
         responseId: mockResponseId,
         data: mockResponseData,
+        responseFinished: true,
       };
 
       vi.mocked(getQuotas).mockResolvedValue([mockQuota]);
@@ -346,6 +398,7 @@ describe("Quota Evaluation Service", () => {
         surveyId: mockSurveyId,
         responseId: mockResponseId,
         data: mockResponseData,
+        responseFinished: true,
       };
 
       vi.mocked(getQuotas).mockResolvedValue([mockQuota]);

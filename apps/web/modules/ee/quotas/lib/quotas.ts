@@ -30,28 +30,31 @@ export const getQuota = reactCache(async (quotaId: string): Promise<TSurveyQuota
   }
 });
 
-export const getQuotas = reactCache(async (surveyId: string): Promise<TSurveyQuota[]> => {
-  validateInputs([surveyId, ZId]);
+export const getQuotas = reactCache(
+  async (surveyId: string, filters?: Prisma.SurveyQuotaWhereInput): Promise<TSurveyQuota[]> => {
+    validateInputs([surveyId, ZId]);
 
-  try {
-    const quotas = await prisma.surveyQuota.findMany({
-      where: {
-        surveyId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    try {
+      const quotas = await prisma.surveyQuota.findMany({
+        where: {
+          surveyId,
+          ...filters,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-    return quotas;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+      return quotas;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
     }
-
-    throw error;
   }
-});
+);
 
 export const createQuota = async (quota: TSurveyQuotaInput): Promise<TSurveyQuota> => {
   try {
