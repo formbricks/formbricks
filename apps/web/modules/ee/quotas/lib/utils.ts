@@ -97,7 +97,7 @@ export const upsertResponseQuotaLinks = async (
 
     if (otherQuotaIds.length > 0) {
       // Create new records for other quotas
-      tx.responseQuotaLink.createMany({
+      await tx.responseQuotaLink.createMany({
         data: otherQuotaIds.map((quotaId) => ({
           responseId,
           quotaId,
