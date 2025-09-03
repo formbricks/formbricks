@@ -221,14 +221,10 @@ export const ResponseTable = ({
           });
         }
 
-        try {
-          const url = URL.createObjectURL(file);
-          const fileName = downloadResponse.data.fileName || `${survey.name}-${format}.${format}`;
-          downloadFile(url, fileName);
-          URL.revokeObjectURL(url);
-        } catch {
-          toast.error(t("environments.surveys.responses.error_downloading_responses"));
-        }
+        const url = URL.createObjectURL(file);
+        const fileName = downloadResponse.data.fileName || `${survey.name}-${format}.${format}`;
+        downloadFile(url, fileName);
+        URL.revokeObjectURL(url);
       } else {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
       }

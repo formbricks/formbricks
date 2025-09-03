@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { StorageErrorCode } from "@formbricks/storage";
 import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { ZProject } from "@formbricks/types/project";
@@ -159,7 +160,10 @@ describe("project lib", () => {
 
     test("logs error if file deletion fails", async () => {
       vi.mocked(prisma.project.delete).mockResolvedValueOnce(baseProject as any);
-      vi.mocked(deleteFilesByEnvironmentId).mockRejectedValueOnce(new Error("fail"));
+      vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({
+        ok: false,
+        error: { code: StorageErrorCode.Unknown },
+      } as any);
       vi.mocked(logger.error).mockImplementation(() => {});
       await deleteProject("p1");
       expect(logger.error).toHaveBeenCalled();

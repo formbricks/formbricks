@@ -325,6 +325,11 @@ beforeEach(() => {
       }
     } as any
   );
+
+  vi.stubGlobal("URL", {
+    createObjectURL: vi.fn(),
+    revokeObjectURL: vi.fn(),
+  });
 });
 
 // Cleanup after each test
@@ -398,6 +403,8 @@ describe("ResponseTable", () => {
 
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
+    // Ensure URL.createObjectURL returns a deterministic URL for assertions
+    (URL.createObjectURL as any).mockReturnValueOnce("https://download.url/file.csv");
     const downloadCsvButton = screen.getByTestId("download-csv");
     await userEvent.click(downloadCsvButton);
 
@@ -427,6 +434,8 @@ describe("ResponseTable", () => {
 
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
+    // Ensure URL.createObjectURL returns a deterministic URL for assertions
+    (URL.createObjectURL as any).mockReturnValueOnce("https://download.url/file.xlsx");
     const downloadXlsxButton = screen.getByTestId("download-xlsx");
     await userEvent.click(downloadXlsxButton);
 
