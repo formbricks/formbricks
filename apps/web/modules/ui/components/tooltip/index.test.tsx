@@ -30,6 +30,11 @@ vi.mock("@radix-ui/react-tooltip", () => ({
       {children}
     </div>
   ),
+  Portal: ({ children, ...props }: any) => (
+    <div data-testid="tooltip-portal" {...props}>
+      {children}
+    </div>
+  ),
 }));
 
 describe("Tooltip", () => {
