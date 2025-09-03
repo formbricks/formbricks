@@ -1507,6 +1507,9 @@
         "question_duplicated": "質問を複製しました。",
         "question_id_updated": "質問IDを更新しました",
         "question_used_in_logic": "この質問は質問 {questionIndex} のロジックで使用されています。",
+        "quotas": {
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "制限は回答数以上でなければなりません"
+        },
         "randomize_all": "すべてをランダム化",
         "randomize_all_except_last": "最後を除くすべてをランダム化",
         "range": "範囲",

@@ -1507,6 +1507,9 @@
         "question_duplicated": "問題已複製。",
         "question_id_updated": "問題 ID 已更新",
         "question_used_in_logic": "此問題用於問題 '{'questionIndex'}' 的邏輯中。",
+        "quotas": {
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "限制 必須 大於 或 等於 回應 的 數量"
+        },
         "randomize_all": "全部隨機排序",
         "randomize_all_except_last": "全部隨機排序（最後一項除外）",
         "range": "範圍",

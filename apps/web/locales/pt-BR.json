@@ -1507,6 +1507,9 @@
         "question_duplicated": "Pergunta duplicada.",
         "question_id_updated": "ID da pergunta atualizado",
         "question_used_in_logic": "Essa pergunta é usada na lógica da pergunta {questionIndex}.",
+        "quotas": {
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "O limite deve ser maior ou igual ao número de respostas"
+        },
         "randomize_all": "Randomizar tudo",
         "randomize_all_except_last": "Randomizar tudo, exceto o último",
         "range": "alcance",

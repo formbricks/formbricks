@@ -1507,6 +1507,9 @@
         "question_duplicated": "Întrebare duplicată.",
         "question_id_updated": "ID întrebare actualizat",
         "question_used_in_logic": "Această întrebare este folosită în logica întrebării {questionIndex}.",
+        "quotas": {
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "Limita trebuie să fie mai mare sau egală cu numărul de răspunsuri"
+        },
         "randomize_all": "Randomizează tot",
         "randomize_all_except_last": "Randomizează tot cu excepția ultimului",
         "range": "Interval",

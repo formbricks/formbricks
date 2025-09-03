@@ -1507,6 +1507,9 @@
         "question_duplicated": "Frage dupliziert.",
         "question_id_updated": "Frage-ID aktualisiert",
         "question_used_in_logic": "Diese Frage wird in der Logik der Frage {questionIndex} verwendet.",
+        "quotas": {
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "Limit muss größer oder gleich der Anzahl der Antworten sein"
+        },
         "randomize_all": "Alle Optionen zufällig anordnen",
         "randomize_all_except_last": "Alle Optionen zufällig anordnen außer der letzten",
         "range": "Reichweite",
