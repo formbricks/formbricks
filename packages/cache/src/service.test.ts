@@ -20,6 +20,8 @@ interface MockRedisClient {
   setEx: ReturnType<typeof vi.fn>;
   del: ReturnType<typeof vi.fn>;
   exists: ReturnType<typeof vi.fn>;
+  isReady: boolean;
+  isOpen: boolean;
 }
 
 describe("CacheService", () => {
@@ -32,6 +34,8 @@ describe("CacheService", () => {
       setEx: vi.fn(),
       del: vi.fn(),
       exists: vi.fn(),
+      isReady: true,
+      isOpen: true,
     };
     cacheService = new CacheService(mockRedis as unknown as RedisClient);
   });
@@ -429,10 +433,26 @@ describe("CacheService", () => {
   });
 
   describe("getRedisClient", () => {
-    test("should return the Redis client instance", () => {
+    test("should return the Redis client instance when ready", () => {
       const result = cacheService.getRedisClient();
 
       expect(result).toBe(mockRedis);
+    });
+
+    test("should return null when Redis is not ready", () => {
+      mockRedis.isReady = false;
+
+      const result = cacheService.getRedisClient();
+
+      expect(result).toBeNull();
+    });
+
+    test("should return null when Redis is not open", () => {
+      mockRedis.isOpen = false;
+
+      const result = cacheService.getRedisClient();
+
+      expect(result).toBeNull();
     });
   });
 

@@ -1,5 +1,5 @@
 import type { RedisClient } from "@/types/client";
-import { type CacheError, ErrorCode, type Result, err, ok } from "@/types/error";
+import { type CacheError, CacheErrorClass, ErrorCode, type Result, err, ok } from "@/types/error";
 import type { CacheKey } from "@/types/keys";
 import { ZCacheKey } from "@/types/keys";
 import { ZTtlMs } from "@/types/service";
@@ -13,11 +13,28 @@ export class CacheService {
   constructor(private readonly redis: RedisClient) {}
 
   /**
+   * Wraps Redis operations with connection check and timeout to prevent hanging
+   */
+  private async withTimeout<T>(operation: Promise<T>, timeoutMs = 1000): Promise<T> {
+    return Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        setTimeout(() => {
+          reject(new CacheErrorClass(ErrorCode.RedisOperationError, "Cache operation timeout"));
+        }, timeoutMs);
+      }),
+    ]);
+  }
+
+  /**
    * Get the underlying Redis client for advanced operations (e.g., Lua scripts)
    * Use with caution - prefer cache service methods when possible
-   * @returns The Redis client instance
+   * @returns The Redis client instance or null if not ready
    */
-  getRedisClient(): RedisClient {
+  getRedisClient(): RedisClient | null {
+    if (!this.redis.isReady || !this.redis.isOpen) {
+      return null;
+    }
     return this.redis;
   }
 
@@ -27,13 +44,20 @@ export class CacheService {
    * @returns Result containing parsed value, null if not found, or an error
    */
   async get<T>(key: CacheKey): Promise<Result<T | null, CacheError>> {
+    // Check Redis availability first
+    if (!this.redis.isReady || !this.redis.isOpen) {
+      return err({
+        code: ErrorCode.RedisConnectionError,
+      });
+    }
+
     const validation = validateInputs([key, ZCacheKey]);
     if (!validation.ok) {
       return validation;
     }
 
     try {
-      const value = await this.redis.get(key);
+      const value = await this.withTimeout(this.redis.get(key));
       if (value === null) {
         return ok(null);
       }
@@ -65,13 +89,20 @@ export class CacheService {
    * @returns Result containing boolean indicating if key exists
    */
   async exists(key: CacheKey): Promise<Result<boolean, CacheError>> {
+    // Check Redis availability first
+    if (!this.redis.isReady || !this.redis.isOpen) {
+      return err({
+        code: ErrorCode.RedisConnectionError,
+      });
+    }
+
     const validation = validateInputs([key, ZCacheKey]);
     if (!validation.ok) {
       return validation;
     }
 
     try {
-      const exists = await this.redis.exists(key);
+      const exists = await this.withTimeout(this.redis.exists(key));
       return ok(exists > 0);
     } catch (error) {
       logger.error({ error, key }, "Cache exists operation failed");
@@ -89,6 +120,13 @@ export class CacheService {
    * @returns Result containing void or an error
    */
   async set(key: CacheKey, value: unknown, ttlMs: number): Promise<Result<void, CacheError>> {
+    // Check Redis availability first
+    if (!this.redis.isReady || !this.redis.isOpen) {
+      return err({
+        code: ErrorCode.RedisConnectionError,
+      });
+    }
+
     // Validate both key and TTL in one call
     const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
     if (!validation.ok) {
@@ -99,7 +137,8 @@ export class CacheService {
       // Normalize undefined to null to maintain consistent cached-null semantics
       const normalizedValue = value === undefined ? null : value;
       const serialized = JSON.stringify(normalizedValue);
-      await this.redis.setEx(key, Math.floor(ttlMs / 1000), serialized);
+
+      await this.withTimeout(this.redis.setEx(key, Math.floor(ttlMs / 1000), serialized));
       return ok(undefined);
     } catch (error) {
       logger.error({ error, key, ttlMs }, "Cache set operation failed");
@@ -115,6 +154,13 @@ export class CacheService {
    * @returns Result containing void or an error
    */
   async del(keys: CacheKey[]): Promise<Result<void, CacheError>> {
+    // Check Redis availability first
+    if (!this.redis.isReady || !this.redis.isOpen) {
+      return err({
+        code: ErrorCode.RedisConnectionError,
+      });
+    }
+
     // Validate all keys using generic validation
     for (const key of keys) {
       const validation = validateInputs([key, ZCacheKey]);
@@ -125,7 +171,7 @@ export class CacheService {
 
     try {
       if (keys.length > 0) {
-        await this.redis.del(keys);
+        await this.withTimeout(this.redis.del(keys));
       }
       return ok(undefined);
     } catch (error) {
@@ -146,31 +192,43 @@ export class CacheService {
    * @returns Cached value if present, otherwise fresh result from fn()
    */
   async withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<T> {
-    // Validate inputs - if invalid, just execute function directly
+    if (!this.redis.isReady || !this.redis.isOpen) {
+      return await fn();
+    }
+
     const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
     if (!validation.ok) {
       logger.warn({ error: validation.error, key }, "Invalid cache inputs, executing function directly");
       return await fn();
     }
 
-    // Try to get from cache first; do not let cache errors affect fn()
+    const cachedValue = await this.tryGetCachedValue<T>(key, ttlMs);
+    if (cachedValue !== undefined) {
+      return cachedValue;
+    }
+
+    const fresh = await fn();
+    await this.trySetCache(key, fresh, ttlMs);
+    return fresh;
+  }
+
+  private async tryGetCachedValue<T>(key: CacheKey, ttlMs: number): Promise<T | undefined> {
     try {
       const cacheResult = await this.get<T>(key);
       if (cacheResult.ok && cacheResult.data !== null) {
-        // Cache hit with non-null value
         return cacheResult.data;
-      } else if (cacheResult.ok && cacheResult.data === null) {
-        // Got null - could be cache miss or cached null, check if key exists
+      }
+
+      if (cacheResult.ok && cacheResult.data === null) {
         const existsResult = await this.exists(key);
         if (existsResult.ok && existsResult.data) {
-          // Key exists, so this is a cached null value
           return null as T;
         }
-        // Key doesn't exist (cache miss) - continue to execute function
-      } else {
-        // Cache operation failed, log and continue to execute function
+      }
+
+      if (!cacheResult.ok) {
         logger.debug(
-          { error: !cacheResult.ok ? cacheResult.error : "unknown", key, ttlMs },
+          { error: cacheResult.error, key, ttlMs },
           "Cache get operation failed, fetching fresh data"
         );
       }
@@ -178,18 +236,16 @@ export class CacheService {
       logger.debug({ error, key, ttlMs }, "Cache get/exists threw; proceeding to compute fresh value");
     }
 
-    // Cache miss or cache error - execute function once
-    const fresh = await fn();
+    return undefined;
+  }
 
-    // Skip caching if fresh is strictly undefined to preserve semantics
-    // (set() normalizes undefined to null which changes meaning)
-    if (typeof fresh === "undefined") {
-      return fresh;
+  private async trySetCache(key: CacheKey, value: unknown, ttlMs: number): Promise<void> {
+    if (typeof value === "undefined") {
+      return; // Skip caching undefined values
     }
 
-    // Try to store in cache (best-effort)
     try {
-      const setResult = await this.set(key, fresh, ttlMs);
+      const setResult = await this.set(key, value, ttlMs);
       if (!setResult.ok) {
         logger.debug(
           { error: setResult.error, key, ttlMs },
@@ -199,6 +255,5 @@ export class CacheService {
     } catch (error) {
       logger.debug({ error, key, ttlMs }, "Cache set threw; returning fresh result");
     }
-    return fresh;
   }
 }

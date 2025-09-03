@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { createCacheKey, createCacheService } from "./index";
+import { createCacheKey, getCacheService } from "./index";
 import type { CacheError, CacheKey, ErrorCode, Result } from "./index";
 
 describe("@formbricks/cache index exports", () => {
   test("should export all required functions and constants", () => {
-    expect(typeof createCacheService).toBe("function");
+    expect(typeof getCacheService).toBe("function");
     expect(typeof createCacheKey).toBe("object");
   });
 

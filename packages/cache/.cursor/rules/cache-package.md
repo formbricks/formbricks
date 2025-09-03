@@ -4,7 +4,7 @@
 
 ### Redis-Only Architecture
 - **Mandatory Redis**: All deployments MUST use Redis via `REDIS_URL` environment variable
-- **Singleton Factory**: Use `createCacheService()` - returns singleton instance per process
+- **Singleton Client**: Use `getCacheService()` - returns singleton instance per process
 - **Result Types**: Core operations return `Result<T, CacheError>` for explicit error handling
 - **Never-Failing Wrappers**: `withCache()` always returns function result, handling cache errors internally
 
@@ -17,9 +17,9 @@
 
 ```text
 src/
-├── index.ts          # Main exports (createCacheService, createCacheKey, types)
-├── factory.ts        # Singleton cache service factory with Redis connection
-├── service.ts        # Core CacheService class with Result types + withCache
+├── index.ts          # Main exports (getCacheService, createCacheKey, types)
+├── client.ts         # Singleton cache service client with Redis connection
+├── service.ts        # Core CacheService class with Result types + withCache helpers
 ├── cache-keys.ts     # Cache key generators with branded types
 ├── utils/
 │   ├── validation.ts # Zod validation utilities
@@ -35,18 +35,18 @@ types/
 
 ## Required Patterns
 
-### Singleton Factory Pattern
+### Singleton Client Pattern
 ```typescript
-// ✅ GOOD - Use singleton factory
-import { createCacheService } from "@formbricks/cache";
-const result = await createCacheService();
+// ✅ GOOD - Use singleton client
+import { getCacheService } from "@formbricks/cache";
+const result = await getCacheService();
 if (!result.ok) {
   // Handle initialization error
   throw new Error(`Cache failed: ${result.error.code}`);
 }
 const cacheService = result.data;
 
-// ❌ BAD - CacheService class not exported
+// ❌ BAD - CacheService class not exported for direct instantiation
 import { CacheService } from "@formbricks/cache"; // Won't work!
 ```
 
@@ -138,7 +138,27 @@ await cacheService.exists(key): Promise<Result<boolean, CacheError>>
 await cacheService.withCache<T>(fn, key, ttlMs): Promise<T>
 
 // Direct Redis access for advanced operations (rate limiting, etc.)
-cacheService.getRedisClient(): RedisClient
+cacheService.getRedisClient(): RedisClient | null
+```
+
+### Service Implementation - Cognitive Complexity Reduction
+The `withCache` method is split into helper methods to reduce cognitive complexity:
+
+```typescript
+// Main method (simplified)
+async withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<T> {
+  // Early returns for Redis availability and validation
+  const cachedValue = await this.tryGetCachedValue<T>(key, ttlMs);
+  if (cachedValue !== undefined) return cachedValue;
+  
+  const fresh = await fn();
+  await this.trySetCache(key, fresh, ttlMs);
+  return fresh;
+}
+
+// Helper methods extract complex logic
+private async tryGetCachedValue<T>(key, ttlMs): Promise<T | undefined>
+private async trySetCache(key, value, ttlMs): Promise<void>
 ```
 
 ## Null vs Undefined Handling
@@ -210,39 +230,10 @@ return await fn(); // Always return function result
 - **Edge cases**: Empty arrays, invalid TTLs, malformed keys
 - **Mock dependencies**: Redis client, logger with all levels
 
-## Import/Export Standards
-
-```typescript
-// ✅ GOOD - Package root exports (index.ts)
-export { createCacheService } from "./factory";
-export type { CacheService } from "./service";
-export { createCacheKey } from "./cache-keys";
-export type { CacheKey } from "../types/keys";
-export type { Result, CacheError } from "../types/error";
-export { CacheErrorClass, ErrorCode } from "../types/error";
-
-// ❌ BAD - Don't export these (encapsulation)
-// export { createRedisClientFromEnv } from "./factory"; // Internal only
-// export type { RedisClient } from "../types/client"; // Internal only
-// export { CacheService } from "./service"; // Only type exported
-```
-
-## Key Rules Summary
-
-1. **Singleton Factory**: Use `createCacheService()` - returns singleton per process  
-2. **Result Types**: Core ops return `Result<T, CacheError>` - no throwing
-3. **Never-Failing withCache**: Returns `T` directly, handles cache errors internally
-4. **Validation**: Use `validateInputs()` function for all input validation
-5. **Error Interface**: Single `CacheError` interface with just `code` field
-6. **Logging**: Rich logging at source, clean Results for consumers
-7. **TTL Minimum**: 1000ms minimum for Redis conversion (ms → seconds)
-8. **Type Safety**: Branded `CacheKey` type prevents raw string usage
-9. **Encapsulation**: RedisClient and createRedisClientFromEnv are internal only
-
 ## Web App Integration Pattern
 
 ### Cache Facade (apps/web/lib/cache/index.ts)
-The web app uses a Proxy-based facade for lazy initialization and clean syntax:
+The web app uses a simplified Proxy-based facade that calls `getCacheService()` directly:
 
 ```typescript
 // ✅ GOOD - Use cache facade in web app
@@ -263,8 +254,38 @@ const userData = await cache.withCache(
 const redis = await cache.getRedisClient();
 ```
 
-### Module-Level Singleton Pattern
-- **Lazy Initialization**: Cache service initializes only when first accessed
+### Proxy Implementation
+- **No Singleton Management**: Calls `getCacheService()` for each operation
 - **Proxy Pattern**: Transparent method forwarding to underlying cache service  
 - **Graceful Degradation**: withCache falls back to direct execution on cache failure
 - **Server-Only**: Uses "server-only" import to prevent client-side usage
+
+## Import/Export Standards
+
+```typescript
+// ✅ GOOD - Package root exports (index.ts)
+export { getCacheService } from "./client";
+export type { CacheService } from "./service";
+export { createCacheKey } from "./cache-keys";
+export type { CacheKey } from "../types/keys";
+export type { Result, CacheError } from "../types/error";
+export { CacheErrorClass, ErrorCode } from "../types/error";
+
+// ❌ BAD - Don't export these (encapsulation)
+// export { createRedisClientFromEnv } from "./client"; // Internal only
+// export type { RedisClient } from "../types/client"; // Internal only
+// export { CacheService } from "./service"; // Only type exported
+```
+
+## Key Rules Summary
+
+1. **Singleton Client**: Use `getCacheService()` - returns singleton per process  
+2. **Result Types**: Core ops return `Result<T, CacheError>` - no throwing
+3. **Never-Failing withCache**: Returns `T` directly, handles cache errors internally
+4. **Validation**: Use `validateInputs()` function for all input validation
+5. **Error Interface**: Single `CacheError` interface with just `code` field
+6. **Logging**: Rich logging at source, clean Results for consumers
+7. **TTL Minimum**: 1000ms minimum for Redis conversion (ms → seconds)
+8. **Type Safety**: Branded `CacheKey` type prevents raw string usage
+9. **Encapsulation**: RedisClient and createRedisClientFromEnv are internal only
+10. **Cognitive Complexity**: Split complex methods into focused helper methods

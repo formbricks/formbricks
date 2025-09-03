@@ -10,7 +10,7 @@ const mockCacheService = {
   getRedisClient: vi.fn(),
 };
 
-const mockCreateCacheService = vi.fn();
+const mockGetCacheService = vi.fn();
 const mockLogger = {
   info: vi.fn(),
   error: vi.fn(),
@@ -20,7 +20,7 @@ const mockLogger = {
 
 // Mock all dependencies before importing the module under test
 vi.mock("@formbricks/cache", () => ({
-  createCacheService: mockCreateCacheService,
+  getCacheService: mockGetCacheService,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -45,8 +45,8 @@ describe("Cache Index", () => {
   });
 
   describe("Singleton Behavior", () => {
-    test("should initialize cache service only once", async () => {
-      mockCreateCacheService.mockResolvedValue({
+    test("should call getCacheService for each method call", async () => {
+      mockGetCacheService.mockResolvedValue({
         ok: true,
         data: mockCacheService,
       });
@@ -56,75 +56,64 @@ describe("Cache Index", () => {
       await cache.get("test-key-2");
       await cache.set("test-key", "value", 1000);
 
-      // createCacheService should only be called once
-      expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
-      expect(mockLogger.debug).toHaveBeenCalledWith("Initializing cache service...");
-      expect(mockLogger.debug).toHaveBeenCalledWith("Cache service initialized successfully");
+      // getCacheService should be called for each operation
+      expect(mockGetCacheService).toHaveBeenCalledTimes(3);
+      expect(mockCacheService.get).toHaveBeenCalledWith("test-key-1");
+      expect(mockCacheService.get).toHaveBeenCalledWith("test-key-2");
+      expect(mockCacheService.set).toHaveBeenCalledWith("test-key", "value", 1000);
     });
 
-    test("should reuse same cache instance across multiple calls", async () => {
-      mockCreateCacheService.mockResolvedValue({
+    test("should proxy all cache methods correctly", async () => {
+      mockGetCacheService.mockResolvedValue({
         ok: true,
         data: mockCacheService,
       });
 
-      // Multiple calls should use the same instance
+      // Multiple calls should use the cache service
       await cache.get("key1");
       await cache.set("key2", "value", 1000);
       await cache.del(["key3"]);
 
-      expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
+      expect(mockGetCacheService).toHaveBeenCalledTimes(3);
       expect(mockCacheService.get).toHaveBeenCalledWith("key1");
       expect(mockCacheService.set).toHaveBeenCalledWith("key2", "value", 1000);
       expect(mockCacheService.del).toHaveBeenCalledWith(["key3"]);
     });
   });
 
-  describe("Lazy Initialization", () => {
-    test("should not initialize cache until first access", async () => {
-      mockCreateCacheService.mockResolvedValue({
+  describe("Cache Service Integration", () => {
+    test("should call getCacheService on each operation", async () => {
+      mockGetCacheService.mockResolvedValue({
         ok: true,
         data: mockCacheService,
       });
 
-      // Cache should not be initialized yet
-      expect(mockCreateCacheService).not.toHaveBeenCalled();
-      expect(mockLogger.debug).not.toHaveBeenCalledWith("Initializing cache service...");
+      // getCacheService should not be called until first access
+      expect(mockGetCacheService).not.toHaveBeenCalled();
 
-      // First access should trigger initialization
+      // First access should trigger getCacheService call
       await cache.get("test-key");
 
-      expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
-      expect(mockLogger.debug).toHaveBeenCalledWith("Initializing cache service...");
+      expect(mockGetCacheService).toHaveBeenCalledTimes(1);
+      expect(mockCacheService.get).toHaveBeenCalledWith("test-key");
     });
 
-    test("should handle concurrent initialization attempts", async () => {
-      let resolveInit: (value: any) => void;
-      const initPromise = new Promise((resolve) => {
-        resolveInit = resolve;
+    test("should handle concurrent operations correctly", async () => {
+      mockGetCacheService.mockResolvedValue({
+        ok: true,
+        data: mockCacheService,
       });
-
-      mockCreateCacheService.mockReturnValue(initPromise);
 
       // Start multiple concurrent operations
       const promise1 = cache.get("key1");
       const promise2 = cache.set("key2", "value", 1000);
       const promise3 = cache.exists("key3");
 
-      // All should be waiting for initialization
-      expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
-
-      // Resolve the initialization
-      resolveInit!({
-        ok: true,
-        data: mockCacheService,
-      });
-
       // Wait for all operations to complete
       await Promise.all([promise1, promise2, promise3]);
 
-      // Should only have initialized once
-      expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
+      // Each operation should call getCacheService
+      expect(mockGetCacheService).toHaveBeenCalledTimes(3);
       expect(mockCacheService.get).toHaveBeenCalledWith("key1");
       expect(mockCacheService.set).toHaveBeenCalledWith("key2", "value", 1000);
       expect(mockCacheService.exists).toHaveBeenCalledWith("key3");
@@ -132,68 +121,51 @@ describe("Cache Index", () => {
   });
 
   describe("Error Handling", () => {
-    test("should throw error when cache initialization fails", async () => {
+    test("should return error object when getCacheService fails", async () => {
       const initError = {
         ok: false,
         error: { code: "REDIS_CONNECTION_ERROR" },
       };
 
-      mockCreateCacheService.mockResolvedValue(initError);
+      mockGetCacheService.mockResolvedValue(initError);
 
-      await expect(cache.get("test-key")).rejects.toThrow(
-        "Cache initialization failed: REDIS_CONNECTION_ERROR"
-      );
+      const result = await cache.get("test-key");
 
-      expect(mockLogger.error).toHaveBeenCalledWith("Cache service initialization failed", {
-        error: initError.error,
-      });
+      expect(result).toEqual({ ok: false, error: initError.error });
+      expect(mockGetCacheService).toHaveBeenCalledTimes(1);
     });
 
-    test("should handle createCacheService rejection", async () => {
+    test("should handle getCacheService rejection", async () => {
       const networkError = new Error("Network connection failed");
-      mockCreateCacheService.mockRejectedValue(networkError);
+      mockGetCacheService.mockRejectedValue(networkError);
 
       await expect(cache.get("test-key")).rejects.toThrow("Network connection failed");
     });
 
-    test("should retry initialization after failure", async () => {
-      // First instance fails
-      mockCreateCacheService.mockResolvedValue({
+    test("should handle errors consistently across different methods", async () => {
+      const cacheError = {
         ok: false,
-        error: { code: "REDIS_CONNECTION_ERROR" },
-      });
+        error: { code: "CONNECTION_FAILED" },
+      };
 
-      // First attempt should fail
-      await expect(cache.get("test-key-1")).rejects.toThrow();
+      mockGetCacheService.mockResolvedValue(cacheError);
 
-      // Reset and create fresh instance for second attempt
-      vi.clearAllMocks();
-      vi.resetModules();
+      // All methods should return the same error structure
+      const getResult = await cache.get("test-key");
+      const setResult = await cache.set("test-key", "value", 1000);
+      const delResult = await cache.del(["test-key"]);
+      const existsResult = await cache.exists("test-key");
 
-      // Mock successful cache service operation for second attempt
-      mockCacheService.get.mockResolvedValue({ ok: true, data: "cached-value" });
-
-      // Second instance succeeds
-      mockCreateCacheService.mockResolvedValue({
-        ok: true,
-        data: mockCacheService,
-      });
-
-      const freshCacheModule = await import("./index");
-      const freshCache = freshCacheModule.cache;
-
-      // Second attempt should succeed
-      const result = await freshCache.get("test-key-2" as any);
-      expect(result).toBeDefined();
-      expect(result).toEqual({ ok: true, data: "cached-value" });
-
-      expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
+      expect(getResult).toEqual({ ok: false, error: cacheError.error });
+      expect(setResult).toEqual({ ok: false, error: cacheError.error });
+      expect(delResult).toEqual({ ok: false, error: cacheError.error });
+      expect(existsResult).toEqual({ ok: false, error: cacheError.error });
     });
   });
 
   describe("Proxy Functionality", () => {
     beforeEach(() => {
-      mockCreateCacheService.mockResolvedValue({
+      mockGetCacheService.mockResolvedValue({
         ok: true,
         data: mockCacheService,
       });
@@ -235,7 +207,7 @@ describe("Cache Index", () => {
       expect(result).toEqual({ ok: true, data: true });
     });
 
-    test("should proxy withCache method correctly", async () => {
+    test("should proxy withCache method correctly when cache is available", async () => {
       const mockFn = vi.fn().mockResolvedValue("function-result");
       mockCacheService.withCache.mockResolvedValue("cached-result");
 
@@ -243,6 +215,37 @@ describe("Cache Index", () => {
 
       expect(mockCacheService.withCache).toHaveBeenCalledWith(mockFn, "cache-key", 3000);
       expect(result).toBe("cached-result");
+    });
+
+    test("should execute function directly when cache service fails", async () => {
+      const mockFn = vi.fn().mockResolvedValue("function-result");
+
+      mockGetCacheService.mockResolvedValue({
+        ok: false,
+        error: { code: "CACHE_UNAVAILABLE" },
+      });
+
+      const result = await cache.withCache(mockFn);
+
+      expect(result).toBe("function-result");
+      expect(mockFn).toHaveBeenCalledTimes(1);
+      expect(mockCacheService.withCache).not.toHaveBeenCalled();
+    });
+
+    test("should execute function directly when cache service throws error", async () => {
+      const mockFn = vi.fn().mockResolvedValue("function-result");
+      const cacheError = new Error("Cache connection failed");
+
+      mockGetCacheService.mockRejectedValue(cacheError);
+
+      const result = await cache.withCache(mockFn);
+
+      expect(result).toBe("function-result");
+      expect(mockFn).toHaveBeenCalledTimes(1);
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        { error: cacheError },
+        "Cache unavailable; executing function directly"
+      );
     });
 
     test("should proxy getRedisClient method correctly", async () => {
@@ -265,7 +268,7 @@ describe("Cache Index", () => {
 
   describe("Type Safety", () => {
     test("should maintain type safety through proxy", async () => {
-      mockCreateCacheService.mockResolvedValue({
+      mockGetCacheService.mockResolvedValue({
         ok: true,
         data: mockCacheService,
       });
@@ -296,7 +299,7 @@ describe("Cache Index", () => {
 
   describe("Integration Scenarios", () => {
     test("should handle rapid successive calls", async () => {
-      mockCreateCacheService.mockResolvedValue({
+      mockGetCacheService.mockResolvedValue({
         ok: true,
         data: mockCacheService,
       });
@@ -315,15 +318,15 @@ describe("Cache Index", () => {
 
       await Promise.all(promises);
 
-      // Should only initialize once despite many concurrent calls
-      expect(mockCreateCacheService).toHaveBeenCalledTimes(1);
+      // Each operation calls getCacheService
+      expect(mockGetCacheService).toHaveBeenCalledTimes(30); // 10 * 3 operations
       expect(mockCacheService.get).toHaveBeenCalledTimes(10);
       expect(mockCacheService.set).toHaveBeenCalledTimes(10);
       expect(mockCacheService.exists).toHaveBeenCalledTimes(10);
     });
 
     test("should work in server environment", async () => {
-      mockCreateCacheService.mockResolvedValue({
+      mockGetCacheService.mockResolvedValue({
         ok: true,
         data: mockCacheService,
       });
@@ -334,7 +337,7 @@ describe("Cache Index", () => {
       const result = await cache.get("server-key");
 
       expect(result).toEqual({ ok: true, data: "server-value" });
-      expect(mockLogger.debug).toHaveBeenCalledWith("Initializing cache service...");
+      expect(mockGetCacheService).toHaveBeenCalledTimes(1);
     });
   });
 });

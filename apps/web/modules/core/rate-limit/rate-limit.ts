@@ -67,15 +67,18 @@ export const checkRateLimit = async (
     const [currentCount, isAllowed] = result;
 
     // Log debug information for every Redis count increase
-    logger.debug(`Rate limit check`, {
-      identifier,
-      currentCount,
-      limit: config.allowedPerInterval,
-      window: config.interval,
-      key,
-      allowed: isAllowed === 1,
-      windowEnd,
-    });
+    logger.debug(
+      {
+        identifier,
+        currentCount,
+        limit: config.allowedPerInterval,
+        window: config.interval,
+        key,
+        allowed: isAllowed === 1,
+        windowEnd,
+      },
+      `Rate limit check`
+    );
 
     const response: TRateLimitResponse = {
       allowed: isAllowed === 1,
@@ -92,7 +95,7 @@ export const checkRateLimit = async (
         namespace: config.namespace,
       };
 
-      logger.error(`Rate limit exceeded`, violationContext);
+      logger.error(violationContext, `Rate limit exceeded`);
 
       if (SENTRY_DSN) {
         // Breadcrumb because the exception will be captured in the error handler
@@ -109,7 +112,7 @@ export const checkRateLimit = async (
     const errorMessage = `Rate limit check failed`;
     const errorContext = { error, identifier, namespace: config.namespace };
 
-    logger.error(errorMessage, errorContext);
+    logger.error(errorContext, errorMessage);
 
     if (SENTRY_DSN) {
       // Log error to Sentry
