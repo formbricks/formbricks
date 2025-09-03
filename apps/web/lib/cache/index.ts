@@ -2,6 +2,11 @@ import "server-only";
 import { type CacheKey, type CacheService, getCacheService } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 
+// Expose an async-leaning service to reflect lazy init for sync members like getRedisClient
+type AsyncCacheService = Omit<CacheService, "getRedisClient"> & {
+  getRedisClient(): Promise<ReturnType<CacheService["getRedisClient"]>>;
+};
+
 /**
  * Cache facade for the cache service
  * Provides a proxy to the cache service methods
@@ -9,7 +14,7 @@ import { logger } from "@formbricks/logger";
  * Handles cache service initialization failures gracefully
  * Avoid the need to use double awaits when using the cache service (e.g. await (await cache).get(key))
  */
-export const cache = new Proxy({} as CacheService, {
+export const cache = new Proxy({} as AsyncCacheService, {
   get(_target, prop: keyof CacheService) {
     // Special-case: withCache must never fail; fall back to direct fn on init failure.
     if (prop === "withCache") {
@@ -36,7 +41,7 @@ export const cache = new Proxy({} as CacheService, {
       if (!cacheServiceResult.ok) {
         return { ok: false, error: cacheServiceResult.error };
       }
-      const method = (cacheServiceResult.data as CacheService)[prop];
+      const method = cacheServiceResult.data[prop];
 
       return await method.apply(cacheServiceResult.data, args);
     };
