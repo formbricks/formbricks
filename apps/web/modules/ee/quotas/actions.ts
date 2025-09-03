@@ -14,7 +14,6 @@ import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotaLinkCountByQuotaId } from "@/modules/ee/quotas/lib/quota-link";
 import { createQuota, deleteQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
-import _ from "lodash";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";

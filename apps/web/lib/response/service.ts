@@ -106,7 +106,12 @@ export const getResponsesByContactId = reactCache(
               status: "screenedIn",
             },
             include: {
-              quota: true,
+              quota: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -287,7 +292,12 @@ export const getResponses = reactCache(
               status: "screenedIn",
             },
             include: {
-              quota: true,
+              quota: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },

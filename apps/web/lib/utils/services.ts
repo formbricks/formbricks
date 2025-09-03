@@ -242,15 +242,11 @@ export const getWebhook = async (id: string): Promise<{ environmentId: string } 
 };
 
 export const getQuota = reactCache(async (quotaId: string): Promise<{ surveyId: string }> => {
-  try {
-    validateInputs([quotaId, ZId]);
+  validateInputs([quotaId, ZId]);
 
-    const quota = await getQuotaService(quotaId);
+  const quota = await getQuotaService(quotaId);
 
-    return { surveyId: quota.surveyId };
-  } catch (error) {
-    throw error;
-  }
+  return { surveyId: quota.surveyId };
 });
 
 export const getTeam = reactCache(async (teamId: string): Promise<{ organizationId: string } | null> => {

@@ -33,7 +33,7 @@ export const InteractiveCard = ({
             id={`${tab}-toggle`}>
             <span className="text-sm text-slate-600">
               {label}
-              {`${Math.round(percentage)}%` !== "NaN%" && !isLoading && (
+              {Number.isFinite(percentage) && !isLoading && (
                 <span className="ml-1 rounded-xl bg-slate-100 px-2 py-1 text-xs">{`${Math.round(percentage)}%`}</span>
               )}
             </span>
