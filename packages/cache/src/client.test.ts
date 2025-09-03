@@ -1,7 +1,7 @@
-import type { RedisClient } from "@/types/client";
-import { ErrorCode } from "@/types/error";
 import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { RedisClient } from "@/types/client";
+import { ErrorCode } from "@/types/error";
 import { createRedisClientFromEnv, getCacheService, resetCacheFactory } from "./client";
 
 // Mock the redis module
@@ -28,9 +28,8 @@ vi.mock("./service", () => ({
     exists: vi.fn(),
     withCache: vi.fn(),
     getRedisClient: vi.fn().mockImplementation(() => {
-      // Return null if Redis is not ready or not open, otherwise return the redis client
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- redis is typed as RedisClient
       if (!redis?.isReady || !redis?.isOpen) {
-        // eslint-disable-line @typescript-eslint/no-unsafe-member-access -- redis is typed as RedisClient
         return null;
       }
       return redis; // eslint-disable-line @typescript-eslint/no-unsafe-return -- redis is typed as RedisClient
