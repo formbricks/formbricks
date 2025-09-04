@@ -280,10 +280,7 @@ EOT
       read -p "   S3 Region (e.g., us-east-1): " ext_s3_region
       read -p "   S3 Bucket Name: " ext_s3_bucket
       read -p "   S3 Endpoint URL (leave empty if you are using AWS S3, otherwise please enter the endpoint URL of the third party S3 compatible storage service): " ext_s3_endpoint
-      read -p "   Force path-style? [y/N] (leave empty if you are using AWS S3, otherwise please enter y if you are using a third party S3 compatible storage service): " ext_s3_force_path
-      ext_s3_force_path=$(echo "$ext_s3_force_path" | tr '[:upper:]' '[:lower:]')
-      if [[ $ext_s3_force_path == "y" ]]; then ext_s3_force_path_val=1; else ext_s3_force_path_val=0; fi
-
+      
       minio_storage="n"
     else
       minio_storage="y"
@@ -345,8 +342,10 @@ EOT
     sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$ext_s3_bucket\"|" docker-compose.yml
     if [[ -n $ext_s3_endpoint ]]; then
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"$ext_s3_endpoint\"|" docker-compose.yml
+      sed -i "s|S3_FORCE_PATH_STYLE: 0|S3_FORCE_PATH_STYLE: 1|" docker-compose.yml
+    else
+      sed -i "s|S3_FORCE_PATH_STYLE: 0|# S3_FORCE_PATH_STYLE:|" docker-compose.yml
     fi
-    sed -i "s|S3_FORCE_PATH_STYLE: 0|S3_FORCE_PATH_STYLE: $ext_s3_force_path_val|" docker-compose.yml
     echo "🚗 External S3 configuration updated successfully!"
   elif [[ $minio_storage == "y" ]]; then
     echo "🚗 Configuring bundled MinIO..."
