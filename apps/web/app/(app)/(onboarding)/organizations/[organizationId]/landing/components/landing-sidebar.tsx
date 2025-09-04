@@ -81,25 +81,23 @@ export const LandingSidebar = ({
             asChild
             id="userDropdownTrigger"
             className="w-full rounded-br-xl border-t p-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
-            <div tabIndex={0} className={cn("flex cursor-pointer flex-row items-center gap-3")}>
+            <div className={cn("flex cursor-pointer flex-row items-center gap-3")}>
               <ProfileAvatar userId={user.id} />
-              <>
-                <div className="grow overflow-hidden">
-                  <p
-                    title={user?.email}
-                    className={cn(
-                      "ph-no-capture ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700"
-                    )}>
-                    {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
-                  </p>
-                  <p
-                    title={capitalizeFirstLetter(organization?.name)}
-                    className="truncate text-sm text-slate-500">
-                    {capitalizeFirstLetter(organization?.name)}
-                  </p>
-                </div>
-                <ChevronRightIcon className={cn("h-5 w-5 shrink-0 text-slate-700 hover:text-slate-500")} />
-              </>
+              <div className="grow overflow-hidden">
+                <p
+                  title={user?.email}
+                  className={cn(
+                    "ph-no-capture ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700"
+                  )}>
+                  {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
+                </p>
+                <p
+                  title={capitalizeFirstLetter(organization?.name)}
+                  className="truncate text-sm text-slate-500">
+                  {capitalizeFirstLetter(organization?.name)}
+                </p>
+              </div>
+              <ChevronRightIcon className={cn("h-5 w-5 shrink-0 text-slate-700 hover:text-slate-500")} />
             </div>
           </DropdownMenuTrigger>
 
@@ -112,7 +110,12 @@ export const LandingSidebar = ({
             {/* Dropdown Items */}
 
             {dropdownNavigation.map((link) => (
-              <Link id={link.href} href={link.href} target={link.target} className="flex w-full items-center">
+              <Link
+                key={link.href}
+                id={link.href}
+                href={link.href}
+                target={link.target}
+                className="flex w-full items-center">
                 <DropdownMenuItem>
                   <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
                   {link.label}

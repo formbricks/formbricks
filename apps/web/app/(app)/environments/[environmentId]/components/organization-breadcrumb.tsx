@@ -1,0 +1,132 @@
+import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
+import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
+import { BuildingIcon, ChevronDownIcon, ChevronRightIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { TOrganization } from "@formbricks/types/organizations";
+
+interface OrganizationBreadcrumbProps {
+  currentOrganization: TOrganization;
+  organizations: TOrganization[];
+  isMultiOrgEnabled: boolean;
+  currentEnvironmentId: string;
+}
+
+export const OrganizationBreadcrumb = ({
+  currentOrganization,
+  organizations,
+  isMultiOrgEnabled,
+  currentEnvironmentId,
+}: OrganizationBreadcrumbProps) => {
+  const { t } = useTranslate();
+  const [organizationDropdownOpen, setOrganizationDropdownOpen] = useState(false);
+  const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleOrganizationChange = (organizationId: string) => {
+    router.push(`/organizations/${organizationId}/`);
+  };
+
+  // Hide organization dropdown for single org setups (on-premise)
+  const showOrganizationDropdown = isMultiOrgEnabled || organizations.length > 1;
+
+  const organizationSettings = [
+    {
+      id: "general",
+      label: t("common.general"),
+      href: `/environments/${currentEnvironmentId}/settings/general`,
+    },
+    {
+      id: "teams",
+      label: t("common.teams"),
+      href: `/environments/${currentEnvironmentId}/settings/teams`,
+    },
+    {
+      id: "api-keys",
+      label: t("common.api_keys"),
+      href: `/environments/${currentEnvironmentId}/settings/api-keys`,
+    },
+    {
+      id: "billing",
+      label: t("common.billing"),
+      href: `/environments/${currentEnvironmentId}/settings/billing`,
+    },
+  ];
+
+  return (
+    <BreadcrumbItem isActive={organizationDropdownOpen}>
+      <DropdownMenu onOpenChange={setOrganizationDropdownOpen}>
+        <DropdownMenuTrigger className="flex items-center gap-1 outline-none">
+          <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
+          <span>{currentOrganization.name}</span>
+          {organizationDropdownOpen ? (
+            <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
+          ) : (
+            <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+          )}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="mt-2">
+          {showOrganizationDropdown && (
+            <>
+              <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                <BuildingIcon className="mr-2 inline h-4 w-4" />
+                {t("common.choose_organization")}
+              </div>
+              <DropdownMenuGroup>
+                {organizations.map((org) => (
+                  <DropdownMenuCheckboxItem
+                    key={org.id}
+                    checked={org.id === currentOrganization.id}
+                    onClick={() => handleOrganizationChange(org.id)}
+                    className="cursor-pointer">
+                    {org.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuGroup>
+              {isMultiOrgEnabled && (
+                <DropdownMenuCheckboxItem
+                  onClick={() => setOpenCreateOrganizationModal(true)}
+                  className="cursor-pointer">
+                  <span>{t("common.create_new_organization")}</span>
+                  <PlusIcon className="ml-2 h-4 w-4" />
+                </DropdownMenuCheckboxItem>
+              )}
+              <DropdownMenuSeparator />
+            </>
+          )}
+
+          <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+            <SettingsIcon className="mr-2 inline h-4 w-4" />
+            {t("common.organization_settings")}
+          </div>
+
+          {organizationSettings.map((setting) => (
+            <DropdownMenuCheckboxItem
+              key={setting.id}
+              checked={pathname.includes(setting.id)}
+              onClick={() => router.push(setting.href)}
+              className="cursor-pointer">
+              {setting.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {openCreateOrganizationModal && (
+        <CreateOrganizationModal
+          open={openCreateOrganizationModal}
+          setOpen={setOpenCreateOrganizationModal}
+        />
+      )}
+    </BreadcrumbItem>
+  );
+};

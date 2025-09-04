@@ -6,23 +6,13 @@ import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/uti
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
-import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
-import { ProjectSwitcher } from "@/modules/projects/components/project-switcher";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { useTranslate } from "@tolgee/react";
@@ -38,11 +28,9 @@ import {
   MousePointerClick,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
-  PlusIcon,
   RocketIcon,
   UserCircleIcon,
   UserIcon,
-  UsersIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -57,39 +45,26 @@ import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
   environment: TEnvironment;
-  organizations: TOrganization[];
   user: TUser;
   organization: TOrganization;
   projects: TProject[];
-  isMultiOrgEnabled: boolean;
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
-  organizationProjectsLimit: number;
-  isLicenseActive: boolean;
-  isAccessControlAllowed: boolean;
 }
 
 export const MainNavigation = ({
   environment,
-  organizations,
   organization,
   user,
   projects,
-  isMultiOrgEnabled,
   membershipRole,
   isFormbricksCloud,
-  organizationProjectsLimit,
-  isLicenseActive,
   isDevelopment,
-  isAccessControlAllowed,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslate();
-  const [currentOrganizationName, setCurrentOrganizationName] = useState("");
-  const [currentOrganizationId, setCurrentOrganizationId] = useState("");
-  const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
@@ -120,40 +95,11 @@ export const MainNavigation = ({
   }, [isCollapsed]);
 
   useEffect(() => {
-    if (organization && organization.name !== "") {
-      setCurrentOrganizationName(organization.name);
-      setCurrentOrganizationId(organization.id);
+    // Auto collapse project navbar on org and account settings
+    if (pathname?.includes("/settings")) {
+      setIsCollapsed(true);
     }
-  }, [organization]);
-
-  const sortedOrganizations = useMemo(() => {
-    return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
-  }, [organizations]);
-
-  const sortedProjects = useMemo(() => {
-    const channelOrder: (string | null)[] = ["website", "app", "link", null];
-
-    const groupedProjects = projects.reduce(
-      (acc, project) => {
-        const channel = project.config.channel;
-        const key = channel !== null ? channel : "null";
-        acc[key] = acc[key] || [];
-        acc[key].push(project);
-        return acc;
-      },
-      {} as Record<string, typeof projects>
-    );
-
-    Object.keys(groupedProjects).forEach((channel) => {
-      groupedProjects[channel].sort((a, b) => a.name.localeCompare(b.name));
-    });
-
-    return channelOrder.flatMap((channel) => groupedProjects[channel !== null ? channel : "null"] || []);
-  }, [projects]);
-
-  const handleEnvironmentChangeByOrganization = (organizationId: string) => {
-    router.push(`/organizations/${organizationId}/`);
-  };
+  }, [pathname]);
 
   const mainNavigation = useMemo(
     () => [
@@ -199,11 +145,6 @@ export const MainNavigation = ({
       icon: UserCircleIcon,
     },
     {
-      label: t("common.organization"),
-      href: `/environments/${environment.id}/settings/general`,
-      icon: UsersIcon,
-    },
-    {
       label: t("common.billing"),
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud,
@@ -246,8 +187,7 @@ export const MainNavigation = ({
         <aside
           className={cn(
             "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
-            !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded",
-            environment.type === "development" ? `h-[calc(100vh-1.25rem)]` : "h-screen"
+            !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <div>
             {/* Logo and Toggle */}
@@ -313,23 +253,6 @@ export const MainNavigation = ({
               </Link>
             )}
 
-            {/* Project Switch */}
-            {!isBilling && (
-              <ProjectSwitcher
-                environmentId={environment.id}
-                projects={sortedProjects}
-                project={project}
-                isCollapsed={isCollapsed}
-                isFormbricksCloud={isFormbricksCloud}
-                isLicenseActive={isLicenseActive}
-                isOwnerOrManager={isOwnerOrManager}
-                isTextVisible={isTextVisible}
-                organization={organization}
-                organizationProjectsLimit={organizationProjectsLimit}
-                isAccessControlAllowed={isAccessControlAllowed}
-              />
-            )}
-
             {/* User Switch */}
             <div className="flex items-center">
               <DropdownMenu>
@@ -338,7 +261,6 @@ export const MainNavigation = ({
                   id="userDropdownTrigger"
                   className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
                   <div
-                    tabIndex={0}
                     className={cn(
                       "flex cursor-pointer flex-row items-center gap-3",
                       isCollapsed ? "justify-center px-2" : "px-4"
@@ -355,11 +277,7 @@ export const MainNavigation = ({
                             )}>
                             {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
                           </p>
-                          <p
-                            title={capitalizeFirstLetter(organization?.name)}
-                            className="truncate text-sm text-slate-500">
-                            {capitalizeFirstLetter(organization?.name)}
-                          </p>
+                          <p className="text-sm text-slate-700">{t("common.account")}</p>
                         </div>
                         <ChevronRightIcon
                           className={cn("h-5 w-5 shrink-0 text-slate-700 hover:text-slate-500")}
@@ -392,9 +310,7 @@ export const MainNavigation = ({
                         </Link>
                       )
                   )}
-
                   {/* Logout */}
-
                   <DropdownMenuItem
                     onClick={async () => {
                       const route = await signOutWithAudit({
@@ -410,55 +326,12 @@ export const MainNavigation = ({
                     icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
                     {t("common.logout")}
                   </DropdownMenuItem>
-
-                  {/* Organization Switch */}
-
-                  {(isMultiOrgEnabled || organizations.length > 1) && (
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="rounded-lg">
-                        <div>
-                          <p>{currentOrganizationName}</p>
-                          <p className="block text-xs text-slate-500">{t("common.switch_organization")}</p>
-                        </div>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent sideOffset={10} alignOffset={5}>
-                          <DropdownMenuRadioGroup
-                            value={currentOrganizationId}
-                            onValueChange={(organizationId) =>
-                              handleEnvironmentChangeByOrganization(organizationId)
-                            }>
-                            {sortedOrganizations.map((organization) => (
-                              <DropdownMenuRadioItem
-                                value={organization.id}
-                                className="cursor-pointer rounded-lg"
-                                key={organization.id}>
-                                {organization.name}
-                              </DropdownMenuRadioItem>
-                            ))}
-                          </DropdownMenuRadioGroup>
-                          <DropdownMenuSeparator />
-                          {isMultiOrgEnabled && (
-                            <DropdownMenuItem
-                              onClick={() => setShowCreateOrganizationModal(true)}
-                              icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                              <span>{t("common.create_new_organization")}</span>
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
-                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </aside>
       )}
-      <CreateOrganizationModal
-        open={showCreateOrganizationModal}
-        setOpen={(val) => setShowCreateOrganizationModal(val)}
-      />
     </>
   );
 };
