@@ -193,7 +193,8 @@ export const handleQuotas = async (
       }
     }
 
-    if (!responseFinished) {
+    // To check if response is ending at this point
+    if (!responseFinished && firstScreenedOutQuota?.action !== "endSurvey") {
       fullQuota = fullQuota.filter((quota) => quota.countPartialSubmissions);
       otherQuota = otherQuota.filter((quota) => quota.countPartialSubmissions);
     }
