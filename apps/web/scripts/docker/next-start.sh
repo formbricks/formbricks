@@ -46,13 +46,6 @@ run_with_timeout() {
   fi
 }
 
-# Start cron jobs if enabled
-if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then
-  echo "Starting cron jobs...";
-  supercronic -quiet /app/docker/cronjobs &
-else
-  echo "Docker cron jobs are disabled via DOCKER_CRON_ENABLED=0";
-fi
 
 echo "🗃️ Running database migrations..."
 run_with_timeout 600 "database migration" sh -c '(cd packages/database && npm run db:migrate:deploy)'
