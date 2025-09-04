@@ -81,7 +81,10 @@ export const LandingSidebar = ({
             asChild
             id="userDropdownTrigger"
             className="w-full rounded-br-xl border-t p-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
-            <div className={cn("flex cursor-pointer flex-row items-center gap-3")}>
+            <button
+              type="button"
+              className={cn("flex w-full cursor-pointer flex-row items-center gap-3 text-left")}
+              aria-haspopup="menu">
               <ProfileAvatar userId={user.id} />
               <div className="grow overflow-hidden">
                 <p
@@ -98,7 +101,7 @@ export const LandingSidebar = ({
                 </p>
               </div>
               <ChevronRightIcon className={cn("h-5 w-5 shrink-0 text-slate-700 hover:text-slate-500")} />
-            </div>
+            </button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent

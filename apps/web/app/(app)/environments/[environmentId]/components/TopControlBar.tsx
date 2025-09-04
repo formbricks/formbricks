@@ -56,9 +56,9 @@ export const TopControlBar = ({
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
   const isReadOnly = isMember && hasReadAccess;
 
-  const sortedProjects = useMemo(() => projects.sort((a, b) => a.name.localeCompare(b.name)), [projects]);
+  const sortedProjects = useMemo(() => projects.toSorted((a, b) => a.name.localeCompare(b.name)), [projects]);
   const sortedOrganizations = useMemo(
-    () => organizations.sort((a, b) => a.name.localeCompare(b.name)),
+    () => organizations.toSorted((a, b) => a.name.localeCompare(b.name)),
     [organizations]
   );
 
@@ -85,7 +85,10 @@ export const TopControlBar = ({
       <div className="z-50 flex items-center space-x-2">
         <TooltipRenderer tooltipContent={t("common.share_feedback")}>
           <Button variant="ghost" size="icon" className="h-fit w-fit bg-slate-50 p-1" asChild>
-            <Link href="https://github.com/formbricks/formbricks/issues" target="_blank">
+            <Link
+              href="https://github.com/formbricks/formbricks/issues"
+              target="_blank"
+              rel="noopener noreferrer">
               <BugIcon />
             </Link>
           </Button>

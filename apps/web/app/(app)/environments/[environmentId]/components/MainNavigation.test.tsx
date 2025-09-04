@@ -52,23 +52,6 @@ vi.mock("@/modules/organization/components/CreateOrganizationModal", () => ({
   CreateOrganizationModal: ({ open }: { open: boolean }) =>
     open ? <div data-testid="create-org-modal">Create Org Modal</div> : null,
 }));
-vi.mock("@/modules/projects/components/project-switcher", () => ({
-  ProjectSwitcher: ({
-    isCollapsed,
-    organizationTeams,
-    isAccessControlAllowed,
-  }: {
-    isCollapsed: boolean;
-    organizationTeams: TOrganizationTeam[];
-    isAccessControlAllowed: boolean;
-  }) => (
-    <div data-testid="project-switcher" data-collapsed={isCollapsed}>
-      Project Switcher
-      <div data-testid="organization-teams-count">{organizationTeams?.length || 0}</div>
-      <div data-testid="is-access-control-allowed">{isAccessControlAllowed.toString()}</div>
-    </div>
-  ),
-}));
 vi.mock("@/modules/ui/components/avatars", () => ({
   ProfileAvatar: () => <div data-testid="profile-avatar">Avatar</div>,
 }));
