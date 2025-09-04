@@ -90,7 +90,6 @@ const baseSurvey: TSurvey = {
   singleUse: null,
   verifyEmail: null,
   pin: null,
-  closeOnDate: null,
   productOverwrites: null,
   analytics: {
     numCTA: 0,
@@ -105,7 +104,6 @@ const baseSurvey: TSurvey = {
   },
   createdBy: null,
   autoComplete: null,
-  runOnDate: null,
   endings: [],
 };
 
@@ -121,29 +119,6 @@ describe("SurveyStatusDropdown", () => {
     );
     expect(screen.getByText("common.draft")).toBeInTheDocument();
     expect(screen.queryByTestId("select-container")).toBeNull();
-  });
-
-  test("disables select when status is scheduled", () => {
-    render(
-      <SurveyStatusDropdown environment={mockEnvironment} survey={{ ...baseSurvey, status: "scheduled" }} />
-    );
-    expect(screen.getByTestId("select-container")).toHaveAttribute("data-disabled", "true");
-    expect(screen.getByTestId("tooltip")).toBeInTheDocument();
-    expect(screen.getByTestId("tooltip-content")).toHaveTextContent(
-      "environments.surveys.survey_status_tooltip"
-    );
-  });
-
-  test("disables select when closeOnDate is in the past", () => {
-    const pastDate = new Date();
-    pastDate.setDate(pastDate.getDate() - 1);
-    render(
-      <SurveyStatusDropdown
-        environment={mockEnvironment}
-        survey={{ ...baseSurvey, status: "inProgress", closeOnDate: pastDate }}
-      />
-    );
-    expect(screen.getByTestId("select-container")).toHaveAttribute("data-disabled", "true");
   });
 
   test("renders SurveyStatusIndicator for link survey", () => {

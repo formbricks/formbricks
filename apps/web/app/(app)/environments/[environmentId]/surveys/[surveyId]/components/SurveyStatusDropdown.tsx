@@ -30,11 +30,7 @@ export const SurveyStatusDropdown = ({
 }: SurveyStatusDropdownProps) => {
   const { t } = useTranslate();
   const router = useRouter();
-  const isCloseOnDateEnabled = survey.closeOnDate !== null;
-  const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
-  const isStatusChangeDisabled =
-    (survey.status === "scheduled" || (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date())) ??
-    false;
+  const isStatusChangeDisabled = false;
 
   const handleStatusChange = async (status: TSurvey["status"]) => {
     const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
@@ -82,7 +78,6 @@ export const SurveyStatusDropdown = ({
                         <SurveyStatusIndicator status={survey.status} />
                       )}
                       <span className="ml-2 text-sm text-slate-700">
-                        {survey.status === "scheduled" && t("common.scheduled")}
                         {survey.status === "inProgress" && t("common.in_progress")}
                         {survey.status === "paused" && t("common.paused")}
                         {survey.status === "completed" && t("common.completed")}

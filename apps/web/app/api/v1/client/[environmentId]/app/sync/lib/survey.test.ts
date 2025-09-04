@@ -80,7 +80,6 @@ const baseSurvey: TSurvey = {
   displayOption: "displayOnce",
   recontactDays: null,
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   autoComplete: null,

@@ -103,7 +103,6 @@ const mockSurveyAppBase = {
   singleUse: null,
   surveyClosedMessage: null,
   segment: null,
-  closeOnDate: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   autoComplete: null,

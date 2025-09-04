@@ -97,7 +97,6 @@ const mockSurvey = {
   displayOption: "displayOnce",
   recontactDays: null,
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   autoComplete: null,
   surveyClosedMessage: null,

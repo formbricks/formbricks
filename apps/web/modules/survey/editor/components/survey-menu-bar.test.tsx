@@ -126,8 +126,6 @@ const baseSurvey = {
   pin: null,
   segment: null,
   languages: [],
-  runOnDate: null,
-  closeOnDate: null,
   welcomeCard: { enabled: false } as TSurvey["welcomeCard"],
 } as unknown as TSurvey;
 
