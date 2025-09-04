@@ -61,7 +61,7 @@ export const ProjectBreadcrumb = ({
     if (isFormbricksCloud && currentOrganization.billing.plan !== "enterprise") {
       return [
         {
-          text: t("common.upgrade"),
+          text: t("environments.settings.billing.upgrade"),
           href: `/environments/${currentEnvironmentId}/settings/billing`,
         },
         {
@@ -72,7 +72,7 @@ export const ProjectBreadcrumb = ({
 
     return [
       {
-        text: t("common.upgrade"),
+        text: t("environments.settings.billing.upgrade"),
         href: isLicenseActive
           ? `/environments/${currentEnvironmentId}/settings/enterprise`
           : "https://formbricks.com/upgrade-self-hosted-license",
