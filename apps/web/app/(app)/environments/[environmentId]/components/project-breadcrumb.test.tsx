@@ -344,7 +344,7 @@ describe("ProjectBreadcrumb", () => {
       const addProjectOption = screen.getByText("common.add_new_project");
       await user.click(addProjectOption);
 
-      expect(screen.getByText("common.upgrade")).toBeInTheDocument();
+      expect(screen.getByText("environments.settings.billing.upgrade")).toBeInTheDocument();
       expect(screen.getByText("common.cancel")).toBeInTheDocument();
     });
 
@@ -365,7 +365,7 @@ describe("ProjectBreadcrumb", () => {
       const addProjectOption = screen.getByText("common.add_new_project");
       await user.click(addProjectOption);
 
-      expect(screen.getByText("common.upgrade")).toBeInTheDocument();
+      expect(screen.getByText("environments.settings.billing.upgrade")).toBeInTheDocument();
       expect(screen.getByText("common.cancel")).toBeInTheDocument();
     });
 

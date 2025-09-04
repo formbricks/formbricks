@@ -79,6 +79,7 @@ export const TopControlBar = ({
           isFormbricksCloud={isFormbricksCloud}
           isLicenseActive={isLicenseActive}
           isOwnerOrManager={isOwnerOrManager}
+          isMember={isMember}
           isAccessControlAllowed={isAccessControlAllowed}
         />
       </div>

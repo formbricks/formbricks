@@ -1,5 +1,4 @@
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { usePathname, useRouter } from "next/navigation";
@@ -224,7 +223,6 @@ describe("MainNavigation", () => {
       expect(screen.getByText("common.account")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("common.license")).toBeInTheDocument(); // Not cloud, not member
     expect(screen.getByText("common.documentation")).toBeInTheDocument();
     expect(screen.getByText("common.logout")).toBeInTheDocument();
 
@@ -270,18 +268,6 @@ describe("MainNavigation", () => {
     render(<MainNavigation {...defaultProps} membershipRole="billing" />);
     expect(screen.queryByRole("link", { name: /common.surveys/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId("project-switcher")).not.toBeInTheDocument();
-  });
-
-  test("shows billing link and hides license link in cloud", async () => {
-    render(<MainNavigation {...defaultProps} isFormbricksCloud={true} />);
-    const userTrigger = screen.getByTestId("profile-avatar").parentElement!;
-    await userEvent.click(userTrigger);
-
-    // Wait for dropdown items
-    await waitFor(() => {
-      expect(screen.getByText("common.billing")).toBeInTheDocument();
-    });
-    expect(screen.queryByText("common.license")).not.toBeInTheDocument();
   });
 
   test("passes isAccessControlAllowed props to ProjectSwitcher", () => {

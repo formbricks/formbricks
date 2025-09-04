@@ -21,8 +21,6 @@ import {
   BlocksIcon,
   ChevronRightIcon,
   Cog,
-  CreditCardIcon,
-  KeyIcon,
   LogOutIcon,
   MessageCircle,
   MousePointerClick,
@@ -71,10 +69,9 @@ export const MainNavigation = ({
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const project = projects.find((project) => project.id === environment.projectId);
-  const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
+  const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
 
   const isOwnerOrManager = isManager || isOwner;
-  const isPricingDisabled = isMember;
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -143,18 +140,6 @@ export const MainNavigation = ({
       label: t("common.account"),
       href: `/environments/${environment.id}/settings/profile`,
       icon: UserCircleIcon,
-    },
-    {
-      label: t("common.billing"),
-      href: `/environments/${environment.id}/settings/billing`,
-      hidden: !isFormbricksCloud,
-      icon: CreditCardIcon,
-    },
-    {
-      label: t("common.license"),
-      href: `/environments/${environment.id}/settings/enterprise`,
-      hidden: isFormbricksCloud || isPricingDisabled,
-      icon: KeyIcon,
     },
     {
       label: t("common.documentation"),
@@ -295,21 +280,18 @@ export const MainNavigation = ({
                   align="end">
                   {/* Dropdown Items */}
 
-                  {dropdownNavigation.map(
-                    (link) =>
-                      !link.hidden && (
-                        <Link
-                          href={link.href}
-                          target={link.target}
-                          className="flex w-full items-center"
-                          key={link.label}>
-                          <DropdownMenuItem>
-                            <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                            {link.label}
-                          </DropdownMenuItem>
-                        </Link>
-                      )
-                  )}
+                  {dropdownNavigation.map((link) => (
+                    <Link
+                      href={link.href}
+                      target={link.target}
+                      className="flex w-full items-center"
+                      key={link.label}>
+                      <DropdownMenuItem>
+                        <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        {link.label}
+                      </DropdownMenuItem>
+                    </Link>
+                  ))}
                   {/* Logout */}
                   <DropdownMenuItem
                     onClick={async () => {

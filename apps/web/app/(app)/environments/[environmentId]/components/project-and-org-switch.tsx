@@ -21,6 +21,7 @@ interface ProjectAndOrgSwitchProps {
   isLicenseActive: boolean;
   isOwnerOrManager: boolean;
   isAccessControlAllowed: boolean;
+  isMember: boolean;
 }
 
 export const ProjectAndOrgSwitch = ({
@@ -36,6 +37,7 @@ export const ProjectAndOrgSwitch = ({
   isLicenseActive,
   isOwnerOrManager,
   isAccessControlAllowed,
+  isMember,
 }: ProjectAndOrgSwitchProps) => {
   return (
     <Breadcrumb>
@@ -45,6 +47,8 @@ export const ProjectAndOrgSwitch = ({
           organizations={organizations}
           isMultiOrgEnabled={isMultiOrgEnabled}
           currentEnvironmentId={currentEnvironment.id}
+          isFormbricksCloud={isFormbricksCloud}
+          isMember={isMember}
         />
         <ProjectBreadcrumb
           currentProject={currentProject}

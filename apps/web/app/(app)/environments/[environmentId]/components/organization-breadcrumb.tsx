@@ -19,6 +19,8 @@ interface OrganizationBreadcrumbProps {
   organizations: TOrganization[];
   isMultiOrgEnabled: boolean;
   currentEnvironmentId: string;
+  isFormbricksCloud: boolean;
+  isMember: boolean;
 }
 
 export const OrganizationBreadcrumb = ({
@@ -26,6 +28,8 @@ export const OrganizationBreadcrumb = ({
   organizations,
   isMultiOrgEnabled,
   currentEnvironmentId,
+  isFormbricksCloud,
+  isMember,
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslate();
   const [organizationDropdownOpen, setOrganizationDropdownOpen] = useState(false);
@@ -60,6 +64,13 @@ export const OrganizationBreadcrumb = ({
       id: "billing",
       label: t("common.billing"),
       href: `/environments/${currentEnvironmentId}/settings/billing`,
+      hidden: !isFormbricksCloud,
+    },
+    {
+      id: "enterprise",
+      label: t("common.enterprise_license"),
+      href: `/environments/${currentEnvironmentId}/settings/enterprise`,
+      hidden: isFormbricksCloud || isMember,
     },
   ];
 
@@ -110,15 +121,18 @@ export const OrganizationBreadcrumb = ({
             {t("common.organization_settings")}
           </div>
 
-          {organizationSettings.map((setting) => (
-            <DropdownMenuCheckboxItem
-              key={setting.id}
-              checked={pathname.includes(setting.id)}
-              onClick={() => router.push(setting.href)}
-              className="cursor-pointer">
-              {setting.label}
-            </DropdownMenuCheckboxItem>
-          ))}
+          {organizationSettings.map((setting) => {
+            return setting.hidden ? null : (
+              <DropdownMenuCheckboxItem
+                key={setting.id}
+                checked={pathname.includes(setting.id)}
+                hidden={setting.hidden}
+                onClick={() => router.push(setting.href)}
+                className="cursor-pointer">
+                {setting.label}
+              </DropdownMenuCheckboxItem>
+            );
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
       {openCreateOrganizationModal && (

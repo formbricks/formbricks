@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { usePathname, useRouter } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TOrganization } from "@formbricks/types/organizations";
+import { TOrganization, TOrganizationBilling } from "@formbricks/types/organizations";
 import { OrganizationBreadcrumb } from "./organization-breadcrumb";
 
 // Mock the dependencies
@@ -131,21 +131,7 @@ describe("OrganizationBreadcrumb", () => {
     billing: {
       plan: "free",
       stripeCustomerId: null,
-      features: {
-        inAppSurvey: {
-          status: "active",
-          unlimited: false,
-        },
-        linkSurvey: {
-          status: "active",
-          unlimited: false,
-        },
-        userTargeting: {
-          status: "active",
-          unlimited: false,
-        },
-      },
-    },
+    } as unknown as TOrganizationBilling,
     isAIEnabled: false,
   };
 
@@ -155,23 +141,9 @@ describe("OrganizationBreadcrumb", () => {
     createdAt: new Date("2023-01-01"),
     updatedAt: new Date("2023-01-01"),
     billing: {
-      plan: "pro",
-      stripeCustomerId: "stripe-123",
-      features: {
-        inAppSurvey: {
-          status: "active",
-          unlimited: true,
-        },
-        linkSurvey: {
-          status: "active",
-          unlimited: true,
-        },
-        userTargeting: {
-          status: "active",
-          unlimited: true,
-        },
-      },
-    },
+      plan: "startup",
+      stripeCustomerId: null,
+    } as unknown as TOrganizationBilling,
     isAIEnabled: true,
   };
 
@@ -196,6 +168,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={[mockOrganization1]}
           isMultiOrgEnabled={false}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -213,6 +187,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={[mockOrganization1]}
           isMultiOrgEnabled={false}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -233,6 +209,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -248,6 +226,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -264,6 +244,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -283,6 +265,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -304,6 +288,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -327,6 +313,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -346,6 +334,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -366,6 +356,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={false}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -384,6 +376,8 @@ describe("OrganizationBreadcrumb", () => {
           currentOrganization={mockOrganization1}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
+          isFormbricksCloud={true}
+          isMember={false}
           currentEnvironmentId={currentEnvironmentId}
         />
       );
@@ -407,6 +401,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -429,6 +425,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -452,6 +450,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={[mockOrganization1]}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -471,6 +471,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -488,6 +490,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
@@ -512,6 +516,8 @@ describe("OrganizationBreadcrumb", () => {
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={true}
+          isMember={false}
         />
       );
 
