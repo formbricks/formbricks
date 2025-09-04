@@ -7,7 +7,6 @@ import { sendToPipeline } from "./pipelines";
 
 // Mock the constants module
 vi.mock("@/lib/constants", () => ({
-  CRON_SECRET: "mocked-cron-secret",
   WEBAPP_URL: "https://test.formbricks.com",
 }));
 
@@ -57,7 +56,6 @@ describe("pipelines", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": "mocked-cron-secret",
       },
       body: JSON.stringify({
         environmentId: testData.environmentId,
@@ -86,28 +84,5 @@ describe("pipelines", () => {
 
     // Check that the error was logged using logger
     expect(logger.error).toHaveBeenCalledWith(testError, "Error sending event to pipeline");
-  });
-
-  test("sendToPipeline should throw error if CRON_SECRET is not set", async () => {
-    // For this test, we need to mock CRON_SECRET as undefined
-    // Let's use a more compatible approach to reset the mocks
-    const originalModule = await import("@/lib/constants");
-    const mockConstants = { ...originalModule, CRON_SECRET: undefined };
-
-    vi.doMock("@/lib/constants", () => mockConstants);
-
-    // Re-import the module to get the new mocked values
-    const { sendToPipeline: sendToPipelineNoSecret } = await import("./pipelines");
-
-    // Create sample data for testing
-    const testData: TPipelineInput = {
-      event: PipelineTriggers.responseCreated,
-      surveyId: "cm8ckvchx000008lb710n0gdn",
-      environmentId: "cm8cmp9hp000008jf7l570ml2",
-      response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
-    };
-
-    // Expect the function to throw an error
-    await expect(sendToPipelineNoSecret(testData)).rejects.toThrow("CRON_SECRET is not set");
   });
 });

@@ -86,7 +86,6 @@ jobs:
         run: |
           RANDOM_KEY=$(openssl rand -hex 32)
           sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
-          sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
