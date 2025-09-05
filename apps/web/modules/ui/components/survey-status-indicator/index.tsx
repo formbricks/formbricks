@@ -2,7 +2,7 @@
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
-import { CheckIcon, ClockIcon, PauseIcon, PencilIcon } from "lucide-react";
+import { CheckIcon, PauseIcon, PencilIcon } from "lucide-react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyStatusIndicatorProps {
