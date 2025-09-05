@@ -270,12 +270,12 @@ describe("generateResponseTableColumns", () => {
 
   test("should generate columns for variables", () => {
     const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
-    const var1Col = columns.find((col) => (col as any).accessorKey === "var1");
+    const var1Col = columns.find((col) => (col as any).accessorKey === "VARIABLE_var1");
     expect(var1Col).toBeDefined();
     const var1Cell = (var1Col?.cell as any)?.({ row: { original: mockResponseData } } as any);
     expect(var1Cell.props.children).toBe("Segment A");
 
-    const var2Col = columns.find((col) => (col as any).accessorKey === "var2");
+    const var2Col = columns.find((col) => (col as any).accessorKey === "VARIABLE_var2");
     expect(var2Col).toBeDefined();
     const var2Cell = (var2Col?.cell as any)?.({ row: { original: mockResponseData } } as any);
     expect(var2Cell.props.children).toBe(100);
@@ -283,7 +283,7 @@ describe("generateResponseTableColumns", () => {
 
   test("should generate columns for hidden fields if fieldIds exist", () => {
     const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
-    const hf1Col = columns.find((col) => (col as any).accessorKey === "hf1");
+    const hf1Col = columns.find((col) => (col as any).accessorKey === "HIDDEN_FIELD_hf1");
     expect(hf1Col).toBeDefined();
     const hf1Cell = (hf1Col?.cell as any)?.({ row: { original: mockResponseData } } as any);
     expect(hf1Cell.props.children).toBe("Hidden Field 1 Value");
@@ -438,7 +438,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
     const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
 
     // Find the variable column for var1
-    const var1Column: any = columns.find((col) => (col as any).accessorKey === "var1");
+    const var1Column: any = columns.find((col) => (col as any).accessorKey === "VARIABLE_var1");
     expect(var1Column).toBeDefined();
 
     // Test the header
@@ -455,7 +455,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
     expect(cellResult?.props.children).toBe("Test Value");
 
     // Test with a number variable
-    const var2Column: any = columns.find((col) => (col as any).accessorKey === "var2");
+    const var2Column: any = columns.find((col) => (col as any).accessorKey === "VARIABLE_var2");
     expect(var2Column).toBeDefined();
 
     const mockRowNumber = {
@@ -470,7 +470,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
     const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
 
     // Find the hidden field column
-    const hfColumn: any = columns.find((col) => (col as any).accessorKey === "hf1");
+    const hfColumn: any = columns.find((col) => (col as any).accessorKey === "HIDDEN_FIELD_hf1");
     expect(hfColumn).toBeDefined();
 
     // Test the header
@@ -497,7 +497,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
     const columns = generateResponseTableColumns(surveyWithNoHiddenFields, false, true, t as any);
 
     // Check that no hidden field columns were created
-    const hfColumn = columns.find((col) => (col as any).accessorKey === "hf1");
+    const hfColumn = columns.find((col) => (col as any).accessorKey === "HIDDEN_FIELD_hf1");
     expect(hfColumn).toBeUndefined();
   });
 });
