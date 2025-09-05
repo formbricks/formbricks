@@ -65,8 +65,6 @@ const mockSurvey: TSurvey = {
   followUps: [],
   delay: 0,
   autoComplete: null,
-  runOnDate: null,
-  closeOnDate: null,
   projectOverwrites: null,
   styling: null,
   showLanguageSwitch: null,

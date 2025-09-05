@@ -99,7 +99,6 @@ const baseSurvey = {
   updatedAt: new Date(),
   createdBy: null,
   variables: [],
-  closeOnDate: null,
   endings: [],
   hiddenFields: { enabled: false, fieldIds: [] },
 } as unknown as TSurvey;

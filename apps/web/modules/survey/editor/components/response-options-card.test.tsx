@@ -55,30 +55,6 @@ describe("ResponseOptionsCard", () => {
     expect(collapsibleRoot).toHaveAttribute("data-state", "open");
   });
 
-  test("should set runOnDateToggle to true when handleRunOnDateToggle is called and runOnDateToggle is false", async () => {
-    const localSurvey: TSurvey = {
-      id: "1",
-      name: "Test Survey",
-      type: "link",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      runOnDate: null,
-    } as unknown as TSurvey;
-
-    const setLocalSurvey = vi.fn();
-
-    render(
-      <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} responseCount={0} />
-    );
-
-    const runOnDateToggle = screen.getByText("environments.surveys.edit.release_survey_on_date");
-    await userEvent.click(runOnDateToggle);
-
-    // Check if the switch element is checked after clicking
-    const runOnDateSwitch = screen.getByRole("switch", { name: /release_survey_on_date/i });
-    expect(runOnDateSwitch).toHaveAttribute("data-state", "checked");
-  });
-
   test("should not correct the invalid autoComplete value when it is less than or equal to responseCount after blur", async () => {
     const localSurvey: TSurvey = {
       id: "1",

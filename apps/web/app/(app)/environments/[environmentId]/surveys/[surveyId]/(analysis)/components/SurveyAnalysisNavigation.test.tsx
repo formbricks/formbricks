@@ -111,11 +111,9 @@ const mockSurvey = {
   surveyClosedMessage: null,
   welcomeCard: { enabled: false, headline: { default: "" } } as unknown as TSurvey["welcomeCard"],
   segment: null,
-  closeOnDate: null,
   delay: 0,
   autoComplete: null,
   recontactDays: null,
-  runOnDate: null,
   displayPercentage: null,
   createdBy: null,
 } as unknown as TSurvey;

@@ -72,9 +72,6 @@ x-environment: &environment
     # Set the below to your Unsplash API Key for their Survey Backgrounds
     # UNSPLASH_ACCESS_KEY:
 
-    # Set the below to 0 to disable cron jobs
-    # DOCKER_CRON_ENABLED: 1
-
     # Set the below to your public domain (default is WEBAPP_URL)
     # PUBLIC_URL:
 
@@ -183,8 +180,8 @@ x-environment: &environment
 
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 
-          # Set the below to 1 to enable audit logging.
-      # AUDIT_LOG_ENABLED: 1
+    # Set the below to 1 to enable audit logging.
+    # AUDIT_LOG_ENABLED: 1
 
     # Set the below to get the ip address of the user from the request headers
     # AUDIT_LOG_GET_USER_IP: 1

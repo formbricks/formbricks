@@ -60,7 +60,6 @@ const mockSurveys: TSurvey[] = [
     triggers: [],
     recontactDays: null,
     autoClose: null,
-    closeOnDate: null,
     delay: 0,
     displayOption: "displayOnce",
     displayPercentage: null,
@@ -76,7 +75,6 @@ const mockSurveys: TSurvey[] = [
     pin: null,
     surveyClosedMessage: null,
     autoComplete: null,
-    runOnDate: null,
     createdBy: null,
   } as unknown as TSurvey,
   {
@@ -89,7 +87,6 @@ const mockSurveys: TSurvey[] = [
     triggers: [],
     recontactDays: null,
     autoClose: null,
-    closeOnDate: null,
     delay: 0,
     displayOption: "displayOnce",
     displayPercentage: null,
@@ -105,7 +102,6 @@ const mockSurveys: TSurvey[] = [
     pin: null,
     surveyClosedMessage: null,
     autoComplete: null,
-    runOnDate: null,
     createdBy: null,
   } as unknown as TSurvey,
   {
@@ -118,7 +114,6 @@ const mockSurveys: TSurvey[] = [
     triggers: [],
     recontactDays: null,
     autoClose: null,
-    closeOnDate: null,
     delay: 0,
     displayOption: "displayOnce",
     displayPercentage: null,
@@ -135,7 +130,6 @@ const mockSurveys: TSurvey[] = [
     pin: null,
     surveyClosedMessage: null,
     autoComplete: null,
-    runOnDate: null,
     createdBy: null,
   } as unknown as TSurvey,
 ];

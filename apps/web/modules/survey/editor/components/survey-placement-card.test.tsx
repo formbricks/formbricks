@@ -63,7 +63,6 @@ const mockSurvey = {
   hiddenFields: { enabled: false },
   segment: null,
   projectOverwrites: null, // Start with no overwrites
-  closeOnDate: null,
   createdBy: null,
 } as unknown as TSurvey;
 

@@ -51,7 +51,6 @@ const baseSurvey = {
   recontactDays: null,
   displayOption: "displayOnce",
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   autoComplete: null,
   surveyClosedMessage: null,

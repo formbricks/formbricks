@@ -12,7 +12,7 @@ export const SurveyInactive = async ({
   surveyClosedMessage,
   project,
 }: {
-  status: "paused" | "completed" | "link invalid" | "scheduled" | "response submitted" | "link expired";
+  status: "paused" | "completed" | "link invalid" | "response submitted" | "link expired";
   surveyClosedMessage?: TSurveyClosedMessage | null;
   project?: Pick<Project, "linkSurveyBranding">;
 }) => {

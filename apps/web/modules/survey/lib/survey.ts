@@ -23,8 +23,6 @@ export const selectSurvey = {
   recontactDays: true,
   displayLimit: true,
   autoClose: true,
-  runOnDate: true,
-  closeOnDate: true,
   delay: true,
   displayPercentage: true,
   autoComplete: true,

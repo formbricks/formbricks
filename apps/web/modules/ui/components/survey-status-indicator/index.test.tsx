@@ -31,7 +31,6 @@ vi.mock("@tolgee/react", () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "common.gathering_responses": "Gathering responses",
-        "common.survey_scheduled": "Survey scheduled",
         "common.survey_paused": "Survey paused",
         "common.survey_completed": "Survey completed",
       };
@@ -58,21 +57,6 @@ describe("SurveyStatusIndicator", () => {
 
     expect(pingElement).toHaveClass("bg-green-500");
     expect(dotElement).toHaveClass("bg-green-500");
-
-    // Should not render tooltip components
-    expect(screen.queryByTestId("tooltip-provider")).not.toBeInTheDocument();
-  });
-
-  test("renders scheduled status correctly without tooltip", () => {
-    const { container } = render(<SurveyStatusIndicator status="scheduled" />);
-
-    // Find the clock icon container
-    const clockIconContainer = container.querySelector(".rounded-full.bg-slate-300.p-1");
-    expect(clockIconContainer).toBeInTheDocument();
-
-    // Find the clock icon inside
-    const clockIcon = clockIconContainer?.querySelector("[data-testid='clock-icon']");
-    expect(clockIcon).toBeInTheDocument();
 
     // Should not render tooltip components
     expect(screen.queryByTestId("tooltip-provider")).not.toBeInTheDocument();
@@ -135,16 +119,6 @@ describe("SurveyStatusIndicator", () => {
     // Should have the right content in the tooltip
     const tooltipContent = screen.getByTestId("tooltip-content");
     expect(tooltipContent).toHaveTextContent("Gathering responses");
-  });
-
-  test("renders scheduled status with tooltip correctly", () => {
-    const { container } = render(<SurveyStatusIndicator status="scheduled" tooltip={true} />);
-
-    expect(screen.getByTestId("tooltip-content")).toHaveTextContent("Survey scheduled");
-
-    // Use container query to find the first clock icon
-    const clockIcon = container.querySelector("[data-testid='clock-icon']");
-    expect(clockIcon).toBeInTheDocument();
   });
 
   test("renders paused status with tooltip correctly", () => {

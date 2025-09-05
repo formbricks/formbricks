@@ -113,13 +113,13 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end -}}
 {{- end }}
 
-{{- define "formbricks.cronSecret" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
-{{- if $secret }}
-    {{- index $secret.data "CRON_SECRET" | b64dec -}}
-{{- else }}
-    {{- randAlphaNum 32 -}}
-{{- end -}}
+{{- define "formbricks.cronSecret" -}}	
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}	
+{{- if $secret }}	
+    {{- index $secret.data "CRON_SECRET" | b64dec -}}	
+{{- else }}	
+    {{- randAlphaNum 32 -}}	
+{{- end -}}	
 {{- end }}
 
 {{- define "formbricks.encryptionKey" -}}

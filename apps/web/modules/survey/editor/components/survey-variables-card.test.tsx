@@ -50,8 +50,6 @@ const mockSurvey = {
   environmentId: "env-123",
   createdBy: null,
   segment: null,
-  closeOnDate: null,
-  runOnDate: null,
   isVerifyEmailEnabled: false,
   isSingleResponsePerEmailEnabled: false,
   recaptcha: null,

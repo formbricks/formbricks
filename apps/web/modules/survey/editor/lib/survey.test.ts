@@ -89,8 +89,6 @@ describe("Survey Editor Library Tests", () => {
       hiddenFields: { enabled: false },
       delay: 0,
       autoComplete: null,
-      closeOnDate: null,
-      runOnDate: null,
       projectOverwrites: null,
       styling: null,
       showLanguageSwitch: false,
@@ -426,45 +424,6 @@ describe("Survey Editor Library Tests", () => {
               },
             ],
           },
-        }),
-        select: expect.any(Object),
-      });
-    });
-
-    test("should handle scheduled status based on runOnDate", async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      const updatedSurvey: TSurvey = {
-        ...mockSurvey,
-        status: "completed",
-        runOnDate: tomorrow,
-      };
-
-      await updateSurvey(updatedSurvey);
-
-      expect(prisma.survey.update).toHaveBeenCalledWith({
-        where: { id: "survey123" },
-        data: expect.objectContaining({
-          status: "scheduled", // Should be changed to scheduled because runOnDate is in the future
-        }),
-        select: expect.any(Object),
-      });
-    });
-
-    test("should remove scheduled status when runOnDate is not set", async () => {
-      const updatedSurvey: TSurvey = {
-        ...mockSurvey,
-        status: "scheduled",
-        runOnDate: null,
-      };
-
-      await updateSurvey(updatedSurvey);
-
-      expect(prisma.survey.update).toHaveBeenCalledWith({
-        where: { id: "survey123" },
-        data: expect.objectContaining({
-          status: "inProgress", // Should be changed to inProgress because runOnDate is null
         }),
         select: expect.any(Object),
       });

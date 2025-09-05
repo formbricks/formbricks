@@ -53,8 +53,6 @@ describe("SuccessMessage", () => {
     autoClose: null,
     delay: 0,
     autoComplete: null,
-    runOnDate: null,
-    closeOnDate: null,
     welcomeCard: {
       enabled: false,
       headline: { default: "" },

@@ -113,7 +113,6 @@ const mockSurveys: TSurvey[] = [
     triggers: [],
     recontactDays: null,
     autoClose: null,
-    closeOnDate: null,
     delay: 0,
     displayOption: "displayOnce",
     displayPercentage: null,
@@ -125,7 +124,6 @@ const mockSurveys: TSurvey[] = [
     surveyClosedMessage: null,
     welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
     autoComplete: null,
-    runOnDate: null,
   } as unknown as TSurvey,
 ];
 

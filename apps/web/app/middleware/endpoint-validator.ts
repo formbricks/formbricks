@@ -72,7 +72,7 @@ export const isAdminDomainRoute = (url: string): boolean => {
     return false;
   }
 
-  // For non-public routes, allow them (includes known admin routes and unknown routes like pipeline, cron)
+  // For non-public routes, allow them (includes known admin routes and unknown routes like pipeline)
   return true;
 };
 

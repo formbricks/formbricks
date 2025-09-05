@@ -1,55 +1,4 @@
 nameOverride: "formbricks-stage"
-cronJob:
-  enabled: true
-  jobs:
-    ping:
-      args:
-        - /bin/sh
-        - -c
-        - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET"
-        "$WEBAPP_URL/api/cron/ping"'
-      env:
-        CRON_SECRET:
-          valueFrom:
-            secretKeyRef:
-              key: CRON_SECRET
-              name: formbricks-stage-app-env
-        WEBAPP_URL:
-          valueFrom:
-            secretKeyRef:
-              key: WEBAPP_URL
-              name: formbricks-stage-app-env
-      image:
-        imagePullPolicy: IfNotPresent
-        repository: quay.io/curl/curl
-        tag: latest
-      schedule: 0 9 * * *
-      successfulJobsHistoryLimit: 0
-    survey-status:
-      args:
-        - /bin/sh
-        - -c
-        - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET"
-        "$WEBAPP_URL/api/cron/survey-status"'
-      env:
-        CRON_SECRET:
-          valueFrom:
-            secretKeyRef:
-              key: CRON_SECRET
-              name: formbricks-stage-app-env
-        WEBAPP_URL:
-          valueFrom:
-            secretKeyRef:
-              key: WEBAPP_URL
-              name: formbricks-stage-app-env
-      image:
-        imagePullPolicy: IfNotPresent
-        repository: quay.io/curl/curl
-        tag: latest
-      schedule: 0 0 * * *
-      successfulJobsHistoryLimit: 0
-    
-
 ## Deployment & Autoscaling
 deployment:
   image:
@@ -62,8 +11,6 @@ deployment:
       cpu: 1
       memory: 1Gi
   env:
-    DOCKER_CRON_ENABLED:
-      value: "0"
     RATE_LIMITING_DISABLED:
       value: "1"
   envFrom:

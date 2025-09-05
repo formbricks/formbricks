@@ -35,8 +35,6 @@ export const SurveyCard = ({
     switch (survey.status) {
       case "inProgress":
         return t("common.in_progress");
-      case "scheduled":
-        return t("common.scheduled");
       case "completed":
         return t("common.completed");
       case "draft":
@@ -73,7 +71,6 @@ export const SurveyCard = ({
         <div
           className={cn(
             "col-span-1 flex w-fit items-center gap-2 whitespace-nowrap rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
-            surveyStatusLabel === "Scheduled" && "bg-slate-200",
             surveyStatusLabel === "In Progress" && "bg-emerald-50",
             surveyStatusLabel === "Completed" && "bg-slate-200",
             surveyStatusLabel === "Draft" && "bg-slate-100",

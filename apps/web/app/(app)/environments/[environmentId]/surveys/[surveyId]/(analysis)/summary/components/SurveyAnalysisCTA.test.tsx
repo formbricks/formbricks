@@ -277,8 +277,6 @@ const mockSurvey: TSurvey = {
   createdBy: null,
   variables: [],
   followUps: [],
-  runOnDate: null,
-  closeOnDate: null,
   styling: null,
   pin: null,
   recaptcha: null,

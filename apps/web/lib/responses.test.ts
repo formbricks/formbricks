@@ -232,8 +232,6 @@ describe("Response Processing", () => {
       autoClose: null,
       autoComplete: null,
       recontactDays: null,
-      runOnDate: null,
-      closeOnDate: null,
       welcomeCard: {
         enabled: false,
         timeToFinish: false,

@@ -286,7 +286,7 @@ export const SurveyMenuBar = ({
         setIsSurveyPublishing(false);
         return;
       }
-      const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
+      const status = "inProgress";
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
