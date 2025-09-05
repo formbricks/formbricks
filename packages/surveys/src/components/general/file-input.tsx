@@ -118,12 +118,27 @@ export function FileInput({
           return;
         }
 
-        const uploadedUrls = await Promise.all(
+        const results = await Promise.allSettled(
           filteredFiles.map((file) => onFileUpload(file, { allowedFileExtensions, surveyId }))
         );
 
-        // Update file URLs by appending the new URL
-        onUploadCallback(fileUrls ? [...fileUrls, ...uploadedUrls] : uploadedUrls);
+        const fulfilled = results.filter(isFulfilled).map((r) => r.value);
+        const rejected = results.filter(isRejected);
+
+        if (fulfilled.length) {
+          onUploadCallback(fileUrls ? [...fileUrls, ...fulfilled] : fulfilled);
+        }
+
+        if (rejected.length > 0) {
+          const reason = rejected[0].reason;
+          if (reason?.name === "FileTooLargeError") {
+            alert(reason.message);
+          } else if (reason?.name === "InvalidFileNameError") {
+            alert("Invalid file name. Please rename your file and try again.");
+          } else {
+            alert("Upload failed! Please try again.");
+          }
+        }
       } catch (err) {
         console.error(`Error uploading native file.`);
         alert(`Upload failed! Please try again.`);
@@ -237,8 +252,13 @@ export function FileInput({
       onUploadCallback(fileUrls ? [...fileUrls, ...uploadedFilesUrl] : uploadedFilesUrl);
 
       if (rejectedFiles.length > 0) {
-        if (rejectedFiles[0].reason?.name === "FileTooLargeError") {
-          alert(rejectedFiles[0].reason.message);
+        const reason = rejectedFiles[0].reason;
+        if (reason?.name === "FileTooLargeError") {
+          alert(reason.message);
+        } else if (reason?.name === "InvalidFileNameError") {
+          alert("Invalid file name. Please rename your file and try again.");
+        } else {
+          alert("Upload failed! Please try again.");
         }
       }
     } catch (err: any) {

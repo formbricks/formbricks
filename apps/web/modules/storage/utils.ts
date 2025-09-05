@@ -27,6 +27,55 @@ export const getOriginalFileNameFromUrl = (fileURL: string) => {
 };
 
 /**
+ * Sanitize a provided file name to a safe subset.
+ * - Removes path separators and backslashes to avoid implicit prefixes
+ * - Drops ASCII control chars and reserved URL chars which often break S3 form fields
+ * - Collapses whitespace
+ * - Limits length to a reasonable maximum
+ * - Preserves last extension only
+ */
+export const sanitizeFileName = (rawFileName: string): string => {
+  if (!rawFileName) return "";
+
+  // Normalize to NFC to avoid weird Unicode composition differences
+  let name = rawFileName.normalize("NFC");
+
+  // Replace path separators/backslashes with dash
+  name = name.replace(/[\\/]/g, "-");
+
+  // Remove control chars and characters problematic in S3 form fields or URLs
+  // Disallow: # <> : " | ? * ` ' and control whitespace
+  name = name.replace(/[\u0000-\u001F#<>:"|?*`'\n\r\t]/g, "");
+
+  // Collapse and trim whitespace
+  name = name.replace(/\s+/g, " ").trim();
+  // Remove spaces immediately before dots separating extension
+  name = name.replace(/\s+\./g, ".");
+
+  // Split into base and extension; keep only the last extension
+  const parts = name.split(".");
+  const hasExt = parts.length > 1;
+  const ext = hasExt ? parts.pop()! : "";
+  let base = (hasExt ? parts.join(".") : parts[0]).trim();
+
+  // Fallback base if empty after sanitization
+  if (!base) return "";
+  // Reject bases that are only punctuation like hyphens or dots
+  if (/^-+$/.test(base) || /^\.+$/.test(base)) return "";
+
+  // Enforce max lengths (S3 key limit is 1024; be conservative for filename)
+  const MAX_BASE = 200;
+  const MAX_EXT = 20;
+  if (base.length > MAX_BASE) base = base.slice(0, MAX_BASE);
+  const safeExt = ext.slice(0, MAX_EXT).replace(/[^A-Za-z0-9]/g, "");
+
+  const result = safeExt ? `${base}.${safeExt}` : base;
+  // Final guard: empty or just dots/hyphens shouldn't pass
+  if (!result || /^\.*$/.test(result) || /^-+$/.test(result)) return "";
+  return result;
+};
+
+/**
  * Validates if the file extension is allowed
  * @param fileName The name of the file to validate
  * @returns {boolean} True if the file extension is allowed, false otherwise

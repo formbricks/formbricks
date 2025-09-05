@@ -91,6 +91,11 @@ export class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 400) {
+        const err = new Error("Invalid file name");
+        err.name = "InvalidFileNameError";
+        throw err;
+      }
       throw new Error(`Upload failed with status: ${String(response.status)}`);
     }
 

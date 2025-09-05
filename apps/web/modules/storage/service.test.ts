@@ -258,6 +258,22 @@ describe("storage service", () => {
         "Error getting signed url for upload"
       );
     });
+
+    test("should return InvalidInput when sanitized filename is empty or invalid", async () => {
+      const mockErrorResponse = {
+        ok: false,
+        error: { code: StorageErrorCode.InvalidInput },
+      } as MockedSignedUploadReturn;
+
+      vi.mocked(getSignedUploadUrl).mockResolvedValue(mockErrorResponse);
+
+      const result = await getSignedUrlForUpload("----.png", "env-123", "image/png", "public" as TAccessType);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(StorageErrorCode.InvalidInput);
+      }
+    });
   });
 
   describe("getSignedUrlForDownload", () => {

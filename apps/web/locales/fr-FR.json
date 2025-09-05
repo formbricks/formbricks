@@ -225,6 +225,7 @@
     "integration": "intégration",
     "integrations": "Intégrations",
     "invalid_date": "Date invalide",
+    "invalid_file_name": "Nom de fichier invalide, veuillez renommer votre fichier et réessayer",
     "invalid_file_type": "Type de fichier invalide",
     "invite": "Inviter",
     "invite_them": "Invitez-les",

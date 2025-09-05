@@ -10,6 +10,7 @@ import { StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { sanitizeFileName } from "./utils";
 
 // Mock the getOriginalFileNameFromUrl function
 const mockGetOriginalFileNameFromUrl = vi.hoisted(() => vi.fn());
@@ -33,6 +34,49 @@ describe("storage utils", () => {
       } catch {
         return undefined;
       }
+    });
+  });
+
+  describe("sanitizeFileName", () => {
+    test("returns empty string for empty input", () => {
+      expect(sanitizeFileName("")).toBe("");
+    });
+
+    test("keeps a normal filename unchanged", () => {
+      expect(sanitizeFileName("photo.jpg")).toBe("photo.jpg");
+    });
+
+    test("replaces slashes and backslashes with dashes", () => {
+      expect(sanitizeFileName("a/b\\c.txt")).toBe("a-b-c.txt");
+    });
+
+    test("removes reserved and control characters including #", () => {
+      expect(sanitizeFileName("we<>:\"|?*`'#ird.pdf")).toBe("weird.pdf");
+      expect(sanitizeFileName("test#file.png")).toBe("testfile.png");
+    });
+
+    test("collapses whitespace and trims", () => {
+      expect(sanitizeFileName("  my   file   name   .jpg  ")).toBe("my file name.jpg");
+    });
+
+    test("keeps only last extension when multiple dots present", () => {
+      expect(sanitizeFileName("my.backup.file.pdf")).toBe("my.backup.file.pdf");
+    });
+
+    test("returns empty string for base of only hyphens or dots", () => {
+      expect(sanitizeFileName("----.png")).toBe("");
+      expect(sanitizeFileName("....png")).toBe("");
+    });
+
+    test("sanitizes extension to alphanumeric only", () => {
+      expect(sanitizeFileName("file.pn#g")).toBe("file.png");
+    });
+
+    test("truncates overly long base name", () => {
+      const longBase = "a".repeat(300);
+      const result = sanitizeFileName(`${longBase}.txt`);
+      // base should be cut to 200 chars
+      expect(result).toBe(`${"a".repeat(200)}.txt`);
     });
   });
 

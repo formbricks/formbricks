@@ -185,7 +185,6 @@
         "RECAPTCHA_SITE_KEY",
         "RECAPTCHA_SECRET_KEY",
         "TERMS_URL",
-        "UPLOADS_DIR",
         "VERCEL",
         "VERCEL_URL",
         "VERSION",
