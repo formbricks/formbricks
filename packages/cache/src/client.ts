@@ -4,9 +4,6 @@ import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
 import { CacheService } from "./service";
 
-// Re-export CacheService for consumers
-export { CacheService } from "./service";
-
 /**
  * Creates a Redis client from the REDIS_URL environment variable
  * @returns Result containing RedisClient or RedisConfigurationError if REDIS_URL is not set
@@ -65,7 +62,7 @@ export async function createRedisClientFromEnv(): Promise<Result<RedisClient, Ca
 // Global singleton with globalThis for cross-module sharing
 const globalForCache = globalThis as unknown as {
   formbricksCache: CacheService | undefined;
-  formbricksCacheInitializing: Promise<CacheService> | undefined;
+  formbricksCacheInitializing: Promise<Result<CacheService, CacheError>> | undefined;
 };
 
 // Module-level singleton for performance
@@ -94,21 +91,19 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
 
   // Prevent concurrent initialization
   if (globalForCache.formbricksCacheInitializing) {
-    try {
-      const svc = await globalForCache.formbricksCacheInitializing;
-      singleton = svc;
-      return ok(svc);
-    } catch (e) {
-      return err(e as CacheError);
+    const result = await globalForCache.formbricksCacheInitializing;
+    if (result.ok) {
+      singleton = result.data;
     }
+    return result;
   }
 
   // Start initialization - fail fast approach
-  globalForCache.formbricksCacheInitializing = (async () => {
+  globalForCache.formbricksCacheInitializing = (async (): Promise<Result<CacheService, CacheError>> => {
     const clientResult = await createRedisClientFromEnv();
     if (!clientResult.ok) {
       logger.error("Redis client creation failed", { error: clientResult.error });
-      throw CacheErrorClass.fromCacheError(clientResult.error, "Redis client creation failed");
+      return err(CacheErrorClass.fromCacheError(clientResult.error, "Redis client creation failed"));
     }
 
     const client = clientResult.data;
@@ -117,17 +112,15 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
     singleton = svc;
     globalForCache.formbricksCache = svc;
     logger.debug("Cache service created");
-    return svc;
+    return ok(svc);
   })();
 
-  try {
-    const svc = await globalForCache.formbricksCacheInitializing;
-    return ok(svc);
-  } catch (e) {
+  const result = await globalForCache.formbricksCacheInitializing;
+  if (!result.ok) {
     globalForCache.formbricksCacheInitializing = undefined; // Allow retry
-    logger.error("Cache service creation failed", { error: e });
-    return err(e as CacheError);
+    logger.error("Cache service creation failed", { error: result.error });
   }
+  return result;
 }
 
 export function resetCacheFactory(): void {
