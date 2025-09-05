@@ -1,5 +1,4 @@
 import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
-import { processResponseData } from "@/lib/responses";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
@@ -29,10 +28,6 @@ const t = vi.fn((key: string, params?: any) => {
 
 vi.mock("@/lib/i18n/utils", () => ({
   getLocalizedValue: vi.fn((localizedString, locale) => localizedString[locale] || localizedString.default),
-}));
-
-vi.mock("@/lib/responses", () => ({
-  processResponseData: vi.fn((data) => (Array.isArray(data) ? data.join(", ") : String(data))),
 }));
 
 vi.mock("@/lib/utils/contact", () => ({
