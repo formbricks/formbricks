@@ -1,5 +1,5 @@
 import { ButtonHTMLAttributes, useRef } from "preact/compat";
-import { useCallback, useEffect } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel?: string;
@@ -18,18 +18,25 @@ export function SubmitButton({
   ...props
 }: SubmitButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled) {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled && !isProcessing) {
         event.preventDefault();
+        setIsProcessing(true);
         const button = buttonRef.current;
         if (button) {
           button.click();
         }
+
+        // Reset processing state after a short delay to prevent rapid successive calls
+        setTimeout(() => {
+          setIsProcessing(false);
+        }, 300);
       }
     },
-    [disabled]
+    [disabled, isProcessing, tabIndex]
   );
 
   useEffect(() => {
