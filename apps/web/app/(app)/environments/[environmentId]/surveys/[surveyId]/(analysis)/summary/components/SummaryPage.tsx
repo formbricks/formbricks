@@ -7,6 +7,7 @@ import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/survey
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { QuotasSummary } from "@/modules/ee/quotas/components/quotas-summary";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -25,8 +26,11 @@ const defaultSurveySummary: TSurveySummary = {
     startsPercentage: 0,
     totalResponses: 0,
     ttcAverage: 0,
+    quotasCompleted: 0,
+    quotasCompletedPercentage: 0,
   },
   dropOff: [],
+  quotas: [],
   summary: [],
 };
 
@@ -36,6 +40,7 @@ interface SummaryPageProps {
   surveyId: string;
   locale: TUserLocale;
   initialSurveySummary?: TSurveySummary;
+  isQuotasAllowed: boolean;
 }
 
 export const SummaryPage = ({
@@ -44,13 +49,15 @@ export const SummaryPage = ({
   surveyId,
   locale,
   initialSurveySummary,
+  isQuotasAllowed,
 }: SummaryPageProps) => {
   const searchParams = useSearchParams();
 
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(
     initialSurveySummary || defaultSurveySummary
   );
-  const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+
+  const [tab, setTab] = useState<"dropOffs" | "quotas" | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
@@ -108,11 +115,13 @@ export const SummaryPage = ({
     <>
       <SummaryMetadata
         surveySummary={surveySummary.meta}
-        showDropOffs={showDropOffs}
-        setShowDropOffs={setShowDropOffs}
         isLoading={isLoading}
+        tab={tab}
+        setTab={setTab}
+        isQuotasAllowed={isQuotasAllowed}
       />
-      {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
+      {tab === "dropOffs" && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
+      {isQuotasAllowed && tab === "quotas" && <QuotasSummary quotas={surveySummary.quotas} />}
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
       </div>

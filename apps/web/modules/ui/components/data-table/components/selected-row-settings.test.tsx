@@ -28,7 +28,10 @@ vi.mock("@/modules/ui/components/button", () => ({
 }));
 
 describe("SelectedRowSettings", () => {
-  const rows = [{ id: "r1" }, { id: "r2" }];
+  const rows = [
+    { id: "r1", original: { quotas: [{ quota: { name: "Quota 1" } }] } },
+    { id: "r2", original: { quotas: [{ quota: { name: "Quota 2" } }] } },
+  ];
   let table: any;
   let updateRowList: ReturnType<typeof vi.fn>;
   let deleteAction: ReturnType<typeof vi.fn>;

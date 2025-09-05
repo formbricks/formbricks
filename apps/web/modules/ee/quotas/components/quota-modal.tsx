@@ -60,6 +60,7 @@ interface QuotaModalProps {
   onClose: () => void;
   duplicateQuota: (quota: TSurveyQuota) => void;
   hasResponses: boolean;
+  quotaResponseCount: number;
 }
 
 export const QuotaModal = ({
@@ -71,6 +72,7 @@ export const QuotaModal = ({
   onClose,
   duplicateQuota,
   hasResponses,
+  quotaResponseCount,
 }: QuotaModalProps) => {
   const router = useRouter();
   const isEditing = !!quota;
@@ -159,6 +161,15 @@ export const QuotaModal = ({
   );
   const submitQuota = async (data: TSurveyQuotaInput) => {
     const trimmedName = data.name.trim();
+    if (data.limit < quotaResponseCount) {
+      form.setError("limit", {
+        message: t(
+          "environments.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses"
+        ),
+      });
+      return;
+    }
+
     let payload = {
       name: trimmedName || t("environments.surveys.edit.quotas.new_quota"),
       limit: data.limit,
@@ -270,6 +281,7 @@ export const QuotaModal = ({
                       <Input
                         {...field}
                         type="number"
+                        min={quotaResponseCount}
                         className="w-32 bg-white"
                         onChange={(e) => {
                           const value = e.target.value;

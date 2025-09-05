@@ -2,8 +2,26 @@ import { makeRequest } from "@/lib/utils";
 import { TDisplayCreateInput } from "@formbricks/types/displays";
 import { Result } from "@formbricks/types/error-handlers";
 import { ApiErrorResponse } from "@formbricks/types/errors";
+import { TSurveyQuotaAction } from "@formbricks/types/quota";
 import { TResponseInput, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storage";
+
+type TResponseCreateResponseQuotaFull = {
+  quotaFull: true;
+  quota: { id: string; action: TSurveyQuotaAction; endingCardId?: string };
+};
+
+type TResponseCreateResponseWithoutQuota = {
+  quotaFull: false;
+};
+
+type TResponseQuota = TResponseCreateResponseQuotaFull | TResponseCreateResponseWithoutQuota;
+
+type TResponseCreateResponse = {
+  id: string;
+} & TResponseQuota;
+
+type TResponseUpdateResponse = Record<string, unknown> & TResponseQuota;
 
 // Simple API client using fetch
 export class ApiClient {
@@ -33,7 +51,7 @@ export class ApiClient {
       contactId: string | null;
       recaptchaToken?: string;
     }
-  ): Promise<Result<{ id: string }, ApiErrorResponse>> {
+  ): Promise<Result<TResponseCreateResponse, ApiErrorResponse>> {
     const fromV1 = !!responseInput.userId;
 
     return makeRequest(
@@ -52,7 +70,9 @@ export class ApiClient {
     ttc,
     variables,
     language,
-  }: TResponseUpdateInput & { responseId: string }): Promise<Result<object, ApiErrorResponse>> {
+  }: TResponseUpdateInput & { responseId: string }): Promise<
+    Result<TResponseUpdateResponse, ApiErrorResponse>
+  > {
     return makeRequest(this.appUrl, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
       finished,
       endingId,

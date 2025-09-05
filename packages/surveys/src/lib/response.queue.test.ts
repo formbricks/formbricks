@@ -154,7 +154,7 @@ describe("ResponseQueue", () => {
 
   test("sendResponse calls updateResponse if responseId exists", async () => {
     surveyState.responseId = "resp1";
-    apiMock.updateResponse.mockResolvedValue(undefined);
+    apiMock.updateResponse.mockResolvedValue({ ok: true, data: { quotaFull: false } });
     const result = await queue.sendResponse(responseUpdate);
     expect(apiMock.updateResponse).toHaveBeenCalled();
     expect(result.ok).toBe(true);

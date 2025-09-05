@@ -2,9 +2,10 @@
 
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
+import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon } from "lucide-react";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { isValidValue } from "../util";
 import { HiddenFields } from "./HiddenFields";
@@ -15,7 +16,7 @@ import { VerifiedEmail } from "./VerifiedEmail";
 
 interface SingleResponseCardBodyProps {
   survey: TSurvey;
-  response: TResponse;
+  response: TResponseWithQuotas;
   skippedQuestions: string[][];
 }
 
@@ -120,6 +121,9 @@ export const SingleResponseCardBody = ({
       {survey.hiddenFields.enabled && survey.hiddenFields.fieldIds && (
         <HiddenFields hiddenFields={survey.hiddenFields} responseData={response.data} />
       )}
+
+      <ResponseCardQuotas quotas={response.quotas} />
+
       {response.finished && (
         <div className="mt-4 flex items-center">
           <CheckCircle2Icon className="h-6 w-6 text-slate-400" />

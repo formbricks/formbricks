@@ -1,8 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
-import { deleteResponsesAndDisplaysForSurvey } from "./survey";
+import { deleteResponsesAndDisplaysForSurvey, getQuotasSummary } from "./survey";
 
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
@@ -14,6 +15,9 @@ vi.mock("@formbricks/database", () => ({
       deleteMany: vi.fn(),
     },
     $transaction: vi.fn(),
+    surveyQuota: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -79,5 +83,76 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
 
       await expect(deleteResponsesAndDisplaysForSurvey(surveyId)).rejects.toThrow(Error);
     });
+  });
+});
+
+describe("Tests for getQuotasSummary service", () => {
+  test("Returns the correct quotas summary", async () => {
+    vi.mocked(prisma.surveyQuota.findMany).mockResolvedValue([
+      {
+        id: "quota123",
+        name: "Test Quota",
+        limit: 100,
+        _count: {
+          quotaLinks: 0,
+        },
+      },
+    ]);
+
+    const result = await getQuotasSummary(surveyId);
+    expect(result).toEqual([
+      {
+        id: "quota123",
+        name: "Test Quota",
+        limit: 100,
+        count: 0,
+        percentage: 0,
+      },
+    ]);
+  });
+
+  test("Returns 0 percentage if limit is 0", async () => {
+    vi.mocked(prisma.surveyQuota.findMany).mockResolvedValue([
+      {
+        id: "quota123",
+        name: "Test Quota",
+        limit: 0,
+        _count: {
+          quotaLinks: 0,
+        },
+      },
+    ]);
+
+    const result = await getQuotasSummary(surveyId);
+    expect(result).toEqual([
+      {
+        id: "quota123",
+        name: "Test Quota",
+        limit: 0,
+        count: 0,
+        percentage: 0,
+      },
+    ]);
+  });
+
+  test("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
+    const { prisma } = await import("@formbricks/database");
+
+    vi.mocked(prisma.surveyQuota.findMany).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "0.0.1",
+      })
+    );
+
+    await expect(getQuotasSummary(surveyId)).rejects.toThrow(DatabaseError);
+  });
+
+  test("Throws a generic Error for other exceptions", async () => {
+    const { prisma } = await import("@formbricks/database");
+
+    vi.mocked(prisma.surveyQuota.findMany).mockRejectedValue(new Error("Database error"));
+
+    await expect(getQuotasSummary(surveyId)).rejects.toThrow(Error);
   });
 });

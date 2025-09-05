@@ -300,7 +300,7 @@ export const copySurveyToOtherEnvironment = async (
     if (!existingProject) throw new ResourceNotFoundError("Project", environmentId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
 
-    const isQuotasEnabled = await getIsQuotasEnabled(organization?.billing.plan);
+    const isQuotasAllowed = await getIsQuotasEnabled(organization?.billing.plan);
 
     let targetEnvironment: string | null = null;
     let targetProject: TProjectWithLanguages | null = null;
@@ -499,7 +499,7 @@ export const copySurveyToOtherEnvironment = async (
       quotas: {
         createMany: {
           data:
-            isQuotasEnabled && existingQuotas.length > 0
+            isQuotasAllowed && existingQuotas.length > 0
               ? existingQuotas.map((quota) => ({
                   name: quota.name,
                   logic: quota.logic,

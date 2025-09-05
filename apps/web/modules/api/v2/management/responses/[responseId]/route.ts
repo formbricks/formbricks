@@ -7,7 +7,7 @@ import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import {
   deleteResponse,
   getResponse,
-  updateResponse,
+  updateResponseWithQuotaEvaluation,
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -190,7 +190,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         });
       }
 
-      const response = await updateResponse(params.responseId, body);
+      const response = await updateResponseWithQuotaEvaluation(params.responseId, body);
 
       if (!response.ok) {
         return handleApiError(request, response.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error

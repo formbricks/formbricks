@@ -1,5 +1,5 @@
 import "server-only";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
@@ -7,8 +7,10 @@ import {
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
+import { getSurvey } from "@/lib/survey/service";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -58,6 +60,31 @@ export const responseSelection = {
     },
   },
 } satisfies Prisma.ResponseSelect;
+
+export const createResponseWithQuotaEvaluation = async (
+  responseInput: TResponseInput
+): Promise<TResponse> => {
+  const response = await createResponse(responseInput);
+
+  const quotaResult = await evaluateResponseQuotas({
+    surveyId: responseInput.surveyId,
+    responseId: response.id,
+    data: responseInput.data,
+    variables: responseInput.variables,
+    language: responseInput.language,
+    responseFinished: response.finished,
+  });
+
+  if (quotaResult.shouldEndSurvey && quotaResult.refreshedResponse) {
+    return {
+      ...quotaResult.refreshedResponse,
+      tags: response.tags,
+      contact: response.contact,
+    };
+  }
+
+  return response;
+};
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
@@ -189,6 +216,50 @@ export const getResponsesByEnvironmentIds = reactCache(
         ],
         take: limit ? limit : undefined,
         skip: offset ? offset : undefined,
+      });
+
+      const transformedResponses: TResponse[] = await Promise.all(
+        responses.map((responsePrisma) => {
+          return {
+            ...responsePrisma,
+            contact: getResponseContact(responsePrisma),
+            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+          };
+        })
+      );
+
+      return transformedResponses;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
+export const getResponses = reactCache(
+  async (surveyId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
+    validateInputs([surveyId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+
+    limit = limit ?? RESPONSES_PER_PAGE;
+    const survey = await getSurvey(surveyId);
+    if (!survey) return [];
+    try {
+      const responses = await prisma.response.findMany({
+        where: { surveyId },
+        select: responseSelection,
+        orderBy: [
+          {
+            createdAt: "desc",
+          },
+          {
+            id: "desc", // Secondary sort by ID for consistent pagination
+          },
+        ],
+        take: limit,
+        skip: offset,
       });
 
       const transformedResponses: TResponse[] = await Promise.all(

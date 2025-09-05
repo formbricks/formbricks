@@ -10,7 +10,7 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
-import { createResponse, getResponses } from "./lib/response";
+import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -126,7 +126,7 @@ export const POST = async (request: Request) =>
         });
       }
 
-      const createResponseResult = await createResponse(environmentId, body);
+      const createResponseResult = await createResponseWithQuotaEvaluation(environmentId, body);
       if (!createResponseResult.ok) {
         return handleApiError(request, createResponseResult.error, auditLog);
       }

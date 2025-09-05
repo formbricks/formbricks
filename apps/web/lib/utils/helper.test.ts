@@ -18,6 +18,7 @@ import {
   getOrganizationIdFromInviteId,
   getOrganizationIdFromLanguageId,
   getOrganizationIdFromProjectId,
+  getOrganizationIdFromQuotaId,
   getOrganizationIdFromResponseId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
@@ -32,6 +33,7 @@ import {
   getProjectIdFromInsightId,
   getProjectIdFromIntegrationId,
   getProjectIdFromLanguageId,
+  getProjectIdFromQuotaId,
   getProjectIdFromResponseId,
   getProjectIdFromSegmentId,
   getProjectIdFromSurveyId,
@@ -47,7 +49,7 @@ vi.mock("@/lib/utils/services", () => ({
   getSurvey: vi.fn(),
   getResponse: vi.fn(),
   getContact: vi.fn(),
-
+  getQuota: vi.fn(),
   getSegment: vi.fn(),
   getActionClass: vi.fn(),
   getIntegration: vi.fn(),
@@ -406,6 +408,24 @@ describe("Helper Utilities", () => {
       vi.mocked(services.getDocument).mockResolvedValueOnce(null);
       await expect(getOrganizationIdFromDocumentId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
+
+    test("getOrganizationIdFromQuotaId returns organization ID correctly", async () => {
+      vi.mocked(services.getQuota).mockResolvedValueOnce({
+        surveyId: "survey1",
+      });
+      vi.mocked(services.getSurvey).mockResolvedValueOnce({
+        environmentId: "env1",
+      });
+      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
+        projectId: "project1",
+      });
+      vi.mocked(services.getProject).mockResolvedValueOnce({
+        organizationId: "org1",
+      });
+
+      const orgId = await getOrganizationIdFromQuotaId("quota1");
+      expect(orgId).toBe("org1");
+    });
   });
 
   describe("Project ID retrieval functions", () => {
@@ -629,6 +649,21 @@ describe("Helper Utilities", () => {
     test("getProjectIdFromWebhookId throws error when webhook not found", async () => {
       vi.mocked(services.getWebhook).mockResolvedValueOnce(null);
       await expect(getProjectIdFromWebhookId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("getProjectIdFromQuotaId returns project ID correctly", async () => {
+      vi.mocked(services.getQuota).mockResolvedValueOnce({
+        surveyId: "survey1",
+      });
+      vi.mocked(services.getSurvey).mockResolvedValueOnce({
+        environmentId: "env1",
+      });
+      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
+        projectId: "project1",
+      });
+
+      const projectId = await getProjectIdFromQuotaId("quota1");
+      expect(projectId).toBe("project1");
     });
   });
 

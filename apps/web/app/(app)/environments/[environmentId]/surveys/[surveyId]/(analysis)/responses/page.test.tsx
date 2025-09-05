@@ -10,8 +10,11 @@ import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -100,6 +103,19 @@ vi.mock("@/modules/environments/lib/utils", () => ({
 
 vi.mock("@/modules/ui/components/page-content-wrapper", () => ({
   PageContentWrapper: vi.fn(({ children }) => <div data-testid="page-content-wrapper">{children}</div>),
+}));
+
+vi.mock("@/modules/survey/lib/organization", () => ({
+  getOrganizationIdFromEnvironmentId: vi.fn(),
+}));
+
+vi.mock("@/modules/survey/lib/survey", () => ({
+  getOrganizationBilling: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsQuotasEnabled: vi.fn(),
+  getIsContactsEnabled: vi.fn(),
 }));
 
 vi.mock("@/modules/ui/components/page-header", () => ({
@@ -194,6 +210,9 @@ describe("ResponsesPage", () => {
 
   test("renders correctly with all data", async () => {
     const props = { params: mockParams };
+    vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("mock-organization-id");
+    vi.mocked(getOrganizationBilling).mockResolvedValue({ plan: "scale" });
+    vi.mocked(getIsQuotasEnabled).mockResolvedValue(false);
     const jsx = await Page(props);
     render(<ResponseFilterProvider>{jsx}</ResponseFilterProvider>);
 

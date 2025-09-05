@@ -154,6 +154,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient.schema(ZDelet
 
 const ZDeleteResponseAction = z.object({
   responseId: ZId,
+  decrementQuotas: z.boolean().default(false),
 });
 
 export const deleteResponseAction = authenticatedActionClient.schema(ZDeleteResponseAction).action(
@@ -179,7 +180,7 @@ export const deleteResponseAction = authenticatedActionClient.schema(ZDeleteResp
       });
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.responseId = parsedInput.responseId;
-      const result = await deleteResponse(parsedInput.responseId);
+      const result = await deleteResponse(parsedInput.responseId, parsedInput.decrementQuotas);
       ctx.auditLoggingCtx.oldObject = result;
       return result;
     }

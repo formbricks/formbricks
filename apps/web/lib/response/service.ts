@@ -1,4 +1,8 @@
 import "server-only";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
@@ -11,6 +15,7 @@ import {
   TResponseContact,
   TResponseFilterCriteria,
   TResponseUpdateInput,
+  TResponseWithQuotas,
   ZResponseFilterCriteria,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
@@ -86,7 +91,7 @@ export const getResponseContact = (
 };
 
 export const getResponsesByContactId = reactCache(
-  async (contactId: string, page?: number): Promise<TResponse[] | null> => {
+  async (contactId: string, page?: number): Promise<TResponseWithQuotas[]> => {
     validateInputs([contactId, ZId], [page, ZOptionalNumber]);
 
     try {
@@ -94,7 +99,22 @@ export const getResponsesByContactId = reactCache(
         where: {
           contactId,
         },
-        select: responseSelection,
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            where: {
+              status: "screenedIn",
+            },
+            include: {
+              quota: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
         take: page ? ITEMS_PER_PAGE : undefined,
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         orderBy: {
@@ -102,11 +122,7 @@ export const getResponsesByContactId = reactCache(
         },
       });
 
-      if (!responsePrisma) {
-        throw new ResourceNotFoundError("Response from ContactId", contactId);
-      }
-
-      let responses: TResponse[] = [];
+      let responses: TResponseWithQuotas[] = [];
 
       await Promise.all(
         responsePrisma.map(async (response) => {
@@ -121,6 +137,7 @@ export const getResponsesByContactId = reactCache(
             contact: responseContact,
 
             tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            quotas: response.quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
           });
         })
       );
@@ -241,7 +258,7 @@ export const getResponses = reactCache(
     offset?: number,
     filterCriteria?: TResponseFilterCriteria,
     cursor?: string
-  ): Promise<TResponse[]> => {
+  ): Promise<TResponseWithQuotas[]> => {
     validateInputs(
       [surveyId, ZId],
       [limit, ZOptionalNumber],
@@ -268,7 +285,22 @@ export const getResponses = reactCache(
 
       const responses = await prisma.response.findMany({
         where: whereClause,
-        select: responseSelection,
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            where: {
+              status: "screenedIn",
+            },
+            include: {
+              quota: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: [
           {
             createdAt: "desc",
@@ -281,12 +313,14 @@ export const getResponses = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TResponse[] = await Promise.all(
+      const transformedResponses: TResponseWithQuotas[] = await Promise.all(
         responses.map((responsePrisma) => {
+          const { quotaLinks, ...response } = responsePrisma;
           return {
-            ...responsePrisma,
+            ...response,
             contact: getResponseContact(responsePrisma),
             tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            quotas: quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
           };
         })
       );
@@ -342,11 +376,24 @@ export const getResponseDownloadUrl = async (
       responses
     );
 
+    const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
+    if (!organizationId) {
+      throw new Error("Organization ID not found");
+    }
+
+    const organizationBilling = await getOrganizationBilling(organizationId);
+
+    if (!organizationBilling) {
+      throw new Error("Organization billing not found");
+    }
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+
     const headers = [
       "No.",
       "Response ID",
       "Timestamp",
       "Finished",
+      ...(isQuotasAllowed ? ["Quotas"] : []),
       "Survey ID",
       "Formbricks ID (internal)",
       "User ID",
@@ -362,7 +409,14 @@ export const getResponseDownloadUrl = async (
     if (survey.isVerifyEmailEnabled) {
       headers.push("Verified Email");
     }
-    const jsonData = getResponsesJson(survey, responses, questions, userAttributes, hiddenFields);
+    const jsonData = getResponsesJson(
+      survey,
+      responses,
+      questions,
+      userAttributes,
+      hiddenFields,
+      isQuotasAllowed
+    );
 
     const fileName = getResponsesFileName(survey?.name || "", format);
     let fileBuffer: Buffer;
@@ -522,21 +576,39 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
   await Promise.all(deletionPromises);
 };
 
-export const deleteResponse = async (responseId: string): Promise<TResponse> => {
+export const deleteResponse = async (
+  responseId: string,
+  decrementQuotas: boolean = false
+): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
     const responsePrisma = await prisma.response.delete({
       where: {
         id: responseId,
       },
-      select: responseSelection,
+      select: {
+        ...responseSelection,
+        quotaLinks: {
+          where: {
+            status: "screenedIn",
+          },
+          include: {
+            quota: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: getResponseContact(responsePrisma),
+    const { quotaLinks, ...responseWithoutQuotas } = responsePrisma;
 
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    const response: TResponse = {
+      ...responseWithoutQuotas,
+      contact: getResponseContact(responsePrisma),
+      tags: responseWithoutQuotas.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     if (response.displayId) {
@@ -553,6 +625,11 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
         },
         survey
       );
+    }
+
+    if (decrementQuotas) {
+      const quotaIds = quotaLinks?.map((link) => link.quota.id) ?? [];
+      await reduceQuotaLimits(quotaIds);
     }
 
     return response;

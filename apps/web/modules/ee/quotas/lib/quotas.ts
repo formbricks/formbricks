@@ -8,6 +8,28 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 
+export const getQuota = reactCache(async (quotaId: string): Promise<TSurveyQuota> => {
+  try {
+    validateInputs([quotaId, ZId]);
+
+    const quota = await prisma.surveyQuota.findUnique({
+      where: {
+        id: quotaId,
+      },
+    });
+
+    if (!quota) {
+      throw new ResourceNotFoundError("Quota", quotaId);
+    }
+    return quota;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+});
+
 export const getQuotas = reactCache(async (surveyId: string): Promise<TSurveyQuota[]> => {
   validateInputs([surveyId, ZId]);
 
@@ -78,10 +100,33 @@ export const deleteQuota = async (quotaId: string): Promise<TSurveyQuota> => {
     return deletedQuota;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.RecordDoesNotExist) {
+        throw new ResourceNotFoundError("Quota not found", error.message);
+      }
+
       throw new DatabaseError(error.message);
     }
-    if (error.code === PrismaErrorType.RecordDoesNotExist) {
-      throw new ResourceNotFoundError("Quota not found", error.message);
+    throw error;
+  }
+};
+
+export const reduceQuotaLimits = async (quotaIds: string[]): Promise<void> => {
+  try {
+    await prisma.surveyQuota.updateMany({
+      where: {
+        id: {
+          in: quotaIds,
+        },
+      },
+      data: {
+        limit: {
+          decrement: 1,
+        },
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
     throw error;
   }

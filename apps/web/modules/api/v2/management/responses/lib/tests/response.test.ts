@@ -43,6 +43,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
   IS_PRODUCTION: false,
+  ENCRYPTION_KEY: "test",
 }));
 
 describe("Response Lib", () => {
@@ -229,20 +230,6 @@ describe("Response Lib", () => {
             limit: responseFilter.limit,
             offset: responseFilter.skip,
           },
-        });
-      }
-    });
-
-    test("return a not_found error if responses are not found", async () => {
-      (prisma.response.findMany as any).mockResolvedValue(null);
-      (prisma.response.count as any).mockResolvedValue(0);
-
-      const result = await getResponses([environmentId], responseFilter);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toEqual({
-          type: "not_found",
-          details: [{ field: "responses", issue: "not found" }],
         });
       }
     });

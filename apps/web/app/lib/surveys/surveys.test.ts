@@ -39,7 +39,7 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
       expect(result.questionOptions.length).toBeGreaterThan(0);
       expect(result.questionOptions[0].header).toBe(OptionsType.QUESTIONS);
@@ -62,7 +62,7 @@ describe("surveys", () => {
         { id: "tag1", name: "Tag 1", environmentId: "env1", createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      const result = generateQuestionAndFilterOptions(survey, tags, {}, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, tags, {}, {}, {}, []);
 
       const tagsHeader = result.questionOptions.find((opt) => opt.header === OptionsType.TAGS);
       expect(tagsHeader).toBeDefined();
@@ -85,7 +85,7 @@ describe("surveys", () => {
         role: ["admin", "user"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, attributes, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, attributes, {}, {}, []);
 
       const attributesHeader = result.questionOptions.find((opt) => opt.header === OptionsType.ATTRIBUTES);
       expect(attributesHeader).toBeDefined();
@@ -108,7 +108,7 @@ describe("surveys", () => {
         source: ["web", "mobile"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {}, []);
 
       const metaHeader = result.questionOptions.find((opt) => opt.header === OptionsType.META);
       expect(metaHeader).toBeDefined();
@@ -131,7 +131,7 @@ describe("surveys", () => {
         segment: ["free", "paid"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, hiddenFields);
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, hiddenFields, []);
 
       const hiddenFieldsHeader = result.questionOptions.find(
         (opt) => opt.header === OptionsType.HIDDEN_FIELDS
@@ -153,7 +153,7 @@ describe("surveys", () => {
         languages: [{ language: { code: "en" } as unknown as TLanguage } as unknown as TSurveyLanguage],
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
       const othersHeader = result.questionOptions.find((opt) => opt.header === OptionsType.OTHERS);
       expect(othersHeader).toBeDefined();
@@ -223,7 +223,7 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
       expect(result.questionFilterOptions.length).toBe(8);
       expect(result.questionFilterOptions.some((o) => o.id === "q1")).toBeTruthy();
@@ -248,7 +248,7 @@ describe("surveys", () => {
         source: ["web", "mobile"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {}, []);
 
       const urlFilterOption = result.questionFilterOptions.find((o) => o.id === "url");
       const sourceFilterOption = result.questionFilterOptions.find((o) => o.id === "source");

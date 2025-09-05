@@ -10,14 +10,36 @@ import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getContact } from "./contact";
+
+export const createResponseWithQuotaEvaluation = async (
+  responseInput: TResponseInputV2
+): Promise<TResponseWithQuotaFull> => {
+  const response = await createResponse(responseInput);
+
+  const quotaResult = await evaluateResponseQuotas({
+    surveyId: responseInput.surveyId,
+    responseId: response.id,
+    data: responseInput.data,
+    variables: responseInput.variables,
+    language: responseInput.language,
+    responseFinished: response.finished,
+  });
+
+  return {
+    ...response,
+    ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
+  };
+};
 
 export const createResponse = async (responseInput: TResponseInputV2): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);

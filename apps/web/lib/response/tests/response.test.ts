@@ -5,6 +5,7 @@ import {
   mockEnvironmentId,
   mockResponse,
   mockResponseData,
+  mockResponseWithQuotas,
   mockSingleUseId,
   mockSurveyId,
   mockSurveySummaryOutput,
@@ -165,6 +166,7 @@ describe("Tests for getSurveySummary service", () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.findMany.mockResolvedValue([mockResponse]);
       prisma.contactAttributeKey.findMany.mockResolvedValueOnce([mockContactAttributeKey]);
+      prisma.surveyQuota.findMany.mockResolvedValue([]);
 
       const summary = await getSurveySummary(mockSurveyId);
       expect(summary).toEqual(mockSurveySummaryOutput);
@@ -205,7 +207,8 @@ describe("Tests for getResponseDownloadUrl service", () => {
     test("Returns a download URL for the csv response file", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.count.mockResolvedValue(1);
-      prisma.response.findMany.mockResolvedValue([mockResponse]);
+      prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
+      prisma.surveyQuota.findMany.mockResolvedValue([]);
 
       const url = await getResponseDownloadUrl(mockSurveyId, "csv");
       const fileExtension = url.split(".").pop();
@@ -215,7 +218,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
     test("Returns a download URL for the xlsx response file", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.count.mockResolvedValue(1);
-      prisma.response.findMany.mockResolvedValue([mockResponse]);
+      prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
 
       const url = await getResponseDownloadUrl(mockSurveyId, "xlsx", { finished: true });
       const fileExtension = url.split(".").pop();
@@ -229,7 +232,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
     test("Throws error if response file is of different format than expected", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.count.mockResolvedValue(1);
-      prisma.response.findMany.mockResolvedValue([mockResponse]);
+      prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
 
       const url = await getResponseDownloadUrl(mockSurveyId, "csv", { finished: true });
       const fileExtension = url.split(".").pop();

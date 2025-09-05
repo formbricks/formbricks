@@ -12,10 +12,37 @@ import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/uti
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+
+export const getResponses = async (
+  environmentIds: string[],
+  params: TGetResponsesFilter
+): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
+  try {
+    const query = getResponsesQuery(environmentIds, params);
+    const whereClause = query.where;
+
+    const [responses, totalCount] = await Promise.all([
+      prisma.response.findMany(query),
+      prisma.response.count({ where: whereClause }),
+    ]);
+
+    return ok({
+      data: responses,
+      meta: {
+        total: totalCount,
+        limit: params.limit,
+        offset: params.skip,
+      },
+    });
+  } catch (error) {
+    return err({ type: "internal_server_error", details: [{ field: "responses", issue: error.message }] });
+  }
+};
 
 export const createResponse = async (
   environmentId: string,
@@ -116,32 +143,39 @@ export const createResponse = async (
   }
 };
 
-export const getResponses = async (
-  environmentIds: string[],
-  params: TGetResponsesFilter
-): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
-  try {
-    const query = getResponsesQuery(environmentIds, params);
-    const whereClause = query.where;
+export const createResponseWithQuotaEvaluation = async (
+  environmentId: string,
+  responseInput: TResponseInput
+): Promise<Result<Response, ApiErrorResponseV2>> => {
+  const responseResult = await createResponse(environmentId, responseInput);
+  if (!responseResult.ok) {
+    return responseResult;
+  }
 
-    const [responses, totalCount] = await Promise.all([
-      prisma.response.findMany(query),
-      prisma.response.count({ where: whereClause }),
-    ]);
+  const response = responseResult.data;
 
-    if (!responses) {
-      return err({ type: "not_found", details: [{ field: "responses", issue: "not found" }] });
+  const quotaResult = await evaluateResponseQuotas({
+    surveyId: responseInput.surveyId,
+    responseId: response.id,
+    data: responseInput.data,
+    variables: responseInput.variables,
+    language: responseInput.language || "default",
+    responseFinished: response.finished,
+  });
+
+  if (quotaResult.shouldEndSurvey) {
+    if (quotaResult.refreshedResponse) {
+      return ok(quotaResult.refreshedResponse);
     }
 
     return ok({
-      data: responses,
-      meta: {
-        total: totalCount,
-        limit: params.limit,
-        offset: params.skip,
-      },
+      ...response,
+      finished: true,
+      ...(quotaResult.quotaFull?.endingCardId && {
+        endingId: quotaResult.quotaFull.endingCardId,
+      }),
     });
-  } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "responses", issue: error.message }] });
   }
+
+  return ok(response);
 };

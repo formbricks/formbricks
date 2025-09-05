@@ -16,7 +16,7 @@ interface DataTableToolbarProps<T> {
   table: Table<T>;
   updateRowList: (rowIds: string[]) => void;
   type: "response" | "contact";
-  deleteAction: (id: string) => Promise<void>;
+  deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
 }
 

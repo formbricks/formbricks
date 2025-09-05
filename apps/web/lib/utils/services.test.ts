@@ -14,6 +14,7 @@ import {
   getInvite,
   getLanguage,
   getProject,
+  getQuota,
   getResponse,
   getSegment,
   getSurvey,
@@ -78,6 +79,9 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
     },
     segment: {
+      findUnique: vi.fn(),
+    },
+    surveyQuota: {
       findUnique: vi.fn(),
     },
   },
@@ -386,6 +390,50 @@ describe("Service Functions", () => {
       );
 
       await expect(getWebhook(webhookId)).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("getQuota", () => {
+    const quotaId = "quota123";
+
+    test("returns the quota when found", async () => {
+      const mockQuota = { surveyId: "survey123" };
+      vi.mocked(prisma.surveyQuota.findUnique).mockResolvedValue(mockQuota);
+
+      const result = await getQuota(quotaId);
+      expect(validateInputs).toHaveBeenCalled();
+      expect(prisma.surveyQuota.findUnique).toHaveBeenCalledWith({
+        where: { id: quotaId },
+      });
+      expect(result).toEqual(mockQuota);
+    });
+
+    test("throws DatabaseError when database operation fails", async () => {
+      vi.mocked(prisma.surveyQuota.findUnique).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Error", {
+          code: "P2002",
+          clientVersion: "4.7.0",
+        })
+      );
+
+      await expect(getQuota(quotaId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("throws ResourceNotFoundError when quota not found", async () => {
+      vi.mocked(prisma.surveyQuota.findUnique).mockResolvedValue(null);
+
+      await expect(getQuota(quotaId)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("throws DatabaseError when database operation fails", async () => {
+      vi.mocked(prisma.surveyQuota.findUnique).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Error", {
+          code: "P2002",
+          clientVersion: "4.7.0",
+        })
+      );
+
+      await expect(getQuota(quotaId)).rejects.toThrow(DatabaseError);
     });
   });
 

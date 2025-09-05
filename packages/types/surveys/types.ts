@@ -2862,6 +2862,8 @@ export const ZSurveySummary = z.object({
     dropOffCount: z.number(),
     dropOffPercentage: z.number(),
     ttcAverage: z.number(),
+    quotasCompleted: z.number(),
+    quotasCompletedPercentage: z.number(),
   }),
   dropOff: z.array(
     z.object({
@@ -2872,6 +2874,15 @@ export const ZSurveySummary = z.object({
       impressions: z.number(),
       dropOffCount: z.number(),
       dropOffPercentage: z.number(),
+    })
+  ),
+  quotas: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      limit: z.number(),
+      count: z.number(),
+      percentage: z.number(),
     })
   ),
   summary: z.array(z.union([ZSurveyQuestionSummary, ZSurveyQuestionSummaryHiddenFields])),

@@ -7,16 +7,18 @@ import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getContact } from "./contact";
-import { createResponse } from "./response";
+import { TResponseWithQuotaFull, createResponse, createResponseWithQuotaEvaluation } from "./response";
 
 let mockIsFormbricksCloud = false;
 
@@ -51,6 +53,7 @@ vi.mock("@/lib/posthogServer");
 vi.mock("@/lib/response/utils");
 vi.mock("@/lib/telemetry");
 vi.mock("@/lib/utils/validate");
+vi.mock("@/modules/ee/quotas/lib/evaluation-service");
 vi.mock("@formbricks/database", () => ({
   prisma: {
     response: {
@@ -67,7 +70,6 @@ const organizationId = "test-organization-id";
 const responseId = "test-response-id";
 const contactId = "test-contact-id";
 const userId = "test-user-id";
-const displayId = "test-display-id";
 
 const mockOrganization = {
   id: organizationId,
@@ -122,6 +124,22 @@ const expectedResponse: TResponse = {
   tags: [],
 };
 
+const mockQuota: TSurveyQuota = {
+  id: "quota-id",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  surveyId,
+  name: "Test Quota",
+  limit: 100,
+  logic: {
+    connector: "and",
+    conditions: [],
+  },
+  action: "endSurvey",
+  endingCardId: "ending-card-id",
+  countPartialSubmissions: false,
+};
+
 describe("createResponse V2", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -136,6 +154,10 @@ describe("createResponse V2", () => {
     vi.mocked(captureTelemetry).mockResolvedValue(undefined);
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
     vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockResolvedValue(undefined);
+    vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+      shouldEndSurvey: false,
+      quotaFull: null,
+    });
   });
 
   afterEach(() => {
@@ -213,5 +235,59 @@ describe("createResponse V2", () => {
 
     const result = await createResponse(mockResponseInput);
     expect(result.tags).toEqual([mockTag]);
+  });
+});
+
+describe("createResponseWithQuotaEvaluation V2", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization as any);
+    vi.mocked(getContact).mockResolvedValue(mockContact);
+    vi.mocked(prisma.response.create).mockResolvedValue(mockResponsePrisma as any);
+    vi.mocked(calculateTtcTotal).mockImplementation((ttc) => ({
+      ...ttc,
+      _total: Object.values(ttc).reduce((a, b) => a + b, 0),
+    }));
+    vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
+    vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+      shouldEndSurvey: false,
+      quotaFull: null,
+    });
+  });
+
+  test("should create response and return it without quotaFull when no quota is full", async () => {
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput);
+
+    expect(result).toEqual(expectedResponse);
+    expect(evaluateResponseQuotas).toHaveBeenCalledWith({
+      surveyId: mockResponseInput.surveyId,
+      responseId: expectedResponse.id,
+      data: mockResponseInput.data,
+      variables: mockResponseInput.variables,
+      language: mockResponseInput.language,
+      responseFinished: expectedResponse.finished,
+    });
+  });
+
+  test("should include quotaFull in response when quota evaluation returns a full quota", async () => {
+    vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+      shouldEndSurvey: false,
+      quotaFull: mockQuota,
+    });
+
+    const result: TResponseWithQuotaFull = await createResponseWithQuotaEvaluation(mockResponseInput);
+
+    expect(result).toEqual({
+      ...expectedResponse,
+      quotaFull: mockQuota,
+    });
+    expect(evaluateResponseQuotas).toHaveBeenCalledWith({
+      surveyId: mockResponseInput.surveyId,
+      responseId: expectedResponse.id,
+      data: mockResponseInput.data,
+      variables: mockResponseInput.variables,
+      language: mockResponseInput.language,
+      responseFinished: expectedResponse.finished,
+    });
   });
 });
