@@ -22,3 +22,23 @@ resource "aws_secretsmanager_secret_version" "formbricks_app_secrets" {
   })
 }
 
+resource "aws_secretsmanager_secret" "rds_credentials" {
+  for_each = local.envs
+  name     = "${each.key}/formbricks/terraform/rds/credentials"
+}
+
+resource "aws_secretsmanager_secret_version" "rds_credentials" {
+  for_each      = local.envs
+  secret_id     = aws_secretsmanager_secret.rds_credentials[each.key].id
+  secret_string = <<EOF
+{
+  "username": "${module.rds-aurora[each.key].cluster_master_username}",
+  "password": "${random_password.postgres[each.key].result}",
+  "engine": data.aws_rds_engine_version.postgresql.engine,
+  "host": "${module.rds-aurora[each.key].cluster_endpoint}",
+  "port": ${module.rds-aurora[each.key].cluster_port},
+  "dbClusterIdentifier": "${module.rds-aurora[each.key].cluster_id}"
+}
+EOF
+}
+

@@ -75,5 +75,4 @@ module "rds-aurora" {
   }
 
   tags = local.tags_map[each.key]
-
 }
