@@ -34,10 +34,6 @@ export const defaultStyling: TProjectStyling = {
   isLogoHidden: false,
   highlightBorderColor: undefined,
   isDarkModeEnabled: false,
-  background: {
-    bg: "#fff",
-    bgType: "color",
-  },
   roundness: 8,
   cardArrangement: {
     linkSurveys: "straight",
