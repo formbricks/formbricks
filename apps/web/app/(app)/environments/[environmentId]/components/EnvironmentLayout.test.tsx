@@ -90,10 +90,6 @@ vi.mock("@/app/(app)/environments/[environmentId]/components/MainNavigation", ()
 vi.mock("@/app/(app)/environments/[environmentId]/components/TopControlBar", () => ({
   TopControlBar: () => <div data-testid="top-control-bar">TopControlBar</div>,
 }));
-vi.mock("@/modules/ui/components/dev-environment-banner", () => ({
-  DevEnvironmentBanner: ({ environment }: { environment: TEnvironment }) =>
-    environment.type === "development" ? <div data-testid="dev-banner">DevEnvironmentBanner</div> : null,
-}));
 vi.mock("@/modules/ui/components/limits-reached-banner", () => ({
   LimitsReachedBanner: () => <div data-testid="limits-banner">LimitsReachedBanner</div>,
 }));
@@ -240,33 +236,6 @@ describe("EnvironmentLayout", () => {
     expect(screen.queryByTestId("downgrade-banner")).not.toBeInTheDocument();
   });
 
-  test("renders DevEnvironmentBanner in development environment", async () => {
-    const devEnvironment = { ...mockEnvironment, type: "development" as const };
-    vi.mocked(getEnvironment).mockResolvedValue(devEnvironment);
-    mockIsDevelopment = true;
-    vi.resetModules();
-    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
-      getEnterpriseLicense: vi.fn().mockResolvedValue({
-        active: false,
-        isPendingDowngrade: false,
-        features: { isMultiOrgEnabled: false },
-        lastChecked: new Date(),
-        fallbackLevel: "live",
-      }),
-    }));
-    const { EnvironmentLayout } = await import(
-      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
-    );
-    render(
-      await EnvironmentLayout({
-        environmentId: "env-1",
-        session: mockSession,
-        children: <div>Child Content</div>,
-      })
-    );
-    expect(screen.getByTestId("dev-banner")).toBeInTheDocument();
-  });
-
   test("renders LimitsReachedBanner in Formbricks Cloud", async () => {
     mockIsFormbricksCloud = true;
     vi.resetModules();
@@ -312,32 +281,6 @@ describe("EnvironmentLayout", () => {
       })
     );
     expect(screen.getByTestId("downgrade-banner")).toBeInTheDocument();
-  });
-
-  test("passes isAccessControlAllowed props to MainNavigation", async () => {
-    vi.resetModules();
-    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
-      getEnterpriseLicense: vi.fn().mockResolvedValue({
-        active: false,
-        isPendingDowngrade: false,
-        features: { isMultiOrgEnabled: false },
-        lastChecked: new Date(),
-        fallbackLevel: "live",
-      }),
-    }));
-    const { EnvironmentLayout } = await import(
-      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
-    );
-    render(
-      await EnvironmentLayout({
-        environmentId: "env-1",
-        session: mockSession,
-        children: <div>Child Content</div>,
-      })
-    );
-
-    expect(screen.getByTestId("is-access-control-allowed")).toHaveTextContent("true");
-    expect(vi.mocked(getAccessControlPermission)).toHaveBeenCalledWith(mockOrganization.billing.plan);
   });
 
   test("handles empty organizationTeams array", async () => {

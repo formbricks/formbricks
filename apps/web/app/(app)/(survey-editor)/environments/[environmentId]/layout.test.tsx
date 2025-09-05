@@ -18,11 +18,6 @@ vi.mock("@/modules/ui/components/environmentId-base-layout", () => ({
     </div>
   ),
 }));
-vi.mock("@/modules/ui/components/dev-environment-banner", () => ({
-  DevEnvironmentBanner: ({ environment }: any) => (
-    <div data-testid="DevEnvironmentBanner">{environment.id}</div>
-  ),
-}));
 
 // Mocks for dependencies
 vi.mock("@/modules/environments/lib/utils", () => ({
@@ -58,7 +53,6 @@ describe("SurveyEditorEnvironmentLayout", () => {
     render(result);
 
     expect(screen.getByTestId("EnvironmentIdBaseLayout")).toHaveTextContent("env1");
-    expect(screen.getByTestId("DevEnvironmentBanner")).toHaveTextContent("env1");
     expect(screen.getByTestId("child")).toHaveTextContent("Survey Editor Content");
   });
 
