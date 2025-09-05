@@ -4,39 +4,42 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { InteractiveCard } from "./interactive-card";
 
-vi.mock("./base-card", () => ({
-  BaseCard: ({
-    label,
-    percentage,
-    tooltipText,
-    isLoading,
-    onClick,
-    testId,
-    id,
-    children,
-  }: {
-    label: React.ReactNode;
-    percentage?: number | null;
-    tooltipText?: React.ReactNode;
-    isLoading?: boolean;
-    onClick?: () => void;
-    testId?: string;
-    id?: string;
-    children: React.ReactNode;
-  }) => (
-    <div data-testid="base-card" onClick={onClick}>
-      <div data-testid="base-card-label">{label}</div>
-      {percentage !== null && percentage !== undefined && (
-        <div data-testid="base-card-percentage">{percentage}%</div>
-      )}
-      {tooltipText && <div data-testid="base-card-tooltip">{tooltipText}</div>}
-      <div data-testid="base-card-loading">{isLoading ? "loading" : "not-loading"}</div>
-      <div data-testid="base-card-testid">{testId}</div>
-      <div data-testid="base-card-id">{id}</div>
-      <div data-testid="base-card-children">{children}</div>
-    </div>
-  ),
-}));
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/base-card",
+  () => ({
+    BaseCard: ({
+      label,
+      percentage,
+      tooltipText,
+      isLoading,
+      onClick,
+      testId,
+      id,
+      children,
+    }: {
+      label: React.ReactNode;
+      percentage?: number | null;
+      tooltipText?: React.ReactNode;
+      isLoading?: boolean;
+      onClick?: () => void;
+      testId?: string;
+      id?: string;
+      children: React.ReactNode;
+    }) => (
+      <div data-testid="base-card" onClick={onClick}>
+        <div data-testid="base-card-label">{label}</div>
+        {percentage !== null && percentage !== undefined && (
+          <div data-testid="base-card-percentage">{percentage}%</div>
+        )}
+        {tooltipText && <div data-testid="base-card-tooltip">{tooltipText}</div>}
+        <div data-testid="base-card-loading">{isLoading ? "loading" : "not-loading"}</div>
+        <div data-testid="base-card-testid">{testId}</div>
+        <div data-testid="base-card-id">{id}</div>
+        <div data-testid="base-card-children">{children}</div>
+      </div>
+    ),
+  })
+);
 
 vi.mock("lucide-react", () => ({
   ChevronDownIcon: ({ className }: { className: string }) => (

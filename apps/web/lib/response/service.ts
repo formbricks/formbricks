@@ -409,7 +409,14 @@ export const getResponseDownloadUrl = async (
     if (survey.isVerifyEmailEnabled) {
       headers.push("Verified Email");
     }
-    const jsonData = getResponsesJson(survey, responses, questions, userAttributes, hiddenFields);
+    const jsonData = getResponsesJson(
+      survey,
+      responses,
+      questions,
+      userAttributes,
+      hiddenFields,
+      isQuotasAllowed
+    );
 
     const fileName = getResponsesFileName(survey?.name || "", format);
     let fileBuffer: Buffer;
@@ -575,61 +582,57 @@ export const deleteResponse = async (
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
-    const txResponse = await prisma.$transaction(async (tx) => {
-      const responsePrisma = await tx.response.delete({
-        where: {
-          id: responseId,
-        },
-        select: {
-          ...responseSelection,
-          quotaLinks: {
-            where: {
-              status: "screenedIn",
-            },
-            include: {
-              quota: {
-                select: {
-                  id: true,
-                },
+    const responsePrisma = await prisma.response.delete({
+      where: {
+        id: responseId,
+      },
+      select: {
+        ...responseSelection,
+        quotaLinks: {
+          where: {
+            status: "screenedIn",
+          },
+          include: {
+            quota: {
+              select: {
+                id: true,
               },
             },
           },
         },
-      });
-
-      const { quotaLinks, ...responseWithoutQuotas } = responsePrisma;
-
-      const response: TResponse = {
-        ...responseWithoutQuotas,
-        contact: getResponseContact(responsePrisma),
-        tags: responseWithoutQuotas.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-      };
-
-      if (response.displayId) {
-        deleteDisplay(response.displayId);
-      }
-      const survey = await getSurvey(response.surveyId);
-
-      if (survey) {
-        await findAndDeleteUploadedFilesInResponse(
-          {
-            ...responsePrisma,
-            contact: getResponseContact(responsePrisma),
-            tags: responsePrisma.tags.map((tag) => tag.tag),
-          },
-          survey
-        );
-      }
-
-      if (decrementQuotas) {
-        const quotaIds = quotaLinks?.map((link) => link.quota.id) ?? [];
-        await reduceQuotaLimits(quotaIds);
-      }
-
-      return response;
+      },
     });
 
-    return txResponse;
+    const { quotaLinks, ...responseWithoutQuotas } = responsePrisma;
+
+    const response: TResponse = {
+      ...responseWithoutQuotas,
+      contact: getResponseContact(responsePrisma),
+      tags: responseWithoutQuotas.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+
+    if (response.displayId) {
+      deleteDisplay(response.displayId);
+    }
+    const survey = await getSurvey(response.surveyId);
+
+    if (survey) {
+      await findAndDeleteUploadedFilesInResponse(
+        {
+          ...responsePrisma,
+          contact: getResponseContact(responsePrisma),
+          tags: responsePrisma.tags.map((tag) => tag.tag),
+        },
+        survey
+      );
+    }
+
+    if (decrementQuotas) {
+      const quotaIds = quotaLinks?.map((link) => link.quota.id) ?? [];
+      await reduceQuotaLimits(quotaIds);
+    }
+
+    return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

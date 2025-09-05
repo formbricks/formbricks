@@ -691,7 +691,8 @@ export const getResponsesJson = (
   responses: TResponseWithQuotas[],
   questionsHeadlines: string[][],
   userAttributes: string[],
-  hiddenFields: string[]
+  hiddenFields: string[],
+  isQuotasAllowed: boolean = false
 ): Record<string, string | number>[] => {
   const jsonData: Record<string, string | number>[] = [];
 
@@ -702,12 +703,15 @@ export const getResponsesJson = (
       "Response ID": response.id,
       Timestamp: getFormattedDateTimeString(response.createdAt),
       Finished: response.finished ? "Yes" : "No",
-      Quotas: response.quotas?.map((quota) => quota.name).join(", ") || "",
       "Survey ID": response.surveyId,
       "Formbricks ID (internal)": response.contact?.id || "",
       "User ID": response.contact?.userId || "",
       Tags: response.tags.map((tag) => tag.name).join(", "),
     });
+
+    if (isQuotasAllowed) {
+      jsonData[idx]["Quotas"] = response.quotas?.map((quota) => quota.name).join(", ") || "";
+    }
 
     // meta details
     Object.entries(response.meta ?? {}).forEach(([key, value]) => {
