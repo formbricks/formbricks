@@ -185,7 +185,7 @@ export const ResponseTable = ({
   };
 
   const deleteResponse = async (responseId: string, params?: { decrementQuotas?: boolean }) => {
-    await deleteResponseAction({ ...params, responseId });
+    await deleteResponseAction({ responseId, decrementQuotas: params?.decrementQuotas ?? false });
   };
 
   // Handle downloading selected responses
