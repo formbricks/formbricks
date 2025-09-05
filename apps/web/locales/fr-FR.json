@@ -365,6 +365,7 @@
     "start_free_trial": "Commencer l'essai gratuit",
     "status": "Statut",
     "step_by_step_manual": "Manuel étape par étape",
+    "storage_not_configured": "Le stockage de fichiers n'est pas configuré, certaines fonctionnalités pourraient ne pas fonctionner",
     "styling": "Style",
     "submit": "Soumettre",
     "summary": "Résumé",

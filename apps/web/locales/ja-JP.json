@@ -365,6 +365,7 @@
     "start_free_trial": "無料トライアルを開始",
     "status": "ステータス",
     "step_by_step_manual": "ステップバイステップマニュアル",
+    "storage_not_configured": "ファイルストレージが構成されていないため、一部の機能が動作しない場合があります",
     "styling": "スタイル",
     "submit": "送信",
     "summary": "概要",

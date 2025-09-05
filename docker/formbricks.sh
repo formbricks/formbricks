@@ -457,7 +457,6 @@ EOT
       /bin/sh -c "
       mc alias set myminio http://minio:9000 $minio_root_user $minio_root_password;
       mc mb myminio/$minio_bucket_name --ignore-existing;
-      mc anonymous set public myminio/$minio_bucket_name;
       exit 0;
       "
 
@@ -559,12 +558,6 @@ if [[ $minio_storage == "y" ]]; then
         -e MC_HOST_minio=http://$minio_root_user:$minio_root_password@minio:9000 \
         minio/mc:latest \
         mb minio/$minio_bucket_name --ignore-existing
-
-    # Set bucket policy to allow uploads (optional - you might want to restrict this)
-    docker run --rm --network formbricks_default \
-        -e MC_HOST_minio=http://$minio_root_user:$minio_root_password@minio:9000 \
-        minio/mc:latest \
-        anonymous set download minio/$minio_bucket_name || true
 
     echo "✅ MinIO bucket '$minio_bucket_name' created successfully!"
 fi

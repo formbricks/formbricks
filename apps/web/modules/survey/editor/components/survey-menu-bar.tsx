@@ -41,6 +41,7 @@ interface SurveyMenuBarProps {
   isCxMode: boolean;
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
+  isStorageConfigured: boolean;
 }
 
 export const SurveyMenuBar = ({
@@ -57,6 +58,7 @@ export const SurveyMenuBar = ({
   isCxMode,
   locale,
   setIsCautionDialogOpen,
+  isStorageConfigured,
 }: SurveyMenuBarProps) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -331,6 +333,13 @@ export const SurveyMenuBar = ({
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+        {!isStorageConfigured && (
+          <div>
+            <Alert variant="warning" size="small">
+              <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
+            </Alert>
+          </div>
+        )}
         {responseCount > 0 && (
           <div>
             <Alert variant="warning" size="small">

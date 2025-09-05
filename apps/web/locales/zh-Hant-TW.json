@@ -365,6 +365,7 @@
     "start_free_trial": "開始免費試用",
     "status": "狀態",
     "step_by_step_manual": "逐步手冊",
+    "storage_not_configured": "檔案存儲 未配置，某些功能可能無法正常運作",
     "styling": "樣式設定",
     "submit": "提交",
     "summary": "摘要",
