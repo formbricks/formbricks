@@ -80,6 +80,7 @@
         "AUTH_SKIP_INVITE_FOR_SSO",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
+        "CRON_SECRET",
         "DATABASE_URL",
         "DEBUG",
         "E2E_TESTING",

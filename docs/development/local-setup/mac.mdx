@@ -45,6 +45,7 @@ icon: "apple"
    ```bash
    sed -i '' '/^ENCRYPTION_KEY=/s|.*|ENCRYPTION_KEY='$(openssl rand -hex 32)'|' .env
    sed -i '' '/^NEXTAUTH_SECRET=/s|.*|NEXTAUTH_SECRET='$(openssl rand -hex 32)'|' .env
+   sed -i '' '/^CRON_SECRET=/s|.*|CRON_SECRET='$(openssl rand -hex 32)'|' .env
    ```
 
 6. **Start the development setup:**

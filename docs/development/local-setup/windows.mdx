@@ -7,7 +7,8 @@ icon: "windows"
 ### Local Machine Setup - Windows
 
 <Info>
-  This guide is intended for **Windows** users. For the best experience, use **WSL2** since pure Windows is not fully supported.
+  This guide is intended for **Windows** users. For the best experience, use **WSL2** since pure Windows is
+  not fully supported.
 </Info>
 
 **Requirements:**
@@ -47,6 +48,8 @@ icon: "windows"
    ```bash
    sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
    sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
+   sed -i '/^CRON_SECRET=/c\CRON_SECRET='$(openssl rand -hex 32) .env
+
    ```
 
 6. **Start the development setup:**

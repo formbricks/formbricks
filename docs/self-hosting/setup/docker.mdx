@@ -64,6 +64,22 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    sed -i '' "s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
    ```
 
+1. **Generate Cron Secret**	
+
+   You require a Cron secret to secure API access for running cron jobs. Run one of the commands below based on your operating system:	
+
+   For Linux:	
+
+   ```bash	
+   sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml	
+   ```	
+
+   For macOS:	
+
+   ```bash	
+   sed -i '' "s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml	
+   ```	
+
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
