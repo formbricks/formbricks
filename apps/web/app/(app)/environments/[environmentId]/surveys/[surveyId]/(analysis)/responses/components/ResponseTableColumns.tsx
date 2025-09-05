@@ -337,7 +337,7 @@ export const generateResponseTableColumns = (
 
   const variableColumns: ColumnDef<TResponseTableData>[] = survey.variables.map((variable) => {
     return {
-      accessorKey: variable.id,
+      accessorKey: "VARIABLE_" + variable.id,
       header: () => (
         <div className="flex items-center space-x-2 overflow-hidden">
           <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
@@ -356,7 +356,7 @@ export const generateResponseTableColumns = (
   const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = survey.hiddenFields.fieldIds
     ? survey.hiddenFields.fieldIds.map((hiddenFieldId) => {
         return {
-          accessorKey: hiddenFieldId,
+          accessorKey: "HIDDEN_FIELD_" + hiddenFieldId,
           header: () => (
             <div className="flex items-center space-x-2 overflow-hidden">
               <span className="h-4 w-4">

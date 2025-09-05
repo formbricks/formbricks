@@ -40,7 +40,7 @@ export const DataTableSettingsModalItem = <T,>({ column, table }: DataTableSetti
             <button type="button" aria-label="Reorder column" onClick={(e) => e.preventDefault()}>
               <GripVertical className="h-4 w-4" />
             </button>
-            {header && flexRender(column.columnDef.header, header.getContext())}
+            {flexRender(column.columnDef.header, header?.getContext() ?? { column })}
           </div>
           <Switch
             id={column.id}
