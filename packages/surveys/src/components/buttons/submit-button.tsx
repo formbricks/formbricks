@@ -20,6 +20,18 @@ export function SubmitButton({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  useEffect(() => {
+    if (isProcessing) {
+      const timer = setTimeout(() => {
+        setIsProcessing(false);
+      }, 300);
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [isProcessing]);
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled && !isProcessing) {
@@ -29,11 +41,6 @@ export function SubmitButton({
         if (button) {
           button.click();
         }
-
-        // Reset processing state after a short delay to prevent rapid successive calls
-        setTimeout(() => {
-          setIsProcessing(false);
-        }, 300);
       }
     },
     [disabled, isProcessing, tabIndex]
