@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import * as fileUploadModule from "./fileUpload";
+import * as fileUploadModule from "./file-upload";
 
 // Mock global fetch
 const mockFetch = vi.fn();
@@ -44,13 +44,6 @@ describe("fileUpload", () => {
     expect(result.url).toBe("");
   });
 
-  test("should return error when file is not an image", async () => {
-    const file = createMockFile("test.pdf", "application/pdf", 1000);
-    const result = await fileUploadModule.handleFileUpload(file, "test-env");
-    expect(result.error).toBe("Please upload an image file.");
-    expect(result.url).toBe("");
-  });
-
   test("should return FILE_SIZE_EXCEEDED if arrayBuffer is > 10MB even if file.size is OK", async () => {
     const file = createMockFile("test.jpg", "image/jpeg", 1000); // file.size = 1KB
 
@@ -88,40 +81,6 @@ describe("fileUpload", () => {
           fileUrl: "https://s3.example.com/file.jpg",
           presignedFields: {
             key: "value",
-          },
-        },
-      }),
-    });
-
-    // Mock successful upload response
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-    });
-
-    // Simulate FileReader onload
-    setTimeout(() => {
-      mockFileReader.onload();
-    }, 0);
-
-    const result = await fileUploadModule.handleFileUpload(file, "test-env");
-    expect(result.error).toBeUndefined();
-    expect(result.url).toBe("https://s3.example.com/file.jpg");
-  });
-
-  test("should handle successful file upload without presigned fields", async () => {
-    const file = createMockFile("test.jpg", "image/jpeg", 1000);
-
-    // Mock successful API response
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        data: {
-          signedUrl: "https://s3.example.com/upload",
-          fileUrl: "https://s3.example.com/file.jpg",
-          signingData: {
-            signature: "test-signature",
-            timestamp: 1234567890,
-            uuid: "test-uuid",
           },
         },
       }),

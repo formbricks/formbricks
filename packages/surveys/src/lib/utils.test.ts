@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { type TAllowedFileExtension, mimeTypes } from "../../../types/common";
 import type { TJsEnvironmentStateSurvey } from "../../../types/js";
+import { type TAllowedFileExtension, mimeTypes } from "../../../types/storage";
 import type { TSurveyLanguage, TSurveyQuestionChoice } from "../../../types/surveys/types";
 import { getDefaultLanguageCode, getMimeType, getShuffledChoicesIds, getShuffledRowIndices } from "./utils";
 

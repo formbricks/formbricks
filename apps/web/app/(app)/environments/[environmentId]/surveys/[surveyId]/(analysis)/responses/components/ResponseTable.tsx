@@ -106,6 +106,7 @@ export const ResponseTable = ({
     () => (isFetchingFirstPage ? Array(10).fill({}) : data),
     [data, isFetchingFirstPage]
   );
+
   const tableColumns = useMemo(
     () =>
       isFetchingFirstPage
@@ -145,6 +146,15 @@ export const ResponseTable = ({
   });
 
   const defaultColumnOrder = useMemo(() => table.getAllLeafColumns().map((d) => d.id), [table]);
+
+  const downloadFile = (url: string, fileName: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Modified useEffect
   useEffect(() => {
@@ -192,13 +202,29 @@ export const ResponseTable = ({
       });
 
       if (downloadResponse?.data) {
-        const link = document.createElement("a");
-        link.href = downloadResponse.data;
-        link.download = "";
+        let file: File;
 
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (format === "xlsx") {
+          // Convert base64 back to binary data for XLSX files
+          const binaryString = atob(downloadResponse.data.fileContents);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          file = new File([bytes], downloadResponse.data.fileName, {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+        } else {
+          // For CSV files, use the string directly
+          file = new File([downloadResponse.data.fileContents], downloadResponse.data.fileName, {
+            type: "text/csv",
+          });
+        }
+
+        const url = URL.createObjectURL(file);
+        const fileName = downloadResponse.data.fileName || `${survey.name}-${format}.${format}`;
+        downloadFile(url, fileName);
+        URL.revokeObjectURL(url);
       } else {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
       }

@@ -97,7 +97,7 @@ describe("MediaBackground", () => {
       styling: {
         background: {
           bgType: "upload",
-          bg: "/uploads/test-image.jpg",
+          bg: "/files/test-image.jpg",
           brightness: 100,
         },
       } as TProjectStyling,
@@ -106,7 +106,7 @@ describe("MediaBackground", () => {
     render(<MediaBackground {...props} />);
 
     expect(screen.getByTestId("child-content")).toBeInTheDocument();
-    expect(screen.getByTestId("next-image")).toHaveAttribute("src", "/uploads/test-image.jpg");
+    expect(screen.getByTestId("next-image")).toHaveAttribute("src", "/files/test-image.jpg");
   });
 
   test("renders error message when image not found", () => {

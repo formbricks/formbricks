@@ -256,7 +256,7 @@ export const UploadContactsCSVButton = ({
     const headers = Object.keys(exampleData[0]);
     const csvRows = [headers.join(","), ...exampleData.map((row) => headers.map((h) => row[h]).join(","))];
     const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const encodedUri = encodeURIComponent(csvContent);
 
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);

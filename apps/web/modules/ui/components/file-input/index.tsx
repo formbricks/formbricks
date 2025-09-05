@@ -1,7 +1,7 @@
 "use client";
 
-import { handleFileUpload } from "@/app/lib/fileUpload";
 import { cn } from "@/lib/cn";
+import { FileUploadError, handleFileUpload } from "@/modules/storage/file-upload";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useTranslate } from "@tolgee/react";
@@ -9,7 +9,7 @@ import { FileIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { Uploader } from "./components/uploader";
 import { VideoSettings } from "./components/video-settings";
 import { getAllowedFiles } from "./lib/utils";
@@ -84,7 +84,10 @@ export const FileInput = ({
     );
 
     if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {
-      if (uploadedFiles.length === 0) {
+      const firstError = uploadedFiles.find((f) => f.error)?.error;
+      if (firstError === FileUploadError.INVALID_FILE_NAME) {
+        toast.error(t("common.invalid_file_name"));
+      } else if (uploadedFiles.length === 0) {
         toast.error(t("common.no_files_uploaded"));
       } else {
         toast.error(t("common.some_files_failed_to_upload"));
@@ -150,7 +153,10 @@ export const FileInput = ({
     );
 
     if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {
-      if (uploadedFiles.length === 0) {
+      const firstError = uploadedFiles.find((f) => f.error)?.error;
+      if (firstError === FileUploadError.INVALID_FILE_NAME) {
+        toast.error(t("common.invalid_file_name"));
+      } else if (uploadedFiles.length === 0) {
         toast.error(t("common.no_files_uploaded"));
       } else {
         toast.error(t("common.some_files_failed_to_upload"));

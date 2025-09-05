@@ -225,6 +225,7 @@
     "integration": "Integration",
     "integrations": "Integrationen",
     "invalid_date": "Ungültiges Datum",
+    "invalid_file_name": "Ungültiger Dateiname, bitte benenne deine Datei um und versuche es erneut",
     "invalid_file_type": "Ungültiger Dateityp",
     "invite": "Einladen",
     "invite_them": "Lade sie ein",

@@ -225,6 +225,7 @@
     "integration": "整合",
     "integrations": "整合",
     "invalid_date": "無效日期",
+    "invalid_file_name": "無效的檔案名稱，請重命名您的檔案然後再試一次",
     "invalid_file_type": "無效的檔案類型",
     "invite": "邀請",
     "invite_them": "邀請他們",

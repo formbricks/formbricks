@@ -1,5 +1,5 @@
 import "server-only";
-import { isValidImageFile } from "@/lib/fileValidation";
+import { isValidImageFile } from "@/modules/storage/utils";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";

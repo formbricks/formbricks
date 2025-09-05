@@ -6,7 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser } from "@formbricks/types/user";
 import { updateUser } from "./user";
 
-vi.mock("@/lib/fileValidation", () => ({
+vi.mock("@/modules/storage/utils", () => ({
   isValidImageFile: vi.fn(),
 }));
 

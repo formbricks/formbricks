@@ -238,6 +238,15 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     setSelectingDate(DateSelected.FROM);
   };
 
+  const downloadFile = (url: string, fileName: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleDownloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
     const responseFilters = filter === FilterDownload.ALL ? {} : filters;
     setIsDownloading(true);
@@ -249,12 +258,40 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     });
 
     if (responsesDownloadUrlResponse?.data) {
-      const link = document.createElement("a");
-      link.href = responsesDownloadUrlResponse.data;
-      link.download = "";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        let file: File;
+
+        if (filetype === "xlsx") {
+          // Convert base64 back to binary data for XLSX files
+          const binaryString = atob(responsesDownloadUrlResponse.data.fileContents);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          file = new File([bytes], responsesDownloadUrlResponse.data.fileName, {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+        } else {
+          // For CSV files, use the string directly
+          file = new File(
+            [responsesDownloadUrlResponse.data.fileContents],
+            responsesDownloadUrlResponse.data.fileName,
+            {
+              type: "text/csv",
+            }
+          );
+        }
+
+        const url = URL.createObjectURL(file);
+        const fileName =
+          responsesDownloadUrlResponse.data.fileName || `${survey.name}-${filetype}.${filetype}`;
+        downloadFile(url, fileName);
+        URL.revokeObjectURL(url);
+      } catch {
+        toast.error(t("environments.surveys.responses.error_downloading_responses"));
+        setIsDownloading(false);
+        return;
+      }
     } else {
       const errorMessage = getFormattedErrorMessage(responsesDownloadUrlResponse);
       toast.error(errorMessage);

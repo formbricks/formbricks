@@ -1,6 +1,6 @@
 "use client";
 
-import { getOriginalFileNameFromUrl } from "@/lib/storage/utils";
+import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 import { useTranslate } from "@tolgee/react";
 import { DownloadIcon } from "lucide-react";
 

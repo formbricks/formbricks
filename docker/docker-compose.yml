@@ -87,9 +87,6 @@ x-environment: &environment
 
     ################################################### OPTIONAL (STORAGE) ###################################################
 
-    # Set the below to set a custom Upload Directory
-    # UPLOADS_DIR:
-
     # Set S3 Storage configuration (required for the file upload in serverless environments like Vercel)
     # S3_ACCESS_KEY:
     # S3_SECRET_KEY:
@@ -100,7 +97,7 @@ x-environment: &environment
     # S3_ENDPOINT_URL:
 
     # Force path style for S3 compatible storage (0 for disabled, 1 for enabled)
-    S3_FORCE_PATH_STYLE: 0
+    # S3_FORCE_PATH_STYLE: 0
 
     ############################################# OPTIONAL (OAUTH CONFIGURATION) #############################################
 
@@ -222,12 +219,9 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - uploads:/home/nextjs/apps/web/uploads/
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
 
 volumes:
   postgres:
-    driver: local
-  uploads:
     driver: local

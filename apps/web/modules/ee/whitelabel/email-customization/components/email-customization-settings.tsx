@@ -1,7 +1,6 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { handleFileUpload } from "@/app/lib/fileUpload";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
@@ -9,6 +8,7 @@ import {
   sendTestEmailAction,
   updateOrganizationEmailLogoUrlAction,
 } from "@/modules/ee/whitelabel/email-customization/actions";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
@@ -20,8 +20,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
 
 const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "webp"];
