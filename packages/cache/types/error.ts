@@ -19,3 +19,25 @@ export enum ErrorCode {
 export interface CacheError {
   code: ErrorCode;
 }
+
+// CacheError class that extends Error for proper error handling
+export class CacheErrorClass extends Error implements CacheError {
+  constructor(
+    public code: ErrorCode,
+    message?: string
+  ) {
+    super(message ?? `Cache error: ${code}`);
+    this.name = "CacheError";
+
+    // Maintains proper prototype chain in older environments
+    Object.setPrototypeOf(this, CacheErrorClass.prototype);
+  }
+
+  /**
+   * Creates a CacheErrorClass from a plain CacheError object
+   * Useful for converting existing error objects to proper Error instances
+   */
+  static fromCacheError(error: CacheError, message?: string): CacheErrorClass {
+    return new CacheErrorClass(error.code, message);
+  }
+}

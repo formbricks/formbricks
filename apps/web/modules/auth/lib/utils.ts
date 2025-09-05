@@ -1,10 +1,11 @@
+import { cache } from "@/lib/cache";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
-import { getRedisClient } from "@/modules/cache/redis";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { compare, hash } from "bcryptjs";
 import { createHash, randomUUID } from "crypto";
+import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 
 export const hashPassword = async (password: string) => {
@@ -13,8 +14,15 @@ export const hashPassword = async (password: string) => {
 };
 
 export const verifyPassword = async (password: string, hashedPassword: string) => {
-  const isValid = await compare(password, hashedPassword);
-  return isValid;
+  try {
+    const isValid = await compare(password, hashedPassword);
+    return isValid;
+  } catch (error) {
+    // Log warning for debugging purposes, but don't throw to maintain security
+    logger.warn("Password verification failed due to invalid hash format", { error });
+    // Return false for invalid hashes or other bcrypt errors
+    return false;
+  }
 };
 
 /**
@@ -225,12 +233,17 @@ export const shouldLogAuthFailure = async (
   // Always log successful authentications
   if (isSuccess) return true;
 
-  const rateLimitKey = `rate_limit:auth:${createAuditIdentifier(identifier, "ratelimit")}`;
   const now = Date.now();
+  const bucketStart = Math.floor(now / RATE_LIMIT_WINDOW) * RATE_LIMIT_WINDOW;
+  const rateLimitKey = createCacheKey.rateLimit.core(
+    "auth",
+    createAuditIdentifier(identifier, "ratelimit"),
+    bucketStart
+  );
 
   try {
     // Get Redis client
-    const redis = getRedisClient();
+    const redis = await cache.getRedisClient();
     if (!redis) {
       logger.warn("Redis not available for rate limiting, not logging due to Redis requirement");
       return false;
@@ -238,10 +251,9 @@ export const shouldLogAuthFailure = async (
 
     // Use Redis for distributed rate limiting
     const multi = redis.multi();
-    const windowStart = now - RATE_LIMIT_WINDOW;
 
     // Remove expired entries and count recent failures
-    multi.zRemRangeByScore(rateLimitKey, 0, windowStart);
+    multi.zRemRangeByScore(rateLimitKey, 0, bucketStart);
     multi.zCard(rateLimitKey);
     multi.zAdd(rateLimitKey, { score: now, value: `${now}:${randomUUID()}` });
     multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
@@ -251,7 +263,7 @@ export const shouldLogAuthFailure = async (
       throw new Error("Redis transaction failed");
     }
 
-    const currentCount = results[1] as number;
+    const currentCount = results[1] as unknown as number;
 
     // Apply throttling logic
     if (currentCount <= AGGREGATION_THRESHOLD) {

@@ -576,8 +576,6 @@
       "contacts_table_refresh": "Refresh contacts",
       "contacts_table_refresh_success": "Contacts refreshed successfully",
       "delete_contact_confirmation": "This will delete all survey responses and contact attributes associated with this contact. Any targeting and personalization based on this contact's data will be lost.",
-      "first_name": "First Name",
-      "last_name": "Last Name",
       "no_responses_found": "No responses found",
       "not_provided": "Not provided",
       "search_contact": "Search contact",

@@ -1,12 +1,11 @@
-// Factory functions for Redis client and cache service
-export { createRedisClientFromEnv, createCacheService } from "./factory";
+// Re-export everything from factory
+export { getCacheService } from "./client";
+export type { CacheService } from "./service";
 
-// Cache key utilities and type-safe key generation
+// Export cache keys
 export { createCacheKey } from "./cache-keys";
+
+// Export types
 export type { CacheKey } from "../types/keys";
-
-// Redis client type
-export type { RedisClient } from "../types/client";
-
-// Result types and error handling
-export type { Result, CacheError, ErrorCode } from "../types/error";
+export type { CacheError, Result } from "../types/error";
+export { ErrorCode } from "../types/error";

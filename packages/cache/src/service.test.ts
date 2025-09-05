@@ -20,6 +20,8 @@ interface MockRedisClient {
   setEx: ReturnType<typeof vi.fn>;
   del: ReturnType<typeof vi.fn>;
   exists: ReturnType<typeof vi.fn>;
+  isReady: boolean;
+  isOpen: boolean;
 }
 
 describe("CacheService", () => {
@@ -32,6 +34,8 @@ describe("CacheService", () => {
       setEx: vi.fn(),
       del: vi.fn(),
       exists: vi.fn(),
+      isReady: true,
+      isOpen: true,
     };
     cacheService = new CacheService(mockRedis as unknown as RedisClient);
   });
@@ -107,6 +111,74 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.CacheValidationError);
       }
     });
+
+    test("should return error when Redis operation fails", async () => {
+      const key = "test:key" as CacheKey;
+      mockRedis.get.mockRejectedValue(new Error("Redis connection failed"));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisOperationError);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error), key }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Cache get operation failed"
+      );
+    });
+
+    test("should handle string values correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = "simple string";
+      mockRedis.get.mockResolvedValue(JSON.stringify(value));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(value);
+      }
+    });
+
+    test("should handle number values correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = 42;
+      mockRedis.get.mockResolvedValue(JSON.stringify(value));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(value);
+      }
+    });
+
+    test("should handle boolean values correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = false;
+      mockRedis.get.mockResolvedValue(JSON.stringify(value));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(value);
+      }
+    });
+
+    test("should handle nested object values correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = { nested: { deeply: { value: "test" } }, array: [1, 2, 3] };
+      mockRedis.get.mockResolvedValue(JSON.stringify(value));
+
+      const result = await cacheService.get(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(value);
+      }
+    });
   });
 
   describe("exists", () => {
@@ -143,6 +215,34 @@ describe("CacheService", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe(ErrorCode.CacheValidationError);
+      }
+    });
+
+    test("should return error when Redis operation fails", async () => {
+      const key = "test:key" as CacheKey;
+      mockRedis.exists.mockRejectedValue(new Error("Redis connection failed"));
+
+      const result = await cacheService.exists(key);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisOperationError);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error), key }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Cache exists operation failed"
+      );
+    });
+
+    test("should handle multiple keys existing", async () => {
+      const key = "test:key" as CacheKey;
+      mockRedis.exists.mockResolvedValue(2); // Multiple keys exist
+
+      const result = await cacheService.exists(key);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(true);
       }
     });
   });
@@ -219,6 +319,42 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.CacheValidationError);
       }
     });
+
+    test("should return error when Redis operation fails", async () => {
+      const key = "test:key" as CacheKey;
+      const value = "test";
+      const ttlMs = 60000;
+      mockRedis.setEx.mockRejectedValue(new Error("Redis connection failed"));
+
+      const result = await cacheService.set(key, value, ttlMs);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisOperationError);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error), key, ttlMs }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Cache set operation failed"
+      );
+    });
+
+    test("should handle complex data types correctly", async () => {
+      const key = "test:key" as CacheKey;
+      const value = {
+        string: "test",
+        number: 42,
+        boolean: true,
+        array: [1, 2, 3],
+        nested: { level: { deep: "value" } },
+        nullValue: null,
+      };
+      const ttlMs = 60000;
+
+      const result = await cacheService.set(key, value, ttlMs);
+
+      expect(result.ok).toBe(true);
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, JSON.stringify(value));
+    });
   });
 
   describe("del", () => {
@@ -266,6 +402,71 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.CacheValidationError);
       }
     });
+
+    test("should return error when Redis is not ready/open", async () => {
+      const keys = ["test:key1", "test:key2"] as CacheKey[];
+      mockRedis.isReady = false;
+      mockRedis.isOpen = false;
+
+      const result = await cacheService.del(keys);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
+      }
+    });
+
+    test("should return error when Redis operation fails", async () => {
+      const keys = ["test:key1", "test:key2"] as CacheKey[];
+      mockRedis.del.mockRejectedValue(new Error("Redis connection failed"));
+
+      const result = await cacheService.del(keys);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.RedisOperationError);
+      }
+      expect(logger.error).toHaveBeenCalledWith(
+        { error: expect.any(Error), keys }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Cache delete operation failed"
+      );
+    });
+
+    test("should validate all keys before deletion", async () => {
+      const keys = ["valid:key1", "   ", "valid:key2"] as CacheKey[];
+
+      const result = await cacheService.del(keys);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe(ErrorCode.CacheValidationError);
+      }
+      expect(mockRedis.del).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getRedisClient", () => {
+    test("should return the Redis client instance when ready", () => {
+      const result = cacheService.getRedisClient();
+
+      expect(result).toBe(mockRedis);
+    });
+
+    test("should return null when Redis is not ready", () => {
+      mockRedis.isReady = false;
+
+      const result = cacheService.getRedisClient();
+
+      expect(result).toBeNull();
+    });
+
+    test("should return null when Redis is not open", () => {
+      mockRedis.isOpen = false;
+
+      const result = cacheService.getRedisClient();
+
+      expect(result).toBeNull();
+    });
   });
 
   describe("withCache", () => {
@@ -278,10 +479,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual(cachedValue);
-      }
+      expect(result).toEqual(cachedValue);
       expect(fn).not.toHaveBeenCalled();
     });
 
@@ -295,10 +493,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual(freshValue);
-      }
+      expect(result).toEqual(freshValue);
       expect(fn).toHaveBeenCalledOnce();
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, JSON.stringify(freshValue));
     });
@@ -312,10 +507,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual(freshValue);
-      }
+      expect(result).toEqual(freshValue);
       expect(fn).toHaveBeenCalledOnce();
     });
 
@@ -329,10 +521,7 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeNull();
-      }
+      expect(result).toBeNull();
       expect(fn).not.toHaveBeenCalled(); // Function should not be executed
     });
 
@@ -346,15 +535,12 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeNull();
-      }
+      expect(result).toBeNull();
       expect(fn).toHaveBeenCalledOnce();
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
     });
 
-    test("should execute function and cache undefined result as null", async () => {
+    test("should return undefined without caching when function returns undefined", async () => {
       const key = "test:key" as CacheKey;
       const fn = vi.fn().mockResolvedValue(undefined); // Function returns undefined
 
@@ -364,29 +550,82 @@ describe("CacheService", () => {
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBeUndefined();
-      }
+      expect(result).toBeUndefined();
       expect(fn).toHaveBeenCalledOnce();
-      // undefined should be normalized to null in cache
-      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
+      // undefined should NOT be cached to preserve semantics
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
     });
 
-    test("should return error when function fails", async () => {
+    test("should distinguish between null and undefined return values", async () => {
+      const nullKey = "test:null-key" as CacheKey;
+      const undefinedKey = "test:undefined-key" as CacheKey;
+
+      const nullFn = vi.fn().mockResolvedValue(null);
+      const undefinedFn = vi.fn().mockResolvedValue(undefined);
+
+      // Mock cache miss for both keys
+      mockRedis.get.mockResolvedValue(null);
+      mockRedis.exists.mockResolvedValue(0);
+
+      // Test null return value - should be cached
+      const nullResult = await cacheService.withCache(nullFn, nullKey, 60000);
+      expect(nullResult).toBeNull();
+      expect(nullFn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(nullKey, 60, "null");
+
+      // Reset mocks
+      vi.clearAllMocks();
+      mockRedis.get.mockResolvedValue(null);
+      mockRedis.exists.mockResolvedValue(0);
+
+      // Test undefined return value - should NOT be cached
+      const undefinedResult = await cacheService.withCache(undefinedFn, undefinedKey, 60000);
+      expect(undefinedResult).toBeUndefined();
+      expect(undefinedFn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
+    });
+
+    test("should execute function directly when cache fails", async () => {
       const key = "test:key" as CacheKey;
-      const fn = vi.fn().mockRejectedValue(new Error("Function failed"));
+      const expectedResult = { data: "result" };
+      const fn = vi.fn().mockResolvedValue(expectedResult);
 
       mockRedis.get.mockRejectedValue(new Error("Redis connection failed"));
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe(ErrorCode.Unknown);
-        // Error details are logged on the spot, not stored in Result
-      }
+      // withCache now always returns the function result, even when cache fails
+      expect(result).toEqual(expectedResult);
       expect(fn).toHaveBeenCalledOnce();
+    });
+
+    test("should execute function directly when validation fails", async () => {
+      const invalidKey = "" as CacheKey; // Empty key should fail validation
+      const expectedResult = { data: "result" };
+      const fn = vi.fn().mockResolvedValue(expectedResult);
+
+      const result = await cacheService.withCache(fn, invalidKey, 60000);
+
+      expect(result).toEqual(expectedResult);
+      expect(fn).toHaveBeenCalledOnce();
+      // Should not attempt any cache operations when validation fails
+      expect(mockRedis.get).not.toHaveBeenCalled();
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
+    });
+
+    test("should execute function directly when TTL validation fails", async () => {
+      const key = "test:key" as CacheKey;
+      const invalidTtl = 500; // Below minimum TTL of 1000ms
+      const expectedResult = { data: "result" };
+      const fn = vi.fn().mockResolvedValue(expectedResult);
+
+      const result = await cacheService.withCache(fn, key, invalidTtl);
+
+      expect(result).toEqual(expectedResult);
+      expect(fn).toHaveBeenCalledOnce();
+      // Should not attempt any cache operations when validation fails
+      expect(mockRedis.get).not.toHaveBeenCalled();
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
     });
   });
 });

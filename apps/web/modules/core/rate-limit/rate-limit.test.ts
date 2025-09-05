@@ -4,24 +4,26 @@ import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vit
 import { checkRateLimit } from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
-const { mockEval, mockRedisClient, mockGetRedisClient } = vi.hoisted(() => {
+const { mockEval, mockRedisClient, mockCache } = vi.hoisted(() => {
   const _mockEval = vi.fn();
   const _mockRedisClient = {
     eval: _mockEval,
   } as any;
 
-  const _mockGetRedisClient = vi.fn().mockReturnValue(_mockRedisClient);
+  const _mockCache = {
+    getRedisClient: vi.fn().mockResolvedValue(_mockRedisClient),
+  };
 
   return {
     mockEval: _mockEval,
     mockRedisClient: _mockRedisClient,
-    mockGetRedisClient: _mockGetRedisClient,
+    mockCache: _mockCache,
   };
 });
 
 // Mock all dependencies (will use the hoisted mocks above)
-vi.mock("@/modules/cache/redis", () => ({
-  getRedisClient: mockGetRedisClient,
+vi.mock("@/lib/cache", () => ({
+  cache: mockCache,
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -52,7 +54,7 @@ describe("checkRateLimit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the mock to return our mock client
-    mockGetRedisClient.mockReturnValue(mockRedisClient);
+    mockCache.getRedisClient.mockResolvedValue(mockRedisClient);
   });
 
   afterEach(() => {
@@ -121,8 +123,10 @@ describe("checkRateLimit", () => {
 
   test("should fail open when Redis is not configured", async () => {
     vi.resetModules();
-    vi.doMock("@/modules/cache/redis", () => ({
-      getRedisClient: vi.fn().mockReturnValue(null),
+    vi.doMock("@/lib/cache", () => ({
+      cache: {
+        getRedisClient: vi.fn().mockResolvedValue(null),
+      },
     }));
 
     // Dynamic import after mocking
@@ -222,10 +226,12 @@ describe("checkRateLimit", () => {
       },
     }));
 
-    vi.doMock("@/modules/cache/redis", () => ({
-      getRedisClient: vi.fn().mockReturnValue({
-        eval: vi.fn().mockResolvedValue([6, 0]),
-      }),
+    vi.doMock("@/lib/cache", () => ({
+      cache: {
+        getRedisClient: vi.fn().mockResolvedValue({
+          eval: vi.fn().mockResolvedValue([6, 0]),
+        }),
+      },
     }));
 
     // Dynamic import after mocking
@@ -263,10 +269,12 @@ describe("checkRateLimit", () => {
       },
     }));
 
-    vi.doMock("@/modules/cache/redis", () => ({
-      getRedisClient: vi.fn().mockReturnValue({
-        eval: vi.fn().mockResolvedValue([6, 0]),
-      }),
+    vi.doMock("@/lib/cache", () => ({
+      cache: {
+        getRedisClient: vi.fn().mockResolvedValue({
+          eval: vi.fn().mockResolvedValue([6, 0]),
+        }),
+      },
     }));
 
     // Dynamic import after mocking
@@ -314,10 +322,12 @@ describe("checkRateLimit", () => {
     }));
 
     const redisError = new Error("Redis connection failed");
-    vi.doMock("@/modules/cache/redis", () => ({
-      getRedisClient: vi.fn().mockReturnValue({
-        eval: vi.fn().mockRejectedValue(redisError),
-      }),
+    vi.doMock("@/lib/cache", () => ({
+      cache: {
+        getRedisClient: vi.fn().mockResolvedValue({
+          eval: vi.fn().mockRejectedValue(redisError),
+        }),
+      },
     }));
 
     // Dynamic import after mocking

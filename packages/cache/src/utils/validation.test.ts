@@ -1,6 +1,6 @@
-import { ErrorCode } from "@/types/error";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import { ErrorCode } from "@/types/error";
 import { validateInputs } from "./validation";
 
 // Mock logger
