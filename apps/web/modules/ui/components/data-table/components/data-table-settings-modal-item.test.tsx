@@ -3,113 +3,135 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DataTableSettingsModalItem } from "./data-table-settings-modal-item";
 
-// Mock the dnd-kit hooks
-vi.mock("@dnd-kit/sortable", async () => {
-  const actual = await vi.importActual("@dnd-kit/sortable");
-  return {
-    ...actual,
-    useSortable: () => ({
-      attributes: {},
-      listeners: {},
-      setNodeRef: vi.fn(),
-      transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 },
-      transition: "transform 100ms ease",
-      isDragging: false,
-    }),
-  };
-});
+// Mock the Switch component
+vi.mock("@/modules/ui/components/switch", () => ({
+  Switch: ({ id, checked, onCheckedChange, disabled }: any) => (
+    <input
+      data-testid={`switch-${id}`}
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onCheckedChange(e.target.checked)}
+      disabled={disabled}
+    />
+  ),
+}));
+
+// Mock lucide-react
+vi.mock("lucide-react", () => ({
+  GripVertical: () => <div data-testid="grip-vertical" />,
+}));
+
+// Mock dnd-kit hooks
+vi.mock("@dnd-kit/sortable", () => ({
+  useSortable: vi.fn(() => ({
+    attributes: { "data-testid": "sortable-attributes" },
+    listeners: { "data-testid": "sortable-listeners" },
+    setNodeRef: vi.fn(),
+    transform: null,
+    transition: null,
+    isDragging: false,
+  })),
+}));
+
+vi.mock("@dnd-kit/utilities", () => ({
+  CSS: {
+    Translate: {
+      toString: vi.fn(() => "translate3d(0px, 0px, 0px)"),
+    },
+  },
+}));
+
+// Mock @tanstack/react-table
+vi.mock("@tanstack/react-table", () => ({
+  flexRender: vi.fn((_, context) => `Header: ${context.column.id}`),
+}));
 
 describe("DataTableSettingsModalItem", () => {
   afterEach(() => {
     cleanup();
   });
 
-  test("renders standard column name correctly", () => {
-    const mockColumn = {
-      id: "firstName",
-      getIsVisible: vi.fn().mockReturnValue(true),
-      toggleVisibility: vi.fn(),
-    };
-
-    render(<DataTableSettingsModalItem column={mockColumn as any} />);
-
-    expect(screen.getByText("environments.contacts.first_name")).toBeInTheDocument();
-    const switchElement = screen.getByRole("switch");
-    expect(switchElement).toBeInTheDocument();
-    expect(switchElement).toHaveAttribute("aria-checked", "true");
+  const createMockColumn = (id: string, isVisible: boolean = true) => ({
+    id,
+    getIsVisible: vi.fn(() => isVisible),
+    toggleVisibility: vi.fn(),
+    columnDef: {
+      header: `${id} Header`,
+    },
   });
 
-  test("renders createdAt column with correct label", () => {
-    const mockColumn = {
-      id: "createdAt",
-      getIsVisible: vi.fn().mockReturnValue(true),
-      toggleVisibility: vi.fn(),
+  const createMockTable = (columns: any[]) => {
+    const headers = columns.map((column) => ({
+      column,
+      getContext: vi.fn(() => ({ column })),
+    }));
+
+    return {
+      getHeaderGroups: vi.fn(() => [{ headers }]),
     };
+  };
 
-    render(<DataTableSettingsModalItem column={mockColumn as any} />);
+  test("renders column item with grip icon and switch", () => {
+    const mockColumn = createMockColumn("firstName");
+    const mockTable = createMockTable([mockColumn]);
 
-    expect(screen.getByText("common.date")).toBeInTheDocument();
+    render(<DataTableSettingsModalItem column={mockColumn as any} table={mockTable as any} />);
+
+    expect(screen.getByTestId("grip-vertical")).toBeInTheDocument();
+    expect(screen.getByTestId("switch-firstName")).toBeInTheDocument();
+    expect(screen.getByText("Header: firstName")).toBeInTheDocument();
   });
 
-  test("renders verifiedEmail column with correct label", () => {
-    const mockColumn = {
-      id: "verifiedEmail",
-      getIsVisible: vi.fn().mockReturnValue(true),
-      toggleVisibility: vi.fn(),
-    };
+  test("switch reflects column visibility state", () => {
+    const mockColumn = createMockColumn("firstName", true);
+    const mockTable = createMockTable([mockColumn]);
 
-    render(<DataTableSettingsModalItem column={mockColumn as any} />);
+    render(<DataTableSettingsModalItem column={mockColumn as any} table={mockTable as any} />);
 
-    expect(screen.getByText("common.verified_email")).toBeInTheDocument();
+    const switchElement = screen.getByTestId("switch-firstName") as HTMLInputElement;
+    expect(switchElement.checked).toBe(true);
   });
 
-  test("renders userId column with correct label", () => {
-    const mockColumn = {
-      id: "userId",
-      getIsVisible: vi.fn().mockReturnValue(true),
-      toggleVisibility: vi.fn(),
-    };
+  test("switch shows unchecked when column is hidden", () => {
+    const mockColumn = createMockColumn("firstName", false);
+    const mockTable = createMockTable([mockColumn]);
 
-    render(<DataTableSettingsModalItem column={mockColumn as any} />);
+    render(<DataTableSettingsModalItem column={mockColumn as any} table={mockTable as any} />);
 
-    expect(screen.getByText("common.user_id")).toBeInTheDocument();
+    const switchElement = screen.getByTestId("switch-firstName") as HTMLInputElement;
+    expect(switchElement.checked).toBe(false);
   });
 
-  test("renders question from survey with localized headline", () => {
-    const mockColumn = {
-      id: "question1",
-      getIsVisible: vi.fn().mockReturnValue(true),
-      toggleVisibility: vi.fn(),
-    };
+  test("calls toggleVisibility when switch is clicked", async () => {
+    const user = userEvent.setup();
+    const mockColumn = createMockColumn("firstName", true);
+    const mockTable = createMockTable([mockColumn]);
 
-    const mockSurvey = {
-      questions: [
-        {
-          id: "question1",
-          type: "open",
-          headline: { default: "Test Question" },
-        },
-      ],
-    };
+    render(<DataTableSettingsModalItem column={mockColumn as any} table={mockTable as any} />);
 
-    render(<DataTableSettingsModalItem column={mockColumn as any} survey={mockSurvey as any} />);
+    const switchElement = screen.getByTestId("switch-firstName");
+    await user.click(switchElement);
 
-    expect(screen.getByText("Test Question")).toBeInTheDocument();
+    expect(mockColumn.toggleVisibility).toHaveBeenCalledWith(false);
   });
 
-  test("toggles visibility when switch is clicked", async () => {
-    const toggleVisibilityMock = vi.fn();
-    const mockColumn = {
-      id: "lastName",
-      getIsVisible: vi.fn().mockReturnValue(true),
-      toggleVisibility: toggleVisibilityMock,
-    };
+  test("renders with correct column id as element id", () => {
+    const mockColumn = createMockColumn("lastName");
+    const mockTable = createMockTable([mockColumn]);
 
-    render(<DataTableSettingsModalItem column={mockColumn as any} />);
+    render(<DataTableSettingsModalItem column={mockColumn as any} table={mockTable as any} />);
 
-    const switchElement = screen.getByRole("switch");
-    await userEvent.click(switchElement);
+    const elementWithId = screen.getByText("Header: lastName").closest("[id='lastName']");
+    expect(elementWithId).toBeInTheDocument();
+  });
 
-    expect(toggleVisibilityMock).toHaveBeenCalledWith(false);
+  test("renders reorder button with correct aria-label", () => {
+    const mockColumn = createMockColumn("firstName");
+    const mockTable = createMockTable([mockColumn]);
+
+    render(<DataTableSettingsModalItem column={mockColumn as any} table={mockTable as any} />);
+
+    const reorderButton = screen.getByRole("button", { name: "Reorder column" });
+    expect(reorderButton).toBeInTheDocument();
   });
 });
