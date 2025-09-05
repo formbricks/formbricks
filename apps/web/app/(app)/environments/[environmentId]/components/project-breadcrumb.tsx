@@ -86,15 +86,21 @@ export const ProjectBreadcrumb = ({
   return (
     <BreadcrumbItem isActive={projectDropdownOpen}>
       <DropdownMenu onOpenChange={setProjectDropdownOpen}>
-        <DropdownMenuTrigger className="flex items-center gap-1 outline-none">
-          <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
-          <span>{currentProject.name}</span>
-          {projectDropdownOpen ? (
-            <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
-          ) : (
-            <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
-          )}
+        <DropdownMenuTrigger
+          className="flex cursor-pointer items-center gap-1 outline-none"
+          id="projectDropdownTrigger"
+          asChild>
+          <div className="flex items-center gap-1">
+            <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
+            <span>{currentProject.name}</span>
+            {projectDropdownOpen ? (
+              <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
+            ) : (
+              <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+            )}
+          </div>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent align="start" className="mt-2">
           <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
             <FolderOpenIcon className="mr-2 inline h-4 w-4" />

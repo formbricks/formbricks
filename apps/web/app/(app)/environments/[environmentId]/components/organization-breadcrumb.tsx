@@ -77,14 +77,19 @@ export const OrganizationBreadcrumb = ({
   return (
     <BreadcrumbItem isActive={organizationDropdownOpen}>
       <DropdownMenu onOpenChange={setOrganizationDropdownOpen}>
-        <DropdownMenuTrigger className="flex items-center gap-1 outline-none">
-          <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
-          <span>{currentOrganization.name}</span>
-          {organizationDropdownOpen ? (
-            <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
-          ) : (
-            <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
-          )}
+        <DropdownMenuTrigger
+          className="flex cursor-pointer items-center gap-1 outline-none"
+          id="organizationDropdownTrigger"
+          asChild>
+          <div className="flex items-center gap-1">
+            <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
+            <span>{currentOrganization.name}</span>
+            {organizationDropdownOpen ? (
+              <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
+            ) : (
+              <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+            )}
+          </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="mt-2">
           {showOrganizationDropdown && (

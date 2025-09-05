@@ -46,11 +46,16 @@ export const EnvironmentBreadcrumb = ({
   return (
     <BreadcrumbItem isActive={environmentDropdownOpen} isHighlighted={environment.type === "development"}>
       <DropdownMenu onOpenChange={setEnvironmentDropdownOpen}>
-        <DropdownMenuTrigger className="flex items-center gap-1 outline-none">
-          <Code2Icon className="h-3 w-3" strokeWidth={1.5} />
-          <span className="capitalize">{environment.type}</span>
-          {environment.type === "development" && developmentTooltip()}
-          {environmentDropdownOpen && <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />}
+        <DropdownMenuTrigger
+          className="flex cursor-pointer items-center gap-1 outline-none"
+          id="environmentDropdownTrigger"
+          asChild>
+          <div className="flex items-center gap-1">
+            <Code2Icon className="h-3 w-3" strokeWidth={1.5} />
+            <span className="capitalize">{environment.type}</span>
+            {environment.type === "development" && developmentTooltip()}
+            {environmentDropdownOpen && <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />}
+          </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="mt-2" align="start">
           <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
