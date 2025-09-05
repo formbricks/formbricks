@@ -20,6 +20,7 @@ vi.mock("@/lib/env", () => ({
     E2E_TESTING: "0",
     ENCRYPTION_KEY: "test-encryption-key-32-characters",
     WEBAPP_URL: "https://example.com",
+    CRON_SECRET: "test-cron-secret",
     PUBLIC_URL: "https://example.com",
     VERCEL_URL: "",
   },

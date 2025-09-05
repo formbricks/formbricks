@@ -99,7 +99,6 @@ const baseSurvey: TSurvey = {
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
   projectOverwrites: null,
-  runOnDate: null,
   showLanguageSwitch: false,
   isBackButtonHidden: false,
   followUps: [],

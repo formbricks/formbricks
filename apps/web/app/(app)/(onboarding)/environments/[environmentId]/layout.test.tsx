@@ -13,6 +13,7 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "http://localhost:3000",
   PUBLIC_URL: "http://localhost:3000/survey",
   ENCRYPTION_KEY: "mock-encryption-key",
+  CRON_SECRET: "mock-cron-secret",
   DEFAULT_BRAND_COLOR: "#64748b",
   FB_LOGO_URL: "https://mock-logo-url.com/logo.png",
   PRIVACY_URL: "http://localhost:3000/privacy",
