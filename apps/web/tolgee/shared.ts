@@ -24,6 +24,7 @@ export function TolgeeBase() {
         "zh-Hant-TW": () => import("@/locales/zh-Hant-TW.json"),
         "ro-RO": () => import("@/locales/ro-RO.json"),
         "ja-JP": () => import("@/locales/ja-JP.json"),
+        "zh-CN": () => import("@/locales/zh-CN.json"),
       },
     });
 }
