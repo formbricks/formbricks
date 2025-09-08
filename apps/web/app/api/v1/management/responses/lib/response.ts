@@ -64,29 +64,37 @@ export const responseSelection = {
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponse> => {
-  const response = await createResponse(responseInput);
+  const txResponse = await prisma.$transaction(async (tx) => {
+    const response = await createResponse(responseInput, tx);
 
-  const quotaResult = await evaluateResponseQuotas({
-    surveyId: responseInput.surveyId,
-    responseId: response.id,
-    data: responseInput.data,
-    variables: responseInput.variables,
-    language: responseInput.language,
-    responseFinished: response.finished,
+    const quotaResult = await evaluateResponseQuotas({
+      surveyId: responseInput.surveyId,
+      responseId: response.id,
+      data: responseInput.data,
+      variables: responseInput.variables,
+      language: responseInput.language,
+      responseFinished: response.finished,
+      tx,
+    });
+
+    if (quotaResult.shouldEndSurvey && quotaResult.refreshedResponse) {
+      return {
+        ...quotaResult.refreshedResponse,
+        tags: response.tags,
+        contact: response.contact,
+      };
+    }
+
+    return response;
   });
 
-  if (quotaResult.shouldEndSurvey && quotaResult.refreshedResponse) {
-    return {
-      ...quotaResult.refreshedResponse,
-      tags: response.tags,
-      contact: response.contact,
-    };
-  }
-
-  return response;
+  return txResponse;
 };
 
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+export const createResponse = async (
+  responseInput: TResponseInput,
+  tx: Prisma.TransactionClient
+): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
@@ -146,7 +154,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       updatedAt,
     };
 
-    const responsePrisma = await prisma.response.create({
+    const responsePrisma = await tx.response.create({
       data: prismaData,
       select: responseSelection,
     });

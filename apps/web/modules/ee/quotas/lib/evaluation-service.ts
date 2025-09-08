@@ -1,6 +1,6 @@
 import "server-only";
 import { getSurvey } from "@/lib/survey/service";
-import { Response } from "@prisma/client";
+import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -14,6 +14,7 @@ export interface QuotaEvaluationInput {
   responseFinished: boolean;
   variables?: Response["variables"];
   language?: string;
+  tx?: Prisma.TransactionClient;
 }
 
 export interface QuotaEvaluationResult {
@@ -35,7 +36,9 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
     variables = {},
     language = "default",
     responseFinished = false,
+    tx,
   } = input;
+  const prismaClient = tx ?? prisma;
 
   try {
     const quotas = await getQuotas(surveyId);
@@ -51,10 +54,10 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
 
     const result = evaluateQuotas(survey, data, variables, quotas, language);
 
-    const quotaFull = await handleQuotas(surveyId, responseId, result, responseFinished);
+    const quotaFull = await handleQuotas(surveyId, responseId, result, responseFinished, prismaClient);
 
     if (quotaFull && quotaFull.action === "endSurvey") {
-      const refreshedResponse = await prisma.response.findUnique({
+      const refreshedResponse = await prismaClient.response.findUnique({
         where: { id: responseId },
       });
 

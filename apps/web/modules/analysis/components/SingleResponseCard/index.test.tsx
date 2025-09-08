@@ -117,7 +117,10 @@ describe("SingleResponseCard", () => {
     const deleteButton = await screen.findByTestId("DeleteDialog");
     await userEvent.click(deleteButton);
     await waitFor(() => {
-      expect(deleteResponseAction).toHaveBeenCalledWith({ responseId: dummyResponse.id });
+      expect(deleteResponseAction).toHaveBeenCalledWith({
+        responseId: dummyResponse.id,
+        decrementQuotas: false,
+      });
     });
 
     expect(dummyUpdateResponseList).toHaveBeenCalledWith([dummyResponse.id]);

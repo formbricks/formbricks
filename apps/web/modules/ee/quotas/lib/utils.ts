@@ -2,7 +2,7 @@ import "server-only";
 import { updateResponse } from "@/lib/response/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import { validateInputs } from "@/lib/utils/validate";
-import { prisma } from "@formbricks/database";
+import { Prisma } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
@@ -52,61 +52,61 @@ export const evaluateQuotas = (
  * @param fullQuota - IDs of quotas that are full
  * @param otherQuota - IDs of quotas that are not full
  * @param failedQuotas - IDs of quotas that are failed
+ * @param tx - Transaction client
  */
 export const upsertResponseQuotaLinks = async (
   responseId: string,
   fullQuota: TSurveyQuota[],
   otherQuota: TSurveyQuota[],
-  failedQuotas: TSurveyQuota[]
+  failedQuotas: TSurveyQuota[],
+  tx: Prisma.TransactionClient
 ): Promise<void> => {
-  await prisma.$transaction(async (tx) => {
-    // remove records for quotas that failed
-    await tx.responseQuotaLink.deleteMany({
-      where: {
+  // remove records for quotas that failed
+  await tx.responseQuotaLink.deleteMany({
+    where: {
+      responseId,
+      quotaId: { in: failedQuotas.map((quota) => quota.id) },
+    },
+  });
+
+  const fullQuotaIds = fullQuota.map((quota) => quota.id);
+  const otherQuotaIds = otherQuota.map((quota) => quota.id);
+
+  if (fullQuotaIds.length > 0) {
+    // Create new records for full quotas
+    await tx.responseQuotaLink.createMany({
+      data: fullQuotaIds.map((quotaId) => ({
         responseId,
-        quotaId: { in: failedQuotas.map((quota) => quota.id) },
-      },
+        quotaId,
+        status: "screenedOut",
+      })),
+      skipDuplicates: true,
     });
 
-    const fullQuotaIds = fullQuota.map((quota) => quota.id);
-    const otherQuotaIds = otherQuota.map((quota) => quota.id);
+    // Update existing records for full quotas to screenedOut
+    await tx.responseQuotaLink.updateMany({
+      where: {
+        responseId,
+        quotaId: { in: fullQuotaIds },
+        status: { not: "screenedOut" },
+      },
+      data: {
+        status: "screenedOut",
+      },
+    });
+  }
 
-    if (fullQuotaIds.length > 0) {
-      // Create new records for full quotas
-      await tx.responseQuotaLink.createMany({
-        data: fullQuotaIds.map((quotaId) => ({
-          responseId,
-          quotaId,
-          status: "screenedOut",
-        })),
-        skipDuplicates: true,
-      });
-
-      // Update existing records for full quotas to screenedOut
-      await tx.responseQuotaLink.updateMany({
-        where: {
-          responseId,
-          quotaId: { in: fullQuotaIds },
-          status: { not: "screenedOut" },
-        },
-        data: {
-          status: "screenedOut",
-        },
-      });
-    }
-
-    if (otherQuotaIds.length > 0) {
-      // Create new records for other quotas
-      await tx.responseQuotaLink.createMany({
-        data: otherQuotaIds.map((quotaId) => ({
-          responseId,
-          quotaId,
-          status: "screenedIn",
-        })),
-        skipDuplicates: true,
-      });
-    }
-  });
+  if (otherQuotaIds.length > 0) {
+    // Create new records for other quotas
+    await tx.responseQuotaLink.createMany({
+      data: otherQuotaIds.map((quotaId) => ({
+        responseId,
+        quotaId,
+        status: "screenedIn",
+      })),
+      skipDuplicates: true,
+    });
+  }
 };
 
 /**
@@ -114,13 +114,16 @@ export const upsertResponseQuotaLinks = async (
  * @param surveyId - Survey ID to check quotas for
  * @param responseId - Response ID to check quotas for
  * @param result - Current evaluation results
+ * @param responseFinished - Whether the response is finished
+ * @param tx - Transaction client
  * @returns Quota-full response if any quota is full, null otherwise
  */
 export const handleQuotas = async (
   surveyId: string,
   responseId: string,
   result: { passedQuotas: TSurveyQuota[]; failedQuotas: TSurveyQuota[] },
-  responseFinished: boolean
+  responseFinished: boolean,
+  tx: Prisma.TransactionClient
 ): Promise<TSurveyQuota | null> => {
   try {
     validateInputs([surveyId, ZId], [responseId, ZId]);
@@ -131,7 +134,7 @@ export const handleQuotas = async (
 
     const quotaCounts =
       result.passedQuotas.length > 0
-        ? await prisma.responseQuotaLink.groupBy({
+        ? await tx.responseQuotaLink.groupBy({
             by: ["quotaId"],
             where: {
               quotaId: { in: result.passedQuotas.map((q) => q.id) },
@@ -166,11 +169,11 @@ export const handleQuotas = async (
       otherQuota = otherQuota.filter((quota) => quota.countPartialSubmissions);
     }
 
-    await upsertResponseQuotaLinks(responseId, fullQuota, otherQuota, result.failedQuotas);
+    await upsertResponseQuotaLinks(responseId, fullQuota, otherQuota, result.failedQuotas, tx);
 
     if (firstScreenedOutQuota?.action === "endSurvey") {
       // If the quota is full and the action is to end the survey, we need to update the response to finished
-      await updateResponse(responseId, { finished: true, endingId: firstScreenedOutQuota.endingCardId });
+      await updateResponse(responseId, { finished: true, endingId: firstScreenedOutQuota.endingCardId }, tx);
     }
 
     return firstScreenedOutQuota;

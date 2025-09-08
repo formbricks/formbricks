@@ -60,24 +60,32 @@ export const responseSelection = {
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponseWithQuotaFull> => {
-  const response = await createResponse(responseInput);
+  const txResponse = await prisma.$transaction(async (tx) => {
+    const response = await createResponse(responseInput, tx);
 
-  const quotaResult = await evaluateResponseQuotas({
-    surveyId: responseInput.surveyId,
-    responseId: response.id,
-    data: responseInput.data,
-    variables: responseInput.variables,
-    language: responseInput.language,
-    responseFinished: response.finished,
+    const quotaResult = await evaluateResponseQuotas({
+      surveyId: responseInput.surveyId,
+      responseId: response.id,
+      data: responseInput.data,
+      variables: responseInput.variables,
+      language: responseInput.language,
+      responseFinished: response.finished,
+      tx,
+    });
+
+    return {
+      ...response,
+      ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
+    };
   });
 
-  return {
-    ...response,
-    ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
-  };
+  return txResponse;
 };
 
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+export const createResponse = async (
+  responseInput: TResponseInput,
+  tx: Prisma.TransactionClient
+): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
@@ -137,7 +145,9 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       updatedAt,
     };
 
-    const responsePrisma = await prisma.response.create({
+    const prismaClient = tx ?? prisma;
+
+    const responsePrisma = await prismaClient.response.create({
       data: prismaData,
       select: responseSelection,
     });

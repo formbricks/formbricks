@@ -49,6 +49,7 @@ vi.mock("@formbricks/database", () => ({
     response: {
       create: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -134,7 +135,7 @@ describe("createResponse", () => {
     mockIsFormbricksCloud = true;
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
 
-    await createResponse(mockResponseInput);
+    await createResponse(mockResponseInput, prisma);
 
     expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
     expect(sendPlanLimitsReachedEventToPosthogWeekly).not.toHaveBeenCalled();
@@ -144,7 +145,7 @@ describe("createResponse", () => {
     mockIsFormbricksCloud = true;
     vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(100);
 
-    await createResponse(mockResponseInput);
+    await createResponse(mockResponseInput, prisma);
 
     expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
     expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalledWith(environmentId, {
@@ -161,7 +162,7 @@ describe("createResponse", () => {
 
   test("should throw ResourceNotFoundError if organization not found", async () => {
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
-    await expect(createResponse(mockResponseInput)).rejects.toThrow(ResourceNotFoundError);
+    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("should throw DatabaseError on Prisma known request error", async () => {
@@ -213,7 +214,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: undefined,
     });
 
-    const result = await createResponseWithQuotaEvaluation(mockResponseInput);
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput, prisma);
 
     expect(evaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponseInput.surveyId,
@@ -275,6 +276,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       variables: mockResponseInput.variables,
       language: mockResponseInput.language,
       responseFinished: mockResponseInput.finished,
+      tx: prisma,
     });
 
     expect(result).toEqual({

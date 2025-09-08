@@ -46,7 +46,8 @@ export const getResponses = async (
 
 export const createResponse = async (
   environmentId: string,
-  responseInput: TResponseInput
+  responseInput: TResponseInput,
+  tx?: Prisma.TransactionClient
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   captureTelemetry("response created");
 
@@ -105,7 +106,9 @@ export const createResponse = async (
     }
     const billingData = billing.data;
 
-    const response = await prisma.response.create({
+    const prismaClient = tx ?? prisma;
+
+    const response = await prismaClient.response.create({
       data: prismaData,
     });
 
@@ -147,35 +150,40 @@ export const createResponseWithQuotaEvaluation = async (
   environmentId: string,
   responseInput: TResponseInput
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
-  const responseResult = await createResponse(environmentId, responseInput);
-  if (!responseResult.ok) {
-    return responseResult;
-  }
-
-  const response = responseResult.data;
-
-  const quotaResult = await evaluateResponseQuotas({
-    surveyId: responseInput.surveyId,
-    responseId: response.id,
-    data: responseInput.data,
-    variables: responseInput.variables,
-    language: responseInput.language || "default",
-    responseFinished: response.finished,
-  });
-
-  if (quotaResult.shouldEndSurvey) {
-    if (quotaResult.refreshedResponse) {
-      return ok(quotaResult.refreshedResponse);
+  const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
+    const responseResult = await createResponse(environmentId, responseInput, tx);
+    if (!responseResult.ok) {
+      return responseResult;
     }
 
-    return ok({
-      ...response,
-      finished: true,
-      ...(quotaResult.quotaFull?.endingCardId && {
-        endingId: quotaResult.quotaFull.endingCardId,
-      }),
-    });
-  }
+    const response = responseResult.data;
 
-  return ok(response);
+    const quotaResult = await evaluateResponseQuotas({
+      surveyId: responseInput.surveyId,
+      responseId: response.id,
+      data: responseInput.data,
+      variables: responseInput.variables,
+      language: responseInput.language || "default",
+      responseFinished: response.finished,
+      tx,
+    });
+
+    if (quotaResult.shouldEndSurvey) {
+      if (quotaResult.refreshedResponse) {
+        return ok(quotaResult.refreshedResponse);
+      }
+
+      return ok({
+        ...response,
+        finished: true,
+        ...(quotaResult.quotaFull?.endingCardId && {
+          endingId: quotaResult.quotaFull.endingCardId,
+        }),
+      });
+    }
+
+    return ok(response);
+  });
+
+  return txResponse;
 };

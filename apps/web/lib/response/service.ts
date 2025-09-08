@@ -484,12 +484,14 @@ export const getResponsesByEnvironmentId = reactCache(
 
 export const updateResponse = async (
   responseId: string,
-  responseInput: TResponseUpdateInput
+  responseInput: TResponseUpdateInput,
+  tx?: Prisma.TransactionClient
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {
+    const prismaClient = tx ?? prisma;
     // use direct prisma call to avoid cache issues
-    const currentResponse = await prisma.response.findUnique({
+    const currentResponse = await prismaClient.response.findUnique({
       where: {
         id: responseId,
       },
@@ -516,7 +518,7 @@ export const updateResponse = async (
       ...responseInput.variables,
     };
 
-    const responsePrisma = await prisma.response.update({
+    const responsePrisma = await prismaClient.response.update({
       where: {
         id: responseId,
       },
