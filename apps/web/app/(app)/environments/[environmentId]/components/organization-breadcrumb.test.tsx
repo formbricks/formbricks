@@ -110,6 +110,11 @@ vi.mock("lucide-react", () => ({
       <title>Settings Icon</title>
     </svg>
   ),
+  Loader2: ({ className }: any) => (
+    <svg data-testid="loader-2-icon" className={className}>
+      <title>Loader2 Icon</title>
+    </svg>
+  ),
 }));
 
 describe("OrganizationBreadcrumb", () => {
@@ -170,6 +175,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -189,6 +195,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -211,6 +218,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -228,6 +236,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -246,6 +255,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -267,6 +277,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -290,6 +301,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -315,6 +327,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -336,6 +349,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -358,6 +372,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -379,6 +394,7 @@ describe("OrganizationBreadcrumb", () => {
           isFormbricksCloud={true}
           isMember={false}
           currentEnvironmentId={currentEnvironmentId}
+          isOwnerOrManager={true}
         />
       );
 
@@ -403,6 +419,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -427,6 +444,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -452,6 +470,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -473,6 +492,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -492,6 +512,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 
@@ -518,6 +539,7 @@ describe("OrganizationBreadcrumb", () => {
           currentEnvironmentId={currentEnvironmentId}
           isFormbricksCloud={true}
           isMember={false}
+          isOwnerOrManager={true}
         />
       );
 

@@ -147,6 +147,12 @@ export const MainNavigation = ({
       target: "_blank",
       icon: ArrowUpRightIcon,
     },
+    {
+      label: t("common.share_feedback"),
+      href: "https://github.com/formbricks/formbricks/issues",
+      target: "_blank",
+      icon: ArrowUpRightIcon,
+    },
   ];
 
   useEffect(() => {

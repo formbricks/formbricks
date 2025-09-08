@@ -117,6 +117,11 @@ vi.mock("lucide-react", () => ({
       <title>Plus Icon</title>
     </svg>
   ),
+  Loader2: ({ className }: any) => (
+    <svg data-testid="loader-2-icon" className={className}>
+      <title>Loader2 Icon</title>
+    </svg>
+  ),
 }));
 
 describe("ProjectBreadcrumb", () => {

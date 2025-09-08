@@ -8,7 +8,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, CircleHelpIcon, Code2Icon } from "lucide-react";
+import { ChevronDownIcon, CircleHelpIcon, Code2Icon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -23,8 +23,10 @@ export const EnvironmentBreadcrumb = ({
   const { t } = useTranslate();
   const [environmentDropdownOpen, setEnvironmentDropdownOpen] = useState(false);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleEnvironmentChange = (environmentId: string) => {
+    setIsLoading(true);
     router.push(`/environments/${environmentId}/`);
   };
 
@@ -53,6 +55,7 @@ export const EnvironmentBreadcrumb = ({
           <div className="flex items-center gap-1">
             <Code2Icon className="h-3 w-3" strokeWidth={1.5} />
             <span className="capitalize">{environment.type}</span>
+            {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {environment.type === "development" && developmentTooltip()}
             {environmentDropdownOpen && <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />}
           </div>

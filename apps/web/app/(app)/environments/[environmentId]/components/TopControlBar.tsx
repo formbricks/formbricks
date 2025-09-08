@@ -10,7 +10,6 @@ import { useTranslate } from "@tolgee/react";
 import { BugIcon, CircleUserIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -56,12 +55,6 @@ export const TopControlBar = ({
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
   const isReadOnly = isMember && hasReadAccess;
 
-  const sortedProjects = useMemo(() => projects.toSorted((a, b) => a.name.localeCompare(b.name)), [projects]);
-  const sortedOrganizations = useMemo(
-    () => organizations.toSorted((a, b) => a.name.localeCompare(b.name)),
-    [organizations]
-  );
-
   return (
     <div
       className="flex h-14 w-full items-center justify-between bg-slate-50 px-6"
@@ -71,9 +64,9 @@ export const TopControlBar = ({
           currentEnvironment={environment}
           environments={environments}
           currentOrganization={organization}
-          organizations={sortedOrganizations}
+          organizations={organizations}
           currentProject={project}
-          projects={sortedProjects}
+          projects={projects}
           isMultiOrgEnabled={isMultiOrgEnabled}
           organizationProjectsLimit={organizationProjectsLimit}
           isFormbricksCloud={isFormbricksCloud}

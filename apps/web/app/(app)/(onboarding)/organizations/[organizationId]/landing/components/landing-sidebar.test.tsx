@@ -47,20 +47,9 @@ afterEach(() => {
 describe("LandingSidebar component", () => {
   const user = { id: "u1", name: "Alice", email: "alice@example.com" } as any;
   const organization = { id: "o1", name: "orgOne" } as any;
-  const organizations = [
-    { id: "o2", name: "betaOrg" },
-    { id: "o1", name: "alphaOrg" },
-  ] as any;
 
   test("renders logo, avatar, and initial modal closed", () => {
-    render(
-      <LandingSidebar
-        isMultiOrgEnabled={false}
-        user={user}
-        organization={organization}
-        organizations={organizations}
-      />
-    );
+    render(<LandingSidebar user={user} organization={organization} />);
 
     // Formbricks logo
     expect(screen.getByAltText("environments.formbricks_logo")).toBeInTheDocument();
@@ -71,14 +60,7 @@ describe("LandingSidebar component", () => {
   });
 
   test("clicking logout triggers signOut", async () => {
-    render(
-      <LandingSidebar
-        isMultiOrgEnabled={false}
-        user={user}
-        organization={organization}
-        organizations={organizations}
-      />
-    );
+    render(<LandingSidebar user={user} organization={organization} />);
 
     // Open user dropdown by clicking on avatar trigger
     const trigger = screen.getByTestId("avatar").parentElement;

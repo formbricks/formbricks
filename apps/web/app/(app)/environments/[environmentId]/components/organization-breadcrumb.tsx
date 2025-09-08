@@ -9,7 +9,14 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { useTranslate } from "@tolgee/react";
-import { BuildingIcon, ChevronDownIcon, ChevronRightIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import {
+  BuildingIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  Loader2,
+  PlusIcon,
+  SettingsIcon,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -18,9 +25,10 @@ interface OrganizationBreadcrumbProps {
   currentOrganization: TOrganization;
   organizations: TOrganization[];
   isMultiOrgEnabled: boolean;
-  currentEnvironmentId: string;
+  currentEnvironmentId?: string;
   isFormbricksCloud: boolean;
   isMember: boolean;
+  isOwnerOrManager: boolean;
 }
 
 export const OrganizationBreadcrumb = ({
@@ -30,14 +38,17 @@ export const OrganizationBreadcrumb = ({
   currentEnvironmentId,
   isFormbricksCloud,
   isMember,
+  isOwnerOrManager,
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslate();
   const [organizationDropdownOpen, setOrganizationDropdownOpen] = useState(false);
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleOrganizationChange = (organizationId: string) => {
+    setIsLoading(true);
     router.push(`/organizations/${organizationId}/`);
   };
 
@@ -59,6 +70,7 @@ export const OrganizationBreadcrumb = ({
       id: "api-keys",
       label: t("common.api_keys"),
       href: `/environments/${currentEnvironmentId}/settings/api-keys`,
+      hidden: !isOwnerOrManager,
     },
     {
       id: "billing",
@@ -84,6 +96,7 @@ export const OrganizationBreadcrumb = ({
           <div className="flex items-center gap-1">
             <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{currentOrganization.name}</span>
+            {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {organizationDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
@@ -117,27 +130,30 @@ export const OrganizationBreadcrumb = ({
                   <PlusIcon className="ml-2 h-4 w-4" />
                 </DropdownMenuCheckboxItem>
               )}
-              <DropdownMenuSeparator />
             </>
           )}
+          {currentEnvironmentId && (
+            <div>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                <SettingsIcon className="mr-2 inline h-4 w-4" />
+                {t("common.organization_settings")}
+              </div>
 
-          <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-            <SettingsIcon className="mr-2 inline h-4 w-4" />
-            {t("common.organization_settings")}
-          </div>
-
-          {organizationSettings.map((setting) => {
-            return setting.hidden ? null : (
-              <DropdownMenuCheckboxItem
-                key={setting.id}
-                checked={pathname.includes(setting.id)}
-                hidden={setting.hidden}
-                onClick={() => router.push(setting.href)}
-                className="cursor-pointer">
-                {setting.label}
-              </DropdownMenuCheckboxItem>
-            );
-          })}
+              {organizationSettings.map((setting) => {
+                return setting.hidden ? null : (
+                  <DropdownMenuCheckboxItem
+                    key={setting.id}
+                    checked={pathname.includes(setting.id)}
+                    hidden={setting.hidden}
+                    onClick={() => router.push(setting.href)}
+                    className="cursor-pointer">
+                    {setting.label}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+            </div>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       {openCreateOrganizationModal && (

@@ -10,47 +10,26 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { useTranslate } from "@tolgee/react";
-import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon, PlusIcon } from "lucide-react";
+import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 
 interface LandingSidebarProps {
-  isMultiOrgEnabled: boolean;
   user: TUser;
   organization: TOrganization;
-  organizations: TOrganization[];
 }
 
-export const LandingSidebar = ({
-  isMultiOrgEnabled,
-  user,
-  organization,
-  organizations,
-}: LandingSidebarProps) => {
+export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState<boolean>(false);
 
   const { t } = useTranslate();
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
-
-  const router = useRouter();
-
-  const handleEnvironmentChangeByOrganization = (organizationId: string) => {
-    router.push(`/organizations/${organizationId}/`);
-  };
 
   const dropdownNavigation = [
     {
@@ -60,13 +39,6 @@ export const LandingSidebar = ({
       icon: ArrowUpRightIcon,
     },
   ];
-
-  const currentOrganizationId = organization?.id;
-  const currentOrganizationName = capitalizeFirstLetter(organization?.name);
-
-  const sortedOrganizations = useMemo(() => {
-    return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
-  }, [organizations]);
 
   return (
     <aside
@@ -127,7 +99,6 @@ export const LandingSidebar = ({
             ))}
 
             {/* Logout */}
-
             <DropdownMenuItem
               onClick={async () => {
                 await signOutWithAudit({
@@ -142,45 +113,6 @@ export const LandingSidebar = ({
               icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
               {t("common.logout")}
             </DropdownMenuItem>
-
-            {/* Organization Switch */}
-
-            {(isMultiOrgEnabled || organizations.length > 1) && (
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="rounded-lg">
-                  <div>
-                    <p>{currentOrganizationName}</p>
-                    <p className="block text-xs text-slate-500">{t("common.switch_organization")}</p>
-                  </div>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent sideOffset={10} alignOffset={5}>
-                    <DropdownMenuRadioGroup
-                      value={currentOrganizationId}
-                      onValueChange={(organizationId) =>
-                        handleEnvironmentChangeByOrganization(organizationId)
-                      }>
-                      {sortedOrganizations.map((organization) => (
-                        <DropdownMenuRadioItem
-                          value={organization.id}
-                          className="cursor-pointer rounded-lg"
-                          key={organization.id}>
-                          {organization.name}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
-                    {isMultiOrgEnabled && (
-                      <DropdownMenuItem
-                        onClick={() => setOpenCreateOrganizationModal(true)}
-                        icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                        <span>{t("common.create_new_organization")}</span>
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

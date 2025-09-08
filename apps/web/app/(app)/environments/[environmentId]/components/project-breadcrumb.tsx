@@ -10,7 +10,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, ChevronRightIcon, FolderOpenIcon, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -44,8 +44,10 @@ export const ProjectBreadcrumb = ({
   const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleProjectChange = (projectId: string) => {
+    setIsLoading(true);
     router.push(`/projects/${projectId}/`);
   };
 
@@ -93,6 +95,7 @@ export const ProjectBreadcrumb = ({
           <div className="flex items-center gap-1">
             <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{currentProject.name}</span>
+            {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {projectDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
