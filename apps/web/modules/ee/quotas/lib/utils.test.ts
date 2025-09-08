@@ -354,12 +354,10 @@ describe("Quota Utils", () => {
 
     test("should return null when no quotas are full", async () => {
       // Mock groupBy to return counts below the limits
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([]) // No quotas counting all
-        .mockResolvedValueOnce([
-          { quotaId: mockQuotaId, _count: { responseId: 10 } },
-          { quotaId: "quota456", _count: { responseId: 25 } },
-        ]);
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 10 } } as any,
+        { quotaId: "quota456", _count: { responseId: 25 } } as any,
+      ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true);
 
@@ -372,29 +370,23 @@ describe("Quota Utils", () => {
 
     test("should return first screened out quota when quota is full", async () => {
       // Mock groupBy to return count at/above limit for first quota
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([
-          { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 counts all
-        ])
-        .mockResolvedValueOnce([
-          { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota counts finished only
-        ]);
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
+        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true);
 
       expect(result).toEqual(mockQuota);
-      expect(prisma.responseQuotaLink.groupBy).toHaveBeenCalledTimes(2);
+      expect(prisma.responseQuotaLink.groupBy).toHaveBeenCalledTimes(1);
     });
 
     test("should update response to finished when quota action is endSurvey", async () => {
       // Mock groupBy to return quota at limit
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([
-          { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 counts all
-        ])
-        .mockResolvedValueOnce([
-          { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota counts finished only
-        ]);
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
+        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true);
 
@@ -411,11 +403,9 @@ describe("Quota Utils", () => {
         failedQuotas: [],
       };
       // Mock groupBy to return quota at limit for mockQuota2 (which counts all)
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([
-          { quotaId: "quota456", _count: { responseId: 30 } }, // mockQuota2 at limit
-        ])
-        .mockResolvedValueOnce([]); // No quotas counting finished only
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: "quota456", _count: { responseId: 30 } } as any, // mockQuota2 at limit
+      ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, resultWithContinueAction, true);
 
@@ -428,11 +418,9 @@ describe("Quota Utils", () => {
         passedQuotas: [mockQuota2],
         failedQuotas: [],
       };
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([
-          { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
-        ])
-        .mockResolvedValueOnce([]); // No quotas counting finished only
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      ]);
 
       await handleQuotas(mockSurveyId, mockResponseId, resultWithPartialCount, true);
 
@@ -446,6 +434,7 @@ describe("Quota Utils", () => {
               not: mockResponseId,
             },
           },
+          OR: [{ quota: { countPartialSubmissions: true } }, { response: { finished: true } }],
         },
         _count: {
           responseId: true,
@@ -458,11 +447,9 @@ describe("Quota Utils", () => {
         passedQuotas: [mockQuota],
         failedQuotas: [],
       };
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([]) // No quotas counting all
-        .mockResolvedValueOnce([
-          { quotaId: mockQuotaId, _count: { responseId: 45 } }, // mockQuota below limit
-        ]);
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 45 } } as any, // mockQuota below limit
+      ]);
 
       await handleQuotas(mockSurveyId, mockResponseId, resultWithFinishedOnly, true);
 
@@ -475,8 +462,8 @@ describe("Quota Utils", () => {
             id: {
               not: mockResponseId,
             },
-            finished: true,
           },
+          OR: [{ quota: { countPartialSubmissions: true } }, { response: { finished: true } }],
         },
         _count: {
           responseId: true,
@@ -492,13 +479,10 @@ describe("Quota Utils", () => {
         failedQuotas,
       };
 
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([
-          { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
-        ])
-        .mockResolvedValueOnce([
-          { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota at limit
-        ]);
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
+        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      ]);
 
       await handleQuotas(mockSurveyId, mockResponseId, testResult, true);
 
@@ -512,13 +496,10 @@ describe("Quota Utils", () => {
         failedQuotas: [],
       };
 
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([
-          { quotaId: "quota456", _count: { responseId: 30 } }, // mockQuota2 at limit
-        ])
-        .mockResolvedValueOnce([
-          { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota at limit
-        ]);
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: "quota456", _count: { responseId: 30 } } as any, // mockQuota2 at limit
+        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
+      ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, bothQuotasFull, true);
 
@@ -564,13 +545,10 @@ describe("Quota Utils", () => {
     });
 
     test("should handle updateResponse errors gracefully", async () => {
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([
-          { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
-        ])
-        .mockResolvedValueOnce([
-          { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota at limit
-        ]);
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
+        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      ]);
       vi.mocked(updateResponse).mockRejectedValue(new Error("Update failed"));
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true);
@@ -599,15 +577,12 @@ describe("Quota Utils", () => {
     });
 
     test("should handle quota limit exactly equal to screened in count", async () => {
-      vi.mocked(prisma.responseQuotaLink.groupBy)
-        .mockResolvedValueOnce([
-          { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
-        ])
-        .mockResolvedValueOnce([
-          { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota exactly at limit
-        ]);
+      vi.mocked(prisma.responseQuotaLink.groupBy).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota exactly at limit
+        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      ]);
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true);
 
       expect(result).toEqual(mockQuota);
     });

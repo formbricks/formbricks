@@ -129,20 +129,23 @@ export const handleQuotas = async (
     let fullQuota: TSurveyQuota[] = [];
     let otherQuota: TSurveyQuota[] = [];
 
-    const quotaCounts = await prisma.responseQuotaLink.groupBy({
-      by: ["quotaId"],
-      where: {
-        quotaId: { in: result.passedQuotas.map((q) => q.id) },
-        status: "screenedIn",
-        response: {
-          id: { not: responseId },
-        },
-        OR: [{ quota: { countPartialSubmissions: true } }, { response: { finished: true } }],
-      },
-      _count: {
-        responseId: true,
-      },
-    });
+    const quotaCounts =
+      result.passedQuotas.length > 0
+        ? await prisma.responseQuotaLink.groupBy({
+            by: ["quotaId"],
+            where: {
+              quotaId: { in: result.passedQuotas.map((q) => q.id) },
+              status: "screenedIn",
+              response: {
+                id: { not: responseId },
+              },
+              OR: [{ quota: { countPartialSubmissions: true } }, { response: { finished: true } }],
+            },
+            _count: {
+              responseId: true,
+            },
+          })
+        : [];
 
     const quotaCountsMap = new Map(quotaCounts.map((result) => [result.quotaId, result._count.responseId]));
 
