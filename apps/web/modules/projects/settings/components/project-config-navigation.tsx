@@ -2,7 +2,7 @@
 
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
-import { BrushIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
+import { BlocksIcon, BrushIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 interface ProjectConfigNavigationProps {
@@ -61,6 +61,13 @@ export const ProjectConfigNavigation = ({
       icon: <UsersIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/project/teams`,
       current: pathname?.includes("/teams"),
+    },
+    {
+      id: "integrations",
+      label: t("common.integrations"),
+      icon: <BlocksIcon className="h-5 w-5" />,
+      href: `/environments/${environmentId}/project/integrations`,
+      current: pathname?.includes("/integrations"),
     },
   ];
 

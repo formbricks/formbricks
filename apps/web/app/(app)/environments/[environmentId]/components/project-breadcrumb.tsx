@@ -8,12 +8,20 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, ChevronRightIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  FolderOpenIcon,
+  Loader2,
+  PlusIcon,
+  SettingsIcon,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface ProjectBreadcrumbProps {
@@ -47,6 +55,45 @@ export const ProjectBreadcrumb = ({
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const pathname = usePathname();
+
+  const projectSettings = [
+    {
+      id: "general",
+      label: t("common.general"),
+      href: `/environments/${currentEnvironmentId}/project/general`,
+    },
+    {
+      id: "look",
+      label: t("common.look_and_feel"),
+      href: `/environments/${currentEnvironmentId}/project/look`,
+    },
+    {
+      id: "languages",
+      label: t("common.survey_languages"),
+      href: `/environments/${currentEnvironmentId}/project/languages`,
+    },
+    {
+      id: "teams",
+      label: t("common.team_access"),
+      href: `/environments/${currentEnvironmentId}/project/teams`,
+    },
+    {
+      id: "app-connection",
+      label: t("common.website_and_app_connection"),
+      href: `/environments/${currentEnvironmentId}/project/app-connection`,
+    },
+    {
+      id: "tags",
+      label: t("common.tags"),
+      href: `/environments/${currentEnvironmentId}/project/tags`,
+    },
+    {
+      id: "integrations",
+      label: t("common.integrations"),
+      href: `/environments/${currentEnvironmentId}/project/integrations`,
+    },
+  ];
 
   const handleProjectChange = (projectId: string) => {
     setIsLoading(true);
@@ -132,6 +179,22 @@ export const ProjectBreadcrumb = ({
               <PlusIcon className="ml-2 h-4 w-4" />
             </DropdownMenuCheckboxItem>
           )}
+          <DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+              <SettingsIcon className="mr-2 inline h-4 w-4" />
+              {t("common.project_configuration")}
+            </div>
+            {projectSettings.map((setting) => (
+              <DropdownMenuCheckboxItem
+                key={setting.id}
+                checked={pathname.includes(setting.id)}
+                onClick={() => router.push(setting.href)}
+                className="cursor-pointer">
+                {setting.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Modals */}

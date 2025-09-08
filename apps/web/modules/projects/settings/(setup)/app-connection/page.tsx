@@ -1,23 +1,37 @@
+"use server";
+
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { getActionClasses } from "@/lib/actionClass/service";
+import { getEnvironments } from "@/lib/environment/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
-import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
+import Link from "next/link";
+import { ActionSettingsCard } from "../components/action-settings-card";
 
 export const AppConnectionPage = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { environment } = await getEnvironmentAuth(params.environmentId);
+  const { environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+
+  const environments = await getEnvironments(environment.projectId);
+  const otherEnvironment = environments.filter((env) => env.id !== params.environmentId)[0];
+  const [actionClasses] = await Promise.all([getActionClasses(params.environmentId)]);
+  const otherEnvActionClasses = await getActionClasses(otherEnvironment.id);
+  const locale = await findMatchingLocale();
 
   const publicDomain = getPublicDomain();
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.project_configuration")}>
@@ -32,6 +46,16 @@ export const AppConnectionPage = async (props) => {
             <div className="space-y-4">
               <WidgetStatusIndicator environment={environment} />
               <Alert variant="info">
+                <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
+                <AlertButton asChild>
+                  <Link
+                    href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
+                    target="_blank">
+                    {t("common.learn_more")}
+                  </Link>
+                </AlertButton>
+              </Alert>
+              <Alert variant="info">
                 <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
                 <AlertDescription>
                   {t("environments.project.app-connection.cache_update_delay_description")}
@@ -40,6 +64,15 @@ export const AppConnectionPage = async (props) => {
             </div>
           )}
         </SettingsCard>
+        <ActionSettingsCard
+          environment={environment}
+          otherEnvironment={otherEnvironment}
+          otherEnvActionClasses={otherEnvActionClasses}
+          environmentId={params.environmentId}
+          actionClasses={actionClasses}
+          isReadOnly={isReadOnly}
+          locale={locale}
+        />
         <SettingsCard
           title={t("environments.project.app-connection.how_to_setup")}
           description={t("environments.project.app-connection.how_to_setup_description")}

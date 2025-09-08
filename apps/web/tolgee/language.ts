@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE } from "@/lib/constants";
+import { DEFAULT_LOCALE } from "@/lib/constants/client";
 import { getUserLocale } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { authOptions } from "@/modules/auth/lib/authOptions";
