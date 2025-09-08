@@ -18,6 +18,7 @@ vi.mock("@/lib/survey/service", () => ({
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     response: {
       findUnique: vi.fn(),
     },
@@ -38,6 +39,14 @@ vi.mock("./utils", () => ({
   evaluateQuotas: vi.fn(),
   handleQuotas: vi.fn(),
 }));
+
+type MockTx = {
+  $transaction: ReturnType<typeof vi.fn>;
+  response: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
+};
+let mockTx: MockTx;
 
 describe("Quota Evaluation Service", () => {
   const mockSurveyId = "survey123";
@@ -162,6 +171,14 @@ describe("Quota Evaluation Service", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockTx = {
+      $transaction: vi.fn(),
+      response: {
+        findUnique: vi.fn(),
+      },
+    };
+    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
   });
 
   afterEach(() => {
@@ -216,6 +233,7 @@ describe("Quota Evaluation Service", () => {
         variables: mockVariablesData,
         language: "en",
         responseFinished: true,
+        tx: mockTx,
       };
 
       const continueSurveyQuota: TSurveyQuota = {
@@ -249,7 +267,7 @@ describe("Quota Evaluation Service", () => {
         [continueSurveyQuota],
         "en"
       );
-      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, true);
+      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, true, mockTx);
     });
 
     test("should process quotas successfully and return shouldEndSurvey true when quota action is endSurvey", async () => {
@@ -260,6 +278,7 @@ describe("Quota Evaluation Service", () => {
         variables: mockVariablesData,
         language: "en",
         responseFinished: true,
+        tx: mockTx,
       };
 
       const evaluateResult = {
@@ -271,7 +290,7 @@ describe("Quota Evaluation Service", () => {
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(evaluateQuotas).mockReturnValue(evaluateResult);
       vi.mocked(handleQuotas).mockResolvedValue(mockQuota);
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockResponse);
+      vi.mocked(mockTx.response.findUnique).mockResolvedValue(mockResponse);
 
       const result = await evaluateResponseQuotas(input);
 
@@ -290,8 +309,8 @@ describe("Quota Evaluation Service", () => {
         [mockQuota],
         "en"
       );
-      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, true);
-      expect(prisma.response.findUnique).toHaveBeenCalledWith({
+      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, true, mockTx);
+      expect(mockTx.response.findUnique).toHaveBeenCalledWith({
         where: { id: mockResponseId },
       });
     });
@@ -303,6 +322,7 @@ describe("Quota Evaluation Service", () => {
         data: mockResponseData,
         variables: mockVariablesData,
         responseFinished: false,
+        tx: mockTx,
       };
 
       const mockPartialSubmissionQuota = {
@@ -319,7 +339,7 @@ describe("Quota Evaluation Service", () => {
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
       vi.mocked(evaluateQuotas).mockReturnValue(evaluateResult);
       vi.mocked(handleQuotas).mockResolvedValue(mockPartialSubmissionQuota);
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockResponse);
+      vi.mocked(mockTx.response.findUnique).mockResolvedValue(mockResponse);
 
       const result = await evaluateResponseQuotas(input);
 
@@ -338,8 +358,8 @@ describe("Quota Evaluation Service", () => {
         [mockPartialSubmissionQuota],
         "default"
       );
-      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, false);
-      expect(prisma.response.findUnique).toHaveBeenCalledWith({ where: { id: mockResponseId } });
+      expect(handleQuotas).toHaveBeenCalledWith(mockSurveyId, mockResponseId, evaluateResult, false, mockTx);
+      expect(mockTx.response.findUnique).toHaveBeenCalledWith({ where: { id: mockResponseId } });
     });
 
     test("should return shouldEndSurvey false when handleQuotas returns null", async () => {

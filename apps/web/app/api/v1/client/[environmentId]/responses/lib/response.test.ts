@@ -108,6 +108,13 @@ const mockResponsePrisma = {
   tags: [],
 };
 
+type MockTx = {
+  response: {
+    create: ReturnType<typeof vi.fn>;
+  };
+};
+let mockTx: MockTx;
+
 describe("createResponse", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -198,8 +205,14 @@ describe("createResponse", () => {
 describe("createResponseWithQuotaEvaluation", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockTx = {
+      response: {
+        create: vi.fn(),
+      },
+    };
+    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization as any);
-    vi.mocked(prisma.response.create).mockResolvedValue(mockResponsePrisma as any);
+    vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma as any);
     vi.mocked(calculateTtcTotal).mockImplementation((ttc) => ttc);
   });
 
@@ -214,7 +227,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: undefined,
     });
 
-    const result = await createResponseWithQuotaEvaluation(mockResponseInput, prisma);
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput, mockTx);
 
     expect(evaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponseInput.surveyId,
@@ -223,6 +236,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       variables: mockResponseInput.variables,
       language: mockResponseInput.language,
       responseFinished: mockResponseInput.finished,
+      tx: mockTx,
     });
 
     expect(result).toEqual({
@@ -267,7 +281,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: mockQuotaFull,
     });
 
-    const result = await createResponseWithQuotaEvaluation(mockResponseInput);
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput, mockTx);
 
     expect(evaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponseInput.surveyId,
@@ -277,6 +291,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       language: mockResponseInput.language,
       responseFinished: mockResponseInput.finished,
       tx: prisma,
+      tx: mockTx,
     });
 
     expect(result).toEqual({
@@ -321,7 +336,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       quotaFull: mockQuotaFull,
     });
 
-    const result = await createResponseWithQuotaEvaluation(mockResponseInput);
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput, mockTx);
 
     expect(result).toEqual({
       id: responseId,

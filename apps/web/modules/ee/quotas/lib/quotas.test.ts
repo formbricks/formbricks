@@ -270,7 +270,7 @@ describe("Quota Service", () => {
       vi.mocked(prisma.surveyQuota.updateMany).mockResolvedValue({ count: 1 });
       await reduceQuotaLimits([mockQuotaId]);
       expect(prisma.surveyQuota.updateMany).toHaveBeenCalledWith({
-        where: { id: { in: [mockQuotaId] } },
+        where: { id: { in: [mockQuotaId] }, limit: { gt: 1 } },
         data: { limit: { decrement: 1 } },
       });
     });

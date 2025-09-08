@@ -1,6 +1,7 @@
 import { updateResponse } from "@/lib/response/service";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import { updateResponseWithQuotaEvaluation } from "./response";
 
@@ -9,6 +10,13 @@ vi.mock("@/modules/ee/quotas/lib/evaluation-service");
 
 const mockUpdateResponse = vi.mocked(updateResponse);
 const mockEvaluateResponseQuotas = vi.mocked(evaluateResponseQuotas);
+
+type MockTx = {
+  response: {
+    update: ReturnType<typeof vi.fn>;
+  };
+};
+let mockTx: MockTx;
 
 describe("updateResponseWithQuotaEvaluation", () => {
   const mockResponseId = "response123";
@@ -70,6 +78,12 @@ describe("updateResponseWithQuotaEvaluation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTx = {
+      response: {
+        update: vi.fn(),
+      },
+    };
+    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
   });
 
   test("should return original response when quota doesn't end survey", async () => {
@@ -80,7 +94,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
 
     const result = await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput);
 
-    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput);
+    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx);
     expect(mockEvaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponse.surveyId,
       responseId: mockResponse.id,
@@ -88,6 +102,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
       variables: mockResponse.variables,
       language: mockResponse.language,
       responseFinished: mockResponse.finished,
+      tx: mockTx,
     });
 
     expect(result).toEqual(mockResponse);
@@ -102,7 +117,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
 
     const result = await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput);
 
-    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput);
+    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx);
     expect(mockEvaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponse.surveyId,
       responseId: mockResponse.id,
@@ -110,6 +125,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
       variables: mockResponse.variables,
       language: mockResponse.language,
       responseFinished: mockResponse.finished,
+      tx: mockTx,
     });
 
     expect(result).toEqual({
@@ -128,7 +144,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
 
     const result = await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput);
 
-    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput);
+    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx);
     expect(mockEvaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponse.surveyId,
       responseId: mockResponse.id,
@@ -136,6 +152,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
       variables: mockResponse.variables,
       language: mockResponse.language,
       responseFinished: mockResponse.finished,
+      tx: mockTx,
     });
 
     expect(result).toEqual(mockResponse);
@@ -150,6 +167,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
 
     const result = await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput);
 
+    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx);
     expect(result).toEqual(mockResponse);
   });
 
@@ -169,6 +187,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
       variables: responseWithNullLanguage.variables,
       language: "default",
       responseFinished: responseWithNullLanguage.finished,
+      tx: mockTx,
     });
 
     expect(result).toEqual(responseWithNullLanguage);

@@ -264,8 +264,27 @@ describe("Response Lib", () => {
   });
 
   describe("updateResponseWithQuotaEvaluation", () => {
+    type MockTx = {
+      response: {
+        update: ReturnType<typeof vi.fn>;
+      };
+    };
+    let mockTx: MockTx;
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+
+      mockTx = {
+        response: {
+          update: vi.fn(),
+        },
+      };
+
+      prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    });
+
     test("update response and continue when quota evaluation says not to end survey", async () => {
-      vi.mocked(prisma.response.update).mockResolvedValue(response);
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
       vi.mocked(evaluateResponseQuotas).mockResolvedValue({
         shouldEndSurvey: false,
         quotaFull: null,
@@ -274,7 +293,7 @@ describe("Response Lib", () => {
 
       const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
 
-      expect(prisma.response.update).toHaveBeenCalledWith({
+      expect(mockTx.response.update).toHaveBeenCalledWith({
         where: { id: responseId },
         data: responseInput,
       });
@@ -285,6 +304,7 @@ describe("Response Lib", () => {
         variables: response.variables,
         language: response.language,
         responseFinished: response.finished,
+        tx: mockTx,
       });
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -294,7 +314,7 @@ describe("Response Lib", () => {
 
     test("handle quota evaluation with default language when response.language is null", async () => {
       const responseWithoutLanguage = { ...response, language: null };
-      vi.mocked(prisma.response.update).mockResolvedValue(responseWithoutLanguage);
+      vi.mocked(mockTx.response.update).mockResolvedValue(responseWithoutLanguage);
       vi.mocked(evaluateResponseQuotas).mockResolvedValue({
         shouldEndSurvey: false,
         quotaFull: null,
@@ -310,13 +330,14 @@ describe("Response Lib", () => {
         variables: responseWithoutLanguage.variables,
         language: "default",
         responseFinished: responseWithoutLanguage.finished,
+        tx: mockTx,
       });
       expect(result.ok).toBe(true);
     });
 
     test("end survey and return refreshed response when quota is full and refreshedResponse exists", async () => {
       const refreshedResponse = { ...response, finished: true, endingId: "new-ending-id" };
-      vi.mocked(prisma.response.update).mockResolvedValue(response);
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
       vi.mocked(evaluateResponseQuotas).mockResolvedValue({
         shouldEndSurvey: true,
         quotaFull: mockQuota,
@@ -332,7 +353,7 @@ describe("Response Lib", () => {
     });
 
     test("end survey and set finished=true with endingCardId when quota is full but no refreshedResponse", async () => {
-      vi.mocked(prisma.response.update).mockResolvedValue(response);
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
       vi.mocked(evaluateResponseQuotas).mockResolvedValue({
         shouldEndSurvey: true,
         quotaFull: mockQuota,
@@ -352,7 +373,7 @@ describe("Response Lib", () => {
     });
 
     test("end survey and set finished=true when quota is full with no quotaFull object", async () => {
-      vi.mocked(prisma.response.update).mockResolvedValue(response);
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
       vi.mocked(evaluateResponseQuotas).mockResolvedValue({
         shouldEndSurvey: true,
         quotaFull: null,
@@ -371,7 +392,7 @@ describe("Response Lib", () => {
     });
 
     test("propagate error when updateResponse fails", async () => {
-      vi.mocked(prisma.response.update).mockRejectedValue(
+      vi.mocked(mockTx.response.update).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Response not found", {
           code: PrismaErrorType.RelatedRecordDoesNotExist,
           clientVersion: "1.0.0",
