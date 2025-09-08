@@ -177,6 +177,7 @@ describe("ProjectBreadcrumb", () => {
     currentOrganization: mockOrganization,
     currentEnvironmentId: "env-123",
     isAccessControlAllowed: true,
+    currentOrgBillingPlan: "free",
   };
 
   beforeEach(() => {

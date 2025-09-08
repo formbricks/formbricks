@@ -84,6 +84,7 @@ export const ProjectBreadcrumb = ({
       },
       {
         text: t("common.cancel"),
+        onClick: () => setOpenLimitModal(false),
       },
     ];
   };
