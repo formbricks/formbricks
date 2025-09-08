@@ -140,11 +140,6 @@ vi.mock("react", async () => {
   };
 });
 
-vi.mock("next/navigation", () => ({
-  redirect: vi.fn(() => "REDIRECT_STUB"),
-  notFound: vi.fn(() => "NOT_FOUND_STUB"),
-}));
-
 describe("Page component", () => {
   afterEach(() => {
     cleanup();

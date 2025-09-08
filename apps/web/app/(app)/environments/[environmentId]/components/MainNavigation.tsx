@@ -291,7 +291,8 @@ export const MainNavigation = ({
                       href={link.href}
                       target={link.target}
                       className="flex w-full items-center"
-                      key={link.label}>
+                      key={link.label}
+                      rel={link.target === "_blank" ? "noopener noreferrer" : undefined}>
                       <DropdownMenuItem>
                         <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
                         {link.label}

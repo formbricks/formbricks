@@ -1,3 +1,5 @@
+"use client";
+
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,

@@ -1,3 +1,5 @@
+"use client";
+
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {

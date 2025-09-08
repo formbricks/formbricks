@@ -1,3 +1,5 @@
+"use client";
+
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";

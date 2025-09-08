@@ -90,6 +90,7 @@ export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
                 id={link.href}
                 href={link.href}
                 target={link.target}
+                rel={link.target === "_blank" ? "noopener noreferrer" : undefined}
                 className="flex w-full items-center">
                 <DropdownMenuItem>
                   <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
