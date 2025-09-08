@@ -585,6 +585,7 @@
       "contacts_table_refresh": "重新整理聯絡人",
       "contacts_table_refresh_success": "聯絡人已成功重新整理",
       "delete_contact_confirmation": "這將刪除與此聯繫人相關的所有調查回應和聯繫屬性。任何基於此聯繫人數據的定位和個性化將會丟失。",
+      "delete_contact_confirmation_with_quotas": "{value, plural, one {這將刪除與這個 contact 相關的所有調查響應和聯繫人屬性。基於這個 contact 數據的任何定向和個性化功能將會丟失。如果這個 contact 有作為調查配額依據的響應，配額計數將會減少，但配額限制將保持不變。} other {這將刪除與這些 contacts 相關的所有調查響應和聯繫人屬性。基於這些 contacts 數據的任何定向和個性化功能將會丟失。如果這些 contacts 有作為調查配額依據的響應，配額計數將會減少，但配額限制將保持不變。}}",
       "no_responses_found": "找不到回應",
       "not_provided": "未提供",
       "search_contact": "搜尋聯絡人",

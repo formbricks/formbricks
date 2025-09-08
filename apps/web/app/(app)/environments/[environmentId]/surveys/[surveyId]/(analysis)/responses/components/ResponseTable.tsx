@@ -231,6 +231,7 @@ export const ResponseTable = ({
           type="response"
           deleteAction={deleteResponse}
           downloadRowsAction={downloadSelectedRows}
+          isQuotasAllowed={isQuotasAllowed}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">

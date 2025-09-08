@@ -24,6 +24,7 @@ interface SelectedRowSettingsProps<T> {
   type: "response" | "contact";
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
+  isQuotasAllowed: boolean;
 }
 
 export const SelectedRowSettings = <T,>({
@@ -32,6 +33,7 @@ export const SelectedRowSettings = <T,>({
   type,
   deleteAction,
   downloadRowsAction,
+  isQuotasAllowed,
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -106,7 +108,11 @@ export const SelectedRowSettings = <T,>({
   const deleteDialogText =
     type === "response"
       ? t("environments.surveys.responses.delete_response_confirmation")
-      : t("environments.contacts.delete_contact_confirmation");
+      : isQuotasAllowed
+        ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+            value: selectedRowCount,
+          })
+        : t("environments.contacts.delete_contact_confirmation");
 
   return (
     <>

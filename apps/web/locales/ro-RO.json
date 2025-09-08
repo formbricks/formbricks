@@ -585,6 +585,7 @@
       "contacts_table_refresh": "Reîmprospătare contacte",
       "contacts_table_refresh_success": "Contactele au fost actualizate cu succes",
       "delete_contact_confirmation": "Acest lucru va șterge toate răspunsurile la sondaj și atributele de contact asociate cu acest contact. Orice țintire și personalizare bazată pe datele acestui contact vor fi pierdute.",
+      "delete_contact_confirmation_with_quotas": "{value, plural, one {Această acțiune va șterge toate răspunsurile chestionarului și atributele de contact asociate cu acest contact. Orice țintire și personalizare bazată pe datele acestui contact vor fi pierdute. Dacă acest contact are răspunsuri care contează pentru cotele chestionarului, numărul cotelor va fi redus, dar limitele cotelor vor rămâne neschimbate.} other {Aceste acțiuni vor șterge toate răspunsurile chestionarului și atributele de contact asociate cu acești contacți. Orice țintire și personalizare bazată pe datele acestor contacți vor fi pierdute. Dacă acești contacți au răspunsuri care contează pentru cotele chestionarului, numărul cotelor va fi redus, dar limitele cotelor vor rămâne neschimbate.} }",
       "no_responses_found": "Nu s-au găsit răspunsuri",
       "not_provided": "Nu a fost furnizat",
       "search_contact": "Căutați contact",

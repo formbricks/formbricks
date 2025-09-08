@@ -85,12 +85,12 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    const isQuotasEnabled = await getIsQuotasEnabled(organizationBilling.plan);
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
 
     const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas = []] = await Promise.all([
       getTagsByEnvironmentId(survey.environmentId),
       getResponseFilteringValues(parsedInput.surveyId),
-      isQuotasEnabled ? getQuotas(parsedInput.surveyId) : [],
+      isQuotasAllowed ? getQuotas(parsedInput.surveyId) : [],
     ]);
 
     return { environmentTags: tags, attributes, meta, hiddenFields, quotas };

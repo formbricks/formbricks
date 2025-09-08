@@ -585,6 +585,7 @@
       "contacts_table_refresh": "Refresh contacts",
       "contacts_table_refresh_success": "Contacts refreshed successfully",
       "delete_contact_confirmation": "This will delete all survey responses and contact attributes associated with this contact. Any targeting and personalization based on this contact's data will be lost.",
+      "delete_contact_confirmation_with_quotas": "{value, plural, one {This will delete all survey responses and contact attributes associated with this contact. Any targeting and personalization based on this contact's data will be lost. If this contact has responses that count towards survey quotas, the quota counts will be reduced but the quota limits will remain unchanged.} other {This will delete all survey responses and contact attributes associated with these contacts. Any targeting and personalization based on these contacts' data will be lost. If these contacts have responses that count towards survey quotas, the quota counts will be reduced but the quota limits will remain unchanged.}}",
       "no_responses_found": "No responses found",
       "not_provided": "Not provided",
       "search_contact": "Search contact",

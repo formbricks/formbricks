@@ -22,6 +22,7 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   hasMore: boolean;
+  isQuotasAllowed: boolean;
 }
 
 export const ContactDataView = ({
@@ -31,6 +32,7 @@ export const ContactDataView = ({
   isReadOnly,
   hasMore: initialHasMore,
   initialContacts,
+  isQuotasAllowed,
 }: ContactDataViewProps) => {
   const [contacts, setContacts] = useState<TContactWithAttributes[]>([...initialContacts]);
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
@@ -144,6 +146,7 @@ export const ContactDataView = ({
       searchValue={searchValue}
       setSearchValue={setSearchValue}
       isReadOnly={isReadOnly}
+      isQuotasAllowed={isQuotasAllowed}
     />
   );
 };

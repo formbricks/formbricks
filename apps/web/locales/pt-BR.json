@@ -585,6 +585,7 @@
       "contacts_table_refresh": "Atualizar contatos",
       "contacts_table_refresh_success": "Contatos atualizados com sucesso",
       "delete_contact_confirmation": "Isso irá apagar todas as respostas da pesquisa e atributos de contato associados a este contato. Qualquer direcionamento e personalização baseados nos dados deste contato serão perdidos.",
+      "delete_contact_confirmation_with_quotas": "{value, plural, other {Isso irá apagar todas as respostas da pesquisa e atributos de contato associados a este contato. Qualquer direcionamento e personalização baseados nos dados deste contato serão perdidos. Se este contato tiver respostas que contam para cotas da pesquisa, as contagens das cotas serão reduzidas, mas os limites das cotas permanecerão inalterados.}}",
       "no_responses_found": "Nenhuma resposta encontrada",
       "not_provided": "Não fornecido",
       "search_contact": "Buscar contato",
