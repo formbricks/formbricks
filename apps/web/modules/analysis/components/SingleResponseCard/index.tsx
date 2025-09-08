@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox } from "@/modules/ui/components/checkbox";
+import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
@@ -42,7 +42,7 @@ export const SingleResponseCard = ({
   setSelectedResponseId,
   locale,
 }: SingleResponseCardProps) => {
-  const hasQuotas = response.quotas && response.quotas.length > 0;
+  const hasQuotas = (response.quotas && response.quotas.length > 0) ?? false;
   const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
   const { t } = useTranslate();
   const environmentId = survey.environmentId;
@@ -143,21 +143,11 @@ export const SingleResponseCard = ({
           isDeleting={isDeleting}
           text={t("environments.surveys.responses.delete_response_confirmation")}>
           {hasQuotas && (
-            <div className="mt-4 flex flex-col gap-3">
-              <p className="text-sm text-slate-900">
-                {t("environments.surveys.responses.delete_response_quotas")}
-              </p>
-              <label htmlFor="decrementQuotas" className="flex cursor-pointer items-center">
-                <Checkbox
-                  type="button"
-                  id="decrementQuotas"
-                  className="bg-white focus:ring-0"
-                  checked={decrementQuotas}
-                  onCheckedChange={() => setDecrementQuotas(!decrementQuotas)}
-                />
-                <span className="ml-2">{t("environments.surveys.responses.decrement_quotas")}</span>
-              </label>
-            </div>
+            <DecrementQuotasCheckbox
+              title={t("environments.surveys.responses.delete_response_quotas")}
+              checked={decrementQuotas}
+              onCheckedChange={setDecrementQuotas}
+            />
           )}
         </DeleteDialog>
       </div>
