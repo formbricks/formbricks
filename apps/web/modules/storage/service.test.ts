@@ -128,7 +128,7 @@ describe("storage service", () => {
       }
     });
 
-    test("should properly encode filenames with special characters like # in URL", async () => {
+    test("should properly sanitize filenames with special characters like # in URL", async () => {
       const mockSignedUrlResponse = {
         ok: true,
         data: {
@@ -150,12 +150,12 @@ describe("storage service", () => {
       if (result.ok) {
         // The filename should be URL-encoded to prevent # from being treated as a URL fragment
         expect(result.data.fileUrl).toBe(
-          `https://public.example.com/storage/env-123/public/test%23file--fid--${mockUUID}.txt`
+          `https://public.example.com/storage/env-123/public/testfile--fid--${mockUUID}.txt`
         );
       }
 
       expect(getSignedUploadUrl).toHaveBeenCalledWith(
-        `test#file--fid--${mockUUID}.txt`,
+        `testfile--fid--${mockUUID}.txt`,
         "text/plain",
         "env-123/public",
         1024 * 1024 * 10 // 10MB default
