@@ -105,14 +105,14 @@ export const SelectedRowSettings = <T,>({
   // Helper component for the separator
   const Separator = () => <div>|</div>;
 
+  const quotasDialogText = isQuotasAllowed
+    ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+        value: selectedRowCount,
+      })
+    : t("environments.contacts.delete_contact_confirmation");
+
   const deleteDialogText =
-    type === "response"
-      ? t("environments.surveys.responses.delete_response_confirmation")
-      : isQuotasAllowed
-        ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
-            value: selectedRowCount,
-          })
-        : t("environments.contacts.delete_contact_confirmation");
+    type === "response" ? t("environments.surveys.responses.delete_response_confirmation") : quotasDialogText;
 
   return (
     <>
