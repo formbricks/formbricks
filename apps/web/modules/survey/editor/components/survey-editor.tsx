@@ -201,6 +201,7 @@ export const SurveyEditor = ({
               locale={locale}
               responseCount={responseCount}
               setIsCautionDialogOpen={setIsCautionDialogOpen}
+              isStorageConfigured={isStorageConfigured}
             />
           )}
 
@@ -217,6 +218,7 @@ export const SurveyEditor = ({
               setLocalStylingChanges={setLocalStylingChanges}
               isUnsplashConfigured={isUnsplashConfigured}
               isCxMode={isCxMode}
+              isStorageConfigured={isStorageConfigured}
             />
           )}
 

@@ -296,7 +296,6 @@ EOT
       echo "✅ MinIO will be configured with:"
       echo "   Access Key: $minio_root_user"
       echo "   Bucket: $minio_bucket_name"
-      echo "   Web Console: https://$domain_name/minio-console (after setup)"
     fi
   else
     minio_storage="n"
@@ -405,8 +404,8 @@ EOT
 
   minio:
     restart: always
-    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
-    command: server /data --console-address ":9001"
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data
     environment:
       - MINIO_ROOT_USER=$minio_root_user
       - MINIO_ROOT_PASSWORD=$minio_root_password
@@ -437,17 +436,6 @@ EOT
       - "traefik.http.middlewares.minio-cors.headers.addvaryheader=true"
       - "traefik.http.middlewares.minio-ratelimit.ratelimit.average=100"
       - "traefik.http.middlewares.minio-ratelimit.ratelimit.burst=200"
-
-      # MinIO Console on app domain path
-      - "traefik.http.routers.minio-console.rule=Host(\`$domain_name\`) && PathPrefix(\`/minio-console\`)"
-      - "traefik.http.routers.minio-console.entrypoints=websecure"
-      - "traefik.http.routers.minio-console.tls=true"
-      - "traefik.http.routers.minio-console.tls.certresolver=default"
-      - "traefik.http.routers.minio-console.service=minio-console"
-      - "traefik.http.services.minio-console.loadbalancer.server.port=9001"
-      - "traefik.http.middlewares.minio-console-stripprefix.stripprefix.prefixes=/minio-console"
-      - "traefik.http.routers.minio-console.middlewares=minio-console-stripprefix"
-
   minio-init:
     image: minio/mc:latest
     depends_on:
@@ -569,12 +557,8 @@ echo ""
 
 if [[ $minio_storage == "y" ]]; then
     echo "🗄️  MinIO Storage Setup Complete:"
-    echo "   • S3 API: https://$domain_name/minio"
-    echo "   • Web Console: https://$domain_name/minio-console"
     echo "   • Access Key: $minio_root_user"
     echo "   • Bucket: $minio_bucket_name (✅ automatically created)"
-    echo ""
-    echo "💡 Tip: You can manage your MinIO storage via the web console at https://$domain_name/minio-console"
     echo ""
 fi
 

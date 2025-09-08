@@ -26,6 +26,7 @@ interface RankingQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured?: boolean;
 }
 
 export const RankingQuestionForm = ({
@@ -37,6 +38,7 @@ export const RankingQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
 }: RankingQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -129,6 +131,7 @@ export const RankingQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
 
       <div ref={parent}>

@@ -65,6 +65,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         fbLogoUrl={FB_LOGO_URL}
         user={user}
+        isStorageConfigured={IS_STORAGE_CONFIGURED}
       />
       {isMultiOrgEnabled && (
         <SettingsCard

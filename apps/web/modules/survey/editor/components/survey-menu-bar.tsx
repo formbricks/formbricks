@@ -337,6 +337,7 @@ export const SurveyMenuBar = ({
           <div>
             <Alert variant="warning" size="small">
               <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
+              <AlertButton onClick={() => setIsCautionDialogOpen(true)}>{t("common.learn_more")}</AlertButton>
             </Alert>
           </div>
         )}

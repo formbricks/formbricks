@@ -21,6 +21,7 @@ interface CTAQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured?: boolean;
 }
 
 export const CTAQuestionForm = ({
@@ -33,6 +34,7 @@ export const CTAQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
 }: CTAQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const options = [
@@ -57,6 +59,7 @@ export const CTAQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
 
       <div className="mt-3">

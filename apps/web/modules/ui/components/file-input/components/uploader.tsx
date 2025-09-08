@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 import { ArrowUpFromLineIcon } from "lucide-react";
 import React from "react";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
@@ -15,6 +16,7 @@ interface UploaderProps {
   handleUpload: (files: File[]) => void;
   uploadMore?: boolean;
   disabled?: boolean;
+  isStorageConfigured?: boolean;
 }
 
 export const Uploader = ({
@@ -29,6 +31,7 @@ export const Uploader = ({
   handleUpload,
   uploadMore = false,
   disabled = false,
+  isStorageConfigured = true,
 }: UploaderProps) => {
   return (
     <label
@@ -41,8 +44,34 @@ export const Uploader = ({
           ? "cursor-not-allowed opacity-50"
           : "hover:bg-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800"
       )}
-      onDragOver={(e) => !disabled && handleDragOver(e)}
-      onDrop={(e) => !disabled && handleDrop(e)}>
+      onDragOver={(e) => {
+        if (!isStorageConfigured) {
+          showStorageNotConfiguredToast();
+          return;
+        }
+
+        if (!disabled) {
+          handleDragOver(e);
+        }
+      }}
+      onDrop={(e) => {
+        if (!isStorageConfigured) {
+          showStorageNotConfiguredToast();
+          return;
+        }
+
+        if (!disabled) {
+          handleDrop(e);
+        }
+      }}
+      onClick={(e) => {
+        if (!isStorageConfigured) {
+          e.preventDefault();
+          e.stopPropagation();
+          showStorageNotConfiguredToast();
+          return;
+        }
+      }}>
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
         <ArrowUpFromLineIcon className="h-6 text-slate-500" />
         <p className={cn("mt-2 text-center text-sm text-slate-500", uploadMore && "text-xs")}>
@@ -59,6 +88,11 @@ export const Uploader = ({
           disabled={disabled}
           ref={ref}
           onChange={async (e) => {
+            if (!isStorageConfigured) {
+              showStorageNotConfiguredToast();
+              return;
+            }
+
             let selectedFiles = Array.from(e.target?.files || []);
             handleUpload(selectedFiles);
           }}

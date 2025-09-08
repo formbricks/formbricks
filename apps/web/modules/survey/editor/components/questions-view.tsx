@@ -65,6 +65,7 @@ interface QuestionsViewProps {
   locale: TUserLocale;
   responseCount: number;
   setIsCautionDialogOpen: (open: boolean) => void;
+  isStorageConfigured?: boolean;
 }
 
 export const QuestionsView = ({
@@ -85,6 +86,7 @@ export const QuestionsView = ({
   locale,
   responseCount,
   setIsCautionDialogOpen,
+  isStorageConfigured = true,
 }: QuestionsViewProps) => {
   const { t } = useTranslate();
   const internalQuestionIdMap = useMemo(() => {
@@ -439,6 +441,7 @@ export const QuestionsView = ({
             setSelectedLanguageCode={setSelectedLanguageCode}
             selectedLanguageCode={selectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       )}
@@ -466,6 +469,7 @@ export const QuestionsView = ({
           locale={locale}
           responseCount={responseCount}
           onAlertTrigger={() => setIsCautionDialogOpen(true)}
+          isStorageConfigured={isStorageConfigured}
         />
       </DndContext>
 

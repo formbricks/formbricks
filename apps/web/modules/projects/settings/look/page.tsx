@@ -48,12 +48,18 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
           colors={SURVEY_BG_COLORS}
           isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
           isReadOnly={isReadOnly}
+          isStorageConfigured={IS_STORAGE_CONFIGURED}
         />
       </SettingsCard>
       <SettingsCard
         title={t("common.logo")}
         description={t("environments.project.look.logo_settings_description")}>
-        <EditLogo project={project} environmentId={params.environmentId} isReadOnly={isReadOnly} />
+        <EditLogo
+          project={project}
+          environmentId={params.environmentId}
+          isReadOnly={isReadOnly}
+          isStorageConfigured={IS_STORAGE_CONFIGURED}
+        />
       </SettingsCard>
       <SettingsCard
         title={t("environments.project.look.app_survey_placement")}
