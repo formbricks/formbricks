@@ -577,8 +577,6 @@
       "contacts_table_refresh": "連絡先を更新",
       "contacts_table_refresh_success": "連絡先を正常に更新しました",
       "delete_contact_confirmation": "これにより、この連絡先に関連付けられているすべてのフォーム回答と連絡先属性が削除されます。この連絡先のデータに基づいたターゲティングとパーソナライゼーションはすべて失われます。",
-      "first_name": "名",
-      "last_name": "姓",
       "no_responses_found": "回答が見つかりません",
       "not_provided": "提供されていません",
       "search_contact": "連絡先を検索",

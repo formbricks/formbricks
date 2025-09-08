@@ -577,8 +577,6 @@
       "contacts_table_refresh": "Kontakte aktualisieren",
       "contacts_table_refresh_success": "Kontakte erfolgreich aktualisiert",
       "delete_contact_confirmation": "Dies wird alle Umfrageantworten und Kontaktattribute löschen, die mit diesem Kontakt verbunden sind. Jegliche zielgerichtete Kommunikation und Personalisierung basierend auf den Daten dieses Kontakts gehen verloren.",
-      "first_name": "Vorname",
-      "last_name": "Nachname",
       "no_responses_found": "Keine Antworten gefunden",
       "not_provided": "Nicht angegeben",
       "search_contact": "Kontakt suchen",

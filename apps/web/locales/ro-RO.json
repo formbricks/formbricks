@@ -577,8 +577,6 @@
       "contacts_table_refresh": "Reîmprospătare contacte",
       "contacts_table_refresh_success": "Contactele au fost actualizate cu succes",
       "delete_contact_confirmation": "Acest lucru va șterge toate răspunsurile la sondaj și atributele de contact asociate cu acest contact. Orice țintire și personalizare bazată pe datele acestui contact vor fi pierdute.",
-      "first_name": "Prenume",
-      "last_name": "Nume de familie",
       "no_responses_found": "Nu s-au găsit răspunsuri",
       "not_provided": "Nu a fost furnizat",
       "search_contact": "Căutați contact",

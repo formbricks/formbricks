@@ -2,6 +2,7 @@ import {
   isAllowedFileExtension,
   isValidFileTypeForExtension,
   isValidImageFile,
+  sanitizeFileName,
   validateFileUploads,
   validateSingleFile,
 } from "@/modules/storage/utils";
@@ -10,7 +11,6 @@ import { StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { sanitizeFileName } from "./utils";
 
 // Mock the getOriginalFileNameFromUrl function
 const mockGetOriginalFileNameFromUrl = vi.hoisted(() => vi.fn());

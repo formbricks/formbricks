@@ -577,8 +577,6 @@
       "contacts_table_refresh": "Rafraîchir les contacts",
       "contacts_table_refresh_success": "Contacts rafraîchis avec succès",
       "delete_contact_confirmation": "Cela supprimera toutes les réponses aux enquêtes et les attributs de contact associés à ce contact. Toute la personnalisation et le ciblage basés sur les données de ce contact seront perdus.",
-      "first_name": "Prénom",
-      "last_name": "Nom de famille",
       "no_responses_found": "Aucune réponse trouvée",
       "not_provided": "Non fourni",
       "search_contact": "Rechercher un contact",

@@ -92,10 +92,14 @@ export class ApiClient {
 
     if (!response.ok) {
       if (response.status === 400) {
-        const err = new Error("Invalid file name");
-        err.name = "InvalidFileNameError";
-        throw err;
+        const json = (await response.json()) as ApiErrorResponse;
+        if (json.details?.fileName) {
+          const err = new Error("Invalid file name");
+          err.name = "InvalidFileNameError";
+          throw err;
+        }
       }
+
       throw new Error(`Upload failed with status: ${String(response.status)}`);
     }
 
