@@ -1,7 +1,7 @@
+import { logger } from "@formbricks/logger";
+import type { z } from "zod";
 import type { CacheError, Result } from "@/types/error";
 import { ErrorCode, err, ok } from "@/types/error";
-import type { z } from "zod";
-import { logger } from "@formbricks/logger";
 
 /**
  * Generic validation function using Zod schemas with Result types

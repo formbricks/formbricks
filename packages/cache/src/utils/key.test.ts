@@ -1,5 +1,5 @@
-import type { CacheKey } from "@/types/keys";
 import { describe, expect, test } from "vitest";
+import type { CacheKey } from "@/types/keys";
 import { makeCacheKey } from "./key";
 
 describe("@formbricks/cache utils/key", () => {

@@ -8,8 +8,10 @@ import { TBaseFilter } from "@formbricks/types/segment";
 import { getPersonSegmentIds, getSegments } from "./segments";
 
 // Mock the cache functions
-vi.mock("@/modules/cache/lib/withCache", () => ({
-  withCache: vi.fn((fn) => fn), // Just execute the function without caching for tests
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    withCache: vi.fn(async (fn) => await fn()), // Just execute the function without caching for tests
+  },
 }));
 
 vi.mock("@/lib/utils/validate", () => ({

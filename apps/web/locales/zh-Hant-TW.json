@@ -576,8 +576,6 @@
       "contacts_table_refresh": "重新整理聯絡人",
       "contacts_table_refresh_success": "聯絡人已成功重新整理",
       "delete_contact_confirmation": "這將刪除與此聯繫人相關的所有調查回應和聯繫屬性。任何基於此聯繫人數據的定位和個性化將會丟失。",
-      "first_name": "名字",
-      "last_name": "姓氏",
       "no_responses_found": "找不到回應",
       "not_provided": "未提供",
       "search_contact": "搜尋聯絡人",

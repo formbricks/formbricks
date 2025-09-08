@@ -1,11 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { createCacheKey, createCacheService, createRedisClientFromEnv } from "./index";
-import type { CacheError, CacheKey, ErrorCode, RedisClient, Result } from "./index";
+import { createCacheKey, getCacheService } from "./index";
+import type { CacheError, CacheKey, ErrorCode, Result } from "./index";
 
 describe("@formbricks/cache index exports", () => {
   test("should export all required functions and constants", () => {
-    expect(typeof createRedisClientFromEnv).toBe("function");
-    expect(typeof createCacheService).toBe("function");
+    expect(typeof getCacheService).toBe("function");
     expect(typeof createCacheKey).toBe("object");
   });
 
@@ -14,14 +13,14 @@ describe("@formbricks/cache index exports", () => {
     // The actual verification happens at compile/import time
     const testTypes = {
       CacheKey: "CacheKey" as keyof { CacheKey: CacheKey },
-      RedisClient: "RedisClient" as keyof { RedisClient: RedisClient },
+      // RedisClient is no longer exported
       Result: "Result" as keyof { Result: Result<unknown, unknown> },
       CacheError: "CacheError" as keyof { CacheError: CacheError },
       ErrorCode: "ErrorCode" as keyof { ErrorCode: ErrorCode },
     };
 
     expect(testTypes.CacheKey).toBe("CacheKey");
-    expect(testTypes.RedisClient).toBe("RedisClient");
+    // RedisClient test removed since it's no longer exported
     expect(testTypes.Result).toBe("Result");
     expect(testTypes.CacheError).toBe("CacheError");
     expect(testTypes.ErrorCode).toBe("ErrorCode");

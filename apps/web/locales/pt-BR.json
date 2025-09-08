@@ -576,8 +576,6 @@
       "contacts_table_refresh": "Atualizar contatos",
       "contacts_table_refresh_success": "Contatos atualizados com sucesso",
       "delete_contact_confirmation": "Isso irá apagar todas as respostas da pesquisa e atributos de contato associados a este contato. Qualquer direcionamento e personalização baseados nos dados deste contato serão perdidos.",
-      "first_name": "Primeiro Nome",
-      "last_name": "Sobrenome",
       "no_responses_found": "Nenhuma resposta encontrada",
       "not_provided": "Não fornecido",
       "search_contact": "Buscar contato",
