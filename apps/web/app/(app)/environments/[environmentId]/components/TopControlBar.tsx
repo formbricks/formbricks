@@ -10,7 +10,6 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { BugIcon, CircleUserIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
@@ -48,7 +47,6 @@ export const TopControlBar = ({
   currentOrgBillingPlan,
 }: TopControlBarProps) => {
   const { t } = useTranslate();
-  const router = useRouter();
 
   const { isMember, isBilling } = getAccessFlags(membershipRole);
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
@@ -90,28 +88,20 @@ export const TopControlBar = ({
         </TooltipRenderer>
 
         <TooltipRenderer tooltipContent={t("common.account")}>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-fit w-fit bg-slate-50 p-1"
-            onClick={() => {
-              router.push(`/environments/${environment.id}/settings/profile`);
-            }}>
-            <CircleUserIcon />
+          <Button variant="ghost" size="icon" className="h-fit w-fit bg-slate-50 p-1" asChild>
+            <Link href={`/environments/${environment.id}/settings/profile`}>
+              <CircleUserIcon />
+            </Link>
           </Button>
         </TooltipRenderer>
         {isBilling || isReadOnly ? (
           <></>
         ) : (
           <TooltipRenderer tooltipContent={t("common.new_survey")}>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-fit w-fit p-1"
-              onClick={() => {
-                router.push(`/environments/${environment.id}/surveys/templates`);
-              }}>
-              <PlusIcon />
+            <Button variant="secondary" size="icon" className="h-fit w-fit p-1" asChild>
+              <Link href={`/environments/${environment.id}/surveys/templates`}>
+                <PlusIcon />
+              </Link>
             </Button>
           </TooltipRenderer>
         )}
