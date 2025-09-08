@@ -110,9 +110,10 @@ export const deleteQuota = async (quotaId: string): Promise<TSurveyQuota> => {
   }
 };
 
-export const reduceQuotaLimits = async (quotaIds: string[]): Promise<void> => {
+export const reduceQuotaLimits = async (quotaIds: string[], tx?: Prisma.TransactionClient): Promise<void> => {
   try {
-    await prisma.surveyQuota.updateMany({
+    const prismaClient = tx ?? prisma;
+    await prismaClient.surveyQuota.updateMany({
       where: {
         id: {
           in: quotaIds,
