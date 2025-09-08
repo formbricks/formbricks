@@ -193,7 +193,7 @@ describe("Page component", () => {
   test("renders header and sidebar for authenticated user", async () => {
     vi.mocked(getOrganizationAuth).mockResolvedValue({
       session: { user: { id: "user1" } },
-      organization: { id: "org1" },
+      organization: { id: "org1", billing: { plan: "free" } },
     } as any);
     vi.mocked(getUser).mockResolvedValue({ id: "user1", name: "Test User" } as any);
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([{ id: "org1", name: "Org One" } as any]);

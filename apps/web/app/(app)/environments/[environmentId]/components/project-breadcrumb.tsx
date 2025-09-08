@@ -15,19 +15,18 @@ import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
 
 interface ProjectBreadcrumbProps {
-  currentProject: TProject;
-  projects: TProject[];
+  currentProject: { id: string; name: string };
+  projects: { id: string; name: string }[];
   isOwnerOrManager: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
-  currentOrganization: TOrganization;
+  currentOrganization: { id: string; name: string };
   currentEnvironmentId: string;
   isAccessControlAllowed: boolean;
+  currentOrgBillingPlan: string;
 }
 
 export const ProjectBreadcrumb = ({
@@ -40,9 +39,10 @@ export const ProjectBreadcrumb = ({
   currentOrganization,
   currentEnvironmentId,
   isAccessControlAllowed,
+  currentOrgBillingPlan,
 }: ProjectBreadcrumbProps) => {
   const { t } = useTranslate();
-  const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
@@ -62,7 +62,7 @@ export const ProjectBreadcrumb = ({
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
-    if (isFormbricksCloud && currentOrganization.billing.plan !== "enterprise") {
+    if (isFormbricksCloud && currentOrgBillingPlan !== "enterprise") {
       return [
         {
           text: t("environments.settings.billing.upgrade"),
@@ -88,8 +88,8 @@ export const ProjectBreadcrumb = ({
     ];
   };
   return (
-    <BreadcrumbItem isActive={projectDropdownOpen}>
-      <DropdownMenu onOpenChange={setProjectDropdownOpen}>
+    <BreadcrumbItem isActive={isProjectDropdownOpen}>
+      <DropdownMenu onOpenChange={setIsProjectDropdownOpen}>
         <DropdownMenuTrigger
           className="flex cursor-pointer items-center gap-1 outline-none"
           id="projectDropdownTrigger"
@@ -98,7 +98,7 @@ export const ProjectBreadcrumb = ({
             <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{currentProject.name}</span>
             {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
-            {projectDropdownOpen ? (
+            {isProjectDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
               <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />

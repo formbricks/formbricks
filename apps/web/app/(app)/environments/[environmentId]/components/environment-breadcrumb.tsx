@@ -13,17 +13,16 @@ import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, CircleHelpIcon, Code2Icon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
 
 export const EnvironmentBreadcrumb = ({
   environments,
   environment,
 }: {
-  environments: TEnvironment[];
-  environment: TEnvironment;
+  environments: { id: string; type: string }[];
+  environment: { id: string; type: string };
 }) => {
   const { t } = useTranslate();
-  const [environmentDropdownOpen, setEnvironmentDropdownOpen] = useState(false);
+  const [isEnvironmentDropdownOpen, setIsEnvironmentDropdownOpen] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,8 +47,8 @@ export const EnvironmentBreadcrumb = ({
   };
 
   return (
-    <BreadcrumbItem isActive={environmentDropdownOpen} isHighlighted={environment.type === "development"}>
-      <DropdownMenu onOpenChange={setEnvironmentDropdownOpen}>
+    <BreadcrumbItem isActive={isEnvironmentDropdownOpen} isHighlighted={environment.type === "development"}>
+      <DropdownMenu onOpenChange={setIsEnvironmentDropdownOpen}>
         <DropdownMenuTrigger
           className="flex cursor-pointer items-center gap-1 outline-none"
           id="environmentDropdownTrigger"
@@ -59,7 +58,7 @@ export const EnvironmentBreadcrumb = ({
             <span className="capitalize">{environment.type}</span>
             {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {environment.type === "development" && developmentTooltip()}
-            {environmentDropdownOpen && <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />}
+            {isEnvironmentDropdownOpen && <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />}
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="mt-2" align="start">

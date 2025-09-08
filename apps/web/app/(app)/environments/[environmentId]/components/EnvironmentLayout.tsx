@@ -1,5 +1,7 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
+import { getOrganizationsByUserId } from "@/app/(app)/environments/[environmentId]/lib/organization";
+import { getUserProjects } from "@/app/(app)/environments/[environmentId]/lib/project";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -8,9 +10,7 @@ import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
-  getOrganizationsByUserId,
 } from "@/lib/organization/service";
-import { getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import {
@@ -50,8 +50,14 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     throw new Error(t("common.environment_not_found"));
   }
 
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  if (!currentUserMembership) {
+    throw new Error(t("common.membership_not_found"));
+  }
+  const membershipRole = currentUserMembership?.role;
+
   const [projects, environments, isAccessControlAllowed] = await Promise.all([
-    getUserProjects(user.id, organization.id),
+    getUserProjects(user.id, currentUserMembership),
     getEnvironments(environment.projectId),
     getAccessControlPermission(organization.billing.plan),
   ]);
@@ -60,8 +66,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     throw new Error(t("environments.projects_environments_organizations_not_found"));
   }
 
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const membershipRole = currentUserMembership?.role;
   const { isMember } = getAccessFlags(membershipRole);
 
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
@@ -126,11 +130,10 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar
-            environment={environment}
             environments={environments}
-            organization={organization}
+            currentOrganizationId={organization.id}
             organizations={organizations}
-            project={project}
+            currentProjectId={project.id}
             projects={projects}
             isMultiOrgEnabled={isMultiOrgEnabled}
             organizationProjectsLimit={organizationProjectsLimit}
@@ -140,6 +143,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
             isAccessControlAllowed={isAccessControlAllowed}
             membershipRole={membershipRole}
             projectPermission={projectPermission}
+            currentOrgBillingPlan={organization.billing.plan}
           />
           <div className="flex-1 overflow-y-auto">{children}</div>
         </div>

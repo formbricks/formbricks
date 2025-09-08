@@ -37,7 +37,6 @@ import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
 import packageJson from "../../../../../package.json";
 
@@ -45,7 +44,7 @@ interface NavigationProps {
   environment: TEnvironment;
   user: TUser;
   organization: TOrganization;
-  projects: TProject[];
+  projects: { id: string; name: string }[];
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;

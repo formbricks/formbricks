@@ -21,11 +21,10 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { TOrganization } from "@formbricks/types/organizations";
 
 interface OrganizationBreadcrumbProps {
-  currentOrganization: TOrganization;
-  organizations: TOrganization[];
+  currentOrganization: { id: string; name: string };
+  organizations: { id: string; name: string }[];
   isMultiOrgEnabled: boolean;
   currentEnvironmentId?: string;
   isFormbricksCloud: boolean;
@@ -43,7 +42,7 @@ export const OrganizationBreadcrumb = ({
   isOwnerOrManager,
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslate();
-  const [organizationDropdownOpen, setOrganizationDropdownOpen] = useState(false);
+  const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -89,8 +88,8 @@ export const OrganizationBreadcrumb = ({
   ];
 
   return (
-    <BreadcrumbItem isActive={organizationDropdownOpen}>
-      <DropdownMenu onOpenChange={setOrganizationDropdownOpen}>
+    <BreadcrumbItem isActive={isOrganizationDropdownOpen}>
+      <DropdownMenu onOpenChange={setIsOrganizationDropdownOpen}>
         <DropdownMenuTrigger
           className="flex cursor-pointer items-center gap-1 outline-none"
           id="organizationDropdownTrigger"
@@ -99,7 +98,7 @@ export const OrganizationBreadcrumb = ({
             <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{currentOrganization.name}</span>
             {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
-            {organizationDropdownOpen ? (
+            {isOrganizationDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
               <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />

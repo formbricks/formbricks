@@ -2,8 +2,6 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
 import { ProjectAndOrgSwitch } from "./project-and-org-switch";
 
 // Mock the individual breadcrumb components
@@ -74,74 +72,24 @@ vi.mock("@/modules/ui/components/breadcrumb", () => ({
 }));
 
 describe("ProjectAndOrgSwitch", () => {
-  const mockOrganization1: TOrganization = {
+  const mockOrganization1 = {
     id: "org-1",
     name: "Test Organization 1",
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    billing: {
-      plan: "free",
-      stripeCustomerId: null,
-      features: {
-        inAppSurvey: {
-          status: "active",
-          unlimited: false,
-        },
-        linkSurvey: {
-          status: "active",
-          unlimited: false,
-        },
-        userTargeting: {
-          status: "active",
-          unlimited: false,
-        },
-      },
-    },
-    isAIEnabled: false,
   };
 
-  const mockOrganization2: TOrganization = {
+  const mockOrganization2 = {
     id: "org-2",
     name: "Test Organization 2",
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    billing: {
-      plan: "pro",
-      stripeCustomerId: "stripe-123",
-      features: {
-        inAppSurvey: {
-          status: "active",
-          unlimited: true,
-        },
-        linkSurvey: {
-          status: "active",
-          unlimited: true,
-        },
-        userTargeting: {
-          status: "active",
-          unlimited: true,
-        },
-      },
-    },
-    isAIEnabled: true,
   };
 
-  const mockProject1: TProject = {
+  const mockProject1 = {
     id: "proj-1",
     name: "Test Project 1",
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    organizationId: "org-1",
-    languages: [],
   };
 
-  const mockProject2: TProject = {
+  const mockProject2 = {
     id: "proj-2",
     name: "Test Project 2",
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    organizationId: "org-1",
-    languages: [],
   };
 
   const mockEnvironment1: TEnvironment = {
@@ -151,7 +99,6 @@ describe("ProjectAndOrgSwitch", () => {
     type: "production",
     projectId: "proj-1",
     appSetupCompleted: true,
-    websiteSetupCompleted: true,
   };
 
   const mockEnvironment2: TEnvironment = {
@@ -161,15 +108,14 @@ describe("ProjectAndOrgSwitch", () => {
     type: "development",
     projectId: "proj-1",
     appSetupCompleted: true,
-    websiteSetupCompleted: true,
   };
 
   const defaultProps = {
-    currentOrganization: mockOrganization1,
+    currentOrganizationId: "org-1",
     organizations: [mockOrganization1, mockOrganization2],
-    currentProject: mockProject1,
+    currentProjectId: "proj-1",
     projects: [mockProject1, mockProject2],
-    currentEnvironment: mockEnvironment1,
+    currentEnvironmentId: "env-1",
     environments: [mockEnvironment1, mockEnvironment2],
     isMultiOrgEnabled: true,
     organizationProjectsLimit: 5,
@@ -177,6 +123,8 @@ describe("ProjectAndOrgSwitch", () => {
     isLicenseActive: false,
     isOwnerOrManager: true,
     isAccessControlAllowed: true,
+    isMember: true,
+    currentOrgBillingPlan: "free",
   };
 
   afterEach(() => {
@@ -284,7 +232,7 @@ describe("ProjectAndOrgSwitch", () => {
     });
 
     test("handles development environment", () => {
-      render(<ProjectAndOrgSwitch {...defaultProps} currentEnvironment={mockEnvironment2} />);
+      render(<ProjectAndOrgSwitch {...defaultProps} currentEnvironmentId="env-2" />);
 
       const envBreadcrumb = screen.getByTestId("environment-breadcrumb");
       expect(envBreadcrumb).toHaveTextContent("Environment: development");
@@ -300,23 +248,6 @@ describe("ProjectAndOrgSwitch", () => {
   });
 
   describe("Props Propagation", () => {
-    test("correctly propagates current environment ID to all components", () => {
-      const customEnvironment = {
-        ...mockEnvironment1,
-        id: "custom-env-123",
-      };
-
-      render(<ProjectAndOrgSwitch {...defaultProps} currentEnvironment={customEnvironment} />);
-
-      expect(screen.getByTestId("organization-breadcrumb")).toHaveTextContent(
-        "Environment ID: custom-env-123"
-      );
-      expect(screen.getByTestId("project-breadcrumb")).toHaveTextContent("Environment ID: custom-env-123");
-      expect(screen.getByTestId("environment-breadcrumb")).toHaveTextContent(
-        "Environment ID: custom-env-123"
-      );
-    });
-
     test("correctly propagates organization limits", () => {
       render(<ProjectAndOrgSwitch {...defaultProps} organizationProjectsLimit={10} />);
 
@@ -325,7 +256,7 @@ describe("ProjectAndOrgSwitch", () => {
     });
 
     test("correctly propagates current organization to project breadcrumb", () => {
-      render(<ProjectAndOrgSwitch {...defaultProps} currentOrganization={mockOrganization2} />);
+      render(<ProjectAndOrgSwitch {...defaultProps} currentOrganizationId="org-2" />);
 
       const orgBreadcrumb = screen.getByTestId("organization-breadcrumb");
       const projectBreadcrumb = screen.getByTestId("project-breadcrumb");
@@ -336,14 +267,6 @@ describe("ProjectAndOrgSwitch", () => {
   });
 
   describe("Edge Cases", () => {
-    test("handles empty arrays gracefully", () => {
-      render(<ProjectAndOrgSwitch {...defaultProps} organizations={[]} projects={[]} environments={[]} />);
-
-      expect(screen.getByTestId("organization-breadcrumb")).toHaveTextContent("Organizations Count: 0");
-      expect(screen.getByTestId("project-breadcrumb")).toHaveTextContent("Projects Count: 0");
-      expect(screen.getByTestId("environment-breadcrumb")).toHaveTextContent("Environments Count: 0");
-    });
-
     test("handles zero project limit", () => {
       render(<ProjectAndOrgSwitch {...defaultProps} organizationProjectsLimit={0} />);
 
@@ -410,7 +333,14 @@ describe("ProjectAndOrgSwitch", () => {
       };
 
       expect(() => {
-        render(<ProjectAndOrgSwitch {...minimalProps} />);
+        render(
+          <ProjectAndOrgSwitch
+            {...minimalProps}
+            currentOrganizationId="org-1"
+            isMember={true}
+            currentOrgBillingPlan="free"
+          />
+        );
       }).not.toThrow();
 
       expect(screen.getByTestId("breadcrumb")).toBeInTheDocument();

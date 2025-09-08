@@ -39,7 +39,7 @@ const Page = async (props) => {
           <div className="p-6">
             {/* we only need to render organization breadcrumb on this page, so we pass some default value without actually calculating them to ProjectAndOrgSwitch component  */}
             <ProjectAndOrgSwitch
-              currentOrganization={organization}
+              currentOrganizationId={organization.id}
               organizations={organizations}
               projects={[]}
               isMultiOrgEnabled={isMultiOrgEnabled}
@@ -50,6 +50,7 @@ const Page = async (props) => {
               isAccessControlAllowed={false}
               isMember={isMember}
               environments={[]}
+              currentOrgBillingPlan={organization.billing.plan}
             />
           </div>
           <div className="flex h-full flex-col items-center justify-center space-y-12">

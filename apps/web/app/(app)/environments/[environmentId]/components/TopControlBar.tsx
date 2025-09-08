@@ -1,6 +1,7 @@
 "use client";
 
 import { ProjectAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/components/project-and-org-switch";
+import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -12,16 +13,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
 
-interface SideBarProps {
-  environment: TEnvironment;
+interface TopControlBarProps {
   environments: TEnvironment[];
-  organization: TOrganization;
-  organizations: TOrganization[];
-  project: TProject;
-  projects: TProject[];
+  currentOrganizationId: string;
+  organizations: { id: string; name: string }[];
+  currentProjectId: string;
+  projects: { id: string; name: string }[];
   isMultiOrgEnabled: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
@@ -30,14 +28,14 @@ interface SideBarProps {
   isAccessControlAllowed: boolean;
   membershipRole?: TOrganizationRole;
   projectPermission: TTeamPermission | null;
+  currentOrgBillingPlan: string;
 }
 
 export const TopControlBar = ({
-  environment,
   environments,
-  organization,
+  currentOrganizationId,
   organizations,
-  project,
+  currentProjectId,
   projects,
   isMultiOrgEnabled,
   organizationProjectsLimit,
@@ -47,13 +45,15 @@ export const TopControlBar = ({
   isAccessControlAllowed,
   membershipRole,
   projectPermission,
-}: SideBarProps) => {
+  currentOrgBillingPlan,
+}: TopControlBarProps) => {
   const { t } = useTranslate();
   const router = useRouter();
 
   const { isMember, isBilling } = getAccessFlags(membershipRole);
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
   const isReadOnly = isMember && hasReadAccess;
+  const { environment } = useEnvironment();
 
   return (
     <div
@@ -61,11 +61,11 @@ export const TopControlBar = ({
       data-testid="fb__global-top-control-bar">
       <div className="flex items-center">
         <ProjectAndOrgSwitch
-          currentEnvironment={environment}
+          currentEnvironmentId={environment.id}
           environments={environments}
-          currentOrganization={organization}
+          currentOrganizationId={currentOrganizationId}
           organizations={organizations}
-          currentProject={project}
+          currentProjectId={currentProjectId}
           projects={projects}
           isMultiOrgEnabled={isMultiOrgEnabled}
           organizationProjectsLimit={organizationProjectsLimit}
@@ -74,6 +74,7 @@ export const TopControlBar = ({
           isOwnerOrManager={isOwnerOrManager}
           isMember={isMember}
           isAccessControlAllowed={isAccessControlAllowed}
+          currentOrgBillingPlan={currentOrgBillingPlan}
         />
       </div>
       <div className="z-50 flex items-center space-x-2">
