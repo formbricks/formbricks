@@ -1,324 +1,395 @@
 {
-  "$schema": "https://mintlify.com/schema.json",
+  "$schema": "https://mintlify.com/docs.json",
   "colors": {
-    "anchors": {
-      "from": "#0D9373",
-      "to": "#07C983"
-    },
     "dark": "#00C4B8",
     "light": "#00C4B8",
     "primary": "#00C4B8"
   },
   "favicon": "/images/favicon.svg",
-  "footerSocials": {
-    "github": "https://github.com/formbricks/formbricks",
-    "linkedin": "https://linkedin.com/company/formbricks",
-    "x": "https://x.com/formbricks"
+  "footer": {
+    "socials": {
+      "github": "https://github.com/formbricks/formbricks",
+      "linkedin": "https://linkedin.com/company/formbricks",
+      "x": "https://x.com/formbricks"
+    }
+  },
+  "integrations": {
+    "posthog": {
+      "apiHost": "https://eu.i.posthog.com",
+      "apiKey": "phc_zJO1n3rjHlhqKiJ0gqLDwT4qvfWF1wzHDq2gfl0moQm"
+    }
   },
   "logo": {
     "dark": "/images/logo-dark.svg",
     "light": "/images/logo-light.svg"
   },
   "name": "Documentation - Formbricks",
-  "navigation": [
-    {
-      "group": "",
-      "pages": ["overview/introduction", "overview/what-is-formbricks", "overview/open-source"]
-    },
-    {
-      "group": "",
-      "pages": ["xm-and-surveys/overview"]
-    },
-    {
-      "group": "Surveys",
-      "pages": [
-        {
-          "group": "General Features",
-          "icon": "wrench",
-          "pages": [
-            "xm-and-surveys/surveys/general-features/add-image-or-video-question",
-            "xm-and-surveys/surveys/general-features/conditional-logic",
-            "xm-and-surveys/surveys/general-features/overwrite-styling",
-            "xm-and-surveys/surveys/general-features/hidden-fields",
-            "xm-and-surveys/surveys/general-features/limit-submissions",
-            "xm-and-surveys/surveys/general-features/multi-language-surveys",
-            "xm-and-surveys/surveys/general-features/partial-submissions",
-            "xm-and-surveys/surveys/general-features/recall",
-            "xm-and-surveys/surveys/general-features/schedule-start-end-dates",
-            "xm-and-surveys/surveys/general-features/metadata",
-            "xm-and-surveys/surveys/general-features/variables",
-            "xm-and-surveys/surveys/general-features/hide-back-button",
-            "xm-and-surveys/surveys/general-features/email-followups",
-            "xm-and-surveys/surveys/general-features/quota-management",
-            "xm-and-surveys/surveys/general-features/spam-protection"
-          ]
-        },
-        {
-          "group": "Link Surveys",
-          "icon": "link",
-          "pages": [
-            "xm-and-surveys/surveys/link-surveys/quickstart",
-            {
-              "group": "Features",
-              "icon": "wrench",
-              "pages": [
-                "xm-and-surveys/surveys/link-surveys/data-prefilling",
-                "xm-and-surveys/surveys/link-surveys/embed-surveys",
-                "xm-and-surveys/surveys/link-surveys/personal-links",
-                "xm-and-surveys/surveys/link-surveys/single-use-links",
-                "xm-and-surveys/surveys/link-surveys/source-tracking",
-                "xm-and-surveys/surveys/link-surveys/start-at-question",
-                "xm-and-surveys/surveys/link-surveys/verify-email-before-survey",
-                "xm-and-surveys/surveys/link-surveys/market-research-panel",
-                "xm-and-surveys/surveys/link-surveys/pin-protected-surveys"
-              ]
-            }
-          ]
-        },
-        {
-          "group": "Website & App Surveys",
-          "icon": "mobile",
-          "pages": [
-            "xm-and-surveys/surveys/website-app-surveys/quickstart",
-            "xm-and-surveys/surveys/website-app-surveys/framework-guides",
-            {
-              "group": "Features",
-              "icon": "wrench",
-              "pages": [
-                "xm-and-surveys/surveys/website-app-surveys/actions",
-                "xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
-                "xm-and-surveys/surveys/website-app-surveys/user-identification",
-                "xm-and-surveys/surveys/website-app-surveys/recontact",
-                "xm-and-surveys/surveys/website-app-surveys/show-survey-to-percent-of-users"
-              ]
-            }
-          ]
-        },
-        {
-          "group": "Question Types",
-          "icon": "question",
-          "pages": [
-            "xm-and-surveys/surveys/question-type/address",
-            "xm-and-surveys/surveys/question-type/consent",
-            "xm-and-surveys/surveys/question-type/contact-info",
-            "xm-and-surveys/surveys/question-type/date",
-            "xm-and-surveys/surveys/question-type/file-upload",
-            "xm-and-surveys/surveys/question-type/free-text",
-            "xm-and-surveys/surveys/question-type/matrix",
-            "xm-and-surveys/surveys/question-type/net-promoter-score",
-            "xm-and-surveys/surveys/question-type/ranking",
-            "xm-and-surveys/surveys/question-type/rating",
-            "xm-and-surveys/surveys/question-type/schedule-a-meeting",
-            "xm-and-surveys/surveys/question-type/select-multiple",
-            "xm-and-surveys/surveys/question-type/select-picture",
-            "xm-and-surveys/surveys/question-type/select-single",
-            "xm-and-surveys/surveys/question-type/statement-cta"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "Platform Features",
-      "pages": [
-        {
-          "group": "Integrations",
-          "icon": "bridge",
-          "pages": [
-            "xm-and-surveys/core-features/integrations/overview",
-            "xm-and-surveys/core-features/integrations/activepieces",
-            "xm-and-surveys/core-features/integrations/airtable",
-            "xm-and-surveys/core-features/integrations/google-sheets",
-            "xm-and-surveys/core-features/integrations/make",
-            "xm-and-surveys/core-features/integrations/n8n",
-            "xm-and-surveys/core-features/integrations/notion",
-            "xm-and-surveys/core-features/integrations/slack",
-            "xm-and-surveys/core-features/integrations/wordpress",
-            "xm-and-surveys/core-features/integrations/zapier",
-            "xm-and-surveys/core-features/integrations/webhooks"
-          ]
-        },
-        "xm-and-surveys/core-features/user-management",
-        "xm-and-surveys/core-features/styling-theme",
-        "xm-and-surveys/core-features/email-customization",
-        "xm-and-surveys/core-features/test-environment"
-      ]
-    },
-    {
-      "group": "XM",
-      "pages": [
-        {
-          "group": "Best Practices",
-          "icon": "lightbulb",
-          "pages": [
-            "xm-and-surveys/xm/best-practices/contact-form",
-            "xm-and-surveys/xm/best-practices/docs-feedback",
-            "xm-and-surveys/xm/best-practices/feature-chaser",
-            "xm-and-surveys/xm/best-practices/feedback-box",
-            "xm-and-surveys/xm/best-practices/improve-email-content",
-            "xm-and-surveys/xm/best-practices/interview-prompt",
-            "xm-and-surveys/xm/best-practices/cancel-subscription",
-            "xm-and-surveys/xm/best-practices/pmf-survey",
-            "xm-and-surveys/xm/best-practices/quiz-time",
-            "xm-and-surveys/xm/best-practices/improve-trial-cr"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "",
-      "pages": ["development/overview"]
-    },
-    {
-      "group": "Local Setup",
-      "pages": [
-        "development/local-setup/linux",
-        "development/local-setup/mac",
-        "development/local-setup/windows",
-        "development/local-setup/gitpod",
-        "development/local-setup/github-codespaces"
-      ]
-    },
-    {
-      "group": "Technical Handbook",
-      "pages": [
-        "development/technical-handbook/overview",
-        "development/technical-handbook/database-model",
-        "development/technical-handbook/tenant-separation"
-      ]
-    },
-    {
-      "group": "Standards",
-      "pages": [
-        {
-          "group": "Code Organization",
-          "icon": "code",
-          "pages": [
-            "development/standards/organization/file-and-directory-organization",
-            "development/standards/organization/naming-conventions",
-            "development/standards/organization/module-component-structure"
-          ]
-        },
-        {
-          "group": "Development Practices",
-          "icon": "laptop",
-          "pages": [
-            "development/standards/practices/code-formatting",
-            "development/standards/practices/documentation",
-            "development/standards/practices/error-handling"
-          ]
-        },
-        {
-          "group": "Technical Standards",
-          "icon": "gear",
-          "pages": [
-            "development/standards/technical/language-specific-conventions",
-            "development/standards/technical/framework-usage"
-          ]
-        },
-        {
-          "group": "Quality Assurance",
-          "icon": "shield",
-          "pages": ["development/standards/qa/code-reviews", "development/standards/qa/testing-methodology"]
-        }
-      ]
-    },
-    {
-      "group": "Contributions",
-      "pages": ["development/contribution/contribution"]
-    },
-    {
-      "group": "Guides",
-      "pages": [
-        {
-          "group": "Auth & Provision",
-          "icon": "user-shield",
-          "pages": ["development/guides/auth-and-provision/setup-saml-with-identity-providers"]
-        }
-      ]
-    },
-    {
-      "group": "Support",
-      "pages": ["development/support/troubleshooting"]
-    },
-    {
-      "group": "",
-      "pages": ["self-hosting/overview"]
-    },
-    {
-      "group": "Setup",
-      "pages": [
-        "self-hosting/setup/one-click",
-        "self-hosting/setup/docker",
-        "self-hosting/setup/monitoring",
-        "self-hosting/setup/cluster-setup",
-        "self-hosting/setup/kubernetes"
-      ]
-    },
-    {
-      "group": "Configuration",
-      "pages": [
-        "self-hosting/configuration/custom-ssl",
-        "self-hosting/configuration/environment-variables",
-        "self-hosting/configuration/smtp",
-        "self-hosting/configuration/domain-configuration",
-        {
-          "group": "Auth & SSO",
-          "icon": "lock",
-          "pages": [
-            "self-hosting/auth-behavior",
-            "self-hosting/configuration/auth-sso/open-id-connect",
-            "self-hosting/configuration/auth-sso/azure-ad-oauth",
-            "self-hosting/configuration/auth-sso/google-oauth",
-            "self-hosting/configuration/auth-sso/saml-sso"
-          ]
-        },
-        {
-          "group": "Integrations",
-          "icon": "bridge",
-          "pages": [
-            "self-hosting/configuration/integrations/airtable",
-            "self-hosting/configuration/integrations/google-sheets",
-            "self-hosting/configuration/integrations/n8n",
-            "self-hosting/configuration/integrations/notion",
-            "self-hosting/configuration/integrations/slack",
-            "self-hosting/configuration/integrations/zapier",
-            "self-hosting/configuration/integrations/activepieces"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "Advanced",
-      "pages": [
-        "self-hosting/advanced/migration",
-        "self-hosting/advanced/license",
-        "self-hosting/advanced/license-activation",
-        {
-          "group": "Enterprise Features",
-          "icon": "building",
-          "pages": [
-            "self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
-            "self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
-            "self-hosting/advanced/enterprise-features/team-access",
-            "self-hosting/advanced/enterprise-features/contact-management-segments",
-            "self-hosting/advanced/enterprise-features/multi-language-surveys",
-            "self-hosting/advanced/enterprise-features/oidc-sso",
-            "self-hosting/advanced/enterprise-features/saml-sso",
-            "self-hosting/advanced/enterprise-features/audit-logging"
-          ]
-        },
-        "self-hosting/advanced/rate-limiting"
-      ]
-    },
-    {
-      "group": "API v1 Documentation",
-      "pages": ["api-reference/rest-api", "api-reference/generate-key", "api-reference/test-key"]
-    },
-    {
-      "group": "API v2 Documentation (Beta)",
-      "pages": ["api-v2-reference/introduction"]
+  "navbar": {
+    "links": [
+      {
+        "href": "https://github.com/formbricks/formbricks/discussions",
+        "label": "Support"
+      }
+    ],
+    "primary": {
+      "href": "https://app.formbricks.com",
+      "label": "Go to app",
+      "type": "button"
     }
-  ],
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["overview/introduction", "overview/what-is-formbricks", "overview/open-source"]
+          }
+        ],
+        "tab": "Overview"
+      },
+      {
+        "groups": [
+          {
+            "group": "XM & Surveys",
+            "pages": ["xm-and-surveys/overview"]
+          },
+          {
+            "group": "Surveys",
+            "pages": [
+              {
+                "group": "General Features",
+                "icon": "wrench",
+                "pages": [
+                  "xm-and-surveys/surveys/general-features/add-image-or-video-question",
+                  "xm-and-surveys/surveys/general-features/conditional-logic",
+                  "xm-and-surveys/surveys/general-features/overwrite-styling",
+                  "xm-and-surveys/surveys/general-features/hidden-fields",
+                  "xm-and-surveys/surveys/general-features/limit-submissions",
+                  "xm-and-surveys/surveys/general-features/multi-language-surveys",
+                  "xm-and-surveys/surveys/general-features/partial-submissions",
+                  "xm-and-surveys/surveys/general-features/recall",
+                  "xm-and-surveys/surveys/general-features/schedule-start-end-dates",
+                  "xm-and-surveys/surveys/general-features/metadata",
+                  "xm-and-surveys/surveys/general-features/variables",
+                  "xm-and-surveys/surveys/general-features/hide-back-button",
+                  "xm-and-surveys/surveys/general-features/email-followups",
+                  "xm-and-surveys/surveys/general-features/quota-management",
+                  "xm-and-surveys/surveys/general-features/spam-protection"
+                ]
+              },
+              {
+                "group": "Link Surveys",
+                "icon": "link",
+                "pages": [
+                  "xm-and-surveys/surveys/link-surveys/quickstart",
+                  {
+                    "group": "Features",
+                    "icon": "wrench",
+                    "pages": [
+                      "xm-and-surveys/surveys/link-surveys/data-prefilling",
+                      "xm-and-surveys/surveys/link-surveys/embed-surveys",
+                      "xm-and-surveys/surveys/link-surveys/link-settings",
+                      "xm-and-surveys/surveys/link-surveys/personal-links",
+                      "xm-and-surveys/surveys/link-surveys/single-use-links",
+                      "xm-and-surveys/surveys/link-surveys/source-tracking",
+                      "xm-and-surveys/surveys/link-surveys/start-at-question",
+                      "xm-and-surveys/surveys/link-surveys/verify-email-before-survey",
+                      "xm-and-surveys/surveys/link-surveys/market-research-panel",
+                      "xm-and-surveys/surveys/link-surveys/pin-protected-surveys"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Website & App Surveys",
+                "icon": "mobile",
+                "pages": [
+                  "xm-and-surveys/surveys/website-app-surveys/quickstart",
+                  "xm-and-surveys/surveys/website-app-surveys/framework-guides",
+                  {
+                    "group": "Features",
+                    "icon": "wrench",
+                    "pages": [
+                      "xm-and-surveys/surveys/website-app-surveys/actions",
+                      "xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
+                      "xm-and-surveys/surveys/website-app-surveys/user-identification",
+                      "xm-and-surveys/surveys/website-app-surveys/recontact",
+                      "xm-and-surveys/surveys/website-app-surveys/show-survey-to-percent-of-users"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Question Types",
+                "icon": "question",
+                "pages": [
+                  "xm-and-surveys/surveys/question-type/address",
+                  "xm-and-surveys/surveys/question-type/consent",
+                  "xm-and-surveys/surveys/question-type/contact-info",
+                  "xm-and-surveys/surveys/question-type/date",
+                  "xm-and-surveys/surveys/question-type/file-upload",
+                  "xm-and-surveys/surveys/question-type/free-text",
+                  "xm-and-surveys/surveys/question-type/matrix",
+                  "xm-and-surveys/surveys/question-type/net-promoter-score",
+                  "xm-and-surveys/surveys/question-type/ranking",
+                  "xm-and-surveys/surveys/question-type/rating",
+                  "xm-and-surveys/surveys/question-type/schedule-a-meeting",
+                  "xm-and-surveys/surveys/question-type/select-multiple",
+                  "xm-and-surveys/surveys/question-type/select-picture",
+                  "xm-and-surveys/surveys/question-type/select-single",
+                  "xm-and-surveys/surveys/question-type/statement-cta"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Platform Features",
+            "pages": [
+              {
+                "group": "Integrations",
+                "icon": "bridge",
+                "pages": [
+                  "xm-and-surveys/core-features/integrations/overview",
+                  "xm-and-surveys/core-features/integrations/activepieces",
+                  "xm-and-surveys/core-features/integrations/airtable",
+                  "xm-and-surveys/core-features/integrations/google-sheets",
+                  "xm-and-surveys/core-features/integrations/make",
+                  "xm-and-surveys/core-features/integrations/n8n",
+                  "xm-and-surveys/core-features/integrations/notion",
+                  "xm-and-surveys/core-features/integrations/slack",
+                  "xm-and-surveys/core-features/integrations/wordpress",
+                  "xm-and-surveys/core-features/integrations/zapier",
+                  "xm-and-surveys/core-features/integrations/webhooks"
+                ]
+              },
+              {
+                "group": "User Management",
+                "icon": "user",
+                "pages": [
+                  "xm-and-surveys/core-features/user-management",
+                  "xm-and-surveys/core-features/user-management/organizations-and-roles",
+                  "xm-and-surveys/core-features/user-management/teams-and-roles",
+                  "xm-and-surveys/core-features/user-management/invite-members",
+                  "xm-and-surveys/core-features/user-management/two-factor-auth"
+                ]
+              },
+              "xm-and-surveys/core-features/styling-theme",
+              "xm-and-surveys/core-features/email-customization",
+              "xm-and-surveys/core-features/test-environment"
+            ]
+          },
+          {
+            "group": "XM",
+            "pages": [
+              {
+                "group": "Best Practices",
+                "icon": "lightbulb",
+                "pages": [
+                  "xm-and-surveys/xm/best-practices/contact-form",
+                  "xm-and-surveys/xm/best-practices/docs-feedback",
+                  "xm-and-surveys/xm/best-practices/feature-chaser",
+                  "xm-and-surveys/xm/best-practices/feedback-box",
+                  "xm-and-surveys/xm/best-practices/improve-email-content",
+                  "xm-and-surveys/xm/best-practices/interview-prompt",
+                  "xm-and-surveys/xm/best-practices/cancel-subscription",
+                  "xm-and-surveys/xm/best-practices/pmf-survey",
+                  "xm-and-surveys/xm/best-practices/quiz-time",
+                  "xm-and-surveys/xm/best-practices/improve-trial-cr"
+                ]
+              }
+            ]
+          }
+        ],
+        "tab": "XM & Surveys"
+      },
+      {
+        "groups": [
+          {
+            "group": "Self Hosting",
+            "pages": ["self-hosting/overview"]
+          },
+          {
+            "group": "Setup",
+            "pages": [
+              "self-hosting/setup/one-click",
+              "self-hosting/setup/docker",
+              "self-hosting/setup/monitoring",
+              "self-hosting/setup/cluster-setup",
+              "self-hosting/setup/kubernetes"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "self-hosting/configuration/custom-ssl",
+              "self-hosting/configuration/environment-variables",
+              "self-hosting/configuration/smtp",
+              "self-hosting/configuration/domain-configuration",
+              {
+                "group": "Auth & SSO",
+                "icon": "lock",
+                "pages": [
+                  "self-hosting/auth-behavior",
+                  "self-hosting/configuration/auth-sso/open-id-connect",
+                  "self-hosting/configuration/auth-sso/azure-ad-oauth",
+                  "self-hosting/configuration/auth-sso/google-oauth",
+                  "self-hosting/configuration/auth-sso/saml-sso"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "icon": "bridge",
+                "pages": [
+                  "self-hosting/configuration/integrations/airtable",
+                  "self-hosting/configuration/integrations/google-sheets",
+                  "self-hosting/configuration/integrations/n8n",
+                  "self-hosting/configuration/integrations/notion",
+                  "self-hosting/configuration/integrations/slack",
+                  "self-hosting/configuration/integrations/zapier",
+                  "self-hosting/configuration/integrations/activepieces"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "self-hosting/advanced/migration",
+              "self-hosting/advanced/license",
+              "self-hosting/advanced/license-activation",
+              {
+                "group": "Enterprise Features",
+                "icon": "building",
+                "pages": [
+                  "self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+                  "self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+                  "self-hosting/advanced/enterprise-features/team-access",
+                  "self-hosting/advanced/enterprise-features/contact-management-segments",
+                  "self-hosting/advanced/enterprise-features/multi-language-surveys",
+                  "self-hosting/advanced/enterprise-features/oidc-sso",
+                  "self-hosting/advanced/enterprise-features/saml-sso",
+                  "self-hosting/advanced/enterprise-features/audit-logging"
+                ]
+              },
+              "self-hosting/advanced/rate-limiting"
+            ]
+          }
+        ],
+        "tab": "Self Hosting"
+      },
+      {
+        "groups": [
+          {
+            "group": "Development",
+            "pages": ["development/overview"]
+          },
+          {
+            "group": "Local Setup",
+            "pages": [
+              "development/local-setup/linux",
+              "development/local-setup/mac",
+              "development/local-setup/windows",
+              "development/local-setup/gitpod",
+              "development/local-setup/github-codespaces"
+            ]
+          },
+          {
+            "group": "Technical Handbook",
+            "pages": [
+              "development/technical-handbook/overview",
+              "development/technical-handbook/database-model",
+              "development/technical-handbook/tenant-separation"
+            ]
+          },
+          {
+            "group": "Standards",
+            "pages": [
+              {
+                "group": "Code Organization",
+                "icon": "code",
+                "pages": [
+                  "development/standards/organization/file-and-directory-organization",
+                  "development/standards/organization/naming-conventions",
+                  "development/standards/organization/module-component-structure"
+                ]
+              },
+              {
+                "group": "Development Practices",
+                "icon": "laptop",
+                "pages": [
+                  "development/standards/practices/code-formatting",
+                  "development/standards/practices/documentation",
+                  "development/standards/practices/error-handling"
+                ]
+              },
+              {
+                "group": "Technical Standards",
+                "icon": "gear",
+                "pages": [
+                  "development/standards/technical/language-specific-conventions",
+                  "development/standards/technical/framework-usage"
+                ]
+              },
+              {
+                "group": "Quality Assurance",
+                "icon": "shield",
+                "pages": [
+                  "development/standards/qa/code-reviews",
+                  "development/standards/qa/testing-methodology"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Contributions",
+            "pages": ["development/contribution/contribution"]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              {
+                "group": "Auth & Provision",
+                "icon": "user-shield",
+                "pages": ["development/guides/auth-and-provision/setup-saml-with-identity-providers"]
+              }
+            ]
+          },
+          {
+            "group": "Support",
+            "pages": ["development/support/troubleshooting"]
+          }
+        ],
+        "tab": "Development"
+      },
+      {
+        "groups": [
+          {
+            "group": "API v1 Documentation",
+            "pages": ["api-reference/rest-api", "api-reference/generate-key", "api-reference/test-key"]
+          }
+        ],
+        "openapi": {
+          "directory": "api-reference",
+          "source": "/api-reference/openapi.json"
+        },
+        "tab": "API v1 Reference"
+      },
+      {
+        "groups": [
+          {
+            "group": "API v2 Documentation (Beta)",
+            "pages": ["api-v2-reference/introduction"]
+          }
+        ],
+        "openapi": {
+          "directory": "api-v2-reference",
+          "source": "/api-v2-reference/openapi.yml"
+        },
+        "tab": "API v2 Reference (Beta)"
+      }
+    ]
+  },
   "redirects": [
     {
       "destination": "/docs/overview/what-is-formbricks",
@@ -628,7 +699,7 @@
     {
       "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-native",
       "permanent": true,
-      "source": "docs/developer-docs/react-native-in-app-surveys"
+      "source": "/docs/developer-docs/react-native-in-app-surveys"
     },
     {
       "destination": "/docs/api-reference/rest-api",
@@ -766,42 +837,5 @@
       "source": "/docs/app-surveys/global/multi-language-surveys"
     }
   ],
-  "tabs": [
-    {
-      "name": "Overview",
-      "url": "overview"
-    },
-    {
-      "name": "XM & Surveys",
-      "url": "xm-and-surveys"
-    },
-    {
-      "name": "Self Hosting",
-      "url": "self-hosting"
-    },
-    {
-      "name": "Development",
-      "url": "development"
-    },
-    {
-      "name": "API v1 Reference",
-      "openapi": "/api-reference/openapi.json",
-      "url": "api-reference"
-    },
-    {
-      "name": "API v2 Reference (Beta)",
-      "openapi": "/api-v2-reference/openapi.yml",
-      "url": "api-v2-reference"
-    }
-  ],
-  "topbarCtaButton": {
-    "name": "Go to app",
-    "url": "https://app.formbricks.com"
-  },
-  "topbarLinks": [
-    {
-      "name": "Support",
-      "url": "https://github.com/formbricks/formbricks/discussions"
-    }
-  ]
+  "theme": "mint"
 }

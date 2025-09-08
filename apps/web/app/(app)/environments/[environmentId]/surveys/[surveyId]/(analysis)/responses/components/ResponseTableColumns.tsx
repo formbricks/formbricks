@@ -34,6 +34,8 @@ const getQuestionColumnsData = (
   t: TFnType
 ): ColumnDef<TResponseTableData>[] => {
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+  const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
+  const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
 
   // Helper function to create consistent column headers
   const createQuestionHeader = (questionType: string, headline: string, suffix?: string) => {
@@ -74,7 +76,7 @@ const getQuestionColumnsData = (
     case "matrix":
       return question.rows.map((matrixRow) => {
         return {
-          accessorKey: matrixRow.label.default,
+          accessorKey: "QUESTION_" + question.id + "_" + matrixRow.label.default,
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -99,10 +101,9 @@ const getQuestionColumnsData = (
       });
 
     case "address":
-      const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
       return addressFields.map((addressField) => {
         return {
-          accessorKey: addressField,
+          accessorKey: "QUESTION_" + question.id + "_" + addressField,
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -123,10 +124,9 @@ const getQuestionColumnsData = (
       });
 
     case "contactInfo":
-      const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
       return contactInfoFields.map((contactInfoField) => {
         return {
-          accessorKey: contactInfoField,
+          accessorKey: "QUESTION_" + question.id + "_" + contactInfoField,
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -153,7 +153,7 @@ const getQuestionColumnsData = (
       const questionHeadline = getQuestionHeadline(question, survey);
       return [
         {
-          accessorKey: question.id,
+          accessorKey: "QUESTION_" + question.id,
           header: createQuestionHeader(question.type, questionHeadline),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[question.id];
@@ -171,7 +171,7 @@ const getQuestionColumnsData = (
           },
         },
         {
-          accessorKey: question.id + "optionIds",
+          accessorKey: "QUESTION_" + question.id + "optionIds",
           header: createQuestionHeader(question.type, questionHeadline, t("common.option_id")),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[question.id];
@@ -193,7 +193,7 @@ const getQuestionColumnsData = (
     default:
       return [
         {
-          accessorKey: question.id,
+          accessorKey: "QUESTION_" + question.id,
           header: () => (
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 overflow-hidden">
@@ -233,7 +233,7 @@ const getMetadataColumnsData = (t: TFnType): ColumnDef<TResponseTableData>[] => 
     const IconComponent = COLUMNS_ICON_MAP[label];
 
     metadataColumns.push({
-      accessorKey: label,
+      accessorKey: "METADATA_" + label,
       header: () => (
         <div className="flex items-center space-x-2 overflow-hidden">
           <span className="h-4 w-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
@@ -283,12 +283,13 @@ export const generateResponseTableColumns = (
             <TooltipTrigger>
               <CircleHelpIcon className="h-3 w-3 text-slate-500" strokeWidth={1.5} />
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="font-normal">
-              {t("environments.surveys.responses.how_to_identify_users")}
+            <TooltipContent side="bottom" className="space-x-1 font-normal">
+              <span>{t("environments.surveys.responses.how_to_identify_users")}</span>
               <Link
                 className="underline underline-offset-2 hover:text-slate-900"
                 href="https://formbricks.com/docs/app-surveys/user-identification"
-                target="_blank">
+                target="_blank"
+                rel="noopener noreferrer">
                 {t("common.app_survey")}
               </Link>
             </TooltipContent>
@@ -308,7 +309,7 @@ export const generateResponseTableColumns = (
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
     size: 200,
-    header: t("common.status"),
+    header: () => <div className="gap-x-1.5">{t("common.status")}</div>,
     cell: ({ row }) => {
       const status = row.original.status;
       return <ResponseBadges items={[{ value: status }]} showId={false} />;
@@ -317,7 +318,7 @@ export const generateResponseTableColumns = (
 
   const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
-    header: t("common.tags"),
+    header: () => <div className="gap-x-1.5">{t("common.tags")}</div>,
     cell: ({ row }) => {
       const tags = row.original.tags;
       if (Array.isArray(tags)) {
@@ -336,7 +337,7 @@ export const generateResponseTableColumns = (
 
   const variableColumns: ColumnDef<TResponseTableData>[] = survey.variables.map((variable) => {
     return {
-      accessorKey: variable.id,
+      accessorKey: "VARIABLE_" + variable.id,
       header: () => (
         <div className="flex items-center space-x-2 overflow-hidden">
           <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
@@ -355,7 +356,7 @@ export const generateResponseTableColumns = (
   const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = survey.hiddenFields.fieldIds
     ? survey.hiddenFields.fieldIds.map((hiddenFieldId) => {
         return {
-          accessorKey: hiddenFieldId,
+          accessorKey: "HIDDEN_FIELD_" + hiddenFieldId,
           header: () => (
             <div className="flex items-center space-x-2 overflow-hidden">
               <span className="h-4 w-4">

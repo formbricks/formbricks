@@ -94,21 +94,48 @@ export const toggleGroupConnector = (group: TConditionGroup, resourceId: string)
   }
 };
 
-export const removeCondition = (group: TConditionGroup, resourceId: string) => {
-  for (let i = 0; i < group.conditions.length; i++) {
+export const removeCondition = (group: TConditionGroup, resourceId: string): boolean => {
+  for (let i = group.conditions.length - 1; i >= 0; i--) {
     const item = group.conditions[i];
 
     if (item.id === resourceId) {
       group.conditions.splice(i, 1);
-      return;
+      cleanupGroup(group);
+      return true;
     }
 
-    if (isConditionGroup(item)) {
-      removeCondition(item, resourceId);
+    if (isConditionGroup(item) && removeCondition(item, resourceId)) {
+      cleanupGroup(group);
+      return true;
     }
   }
 
-  deleteEmptyGroups(group);
+  return false;
+};
+
+const cleanupGroup = (group: TConditionGroup) => {
+  // Remove empty condition groups first
+  for (let i = group.conditions.length - 1; i >= 0; i--) {
+    const condition = group.conditions[i];
+    if (isConditionGroup(condition)) {
+      cleanupGroup(condition);
+
+      // Remove if empty after cleanup
+      if (condition.conditions.length === 0) {
+        group.conditions.splice(i, 1);
+      }
+    }
+  }
+
+  // Flatten if group has only one condition and it's a condition group
+  if (group.conditions.length === 1 && isConditionGroup(group.conditions[0])) {
+    group.connector = group.conditions[0].connector || "and";
+    group.conditions = group.conditions[0].conditions;
+  }
+};
+
+export const deleteEmptyGroups = (group: TConditionGroup) => {
+  cleanupGroup(group);
 };
 
 export const duplicateCondition = (group: TConditionGroup, resourceId: string) => {
@@ -126,18 +153,6 @@ export const duplicateCondition = (group: TConditionGroup, resourceId: string) =
 
     if (item.connector) {
       duplicateCondition(item, resourceId);
-    }
-  }
-};
-
-export const deleteEmptyGroups = (group: TConditionGroup) => {
-  for (let i = 0; i < group.conditions.length; i++) {
-    const resource = group.conditions[i];
-
-    if (isConditionGroup(resource) && resource.conditions.length === 0) {
-      group.conditions.splice(i, 1);
-    } else if (isConditionGroup(resource)) {
-      deleteEmptyGroups(resource);
     }
   }
 };
@@ -674,8 +689,9 @@ const performCalculation = (
       if (typeof val === "number" || typeof val === "string") {
         if (variable.type === "number" && !isNaN(Number(val))) {
           operandValue = Number(val);
+        } else {
+          operandValue = val;
         }
-        operandValue = val;
       }
       break;
   }

@@ -4,14 +4,14 @@
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import * as Sentry from "@sentry/nextjs";
-import { useTranslate } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { type ClientErrorType, getClientErrorData } from "@formbricks/types/errors";
 
 /**
  * Get translated error messages based on error type
  * All translation keys are directly visible to Tolgee's static analysis
  */
-const getErrorMessages = (type: ClientErrorType, t: (key: string) => string) => {
+const getErrorMessages = (type: ClientErrorType, t: TFnType) => {
   if (type === "rate_limit") {
     return {
       title: t("common.error_rate_limit_title"),

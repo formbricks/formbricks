@@ -191,9 +191,7 @@ describe("NotionIntegrationPage", () => {
     expect(screen.getByTestId("webAppUrl")).toHaveTextContent("test-webapp-url");
     expect(screen.getByTestId("databaseCount")).toHaveTextContent(mockDatabases.length.toString());
     expect(screen.getByTestId("locale")).toHaveTextContent("en-US");
-    expect(screen.getByTestId("go-back")).toHaveTextContent(
-      `test-webapp-url/environments/${mockProps.params.environmentId}/integrations`
-    );
+    expect(screen.getByTestId("go-back")).toHaveTextContent("./");
     expect(vi.mocked(redirect)).not.toHaveBeenCalled();
     expect(vi.mocked(getNotionDatabases)).toHaveBeenCalledWith(mockEnvironment.id);
   });
