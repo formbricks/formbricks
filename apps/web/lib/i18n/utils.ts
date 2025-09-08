@@ -198,7 +198,7 @@ export const appLanguages = [
       "pt-PT": "Chinês (Tradicional)",
       "ro-RO": "Chineză (Tradicională)",
       "ja-JP": "中国語（繁体字）",
-      "zh-CN": "繁體中文",
+      "zh-CN": "繁体中文",
     },
   },
   {
