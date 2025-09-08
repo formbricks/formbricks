@@ -29,7 +29,7 @@ export const SingleContactPage = async (props: {
     throw new Error(t("environments.contacts.contact_not_found"));
   }
 
-  const isQuotasAllowed = await getIsQuotasEnabled(organization.billing);
+  const isQuotasAllowed = await getIsQuotasEnabled(organization.billing.plan);
 
   const getDeletePersonButton = () => {
     return (

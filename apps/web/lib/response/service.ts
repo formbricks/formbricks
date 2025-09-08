@@ -623,20 +623,14 @@ export const deleteResponse = async (
         await reduceQuotaLimits(quotaIds, tx);
       }
 
-      const survey = await getSurvey(response.surveyId);
-
-      if (survey) {
-        await findAndDeleteUploadedFilesInResponse(
-          {
-            ...responsePrisma,
-            contact: getResponseContact(responsePrisma),
-            tags: responsePrisma.tags.map((tag) => tag.tag),
-          },
-          survey
-        );
-      }
       return response;
     });
+
+    const survey = await getSurvey(txResponse.surveyId);
+
+    if (survey) {
+      await findAndDeleteUploadedFilesInResponse(txResponse, survey);
+    }
 
     return txResponse;
   } catch (error) {

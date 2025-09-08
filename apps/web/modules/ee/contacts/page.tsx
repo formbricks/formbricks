@@ -24,7 +24,7 @@ export const ContactsPage = async ({
 
   const isContactsEnabled = await getIsContactsEnabled();
 
-  const isQuotasAllowed = await getIsQuotasEnabled(organization.billing);
+  const isQuotasAllowed = await getIsQuotasEnabled(organization.billing.plan);
 
   const contactAttributeKeys = await getContactAttributeKeys(params.environmentId);
   const initialContacts = await getContacts(params.environmentId, 0);
