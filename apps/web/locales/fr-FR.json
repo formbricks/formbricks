@@ -203,6 +203,10 @@
     "environment_not_found": "Environnement non trouvé",
     "environment_notice": "Vous êtes actuellement dans l'environnement {environment}.",
     "error": "Erreur",
+    "error_component_description": "Cette ressource n'existe pas ou vous n'avez pas les droits nécessaires pour y accéder.",
+    "error_component_title": "Erreur de chargement des ressources",
+    "error_rate_limit_description": "Nombre maximal de demandes atteint. Veuillez réessayer plus tard.",
+    "error_rate_limit_title": "Limite de Taux Dépassée",
     "expand_rows": "Développer les lignes",
     "finish": "Terminer",
     "follow_these": "Suivez ceci",
@@ -581,8 +585,6 @@
       "contacts_table_refresh": "Rafraîchir les contacts",
       "contacts_table_refresh_success": "Contacts rafraîchis avec succès",
       "delete_contact_confirmation": "Cela supprimera toutes les réponses aux enquêtes et les attributs de contact associés à ce contact. Toute la personnalisation et le ciblage basés sur les données de ce contact seront perdus.",
-      "first_name": "Prénom",
-      "last_name": "Nom de famille",
       "no_responses_found": "Aucune réponse trouvée",
       "not_provided": "Non fourni",
       "search_contact": "Rechercher un contact",
@@ -1508,7 +1510,7 @@
         "question_id_updated": "ID de la question mis à jour",
         "question_used_in_logic": "Cette question est utilisée dans la logique de la question '{'questionIndex'}'.",
         "quotas": {
-          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "La limite doit être supérieure ou égale au nombre de réponses"
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "{value, plural, other {La limite doit être supérieure ou égale au nombre de réponses}}"
         },
         "randomize_all": "Randomiser tout",
         "randomize_all_except_last": "Randomiser tout sauf le dernier",

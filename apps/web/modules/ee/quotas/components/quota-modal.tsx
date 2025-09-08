@@ -41,6 +41,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { z } from "zod";
 import {
   TSurveyQuota,
   TSurveyQuotaInput,
@@ -102,7 +103,18 @@ export const QuotaModal = ({
 
   const form = useForm<TSurveyQuotaInput>({
     defaultValues,
-    resolver: zodResolver(ZSurveyQuotaInput),
+    resolver: zodResolver(
+      quotaResponseCount > 0
+        ? ZSurveyQuotaInput.innerType().extend({
+            limit: z.number().min(quotaResponseCount, {
+              message: t(
+                "environments.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses",
+                { value: quotaResponseCount }
+              ),
+            }),
+          })
+        : ZSurveyQuotaInput
+    ),
     mode: "onSubmit",
     criteriaMode: "all",
   });
@@ -281,7 +293,6 @@ export const QuotaModal = ({
                       <Input
                         {...field}
                         type="number"
-                        min={quotaResponseCount}
                         className="w-32 bg-white"
                         onChange={(e) => {
                           const value = e.target.value;

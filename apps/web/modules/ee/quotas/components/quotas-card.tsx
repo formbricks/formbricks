@@ -131,6 +131,7 @@ export const QuotasCard = ({
     } else {
       const errorMessage = getFormattedErrorMessage(quotaResponseCountActionResult);
       toast.error(errorMessage);
+      return;
     }
     setActiveQuota(quota);
     setIsQuotaModalOpen(true);

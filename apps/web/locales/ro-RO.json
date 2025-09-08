@@ -203,6 +203,10 @@
     "environment_not_found": "Mediul nu a fost găsit",
     "environment_notice": "Te afli în prezent în mediul {environment}",
     "error": "Eroare",
+    "error_component_description": "Această resursă nu există sau nu aveți drepturile necesare pentru a o accesa.",
+    "error_component_title": "Eroare la încărcarea resurselor",
+    "error_rate_limit_description": "Numărul maxim de cereri atins. Vă rugăm să încercați din nou mai târziu.",
+    "error_rate_limit_title": "Limită de cereri depășită",
     "expand_rows": "Extinde rândurile",
     "finish": "Finalizează",
     "follow_these": "Urmați acestea",
@@ -581,8 +585,6 @@
       "contacts_table_refresh": "Reîmprospătare contacte",
       "contacts_table_refresh_success": "Contactele au fost actualizate cu succes",
       "delete_contact_confirmation": "Acest lucru va șterge toate răspunsurile la sondaj și atributele de contact asociate cu acest contact. Orice țintire și personalizare bazată pe datele acestui contact vor fi pierdute.",
-      "first_name": "Prenume",
-      "last_name": "Nume de familie",
       "no_responses_found": "Nu s-au găsit răspunsuri",
       "not_provided": "Nu a fost furnizat",
       "search_contact": "Căutați contact",
@@ -1508,7 +1510,7 @@
         "question_id_updated": "ID întrebare actualizat",
         "question_used_in_logic": "Această întrebare este folosită în logica întrebării {questionIndex}.",
         "quotas": {
-          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "Limita trebuie să fie mai mare sau egală cu numărul de răspunsuri"
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "{value, plural, one {Deja aveți {value} răspuns pentru această cotă, astfel încât limita trebuie să fie mai mare decât {value}.} other {Deja aveți {value} răspunsuri pentru această cotă, astfel încât limita trebuie să fie mai mare decât {value}.} }"
         },
         "randomize_all": "Randomizează tot",
         "randomize_all_except_last": "Randomizează tot cu excepția ultimului",

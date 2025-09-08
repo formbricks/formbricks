@@ -203,6 +203,10 @@
     "environment_not_found": "Environment not found",
     "environment_notice": "You're currently in the {environment} environment.",
     "error": "Error",
+    "error_component_description": "This resource doesn't exist or you don't have the necessary rights to access it.",
+    "error_component_title": "Error loading resources",
+    "error_rate_limit_description": "Maximum number of requests reached. Please try again later.",
+    "error_rate_limit_title": "Rate Limit Exceeded",
     "expand_rows": "Expand rows",
     "finish": "Finish",
     "follow_these": "Follow these",
@@ -581,8 +585,6 @@
       "contacts_table_refresh": "Refresh contacts",
       "contacts_table_refresh_success": "Contacts refreshed successfully",
       "delete_contact_confirmation": "This will delete all survey responses and contact attributes associated with this contact. Any targeting and personalization based on this contact's data will be lost.",
-      "first_name": "First Name",
-      "last_name": "Last Name",
       "no_responses_found": "No responses found",
       "not_provided": "Not provided",
       "search_contact": "Search contact",
@@ -1508,7 +1510,7 @@
         "question_id_updated": "Question ID updated",
         "question_used_in_logic": "This question is used in logic of question {questionIndex}.",
         "quotas": {
-          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "Limit must be greater than or equal to the number of responses"
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "{value, plural, one {You already have {value} response for this quota, so the limit must be greater than {value}.} other {You already have {value} responses for this quota, so the limit must be greater than {value}.}}"
         },
         "randomize_all": "Randomize all",
         "randomize_all_except_last": "Randomize all except last",

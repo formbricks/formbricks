@@ -203,6 +203,10 @@
     "environment_not_found": "環境が見つかりません",
     "environment_notice": "現在、{environment} 環境にいます。",
     "error": "エラー",
+    "error_component_description": "この リソース は 存在 しない か、アクセス する ための 必要な 権限 が ありません。",
+    "error_component_title": "リソース の 読み込み エラー",
+    "error_rate_limit_description": "リクエストの最大数に達しました。後でもう一度試してください。",
+    "error_rate_limit_title": "レート制限を超えました",
     "expand_rows": "行を展開",
     "finish": "完了",
     "follow_these": "こちらの手順に従って",
@@ -581,8 +585,6 @@
       "contacts_table_refresh": "連絡先を更新",
       "contacts_table_refresh_success": "連絡先を正常に更新しました",
       "delete_contact_confirmation": "これにより、この連絡先に関連付けられているすべてのフォーム回答と連絡先属性が削除されます。この連絡先のデータに基づいたターゲティングとパーソナライゼーションはすべて失われます。",
-      "first_name": "名",
-      "last_name": "姓",
       "no_responses_found": "回答が見つかりません",
       "not_provided": "提供されていません",
       "search_contact": "連絡先を検索",
@@ -1508,7 +1510,7 @@
         "question_id_updated": "質問IDを更新しました",
         "question_used_in_logic": "この質問は質問 {questionIndex} のロジックで使用されています。",
         "quotas": {
-          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "制限は回答数以上でなければなりません"
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "{value, plural, other { この クオータ では すでに {value} 件 の回答があります ので、制限は {value} より大きくする必要があります。} }"
         },
         "randomize_all": "すべてをランダム化",
         "randomize_all_except_last": "最後を除くすべてをランダム化",

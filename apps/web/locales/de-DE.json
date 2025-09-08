@@ -203,6 +203,10 @@
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
     "error": "Fehler",
+    "error_component_description": "Diese Ressource existiert nicht oder Du hast nicht die notwendigen Rechte, um darauf zuzugreifen.",
+    "error_component_title": "Fehler beim Laden der Ressourcen",
+    "error_rate_limit_description": "Maximale Anzahl an Anfragen erreicht. Bitte später erneut versuchen.",
+    "error_rate_limit_title": "Rate Limit Überschritten",
     "expand_rows": "Zeilen erweitern",
     "finish": "Fertigstellen",
     "follow_these": "Folge diesen",
@@ -581,8 +585,6 @@
       "contacts_table_refresh": "Kontakte aktualisieren",
       "contacts_table_refresh_success": "Kontakte erfolgreich aktualisiert",
       "delete_contact_confirmation": "Dies wird alle Umfrageantworten und Kontaktattribute löschen, die mit diesem Kontakt verbunden sind. Jegliche zielgerichtete Kommunikation und Personalisierung basierend auf den Daten dieses Kontakts gehen verloren.",
-      "first_name": "Vorname",
-      "last_name": "Nachname",
       "no_responses_found": "Keine Antworten gefunden",
       "not_provided": "Nicht angegeben",
       "search_contact": "Kontakt suchen",
@@ -1508,7 +1510,7 @@
         "question_id_updated": "Frage-ID aktualisiert",
         "question_used_in_logic": "Diese Frage wird in der Logik der Frage {questionIndex} verwendet.",
         "quotas": {
-          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "Limit muss größer oder gleich der Anzahl der Antworten sein"
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "{value, plural, other {Limit muss größer oder gleich der Anzahl der Antworten sein}}"
         },
         "randomize_all": "Alle Optionen zufällig anordnen",
         "randomize_all_except_last": "Alle Optionen zufällig anordnen außer der letzten",

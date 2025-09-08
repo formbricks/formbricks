@@ -25,7 +25,7 @@ export const ZSurveyQuota = z.object({
   updatedAt: z.date(),
   surveyId: ZId,
   name: z.string().min(1, { message: "Quota name is required" }),
-  limit: z.number().positive().min(1, { message: "Limit must be greater than 0" }),
+  limit: z.number().min(1, { message: "Limit must be greater than 0" }),
   logic: ZSurveyQuotaLogic,
   action: ZSurveyQuotaAction,
   endingCardId: ZId.nullable(),

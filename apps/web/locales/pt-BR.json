@@ -203,6 +203,10 @@
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Você está atualmente no ambiente {environment}.",
     "error": "Erro",
+    "error_component_description": "Esse recurso não existe ou você não tem permissão para acessá-lo.",
+    "error_component_title": "Erro ao carregar recursos",
+    "error_rate_limit_description": "Número máximo de requisições atingido. Por favor, tente novamente mais tarde.",
+    "error_rate_limit_title": "Limite de Taxa Excedido",
     "expand_rows": "Expandir linhas",
     "finish": "Terminar",
     "follow_these": "Siga esses",
@@ -581,8 +585,6 @@
       "contacts_table_refresh": "Atualizar contatos",
       "contacts_table_refresh_success": "Contatos atualizados com sucesso",
       "delete_contact_confirmation": "Isso irá apagar todas as respostas da pesquisa e atributos de contato associados a este contato. Qualquer direcionamento e personalização baseados nos dados deste contato serão perdidos.",
-      "first_name": "Primeiro Nome",
-      "last_name": "Sobrenome",
       "no_responses_found": "Nenhuma resposta encontrada",
       "not_provided": "Não fornecido",
       "search_contact": "Buscar contato",
@@ -1508,7 +1510,7 @@
         "question_id_updated": "ID da pergunta atualizado",
         "question_used_in_logic": "Essa pergunta é usada na lógica da pergunta {questionIndex}.",
         "quotas": {
-          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "O limite deve ser maior ou igual ao número de respostas"
+          "limit_must_be_greater_than_or_equal_to_the_number_of_responses": "{value, plural, other {O limite deve ser maior ou igual ao número de respostas}}"
         },
         "randomize_all": "Randomizar tudo",
         "randomize_all_except_last": "Randomizar tudo, exceto o último",
