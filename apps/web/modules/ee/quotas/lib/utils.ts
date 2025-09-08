@@ -129,61 +129,25 @@ export const handleQuotas = async (
     let fullQuota: TSurveyQuota[] = [];
     let otherQuota: TSurveyQuota[] = [];
 
-    const quotasCountingAll = result.passedQuotas.filter((quota) => quota.countPartialSubmissions);
-    const quotasCountingFinished = result.passedQuotas.filter((quota) => !quota.countPartialSubmissions);
-
-    type QuotaCountResult = { quotaId: string; _count: { responseId: number } };
-
-    const [countsForAll, countsForFinished] = await Promise.all([
-      quotasCountingAll.length > 0
-        ? prisma.responseQuotaLink.groupBy({
-            by: ["quotaId"],
-            where: {
-              quotaId: { in: quotasCountingAll.map((q) => q.id) },
-              status: "screenedIn",
-              response: {
-                id: {
-                  not: responseId,
-                },
-              },
-            },
-            _count: {
-              responseId: true,
-            },
-          })
-        : ([] as QuotaCountResult[]),
-      quotasCountingFinished.length > 0
-        ? prisma.responseQuotaLink.groupBy({
-            by: ["quotaId"],
-            where: {
-              quotaId: { in: quotasCountingFinished.map((q) => q.id) },
-              status: "screenedIn",
-              response: {
-                id: {
-                  not: responseId,
-                },
-                finished: true,
-              },
-            },
-            _count: {
-              responseId: true,
-            },
-          })
-        : ([] as QuotaCountResult[]),
-    ]);
-
-    const quotaCounts = new Map<string, number>();
-
-    countsForAll.forEach((result) => {
-      quotaCounts.set(result.quotaId, result._count.responseId);
+    const quotaCounts = await prisma.responseQuotaLink.groupBy({
+      by: ["quotaId"],
+      where: {
+        quotaId: { in: result.passedQuotas.map((q) => q.id) },
+        status: "screenedIn",
+        response: {
+          id: { not: responseId },
+        },
+        OR: [{ quota: { countPartialSubmissions: true } }, { response: { finished: true } }],
+      },
+      _count: {
+        responseId: true,
+      },
     });
 
-    countsForFinished.forEach((result) => {
-      quotaCounts.set(result.quotaId, result._count.responseId);
-    });
+    const quotaCountsMap = new Map(quotaCounts.map((result) => [result.quotaId, result._count.responseId]));
 
     for (const quota of result.passedQuotas) {
-      const screenedInCount = quotaCounts.get(quota.id) ?? 0;
+      const screenedInCount = quotaCountsMap.get(quota.id) ?? 0;
 
       if (screenedInCount >= quota.limit) {
         firstScreenedOutQuota ??= quota;

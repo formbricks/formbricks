@@ -117,6 +117,9 @@ export const reduceQuotaLimits = async (quotaIds: string[]): Promise<void> => {
         id: {
           in: quotaIds,
         },
+        limit: {
+          gt: 1,
+        },
       },
       data: {
         limit: {
