@@ -22,7 +22,6 @@ import {
   Cog,
   LogOutIcon,
   MessageCircle,
-  MousePointerClick,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RocketIcon,

@@ -2,7 +2,6 @@ import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/pr
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -10,13 +9,13 @@ import {
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 // Mock actions and utilities
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
   createOrUpdateIntegrationAction: vi.fn(),
 }));
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/actions", () => ({
   getSpreadsheetNameByIdAction: vi.fn(),
 }));
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/util", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/util", () => ({
   constructGoogleSheetsUrl: (id: string) => `https://docs.google.com/spreadsheets/d/${id}`,
   extractSpreadsheetIdFromUrl: (url: string) => url.split("/")[5],
   isValidGoogleSheetsUrl: (url: string) => url.startsWith("https://docs.google.com/spreadsheets/d/"),

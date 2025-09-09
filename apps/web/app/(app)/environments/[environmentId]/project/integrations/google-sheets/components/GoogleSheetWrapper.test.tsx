@@ -12,7 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 
 // Mock child components and functions
 vi.mock(
-  "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/ManageIntegration",
+  "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/ManageIntegration",
   () => ({
     ManageIntegration: vi.fn(({ setOpenAddIntegrationModal }) => (
       <div data-testid="manage-integration">
@@ -31,7 +31,7 @@ vi.mock("@/modules/ui/components/connect-integration", () => ({
 }));
 
 vi.mock(
-  "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/AddIntegrationModal",
+  "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/AddIntegrationModal",
   () => ({
     AddIntegrationModal: vi.fn(({ open }) =>
       open ? <div data-testid="add-integration-modal">Modal</div> : null
@@ -39,7 +39,7 @@ vi.mock(
   })
 );
 
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/google", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/google", () => ({
   authorize: vi.fn(() => Promise.resolve("http://google.com/auth")),
 }));
 

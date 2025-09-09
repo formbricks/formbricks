@@ -10,6 +10,7 @@ import { ProjectBreadcrumb } from "./project-breadcrumb";
 // Mock the dependencies
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
+  usePathname: vi.fn(() => "/environments/env-123/project/general"),
 }));
 
 vi.mock("@tolgee/react", () => ({
@@ -87,6 +88,7 @@ vi.mock("@/modules/ui/components/dropdown-menu", () => ({
     </button>
   ),
   DropdownMenuGroup: ({ children }: any) => <div data-testid="dropdown-group">{children}</div>,
+  DropdownMenuSeparator: () => <div data-testid="dropdown-separator" />,
 }));
 
 // Mock Lucide React icons
@@ -120,6 +122,11 @@ vi.mock("lucide-react", () => ({
   Loader2: ({ className }: any) => (
     <svg data-testid="loader-2-icon" className={className}>
       <title>Loader2 Icon</title>
+    </svg>
+  ),
+  SettingsIcon: ({ className }: any) => (
+    <svg data-testid="settings-icon" className={className}>
+      <title>Settings Icon</title>
     </svg>
   ),
 }));
@@ -177,6 +184,7 @@ describe("ProjectBreadcrumb", () => {
     currentOrganization: mockOrganization,
     currentEnvironmentId: "env-123",
     isAccessControlAllowed: true,
+    currentOrgBillingPlan: "free",
   };
 
   beforeEach(() => {
@@ -229,7 +237,7 @@ describe("ProjectBreadcrumb", () => {
 
       expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
       expect(screen.getByText("common.choose_project")).toBeInTheDocument();
-      expect(screen.getByTestId("dropdown-group")).toBeInTheDocument();
+      expect(screen.getAllByTestId("dropdown-group")).toHaveLength(2); // Project list group and settings group
     });
 
     test("renders all project options in dropdown", async () => {
@@ -340,6 +348,7 @@ describe("ProjectBreadcrumb", () => {
           ...mockOrganization,
           billing: { ...mockOrganization.billing, plan: "startup" } as unknown as TOrganizationBilling,
         },
+        currentOrgBillingPlan: "startup",
       };
       render(<ProjectBreadcrumb {...props} />);
 
@@ -488,6 +497,7 @@ describe("ProjectBreadcrumb", () => {
           ...mockOrganization,
           billing: { ...mockOrganization.billing, plan: "enterprise" } as unknown as TOrganizationBilling,
         },
+        currentOrgBillingPlan: "enterprise",
       };
       render(<ProjectBreadcrumb {...props} />);
 

@@ -16,7 +16,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 
 // Mock dependencies
 vi.mock(
-  "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper",
+  "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/GoogleSheetWrapper",
   () => ({
     GoogleSheetWrapper: vi.fn(
       ({ isEnabled, environment, surveys, googleSheetIntegration, webAppUrl, locale }) => (
@@ -33,7 +33,7 @@ vi.mock(
     ),
   })
 );
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/lib/surveys", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys", () => ({
   getSurveys: vi.fn(),
 }));
 
@@ -178,7 +178,7 @@ describe("GoogleSheetsIntegrationPage", () => {
     expect(screen.getByTestId("webAppUrl")).toHaveTextContent("test-webapp-url");
     expect(screen.getByTestId("locale")).toHaveTextContent("en-US");
     expect(screen.getByTestId("go-back")).toHaveTextContent(
-      `test-webapp-url/environments/${mockProps.params.environmentId}/integrations`
+      `test-webapp-url/environments/${mockProps.params.environmentId}/project/integrations`
     );
     expect(vi.mocked(redirect)).not.toHaveBeenCalled();
   });

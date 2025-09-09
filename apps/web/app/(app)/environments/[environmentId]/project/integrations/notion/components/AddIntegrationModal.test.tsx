@@ -11,7 +11,7 @@ import {
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 // Mock actions and utilities
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
   createOrUpdateIntegrationAction: vi.fn(),
 }));
 vi.mock("@/lib/i18n/utils", () => ({

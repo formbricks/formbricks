@@ -9,9 +9,11 @@ import type {
 } from "@formbricks/types/integration/notion";
 import { ManageIntegration } from "./ManageIntegration";
 
-vi.mock("react-hot-toast", () => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("react-hot-toast", () => ({
+  default: { success: vi.fn(), error: vi.fn() },
+}));
 vi.mock("@/lib/time", () => ({ timeSince: () => "ago" }));
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
   deleteIntegrationAction: vi.fn(),
 }));
 

@@ -15,10 +15,13 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import Page from "./page";
 
 // Mock dependencies
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper", () => ({
-  AirtableWrapper: vi.fn(() => <div>AirtableWrapper Mock</div>),
-}));
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/lib/surveys");
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/AirtableWrapper",
+  () => ({
+    AirtableWrapper: vi.fn(() => <div>AirtableWrapper Mock</div>),
+  })
+);
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys");
 vi.mock("@/lib/airtable/service");
 
 let mockAirtableClientId: string | undefined = "test-client-id";

@@ -9,12 +9,38 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { ActionActivityTab } from "./ActionActivityTab";
 
 // Mock dependencies
-vi.mock("@/app/(app)/environments/[environmentId]/actions/utils", () => ({
+vi.mock("@/modules/projects/settings/(setup)/app-connection/utils", () => ({
   ACTION_TYPE_ICON_LOOKUP: {
     noCode: <div>NoCodeIcon</div>,
-    automatic: <div>AutomaticIcon</div>,
     code: <div>CodeIcon</div>,
   },
+}));
+
+vi.mock("@/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: false,
+  POSTHOG_API_KEY: "mock-posthog-api-key",
+  POSTHOG_HOST: "mock-posthog-host",
+  IS_POSTHOG_CONFIGURED: true,
+  ENCRYPTION_KEY: "mock-encryption-key",
+  ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
+  GITHUB_ID: "mock-github-id",
+  GITHUB_SECRET: "test-githubID",
+  GOOGLE_CLIENT_ID: "test-google-client-id",
+  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+  AZUREAD_CLIENT_ID: "test-azuread-client-id",
+  AZUREAD_CLIENT_SECRET: "test-azure",
+  AZUREAD_TENANT_ID: "test-azuread-tenant-id",
+  OIDC_DISPLAY_NAME: "test-oidc-display-name",
+  OIDC_CLIENT_ID: "test-oidc-client-id",
+  OIDC_ISSUER: "test-oidc-issuer",
+  OIDC_CLIENT_SECRET: "test-oidc-client-secret",
+  OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
+  WEBAPP_URL: "test-webapp-url",
+  IS_PRODUCTION: false,
+  SENTRY_DSN: "mock-sentry-dsn",
+  SENTRY_RELEASE: "mock-sentry-release",
+  SENTRY_ENVIRONMENT: "mock-sentry-environment",
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("@/lib/time", () => ({
@@ -53,8 +79,12 @@ vi.mock("@/modules/ui/components/loading-spinner", () => ({
   LoadingSpinner: () => <div>LoadingSpinner</div>,
 }));
 
-vi.mock("../actions", () => ({
+vi.mock("@/modules/projects/settings/(setup)/app-connection/actions", () => ({
   getActiveInactiveSurveysAction: vi.fn(),
+}));
+
+vi.mock("react-hot-toast", () => ({
+  default: { success: vi.fn(), error: vi.fn() },
 }));
 
 const mockActionClass = {

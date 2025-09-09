@@ -6,7 +6,7 @@ import { TActionClass, TActionClassNoCodeConfig, TActionClassType } from "@formb
 import { ActionSettingsTab } from "./ActionSettingsTab";
 
 // Mock actions
-vi.mock("@/app/(app)/environments/[environmentId]/actions/actions", () => ({
+vi.mock("@/modules/projects/settings/(setup)/app-connection/actions", () => ({
   deleteActionClassAction: vi.fn(),
   updateActionClassAction: vi.fn(),
 }));
@@ -20,14 +20,14 @@ vi.mock("@/modules/survey/editor/lib/action-utils", () => ({
 
 // Mock action builder
 vi.mock("@/modules/survey/editor/lib/action-builder", () => ({
-  buildActionObject: vi.fn((data, environmentId, t) => ({
+  buildActionObject: vi.fn((data, environmentId) => ({
     ...data,
     environmentId,
   })),
 }));
 
 // Mock utils
-vi.mock("@/app/lib/actionClass/actionClass", () => ({
+vi.mock("@/modules/projects/settings/(setup)/app-connection/utils", () => ({
   isValidCssSelector: vi.fn((selector) => selector !== "invalid-selector"),
 }));
 
@@ -91,6 +91,11 @@ vi.mock("@/modules/ui/components/no-code-action-form", () => ({
 // Mock icons
 vi.mock("lucide-react", () => ({
   TrashIcon: () => <div data-testid="trash-icon">Trash</div>,
+}));
+
+// Mock react-hot-toast
+vi.mock("react-hot-toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 // Mock react-hook-form
@@ -229,7 +234,7 @@ describe("ActionSettingsTab", () => {
 
   test("handles successful form submission", async () => {
     const { updateActionClassAction } = await import(
-      "@/app/(app)/environments/[environmentId]/actions/actions"
+      "@/modules/projects/settings/(setup)/app-connection/actions"
     );
     const actionUtilsMock = await import("@/modules/survey/editor/lib/action-utils");
 
@@ -283,7 +288,7 @@ describe("ActionSettingsTab", () => {
   test("handles successful deletion", async () => {
     const actionClass = createMockActionClass("noCode1", "noCode", "No Code Action");
     const { deleteActionClassAction } = await import(
-      "@/app/(app)/environments/[environmentId]/actions/actions"
+      "@/modules/projects/settings/(setup)/app-connection/actions"
     );
     vi.mocked(deleteActionClassAction).mockResolvedValue({ data: actionClass } as any);
 
@@ -314,7 +319,7 @@ describe("ActionSettingsTab", () => {
   test("handles deletion failure", async () => {
     const actionClass = createMockActionClass("noCode1", "noCode", "No Code Action");
     const { deleteActionClassAction } = await import(
-      "@/app/(app)/environments/[environmentId]/actions/actions"
+      "@/modules/projects/settings/(setup)/app-connection/actions"
     );
     vi.mocked(deleteActionClassAction).mockRejectedValue(new Error("Deletion failed"));
 
@@ -361,7 +366,7 @@ describe("ActionSettingsTab", () => {
   test("prevents delete when read-only", async () => {
     const actionClass = createMockActionClass("noCode1", "noCode", "No Code Action");
     const { deleteActionClassAction } = await import(
-      "@/app/(app)/environments/[environmentId]/actions/actions"
+      "@/modules/projects/settings/(setup)/app-connection/actions"
     );
 
     render(

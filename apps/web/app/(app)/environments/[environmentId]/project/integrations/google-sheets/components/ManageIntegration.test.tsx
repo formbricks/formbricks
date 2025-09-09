@@ -6,7 +6,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { ManageIntegration } from "./ManageIntegration";
 
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
   deleteIntegrationAction: vi.fn(),
 }));
 

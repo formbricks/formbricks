@@ -10,7 +10,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegration } from "@formbricks/types/integration";
 
 // Mock dependencies
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/lib/webhook", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/lib/webhook", () => ({
   getWebhookCountBySource: vi.fn(),
 }));
 
@@ -106,8 +106,6 @@ describe("Integrations Page", () => {
 
     const PageComponent = await Page(mockProps);
     render(PageComponent);
-
-    expect(screen.getByText("common.integrations")).toBeInTheDocument(); // Page Header
     expect(screen.getByTestId("card-Javascript SDK")).toBeInTheDocument();
     expect(
       screen.getByText("environments.integrations.website_or_app_integration_description")

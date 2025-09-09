@@ -6,7 +6,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { ManageIntegration } from "./ManageIntegration";
 
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
   deleteIntegrationAction: vi.fn(),
 }));
 vi.mock("react-hot-toast", () => ({ default: { success: vi.fn(), error: vi.fn() } }));

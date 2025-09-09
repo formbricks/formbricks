@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TActionClass, TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 import { AddActionModal } from "./AddActionModal";
@@ -22,30 +23,48 @@ vi.mock("@/modules/ui/components/button", () => ({
   ),
 }));
 
-vi.mock("@/modules/ui/components/dialog", () => ({
-  Dialog: ({ children, open, onOpenChange }: any) =>
-    open ? (
-      <div data-testid="dialog" role="dialog">
+vi.mock("@/modules/ui/components/dialog", () => {
+  const React = require("react");
+  const { useState } = React;
+
+  return {
+    Dialog: ({ children, open: externalOpen, onOpenChange }: any) => {
+      const [internalOpen, setInternalOpen] = useState(externalOpen);
+
+      // Update internal state when external open prop changes
+      React.useEffect(() => {
+        setInternalOpen(externalOpen);
+      }, [externalOpen]);
+
+      const handleOpenChange = (newOpen: boolean) => {
+        setInternalOpen(newOpen);
+        onOpenChange?.(newOpen);
+      };
+
+      return internalOpen ? (
+        <dialog data-testid="dialog" open>
+          {children}
+          <button onClick={() => handleOpenChange(false)}>Close Dialog</button>
+        </dialog>
+      ) : null;
+    },
+    DialogContent: ({ children, disableCloseOnOutsideClick, ...props }: any) => (
+      <div data-testid="dialog-content" {...props}>
         {children}
-        <button onClick={() => onOpenChange(false)}>Close Dialog</button>
       </div>
-    ) : null,
-  DialogContent: ({ children, ...props }: any) => (
-    <div data-testid="dialog-content" {...props}>
-      {children}
-    </div>
-  ),
-  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
-  DialogTitle: ({ children, className }: any) => (
-    <h2 data-testid="dialog-title" className={className}>
-      {children}
-    </h2>
-  ),
-  DialogDescription: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dialog-description">{children}</div>
-  ),
-  DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
-}));
+    ),
+    DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
+    DialogTitle: ({ children, className }: any) => (
+      <h2 data-testid="dialog-title" className={className}>
+        {children}
+      </h2>
+    ),
+    DialogDescription: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="dialog-description">{children}</div>
+    ),
+    DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
+  };
+});
 
 vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({
@@ -79,44 +98,36 @@ describe("AddActionModal", () => {
     vi.clearAllMocks();
   });
 
-  test("renders the 'Add Action' button initially", () => {
-    render(
-      <AddActionModal environmentId={environmentId} actionClasses={mockActionClasses} isReadOnly={false} />
-    );
-    expect(screen.getByRole("button", { name: "common.add_action" })).toBeInTheDocument();
-    expect(screen.getByTestId("plus-icon")).toBeInTheDocument();
-    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-  });
+  const createTestWrapper = () => {
+    const TestWrapper = () => {
+      const [open, setOpen] = React.useState(true);
 
-  test("opens the dialog when the 'Add Action' button is clicked", async () => {
-    render(
-      <AddActionModal environmentId={environmentId} actionClasses={mockActionClasses} isReadOnly={false} />
-    );
-    const addButton = screen.getByRole("button", { name: "common.add_action" });
-    await userEvent.click(addButton);
-
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-header")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-body")).toBeInTheDocument();
-    expect(screen.getByTestId("mouse-pointer-icon")).toBeInTheDocument();
-    expect(screen.getByText("environments.actions.track_new_user_action")).toBeInTheDocument();
-    expect(
-      screen.getByText("environments.actions.track_user_action_to_display_surveys_or_create_user_segment")
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("create-new-action-tab")).toBeInTheDocument();
-  });
+      return (
+        <AddActionModal
+          environmentId={environmentId}
+          actionClasses={mockActionClasses}
+          isReadOnly={false}
+          open={open}
+          setOpen={setOpen}
+        />
+      );
+    };
+    return TestWrapper;
+  };
 
   test("passes correct props to CreateNewActionTab", async () => {
     const { CreateNewActionTab } = await import("@/modules/survey/editor/components/create-new-action-tab");
     const mockedCreateNewActionTab = vi.mocked(CreateNewActionTab);
 
     render(
-      <AddActionModal environmentId={environmentId} actionClasses={mockActionClasses} isReadOnly={false} />
+      <AddActionModal
+        environmentId={environmentId}
+        actionClasses={mockActionClasses}
+        isReadOnly={false}
+        open={true}
+        setOpen={vi.fn()}
+      />
     );
-    const addButton = screen.getByRole("button", { name: "common.add_action" });
-    await userEvent.click(addButton);
 
     expect(mockedCreateNewActionTab).toHaveBeenCalled();
     const props = mockedCreateNewActionTab.mock.calls[0][0];
@@ -128,11 +139,8 @@ describe("AddActionModal", () => {
   });
 
   test("closes the dialog when the close button (simulated) is clicked", async () => {
-    render(
-      <AddActionModal environmentId={environmentId} actionClasses={mockActionClasses} isReadOnly={false} />
-    );
-    const addButton = screen.getByRole("button", { name: "common.add_action" });
-    await userEvent.click(addButton);
+    const TestWrapper = createTestWrapper();
+    render(<TestWrapper />);
 
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
 
@@ -144,11 +152,8 @@ describe("AddActionModal", () => {
   });
 
   test("closes the dialog when setOpen is called from CreateNewActionTab", async () => {
-    render(
-      <AddActionModal environmentId={environmentId} actionClasses={mockActionClasses} isReadOnly={false} />
-    );
-    const addButton = screen.getByRole("button", { name: "common.add_action" });
-    await userEvent.click(addButton);
+    const TestWrapper = createTestWrapper();
+    render(<TestWrapper />);
 
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
 

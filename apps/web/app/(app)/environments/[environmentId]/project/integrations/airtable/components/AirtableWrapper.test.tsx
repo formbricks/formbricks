@@ -8,7 +8,7 @@ import { AirtableWrapper } from "./AirtableWrapper";
 
 // Mock child components
 vi.mock(
-  "@/app/(app)/environments/[environmentId]/integrations/airtable/components/ManageIntegration",
+  "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/ManageIntegration",
   () => ({
     ManageIntegration: ({ setIsConnected }) => (
       <div data-testid="manage-integration">
@@ -28,7 +28,7 @@ vi.mock("@/modules/ui/components/connect-integration", () => ({
 }));
 
 // Mock library function
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable", () => ({
   authorize: vi.fn(),
 }));
 

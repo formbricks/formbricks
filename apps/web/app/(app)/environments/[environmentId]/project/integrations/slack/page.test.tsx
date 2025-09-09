@@ -13,18 +13,21 @@ import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/type
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 // Mock dependencies
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/lib/surveys", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys", () => ({
   getSurveys: vi.fn(),
 }));
 
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/slack/components/SlackWrapper", () => ({
-  SlackWrapper: vi.fn(({ isEnabled, environment, surveys, slackIntegration, webAppUrl, locale }) => (
-    <div data-testid="slack-wrapper">
-      Mock SlackWrapper: isEnabled={isEnabled.toString()}, envId={environment.id}, surveys=
-      {surveys.length}, integrationId={slackIntegration?.id}, webAppUrl={webAppUrl}, locale={locale}
-    </div>
-  )),
-}));
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/SlackWrapper",
+  () => ({
+    SlackWrapper: vi.fn(({ isEnabled, environment, surveys, slackIntegration, webAppUrl, locale }) => (
+      <div data-testid="slack-wrapper">
+        Mock SlackWrapper: isEnabled={isEnabled.toString()}, envId={environment.id}, surveys=
+        {surveys.length}, integrationId={slackIntegration?.id}, webAppUrl={webAppUrl}, locale={locale}
+      </div>
+    )),
+  })
+);
 
 vi.mock("@/lib/constants", () => ({
   IS_PRODUCTION: true,
@@ -155,7 +158,7 @@ describe("SlackIntegrationPage", () => {
       "environments.integrations.slack.slack_integration"
     );
     expect(screen.getByTestId("go-back-button")).toHaveTextContent(
-      `Go Back: http://test.formbricks.com/environments/${environmentId}/integrations`
+      `Go Back: http://test.formbricks.com/environments/${environmentId}/project/integrations`
     );
     expect(screen.getByTestId("slack-wrapper")).toBeInTheDocument();
 

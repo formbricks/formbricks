@@ -12,7 +12,7 @@ import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/t
 import { AddChannelMappingModal } from "./AddChannelMappingModal";
 
 // Mock dependencies
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
   createOrUpdateIntegrationAction: vi.fn(),
 }));
 vi.mock("@/lib/i18n/utils", () => ({

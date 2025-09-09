@@ -13,23 +13,26 @@ import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/type
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 // Mock dependencies
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper", () => ({
-  NotionWrapper: vi.fn(
-    ({ enabled, environment, surveys, notionIntegration, webAppUrl, databasesArray, locale }) => (
-      <div>
-        <span>Mocked NotionWrapper</span>
-        <span data-testid="enabled">{enabled.toString()}</span>
-        <span data-testid="environmentId">{environment.id}</span>
-        <span data-testid="surveyCount">{surveys?.length ?? 0}</span>
-        <span data-testid="integrationId">{notionIntegration?.id}</span>
-        <span data-testid="webAppUrl">{webAppUrl}</span>
-        <span data-testid="databaseCount">{databasesArray?.length ?? 0}</span>
-        <span data-testid="locale">{locale}</span>
-      </div>
-    )
-  ),
-}));
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/lib/surveys", () => ({
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/project/integrations/notion/components/NotionWrapper",
+  () => ({
+    NotionWrapper: vi.fn(
+      ({ enabled, environment, surveys, notionIntegration, webAppUrl, databasesArray, locale }) => (
+        <div>
+          <span>Mocked NotionWrapper</span>
+          <span data-testid="enabled">{enabled.toString()}</span>
+          <span data-testid="environmentId">{environment.id}</span>
+          <span data-testid="surveyCount">{surveys?.length ?? 0}</span>
+          <span data-testid="integrationId">{notionIntegration?.id}</span>
+          <span data-testid="webAppUrl">{webAppUrl}</span>
+          <span data-testid="databaseCount">{databasesArray?.length ?? 0}</span>
+          <span data-testid="locale">{locale}</span>
+        </div>
+      )
+    ),
+  })
+);
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys", () => ({
   getSurveys: vi.fn(),
 }));
 

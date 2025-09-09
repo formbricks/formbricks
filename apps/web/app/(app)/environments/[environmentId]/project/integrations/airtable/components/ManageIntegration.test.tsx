@@ -6,11 +6,11 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationAirtable, TIntegrationAirtableConfig } from "@formbricks/types/integration/airtable";
 import { ManageIntegration } from "./ManageIntegration";
 
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
   deleteIntegrationAction: vi.fn(),
 }));
 vi.mock(
-  "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal",
+  "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/AddIntegrationModal",
   () => ({
     AddIntegrationModal: ({ open, setOpenWithStates }) =>
       open ? (

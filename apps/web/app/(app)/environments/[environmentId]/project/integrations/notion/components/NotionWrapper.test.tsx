@@ -61,7 +61,7 @@ vi.mock("@/modules/ui/components/connect-integration", () => ({
 }));
 
 // Mock library function
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/notion/lib/notion", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/notion/lib/notion", () => ({
   authorize: vi.fn(),
 }));
 
@@ -140,7 +140,7 @@ describe("NotionWrapper", () => {
   test("calls authorize and redirects when Connect button is clicked", async () => {
     const mockAuthorize = vi.mocked(authorize);
     const redirectUrl = "https://notion.com/auth";
-    mockAuthorize.mockResolvedValue(redirectUrl);
+    mockAuthorize.mockImplementation(() => Promise.resolve(redirectUrl));
 
     render(<NotionWrapper {...baseProps} enabled={true} notionIntegration={undefined} />); // Changed isEnabled to enabled
 

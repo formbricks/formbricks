@@ -16,11 +16,11 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { AddIntegrationModal } from "./AddIntegrationModal";
 
 // Mock dependencies
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
   createOrUpdateIntegrationAction: vi.fn(),
 }));
 vi.mock(
-  "@/app/(app)/environments/[environmentId]/integrations/airtable/components/BaseSelectDropdown",
+  "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/BaseSelectDropdown",
   () => ({
     BaseSelectDropdown: ({ control, airtableArray, fetchTable, defaultValue, setValue }) => (
       <div>
@@ -44,7 +44,7 @@ vi.mock(
     ),
   })
 );
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable", () => ({
   fetchTables: vi.fn(),
 }));
 vi.mock("@/lib/i18n/utils", () => ({

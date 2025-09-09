@@ -11,28 +11,31 @@ import { authorize } from "../lib/slack";
 import { SlackWrapper } from "./SlackWrapper";
 
 // Mock child components and actions
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/slack/actions", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/slack/actions", () => ({
   getSlackChannelsAction: vi.fn(),
 }));
 
 vi.mock(
-  "@/app/(app)/environments/[environmentId]/integrations/slack/components/AddChannelMappingModal",
+  "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/AddChannelMappingModal",
   () => ({
     AddChannelMappingModal: vi.fn(({ open }) => (open ? <div data-testid="add-modal">Add Modal</div> : null)),
   })
 );
 
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/slack/components/ManageIntegration", () => ({
-  ManageIntegration: vi.fn(({ setOpenAddIntegrationModal, setIsConnected, handleSlackAuthorization }) => (
-    <div data-testid="manage-integration">
-      <button onClick={() => setOpenAddIntegrationModal(true)}>Open Modal</button>
-      <button onClick={() => setIsConnected(false)}>Disconnect</button>
-      <button onClick={handleSlackAuthorization}>Reconnect</button>
-    </div>
-  )),
-}));
+vi.mock(
+  "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/ManageIntegration",
+  () => ({
+    ManageIntegration: vi.fn(({ setOpenAddIntegrationModal, setIsConnected, handleSlackAuthorization }) => (
+      <div data-testid="manage-integration">
+        <button onClick={() => setOpenAddIntegrationModal(true)}>Open Modal</button>
+        <button onClick={() => setIsConnected(false)}>Disconnect</button>
+        <button onClick={handleSlackAuthorization}>Reconnect</button>
+      </div>
+    )),
+  })
+);
 
-vi.mock("@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack", () => ({
+vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/slack/lib/slack", () => ({
   authorize: vi.fn(),
 }));
 
