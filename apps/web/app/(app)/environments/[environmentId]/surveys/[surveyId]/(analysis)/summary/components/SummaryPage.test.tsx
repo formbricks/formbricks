@@ -20,6 +20,8 @@ vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/
         startsPercentage: 100,
         totalResponses: 50,
         ttcAverage: 120,
+        quotasCompleted: 0,
+        quotasCompletedPercentage: 0,
       },
       dropOff: [
         {
@@ -67,10 +69,10 @@ vi.mock(
 vi.mock(
   "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata",
   () => ({
-    SummaryMetadata: ({ showDropOffs, setShowDropOffs, isLoading }: any) => (
+    SummaryMetadata: ({ tab, setTab, isLoading }: any) => (
       <div data-testid="summary-metadata">
         <span>Is Loading: {isLoading ? "true" : "false"}</span>
-        <button onClick={() => setShowDropOffs(!showDropOffs)}>Toggle Dropoffs</button>
+        <button onClick={() => setTab(tab === "dropOffs" ? "quotas" : "dropOffs")}>Toggle Dropoffs</button>
       </div>
     ),
   })
@@ -166,7 +168,7 @@ describe("SummaryPage", () => {
     expect(screen.queryByTestId("summary-drop-offs")).not.toBeInTheDocument();
 
     // Toggle drop-offs
-    await user.click(screen.getByText("Toggle Dropoffs"));
+    await user.click(screen.getByRole("button", { name: "Toggle Dropoffs" }));
 
     // Drop-offs should now be visible
     expect(screen.getByTestId("summary-drop-offs")).toBeInTheDocument();
