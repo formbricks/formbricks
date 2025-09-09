@@ -579,7 +579,7 @@ describe("Quota Utils", () => {
       const result = await handleQuotas(mockSurveyId, mockResponseId, emptyResult, true, mockTx);
 
       expect(result).toBeNull();
-      expect(prisma.responseQuotaLink.groupBy).not.toHaveBeenCalled();
+      expect(mockTx.responseQuotaLink.groupBy).not.toHaveBeenCalled();
     });
 
     test("should handle quota limit exactly equal to screened in count", async () => {

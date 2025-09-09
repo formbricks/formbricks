@@ -9,7 +9,7 @@ import { calculateTtcTotal } from "@/lib/response/utils";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
-import { Prisma } from "@prisma/client";
+import { Organization, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
@@ -57,6 +57,80 @@ export const responseSelection = {
   },
 } satisfies Prisma.ResponseSelect;
 
+const buildPrismaResponseData = (
+  responseInput: TResponseInput,
+  contact: { id: string; attributes: TContactAttributes } | null,
+  ttc: Record<string, number>
+): Prisma.ResponseCreateInput => {
+  const {
+    surveyId,
+    displayId,
+    finished,
+    data,
+    language,
+    meta,
+    singleUseId,
+    variables,
+    createdAt,
+    updatedAt,
+  } = responseInput;
+
+  return {
+    survey: {
+      connect: {
+        id: surveyId,
+      },
+    },
+    display: displayId ? { connect: { id: displayId } } : undefined,
+    finished: finished,
+    data: data,
+    language: language,
+    ...(contact?.id && {
+      contact: {
+        connect: {
+          id: contact.id,
+        },
+      },
+      contactAttributes: contact.attributes,
+    }),
+    ...(meta && ({ meta } as Prisma.JsonObject)),
+    singleUseId,
+    ...(variables && { variables }),
+    ttc: ttc,
+    createdAt,
+    updatedAt,
+  };
+};
+
+const handleBillingLimitsCheck = async (
+  environmentId: string,
+  organizationId: string,
+  organizationBilling: Organization["billing"]
+): Promise<void> => {
+  if (!IS_FORMBRICKS_CLOUD) return;
+
+  const responsesCount = await getMonthlyOrganizationResponseCount(organizationId);
+  const responsesLimit = organizationBilling.limits.monthly.responses;
+
+  if (responsesLimit && responsesCount >= responsesLimit) {
+    try {
+      await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+        plan: organizationBilling.plan,
+        limits: {
+          projects: null,
+          monthly: {
+            responses: responsesLimit,
+            miu: null,
+          },
+        },
+      });
+    } catch (err) {
+      // Log error but do not throw
+      logger.error(err, "Error sending plan limits reached event to Posthog");
+    }
+  }
+};
+
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponseWithQuotaFull> => {
@@ -89,21 +163,7 @@ export const createResponse = async (
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
-  const {
-    environmentId,
-    language,
-    userId,
-    surveyId,
-    displayId,
-    finished,
-    data,
-    meta,
-    singleUseId,
-    variables,
-    ttc: initialTtc,
-    createdAt,
-    updatedAt,
-  } = responseInput;
+  const { environmentId, userId, finished, ttc: initialTtc } = responseInput;
 
   try {
     let contact: { id: string; attributes: TContactAttributes } | null = null;
@@ -119,31 +179,7 @@ export const createResponse = async (
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const prismaData: Prisma.ResponseCreateInput = {
-      survey: {
-        connect: {
-          id: surveyId,
-        },
-      },
-      display: displayId ? { connect: { id: displayId } } : undefined,
-      finished: finished,
-      data: data,
-      language: language,
-      ...(contact?.id && {
-        contact: {
-          connect: {
-            id: contact.id,
-          },
-        },
-        contactAttributes: contact.attributes,
-      }),
-      ...(meta && ({ meta } as Prisma.JsonObject)),
-      singleUseId,
-      ...(variables && { variables }),
-      ttc: ttc,
-      createdAt,
-      updatedAt,
-    };
+    const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
 
     const prismaClient = tx ?? prisma;
 
@@ -152,7 +188,7 @@ export const createResponse = async (
       select: responseSelection,
     });
 
-    const response: TResponse = {
+    const response = {
       ...responsePrisma,
       contact: contact
         ? {
@@ -163,28 +199,7 @@ export const createResponse = async (
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
-    if (IS_FORMBRICKS_CLOUD) {
-      const responsesCount = await getMonthlyOrganizationResponseCount(organization.id);
-      const responsesLimit = organization.billing.limits.monthly.responses;
-
-      if (responsesLimit && responsesCount >= responsesLimit) {
-        try {
-          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-            plan: organization.billing.plan,
-            limits: {
-              projects: null,
-              monthly: {
-                responses: responsesLimit,
-                miu: null,
-              },
-            },
-          });
-        } catch (err) {
-          // Log error but do not throw
-          logger.error(err, "Error sending plan limits reached event to Posthog");
-        }
-      }
-    }
+    await handleBillingLimitsCheck(environmentId, organization.id, organization.billing);
 
     return response;
   } catch (error) {
