@@ -45,12 +45,10 @@ export const sanitizeFileName = (rawFileName: string): string => {
 
   // Remove control chars and characters problematic in S3 form fields or URLs
   // Disallow: # <> : " | ? * ` ' and control whitespace
-  name = name.replace(/[\u0000-\u001F#<>:"|?*`']/g, "");
+  name = name.replace(/[#<>:"|?*`']/g, "");
 
   // Collapse and trim whitespace
   name = name.replace(/\s+/g, " ").trim();
-  // Remove spaces immediately before dots separating extension
-  name = name.replace(/\s+\./g, ".");
 
   // Split into base and extension; keep only the last extension
   const parts = name.split(".");

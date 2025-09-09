@@ -148,7 +148,7 @@ export const DELETE = async (
     }
   }
 
-  const deleteResult = await deleteFile(environmentId, accessType, fileName);
+  const deleteResult = await deleteFile(environmentId, accessType, decodeURIComponent(fileName));
 
   const isSuccess = deleteResult.ok;
 
