@@ -17,8 +17,6 @@ import { type Result, type StorageError, StorageErrorCode, err, ok } from "../ty
 import { createS3Client } from "./client";
 import { S3_BUCKET_NAME } from "./constants";
 
-const s3Client = createS3Client();
-
 /**
  * Get a signed URL for uploading a file to S3
  * @param fileName - The name of the file to upload
@@ -42,6 +40,8 @@ export const getSignedUploadUrl = async (
   >
 > => {
   try {
+    const s3Client = createS3Client();
+
     if (!s3Client) {
       logger.error("Failed to get signed upload URL: S3 client is not set");
       return err({
@@ -91,6 +91,8 @@ export const getSignedUploadUrl = async (
  */
 export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<string, StorageError>> => {
   try {
+    const s3Client = createS3Client();
+
     if (!s3Client) {
       return err({
         code: StorageErrorCode.S3ClientError,
@@ -146,6 +148,8 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
  */
 export const deleteFile = async (fileKey: string): Promise<Result<void, StorageError>> => {
   try {
+    const s3Client = createS3Client();
+
     if (!s3Client) {
       return err({
         code: StorageErrorCode.S3ClientError,
@@ -182,6 +186,8 @@ export const deleteFile = async (fileKey: string): Promise<Result<void, StorageE
  */
 export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, StorageError>> => {
   try {
+    const s3Client = createS3Client();
+
     if (!s3Client) {
       return err({
         code: StorageErrorCode.S3ClientError,

@@ -3,6 +3,8 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { deleteFile, getSignedUrlForDownload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
@@ -77,9 +79,7 @@ export const DELETE = async (
   props: { params: Promise<{ environmentId: string; accessType: string; fileName: string }> }
 ): Promise<Response> => {
   const params = await props.params;
-
   const paramValidation = ZDeleteFileRequest.safeParse(params);
-
   if (!paramValidation.success) {
     const errorDetails = transformErrorToDetails(paramValidation.error);
 
@@ -120,6 +120,12 @@ export const DELETE = async (
 
       return responses.unauthorizedResponse();
     }
+
+    try {
+      await applyRateLimit(rateLimitConfigs.storage.delete, auth.hashedApiKey);
+    } catch (error) {
+      return responses.tooManyRequestsResponse(error.message);
+    }
   } else {
     const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
 
@@ -133,6 +139,12 @@ export const DELETE = async (
       });
 
       return responses.unauthorizedResponse();
+    }
+
+    try {
+      await applyRateLimit(rateLimitConfigs.storage.delete, session.user.id);
+    } catch (error) {
+      return responses.tooManyRequestsResponse(error.message);
     }
   }
 

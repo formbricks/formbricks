@@ -7,7 +7,7 @@ const getOrgId = async (environmentId: string): Promise<string> => {
   try {
     return await getOrganizationIdFromEnvironmentId(environmentId);
   } catch (error) {
-    logger.error("Failed to get organization ID for environment", { error });
+    logger.error({ error }, "Failed to get organization ID for environment");
     return UNKNOWN_DATA;
   }
 };
@@ -49,6 +49,6 @@ export const logFileDeletion = async ({
       apiUrl,
     });
   } catch (auditError) {
-    logger.error("Failed to log file deletion audit event:", auditError);
+    logger.error({ error: auditError }, "Failed to log file deletion audit event");
   }
 };
