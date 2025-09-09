@@ -20,6 +20,9 @@ export function SubmitButton({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // throttle the button submit to prevent multiple submissions
+  // works by setting a timeout to reset the isProcessing state
+  // TODO: Refactor
   useEffect(() => {
     if (isProcessing) {
       const timer = setTimeout(() => {
@@ -43,7 +46,7 @@ export function SubmitButton({
         }
       }
     },
-    [disabled, isProcessing, tabIndex]
+    [disabled, isProcessing]
   );
 
   useEffect(() => {
