@@ -43,7 +43,6 @@ export const sanitizeFileName = (rawFileName: string): string => {
   // Replace path separators/backslashes with dash
   name = name.replace(/[\\/]/g, "-");
 
-  // Remove control chars and characters problematic in S3 form fields or URLs
   // Disallow: # <> : " | ? * ` ' and control whitespace
   name = name.replace(/[#<>:"|?*`']/g, "");
 
