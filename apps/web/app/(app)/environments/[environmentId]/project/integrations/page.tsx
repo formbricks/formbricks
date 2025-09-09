@@ -145,7 +145,7 @@ const Page = async (props) => {
       description: t("environments.integrations.n8n_integration_description"),
       icon: <Image src={n8nLogo} alt="n8n Logo" />,
       connected: n8nwebhookCount > 0,
-      statusText: getStatusText(n8nwebhookCount, t, "integration"),
+      statusText: getStatusText(n8nwebhookCount, t, t("common.integration")),
       disabled: isReadOnly,
     },
     {
@@ -159,7 +159,7 @@ const Page = async (props) => {
       description: t("environments.integrations.make_integration_description"),
       icon: <Image src={MakeLogo} alt="Make Logo" />,
       connected: makeWebhookCount > 0,
-      statusText: getStatusText(makeWebhookCount, t, "integration"),
+      statusText: getStatusText(makeWebhookCount, t, t("common.integration")),
       disabled: isReadOnly,
     },
     {
@@ -187,7 +187,7 @@ const Page = async (props) => {
       description: t("environments.integrations.activepieces_integration_description"),
       icon: <Image src={ActivePiecesLogo} alt="ActivePieces Logo" />,
       connected: activePiecesWebhookCount > 0,
-      statusText: getStatusText(activePiecesWebhookCount, t, "integration"),
+      statusText: getStatusText(activePiecesWebhookCount, t, t("common.integration")),
       disabled: isReadOnly,
     },
   ];
