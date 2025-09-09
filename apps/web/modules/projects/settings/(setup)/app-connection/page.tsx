@@ -49,23 +49,29 @@ export const AppConnectionPage = async ({ params }: { params: { environmentId: s
           {environment && (
             <div className="space-y-4">
               <WidgetStatusIndicator environment={environment} />
-              <Alert variant="info">
-                <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
-                <AlertButton asChild>
-                  <Link
-                    href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
-                    target="_blank"
-                    rel="noopener noreferrer">
-                    {t("common.learn_more")}
-                  </Link>
-                </AlertButton>
-              </Alert>
-              <Alert variant="info">
-                <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
-                <AlertDescription>
-                  {t("environments.project.app-connection.cache_update_delay_description")}
-                </AlertDescription>
-              </Alert>
+              {!environment.appSetupCompleted ? (
+                <Alert variant="outbound">
+                  <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
+                  <AlertDescription>
+                    {t("environments.project.app-connection.setup_alert_description")}
+                  </AlertDescription>
+                  <AlertButton asChild>
+                    <Link
+                      href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
+                      target="_blank"
+                      rel="noopener noreferrer">
+                      {t("common.learn_more")}
+                    </Link>
+                  </AlertButton>
+                </Alert>
+              ) : (
+                <Alert variant="warning">
+                  <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
+                  <AlertDescription>
+                    {t("environments.project.app-connection.cache_update_delay_description")}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           )}
         </SettingsCard>
