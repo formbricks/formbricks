@@ -239,14 +239,14 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     setSelectingDate(DateSelected.FROM);
   };
 
-  const handleDownloadResponses = async (filter: FilterDownload, format: "csv" | "xlsx") => {
+  const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
     try {
       const responseFilters = filter === FilterDownload.ALL ? {} : filters;
       setIsDownloading(true);
 
       const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
         surveyId: survey.id,
-        format,
+        format: fileType,
         filterCriteria: responseFilters,
       });
 
@@ -254,7 +254,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
         downloadResponsesFile(
           responsesDownloadUrlResponse.data.fileName,
           responsesDownloadUrlResponse.data.fileContents,
-          format
+          fileType
         );
       } else {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));

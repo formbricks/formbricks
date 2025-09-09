@@ -770,7 +770,7 @@
         "check_out_the_docs": "Consultați documentația.",
         "dive_into_the_docs": "Accesați documentația.",
         "does_your_widget_work": "Funcționează widgetul dvs.?",
-        "environment_id": "ID-ul Mediului Dvs.",
+        "environment_id": "ID-ul mediului tău",
         "environment_id_description": "Acest id identifică în mod unic acest mediu Formbricks.",
         "environment_id_description_with_environment_id": "Folosit pentru a identifica mediul corect: {environmentId} este al tău.",
         "formbricks_sdk": "SDK Formbricks",

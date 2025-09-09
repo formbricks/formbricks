@@ -163,7 +163,8 @@ export const DELETE = async (
       apiUrl: request.url,
     });
 
-    return responses.internalServerErrorResponse("Unexpected error during file deletion");
+    const errorResponse = getErrorResponseFromStorageError(deleteResult.error, { fileName });
+    return errorResponse;
   }
 
   await logFileDeletion({

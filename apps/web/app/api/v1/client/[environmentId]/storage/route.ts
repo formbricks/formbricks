@@ -1,7 +1,7 @@
-import { getMaxFileUploadSize } from "@/app/api/v1/client/[environmentId]/storage/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -97,7 +97,9 @@ export const POST = withV1ApiWrapper({
     }
 
     const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
-    const maxFileUploadSize = getMaxFileUploadSize(isBiggerFileUploadAllowed);
+    const maxFileUploadSize = isBiggerFileUploadAllowed
+      ? MAX_FILE_UPLOAD_SIZES.big
+      : MAX_FILE_UPLOAD_SIZES.standard;
 
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,
