@@ -290,7 +290,6 @@ describe("createResponseWithQuotaEvaluation", () => {
       variables: mockResponseInput.variables,
       language: mockResponseInput.language,
       responseFinished: mockResponseInput.finished,
-      tx: prisma,
       tx: mockTx,
     });
 

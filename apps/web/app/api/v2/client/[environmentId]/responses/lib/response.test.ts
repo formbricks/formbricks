@@ -277,7 +277,7 @@ describe("createResponseWithQuotaEvaluation V2", () => {
   });
 
   test("should create response and return it without quotaFull when no quota is full", async () => {
-    const result = await createResponseWithQuotaEvaluation(mockResponseInput, mockTx);
+    const result = await createResponseWithQuotaEvaluation(mockResponseInput);
 
     expect(result).toEqual(expectedResponse);
     expect(evaluateResponseQuotas).toHaveBeenCalledWith({
@@ -297,7 +297,7 @@ describe("createResponseWithQuotaEvaluation V2", () => {
       quotaFull: mockQuota,
     });
 
-    const result: TResponseWithQuotaFull = await createResponseWithQuotaEvaluation(mockResponseInput, mockTx);
+    const result: TResponseWithQuotaFull = await createResponseWithQuotaEvaluation(mockResponseInput);
 
     expect(result).toEqual({
       ...expectedResponse,

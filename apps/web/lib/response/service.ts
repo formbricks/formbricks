@@ -615,7 +615,7 @@ export const deleteResponse = async (
       };
 
       if (response.displayId) {
-        deleteDisplay(response.displayId, tx);
+        await deleteDisplay(response.displayId, tx);
       }
 
       if (decrementQuotas) {

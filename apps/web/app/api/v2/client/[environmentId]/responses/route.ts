@@ -139,7 +139,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     response: responseData,
   });
 
-  if (responseInput.finished) {
+  if (responseData.finished) {
     sendToPipeline({
       event: "responseFinished",
       environmentId,

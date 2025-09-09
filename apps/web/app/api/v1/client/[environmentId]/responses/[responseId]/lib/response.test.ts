@@ -72,10 +72,6 @@ describe("updateResponseWithQuotaEvaluation", () => {
     },
   };
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   test("should return response with quotaFull when quota evaluation returns quotaFull", async () => {
     mockUpdateResponse.mockResolvedValue(mockResponse);
     mockEvaluateResponseQuotas.mockResolvedValue({

@@ -557,7 +557,7 @@ describe("Quota Utils", () => {
       ]);
       vi.mocked(updateResponse).mockRejectedValue(new Error("Update failed"));
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, mockTx);
 
       expect(result).toBeNull();
       expect(logger.error).toHaveBeenCalledWith(
@@ -576,7 +576,7 @@ describe("Quota Utils", () => {
         failedQuotas: [mockQuota],
       };
 
-      const result = await handleQuotas(mockSurveyId, mockResponseId, emptyResult, true);
+      const result = await handleQuotas(mockSurveyId, mockResponseId, emptyResult, true, mockTx);
 
       expect(result).toBeNull();
       expect(prisma.responseQuotaLink.groupBy).not.toHaveBeenCalled();
