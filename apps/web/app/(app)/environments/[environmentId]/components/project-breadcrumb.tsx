@@ -35,6 +35,7 @@ interface ProjectBreadcrumbProps {
   currentEnvironmentId: string;
   isAccessControlAllowed: boolean;
   currentOrgBillingPlan: string;
+  isEnvironmentBreadcrumbVisible: boolean;
 }
 
 export const ProjectBreadcrumb = ({
@@ -48,6 +49,7 @@ export const ProjectBreadcrumb = ({
   currentEnvironmentId,
   isAccessControlAllowed,
   currentOrgBillingPlan,
+  isEnvironmentBreadcrumbVisible,
 }: ProjectBreadcrumbProps) => {
   const { t } = useTranslate();
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -149,7 +151,7 @@ export const ProjectBreadcrumb = ({
             {isProjectDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
-              <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+              isEnvironmentBreadcrumbVisible && <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
             )}
           </div>
         </DropdownMenuTrigger>

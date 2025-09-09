@@ -185,6 +185,7 @@ describe("ProjectBreadcrumb", () => {
     currentEnvironmentId: "env-123",
     isAccessControlAllowed: true,
     currentOrgBillingPlan: "free",
+    isEnvironmentBreadcrumbVisible: true,
   };
 
   beforeEach(() => {

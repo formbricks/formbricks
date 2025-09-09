@@ -49,6 +49,8 @@ export const ProjectAndOrgSwitch = ({
   const currentOrganization = organizations.find((org) => org.id === currentOrganizationId);
   const currentProject = projects.find((project) => project.id === currentProjectId);
 
+  const showEnvironmentBreadcrumb = Boolean(currentEnvironment) && currentEnvironment?.type === "development";
+
   return (
     <Breadcrumb>
       <BreadcrumbList className="gap-0">
@@ -75,9 +77,10 @@ export const ProjectAndOrgSwitch = ({
             isLicenseActive={isLicenseActive}
             isAccessControlAllowed={isAccessControlAllowed}
             currentOrgBillingPlan={currentOrgBillingPlan}
+            isEnvironmentBreadcrumbVisible={showEnvironmentBreadcrumb}
           />
         )}
-        {currentEnvironment && (
+        {showEnvironmentBreadcrumb && (
           <EnvironmentBreadcrumb environments={environments} environment={currentEnvironment} />
         )}
       </BreadcrumbList>
