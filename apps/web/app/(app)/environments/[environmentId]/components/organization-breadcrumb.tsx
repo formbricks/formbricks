@@ -50,7 +50,11 @@ export const OrganizationBreadcrumb = ({
 
   const handleOrganizationChange = (organizationId: string) => {
     setIsLoading(true);
-    router.push(`/organizations/${organizationId}/`);
+    try {
+      router.push(`/organizations/${organizationId}/`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Hide organization dropdown for single org setups (on-premise)

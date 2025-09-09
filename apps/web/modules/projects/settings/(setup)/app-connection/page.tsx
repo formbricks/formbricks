@@ -18,17 +18,20 @@ import { getTranslate } from "@/tolgee/server";
 import Link from "next/link";
 import { ActionSettingsCard } from "../components/action-settings-card";
 
-export const AppConnectionPage = async (props) => {
-  const params = await props.params;
+export const AppConnectionPage = async ({ params }: { params: { environmentId: string } }) => {
   const t = await getTranslate();
 
   const { environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
-  const environments = await getEnvironments(environment.projectId);
+  const [environments, actionClasses] = await Promise.all([
+    getEnvironments(environment.projectId),
+    getActionClasses(params.environmentId),
+  ]);
   const otherEnvironment = environments.filter((env) => env.id !== params.environmentId)[0];
-  const [actionClasses] = await Promise.all([getActionClasses(params.environmentId)]);
-  const otherEnvActionClasses = await getActionClasses(otherEnvironment.id);
-  const locale = await findMatchingLocale();
+  const [otherEnvActionClasses, locale] = await Promise.all([
+    otherEnvironment ? getActionClasses(otherEnvironment.id) : Promise.resolve([]),
+    findMatchingLocale(),
+  ]);
 
   const publicDomain = getPublicDomain();
 
@@ -50,7 +53,8 @@ export const AppConnectionPage = async (props) => {
                 <AlertButton asChild>
                   <Link
                     href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
-                    target="_blank">
+                    target="_blank"
+                    rel="noopener noreferrer">
                     {t("common.learn_more")}
                   </Link>
                 </AlertButton>

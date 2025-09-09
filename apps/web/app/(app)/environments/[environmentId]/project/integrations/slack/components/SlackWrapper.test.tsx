@@ -1,3 +1,6 @@
+import { getSlackChannelsAction } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/actions";
+import { SlackWrapper } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/SlackWrapper";
+import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/lib/slack";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -6,9 +9,6 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { getSlackChannelsAction } from "../actions";
-import { authorize } from "../lib/slack";
-import { SlackWrapper } from "./SlackWrapper";
 
 // Mock child components and actions
 vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/slack/actions", () => ({

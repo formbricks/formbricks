@@ -1,6 +1,6 @@
 import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/GoogleSheetWrapper";
 import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/google";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -129,7 +129,7 @@ describe("GoogleSheetWrapper", () => {
 
     expect(vi.mocked(authorize)).toHaveBeenCalledWith(mockEnvironment.id, mockWebAppUrl);
     // Need to wait for the promise returned by authorize to resolve
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(window.location.replace).toHaveBeenCalledWith("http://google.com/auth");
     });
 
