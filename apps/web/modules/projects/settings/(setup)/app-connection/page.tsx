@@ -16,16 +16,17 @@ import { getTranslate } from "@/tolgee/server";
 import Link from "next/link";
 import { ActionSettingsCard } from "../components/action-settings-card";
 
-export const AppConnectionPage = async ({ params }: { params: { environmentId: string } }) => {
+export const AppConnectionPage = async ({ params }: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslate();
+  const { environmentId } = await params;
 
-  const { environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { environment, isReadOnly } = await getEnvironmentAuth(environmentId);
 
   const [environments, actionClasses] = await Promise.all([
     getEnvironments(environment.projectId),
-    getActionClasses(params.environmentId),
+    getActionClasses(environmentId),
   ]);
-  const otherEnvironment = environments.filter((env) => env.id !== params.environmentId)[0];
+  const otherEnvironment = environments.filter((env) => env.id !== environmentId)[0];
   const [otherEnvActionClasses, locale] = await Promise.all([
     otherEnvironment ? getActionClasses(otherEnvironment.id) : Promise.resolve([]),
     findMatchingLocale(),
@@ -34,14 +35,14 @@ export const AppConnectionPage = async ({ params }: { params: { environmentId: s
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.project_configuration")}>
-        <ProjectConfigNavigation environmentId={params.environmentId} activeId="app-connection" />
+        <ProjectConfigNavigation environmentId={environmentId} activeId="app-connection" />
       </PageHeader>
       <div className="space-y-4">
-        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/project/app-connection" />
+        <EnvironmentNotice environmentId={environmentId} subPageUrl="/project/app-connection" />
         <SettingsCard
           title={t("environments.project.app-connection.environment_id")}
           description={t("environments.project.app-connection.environment_id_description")}>
-          <IdBadge id={params.environmentId} />
+          <IdBadge id={environmentId} />
         </SettingsCard>
         <SettingsCard
           title={t("environments.project.app-connection.app_connection")}
@@ -79,7 +80,7 @@ export const AppConnectionPage = async ({ params }: { params: { environmentId: s
           environment={environment}
           otherEnvironment={otherEnvironment}
           otherEnvActionClasses={otherEnvActionClasses}
-          environmentId={params.environmentId}
+          environmentId={environmentId}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}
           locale={locale}
