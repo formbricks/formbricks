@@ -1,21 +1,17 @@
 import "server-only";
-import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
+import { handleBillingLimitsCheck } from "@/app/api/lib/utils";
+import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
-import { Organization, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -134,35 +130,6 @@ const buildPrismaResponseData = (
     createdAt,
     updatedAt,
   };
-};
-
-const handleBillingLimitsCheck = async (
-  environmentId: string,
-  organizationId: string,
-  organizationBilling: Organization["billing"]
-): Promise<void> => {
-  if (!IS_FORMBRICKS_CLOUD) return;
-
-  const responsesCount = await getMonthlyOrganizationResponseCount(organizationId);
-  const responsesLimit = organizationBilling.limits.monthly.responses;
-
-  if (responsesLimit && responsesCount >= responsesLimit) {
-    try {
-      await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-        plan: organizationBilling.plan,
-        limits: {
-          projects: null,
-          monthly: {
-            responses: responsesLimit,
-            miu: null,
-          },
-        },
-      });
-    } catch (err) {
-      // Log error but do not throw
-      logger.error(err, "Error sending plan limits reached event to Posthog");
-    }
-  }
 };
 
 export const createResponse = async (
