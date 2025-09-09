@@ -133,7 +133,6 @@ describe("ProjectAndOrgSwitch", () => {
     isOwnerOrManager: true,
     isAccessControlAllowed: true,
     isMember: true,
-    currentOrgBillingPlan: "free",
   };
 
   afterEach(() => {
@@ -340,7 +339,6 @@ describe("ProjectAndOrgSwitch", () => {
         isOwnerOrManager: false,
         isAccessControlAllowed: false,
         isMember: true,
-        currentOrgBillingPlan: "free",
       };
 
       expect(() => {

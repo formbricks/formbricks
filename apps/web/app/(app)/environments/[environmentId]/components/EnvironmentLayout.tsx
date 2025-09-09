@@ -143,7 +143,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
             isAccessControlAllowed={isAccessControlAllowed}
             membershipRole={membershipRole}
             projectPermission={projectPermission}
-            currentOrgBillingPlan={organization.billing.plan}
           />
           <div className="flex-1 overflow-y-auto">{children}</div>
         </div>

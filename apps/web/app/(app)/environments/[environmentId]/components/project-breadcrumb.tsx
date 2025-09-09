@@ -26,7 +26,6 @@ interface ProjectBreadcrumbProps {
   currentOrganizationId: string;
   currentEnvironmentId: string;
   isAccessControlAllowed: boolean;
-  currentOrgBillingPlan: string;
 }
 
 export const ProjectBreadcrumb = ({
@@ -39,7 +38,6 @@ export const ProjectBreadcrumb = ({
   currentOrganizationId,
   currentEnvironmentId,
   isAccessControlAllowed,
-  currentOrgBillingPlan,
 }: ProjectBreadcrumbProps) => {
   const { t } = useTranslate();
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -67,7 +65,7 @@ export const ProjectBreadcrumb = ({
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
-    if (isFormbricksCloud && currentOrgBillingPlan !== "enterprise") {
+    if (isFormbricksCloud) {
       return [
         {
           text: t("environments.settings.billing.upgrade"),

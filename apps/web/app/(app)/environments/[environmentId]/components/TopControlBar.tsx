@@ -27,7 +27,6 @@ interface TopControlBarProps {
   isAccessControlAllowed: boolean;
   membershipRole?: TOrganizationRole;
   projectPermission: TTeamPermission | null;
-  currentOrgBillingPlan: string;
 }
 
 export const TopControlBar = ({
@@ -44,7 +43,6 @@ export const TopControlBar = ({
   isAccessControlAllowed,
   membershipRole,
   projectPermission,
-  currentOrgBillingPlan,
 }: TopControlBarProps) => {
   const { t } = useTranslate();
 
@@ -72,7 +70,6 @@ export const TopControlBar = ({
           isOwnerOrManager={isOwnerOrManager}
           isMember={isMember}
           isAccessControlAllowed={isAccessControlAllowed}
-          currentOrgBillingPlan={currentOrgBillingPlan}
         />
       </div>
       <div className="z-50 flex items-center space-x-2">

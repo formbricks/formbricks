@@ -20,7 +20,6 @@ interface ProjectAndOrgSwitchProps {
   isOwnerOrManager: boolean;
   isAccessControlAllowed: boolean;
   isMember: boolean;
-  currentOrgBillingPlan: string;
 }
 
 export const ProjectAndOrgSwitch = ({
@@ -37,7 +36,6 @@ export const ProjectAndOrgSwitch = ({
   isOwnerOrManager,
   isAccessControlAllowed,
   isMember,
-  currentOrgBillingPlan,
 }: ProjectAndOrgSwitchProps) => {
   const sortedProjects = useMemo(() => projects.toSorted((a, b) => a.name.localeCompare(b.name)), [projects]);
   const sortedOrganizations = useMemo(
@@ -68,7 +66,6 @@ export const ProjectAndOrgSwitch = ({
             isFormbricksCloud={isFormbricksCloud}
             isLicenseActive={isLicenseActive}
             isAccessControlAllowed={isAccessControlAllowed}
-            currentOrgBillingPlan={currentOrgBillingPlan}
           />
         )}
         {currentEnvironmentId && (
