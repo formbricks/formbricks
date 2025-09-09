@@ -2,6 +2,7 @@
 
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Button } from "@/modules/ui/components/button";
+import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -13,15 +14,17 @@ import { cn } from "@/modules/ui/lib/utils";
 import { Table } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { ArrowDownToLineIcon, Loader2Icon, Trash2Icon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   updateRowList: (rowId: string[]) => void;
   type: "response" | "contact";
-  deleteAction: (id: string) => Promise<void>;
+  deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
+  isQuotasAllowed: boolean;
 }
 
 export const SelectedRowSettings = <T,>({
@@ -30,12 +33,21 @@ export const SelectedRowSettings = <T,>({
   type,
   deleteAction,
   downloadRowsAction,
+  isQuotasAllowed,
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const { t } = useTranslate();
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
+
+  const hasQuotas =
+    type === "response" &&
+    table
+      .getFilteredSelectedRowModel()
+      .rows.some((row) => (row.original as TResponseWithQuotas).quotas?.length);
+
+  const [decrementQuotas, setDecrementQuotas] = useState<boolean>(hasQuotas);
 
   // Toggle all rows selection
   const handleToggleAllRowsSelection = useCallback(
@@ -45,13 +57,19 @@ export const SelectedRowSettings = <T,>({
     [table]
   );
 
+  useEffect(() => {
+    setDecrementQuotas(hasQuotas);
+  }, [hasQuotas]);
+
   // Handle deletion
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
-      if (type === "response" || type === "contact") {
+      if (type === "response") {
+        await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId, { decrementQuotas })));
+      } else {
         await Promise.all(rowsToBeDeleted.map((rowId) => deleteAction(rowId)));
       }
 
@@ -87,10 +105,14 @@ export const SelectedRowSettings = <T,>({
   // Helper component for the separator
   const Separator = () => <div>|</div>;
 
+  const quotasDialogText = isQuotasAllowed
+    ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+        value: selectedRowCount,
+      })
+    : t("environments.contacts.delete_contact_confirmation");
+
   const deleteDialogText =
-    type === "response"
-      ? t("environments.surveys.responses.delete_response_confirmation")
-      : t("environments.contacts.delete_contact_confirmation");
+    type === "response" ? t("environments.surveys.responses.delete_response_confirmation") : quotasDialogText;
 
   return (
     <>
@@ -106,7 +128,6 @@ export const SelectedRowSettings = <T,>({
           onClick={() => handleToggleAllRowsSelection(true)}>
           {t("common.select_all")}
         </Button>
-
         <Button
           variant="outline"
           size="sm"
@@ -154,11 +175,22 @@ export const SelectedRowSettings = <T,>({
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
-        deleteWhat={type === "response" ? t("common.responses") : t("common.contacts")}
+        deleteWhat={
+          type === "response"
+            ? t("common.count_responses", { value: selectedRowCount })
+            : t("common.count_contacts", { value: selectedRowCount })
+        }
         onDelete={handleDelete}
         isDeleting={isDeleting}
-        text={deleteDialogText}
-      />
+        text={deleteDialogText}>
+        {hasQuotas && (
+          <DecrementQuotasCheckbox
+            title={t("environments.surveys.responses.bulk_delete_response_quotas")}
+            checked={decrementQuotas ?? hasQuotas}
+            onCheckedChange={setDecrementQuotas}
+          />
+        )}
+      </DeleteDialog>
     </>
   );
 };

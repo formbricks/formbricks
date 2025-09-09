@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "./common";
+import type { TResponse } from "./responses";
 import { ZConnector, ZSingleCondition } from "./surveys/types";
 
 // Complete quota conditions structure
@@ -24,7 +25,7 @@ export const ZSurveyQuota = z.object({
   updatedAt: z.date(),
   surveyId: ZId,
   name: z.string().min(1, { message: "Quota name is required" }),
-  limit: z.number().positive().min(1, { message: "Limit must be greater than 0" }),
+  limit: z.number().min(1, { message: "Limit must be greater than 0" }),
   logic: ZSurveyQuotaLogic,
   action: ZSurveyQuotaAction,
   endingCardId: ZId.nullable(),
@@ -55,3 +56,24 @@ export const ZResponseQuotaLink = z.object({
   status: ZResponseQuotaLinkStatus,
 });
 export type TResponseQuotaLink = z.infer<typeof ZResponseQuotaLink>;
+
+export interface TQuotaFullEndSurvey {
+  action: "endSurvey";
+  endingCardId: string;
+}
+
+export interface TQuotaFullContinueSurvey {
+  action: "continueSurvey";
+}
+
+type TQuotaFullAction = TQuotaFullEndSurvey | TQuotaFullContinueSurvey;
+
+export type TQuotaFullResponse = {
+  quotaFull: true;
+  quotaId: string;
+  action: TSurveyQuotaAction;
+} & TQuotaFullAction;
+
+export type TResponseWithQuotaFull = TResponse & {
+  quotaFull?: TSurveyQuota;
+};

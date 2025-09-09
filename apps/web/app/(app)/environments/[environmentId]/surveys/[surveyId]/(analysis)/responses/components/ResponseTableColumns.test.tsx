@@ -1,5 +1,4 @@
 import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
-import { processResponseData } from "@/lib/responses";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
@@ -251,30 +250,30 @@ describe("generateResponseTableColumns", () => {
   });
 
   test("should include selection column when not read-only", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, false, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, false, t as any, false);
     expect(columns[0].id).toBe("select");
     expect(vi.mocked(getSelectionColumn)).toHaveBeenCalledTimes(1);
   });
 
   test("should not include selection column when read-only", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     expect(columns[0].id).not.toBe("select");
     expect(vi.mocked(getSelectionColumn)).not.toHaveBeenCalled();
   });
 
   test("should include Verified Email column when survey.isVerifyEmailEnabled is true", () => {
     const surveyWithVerifiedEmail = { ...mockSurvey, isVerifyEmailEnabled: true };
-    const columns = generateResponseTableColumns(surveyWithVerifiedEmail, false, true, t as any);
+    const columns = generateResponseTableColumns(surveyWithVerifiedEmail, false, true, t as any, false);
     expect(columns.some((col) => (col as any).accessorKey === "verifiedEmail")).toBe(true);
   });
 
   test("should not include Verified Email column when survey.isVerifyEmailEnabled is false", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     expect(columns.some((col) => (col as any).accessorKey === "verifiedEmail")).toBe(false);
   });
 
   test("should generate columns for variables", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const var1Col = columns.find((col) => (col as any).accessorKey === "var1");
     expect(var1Col).toBeDefined();
     const var1Cell = (var1Col?.cell as any)?.({ row: { original: mockResponseData } } as any);
@@ -287,7 +286,7 @@ describe("generateResponseTableColumns", () => {
   });
 
   test("should generate columns for hidden fields if fieldIds exist", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const hf1Col = columns.find((col) => (col as any).accessorKey === "hf1");
     expect(hf1Col).toBeDefined();
     const hf1Cell = (hf1Col?.cell as any)?.({ row: { original: mockResponseData } } as any);
@@ -296,7 +295,7 @@ describe("generateResponseTableColumns", () => {
 
   test("should not generate columns for hidden fields if fieldIds is undefined", () => {
     const surveyWithoutHiddenFieldIds = { ...mockSurvey, hiddenFields: { enabled: true } };
-    const columns = generateResponseTableColumns(surveyWithoutHiddenFieldIds, false, true, t as any);
+    const columns = generateResponseTableColumns(surveyWithoutHiddenFieldIds, false, true, t as any, false);
     const hf1Col = columns.find((col) => (col as any).accessorKey === "hf1");
     expect(hf1Col).toBeUndefined();
   });
@@ -321,7 +320,7 @@ describe("ResponseTableColumns", () => {
     const isReadOnly = false;
 
     // Act
-    const columns = generateResponseTableColumns(mockSurvey, isExpanded, isReadOnly, mockT);
+    const columns = generateResponseTableColumns(mockSurvey, isExpanded, isReadOnly, mockT, false);
 
     // Assert
     const verifiedEmailColumn: any = columns.find((col: any) => col.accessorKey === "verifiedEmail");
@@ -349,7 +348,7 @@ describe("ResponseTableColumns", () => {
     const isReadOnly = false;
 
     // Act
-    const columns = generateResponseTableColumns(mockSurvey, isExpanded, isReadOnly, mockT);
+    const columns = generateResponseTableColumns(mockSurvey, isExpanded, isReadOnly, mockT, false);
 
     // Assert
     const verifiedEmailColumn = columns.find((col: any) => col.accessorKey === "verifiedEmail");
@@ -363,7 +362,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
   });
 
   test("dateColumn renders with formatted date", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const dateColumn: any = columns.find((col) => (col as any).accessorKey === "createdAt");
     expect(dateColumn).toBeDefined();
 
@@ -381,7 +380,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
   });
 
   test("personColumn renders anonymous when person is null", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const personColumn: any = columns.find((col) => (col as any).accessorKey === "personId");
     expect(personColumn).toBeDefined();
 
@@ -404,7 +403,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
   });
 
   test("personColumn renders person identifier when person exists", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const personColumn: any = columns.find((col) => (col as any).accessorKey === "personId");
     expect(personColumn).toBeDefined();
 
@@ -425,7 +424,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
   });
 
   test("tagsColumn returns undefined when tags is not an array", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const tagsColumn: any = columns.find((col) => (col as any).accessorKey === "tags");
     expect(tagsColumn).toBeDefined();
 
@@ -440,7 +439,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
   });
 
   test("variableColumns render variable values correctly", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
 
     // Find the variable column for var1
     const var1Column: any = columns.find((col) => (col as any).accessorKey === "var1");
@@ -472,7 +471,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
   });
 
   test("hiddenFieldColumns render when fieldIds exist", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
 
     // Find the hidden field column
     const hfColumn: any = columns.find((col) => (col as any).accessorKey === "hf1");
@@ -499,7 +498,7 @@ describe("ResponseTableColumns - Column Implementations", () => {
       hiddenFields: { enabled: true }, // no fieldIds
     };
 
-    const columns = generateResponseTableColumns(surveyWithNoHiddenFields, false, true, t as any);
+    const columns = generateResponseTableColumns(surveyWithNoHiddenFields, false, true, t as any, false);
 
     // Check that no hidden field columns were created
     const hfColumn = columns.find((col) => (col as any).accessorKey === "hf1");
@@ -517,7 +516,7 @@ describe("ResponseTableColumns - Multiple Choice Questions", () => {
   });
 
   test("generates two columns for multipleChoiceSingle questions", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
 
     // Should have main response column
     const mainColumn = columns.find((col) => (col as any).accessorKey === "q5single");
@@ -529,7 +528,7 @@ describe("ResponseTableColumns - Multiple Choice Questions", () => {
   });
 
   test("generates two columns for multipleChoiceMulti questions", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
 
     // Should have main response column
     const mainColumn = columns.find((col) => (col as any).accessorKey === "q6multi");
@@ -541,7 +540,7 @@ describe("ResponseTableColumns - Multiple Choice Questions", () => {
   });
 
   test("multipleChoiceSingle main column renders RenderResponse component", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const mainColumn: any = columns.find((col) => (col as any).accessorKey === "q5single");
 
     const mockRow = {
@@ -557,7 +556,7 @@ describe("ResponseTableColumns - Multiple Choice Questions", () => {
   });
 
   test("multipleChoiceMulti main column renders RenderResponse component", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const mainColumn: any = columns.find((col) => (col as any).accessorKey === "q6multi");
 
     const mockRow = {
@@ -583,7 +582,7 @@ describe("ResponseTableColumns - Choice ID Columns", () => {
   });
 
   test("option IDs column calls extractChoiceIdsFromResponse for string response", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
 
     const mockRow = {
@@ -603,7 +602,7 @@ describe("ResponseTableColumns - Choice ID Columns", () => {
   });
 
   test("option IDs column calls extractChoiceIdsFromResponse for array response", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q6multioptionIds");
 
     const mockRow = {
@@ -623,7 +622,7 @@ describe("ResponseTableColumns - Choice ID Columns", () => {
   });
 
   test("option IDs column renders IdBadge components for choice IDs", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q6multioptionIds");
 
     const mockRow = {
@@ -645,7 +644,7 @@ describe("ResponseTableColumns - Choice ID Columns", () => {
   });
 
   test("option IDs column returns null for non-string/array response values", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
 
     const mockRow = {
@@ -662,7 +661,7 @@ describe("ResponseTableColumns - Choice ID Columns", () => {
   });
 
   test("option IDs column returns null when no choice IDs found", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
 
     const mockRow = {
@@ -681,7 +680,7 @@ describe("ResponseTableColumns - Choice ID Columns", () => {
   });
 
   test("option IDs column handles missing language gracefully", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
 
     const mockRow = {
@@ -711,7 +710,7 @@ describe("ResponseTableColumns - Helper Functions", () => {
   });
 
   test("question headers are properly created for multiple choice questions", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const mainColumn: any = columns.find((col) => (col as any).accessorKey === "q5single");
     const optionIdsColumn: any = columns.find((col) => (col as any).accessorKey === "q5singleoptionIds");
 
@@ -727,7 +726,7 @@ describe("ResponseTableColumns - Helper Functions", () => {
   });
 
   test("question headers include proper icons for multiple choice questions", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
     const singleChoiceColumn: any = columns.find((col) => (col as any).accessorKey === "q5single");
     const multiChoiceColumn: any = columns.find((col) => (col as any).accessorKey === "q6multi");
 
@@ -751,7 +750,7 @@ describe("ResponseTableColumns - Integration Tests", () => {
   });
 
   test("multiple choice questions work end-to-end with real data", () => {
-    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any);
+    const columns = generateResponseTableColumns(mockSurvey, false, true, t as any, false);
 
     // Find all multiple choice related columns
     const singleMainCol = columns.find((col) => (col as any).accessorKey === "q5single");

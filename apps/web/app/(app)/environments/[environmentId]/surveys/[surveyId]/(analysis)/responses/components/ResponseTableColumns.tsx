@@ -257,7 +257,8 @@ export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isReadOnly: boolean,
-  t: TFnType
+  t: TFnType,
+  showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>
     getQuestionColumnsData(question, survey, isExpanded, t)
@@ -304,6 +305,17 @@ export const generateResponseTableColumns = (
         : t("common.anonymous");
       return <p className="truncate text-slate-900">{personId}</p>;
     },
+  };
+
+  const quotasColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "quota",
+    header: t("common.quota"),
+    cell: ({ row }) => {
+      const quotas = row.original.quotas;
+      const items = quotas?.map((quota) => ({ value: quota })) ?? [];
+      return <ResponseBadges items={items} showId={false} />;
+    },
+    size: 200,
   };
 
   const statusColumn: ColumnDef<TResponseTableData> = {
@@ -393,6 +405,7 @@ export const generateResponseTableColumns = (
   const baseColumns = [
     personColumn,
     dateColumn,
+    ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
     ...questionColumns,

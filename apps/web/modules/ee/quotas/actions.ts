@@ -3,9 +3,15 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import {
+  getOrganizationIdFromQuotaId,
+  getOrganizationIdFromSurveyId,
+  getProjectIdFromQuotaId,
+  getProjectIdFromSurveyId,
+} from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getQuotaLinkCountByQuotaId } from "@/modules/ee/quotas/lib/quota-link";
 import { createQuota, deleteQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
@@ -23,8 +29,8 @@ const checkQuotasEnabled = async (organizationId: string) => {
   if (!organizationBilling) {
     throw new Error("Organization billing not found");
   }
-  const isQuotasEnabled = await getIsQuotasEnabled(organizationBilling.plan);
-  if (!isQuotasEnabled) {
+  const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+  if (!isQuotasAllowed) {
     throw new OperationNotAllowedError("Quotas are not enabled");
   }
 };
@@ -154,3 +160,40 @@ export const createQuotaAction = authenticatedActionClient.schema(ZCreateQuotaAc
     }
   )
 );
+
+const ZGetQuotaResponseCountAction = z.object({
+  quotaId: ZId,
+});
+
+export const getQuotaResponseCountAction = authenticatedActionClient
+  .schema(ZGetQuotaResponseCountAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZGetQuotaResponseCountAction>;
+    }) => {
+      const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
+      await checkQuotasEnabled(organizationId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "projectTeam",
+            projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
+            minPermission: "readWrite",
+          },
+        ],
+      });
+
+      const count = await getQuotaLinkCountByQuotaId(parsedInput.quotaId);
+      return { count };
+    }
+  );

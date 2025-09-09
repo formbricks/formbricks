@@ -41,6 +41,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { z } from "zod";
 import {
   TSurveyQuota,
   TSurveyQuotaInput,
@@ -60,6 +61,7 @@ interface QuotaModalProps {
   onClose: () => void;
   duplicateQuota: (quota: TSurveyQuota) => void;
   hasResponses: boolean;
+  quotaResponseCount: number;
 }
 
 export const QuotaModal = ({
@@ -71,6 +73,7 @@ export const QuotaModal = ({
   onClose,
   duplicateQuota,
   hasResponses,
+  quotaResponseCount,
 }: QuotaModalProps) => {
   const router = useRouter();
   const isEditing = !!quota;
@@ -100,7 +103,18 @@ export const QuotaModal = ({
 
   const form = useForm<TSurveyQuotaInput>({
     defaultValues,
-    resolver: zodResolver(ZSurveyQuotaInput),
+    resolver: zodResolver(
+      quotaResponseCount > 0
+        ? ZSurveyQuotaInput.innerType().extend({
+            limit: z.number().min(quotaResponseCount, {
+              message: t(
+                "environments.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses",
+                { value: quotaResponseCount }
+              ),
+            }),
+          })
+        : ZSurveyQuotaInput
+    ),
     mode: "onSubmit",
     criteriaMode: "all",
   });
@@ -159,6 +173,15 @@ export const QuotaModal = ({
   );
   const submitQuota = async (data: TSurveyQuotaInput) => {
     const trimmedName = data.name.trim();
+    if (data.limit < quotaResponseCount) {
+      form.setError("limit", {
+        message: t(
+          "environments.surveys.edit.quotas.limit_must_be_greater_than_or_equal_to_the_number_of_responses"
+        ),
+      });
+      return;
+    }
+
     let payload = {
       name: trimmedName || t("environments.surveys.edit.quotas.new_quota"),
       limit: data.limit,

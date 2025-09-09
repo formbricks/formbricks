@@ -1,8 +1,10 @@
 import { validateInputs } from "@/lib/utils/validate";
+import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   getActionClass,
   getApiKey,
@@ -14,6 +16,7 @@ import {
   getInvite,
   getLanguage,
   getProject,
+  getQuota,
   getResponse,
   getSegment,
   getSurvey,
@@ -80,7 +83,14 @@ vi.mock("@formbricks/database", () => ({
     segment: {
       findUnique: vi.fn(),
     },
+    surveyQuota: {
+      findUnique: vi.fn(),
+    },
   },
+}));
+
+vi.mock("@/modules/ee/quotas/lib/quotas", () => ({
+  getQuota: vi.fn(),
 }));
 
 describe("Service Functions", () => {
@@ -386,6 +396,30 @@ describe("Service Functions", () => {
       );
 
       await expect(getWebhook(webhookId)).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("getQuota", () => {
+    const quotaId = "quota123";
+
+    test("returns surveyId when found (delegates to getQuotaService)", async () => {
+      const mockQuota = { surveyId: "survey123" } as TSurveyQuota;
+      vi.mocked(getQuotaService).mockResolvedValue(mockQuota);
+
+      const result = await getQuota(quotaId);
+      expect(validateInputs).toHaveBeenCalled();
+      expect(getQuotaService).toHaveBeenCalledWith(quotaId);
+      expect(result).toEqual(mockQuota);
+    });
+
+    test("throws DatabaseError when underlying service fails", async () => {
+      vi.mocked(getQuotaService).mockRejectedValue(new DatabaseError("error"));
+      await expect(getQuota(quotaId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("throws ResourceNotFoundError when quota not found", async () => {
+      vi.mocked(getQuotaService).mockRejectedValue(new ResourceNotFoundError("Quota", quotaId));
+      await expect(getQuota(quotaId)).rejects.toThrow(ResourceNotFoundError);
     });
   });
 

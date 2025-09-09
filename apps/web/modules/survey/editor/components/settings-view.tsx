@@ -84,7 +84,7 @@ export const SettingsView = ({
       />
       <QuotasCard
         localSurvey={localSurvey}
-        isQuotasEnabled={isQuotasAllowed}
+        isQuotasAllowed={isQuotasAllowed}
         isFormbricksCloud={isFormbricksCloud}
         quotas={quotas}
         hasResponses={responseCount > 0}

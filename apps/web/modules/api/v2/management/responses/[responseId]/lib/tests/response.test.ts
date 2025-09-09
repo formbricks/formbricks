@@ -1,13 +1,32 @@
 import { response, responseId, responseInput, survey } from "./__mocks__/response.mock";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok, okVoid } from "@formbricks/types/error-handlers";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { deleteDisplay } from "../display";
-import { deleteResponse, getResponse, updateResponse } from "../response";
+import { deleteResponse, getResponse, updateResponse, updateResponseWithQuotaEvaluation } from "../response";
 import { getSurveyQuestions } from "../survey";
 import { findAndDeleteUploadedFilesInResponse } from "../utils";
+
+// Mock quota object for testing
+const mockQuota: TSurveyQuota = {
+  id: "quota-id",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  surveyId: "kbr8tnr2q2vgztyrfnqlgfjt",
+  name: "Test Quota",
+  limit: 100,
+  logic: {
+    connector: "and",
+    conditions: [],
+  },
+  action: "endSurvey",
+  endingCardId: "ending-card-id",
+  countPartialSubmissions: false,
+};
 
 vi.mock("../display", () => ({
   deleteDisplay: vi.fn(),
@@ -19,6 +38,10 @@ vi.mock("../survey", () => ({
 
 vi.mock("../utils", () => ({
   findAndDeleteUploadedFilesInResponse: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
+  evaluateResponseQuotas: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -237,6 +260,158 @@ describe("Response Lib", () => {
           details: [{ field: "response", issue: "Update failed" }],
         });
       }
+    });
+  });
+
+  describe("updateResponseWithQuotaEvaluation", () => {
+    type MockTx = {
+      response: {
+        update: ReturnType<typeof vi.fn>;
+      };
+    };
+    let mockTx: MockTx;
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+
+      mockTx = {
+        response: {
+          update: vi.fn(),
+        },
+      };
+
+      prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    });
+
+    test("update response and continue when quota evaluation says not to end survey", async () => {
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
+      vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+        shouldEndSurvey: false,
+        quotaFull: null,
+        refreshedResponse: null,
+      });
+
+      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+
+      expect(mockTx.response.update).toHaveBeenCalledWith({
+        where: { id: responseId },
+        data: responseInput,
+      });
+      expect(evaluateResponseQuotas).toHaveBeenCalledWith({
+        surveyId: response.surveyId,
+        responseId: response.id,
+        data: response.data,
+        variables: response.variables,
+        language: response.language,
+        responseFinished: response.finished,
+        tx: mockTx,
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(response);
+      }
+    });
+
+    test("handle quota evaluation with default language when response.language is null", async () => {
+      const responseWithoutLanguage = { ...response, language: null };
+      vi.mocked(mockTx.response.update).mockResolvedValue(responseWithoutLanguage);
+      vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+        shouldEndSurvey: false,
+        quotaFull: null,
+        refreshedResponse: null,
+      });
+
+      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+
+      expect(evaluateResponseQuotas).toHaveBeenCalledWith({
+        surveyId: responseWithoutLanguage.surveyId,
+        responseId: responseWithoutLanguage.id,
+        data: responseWithoutLanguage.data,
+        variables: responseWithoutLanguage.variables,
+        language: "default",
+        responseFinished: responseWithoutLanguage.finished,
+        tx: mockTx,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    test("end survey and return refreshed response when quota is full and refreshedResponse exists", async () => {
+      const refreshedResponse = { ...response, finished: true, endingId: "new-ending-id" };
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
+      vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+        shouldEndSurvey: true,
+        quotaFull: mockQuota,
+        refreshedResponse: refreshedResponse,
+      });
+
+      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(refreshedResponse);
+      }
+    });
+
+    test("end survey and set finished=true with endingCardId when quota is full but no refreshedResponse", async () => {
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
+      vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+        shouldEndSurvey: true,
+        quotaFull: mockQuota,
+        refreshedResponse: null,
+      });
+
+      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual({
+          ...response,
+          finished: true,
+          endingId: "ending-card-id",
+        });
+      }
+    });
+
+    test("end survey and set finished=true when quota is full with no quotaFull object", async () => {
+      vi.mocked(mockTx.response.update).mockResolvedValue(response);
+      vi.mocked(evaluateResponseQuotas).mockResolvedValue({
+        shouldEndSurvey: true,
+        quotaFull: null,
+        refreshedResponse: null,
+      });
+
+      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual({
+          ...response,
+          finished: true,
+        });
+      }
+    });
+
+    test("propagate error when updateResponse fails", async () => {
+      vi.mocked(mockTx.response.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Response not found", {
+          code: PrismaErrorType.RelatedRecordDoesNotExist,
+          clientVersion: "1.0.0",
+          meta: {
+            cause: "Response not found",
+          },
+        })
+      );
+
+      const result = await updateResponseWithQuotaEvaluation(responseId, responseInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "response", issue: "not found" }],
+        });
+      }
+      expect(evaluateResponseQuotas).not.toHaveBeenCalled();
     });
   });
 });
