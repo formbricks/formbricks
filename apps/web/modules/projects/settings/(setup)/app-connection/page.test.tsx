@@ -153,15 +153,12 @@ describe("AppConnectionPage", () => {
     expect(await findByTestId("action-settings-card")).toHaveTextContent("action-settings-card");
 
     const cards = await findAllByTestId("settings-card");
-    expect(cards.length).toBe(3);
-    expect(cards[0]).toHaveTextContent("environments.project.app-connection.app_connection");
-    expect(cards[0]).toHaveTextContent("environments.project.app-connection.app_connection_description");
-    expect(cards[0]).toHaveTextContent("env-123"); // WidgetStatusIndicator
-    expect(cards[1]).toHaveTextContent("environments.project.app-connection.how_to_setup");
-    expect(cards[1]).toHaveTextContent("environments.project.app-connection.how_to_setup_description");
-    expect(cards[1]).toHaveTextContent("env-123"); // SetupInstructions
-    expect(cards[2]).toHaveTextContent("environments.project.app-connection.environment_id");
-    expect(cards[2]).toHaveTextContent("environments.project.app-connection.environment_id_description");
-    expect(cards[2]).toHaveTextContent("env-123"); // IdBadge
+    expect(cards.length).toBe(2);
+    expect(cards[0]).toHaveTextContent("environments.project.app-connection.environment_id");
+    expect(cards[0]).toHaveTextContent("environments.project.app-connection.environment_id_description");
+    expect(cards[0]).toHaveTextContent("env-123"); // IdBadge
+    expect(cards[1]).toHaveTextContent("environments.project.app-connection.app_connection");
+    expect(cards[1]).toHaveTextContent("environments.project.app-connection.app_connection_description");
+    expect(cards[1]).toHaveTextContent("env-123"); // WidgetStatusIndicator
   });
 });

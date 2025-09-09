@@ -129,6 +129,11 @@ vi.mock("lucide-react", () => ({
       <title>Settings Icon</title>
     </svg>
   ),
+  CogIcon: ({ className }: any) => (
+    <svg data-testid="cog-icon" className={className}>
+      <title>Cog Icon</title>
+    </svg>
+  ),
 }));
 
 describe("ProjectBreadcrumb", () => {
