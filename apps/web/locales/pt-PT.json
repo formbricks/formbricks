@@ -769,7 +769,7 @@
         "check_out_the_docs": "Consulte a documentação.",
         "dive_into_the_docs": "Mergulhe na documentação.",
         "does_your_widget_work": "O seu widget funciona?",
-        "environment_id": "O seu EnvironmentId",
+        "environment_id": "O Seu ID de Ambiente",
         "environment_id_description": "Este id identifica de forma única este ambiente Formbricks.",
         "environment_id_description_with_environment_id": "Usado para identificar o ambiente correto: {environmentId} é o seu.",
         "formbricks_sdk": "SDK Formbricks",

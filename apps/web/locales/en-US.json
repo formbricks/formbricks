@@ -769,7 +769,7 @@
         "check_out_the_docs": "Check out the docs.",
         "dive_into_the_docs": "Dive into the docs.",
         "does_your_widget_work": "Does your widget work?",
-        "environment_id": "Your EnvironmentId",
+        "environment_id": "Your Environment ID",
         "environment_id_description": "This id uniquely identifies this Formbricks environment.",
         "environment_id_description_with_environment_id": "Used to identify the correct environment: {environmentId} is yours.",
         "formbricks_sdk": "Formbricks SDK",
