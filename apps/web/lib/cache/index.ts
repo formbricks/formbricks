@@ -34,6 +34,16 @@ export const cache = new Proxy({} as AsyncCacheService, {
       };
     }
 
+    if (prop === "getRedisClient") {
+      return async () => {
+        const cacheServiceResult = await getCacheService();
+        if (!cacheServiceResult.ok) {
+          return null;
+        }
+        return cacheServiceResult.data.getRedisClient();
+      };
+    }
+
     // Default: lazily initialize and forward the call; returns a Promise for all methods
     return async (...args: Parameters<CacheService[typeof prop]>) => {
       const cacheServiceResult = await getCacheService();

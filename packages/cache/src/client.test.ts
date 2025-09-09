@@ -62,6 +62,8 @@ describe("@formbricks/cache factory", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe(ErrorCode.RedisConfigurationError);
+        expect(typeof result.error).toBe("object");
+        expect(result.error).toHaveProperty("code");
       }
     });
 
@@ -119,6 +121,8 @@ describe("@formbricks/cache factory", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
+        expect(typeof result.error).toBe("object");
+        expect(result.error).toHaveProperty("code");
       }
 
       // Verify client was created and connect was attempted
@@ -141,6 +145,8 @@ describe("@formbricks/cache factory", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe(ErrorCode.RedisConfigurationError);
+        expect(typeof result.error).toBe("object");
+        expect(result.error).toHaveProperty("code");
       }
     });
 
@@ -244,8 +250,10 @@ describe("@formbricks/cache factory", () => {
       expect(result.ok).toBe(false);
 
       if (!result.ok) {
-        // The error should be a structured CacheError from createRedisClientFromEnv
+        // The error should be a simple error object from createRedisClientFromEnv
         expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
+        expect(typeof result.error).toBe("object");
+        expect(result.error).toHaveProperty("code");
       }
 
       expect(mockClient.connect).toHaveBeenCalledTimes(1);
@@ -269,8 +277,10 @@ describe("@formbricks/cache factory", () => {
       const result = await getCacheService();
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        // The error should be a structured CacheError from createRedisClientFromEnv
+        // The error should be a simple error object from createRedisClientFromEnv
         expect(result.error.code).toBe(ErrorCode.RedisConnectionError);
+        expect(typeof result.error).toBe("object");
+        expect(result.error).toHaveProperty("code");
       }
     });
   });

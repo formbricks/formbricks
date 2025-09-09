@@ -27,5 +27,11 @@ export default defineConfig({
       reporter: ["text", "json", "html", "lcov"],
     },
   },
-  plugins: [dts()],
+  plugins: [
+    dts({
+      include: ["src/**/*", "types/**/*"],
+      entryRoot: ".",
+      outDir: "dist",
+    }),
+  ],
 });

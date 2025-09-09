@@ -259,6 +259,25 @@ describe("Cache Index", () => {
       expect(result).toBe(mockRedisClient);
     });
 
+    test("should return null when cache service fails for getRedisClient", async () => {
+      mockGetCacheService.mockResolvedValue({
+        ok: false,
+        error: { code: "REDIS_CONNECTION_ERROR" },
+      });
+
+      const result = await cache.getRedisClient();
+
+      expect(result).toBeNull();
+      expect(mockCacheService.getRedisClient).not.toHaveBeenCalled();
+    });
+
+    test("should handle getRedisClient when cache service throws error", async () => {
+      const cacheError = new Error("Cache connection failed");
+      mockGetCacheService.mockRejectedValue(cacheError);
+
+      await expect(cache.getRedisClient()).rejects.toThrow("Cache connection failed");
+    });
+
     test("should handle method errors correctly", async () => {
       const cacheError = new Error("Cache operation failed");
       mockCacheService.get.mockRejectedValue(cacheError);

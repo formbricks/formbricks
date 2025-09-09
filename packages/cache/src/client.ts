@@ -1,5 +1,5 @@
 import type { RedisClient } from "@/types/client";
-import { type CacheError, CacheErrorClass, ErrorCode, type Result, err, ok } from "@/types/error";
+import { type CacheError, ErrorCode, type Result, err, ok } from "@/types/error";
 import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
 import { CacheService } from "./service";
@@ -50,12 +50,8 @@ export async function createRedisClientFromEnv(): Promise<Result<RedisClient, Ca
     await client.connect();
     return ok(client as RedisClient);
   } catch (error) {
-    return err(
-      new CacheErrorClass(
-        ErrorCode.RedisConnectionError,
-        error instanceof Error ? error.message : String(error)
-      )
-    );
+    logger.error(error, "Redis client connection failed");
+    return err({ code: ErrorCode.RedisConnectionError });
   }
 }
 
@@ -102,8 +98,8 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
   globalForCache.formbricksCacheInitializing = (async (): Promise<Result<CacheService, CacheError>> => {
     const clientResult = await createRedisClientFromEnv();
     if (!clientResult.ok) {
-      logger.error("Redis client creation failed", { error: clientResult.error });
-      return err(CacheErrorClass.fromCacheError(clientResult.error, "Redis client creation failed"));
+      logger.error({ error: clientResult.error }, "Redis client creation failed");
+      return err({ code: clientResult.error.code });
     }
 
     const client = clientResult.data;
@@ -118,7 +114,7 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
   const result = await globalForCache.formbricksCacheInitializing;
   if (!result.ok) {
     globalForCache.formbricksCacheInitializing = undefined; // Allow retry
-    logger.error("Cache service creation failed", { error: result.error });
+    logger.error({ error: result.error }, "Cache service creation failed");
   }
   return result;
 }
