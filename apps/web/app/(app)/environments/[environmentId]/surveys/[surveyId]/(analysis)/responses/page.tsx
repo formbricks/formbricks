@@ -10,8 +10,11 @@ import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
-import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -46,6 +49,19 @@ const Page = async (props) => {
   const locale = await findMatchingLocale();
   const publicDomain = getPublicDomain();
 
+  const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
+  if (!organizationId) {
+    throw new Error(t("common.organization_not_found"));
+  }
+  const organizationBilling = await getOrganizationBilling(organizationId);
+  if (!organizationBilling) {
+    throw new Error(t("common.organization_not_found"));
+  }
+
+  const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+
+  const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
+
   return (
     <PageContentWrapper>
       <PageHeader
@@ -75,6 +91,8 @@ const Page = async (props) => {
         responsesPerPage={RESPONSES_PER_PAGE}
         locale={locale}
         isReadOnly={isReadOnly}
+        isQuotasAllowed={isQuotasAllowed}
+        quotas={quotas}
       />
     </PageContentWrapper>
   );

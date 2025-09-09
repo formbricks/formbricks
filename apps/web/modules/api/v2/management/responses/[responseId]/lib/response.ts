@@ -3,6 +3,7 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
 import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma, Response } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
@@ -76,10 +77,12 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
 
 export const updateResponse = async (
   responseId: string,
-  responseInput: z.infer<typeof ZResponseUpdateSchema>
+  responseInput: z.infer<typeof ZResponseUpdateSchema>,
+  tx?: Prisma.TransactionClient
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
-    const updatedResponse = await prisma.response.update({
+    const prismaClient = tx ?? prisma;
+    const updatedResponse = await prismaClient.response.update({
       where: {
         id: responseId,
       },
@@ -104,4 +107,47 @@ export const updateResponse = async (
       details: [{ field: "response", issue: error.message }],
     });
   }
+};
+
+export const updateResponseWithQuotaEvaluation = async (
+  responseId: string,
+  responseInput: z.infer<typeof ZResponseUpdateSchema>
+): Promise<Result<Response, ApiErrorResponseV2>> => {
+  const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
+    const responseResult = await updateResponse(responseId, responseInput, tx);
+
+    if (!responseResult.ok) {
+      return responseResult;
+    }
+
+    const response = responseResult.data;
+
+    const quotaResult = await evaluateResponseQuotas({
+      surveyId: response.surveyId,
+      responseId: response.id,
+      data: response.data,
+      variables: response.variables,
+      language: response.language || "default",
+      responseFinished: response.finished,
+      tx,
+    });
+
+    if (quotaResult.shouldEndSurvey) {
+      if (quotaResult.refreshedResponse) {
+        return ok(quotaResult.refreshedResponse);
+      }
+
+      return ok({
+        ...response,
+        finished: true,
+        ...(quotaResult.quotaFull?.endingCardId && {
+          endingId: quotaResult.quotaFull.endingCardId,
+        }),
+      });
+    }
+
+    return ok(response);
+  });
+
+  return txResponse;
 };
