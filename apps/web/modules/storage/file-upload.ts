@@ -60,11 +60,15 @@ export const handleFileUpload = async (
 
     if (!response.ok) {
       if (response.status === 400) {
-        return {
-          error: FileUploadError.INVALID_FILE_NAME,
-          url: "",
-        };
+        const json = (await response.json()) as { details?: { fileName?: string } };
+        if (json.details?.fileName) {
+          return {
+            error: FileUploadError.INVALID_FILE_NAME,
+            url: "",
+          };
+        }
       }
+
       return {
         error: FileUploadError.UPLOAD_FAILED,
         url: "",

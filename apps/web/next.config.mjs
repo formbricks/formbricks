@@ -115,7 +115,7 @@ const nextConfig = {
   async headers() {
     const isProduction = process.env.NODE_ENV === "production";
     const scriptSrcUnsafeEval = isProduction ? "" : " 'unsafe-eval'";
-    const imgSrcLocal = isProduction ? "" : " http://localhost:*";
+    const imgSrcLocal = isProduction ? "" : " http://localhost:*"; // NOSONAR - We want to allow local images in development
 
     return [
       {
