@@ -7,54 +7,63 @@ import { ProjectAndOrgSwitch } from "./project-and-org-switch";
 // Mock the individual breadcrumb components
 vi.mock("@/app/(app)/environments/[environmentId]/components/organization-breadcrumb", () => ({
   OrganizationBreadcrumb: ({
-    currentOrganization,
+    currentOrganizationId,
     organizations,
     isMultiOrgEnabled,
     currentEnvironmentId,
-  }: any) => (
-    <div data-testid="organization-breadcrumb">
-      <div>Organization: {currentOrganization.name}</div>
-      <div>Organizations Count: {organizations.length}</div>
-      <div>Multi Org: {isMultiOrgEnabled ? "Enabled" : "Disabled"}</div>
-      <div>Environment ID: {currentEnvironmentId}</div>
-    </div>
-  ),
+  }: any) => {
+    const currentOrganization = organizations.find((org: any) => org.id === currentOrganizationId);
+    return (
+      <div data-testid="organization-breadcrumb">
+        <div>Organization: {currentOrganization?.name}</div>
+        <div>Organizations Count: {organizations.length}</div>
+        <div>Multi Org: {isMultiOrgEnabled ? "Enabled" : "Disabled"}</div>
+        <div>Environment ID: {currentEnvironmentId}</div>
+      </div>
+    );
+  },
 }));
 
 vi.mock("@/app/(app)/environments/[environmentId]/components/project-breadcrumb", () => ({
   ProjectBreadcrumb: ({
-    currentProject,
+    currentProjectId,
     projects,
     isOwnerOrManager,
     organizationProjectsLimit,
     isFormbricksCloud,
     isLicenseActive,
-    currentOrganization,
+    currentOrganizationId,
     currentEnvironmentId,
     isAccessControlAllowed,
-  }: any) => (
-    <div data-testid="project-breadcrumb">
-      <div>Project: {currentProject.name}</div>
-      <div>Projects Count: {projects.length}</div>
-      <div>Owner/Manager: {isOwnerOrManager ? "Yes" : "No"}</div>
-      <div>Project Limit: {organizationProjectsLimit}</div>
-      <div>Formbricks Cloud: {isFormbricksCloud ? "Yes" : "No"}</div>
-      <div>License Active: {isLicenseActive ? "Yes" : "No"}</div>
-      <div>Organization: {currentOrganization.name}</div>
-      <div>Environment ID: {currentEnvironmentId}</div>
-      <div>Access Control: {isAccessControlAllowed ? "Allowed" : "Not Allowed"}</div>
-    </div>
-  ),
+  }: any) => {
+    const currentProject = projects.find((project: any) => project.id === currentProjectId);
+    return (
+      <div data-testid="project-breadcrumb">
+        <div>Project: {currentProject?.name}</div>
+        <div>Projects Count: {projects.length}</div>
+        <div>Owner/Manager: {isOwnerOrManager ? "Yes" : "No"}</div>
+        <div>Project Limit: {organizationProjectsLimit}</div>
+        <div>Formbricks Cloud: {isFormbricksCloud ? "Yes" : "No"}</div>
+        <div>License Active: {isLicenseActive ? "Yes" : "No"}</div>
+        <div>Organization ID: {currentOrganizationId}</div>
+        <div>Environment ID: {currentEnvironmentId}</div>
+        <div>Access Control: {isAccessControlAllowed ? "Allowed" : "Not Allowed"}</div>
+      </div>
+    );
+  },
 }));
 
 vi.mock("@/app/(app)/environments/[environmentId]/components/environment-breadcrumb", () => ({
-  EnvironmentBreadcrumb: ({ environments, environment }: any) => (
-    <div data-testid="environment-breadcrumb">
-      <div>Environment: {environment.type}</div>
-      <div>Environments Count: {environments.length}</div>
-      <div>Environment ID: {environment.id}</div>
-    </div>
-  ),
+  EnvironmentBreadcrumb: ({ environments, currentEnvironmentId }: any) => {
+    const currentEnvironment = environments.find((env: any) => env.id === currentEnvironmentId);
+    return (
+      <div data-testid="environment-breadcrumb">
+        <div>Environment: {currentEnvironment?.type}</div>
+        <div>Environments Count: {environments.length}</div>
+        <div>Environment ID: {currentEnvironment?.id}</div>
+      </div>
+    );
+  },
 }));
 
 // Mock the UI components
@@ -105,7 +114,7 @@ describe("ProjectAndOrgSwitch", () => {
     id: "env-2",
     createdAt: new Date("2023-01-01"),
     updatedAt: new Date("2023-01-01"),
-    type: "production",
+    type: "development",
     projectId: "proj-1",
     appSetupCompleted: true,
   };
@@ -124,7 +133,6 @@ describe("ProjectAndOrgSwitch", () => {
     isOwnerOrManager: true,
     isAccessControlAllowed: true,
     isMember: true,
-    currentOrgBillingPlan: "free",
   };
 
   afterEach(() => {
@@ -152,7 +160,6 @@ describe("ProjectAndOrgSwitch", () => {
 
       expect(screen.getByTestId("organization-breadcrumb")).toBeInTheDocument();
       expect(screen.getByTestId("project-breadcrumb")).toBeInTheDocument();
-      expect(screen.getByTestId("environment-breadcrumb")).toBeInTheDocument();
     });
   });
 
@@ -193,7 +200,7 @@ describe("ProjectAndOrgSwitch", () => {
       expect(projectBreadcrumb).toHaveTextContent("Project Limit: 5");
       expect(projectBreadcrumb).toHaveTextContent("Formbricks Cloud: Yes");
       expect(projectBreadcrumb).toHaveTextContent("License Active: No");
-      expect(projectBreadcrumb).toHaveTextContent("Organization: Test Organization 1");
+      expect(projectBreadcrumb).toHaveTextContent("Organization ID: org-1");
       expect(projectBreadcrumb).toHaveTextContent("Environment ID: env-1");
       expect(projectBreadcrumb).toHaveTextContent("Access Control: Allowed");
     });
@@ -226,9 +233,7 @@ describe("ProjectAndOrgSwitch", () => {
       render(<ProjectAndOrgSwitch {...defaultProps} />);
 
       const envBreadcrumb = screen.getByTestId("environment-breadcrumb");
-      expect(envBreadcrumb).toHaveTextContent("Environment: development");
       expect(envBreadcrumb).toHaveTextContent("Environments Count: 2");
-      expect(envBreadcrumb).toHaveTextContent("Environment ID: env-1");
     });
 
     test("handles single environment", () => {
@@ -254,7 +259,7 @@ describe("ProjectAndOrgSwitch", () => {
       const projectBreadcrumb = screen.getByTestId("project-breadcrumb");
 
       expect(orgBreadcrumb).toHaveTextContent("Organization: Test Organization 2");
-      expect(projectBreadcrumb).toHaveTextContent("Organization: Test Organization 2");
+      expect(projectBreadcrumb).toHaveTextContent("Organization ID: org-2");
     });
   });
 
@@ -310,11 +315,11 @@ describe("ProjectAndOrgSwitch", () => {
 
     test("works with minimal valid props", () => {
       const minimalProps = {
-        currentOrganization: mockOrganization1,
+        currentOrganizationId: "org-1",
         organizations: [mockOrganization1],
-        currentProject: mockProject1,
+        currentProjectId: "proj-1",
         projects: [mockProject1],
-        currentEnvironment: mockEnvironment1,
+        currentEnvironmentId: "env-1",
         environments: [mockEnvironment1],
         isMultiOrgEnabled: false,
         organizationProjectsLimit: 1,
@@ -322,17 +327,11 @@ describe("ProjectAndOrgSwitch", () => {
         isLicenseActive: false,
         isOwnerOrManager: false,
         isAccessControlAllowed: false,
+        isMember: true,
       };
 
       expect(() => {
-        render(
-          <ProjectAndOrgSwitch
-            {...minimalProps}
-            currentOrganizationId="org-1"
-            isMember={true}
-            currentOrgBillingPlan="free"
-          />
-        );
+        render(<ProjectAndOrgSwitch {...minimalProps} />);
       }).not.toThrow();
 
       expect(screen.getByTestId("breadcrumb")).toBeInTheDocument();

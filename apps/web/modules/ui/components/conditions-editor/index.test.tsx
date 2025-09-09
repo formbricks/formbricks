@@ -219,9 +219,11 @@ describe("ConditionsEditor", () => {
 
   test("calls onRemoveCondition from the dropdown menu", async () => {
     const user = userEvent.setup();
-    render(<ConditionsEditor conditions={singleCondition} config={mockConfig} callbacks={mockCallbacks} />);
-    const removeButton = screen.getByText("common.remove");
-    await user.click(removeButton);
+    render(
+      <ConditionsEditor conditions={multipleConditions} config={mockConfig} callbacks={mockCallbacks} />
+    );
+    const removeButtons = screen.getAllByText("common.remove");
+    await user.click(removeButtons[0]);
     expect(mockCallbacks.onRemoveCondition).toHaveBeenCalledWith("cond1");
   });
 

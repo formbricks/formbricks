@@ -67,7 +67,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     }
   }, [backgroundLoaded, onBackgroundLoaded]);
 
-  const baseClasses = "absolute inset-0 h-full w-full transition-opacity duration-500";
+  const baseClasses = "absolute inset-0 h-full w-full transition-opacity duration-500 bg-slate-200";
   const loadedClass = backgroundLoaded ? "opacity-100" : "opacity-0";
 
   const getFilterStyle = () => {

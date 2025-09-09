@@ -44,7 +44,6 @@ export const TopControlBar = ({
   isAccessControlAllowed,
   membershipRole,
   projectPermission,
-  currentOrgBillingPlan,
 }: TopControlBarProps) => {
   const { t } = useTranslate();
 
@@ -72,7 +71,6 @@ export const TopControlBar = ({
           isOwnerOrManager={isOwnerOrManager}
           isMember={isMember}
           isAccessControlAllowed={isAccessControlAllowed}
-          currentOrgBillingPlan={currentOrgBillingPlan}
         />
       </div>
       <div className="z-50 flex items-center space-x-2">

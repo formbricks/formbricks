@@ -142,7 +142,9 @@ describe("EnvironmentBreadcrumb", () => {
   });
 
   test("renders environment breadcrumb with production environment", () => {
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     expect(screen.getByTestId("breadcrumb-item")).toBeInTheDocument();
     expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
@@ -152,7 +154,10 @@ describe("EnvironmentBreadcrumb", () => {
 
   test("renders environment breadcrumb with development environment and shows tooltip", () => {
     render(
-      <EnvironmentBreadcrumb environments={mockEnvironments} environment={mockDevelopmentEnvironment} />
+      <EnvironmentBreadcrumb
+        environments={mockEnvironments}
+        currentEnvironment={mockDevelopmentEnvironment}
+      />
     );
 
     expect(screen.getAllByText("development")).toHaveLength(2); // trigger + dropdown option
@@ -162,7 +167,10 @@ describe("EnvironmentBreadcrumb", () => {
 
   test("highlights breadcrumb item for development environment", () => {
     render(
-      <EnvironmentBreadcrumb environments={mockEnvironments} environment={mockDevelopmentEnvironment} />
+      <EnvironmentBreadcrumb
+        environments={mockEnvironments}
+        currentEnvironment={mockDevelopmentEnvironment}
+      />
     );
 
     const breadcrumbItem = screen.getByTestId("breadcrumb-item");
@@ -170,7 +178,9 @@ describe("EnvironmentBreadcrumb", () => {
   });
 
   test("does not highlight breadcrumb item for production environment", () => {
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     const breadcrumbItem = screen.getByTestId("breadcrumb-item");
     expect(breadcrumbItem).toHaveAttribute("data-highlighted", "false");
@@ -178,7 +188,9 @@ describe("EnvironmentBreadcrumb", () => {
 
   test("shows chevron down icon when dropdown is open", async () => {
     const user = userEvent.setup();
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     const dropdownMenu = screen.getByTestId("dropdown-menu");
     await user.click(dropdownMenu);
@@ -190,7 +202,9 @@ describe("EnvironmentBreadcrumb", () => {
 
   test("renders dropdown content with environment options", async () => {
     const user = userEvent.setup();
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     const dropdownMenu = screen.getByTestId("dropdown-menu");
     await user.click(dropdownMenu);
@@ -202,7 +216,9 @@ describe("EnvironmentBreadcrumb", () => {
 
   test("renders all environment options in dropdown", async () => {
     const user = userEvent.setup();
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     const dropdownMenu = screen.getByTestId("dropdown-menu");
     await user.click(dropdownMenu);
@@ -223,7 +239,9 @@ describe("EnvironmentBreadcrumb", () => {
 
   test("handles environment change when clicking dropdown option", async () => {
     const user = userEvent.setup();
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     const dropdownMenu = screen.getByTestId("dropdown-menu");
     await user.click(dropdownMenu);
@@ -238,7 +256,9 @@ describe("EnvironmentBreadcrumb", () => {
   });
 
   test("capitalizes environment type in display", () => {
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     const environmentSpans = screen.getAllByText("production");
     const triggerSpan = environmentSpans.find((span) => span.className.includes("capitalize"));
@@ -247,7 +267,10 @@ describe("EnvironmentBreadcrumb", () => {
 
   test("tooltip shows correct content for development environment", () => {
     render(
-      <EnvironmentBreadcrumb environments={mockEnvironments} environment={mockDevelopmentEnvironment} />
+      <EnvironmentBreadcrumb
+        environments={mockEnvironments}
+        currentEnvironment={mockDevelopmentEnvironment}
+      />
     );
 
     const tooltipContent = screen.getByTestId("tooltip-content");
@@ -256,7 +279,9 @@ describe("EnvironmentBreadcrumb", () => {
   });
 
   test("renders without tooltip for production environment", () => {
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     expect(screen.queryByTestId("circle-help-icon")).not.toBeInTheDocument();
     expect(screen.queryByTestId("tooltip-provider")).not.toBeInTheDocument();
@@ -264,7 +289,9 @@ describe("EnvironmentBreadcrumb", () => {
 
   test("sets breadcrumb item as active when dropdown is open", async () => {
     const user = userEvent.setup();
-    render(<EnvironmentBreadcrumb environments={mockEnvironments} environment={mockProductionEnvironment} />);
+    render(
+      <EnvironmentBreadcrumb environments={mockEnvironments} currentEnvironment={mockProductionEnvironment} />
+    );
 
     // Initially not active
     let breadcrumbItem = screen.getByTestId("breadcrumb-item");
@@ -283,7 +310,10 @@ describe("EnvironmentBreadcrumb", () => {
     const singleEnvironment = [mockProductionEnvironment];
 
     render(
-      <EnvironmentBreadcrumb environments={singleEnvironment} environment={mockProductionEnvironment} />
+      <EnvironmentBreadcrumb
+        environments={singleEnvironment}
+        currentEnvironment={mockProductionEnvironment}
+      />
     );
 
     expect(screen.getByTestId("breadcrumb-item")).toBeInTheDocument();
@@ -291,7 +321,7 @@ describe("EnvironmentBreadcrumb", () => {
   });
 
   test("handles empty environments array gracefully", () => {
-    render(<EnvironmentBreadcrumb environments={[]} environment={mockProductionEnvironment} />);
+    render(<EnvironmentBreadcrumb environments={[]} currentEnvironment={mockProductionEnvironment} />);
 
     expect(screen.getByTestId("breadcrumb-item")).toBeInTheDocument();
     expect(screen.getByText("production")).toBeInTheDocument();

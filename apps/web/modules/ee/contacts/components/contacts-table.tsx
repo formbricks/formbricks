@@ -42,6 +42,7 @@ interface ContactsTableProps {
   searchValue: string;
   setSearchValue: (value: string) => void;
   isReadOnly: boolean;
+  isQuotasAllowed: boolean;
 }
 
 export const ContactsTable = ({
@@ -54,6 +55,7 @@ export const ContactsTable = ({
   searchValue,
   setSearchValue,
   isReadOnly,
+  isQuotasAllowed,
 }: ContactsTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -237,6 +239,7 @@ export const ContactsTable = ({
           updateRowList={updateContactList}
           type="contact"
           deleteAction={deleteContact}
+          isQuotasAllowed={isQuotasAllowed}
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>

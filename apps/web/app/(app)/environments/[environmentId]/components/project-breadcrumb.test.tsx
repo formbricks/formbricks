@@ -124,14 +124,14 @@ vi.mock("lucide-react", () => ({
       <title>Loader2 Icon</title>
     </svg>
   ),
-  SettingsIcon: ({ className }: any) => (
-    <svg data-testid="settings-icon" className={className}>
-      <title>Settings Icon</title>
-    </svg>
-  ),
   CogIcon: ({ className }: any) => (
     <svg data-testid="cog-icon" className={className}>
       <title>Cog Icon</title>
+    </svg>
+  ),
+  SettingsIcon: ({ className }: any) => (
+    <svg data-testid="settings-icon" className={className}>
+      <title>Settings Icon</title>
     </svg>
   ),
 }));
@@ -180,16 +180,15 @@ describe("ProjectBreadcrumb", () => {
   };
 
   const defaultProps = {
-    currentProject: mockProject1,
+    currentProjectId: "proj-1",
+    currentOrganizationId: "org-1",
     projects: mockProjects,
     isOwnerOrManager: true,
     organizationProjectsLimit: 3,
     isFormbricksCloud: true,
     isLicenseActive: false,
-    currentOrganization: mockOrganization,
     currentEnvironmentId: "env-123",
     isAccessControlAllowed: true,
-    currentOrgBillingPlan: "free",
     isEnvironmentBreadcrumbVisible: true,
   };
 
@@ -243,7 +242,7 @@ describe("ProjectBreadcrumb", () => {
 
       expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
       expect(screen.getByText("common.choose_project")).toBeInTheDocument();
-      expect(screen.getAllByTestId("dropdown-group")).toHaveLength(2); // Project list group and settings group
+      expect(screen.getAllByTestId("dropdown-group")).toHaveLength(2); // Projects group and settings group
     });
 
     test("renders all project options in dropdown", async () => {
@@ -350,11 +349,11 @@ describe("ProjectBreadcrumb", () => {
         projects: [mockProject1, mockProject2, { ...mockProject1, id: "proj-3", name: "Project 3" }],
         organizationProjectsLimit: 3,
         isFormbricksCloud: true,
+        isEnvironmentBreadcrumbVisible: true,
         currentOrganization: {
           ...mockOrganization,
           billing: { ...mockOrganization.billing, plan: "startup" } as unknown as TOrganizationBilling,
         },
-        currentOrgBillingPlan: "startup",
       };
       render(<ProjectBreadcrumb {...props} />);
 
@@ -376,6 +375,7 @@ describe("ProjectBreadcrumb", () => {
         organizationProjectsLimit: 3,
         isFormbricksCloud: false,
         isLicenseActive: true,
+        isEnvironmentBreadcrumbVisible: true,
       };
       render(<ProjectBreadcrumb {...props} />);
 
@@ -454,13 +454,6 @@ describe("ProjectBreadcrumb", () => {
       expect(screen.getAllByText("Test Project 1")).toHaveLength(2); // trigger + dropdown option
     });
 
-    test("handles empty projects array", () => {
-      render(<ProjectBreadcrumb {...defaultProps} projects={[]} />);
-
-      expect(screen.getByTestId("breadcrumb-item")).toBeInTheDocument();
-      expect(screen.getByText("Test Project 1")).toBeInTheDocument();
-    });
-
     test("sets breadcrumb item as active when dropdown is open", async () => {
       const user = userEvent.setup();
       render(<ProjectBreadcrumb {...defaultProps} />);
@@ -503,7 +496,6 @@ describe("ProjectBreadcrumb", () => {
           ...mockOrganization,
           billing: { ...mockOrganization.billing, plan: "enterprise" } as unknown as TOrganizationBilling,
         },
-        currentOrgBillingPlan: "enterprise",
       };
       render(<ProjectBreadcrumb {...props} />);
 

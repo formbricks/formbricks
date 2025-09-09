@@ -50,7 +50,6 @@ const Page = async (props) => {
               isAccessControlAllowed={false}
               isMember={isMember}
               environments={[]}
-              currentOrgBillingPlan={organization.billing.plan}
             />
           </div>
           <div className="flex h-full flex-col items-center justify-center space-y-12">

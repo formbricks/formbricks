@@ -4,7 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { SettingsView } from "./settings-view";
 
 // Mock child components
@@ -22,6 +22,30 @@ vi.mock("@/modules/survey/editor/components/how-to-send-card", () => ({
       HowToSendCard - Survey: {localSurvey.id}, Env: {environment.id}
     </div>
   ),
+}));
+
+vi.mock("@/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: false,
+  ENCRYPTION_KEY: "mock-encryption-key",
+  ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
+  GITHUB_ID: "mock-github-id",
+  GITHUB_SECRET: "test-githubID",
+  GOOGLE_CLIENT_ID: "test-google-client-id",
+  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+  AZUREAD_CLIENT_ID: "test-azuread-client-id",
+  AZUREAD_CLIENT_SECRET: "test-azure",
+  AZUREAD_TENANT_ID: "test-azuread-tenant-id",
+  OIDC_DISPLAY_NAME: "test-oidc-display-name",
+  OIDC_CLIENT_ID: "test-oidc-client-id",
+  OIDC_ISSUER: "test-oidc-issuer",
+  OIDC_CLIENT_SECRET: "test-oidc-client-secret",
+  OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
+  WEBAPP_URL: "test-webapp-url",
+  IS_PRODUCTION: false,
+  SENTRY_DSN: "mock-sentry-dsn",
+  SENTRY_RELEASE: "mock-sentry-release",
+  SENTRY_ENVIRONMENT: "mock-sentry-environment",
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("@/modules/survey/editor/components/recontact-options-card", () => ({
@@ -65,6 +89,11 @@ vi.mock("@/modules/survey/editor/components/when-to-send-card", () => ({
   ),
 }));
 
+// Mock @formkit/auto-animate package that's causing the window.matchMedia issue
+vi.mock("@formkit/auto-animate/react", () => ({
+  useAutoAnimate: () => [null, () => {}],
+}));
+
 const mockEnvironment: Pick<Environment, "id" | "appSetupCompleted"> = {
   id: "env-123",
   appSetupCompleted: true,
@@ -81,7 +110,14 @@ const baseSurvey = {
   type: "app", // Default to app survey
   environmentId: "env-123",
   status: "draft",
-  questions: [],
+  questions: [
+    {
+      id: "question-123",
+      type: TSurveyQuestionTypeEnum.OpenText,
+      headline: { default: "Question 1" },
+      required: true,
+    },
+  ],
   welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
   languages: [],
   triggers: [],
@@ -125,6 +161,8 @@ describe("SettingsView", () => {
         isSpamProtectionAllowed={true}
         projectPermission={mockProjectPermission}
         isFormbricksCloud={true}
+        isQuotasAllowed={true}
+        quotas={[]}
       />
     );
 
@@ -163,6 +201,8 @@ describe("SettingsView", () => {
         isSpamProtectionAllowed={false}
         projectPermission={mockProjectPermission}
         isFormbricksCloud={false}
+        isQuotasAllowed={true}
+        quotas={[]}
       />
     );
 
@@ -197,6 +237,8 @@ describe("SettingsView", () => {
         isSpamProtectionAllowed={true}
         projectPermission={mockProjectPermission}
         isFormbricksCloud={true}
+        isQuotasAllowed={true}
+        quotas={[]}
       />
     );
 

@@ -6,7 +6,7 @@ import { ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TMembership, ZMembership } from "@formbricks/types/memberships";
 
-export const getUserProjects = reactCache(
+export const getProjectsByUserId = reactCache(
   async (userId: string, orgMembership: TMembership): Promise<{ id: string; name: string }[]> => {
     validateInputs([userId, ZString], [orgMembership, ZMembership]);
 

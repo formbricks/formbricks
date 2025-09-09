@@ -20,7 +20,6 @@ interface ProjectAndOrgSwitchProps {
   isOwnerOrManager: boolean;
   isAccessControlAllowed: boolean;
   isMember: boolean;
-  currentOrgBillingPlan: string;
 }
 
 export const ProjectAndOrgSwitch = ({
@@ -37,38 +36,31 @@ export const ProjectAndOrgSwitch = ({
   isOwnerOrManager,
   isAccessControlAllowed,
   isMember,
-  currentOrgBillingPlan,
 }: ProjectAndOrgSwitchProps) => {
-  const currentEnvironment = environments.find((env) => env.id === currentEnvironmentId);
   const sortedProjects = useMemo(() => projects.toSorted((a, b) => a.name.localeCompare(b.name)), [projects]);
   const sortedOrganizations = useMemo(
     () => organizations.toSorted((a, b) => a.name.localeCompare(b.name)),
     [organizations]
   );
-
-  const currentOrganization = organizations.find((org) => org.id === currentOrganizationId);
-  const currentProject = projects.find((project) => project.id === currentProjectId);
-
-  const showEnvironmentBreadcrumb = Boolean(currentEnvironment) && currentEnvironment?.type === "development";
+  const currentEnvironment = environments.find((env) => env.id === currentEnvironmentId);
+  const showEnvironmentBreadcrumb = currentEnvironment?.type === "development";
 
   return (
     <Breadcrumb>
       <BreadcrumbList className="gap-0">
-        {currentOrganization && (
-          <OrganizationBreadcrumb
-            currentOrganization={currentOrganization}
-            organizations={sortedOrganizations}
-            isMultiOrgEnabled={isMultiOrgEnabled}
-            currentEnvironmentId={currentEnvironmentId}
-            isFormbricksCloud={isFormbricksCloud}
-            isMember={isMember}
-            isOwnerOrManager={isOwnerOrManager}
-          />
-        )}
-        {currentProject && currentOrganization && currentEnvironmentId && (
+        <OrganizationBreadcrumb
+          currentOrganizationId={currentOrganizationId}
+          organizations={sortedOrganizations}
+          isMultiOrgEnabled={isMultiOrgEnabled}
+          currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={isFormbricksCloud}
+          isMember={isMember}
+          isOwnerOrManager={isOwnerOrManager}
+        />
+        {currentProjectId && currentEnvironmentId && (
           <ProjectBreadcrumb
-            currentProject={currentProject}
-            currentOrganization={currentOrganization}
+            currentProjectId={currentProjectId}
+            currentOrganizationId={currentOrganizationId}
             currentEnvironmentId={currentEnvironmentId}
             projects={sortedProjects}
             isOwnerOrManager={isOwnerOrManager}
@@ -76,12 +68,11 @@ export const ProjectAndOrgSwitch = ({
             isFormbricksCloud={isFormbricksCloud}
             isLicenseActive={isLicenseActive}
             isAccessControlAllowed={isAccessControlAllowed}
-            currentOrgBillingPlan={currentOrgBillingPlan}
             isEnvironmentBreadcrumbVisible={showEnvironmentBreadcrumb}
           />
         )}
         {showEnvironmentBreadcrumb && (
-          <EnvironmentBreadcrumb environments={environments} environment={currentEnvironment} />
+          <EnvironmentBreadcrumb environments={environments} currentEnvironment={currentEnvironment} />
         )}
       </BreadcrumbList>
     </Breadcrumb>

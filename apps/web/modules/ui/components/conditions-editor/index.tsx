@@ -20,6 +20,8 @@ import { cn } from "@/modules/ui/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
+import { FieldErrors } from "react-hook-form";
+import { TSurveyQuotaInput } from "@formbricks/types/quota";
 import {
   TConditionsEditorCallbacks,
   TConditionsEditorConfig,
@@ -32,9 +34,16 @@ interface ConditionsEditorProps {
   config: TConditionsEditorConfig;
   callbacks: TConditionsEditorCallbacks;
   depth?: number;
+  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
 }
 
-export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: ConditionsEditorProps) {
+export function ConditionsEditor({
+  conditions,
+  config,
+  callbacks,
+  depth = 0,
+  quotaErrors,
+}: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
 
@@ -133,7 +142,11 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
 
     const leftOperandOptions = config.getLeftOperandOptions();
     const operatorOptions = config.getOperatorOptions(condition);
+    const onCreateGroup = callbacks.onCreateGroup;
     const { show = false, options, showInput = false, inputType } = config.getValueProps(condition);
+    const quotaError =
+      quotaErrors?.logic?.conditions?.[index]?.message ||
+      quotaErrors?.logic?.conditions?.[index]?.rightOperand?.message;
 
     const allowMultiSelect = [
       "equalsOneOf",
@@ -144,101 +157,106 @@ export function ConditionsEditor({ conditions, config, callbacks, depth = 0 }: C
       "isAnyOf",
     ].includes(condition.operator);
 
-    return (
-      <div key={condition.id} className="flex items-center gap-x-2">
-        <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">
-          {index > 0 ? (
-            <div>{connector}</div>
-          ) : parentConditionGroup.conditions.length === 1 ? (
-            <div>When</div>
-          ) : (
-            <div />
-          )}
-        </div>
+    const getConnector = () => {
+      if (index > 0) return <div>{connector}</div>;
+      if (parentConditionGroup.conditions.length === 1) return <div>When</div>;
+      return <div />;
+    };
 
-        <div className="grid w-full flex-1 grid-cols-12 gap-x-2">
-          <div className="col-span-4">
-            <InputCombobox
-              id={`condition-${depth}-${index}-conditionValue`}
-              key="conditionValue"
-              showSearch
-              groupedOptions={leftOperandOptions}
-              value={config.formatLeftOperandValue(condition)}
-              onChangeValue={(val: string, option) => {
-                handleLeftOperandChange(condition, val, option);
-              }}
-            />
-          </div>
-          <div className="col-span-4">
-            <InputCombobox
-              id={`condition-${depth}-${index}-conditionOperator`}
-              key="conditionOperator"
-              showSearch={false}
-              options={operatorOptions}
-              value={condition.operator}
-              onChangeValue={(val: string) => {
-                handleOperatorChange(condition, val);
-              }}
-            />
-          </div>
-          <div className="col-span-4">
-            {show && (
+    return (
+      <div key={condition.id} className="flex flex-col gap-x-2">
+        <div className="flex items-center gap-x-2">
+          <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">{getConnector()}</div>
+
+          <div className="grid w-full flex-1 grid-cols-12 gap-x-2">
+            <div className="col-span-4">
               <InputCombobox
-                id={`condition-${depth}-${index}-conditionMatchValue`}
-                withInput={showInput}
-                inputProps={{
-                  type: inputType,
-                  placeholder: t("environments.surveys.edit.select_or_type_value"),
-                }}
-                key="conditionMatchValue"
-                showSearch={false}
-                groupedOptions={options}
-                allowMultiSelect={allowMultiSelect}
-                showCheckIcon={allowMultiSelect}
-                value={condition.rightOperand?.value}
-                clearable={true}
-                onChangeValue={(val, option) => {
-                  handleRightOperandChange(condition, val, option);
+                id={`condition-${depth}-${index}-conditionValue`}
+                key="conditionValue"
+                showSearch
+                groupedOptions={leftOperandOptions}
+                value={config.formatLeftOperandValue(condition)}
+                onChangeValue={(val: string, option) => {
+                  handleLeftOperandChange(condition, val, option);
                 }}
               />
-            )}
+            </div>
+            <div className="col-span-4">
+              <InputCombobox
+                id={`condition-${depth}-${index}-conditionOperator`}
+                key="conditionOperator"
+                showSearch={false}
+                options={operatorOptions}
+                value={condition.operator}
+                onChangeValue={(val: string) => {
+                  handleOperatorChange(condition, val);
+                }}
+              />
+            </div>
+            <div className="col-span-4">
+              {show && (
+                <InputCombobox
+                  id={`condition-${depth}-${index}-conditionMatchValue`}
+                  withInput={showInput}
+                  inputProps={{
+                    type: inputType,
+                    placeholder: t("environments.surveys.edit.select_or_type_value"),
+                  }}
+                  key="conditionMatchValue"
+                  showSearch={false}
+                  groupedOptions={options}
+                  allowMultiSelect={allowMultiSelect}
+                  showCheckIcon={allowMultiSelect}
+                  value={condition.rightOperand?.value}
+                  clearable={true}
+                  onChangeValue={(val, option) => {
+                    handleRightOperandChange(condition, val, option);
+                  }}
+                />
+              )}
+            </div>
           </div>
-        </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`} asChild>
-            <Button
-              variant="outline"
-              className="flex h-10 w-10 items-center justify-center rounded-md bg-white">
-              <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              onClick={() => {
-                callbacks.onAddConditionBelow(condition.id);
-              }}
-              icon={<PlusIcon className="h-4 w-4" />}>
-              {t("environments.surveys.edit.add_condition_below")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => callbacks.onRemoveCondition(condition.id)}
-              icon={<TrashIcon className="h-4 w-4" />}>
-              {t("common.remove")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => callbacks.onDuplicateCondition(condition.id)}
-              icon={<CopyIcon className="h-4 w-4" />}>
-              {t("common.duplicate")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => callbacks.onCreateGroup(condition.id)}
-              icon={<WorkflowIcon className="h-4 w-4" />}
-              disabled={conditions.conditions.length <= 1}>
-              {t("environments.surveys.edit.create_group")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`} asChild>
+              <Button
+                variant="outline"
+                className="flex h-10 w-10 items-center justify-center rounded-md bg-white">
+                <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => {
+                  callbacks.onAddConditionBelow(condition.id);
+                }}
+                icon={<PlusIcon className="h-4 w-4" />}>
+                {t("environments.surveys.edit.add_condition_below")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                // onCreateGroup determines if this component is being used in quotas or logic, if in quotas we do not allow removal of only condition
+                disabled={!onCreateGroup && conditions.conditions.length === 1}
+                onClick={() => callbacks.onRemoveCondition(condition.id)}
+                icon={<TrashIcon className="h-4 w-4" />}>
+                {t("common.remove")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => callbacks.onDuplicateCondition(condition.id)}
+                icon={<CopyIcon className="h-4 w-4" />}>
+                {t("common.duplicate")}
+              </DropdownMenuItem>
+              {onCreateGroup && (
+                <DropdownMenuItem
+                  onClick={() => onCreateGroup(condition.id)}
+                  icon={<WorkflowIcon className="h-4 w-4" />}
+                  disabled={conditions.conditions.length <= 1}>
+                  {t("environments.surveys.edit.create_group")}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        {quotaError && <p className="text-error mt-2 w-full text-right text-sm">{quotaError}</p>}
       </div>
     );
   };

@@ -16,32 +16,31 @@ import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { logger } from "@formbricks/logger";
 
 interface ProjectBreadcrumbProps {
-  currentProject: { id: string; name: string };
+  currentProjectId: string;
   projects: { id: string; name: string }[];
   isOwnerOrManager: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
-  currentOrganization: { id: string; name: string };
+  currentOrganizationId: string;
   currentEnvironmentId: string;
   isAccessControlAllowed: boolean;
-  currentOrgBillingPlan: string;
   isEnvironmentBreadcrumbVisible: boolean;
 }
 
 export const ProjectBreadcrumb = ({
-  currentProject,
+  currentProjectId,
   projects,
   isOwnerOrManager,
   organizationProjectsLimit,
   isFormbricksCloud,
   isLicenseActive,
-  currentOrganization,
+  currentOrganizationId,
   currentEnvironmentId,
   isAccessControlAllowed,
-  currentOrgBillingPlan,
   isEnvironmentBreadcrumbVisible,
 }: ProjectBreadcrumbProps) => {
   const { t } = useTranslate();
@@ -90,6 +89,13 @@ export const ProjectBreadcrumb = ({
     },
   ];
 
+  const currentProject = projects.find((project) => project.id === currentProjectId);
+
+  if (!currentProject) {
+    logger.error(`Project not found for project id: ${currentProjectId}`);
+    return;
+  }
+
   const handleProjectChange = (projectId: string) => {
     setIsLoading(true);
     router.push(`/projects/${projectId}/`);
@@ -104,7 +110,7 @@ export const ProjectBreadcrumb = ({
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
-    if (isFormbricksCloud && currentOrgBillingPlan !== "enterprise") {
+    if (isFormbricksCloud) {
       return [
         {
           text: t("environments.settings.billing.upgrade"),
@@ -206,7 +212,7 @@ export const ProjectBreadcrumb = ({
         <CreateProjectModal
           open={openCreateProjectModal}
           setOpen={setOpenCreateProjectModal}
-          organizationId={currentOrganization.id}
+          organizationId={currentOrganizationId}
           isAccessControlAllowed={isAccessControlAllowed}
         />
       )}
