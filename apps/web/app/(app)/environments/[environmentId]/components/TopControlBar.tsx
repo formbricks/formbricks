@@ -81,6 +81,7 @@ export const TopControlBar = ({
             <Link
               href="https://github.com/formbricks/formbricks/issues"
               target="_blank"
+              aria-label={t("common.share_feedback")}
               rel="noopener noreferrer">
               <BugIcon />
             </Link>
@@ -89,7 +90,7 @@ export const TopControlBar = ({
 
         <TooltipRenderer tooltipContent={t("common.account")}>
           <Button variant="ghost" size="icon" className="h-fit w-fit bg-slate-50 p-1" asChild>
-            <Link href={`/environments/${environment.id}/settings/profile`}>
+            <Link href={`/environments/${environment.id}/settings/profile`} aria-label={t("common.account")}>
               <CircleUserIcon />
             </Link>
           </Button>
@@ -99,7 +100,9 @@ export const TopControlBar = ({
         ) : (
           <TooltipRenderer tooltipContent={t("common.new_survey")}>
             <Button variant="secondary" size="icon" className="h-fit w-fit p-1" asChild>
-              <Link href={`/environments/${environment.id}/surveys/templates`}>
+              <Link
+                href={`/environments/${environment.id}/surveys/templates`}
+                aria-label={t("common.new_survey")}>
                 <PlusIcon />
               </Link>
             </Button>
