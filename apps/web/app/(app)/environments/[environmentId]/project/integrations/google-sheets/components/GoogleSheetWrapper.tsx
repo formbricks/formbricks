@@ -34,7 +34,7 @@ export const GoogleSheetWrapper = ({
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
   );
-  const [isModalOpen, setModalOpen] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
     (TIntegrationGoogleSheetsConfigData & { index: number }) | null
   >(null);
@@ -55,14 +55,14 @@ export const GoogleSheetWrapper = ({
             environmentId={environment.id}
             surveys={surveys}
             open={isModalOpen}
-            setOpen={setModalOpen}
+            setOpen={setIsModalOpen}
             googleSheetIntegration={googleSheetIntegration}
             selectedIntegration={selectedIntegration}
           />
           <ManageIntegration
             environment={environment}
             googleSheetIntegration={googleSheetIntegration}
-            setOpenAddIntegrationModal={setModalOpen}
+            setOpenAddIntegrationModal={setIsModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
             locale={locale}

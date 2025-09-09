@@ -41,6 +41,7 @@ import {
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { IntegrationModalInputs } from "../lib/types";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }
@@ -54,17 +55,6 @@ type AddIntegrationModalProps = {
   surveys: TSurvey[];
   airtableIntegration: TIntegrationAirtable;
 } & EditModeProps;
-
-export type IntegrationModalInputs = {
-  base: string;
-  table: string;
-  survey: string;
-  questions: string[];
-  includeVariables: boolean;
-  includeHiddenFields: boolean;
-  includeMetadata: boolean;
-  includeCreatedAt: boolean;
-};
 
 const NoBaseFoundError = () => {
   const { t } = useTranslate();
@@ -239,7 +229,7 @@ export const AddIntegrationModal = ({
 
       if (isEditMode) {
         // update action
-        airtableIntegrationData.config!.data[defaultData.index] = integrationData;
+        airtableIntegrationData.config.data[defaultData.index] = integrationData;
       } else {
         // create action
         airtableIntegrationData.config?.data.push(integrationData);

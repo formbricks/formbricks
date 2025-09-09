@@ -16,9 +16,16 @@ import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
+import { TFnType } from "@tolgee/react";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { TIntegrationType } from "@formbricks/types/integration";
+
+const getStatusText = (count: number, t: TFnType, type: string) => {
+  if (count === 1) return `1 ${type}`;
+  if (count === 0) return t("common.not_connected");
+  return `${count} ${type}s`;
+};
 
 const Page = async (props) => {
   const params = await props.params;
@@ -68,12 +75,7 @@ const Page = async (props) => {
       description: t("environments.integrations.zapier_integration_description"),
       icon: <Image src={ZapierLogo} alt="Zapier Logo" />,
       connected: zapierWebhookCount > 0,
-      statusText:
-        zapierWebhookCount === 1
-          ? "1 zap"
-          : zapierWebhookCount === 0
-            ? t("common.not_connected")
-            : `${zapierWebhookCount} zaps`,
+      statusText: getStatusText(zapierWebhookCount, t, "zap"),
       disabled: isReadOnly,
     },
     {
@@ -87,12 +89,7 @@ const Page = async (props) => {
       description: t("environments.integrations.webhook_integration_description"),
       icon: <Image src={WebhookLogo} alt="Webhook Logo" />,
       connected: userWebhookCount > 0,
-      statusText:
-        userWebhookCount === 1
-          ? "1 webhook"
-          : userWebhookCount === 0
-            ? t("common.not_connected")
-            : `${userWebhookCount} webhooks`,
+      statusText: getStatusText(userWebhookCount, t, "webhook"),
       disabled: false,
     },
     {
@@ -148,12 +145,7 @@ const Page = async (props) => {
       description: t("environments.integrations.n8n_integration_description"),
       icon: <Image src={n8nLogo} alt="n8n Logo" />,
       connected: n8nwebhookCount > 0,
-      statusText:
-        n8nwebhookCount === 1
-          ? `1 ${t("common.integration")}`
-          : n8nwebhookCount === 0
-            ? t("common.not_connected")
-            : `${n8nwebhookCount} ${t("common.integrations")}`,
+      statusText: getStatusText(n8nwebhookCount, t, "integration"),
       disabled: isReadOnly,
     },
     {
@@ -167,12 +159,7 @@ const Page = async (props) => {
       description: t("environments.integrations.make_integration_description"),
       icon: <Image src={MakeLogo} alt="Make Logo" />,
       connected: makeWebhookCount > 0,
-      statusText:
-        makeWebhookCount === 1
-          ? `1 ${t("common.integration")}`
-          : makeWebhookCount === 0
-            ? t("common.not_connected")
-            : `${makeWebhookCount} ${t("common.integrations")}`,
+      statusText: getStatusText(makeWebhookCount, t, "integration"),
       disabled: isReadOnly,
     },
     {
@@ -200,12 +187,7 @@ const Page = async (props) => {
       description: t("environments.integrations.activepieces_integration_description"),
       icon: <Image src={ActivePiecesLogo} alt="ActivePieces Logo" />,
       connected: activePiecesWebhookCount > 0,
-      statusText:
-        activePiecesWebhookCount === 1
-          ? `1 ${t("common.integration")}`
-          : activePiecesWebhookCount === 0
-            ? t("common.not_connected")
-            : `${activePiecesWebhookCount} ${t("common.integrations")}`,
+      statusText: getStatusText(activePiecesWebhookCount, t, "integration"),
       disabled: isReadOnly,
     },
   ];

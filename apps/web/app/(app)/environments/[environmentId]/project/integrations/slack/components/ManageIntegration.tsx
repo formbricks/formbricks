@@ -124,24 +124,21 @@ export const ManageIntegration = ({
               <div className="col-span-2 hidden text-center sm:block">{t("common.questions")}</div>
               <div className="col-span-2 hidden text-center sm:block">{t("common.updated_at")}</div>
             </div>
-            {integrationArray &&
-              integrationArray.map((data, index) => {
-                return (
-                  <button
-                    key={`${index}-${data.surveyName}-${data.channelName}`}
-                    className="grid h-16 w-full grid-cols-8 content-center rounded-lg p-2 text-slate-700 hover:cursor-pointer hover:bg-slate-100"
-                    onClick={() => {
-                      editIntegration(index);
-                    }}>
-                    <div className="col-span-2 text-center">{data.surveyName}</div>
-                    <div className="col-span-2 text-center">{data.channelName}</div>
-                    <div className="col-span-2 text-center">{data.questions}</div>
-                    <div className="col-span-2 text-center">
-                      {timeSince(data.createdAt.toString(), locale)}
-                    </div>
-                  </button>
-                );
-              })}
+            {integrationArray.map((data, index) => {
+              return (
+                <button
+                  key={`${index}-${data.surveyName}-${data.channelName}`}
+                  className="grid h-16 w-full grid-cols-8 content-center rounded-lg p-2 text-slate-700 hover:cursor-pointer hover:bg-slate-100"
+                  onClick={() => {
+                    editIntegration(index);
+                  }}>
+                  <div className="col-span-2 text-center">{data.surveyName}</div>
+                  <div className="col-span-2 text-center">{data.channelName}</div>
+                  <div className="col-span-2 text-center">{data.questions}</div>
+                  <div className="col-span-2 text-center">{timeSince(data.createdAt.toString(), locale)}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

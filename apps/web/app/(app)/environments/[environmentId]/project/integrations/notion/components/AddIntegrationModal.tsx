@@ -221,10 +221,10 @@ export const AddIntegrationModal = ({
 
       if (selectedIntegration) {
         // update action
-        notionIntegrationData.config!.data[selectedIntegration.index] = integrationData;
+        notionIntegrationData.config.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        notionIntegrationData.config!.data.push(integrationData);
+        notionIntegrationData.config.data.push(integrationData);
       }
 
       await createOrUpdateIntegrationAction({ environmentId, integrationData: notionIntegrationData });
@@ -243,7 +243,7 @@ export const AddIntegrationModal = ({
   };
 
   const deleteLink = async () => {
-    notionIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
+    notionIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
       await createOrUpdateIntegrationAction({ environmentId, integrationData: notionIntegrationData });

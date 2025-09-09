@@ -11,7 +11,7 @@ import {
 import { useTranslate } from "@tolgee/react";
 import { Control, Controller, UseFormSetValue } from "react-hook-form";
 import { TIntegrationItem } from "@formbricks/types/integration";
-import { IntegrationModalInputs } from "./AddIntegrationModal";
+import { IntegrationModalInputs } from "../lib/types";
 
 interface BaseSelectProps {
   control: Control<IntegrationModalInputs, any>;

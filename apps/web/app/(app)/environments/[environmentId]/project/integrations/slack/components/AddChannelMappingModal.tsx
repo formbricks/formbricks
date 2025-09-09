@@ -133,10 +133,10 @@ export const AddChannelMappingModal = ({
       };
       if (selectedIntegration) {
         // update action
-        slackIntegrationData.config!.data[selectedIntegration.index] = integrationData;
+        slackIntegrationData.config.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        slackIntegrationData.config!.data.push(integrationData);
+        slackIntegrationData.config.data.push(integrationData);
       }
       await createOrUpdateIntegrationAction({ environmentId, integrationData: slackIntegrationData });
       if (selectedIntegration) {
@@ -172,7 +172,7 @@ export const AddChannelMappingModal = ({
   };
 
   const deleteLink = async () => {
-    slackIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
+    slackIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
       await createOrUpdateIntegrationAction({ environmentId, integrationData: slackIntegrationData });

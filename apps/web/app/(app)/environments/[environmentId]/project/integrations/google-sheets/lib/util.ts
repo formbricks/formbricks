@@ -1,7 +1,7 @@
 export const extractSpreadsheetIdFromUrl = (url: string): string => {
   const regex = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/;
-  const match = url.match(regex);
-  if (match && match[1]) {
+  const match = regex.exec(url);
+  if (match?.[1]) {
     return match[1];
   } else {
     throw new Error("Invalid Google Sheets URL");

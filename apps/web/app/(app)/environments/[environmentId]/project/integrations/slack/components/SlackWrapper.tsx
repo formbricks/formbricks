@@ -32,7 +32,7 @@ export const SlackWrapper = ({
 }: SlackWrapperProps) => {
   const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
   const [slackChannels, setSlackChannels] = useState<TIntegrationItem[]>([]);
-  const [isModalOpen, setModalOpen] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [showReconnectButton, setShowReconnectButton] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
     (TIntegrationSlackConfigData & { index: number }) | null
@@ -72,7 +72,7 @@ export const SlackWrapper = ({
         environmentId={environment.id}
         surveys={surveys}
         open={isModalOpen}
-        setOpen={setModalOpen}
+        setOpen={setIsModalOpen}
         channels={slackChannels}
         slackIntegration={slackIntegration}
         selectedIntegration={selectedIntegration}
@@ -80,7 +80,7 @@ export const SlackWrapper = ({
       <ManageIntegration
         environment={environment}
         slackIntegration={slackIntegration}
-        setOpenAddIntegrationModal={setModalOpen}
+        setOpenAddIntegrationModal={setIsModalOpen}
         setIsConnected={setIsConnected}
         setSelectedIntegration={setSelectedIntegration}
         refreshChannels={getSlackChannels}

@@ -34,7 +34,7 @@ export const NotionWrapper = ({
   databasesArray,
   locale,
 }: NotionWrapperProps) => {
-  const [isModalOpen, setModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
     notionIntegration ? notionIntegration.config.key?.bot_id : false
   );
@@ -58,7 +58,7 @@ export const NotionWrapper = ({
             environmentId={environment.id}
             surveys={surveys}
             open={isModalOpen}
-            setOpen={setModalOpen}
+            setOpen={setIsModalOpen}
             notionIntegration={notionIntegration}
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
@@ -66,7 +66,7 @@ export const NotionWrapper = ({
           <ManageIntegration
             environment={environment}
             notionIntegration={notionIntegration}
-            setOpenAddIntegrationModal={setModalOpen}
+            setOpenAddIntegrationModal={setIsModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
             locale={locale}

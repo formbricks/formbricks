@@ -24,7 +24,7 @@ const Loading = () => {
         <div className="grid-cols-7">
           {[...Array(3)].map((_, index) => (
             <div
-              key={index}
+              key={`${index.toString()}-notion-loading`}
               className="mt-2 grid h-16 grid-cols-12 content-center rounded-lg hover:bg-slate-100">
               <div className="col-span-3 flex items-center pl-6 text-sm">
                 <div className="text-left">

@@ -136,8 +136,8 @@ const getLatestStableFbRelease = async (): Promise<string | null> => {
     }
 
     return null;
-  } catch (err) {
-    return null;
+  } catch (error) {
+    throw new Error("Failed to get latest stable Formbricks release", { cause: error });
   }
 };
 

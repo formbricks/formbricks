@@ -154,10 +154,10 @@ export const AddIntegrationModal = ({
       integrationData.includeCreatedAt = includeCreatedAt;
       if (selectedIntegration) {
         // update action
-        googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
+        googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        googleSheetIntegrationData.config!.data.push(integrationData);
+        googleSheetIntegrationData.config.data.push(integrationData);
       }
       await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
       if (selectedIntegration) {
@@ -196,7 +196,7 @@ export const AddIntegrationModal = ({
   };
 
   const deleteLink = async () => {
-    googleSheetIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
+    googleSheetIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
       await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });

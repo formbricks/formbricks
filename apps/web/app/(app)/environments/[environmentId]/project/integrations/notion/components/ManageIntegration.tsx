@@ -118,23 +118,20 @@ export const ManageIntegration = ({
               </div>
               <div className="col-span-2 hidden text-center sm:block">{t("common.updated_at")}</div>
             </div>
-            {integrationArray &&
-              integrationArray.map((data, index) => {
-                return (
-                  <button
-                    key={`${index}-${data.databaseId}`}
-                    className="grid h-16 w-full cursor-pointer grid-cols-6 content-center rounded-lg p-2 hover:bg-slate-100"
-                    onClick={() => {
-                      editIntegration(index);
-                    }}>
-                    <div className="col-span-2 text-center">{data.surveyName}</div>
-                    <div className="col-span-2 text-center">{data.databaseName}</div>
-                    <div className="col-span-2 text-center">
-                      {timeSince(data.createdAt.toString(), locale)}
-                    </div>
-                  </button>
-                );
-              })}
+            {integrationArray.map((data, index) => {
+              return (
+                <button
+                  key={`${index}-${data.databaseId}`}
+                  className="grid h-16 w-full cursor-pointer grid-cols-6 content-center rounded-lg p-2 hover:bg-slate-100"
+                  onClick={() => {
+                    editIntegration(index);
+                  }}>
+                  <div className="col-span-2 text-center">{data.surveyName}</div>
+                  <div className="col-span-2 text-center">{data.databaseName}</div>
+                  <div className="col-span-2 text-center">{timeSince(data.createdAt.toString(), locale)}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
