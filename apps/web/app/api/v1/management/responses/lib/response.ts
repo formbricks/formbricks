@@ -1,5 +1,6 @@
 import "server-only";
 import { handleBillingLimitsCheck } from "@/app/api/lib/utils";
+import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
@@ -87,54 +88,9 @@ export const createResponseWithQuotaEvaluation = async (
   return txResponse;
 };
 
-const buildPrismaResponseData = (
-  responseInput: TResponseInput,
-  contact: { id: string; attributes: TContactAttributes } | null,
-  ttc: Record<string, number>
-): Prisma.ResponseCreateInput => {
-  const {
-    surveyId,
-    displayId,
-    finished,
-    data,
-    language,
-    meta,
-    singleUseId,
-    variables,
-    createdAt,
-    updatedAt,
-  } = responseInput;
-
-  return {
-    survey: {
-      connect: {
-        id: surveyId,
-      },
-    },
-    display: displayId ? { connect: { id: displayId } } : undefined,
-    finished: finished,
-    data: data,
-    language: language,
-    ...(contact?.id && {
-      contact: {
-        connect: {
-          id: contact.id,
-        },
-      },
-      contactAttributes: contact.attributes,
-    }),
-    ...(meta && ({ meta } as Prisma.JsonObject)),
-    singleUseId,
-    ...(variables && { variables }),
-    ttc: ttc,
-    createdAt,
-    updatedAt,
-  };
-};
-
 export const createResponse = async (
   responseInput: TResponseInput,
-  tx: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient
 ): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");

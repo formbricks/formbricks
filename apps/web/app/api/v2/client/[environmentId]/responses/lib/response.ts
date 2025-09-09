@@ -88,7 +88,7 @@ const buildPrismaResponseData = (
 
 export const createResponse = async (
   responseInput: TResponseInputV2,
-  tx: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient
 ): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");

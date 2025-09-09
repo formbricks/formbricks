@@ -1,5 +1,6 @@
 import "server-only";
 import { handleBillingLimitsCheck } from "@/app/api/lib/utils";
+import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { captureTelemetry } from "@/lib/telemetry";
@@ -51,51 +52,6 @@ export const responseSelection = {
     },
   },
 } satisfies Prisma.ResponseSelect;
-
-const buildPrismaResponseData = (
-  responseInput: TResponseInput,
-  contact: { id: string; attributes: TContactAttributes } | null,
-  ttc: Record<string, number>
-): Prisma.ResponseCreateInput => {
-  const {
-    surveyId,
-    displayId,
-    finished,
-    data,
-    language,
-    meta,
-    singleUseId,
-    variables,
-    createdAt,
-    updatedAt,
-  } = responseInput;
-
-  return {
-    survey: {
-      connect: {
-        id: surveyId,
-      },
-    },
-    display: displayId ? { connect: { id: displayId } } : undefined,
-    finished: finished,
-    data: data,
-    language: language,
-    ...(contact?.id && {
-      contact: {
-        connect: {
-          id: contact.id,
-        },
-      },
-      contactAttributes: contact.attributes,
-    }),
-    ...(meta && ({ meta } as Prisma.JsonObject)),
-    singleUseId,
-    ...(variables && { variables }),
-    ttc: ttc,
-    createdAt,
-    updatedAt,
-  };
-};
 
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
