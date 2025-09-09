@@ -1,7 +1,7 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { getOrganizationsByUserId } from "@/app/(app)/environments/[environmentId]/lib/organization";
-import { getUserProjects } from "@/app/(app)/environments/[environmentId]/lib/project";
+import { getProjectsByUserId } from "@/app/(app)/environments/[environmentId]/lib/project";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -57,7 +57,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const membershipRole = currentUserMembership?.role;
 
   const [projects, environments, isAccessControlAllowed] = await Promise.all([
-    getUserProjects(user.id, currentUserMembership),
+    getProjectsByUserId(user.id, currentUserMembership),
     getEnvironments(environment.projectId),
     getAccessControlPermission(organization.billing.plan),
   ]);

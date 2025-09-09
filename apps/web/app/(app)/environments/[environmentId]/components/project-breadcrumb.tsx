@@ -17,26 +17,26 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface ProjectBreadcrumbProps {
-  currentProject: { id: string; name: string };
+  currentProjectId: string;
   projects: { id: string; name: string }[];
   isOwnerOrManager: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
-  currentOrganization: { id: string; name: string };
+  currentOrganizationId: string;
   currentEnvironmentId: string;
   isAccessControlAllowed: boolean;
   currentOrgBillingPlan: string;
 }
 
 export const ProjectBreadcrumb = ({
-  currentProject,
+  currentProjectId,
   projects,
   isOwnerOrManager,
   organizationProjectsLimit,
   isFormbricksCloud,
   isLicenseActive,
-  currentOrganization,
+  currentOrganizationId,
   currentEnvironmentId,
   isAccessControlAllowed,
   currentOrgBillingPlan,
@@ -47,6 +47,11 @@ export const ProjectBreadcrumb = ({
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const currentProject = projects.find((project) => project.id === currentProjectId);
+
+  if (!currentProject) {
+    return null;
+  }
 
   const handleProjectChange = (projectId: string) => {
     setIsLoading(true);
@@ -148,7 +153,7 @@ export const ProjectBreadcrumb = ({
         <CreateProjectModal
           open={openCreateProjectModal}
           setOpen={setOpenCreateProjectModal}
-          organizationId={currentOrganization.id}
+          organizationId={currentOrganizationId}
           isAccessControlAllowed={isAccessControlAllowed}
         />
       )}

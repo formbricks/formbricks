@@ -16,15 +16,20 @@ import { useState } from "react";
 
 export const EnvironmentBreadcrumb = ({
   environments,
-  environment,
+  currentEnvironmentId,
 }: {
   environments: { id: string; type: string }[];
-  environment: { id: string; type: string };
+  currentEnvironmentId: string;
 }) => {
   const { t } = useTranslate();
   const [isEnvironmentDropdownOpen, setIsEnvironmentDropdownOpen] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const currentEnvironment = environments.find((env) => env.id === currentEnvironmentId);
+
+  if (!currentEnvironment) {
+    return null;
+  }
 
   const handleEnvironmentChange = (environmentId: string) => {
     setIsLoading(true);
@@ -47,7 +52,9 @@ export const EnvironmentBreadcrumb = ({
   };
 
   return (
-    <BreadcrumbItem isActive={isEnvironmentDropdownOpen} isHighlighted={environment.type === "development"}>
+    <BreadcrumbItem
+      isActive={isEnvironmentDropdownOpen}
+      isHighlighted={currentEnvironment.type === "development"}>
       <DropdownMenu onOpenChange={setIsEnvironmentDropdownOpen}>
         <DropdownMenuTrigger
           className="flex cursor-pointer items-center gap-1 outline-none"
@@ -55,9 +62,9 @@ export const EnvironmentBreadcrumb = ({
           asChild>
           <div className="flex items-center gap-1">
             <Code2Icon className="h-3 w-3" strokeWidth={1.5} />
-            <span className="capitalize">{environment.type}</span>
+            <span className="capitalize">{currentEnvironment.type}</span>
             {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
-            {environment.type === "development" && developmentTooltip()}
+            {currentEnvironment.type === "development" && developmentTooltip()}
             {isEnvironmentDropdownOpen && <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />}
           </div>
         </DropdownMenuTrigger>
@@ -70,7 +77,7 @@ export const EnvironmentBreadcrumb = ({
             {environments.map((env) => (
               <DropdownMenuCheckboxItem
                 key={env.id}
-                checked={env.id === environment.id}
+                checked={env.id === currentEnvironment.id}
                 onClick={() => handleEnvironmentChange(env.id)}
                 className="cursor-pointer">
                 <div className="flex items-center gap-2 capitalize">

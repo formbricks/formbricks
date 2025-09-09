@@ -1,5 +1,5 @@
 import { getOrganizationsByUserId } from "@/app/(app)/environments/[environmentId]/lib/organization";
-import { getUserProjects } from "@/app/(app)/environments/[environmentId]/lib/project";
+import { getProjectsByUserId } from "@/app/(app)/environments/[environmentId]/lib/project";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -60,7 +60,7 @@ vi.mock("@/app/(app)/environments/[environmentId]/lib/organization", () => ({
   getOrganizationsByUserId: vi.fn(),
 }));
 vi.mock("@/app/(app)/environments/[environmentId]/lib/project", () => ({
-  getUserProjects: vi.fn(),
+  getProjectsByUserId: vi.fn(),
 }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -197,7 +197,7 @@ describe("EnvironmentLayout", () => {
       { id: mockOrganization.id, name: mockOrganization.name },
     ]);
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
-    vi.mocked(getUserProjects).mockResolvedValue([{ id: mockProject.id, name: mockProject.name }]);
+    vi.mocked(getProjectsByUserId).mockResolvedValue([{ id: mockProject.id, name: mockProject.name }]);
     vi.mocked(getEnvironments).mockResolvedValue([mockEnvironment]);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
     vi.mocked(getMonthlyActiveOrganizationPeopleCount).mockResolvedValue(100);
@@ -430,7 +430,7 @@ describe("EnvironmentLayout", () => {
   });
 
   test("throws error if projects, environments or organizations not found", async () => {
-    vi.mocked(getUserProjects).mockResolvedValue(null as any);
+    vi.mocked(getProjectsByUserId).mockResolvedValue(null as any);
     vi.resetModules();
     await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({

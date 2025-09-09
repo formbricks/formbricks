@@ -168,13 +168,13 @@ describe("ProjectBreadcrumb", () => {
   };
 
   const defaultProps = {
-    currentProject: mockProject1,
+    currentProjectId: "proj-1",
+    currentOrganizationId: "org-1",
     projects: mockProjects,
     isOwnerOrManager: true,
     organizationProjectsLimit: 3,
     isFormbricksCloud: true,
     isLicenseActive: false,
-    currentOrganization: mockOrganization,
     currentEnvironmentId: "env-123",
     isAccessControlAllowed: true,
     currentOrgBillingPlan: "free",
@@ -438,13 +438,6 @@ describe("ProjectBreadcrumb", () => {
 
       expect(screen.getByTestId("breadcrumb-item")).toBeInTheDocument();
       expect(screen.getAllByText("Test Project 1")).toHaveLength(2); // trigger + dropdown option
-    });
-
-    test("handles empty projects array", () => {
-      render(<ProjectBreadcrumb {...defaultProps} projects={[]} />);
-
-      expect(screen.getByTestId("breadcrumb-item")).toBeInTheDocument();
-      expect(screen.getByText("Test Project 1")).toBeInTheDocument();
     });
 
     test("sets breadcrumb item as active when dropdown is open", async () => {

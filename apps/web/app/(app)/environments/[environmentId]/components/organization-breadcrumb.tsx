@@ -23,7 +23,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface OrganizationBreadcrumbProps {
-  currentOrganization: { id: string; name: string };
+  currentOrganizationId: string;
   organizations: { id: string; name: string }[];
   isMultiOrgEnabled: boolean;
   currentEnvironmentId?: string;
@@ -33,7 +33,7 @@ interface OrganizationBreadcrumbProps {
 }
 
 export const OrganizationBreadcrumb = ({
-  currentOrganization,
+  currentOrganizationId,
   organizations,
   isMultiOrgEnabled,
   currentEnvironmentId,
@@ -47,6 +47,11 @@ export const OrganizationBreadcrumb = ({
   const pathname = usePathname();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const currentOrganization = organizations.find((org) => org.id === currentOrganizationId);
+
+  if (!currentOrganization) {
+    return null;
+  }
 
   const handleOrganizationChange = (organizationId: string) => {
     setIsLoading(true);

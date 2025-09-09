@@ -169,7 +169,7 @@ describe("OrganizationBreadcrumb", () => {
     test("renders organization breadcrumb without dropdown for single org", () => {
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={[mockOrganization1]}
           isMultiOrgEnabled={false}
           currentEnvironmentId={currentEnvironmentId}
@@ -189,7 +189,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={[mockOrganization1]}
           isMultiOrgEnabled={false}
           currentEnvironmentId={currentEnvironmentId}
@@ -212,7 +212,7 @@ describe("OrganizationBreadcrumb", () => {
     test("renders organization breadcrumb with dropdown for multi org", () => {
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -230,7 +230,7 @@ describe("OrganizationBreadcrumb", () => {
     test("shows chevron icons correctly", () => {
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -249,7 +249,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -271,7 +271,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -295,7 +295,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -321,7 +321,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -343,7 +343,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -366,7 +366,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={false}
           currentEnvironmentId={currentEnvironmentId}
@@ -388,7 +388,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           isFormbricksCloud={true}
@@ -413,7 +413,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -438,7 +438,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -464,7 +464,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={[mockOrganization1]}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -486,7 +486,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -506,7 +506,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}
@@ -533,7 +533,7 @@ describe("OrganizationBreadcrumb", () => {
       const user = userEvent.setup();
       render(
         <OrganizationBreadcrumb
-          currentOrganization={mockOrganization1}
+          currentOrganizationId={mockOrganization1.id}
           organizations={mockOrganizations}
           isMultiOrgEnabled={true}
           currentEnvironmentId={currentEnvironmentId}

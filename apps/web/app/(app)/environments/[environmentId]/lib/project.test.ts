@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
-import { getUserProjects } from "./project";
+import { getProjectsByUserId } from "./project";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -37,7 +37,7 @@ describe("Project", () => {
 
       vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
 
-      const result = await getUserProjects("user1", mockAdminMembership);
+      const result = await getProjectsByUserId("user1", mockAdminMembership);
 
       expect(prisma.project.findMany).toHaveBeenCalledWith({
         where: {
@@ -56,7 +56,7 @@ describe("Project", () => {
 
       vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
 
-      const result = await getUserProjects("user1", mockMemberMembership);
+      const result = await getProjectsByUserId("user1", mockMemberMembership);
 
       expect(prisma.project.findMany).toHaveBeenCalledWith({
         where: {
@@ -84,7 +84,7 @@ describe("Project", () => {
     test("should return empty array when no projects found", async () => {
       vi.mocked(prisma.project.findMany).mockResolvedValue([]);
 
-      const result = await getUserProjects("user1", mockAdminMembership);
+      const result = await getProjectsByUserId("user1", mockAdminMembership);
 
       expect(result).toEqual([]);
     });
@@ -97,7 +97,7 @@ describe("Project", () => {
 
       vi.mocked(prisma.project.findMany).mockRejectedValue(prismaError);
 
-      await expect(getUserProjects("user1", mockAdminMembership)).rejects.toThrow(
+      await expect(getProjectsByUserId("user1", mockAdminMembership)).rejects.toThrow(
         new DatabaseError("Database error")
       );
     });
@@ -106,16 +106,16 @@ describe("Project", () => {
       const unknownError = new Error("Unknown error");
       vi.mocked(prisma.project.findMany).mockRejectedValue(unknownError);
 
-      await expect(getUserProjects("user1", mockAdminMembership)).rejects.toThrow(unknownError);
+      await expect(getProjectsByUserId("user1", mockAdminMembership)).rejects.toThrow(unknownError);
     });
 
     test("should validate inputs correctly", async () => {
-      await expect(getUserProjects(123 as any, mockAdminMembership)).rejects.toThrow();
+      await expect(getProjectsByUserId(123 as any, mockAdminMembership)).rejects.toThrow();
     });
 
     test("should validate membership input correctly", async () => {
       const invalidMembership = {} as TMembership;
-      await expect(getUserProjects("user1", invalidMembership)).rejects.toThrow();
+      await expect(getProjectsByUserId("user1", invalidMembership)).rejects.toThrow();
     });
 
     test("should handle owner role like manager", async () => {
@@ -129,7 +129,7 @@ describe("Project", () => {
       const mockProjects = [{ id: "project1", name: "Project 1" }];
       vi.mocked(prisma.project.findMany).mockResolvedValue(mockProjects as any);
 
-      const result = await getUserProjects("user1", mockOwnerMembership);
+      const result = await getProjectsByUserId("user1", mockOwnerMembership);
 
       expect(prisma.project.findMany).toHaveBeenCalledWith({
         where: {

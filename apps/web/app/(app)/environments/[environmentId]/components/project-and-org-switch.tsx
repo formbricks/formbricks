@@ -39,34 +39,28 @@ export const ProjectAndOrgSwitch = ({
   isMember,
   currentOrgBillingPlan,
 }: ProjectAndOrgSwitchProps) => {
-  const currentEnvironment = environments.find((env) => env.id === currentEnvironmentId);
   const sortedProjects = useMemo(() => projects.toSorted((a, b) => a.name.localeCompare(b.name)), [projects]);
   const sortedOrganizations = useMemo(
     () => organizations.toSorted((a, b) => a.name.localeCompare(b.name)),
     [organizations]
   );
 
-  const currentOrganization = organizations.find((org) => org.id === currentOrganizationId);
-  const currentProject = projects.find((project) => project.id === currentProjectId);
-
   return (
     <Breadcrumb>
       <BreadcrumbList className="gap-0">
-        {currentOrganization && (
-          <OrganizationBreadcrumb
-            currentOrganization={currentOrganization}
-            organizations={sortedOrganizations}
-            isMultiOrgEnabled={isMultiOrgEnabled}
-            currentEnvironmentId={currentEnvironmentId}
-            isFormbricksCloud={isFormbricksCloud}
-            isMember={isMember}
-            isOwnerOrManager={isOwnerOrManager}
-          />
-        )}
-        {currentProject && currentOrganization && currentEnvironmentId && (
+        <OrganizationBreadcrumb
+          currentOrganizationId={currentOrganizationId}
+          organizations={sortedOrganizations}
+          isMultiOrgEnabled={isMultiOrgEnabled}
+          currentEnvironmentId={currentEnvironmentId}
+          isFormbricksCloud={isFormbricksCloud}
+          isMember={isMember}
+          isOwnerOrManager={isOwnerOrManager}
+        />
+        {currentProjectId && currentEnvironmentId && (
           <ProjectBreadcrumb
-            currentProject={currentProject}
-            currentOrganization={currentOrganization}
+            currentProjectId={currentProjectId}
+            currentOrganizationId={currentOrganizationId}
             currentEnvironmentId={currentEnvironmentId}
             projects={sortedProjects}
             isOwnerOrManager={isOwnerOrManager}
@@ -77,8 +71,8 @@ export const ProjectAndOrgSwitch = ({
             currentOrgBillingPlan={currentOrgBillingPlan}
           />
         )}
-        {currentEnvironment && (
-          <EnvironmentBreadcrumb environments={environments} environment={currentEnvironment} />
+        {currentEnvironmentId && (
+          <EnvironmentBreadcrumb environments={environments} currentEnvironmentId={currentEnvironmentId} />
         )}
       </BreadcrumbList>
     </Breadcrumb>
