@@ -1,0 +1,79 @@
+---
+title: "Two-factor authentication"
+description: "Secure your account with an additional layer of protection using time-based codes from authenticator apps and backup codes."
+icon: "shield-check"
+---
+
+Two-factor authentication (2FA) adds an extra layer of security to user accounts by requiring a second form of verification in addition to the password. This significantly reduces the risk of unauthorized access even if passwords are compromised.
+
+<Note>
+  Two-factor authentication is part of the [Enterprise Edition](/self-hosting/advanced/license). 
+</Note>
+
+
+## Prerequisites
+
+To use two-factor authentication, users must:
+
+- Have an account with email-based authentication (third-party login providers like Google SSO are not compatible with 2FA)
+- Have a TOTP-compatible authenticator app installed on their device (such as Google Authenticator, Authy, or 1Password)
+
+## Setting up Two-factor authentication
+
+Users can enable 2FA from their profile settings:
+
+1. Navigate to **Profile Settings** via the menu in the lower right corner
+2. In the **Security** section, toggle the **Two-factor authentication** switch
+3. Follow the setup wizard:
+
+   **Step 1: Confirm Password**
+   - Enter your current password to verify your identity
+
+   **Step 2: Scan QR Code**
+   - Use your authenticator app to scan the displayed QR code
+   - Alternatively, manually enter the provided secret key into your authenticator app
+
+   **Step 3: Verify Setup**
+   - Enter the 6-digit code from your authenticator app to confirm the setup
+
+   **Step 4: Save Backup Codes**
+   - **Important**: Save the 10 backup codes in a secure location
+   - These codes can be used to access your account if you lose access to your authenticator device
+   - Each backup code can only be used once
+
+<Warning>
+Store your backup codes in a secure location. If you lose access to both your authenticator device and backup codes, you will need administrator assistance to regain access to your account.
+</Warning>
+
+## Logging in with Two-factor authentication
+
+Once 2FA is enabled, the login process requires an additional step:
+
+1. Enter your email and password as usual
+2. When prompted, enter either:
+   - A 6-digit code from your authenticator app, or
+   - One of your backup codes (use format: xxxxx-xxxxx or just the 10-character code)
+
+## Managing Two-factor authentication
+
+### Disabling 2FA
+
+To disable two-factor authentication:
+
+1. Go to **Profile Settings > Security**
+2. Toggle off the **Two-factor authentication** switch
+3. Confirm by entering either:
+   - Your password and a TOTP code from your authenticator app, or
+   - Your password and a backup code
+
+<Info>
+When 2FA is disabled, all associated backup codes are permanently deleted for security reasons.
+</Info>
+
+### Re-enabling 2FA
+
+If you need to set up 2FA again (for example, after getting a new device):
+
+1. Follow the same setup process described above
+2. New backup codes will be generated
+3. Old backup codes (if any existed) will be invalidated

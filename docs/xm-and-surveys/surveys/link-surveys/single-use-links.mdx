@@ -1,5 +1,5 @@
 ---
-title: "Single Use Links"
+title: "Single-Use Links"
 description:
   "Make sure that each respondent only replies once with single use links."
 icon: "link"
@@ -22,30 +22,18 @@ This guide will help you understand how to generate and use single-use links wit
 
 Using single-use links with Formbricks is quite straight-forward:
 
-1. In the survey settings, toggle "Single Use Link" on:
+1. On the Summary page, hit "Share survey" in the top right corner to open the sharing modal.
 
-   ![Single use survey settings](/images/xm-and-surveys/surveys/link-surveys/single-use-links/single-use-setting.webp)
+2. Toggle "Single Use Link" on in the Anonymous Links tab:
 
-2. When you publish your survey, the following modal will open:
+   ![Single use link survey settings](/images/xm-and-surveys/surveys/link-surveys/single-use-links/single-use-links.webp)
 
-   ![Share modal with 7 single use links which can be regenerated](/images/xm-and-surveys/surveys/link-surveys/single-use-links/share-modal.webp)
+3. If you'd like to use URL encryption, toggle "URL Encryption" on. You can then customize the number of links you'd like to generate and download as CSV.
 
-   Here, you can copy and generate as many single-use links as you need.
-
-## URL encryption
-
-You can encrypt single use URLs to assure information to be protected. To enable it, you have to set the correct environment variable:
-
-![Set the right env var to be able to enable encryption.](/images/xm-and-surveys/surveys/link-surveys/single-use-links/env-variable.webp)
+4. If you'd like to set a custom single-use ID, deactivate the "Enable URL Encryption" toggle. You can then customize the single-use ID in the URL or programmatically.
 
 ## Check suId of a submission
 
-You can find the suId of each submission in the submission meta data. To view it, simple hover over the Avatar:
+You can find the suId of each submission in the submission meta data. You'll find it both in the table as well as in the meta data when hovering over the Avatar:
 
-![View suId in the submission meta data.](/images/xm-and-surveys/surveys/link-surveys/single-use-links/metadata.webp)
-
-### 'Link used' message
-
-You can customize the 'link used' messaging in the Survey Editor settings:
-
-![Adjust the message shown to people if a link was already used.](/images/xm-and-surveys/surveys/link-surveys/single-use-links/used-message.webp)
+   ![Single use link survey metadata](/images/xm-and-surveys/surveys/link-surveys/single-use-links/suid-metadata.webp)

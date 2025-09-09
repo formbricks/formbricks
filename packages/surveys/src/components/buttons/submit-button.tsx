@@ -1,5 +1,5 @@
 import { ButtonHTMLAttributes, useRef } from "preact/compat";
-import { useCallback, useEffect } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel?: string;
@@ -18,18 +18,35 @@ export function SubmitButton({
   ...props
 }: SubmitButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // throttle the button submit to prevent multiple submissions
+  // works by setting a timeout to reset the isProcessing state
+  // TODO: Refactor
+  useEffect(() => {
+    if (isProcessing) {
+      const timer = setTimeout(() => {
+        setIsProcessing(false);
+      }, 300);
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [isProcessing]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled) {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled && !isProcessing) {
         event.preventDefault();
+        setIsProcessing(true);
         const button = buttonRef.current;
         if (button) {
           button.click();
         }
       }
     },
-    [disabled]
+    [disabled, isProcessing]
   );
 
   useEffect(() => {
