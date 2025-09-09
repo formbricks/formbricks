@@ -109,7 +109,7 @@ jobs:
           echo "S3_ENDPOINT_URL=http://localhost:9000" >> .env
           echo "S3_ACCESS_KEY=minioadmin" >> .env
           echo "S3_SECRET_KEY=minioadmin" >> .env
-          echo "S3_FORCE_PATH_STYLE=true" >> .env
+          echo "S3_FORCE_PATH_STYLE=1" >> .env
         shell: bash
 
       - name: Install MinIO client (mc)
