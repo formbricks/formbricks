@@ -8,6 +8,7 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { type RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -50,6 +51,7 @@ export function OpenTextQuestion({
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
 
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
@@ -71,7 +73,7 @@ export function OpenTextQuestion({
     input?.setCustomValidity("");
 
     if (question.required && (!value || value.trim() === "")) {
-      input?.setCustomValidity("Please fill out this field.");
+      input?.setCustomValidity(t("errors.please_fill_out_this_field"));
       input?.reportValidity();
       return;
     }

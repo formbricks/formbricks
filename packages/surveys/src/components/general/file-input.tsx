@@ -4,6 +4,7 @@ import { getMimeType, isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
+import { useTranslation } from "react-i18next";
 import { type TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -31,6 +32,7 @@ export function FileInput({
   allowMultipleFiles,
   htmlFor = "",
 }: Readonly<FileInputProps>) {
+  const { t } = useTranslation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [parent] = useAutoAnimate();
@@ -60,9 +62,7 @@ export function FileInput({
 
       if (duplicateFiles.length > 0) {
         const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
-        alert(
-          `The following files are already uploaded: ${duplicateNames}. Duplicate files are not allowed.`
-        );
+        alert(t("errors.file_input.duplicate_files", { duplicateNames }));
       }
 
       return { filteredFiles, duplicateFiles };
@@ -108,9 +108,7 @@ export function FileInput({
         // Display alert for rejected files
         if (rejectedFiles.length > 0) {
           const fileNames = rejectedFiles.join(", ");
-          alert(
-            `The following file(s) exceed the maximum size of ${maxSizeInMB} MB and were removed: ${fileNames}`
-          );
+          alert(t("errors.file_input.file_size_exceeded", { fileNames, maxSizeInMB }));
         }
 
         // If no files remain after filtering, exit early
@@ -125,8 +123,8 @@ export function FileInput({
         // Update file URLs by appending the new URL
         onUploadCallback(fileUrls ? [...fileUrls, ...uploadedUrls] : uploadedUrls);
       } catch (err) {
-        console.error(`Error uploading native file.`);
-        alert(`Upload failed! Please try again.`);
+        console.error(t("errors.file_input.native_upload_failed"));
+        alert(t("errors.file_input.upload_failed"));
       } finally {
         setIsUploading(false);
       }
@@ -151,7 +149,7 @@ export function FileInput({
       const fileBuffer = await file.arrayBuffer();
       const bufferKB = fileBuffer.byteLength / 1024;
       if (bufferKB > maxSizeInMB * 1024) {
-        alert(`File should be less than ${maxSizeInMB.toString()} MB`);
+        alert(t("errors.file_input.file_size_exceeded", { maxSizeInMB }));
         return false;
       }
     }
@@ -162,12 +160,12 @@ export function FileInput({
     let fileArray = Array.from(files);
 
     if (!allowMultipleFiles && fileArray.length > 1) {
-      alert("Only one file can be uploaded at a time.");
+      alert(t("errors.file_input.only_one_file_can_be_uploaded_at_a_time"));
       return;
     }
 
     if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
-      alert(`You can only upload a maximum of ${FILE_LIMIT.toString()} files.`);
+      alert(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
       return;
     }
 
@@ -193,7 +191,7 @@ export function FileInput({
     });
 
     if (!validFiles.length) {
-      alert("No valid file types selected. Please select a valid file type.");
+      alert(t("errors.file_input.no_valid_file_types_selected"));
       return;
     }
 
@@ -243,7 +241,7 @@ export function FileInput({
       }
     } catch (err: any) {
       console.error("error in uploading file: ", err);
-      alert("Upload failed! Please try again.");
+      alert(t("errors.file_input.upload_failed"));
     } finally {
       setIsUploading(false);
     }

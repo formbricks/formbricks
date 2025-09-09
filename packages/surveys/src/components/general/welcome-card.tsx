@@ -4,6 +4,7 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
 import { useEffect } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
 import { type TI18nString } from "@formbricks/types/surveys/types";
@@ -76,6 +77,8 @@ export function WelcomeCard({
   responseData,
   variablesData,
 }: WelcomeCardProps) {
+  const { t } = useTranslation();
+
   const calculateTimeToComplete = () => {
     let totalCards = survey.questions.length;
     if (survey.endings.length > 0) totalCards += 1;
@@ -86,7 +89,7 @@ export function WelcomeCard({
     const timeInSeconds = (survey.questions.length / idx) * 15; //15 seconds per question.
     if (timeInSeconds > 360) {
       // If it's more than 6 minutes
-      return "6+ minutes";
+      return t("common.x_plus_minutes", { count: 6 });
     }
     // Calculate minutes, if there are any seconds left, add a minute
     const minutes = Math.floor(timeInSeconds / 60);
@@ -96,13 +99,13 @@ export function WelcomeCard({
       // If there are any seconds left, we'll need to round up to the next minute
       if (minutes === 0) {
         // If less than 1 minute, return 'less than 1 minute'
-        return "less than 1 minute";
+        return t("common.less_than_x_minutes", { count: 1 });
       }
       // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
-      return `less than ${(minutes + 1).toString()} minutes`;
+      return t("common.less_than_x_minutes", { count: minutes + 1 });
     }
     // If there are no remaining seconds, just return the number of minutes
-    return `${minutes.toString()} minutes`;
+    return t("common.x_minutes", { count: minutes });
   };
 
   const timeToFinish = survey.welcomeCard.timeToFinish;
@@ -165,7 +168,9 @@ export function WelcomeCard({
           <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <TimerIcon />
             <p className="fb-pt-1 fb-text-xs">
-              <span> Takes {calculateTimeToComplete()} </span>
+              <span>
+                {t("common.takes")} {calculateTimeToComplete()}{" "}
+              </span>
             </p>
           </div>
         ) : null}
@@ -173,7 +178,9 @@ export function WelcomeCard({
           <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <UsersIcon />
             <p className="fb-pt-1 fb-text-xs">
-              <span data-testid="fb__surveys__welcome-card__response-count">{`${responseCount.toString()} people responded`}</span>
+              <span data-testid="fb__surveys__welcome-card__response-count">
+                {t("common.people_responded", { count: responseCount })}
+              </span>
             </p>
           </div>
         ) : null}
@@ -181,9 +188,13 @@ export function WelcomeCard({
           <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <TimerIcon />
             <p className="fb-pt-1 fb-text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
-              <span> Takes {calculateTimeToComplete()} </span>
+              <span>
+                {t("common.takes")} {calculateTimeToComplete()}{" "}
+              </span>
               <span data-testid="fb__surveys__welcome-card__response-count">
-                {responseCount && responseCount > 3 ? `⋅ ${responseCount.toString()} people responded` : ""}
+                {responseCount && responseCount > 3
+                  ? `⋅ ${t("common.people_responded", { count: responseCount })}`
+                  : ""}
               </span>
             </p>
           </div>

@@ -11,6 +11,7 @@ import {
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyCalQuestion, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -44,6 +45,7 @@ export function CalQuestion({
   currentQuestionId,
   isBackButtonHidden,
 }: Readonly<CalQuestionProps>) {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const [errorMessage, setErrorMessage] = useState("");
@@ -64,7 +66,7 @@ export function CalQuestion({
         onSubmit={(e) => {
           e.preventDefault();
           if (question.required && !value) {
-            setErrorMessage("Please book an appointment");
+            setErrorMessage(t("errors.please_book_an_appointment"));
             // Scroll to bottom to show the error message
             setTimeout(() => {
               if (scrollableRef.current?.scrollToBottom) {

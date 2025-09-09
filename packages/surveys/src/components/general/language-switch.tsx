@@ -3,6 +3,7 @@ import { mixColor } from "@/lib/color";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { checkIfSurveyIsRTL, cn } from "@/lib/utils";
 import { useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -28,6 +29,7 @@ export function LanguageSwitch({
   dir = "auto",
   setDir,
 }: LanguageSwitchProps) {
+  const { t } = useTranslation();
   const hoverColorWithOpacity = hoverColor ?? mixColor("#000000", "#ffffff", 0.8);
 
   const [isHovered, setIsHovered] = useState(false);
@@ -78,7 +80,7 @@ export function LanguageSwitch({
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}
-        aria-label="Language switch"
+        aria-label={t("common.language_switch")}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}>
         <LanguageIcon />
