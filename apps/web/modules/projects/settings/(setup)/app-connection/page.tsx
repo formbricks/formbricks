@@ -4,10 +4,8 @@ import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getEnvironments } from "@/lib/environment/service";
-import { getPublicDomain } from "@/lib/getPublicUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
@@ -30,8 +28,6 @@ export const AppConnectionPage = async (props) => {
   const otherEnvActionClasses = await getActionClasses(otherEnvironment.id);
   const locale = await findMatchingLocale();
 
-  const publicDomain = getPublicDomain();
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.project_configuration")}>
@@ -40,27 +36,39 @@ export const AppConnectionPage = async (props) => {
       <div className="space-y-4">
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/project/app-connection" />
         <SettingsCard
+          title={t("environments.project.app-connection.environment_id")}
+          description={t("environments.project.app-connection.environment_id_description")}>
+          <IdBadge id={params.environmentId} />
+        </SettingsCard>
+        <SettingsCard
           title={t("environments.project.app-connection.app_connection")}
           description={t("environments.project.app-connection.app_connection_description")}>
           {environment && (
             <div className="space-y-4">
               <WidgetStatusIndicator environment={environment} />
-              <Alert variant="info">
-                <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
-                <AlertButton asChild>
-                  <Link
-                    href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
-                    target="_blank">
-                    {t("common.learn_more")}
-                  </Link>
-                </AlertButton>
-              </Alert>
-              <Alert variant="info">
-                <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
-                <AlertDescription>
-                  {t("environments.project.app-connection.cache_update_delay_description")}
-                </AlertDescription>
-              </Alert>
+              {!environment.appSetupCompleted && (
+                <Alert variant="outbound">
+                  <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
+                  <AlertDescription>
+                    {t("environments.project.app-connection.setup_alert_description")}
+                  </AlertDescription>
+                  <AlertButton asChild>
+                    <Link
+                      href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
+                      target="_blank">
+                      {t("common.learn_more")}
+                    </Link>
+                  </AlertButton>
+                </Alert>
+              )}
+              {environment.appSetupCompleted && (
+                <Alert variant="warning">
+                  <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
+                  <AlertDescription>
+                    {t("environments.project.app-connection.cache_update_delay_description")}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           )}
         </SettingsCard>
@@ -73,17 +81,6 @@ export const AppConnectionPage = async (props) => {
           isReadOnly={isReadOnly}
           locale={locale}
         />
-        <SettingsCard
-          title={t("environments.project.app-connection.how_to_setup")}
-          description={t("environments.project.app-connection.how_to_setup_description")}
-          noPadding>
-          <SetupInstructions environmentId={params.environmentId} publicDomain={publicDomain} />
-        </SettingsCard>
-        <SettingsCard
-          title={t("environments.project.app-connection.environment_id")}
-          description={t("environments.project.app-connection.environment_id_description")}>
-          <IdBadge id={params.environmentId} />
-        </SettingsCard>
       </div>
     </PageContentWrapper>
   );

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { H3, Small } from "@/modules/ui/components/typography";
+import { H4, Small } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 
 interface ButtonInfo {
@@ -41,7 +41,7 @@ export const SettingsCard = ({
       id={title}>
       <div className="flex justify-between border-b border-slate-200 px-4 pb-4">
         <div>
-          <H3 className="capitalize">{title}</H3>
+          <H4 className="font-medium capitalize tracking-normal">{title}</H4>
           <div className="ml-2">
             {beta && <Badge size="normal" type="warning" text="Beta" />}
             {soon && (
