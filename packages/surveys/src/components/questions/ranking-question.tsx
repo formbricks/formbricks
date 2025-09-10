@@ -170,7 +170,7 @@ export function RankingQuestion({
         />
         <div className="fb-mt-4">
           <fieldset>
-            <legend className="fb-sr-only">Ranking Items</legend>
+            <legend className="fb-sr-only">{t("common.ranking_items")}</legend>
             <div className="fb-relative" ref={parent}>
               {[...sortedItems, ...unsortedItems].map((item, idx) => {
                 if (!item) return null;
