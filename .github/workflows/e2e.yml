@@ -64,8 +64,8 @@ jobs:
           - 9000:9000
         options: >-
           --health-cmd="curl -fsS http://localhost:9000/minio/health/live || exit 1"
-          --health-interval=5s
-          --health-timeout=2s
+          --health-interval=10s
+          --health-timeout=5s
           --health-retries=20
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -120,16 +120,33 @@ jobs:
 
       - name: Wait for MinIO and create S3 bucket
         run: |
+          echo "Waiting for MinIO to be ready..."
           for i in {1..60}; do
             if curl -fsS http://localhost:9000/minio/health/live >/dev/null; then
-              echo "MinIO is up"
+              echo "MinIO is up after ${i} seconds"
               break
             fi
+            echo "Waiting for MinIO... (attempt ${i}/60)"
             sleep 1
           done
 
+          # Give MinIO a bit more time to fully initialize
+          sleep 5
+
+          echo "Configuring MinIO client..."
           mc alias set local http://localhost:9000 minioadmin minioadmin
+
+          echo "Creating S3 bucket..."
           mc mb --ignore-existing local/formbricks-e2e
+
+          echo "Verifying bucket creation..."
+          mc ls local/
+
+          echo "Testing MinIO connectivity..."
+          curl -fsS http://localhost:9000/minio/health/live && echo "✓ MinIO health check passed"
+
+          echo "Testing S3 API endpoint..."
+          curl -fsS http://localhost:9000/ && echo "✓ MinIO S3 API accessible" || echo "✗ MinIO S3 API not accessible"
 
       - name: Build App
         run: |
@@ -172,6 +189,22 @@ jobs:
             echo "Still waiting for the application to be ready..."
             sleep 10
           done
+
+      - name: Test Storage and MinIO Integration
+        run: |
+          echo "Testing MinIO file upload with mc client..."
+          # Test file upload using MinIO client
+          echo "test content" > test-file.txt
+          mc cp test-file.txt local/formbricks-e2e/test-file.txt
+
+          echo "Verifying file was uploaded..."
+          mc ls local/formbricks-e2e/
+
+          echo "Testing file download..."
+          mc cp local/formbricks-e2e/test-file.txt downloaded-test-file.txt
+          cat downloaded-test-file.txt
+
+          echo "MinIO integration test completed successfully!"
 
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps

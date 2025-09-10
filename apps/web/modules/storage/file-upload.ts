@@ -1,3 +1,5 @@
+import toast from "react-hot-toast";
+
 export enum FileUploadError {
   NO_FILE = "No file provided or invalid file type. Expected a File or Blob.",
   INVALID_FILE_TYPE = "Please upload an image file.",
@@ -59,6 +61,8 @@ export const handleFileUpload = async (
     });
 
     if (!response.ok) {
+      toast.error(JSON.stringify(response), { duration: 1000 });
+
       if (response.status === 400) {
         const json = (await response.json()) as { details?: { fileName?: string } };
         if (json.details?.fileName) {
