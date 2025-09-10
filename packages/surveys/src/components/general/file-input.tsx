@@ -5,8 +5,11 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
-import { type TUploadFileConfig } from "@formbricks/types/storage";
+import {
+  type TAllowedFileExtension,
+  type TUploadFileConfig,
+  ZAllowedFileExtension,
+} from "@formbricks/types/storage";
 
 interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
