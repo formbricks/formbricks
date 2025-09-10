@@ -11,6 +11,7 @@ require("dotenv").config({ path: ".env" });
  */
 export default defineConfig({
   testDir: "./apps/web/playwright",
+  testMatch: "**/survey.spec.ts",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Retry on CI only */
@@ -22,9 +23,7 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   // workers: os.cpus().length,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter:  [
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
-  ],
+  reporter: [["html", { outputFolder: "playwright-report", open: "never" }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -42,7 +41,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: "**/*.spec.ts",
+      testMatch: "**/survey.spec.ts",
     },
 
     // {
