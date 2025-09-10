@@ -155,6 +155,7 @@ export const FileInput = ({
 
     if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {
       const firstError = uploadedFiles.find((f) => f.error)?.error;
+      toast.error(JSON.stringify(uploadedFiles), { duration: 1000 });
       if (firstError === FileUploadError.INVALID_FILE_NAME) {
         toast.error(t("common.invalid_file_name"));
       } else if (uploadedFiles.length === 0) {

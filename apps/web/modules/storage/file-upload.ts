@@ -61,8 +61,10 @@ export const handleFileUpload = async (
     });
 
     if (!response.ok) {
-      toast.error(JSON.stringify(response), { duration: 1000 });
-
+      // get the error and add it to the body:
+      const error = await response.json();
+      document.body.innerHTML += `<div class="text-red-500 absolute top-0 left-0 mb-10 bg-white p-4 rounded-md">${JSON.stringify(error)}</div>`;
+      toast.error(JSON.stringify(error), { duration: 10000 });
       if (response.status === 400) {
         const json = (await response.json()) as { details?: { fileName?: string } };
         if (json.details?.fileName) {
@@ -103,18 +105,27 @@ export const handleFileUpload = async (
       formDataForS3.append("file", blob);
     } catch (err) {
       console.error("Error in uploading file: ", err);
+      document.body.innerHTML += `<div class="text-red-500 absolute top-0 left-0 mb-10 bg-white p-4 rounded-md">${JSON.stringify(err)}</div>`;
+      toast.error(JSON.stringify(err), { duration: 10000 });
       return {
         error: FileUploadError.UPLOAD_FAILED,
         url: "",
       };
     }
 
+    toast.success("Uploading file...", { duration: 10000 });
+    toast.success(signedUrl, { duration: 10000 });
     const uploadResponse = await fetch(signedUrl, {
       method: "POST",
       body: formDataForS3,
     });
 
     if (!uploadResponse.ok) {
+      const error = await uploadResponse.json();
+      const status = uploadResponse.status;
+      document.body.innerHTML += `<div class="text-red-500 absolute top-0 left-0 mb-10 bg-white p-4 rounded-md">${JSON.stringify(error)} ${status}</div>`;
+      toast.error(JSON.stringify(error), { duration: 10000 });
+      toast.error(status.toString(), { duration: 10000 });
       return {
         error: FileUploadError.UPLOAD_FAILED,
         url: "",
@@ -126,6 +137,8 @@ export const handleFileUpload = async (
     };
   } catch (error) {
     console.error("Error in uploading file: ", error);
+    document.body.innerHTML += `<div class="text-red-500 absolute top-0 left-0 mb-10 bg-white p-4 rounded-md">${JSON.stringify(error)}</div>`;
+    toast.error(JSON.stringify(error), { duration: 10000 });
     return {
       error: FileUploadError.UPLOAD_FAILED,
       url: "",
