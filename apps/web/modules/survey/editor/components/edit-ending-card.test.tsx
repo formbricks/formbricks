@@ -61,6 +61,7 @@ describe("EditEndingCard", () => {
         addEndingCard={addEndingCard}
         isFormbricksCloud={isFormbricksCloud}
         locale={locale}
+        quotas={[]}
       />
     );
 

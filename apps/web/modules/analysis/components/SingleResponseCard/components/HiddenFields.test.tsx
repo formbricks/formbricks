@@ -16,12 +16,12 @@ describe("HiddenFields", () => {
     cleanup();
   });
 
-  test("renders empty container when no fieldIds are provided", () => {
+  test("does not render empty container when no fieldIds are provided", () => {
     render(
       <HiddenFields hiddenFields={{ fieldIds: [] } as unknown as TSurveyHiddenFields} responseData={{}} />
     );
-    const container = screen.getByTestId("main-hidden-fields-div");
-    expect(container).toBeDefined();
+    const container = screen.queryByTestId("main-hidden-fields-div");
+    expect(container).not.toBeInTheDocument();
   });
 
   test("renders nothing for fieldIds with no corresponding response data", () => {

@@ -5,6 +5,7 @@ import type { TOrganizationAccess } from "../types/api-key";
 import { type TIntegrationConfig } from "../types/integration";
 import { type TOrganizationBilling } from "../types/organizations";
 import { type TProjectConfig, type TProjectStyling } from "../types/project";
+import type { TSurveyQuotaLogic } from "../types/quota";
 import { type TResponseContactAttributes, type TResponseData, type TResponseMeta } from "../types/responses";
 import { type TBaseFilters } from "../types/segment";
 import {
@@ -51,5 +52,6 @@ declare global {
     export type SurveyFollowUpAction = TSurveyFollowUpAction;
     export type OrganizationAccess = TOrganizationAccess;
     export type SurveyMetadata = TSurveyMetadata;
+    export type SurveyQuotaLogic = TSurveyQuotaLogic;
   }
 }

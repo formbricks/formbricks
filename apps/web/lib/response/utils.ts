@@ -6,6 +6,7 @@ import {
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
   TResponseTtc,
+  TResponseWithQuotas,
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
@@ -593,6 +594,43 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
       id: { in: filterCriteria.responseIds },
     });
   }
+
+  // For quota filters
+  if (filterCriteria?.quotas) {
+    const quotaFilters: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.quotas).forEach(([quotaId, { op }]) => {
+      if (op === "screenedOutNotInQuota") {
+        // Responses that don't have any quota link with this quota
+        quotaFilters.push({
+          NOT: {
+            quotaLinks: {
+              some: {
+                quotaId,
+              },
+            },
+          },
+        });
+      } else {
+        // Responses that have a quota link with this quota and the specified status
+        quotaFilters.push({
+          quotaLinks: {
+            some: {
+              quotaId,
+              status: op,
+            },
+          },
+        });
+      }
+    });
+
+    if (quotaFilters.length > 0) {
+      whereClause.push({
+        AND: quotaFilters,
+      });
+    }
+  }
+
   return { AND: whereClause };
 };
 
@@ -650,10 +688,11 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
 
 export const getResponsesJson = (
   survey: TSurvey,
-  responses: TResponse[],
+  responses: TResponseWithQuotas[],
   questionsHeadlines: string[][],
   userAttributes: string[],
-  hiddenFields: string[]
+  hiddenFields: string[],
+  isQuotasAllowed: boolean = false
 ): Record<string, string | number>[] => {
   const jsonData: Record<string, string | number>[] = [];
 
@@ -669,6 +708,10 @@ export const getResponsesJson = (
       "User ID": response.contact?.userId || "",
       Tags: response.tags.map((tag) => tag.name).join(", "),
     });
+
+    if (isQuotasAllowed) {
+      jsonData[idx]["Quotas"] = response.quotas?.map((quota) => quota.name).join(", ") || "";
+    }
 
     // meta details
     Object.entries(response.meta ?? {}).forEach(([key, value]) => {

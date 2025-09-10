@@ -134,9 +134,23 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger");
 vi.mock("./contact");
 
+type MockTx = {
+  response: {
+    create: ReturnType<typeof vi.fn>;
+  };
+};
+let mockTx: MockTx;
+
 describe("Response Lib Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockTx = {
+      response: {
+        create: vi.fn(),
+      },
+    };
+    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
   });
 
   describe("createResponse", () => {
@@ -145,16 +159,16 @@ describe("Response Lib Tests", () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
       vi.mocked(getContactByUserId).mockResolvedValue(mockContact);
       vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-      vi.mocked(prisma.response.create).mockResolvedValue({
+      vi.mocked(mockTx.response.create).mockResolvedValue({
         ...mockResponsePrisma,
       });
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(50);
 
-      const response = await createResponse(mockResponseInputWithUserId);
+      const response = await createResponse(mockResponseInputWithUserId, mockTx);
 
       expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
       expect(getContactByUserId).toHaveBeenCalledWith(environmentId, mockUserId);
-      expect(prisma.response.create).toHaveBeenCalledWith(
+      expect(mockTx.response.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             contact: { connect: { id: mockContact.id } },
@@ -167,9 +181,9 @@ describe("Response Lib Tests", () => {
 
     test("should throw ResourceNotFoundError if organization not found", async () => {
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
-      await expect(createResponse(mockResponseInput)).rejects.toThrow(ResourceNotFoundError);
+      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(ResourceNotFoundError);
       expect(getOrganizationByEnvironmentId).toHaveBeenCalledWith(environmentId);
-      expect(prisma.response.create).not.toHaveBeenCalled();
+      expect(mockTx.response.create).not.toHaveBeenCalled();
     });
 
     test("should handle PrismaClientKnownRequestError", async () => {
@@ -178,9 +192,9 @@ describe("Response Lib Tests", () => {
         clientVersion: "2.0",
       });
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
-      vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
+      vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
 
-      await expect(createResponse(mockResponseInput)).rejects.toThrow(DatabaseError);
+      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(DatabaseError);
       expect(logger.error).not.toHaveBeenCalled(); // Should be caught and re-thrown as DatabaseError
     });
 
@@ -190,18 +204,18 @@ describe("Response Lib Tests", () => {
         clientVersion: "2.0",
       });
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
-      vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
+      vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
 
-      await expect(createResponse(mockResponseInput)).rejects.toThrow(DatabaseError);
-      await expect(createResponse(mockResponseInput)).rejects.toThrow("Display ID does not exist");
+      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(DatabaseError);
+      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow("Display ID does not exist");
     });
 
     test("should handle generic errors", async () => {
       const genericError = new Error("Something went wrong");
       vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
-      vi.mocked(prisma.response.create).mockRejectedValue(genericError);
+      vi.mocked(mockTx.response.create).mockRejectedValue(genericError);
 
-      await expect(createResponse(mockResponseInput)).rejects.toThrow(genericError);
+      await expect(createResponse(mockResponseInput, mockTx)).rejects.toThrow(genericError);
     });
 
     describe("Cloud specific tests", () => {
@@ -214,10 +228,10 @@ describe("Response Lib Tests", () => {
         } as any;
         vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrgWithBilling);
         vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-        vi.mocked(prisma.response.create).mockResolvedValue(mockResponsePrisma);
+        vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma);
         vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(limit); // Limit reached
 
-        await createResponse(mockResponseInput);
+        await createResponse(mockResponseInput, mockTx);
 
         expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
         expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalled();
@@ -231,10 +245,10 @@ describe("Response Lib Tests", () => {
         } as any;
         vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrgWithBilling);
         vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-        vi.mocked(prisma.response.create).mockResolvedValue(mockResponsePrisma);
+        vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma);
         vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(limit - 1); // Limit not reached
 
-        await createResponse(mockResponseInput);
+        await createResponse(mockResponseInput, mockTx);
 
         expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
         expect(sendPlanLimitsReachedEventToPosthogWeekly).not.toHaveBeenCalled();
@@ -249,12 +263,12 @@ describe("Response Lib Tests", () => {
         const posthogError = new Error("Posthog error");
         vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrgWithBilling);
         vi.mocked(calculateTtcTotal).mockReturnValue({ total: 10 });
-        vi.mocked(prisma.response.create).mockResolvedValue(mockResponsePrisma);
+        vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma);
         vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(limit); // Limit reached
         vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockRejectedValue(posthogError);
 
         // Expecting successful response creation despite PostHog error
-        const response = await createResponse(mockResponseInput);
+        const response = await createResponse(mockResponseInput, mockTx);
 
         expect(getMonthlyOrganizationResponseCount).toHaveBeenCalledWith(organizationId);
         expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalled();

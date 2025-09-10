@@ -439,6 +439,6 @@ const sentryOptions = {
 
 // Always enable Sentry plugin to inject Debug IDs
 // Runtime Sentry reporting still depends on DSN being set via environment variables
-const exportConfig = withSentryConfig(nextConfig, sentryOptions);
+const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
 
 export default exportConfig;

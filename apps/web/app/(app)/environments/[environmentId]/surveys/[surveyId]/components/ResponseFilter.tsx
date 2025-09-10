@@ -25,7 +25,7 @@ import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/type
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages";
+  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages" | "Quotas";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
@@ -51,13 +51,14 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
 
         if (!surveyFilterData?.data) return;
 
-        const { attributes, meta, environmentTags, hiddenFields } = surveyFilterData.data;
+        const { attributes, meta, environmentTags, hiddenFields, quotas } = surveyFilterData.data;
         const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
           survey,
           environmentTags,
           attributes,
           meta,
-          hiddenFields
+          hiddenFields,
+          quotas
         );
         setSelectedOptions({ questionFilterOptions, questionOptions });
       }

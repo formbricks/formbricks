@@ -1,7 +1,11 @@
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
+import { ProjectAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/components/project-and-org-switch";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 import { getTranslate } from "@/tolgee/server";
@@ -22,24 +26,38 @@ const Page = async (props) => {
 
   const organizations = await getOrganizationsByUserId(session.user.id);
 
-  const { features } = await getEnterpriseLicense();
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
-  const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+  const { isMember } = getAccessFlags(membership?.role);
 
   return (
     <div className="flex min-h-full min-w-full flex-row">
-      <LandingSidebar
-        user={user}
-        organization={organization}
-        isMultiOrgEnabled={isMultiOrgEnabled}
-        organizations={organizations}
-      />
+      <LandingSidebar user={user} organization={organization} />
       <div className="flex-1">
-        <div className="flex h-full flex-col items-center justify-center space-y-12">
-          <Header
-            title={t("organizations.landing.no_projects_warning_title")}
-            subtitle={t("organizations.landing.no_projects_warning_subtitle")}
-          />
+        <div className="flex h-full flex-col">
+          <div className="p-6">
+            {/* we only need to render organization breadcrumb on this page, so we pass some default value without actually calculating them to ProjectAndOrgSwitch component  */}
+            <ProjectAndOrgSwitch
+              currentOrganizationId={organization.id}
+              organizations={organizations}
+              projects={[]}
+              isMultiOrgEnabled={isMultiOrgEnabled}
+              organizationProjectsLimit={0}
+              isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+              isLicenseActive={false}
+              isOwnerOrManager={false}
+              isAccessControlAllowed={false}
+              isMember={isMember}
+              environments={[]}
+            />
+          </div>
+          <div className="flex h-full flex-col items-center justify-center space-y-12">
+            <Header
+              title={t("organizations.landing.no_projects_warning_title")}
+              subtitle={t("organizations.landing.no_projects_warning_subtitle")}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -14,9 +14,15 @@ interface DeleteContactButtonProps {
   environmentId: string;
   contactId: string;
   isReadOnly: boolean;
+  isQuotasAllowed: boolean;
 }
 
-export const DeleteContactButton = ({ environmentId, contactId, isReadOnly }: DeleteContactButtonProps) => {
+export const DeleteContactButton = ({
+  environmentId,
+  contactId,
+  isReadOnly,
+  isQuotasAllowed,
+}: DeleteContactButtonProps) => {
   const router = useRouter();
   const { t } = useTranslate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -63,7 +69,13 @@ export const DeleteContactButton = ({ environmentId, contactId, isReadOnly }: De
         deleteWhat="person"
         onDelete={handleDeletePerson}
         isDeleting={isDeletingPerson}
-        text={t("environments.contacts.delete_contact_confirmation")}
+        text={
+          isQuotasAllowed
+            ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+                value: 1,
+              })
+            : t("environments.contacts.delete_contact_confirmation")
+        }
       />
     </>
   );

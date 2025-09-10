@@ -3,7 +3,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { SurveyVariablesCardItem } from "./survey-variables-card-item";
@@ -84,6 +83,7 @@ describe("SurveyVariablesCardItem", () => {
           mode="create"
           localSurvey={initialSurvey}
           setLocalSurvey={mockSetLocalSurvey}
+          quotas={[]}
         />
       </TestWrapper>
     );
@@ -146,6 +146,7 @@ describe("SurveyVariablesCardItem", () => {
           mode="create"
           localSurvey={initialSurvey}
           setLocalSurvey={mockSetLocalSurvey}
+          quotas={[]}
         />
       </TestWrapper>
     );
@@ -200,6 +201,7 @@ describe("SurveyVariablesCardItem", () => {
           mode="create"
           localSurvey={initialSurvey}
           setLocalSurvey={mockSetLocalSurvey}
+          quotas={[]}
         />
       </TestWrapper>
     );
@@ -248,6 +250,7 @@ describe("SurveyVariablesCardItem", () => {
         localSurvey={initialSurvey}
         setLocalSurvey={mockSetLocalSurvey}
         variable={undefined}
+        quotas={[]}
       />
     );
 
@@ -299,6 +302,7 @@ describe("SurveyVariablesCardItem", () => {
           mode="create"
           localSurvey={initialSurvey}
           setLocalSurvey={mockSetLocalSurvey}
+          quotas={[]}
         />
       </TestWrapper>
     );
@@ -372,6 +376,7 @@ describe("SurveyVariablesCardItem", () => {
         localSurvey={initialSurvey}
         setLocalSurvey={mockSetLocalSurvey}
         variable={variableUsedInLogic}
+        quotas={[]}
       />
     );
 
@@ -437,6 +442,7 @@ describe("SurveyVariablesCardItem", () => {
         localSurvey={initialSurvey}
         setLocalSurvey={mockSetLocalSurvey}
         variable={variableToDelete}
+        quotas={[]}
       />
     );
 

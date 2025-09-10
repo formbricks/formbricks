@@ -388,16 +388,19 @@ export const ZSingleCondition = z
 
 export type TSingleCondition = z.infer<typeof ZSingleCondition>;
 
+export const ZConnector = z.enum(["and", "or"]);
+export type TConnector = z.infer<typeof ZConnector>;
+
 export interface TConditionGroup {
   id: string;
-  connector: "and" | "or";
+  connector: TConnector;
   conditions: (TSingleCondition | TConditionGroup)[];
 }
 
 const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
   z.object({
     id: ZId,
-    connector: z.enum(["and", "or"]),
+    connector: ZConnector,
     conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
   })
 );
@@ -2855,6 +2858,8 @@ export const ZSurveySummary = z.object({
     dropOffCount: z.number(),
     dropOffPercentage: z.number(),
     ttcAverage: z.number(),
+    quotasCompleted: z.number(),
+    quotasCompletedPercentage: z.number(),
   }),
   dropOff: z.array(
     z.object({
@@ -2865,6 +2870,15 @@ export const ZSurveySummary = z.object({
       impressions: z.number(),
       dropOffCount: z.number(),
       dropOffPercentage: z.number(),
+    })
+  ),
+  quotas: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      limit: z.number(),
+      count: z.number(),
+      percentage: z.number(),
     })
   ),
   summary: z.array(z.union([ZSurveyQuestionSummary, ZSurveyQuestionSummaryHiddenFields])),

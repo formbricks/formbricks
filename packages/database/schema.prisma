@@ -141,32 +141,33 @@ model Contact {
 /// @property ttc - Time to completion metrics
 /// @property meta - Additional metadata about the response
 model Response {
-  id                String            @id @default(cuid())
-  createdAt         DateTime          @default(now()) @map(name: "created_at")
-  updatedAt         DateTime          @default(now()) @updatedAt @map(name: "updated_at")
-  finished          Boolean           @default(false)
-  survey            Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  id                String              @id @default(cuid())
+  createdAt         DateTime            @default(now()) @map(name: "created_at")
+  updatedAt         DateTime            @default(now()) @updatedAt @map(name: "updated_at")
+  finished          Boolean             @default(false)
+  survey            Survey              @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId          String
-  contact           Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact           Contact?            @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId         String?
   endingId          String?
   /// [ResponseData]
-  data              Json              @default("{}")
+  data              Json                @default("{}")
   /// [ResponseVariables]
-  variables         Json              @default("{}")
+  variables         Json                @default("{}")
   /// [ResponseTtc]
-  ttc               Json              @default("{}")
+  ttc               Json                @default("{}")
   /// [ResponseMeta]
-  meta              Json              @default("{}")
+  meta              Json                @default("{}")
   tags              TagsOnResponses[]
+  quotaLinks        ResponseQuotaLink[]
   /// [ResponseContactAttributes]
   contactAttributes Json?
   // singleUseId, used to prevent multiple responses
   singleUseId       String?
   language          String?
   documents         Document[]
-  displayId         String?           @unique
-  display           Display?          @relation(fields: [displayId], references: [id])
+  displayId         String?             @unique
+  display           Display?            @relation(fields: [displayId], references: [id])
 
   @@unique([surveyId, singleUseId])
   @@index([createdAt])
@@ -274,6 +275,16 @@ enum SurveyAttributeFilterCondition {
   notEquals
 }
 
+enum SurveyQuotaAction {
+  endSurvey
+  continueSurvey
+}
+
+enum ResponseQuotaLinkStatus {
+  screenedIn
+  screenedOut
+}
+
 /// Defines targeting rules for surveys based on contact attributes.
 /// Used to show surveys only to contacts matching specific criteria.
 ///
@@ -348,6 +359,7 @@ model Survey {
   /// [SurveyVariables]
   variables           Json                    @default("[]")
   responses           Response[]
+  quotas              SurveyQuota[]
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?
   displayLimit        Int?
@@ -391,6 +403,52 @@ model Survey {
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
+}
+
+/// Represents a quota configuration for a survey.
+/// Defines response limits and conditions for quota management.
+///
+/// @property id - Unique identifier for the quota
+/// @property survey - The survey this quota belongs to
+/// @property name - Display name for the quota
+/// @property limit - Maximum number of responses allowed
+/// @property conditions - JSON object containing quota conditions
+/// @property action - Action to take when quota is reached
+/// @property endingCardId - Optional ending card to show when quota is reached
+model SurveyQuota {
+  id                      String              @id @default(cuid())
+  createdAt               DateTime            @default(now()) @map(name: "created_at")
+  updatedAt               DateTime            @updatedAt @map(name: "updated_at")
+  survey                  Survey              @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId                String
+  name                    String
+  limit                   Int
+  /// [SurveyQuotaLogic]
+  logic                   Json                @default("{}")
+  action                  SurveyQuotaAction
+  endingCardId            String?
+  quotaLinks              ResponseQuotaLink[]
+  countPartialSubmissions Boolean             @default(false)
+
+  @@unique([surveyId, name])
+  @@index([surveyId])
+}
+
+/// Junction table linking responses to quotas.
+/// Tracks which responses counted towards specific quotas and their status.
+///
+/// @property response - The response that counted towards the quota
+/// @property quota - The quota this response counted towards
+/// @property status - Whether the response was screened in or out
+model ResponseQuotaLink {
+  response   Response                @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  responseId String
+  quota      SurveyQuota             @relation(fields: [quotaId], references: [id], onDelete: Cascade)
+  quotaId    String
+  status     ResponseQuotaLinkStatus
+
+  @@id([responseId, quotaId])
+  @@index([quotaId, status])
 }
 
 /// Defines follow-up actions for survey responses.
