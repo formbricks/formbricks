@@ -20,6 +20,7 @@ const config = ({ mode }) => {
         ["**/*.test.tsx", "jsdom"],
         ["**/lib/**/*.test.ts", "jsdom"],
       ],
+      setupFiles: ["./vitestSetup.ts"],
       exclude: ["dist/**", "node_modules/**"],
       env: env,
       coverage: {

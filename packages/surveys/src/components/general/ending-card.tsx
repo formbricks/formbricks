@@ -181,7 +181,7 @@ export function EndingCard({
             <div className="fb-my-3">
               <LoadingSpinner />
             </div>
-            <h1 className="fb-text-brand">Sending responses...</h1>
+            <h1 className="fb-text-brand">{t("common.sending_responses")}</h1>
           </>
         )}
       </div>

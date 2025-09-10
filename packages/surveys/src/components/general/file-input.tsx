@@ -123,7 +123,7 @@ export function FileInput({
         // Update file URLs by appending the new URL
         onUploadCallback(fileUrls ? [...fileUrls, ...uploadedUrls] : uploadedUrls);
       } catch (err) {
-        console.error(t("errors.file_input.native_upload_failed"));
+        console.error(`Error uploading native file.`);
         alert(t("errors.file_input.upload_failed"));
       } finally {
         setIsUploading(false);
