@@ -56,14 +56,14 @@ jobs:
           --health-timeout=5s
           --health-retries=5
       minio:
-        image: bitnami/minio:2025.7.23-debian-12-r5
+        image: bitnami/minio@sha256:<digest-for-2025.7.23-debian-12-r5>
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
         ports:
           - 9000:9000
         options: >-
-          --health-cmd="curl -fsS http://localhost:9000/minio/health/live || exit 1"
+          --health-cmd="wget -qO- http://localhost:9000/minio/health/live >/dev/null || exit 1"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=20
