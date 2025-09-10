@@ -9,6 +9,7 @@ import {
   getInvite,
   getLanguage,
   getProject,
+  getQuota,
   getResponse,
   getSegment,
   getSurvey,
@@ -193,6 +194,12 @@ export const getOrganizationIdFromDocumentId = async (documentId: string) => {
   return await getOrganizationIdFromEnvironmentId(document.environmentId);
 };
 
+export const getOrganizationIdFromQuotaId = async (quotaId: string) => {
+  const quota = await getQuota(quotaId);
+
+  return await getOrganizationIdFromSurveyId(quota.surveyId);
+};
+
 // project id helpers
 export const getProjectIdFromEnvironmentId = async (environmentId: string) => {
   const environment = await getEnvironment(environmentId);
@@ -300,6 +307,12 @@ export const getProjectIdFromWebhookId = async (webhookId: string) => {
   }
 
   return await getProjectIdFromEnvironmentId(webhook.environmentId);
+};
+
+export const getProjectIdFromQuotaId = async (quotaId: string) => {
+  const quota = await getQuota(quotaId);
+
+  return await getProjectIdFromSurveyId(quota.surveyId);
 };
 
 // environment id helpers

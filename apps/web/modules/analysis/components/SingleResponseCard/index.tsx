@@ -1,12 +1,13 @@
 "use client";
 
+import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -18,7 +19,7 @@ import { isValidValue } from "./util";
 
 interface SingleResponseCardProps {
   survey: TSurvey;
-  response: TResponse;
+  response: TResponseWithQuotas;
   user?: TUser;
   environmentTags: TTag[];
   environment: TEnvironment;
@@ -41,6 +42,8 @@ export const SingleResponseCard = ({
   setSelectedResponseId,
   locale,
 }: SingleResponseCardProps) => {
+  const hasQuotas = (response.quotas && response.quotas.length > 0) ?? false;
+  const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
   const { t } = useTranslate();
   const environmentId = survey.environmentId;
   const router = useRouter();
@@ -86,7 +89,7 @@ export const SingleResponseCard = ({
       if (isReadOnly) {
         throw new Error(t("common.not_authorized"));
       }
-      await deleteResponseAction({ responseId: response.id });
+      await deleteResponseAction({ responseId: response.id, decrementQuotas });
       updateResponseList?.([response.id]);
       router.refresh();
       if (setSelectedResponseId) setSelectedResponseId(null);
@@ -138,8 +141,15 @@ export const SingleResponseCard = ({
           deleteWhat={t("common.response")}
           onDelete={handleDeleteResponse}
           isDeleting={isDeleting}
-          text={t("environments.surveys.responses.delete_response_confirmation")}
-        />
+          text={t("environments.surveys.responses.delete_response_confirmation")}>
+          {hasQuotas && (
+            <DecrementQuotasCheckbox
+              title={t("environments.surveys.responses.delete_response_quotas")}
+              checked={decrementQuotas}
+              onCheckedChange={setDecrementQuotas}
+            />
+          )}
+        </DeleteDialog>
       </div>
     </div>
   );

@@ -470,7 +470,8 @@ describe("Response Utils", () => {
         mockResponses as TResponse[],
         questionsHeadlines,
         userAttributes,
-        hiddenFields
+        hiddenFields,
+        false
       );
       expect(result[0]["Response ID"]).toBe("response1");
       expect(result[0]["userAgent - browser"]).toBe("Chrome");

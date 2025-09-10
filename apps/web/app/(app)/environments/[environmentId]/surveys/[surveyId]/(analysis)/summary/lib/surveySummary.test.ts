@@ -1,3 +1,4 @@
+import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
@@ -58,6 +59,11 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
+
+vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey", () => ({
+  getQuotasSummary: vi.fn(),
+}));
+
 vi.mock("./utils", () => ({
   convertFloatTo2Decimal: vi.fn((num) =>
     num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
@@ -138,6 +144,23 @@ const mockResponses = [
   },
 ] as any;
 
+const mockQuotas = [
+  {
+    id: "quota1",
+    name: "Quota 1",
+    limit: 10,
+    count: 5,
+    percentage: 50,
+  },
+  {
+    id: "quota2",
+    name: "Quota 2",
+    limit: 20,
+    count: 10,
+    percentage: 50,
+  },
+];
+
 describe("getSurveySummaryMeta", () => {
   beforeEach(() => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
@@ -146,7 +169,7 @@ describe("getSurveySummaryMeta", () => {
   });
 
   test("calculates meta correctly", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 10);
+    const meta = getSurveySummaryMeta(mockResponses, 10, mockQuotas);
     expect(meta.displayCount).toBe(10);
     expect(meta.totalResponses).toBe(3);
     expect(meta.startsPercentage).toBe(30);
@@ -155,16 +178,18 @@ describe("getSurveySummaryMeta", () => {
     expect(meta.dropOffCount).toBe(1);
     expect(meta.dropOffPercentage).toBe(33.33); // (1/3)*100
     expect(meta.ttcAverage).toBe(125); // (100+150)/2
+    expect(meta.quotasCompleted).toBe(0);
+    expect(meta.quotasCompletedPercentage).toBe(0);
   });
 
   test("handles zero display count", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 0);
+    const meta = getSurveySummaryMeta(mockResponses, 0, mockQuotas);
     expect(meta.startsPercentage).toBe(0);
     expect(meta.completedPercentage).toBe(0);
   });
 
   test("handles zero responses", () => {
-    const meta = getSurveySummaryMeta([], 10);
+    const meta = getSurveySummaryMeta([], 10, mockQuotas);
     expect(meta.totalResponses).toBe(0);
     expect(meta.completedResponses).toBe(0);
     expect(meta.dropOffCount).toBe(0);
@@ -702,6 +727,7 @@ describe("getSurveySummary", () => {
     // Default mocks for services
     vi.mocked(getSurvey).mockResolvedValue(mockBaseSurvey);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(mockResponses.length);
+    vi.mocked(getQuotasSummary).mockResolvedValue(mockQuotas);
     // For getResponsesForSummary mock, we need to ensure it's correctly used by getSurveySummary
     // Since getSurveySummary calls getResponsesForSummary internally, we'll mock prisma.response.findMany
     // which is used by the actual implementation of getResponsesForSummary.

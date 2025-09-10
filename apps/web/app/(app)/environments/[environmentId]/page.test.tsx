@@ -23,6 +23,10 @@ vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
+vi.mock("@/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: true,
+}));
+
 describe("EnvironmentPage", () => {
   afterEach(() => {
     vi.clearAllMocks();

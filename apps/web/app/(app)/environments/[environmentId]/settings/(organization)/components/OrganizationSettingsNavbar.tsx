@@ -35,24 +35,10 @@ export const OrganizationSettingsNavbar = ({
       hidden: false,
     },
     {
-      id: "billing",
-      label: t("common.billing"),
-      href: `/environments/${environmentId}/settings/billing`,
-      hidden: !isFormbricksCloud || loading,
-      current: pathname?.includes("/billing"),
-    },
-    {
       id: "teams",
       label: t("common.teams"),
       href: `/environments/${environmentId}/settings/teams`,
       current: pathname?.includes("/teams"),
-    },
-    {
-      id: "enterprise",
-      label: t("common.enterprise_license"),
-      href: `/environments/${environmentId}/settings/enterprise`,
-      hidden: isFormbricksCloud || isPricingDisabled,
-      current: pathname?.includes("/enterprise"),
     },
     {
       id: "api-keys",
@@ -60,6 +46,20 @@ export const OrganizationSettingsNavbar = ({
       href: `/environments/${environmentId}/settings/api-keys`,
       current: pathname?.includes("/api-keys"),
       hidden: !isOwner,
+    },
+    {
+      id: "billing",
+      label: t("common.billing"),
+      href: `/environments/${environmentId}/settings/billing`,
+      hidden: !isFormbricksCloud || loading,
+      current: pathname?.includes("/billing"),
+    },
+    {
+      id: "enterprise",
+      label: t("common.enterprise_license"),
+      href: `/environments/${environmentId}/settings/enterprise`,
+      hidden: isFormbricksCloud || isPricingDisabled,
+      current: pathname?.includes("/enterprise"),
     },
   ];
 

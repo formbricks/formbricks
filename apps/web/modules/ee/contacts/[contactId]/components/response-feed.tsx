@@ -9,7 +9,7 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -17,7 +17,7 @@ import { TUser, TUserLocale } from "@formbricks/types/user";
 interface ResponseTimelineProps {
   surveys: TSurvey[];
   user: TUser;
-  responses: TResponse[];
+  responses: TResponseWithQuotas[];
   environment: TEnvironment;
   environmentTags: TTag[];
   locale: TUserLocale;
@@ -43,7 +43,7 @@ export const ResponseFeed = ({
     setFetchedResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
   };
 
-  const updateResponse = (responseId: string, updatedResponse: TResponse) => {
+  const updateResponse = (responseId: string, updatedResponse: TResponseWithQuotas) => {
     setFetchedResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
@@ -82,13 +82,13 @@ const ResponseSurveyCard = ({
   locale,
   projectPermission,
 }: {
-  response: TResponse;
+  response: TResponseWithQuotas;
   surveys: TSurvey[];
   user: TUser;
   environmentTags: TTag[];
   environment: TEnvironment;
   updateResponseList: (responseIds: string[]) => void;
-  updateResponse: (responseId: string, response: TResponse) => void;
+  updateResponse: (responseId: string, response: TResponseWithQuotas) => void;
   locale: TUserLocale;
   projectPermission: TTeamPermission | null;
 }) => {

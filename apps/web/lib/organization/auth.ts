@@ -12,7 +12,7 @@ export const canUserAccessOrganization = async (userId: string, organizationId: 
     const userOrganizations = await getOrganizationsByUserId(userId);
 
     const givenOrganizationExists = userOrganizations.filter(
-      (organization) => (organization.id = organizationId)
+      (organization) => organization.id === organizationId
     );
     if (!givenOrganizationExists) {
       return false;

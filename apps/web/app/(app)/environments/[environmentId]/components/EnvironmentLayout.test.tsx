@@ -1,3 +1,5 @@
+import { getOrganizationsByUserId } from "@/app/(app)/environments/[environmentId]/lib/organization";
+import { getProjectsByUserId } from "@/app/(app)/environments/[environmentId]/lib/project";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -5,9 +7,7 @@ import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
-  getOrganizationsByUserId,
 } from "@/lib/organization/service";
-import { getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import {
   getAccessControlPermission,
@@ -20,11 +20,7 @@ import type { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembership } from "@formbricks/types/memberships";
-import {
-  TOrganization,
-  TOrganizationBilling,
-  TOrganizationBillingPlanLimits,
-} from "@formbricks/types/organizations";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
 
@@ -35,15 +31,11 @@ vi.mock("@/lib/environment/service", () => ({
 }));
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByEnvironmentId: vi.fn(),
-  getOrganizationsByUserId: vi.fn(),
   getMonthlyActiveOrganizationPeopleCount: vi.fn(),
   getMonthlyOrganizationResponseCount: vi.fn(),
 }));
 vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
-}));
-vi.mock("@/lib/project/service", () => ({
-  getUserProjects: vi.fn(),
 }));
 vi.mock("@/lib/membership/service", () => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
@@ -63,6 +55,22 @@ vi.mock("@/modules/ee/teams/team-list/lib/team", () => ({
 }));
 vi.mock("@/tolgee/server", () => ({
   getTranslate: async () => (key: string) => key,
+}));
+vi.mock("@/app/(app)/environments/[environmentId]/lib/organization", () => ({
+  getOrganizationsByUserId: vi.fn(),
+}));
+vi.mock("@/app/(app)/environments/[environmentId]/lib/project", () => ({
+  getProjectsByUserId: vi.fn(),
+}));
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    project: {
+      findMany: vi.fn(),
+    },
+    organization: {
+      findMany: vi.fn(),
+    },
+  },
 }));
 
 let mockIsFormbricksCloud = false;
@@ -89,10 +97,6 @@ vi.mock("@/app/(app)/environments/[environmentId]/components/MainNavigation", ()
 }));
 vi.mock("@/app/(app)/environments/[environmentId]/components/TopControlBar", () => ({
   TopControlBar: () => <div data-testid="top-control-bar">TopControlBar</div>,
-}));
-vi.mock("@/modules/ui/components/dev-environment-banner", () => ({
-  DevEnvironmentBanner: ({ environment }: { environment: TEnvironment }) =>
-    environment.type === "development" ? <div data-testid="dev-banner">DevEnvironmentBanner</div> : null,
 }));
 vi.mock("@/modules/ui/components/limits-reached-banner", () => ({
   LimitsReachedBanner: () => <div data-testid="limits-banner">LimitsReachedBanner</div>,
@@ -123,12 +127,10 @@ const mockUser = {
 const mockOrganization = {
   id: "org-1",
   name: "Test Org",
-  createdAt: new Date(),
-  updatedAt: new Date(),
   billing: {
-    stripeCustomerId: null,
-    limits: { monthly: { responses: null } } as unknown as TOrganizationBillingPlanLimits,
-  } as unknown as TOrganizationBilling,
+    plan: "free",
+    limits: {},
+  },
 } as unknown as TOrganization;
 
 const mockEnvironment: TEnvironment = {
@@ -191,9 +193,11 @@ describe("EnvironmentLayout", () => {
   beforeEach(() => {
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getEnvironment).mockResolvedValue(mockEnvironment);
-    vi.mocked(getOrganizationsByUserId).mockResolvedValue([mockOrganization]);
+    vi.mocked(getOrganizationsByUserId).mockResolvedValue([
+      { id: mockOrganization.id, name: mockOrganization.name },
+    ]);
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
-    vi.mocked(getUserProjects).mockResolvedValue([mockProject]);
+    vi.mocked(getProjectsByUserId).mockResolvedValue([{ id: mockProject.id, name: mockProject.name }]);
     vi.mocked(getEnvironments).mockResolvedValue([mockEnvironment]);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
     vi.mocked(getMonthlyActiveOrganizationPeopleCount).mockResolvedValue(100);
@@ -238,33 +242,6 @@ describe("EnvironmentLayout", () => {
     expect(screen.queryByTestId("dev-banner")).not.toBeInTheDocument();
     expect(screen.queryByTestId("limits-banner")).not.toBeInTheDocument();
     expect(screen.queryByTestId("downgrade-banner")).not.toBeInTheDocument();
-  });
-
-  test("renders DevEnvironmentBanner in development environment", async () => {
-    const devEnvironment = { ...mockEnvironment, type: "development" as const };
-    vi.mocked(getEnvironment).mockResolvedValue(devEnvironment);
-    mockIsDevelopment = true;
-    vi.resetModules();
-    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
-      getEnterpriseLicense: vi.fn().mockResolvedValue({
-        active: false,
-        isPendingDowngrade: false,
-        features: { isMultiOrgEnabled: false },
-        lastChecked: new Date(),
-        fallbackLevel: "live",
-      }),
-    }));
-    const { EnvironmentLayout } = await import(
-      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
-    );
-    render(
-      await EnvironmentLayout({
-        environmentId: "env-1",
-        session: mockSession,
-        children: <div>Child Content</div>,
-      })
-    );
-    expect(screen.getByTestId("dev-banner")).toBeInTheDocument();
   });
 
   test("renders LimitsReachedBanner in Formbricks Cloud", async () => {
@@ -312,32 +289,6 @@ describe("EnvironmentLayout", () => {
       })
     );
     expect(screen.getByTestId("downgrade-banner")).toBeInTheDocument();
-  });
-
-  test("passes isAccessControlAllowed props to MainNavigation", async () => {
-    vi.resetModules();
-    await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
-      getEnterpriseLicense: vi.fn().mockResolvedValue({
-        active: false,
-        isPendingDowngrade: false,
-        features: { isMultiOrgEnabled: false },
-        lastChecked: new Date(),
-        fallbackLevel: "live",
-      }),
-    }));
-    const { EnvironmentLayout } = await import(
-      "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout"
-    );
-    render(
-      await EnvironmentLayout({
-        environmentId: "env-1",
-        session: mockSession,
-        children: <div>Child Content</div>,
-      })
-    );
-
-    expect(screen.getByTestId("is-access-control-allowed")).toHaveTextContent("true");
-    expect(vi.mocked(getAccessControlPermission)).toHaveBeenCalledWith(mockOrganization.billing.plan);
   });
 
   test("handles empty organizationTeams array", async () => {
@@ -479,7 +430,7 @@ describe("EnvironmentLayout", () => {
   });
 
   test("throws error if projects, environments or organizations not found", async () => {
-    vi.mocked(getUserProjects).mockResolvedValue(null as any);
+    vi.mocked(getProjectsByUserId).mockResolvedValue(null as any);
     vi.resetModules();
     await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({

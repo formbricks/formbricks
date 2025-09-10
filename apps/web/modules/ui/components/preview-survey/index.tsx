@@ -243,7 +243,7 @@ export const PreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
