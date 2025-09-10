@@ -114,9 +114,19 @@ jobs:
 
       - name: Install MinIO client (mc)
         run: |
-          wget -qO mc https://dl.min.io/client/mc/release/linux-amd64/mc
-          chmod +x mc
-          sudo mv mc /usr/local/bin/mc
+          set -euo pipefail
+          MC_VERSION="RELEASE.2025-08-13T08-35-41Z"
+          MC_BASE="https://dl.min.io/client/mc/release/linux-amd64/archive"
+          MC_BIN="mc.${MC_VERSION}"
+          MC_SUM="${MC_BIN}.sha256sum"
+
+          curl -fsSL "${MC_BASE}/${MC_BIN}" -o "${MC_BIN}"
+          curl -fsSL "${MC_BASE}/${MC_SUM}" -o "${MC_SUM}"
+
+          sha256sum -c "${MC_SUM}"
+
+          chmod +x "${MC_BIN}"
+          sudo mv "${MC_BIN}" /usr/local/bin/mc
 
       - name: Wait for MinIO and create S3 bucket
         run: |
