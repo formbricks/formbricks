@@ -199,7 +199,9 @@ export function RankingQuestion({
                         handleItemClick(item);
                       }}
                       type="button"
-                      aria-label={`Select ${getLocalizedValue(item.label, languageCode)} for ranking`}
+                      aria-label={t("common.select_for_ranking", {
+                        item: getLocalizedValue(item.label, languageCode),
+                      })}
                       className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
                       <span
                         className={cn(

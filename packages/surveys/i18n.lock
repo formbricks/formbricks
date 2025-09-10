@@ -29,6 +29,7 @@ checksums:
     common/respondents_will_not_see_this_card: 18c3dd44d6ff6ca2310ad196b84f30d3
     common/retry: 6e44d18639560596569a1278f9c83676
     common/select_a_date: 521e4a705800da06d091fde3e801ce02
+    common/select_for_ranking: e5f4e20752d1c2d852cd02dc3a0e9dd0
     common/sending_responses: 184772f70cca69424eaf34f73520789f
     common/takes: 01f96e2e84741ea8392d97ff4bd2aa52
     common/terms_of_service: 5add91f519e39025708e54a7eb7a9fc5
