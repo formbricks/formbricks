@@ -80,6 +80,30 @@ jobs:
             exit 1
           fi
 
+      - name: Update package.json version
+        shell: bash
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          
+          # Remove 'v' prefix if present (e.g., v3.16.1 -> 3.16.1)
+          VERSION="${IMAGE_TAG#v}"
+          
+          # Validate SemVer format (major.minor.patch with optional prerelease and build metadata)
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Error: Invalid version format after extraction. Must be SemVer (e.g., 1.2.3, 1.2.3-alpha, 1.2.3+build.1)"
+            echo "Original input: ${IMAGE_TAG}"
+            echo "Extracted version: ${VERSION}"
+            echo "Expected format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILDMETADATA]"
+            exit 1
+          fi
+          
+          echo "✅ Valid SemVer format detected: ${VERSION}"
+          echo "Updating package.json version to: ${VERSION}"
+          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${VERSION}\"/" ./apps/web/package.json
+          cat ./apps/web/package.json | grep version
+
       - name: Build tag list
         id: tags
         shell: bash
@@ -141,3 +165,4 @@ jobs:
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}

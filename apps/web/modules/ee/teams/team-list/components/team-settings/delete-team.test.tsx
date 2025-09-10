@@ -57,7 +57,6 @@ describe("DeleteTeam", () => {
 
   test("renders danger zone label and delete button enabled for owner/manager", () => {
     render(<DeleteTeam {...baseProps} />);
-    expect(screen.getByText("common.danger_zone")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "environments.settings.teams.delete_team" })).toBeEnabled();
   });
 

@@ -1,0 +1,86 @@
+---
+title: "Teams and roles"
+description: "Learn about team-level roles and project permissions that enable granular access control within teams and projects."
+icon: "users"
+---
+
+Team-level roles provide more granular permissions within specific teams and projects. These roles work alongside organization-level roles to create a flexible permission system.
+
+<Note>
+  Team-level roles are a feature of the [Enterprise Edition](/self-hosting/advanced/license). In the Community Edition, all members are Organisation-level "Owners".
+</Note>
+
+## Understanding the role hierarchy
+
+Formbricks uses a two-tier permission system:
+
+1. **Organization-level roles** - Apply across all teams and projects
+2. **Team-level roles** - Apply within specific teams and projects
+
+### How roles interact
+
+- Organization-level roles (Owner, Manager) can override team-level restrictions
+- Team-level roles provide granular control for specific teams
+- Project permissions further refine what users can do within individual projects
+
+## Team-level roles
+
+### Team Admins
+- Have additional permissions to manage their team's membership and projects
+- Can add or remove team members
+- Can create and manage projects within their team
+- Can assign project-level permissions to team members
+- These permissions are granted at the team-level and don't apply to teams where they're not a Team Admin
+
+### Team Contributors
+- Can view and act on surveys and responses within their assigned projects
+- Cannot manage team membership or create new projects
+- Permissions depend on their project-level access (Read, Read & Write, or Manage)
+
+## Project-level permissions
+
+Within each project, team members can have one of three permission levels:
+
+### Read
+- Read access to all resources (except settings) in the project
+- Can view surveys, responses, and analytics
+- Cannot create, edit, or delete surveys
+- Cannot modify project settings
+
+### Read & Write
+- Read & write access to all resources (except settings) in the project
+- Can create, edit, and delete surveys
+- Can manage responses and tags
+- Can download survey data
+- Cannot modify project settings or manage integrations
+
+### Manage
+- Read & write access to all resources including settings in the project
+- Full project control including settings
+- Can manage API keys and integrations
+- Can configure project-level settings like recontact options and styling
+- Can manage project tags and actions
+
+## Permission examples
+
+### Scenario 1: Marketing Team Member
+- **Organization role**: Member
+- **Team role**: Team Contributor
+- **Project permission**: Read & Write
+- **Can do**: Create and edit surveys, view responses, download data
+- **Cannot do**: Change project settings, manage team membership
+
+### Scenario 2: Team Lead
+- **Organization role**: Member
+- **Team role**: Team Admin
+- **Project permission**: Manage
+- **Can do**: Everything within their team including managing members and project settings
+- **Cannot do**: Access other teams, change organization settings
+
+### Scenario 3: Department Manager
+- **Organization role**: Manager
+- **Team role**: N/A (org role overrides)
+- **Project permission**: N/A (org role provides access)
+- **Can do**: Access all teams and projects, manage organization membership
+- **Cannot do**: Change organization-level settings like billing
+

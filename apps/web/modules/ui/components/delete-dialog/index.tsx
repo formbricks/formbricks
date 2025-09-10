@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
-import { TrashIcon } from "lucide-react";
+import { CircleAlert, TrashIcon } from "lucide-react";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -45,10 +45,15 @@ export const DeleteDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
         <DialogHeader>
-          <DialogTitle>{`${t("common.delete")} ${deleteWhat}`}</DialogTitle>
-          <DialogDescription>
-            {t("environments.project.general.this_action_cannot_be_undone")}
-          </DialogDescription>
+          <div className="flex items-center gap-2">
+            <CircleAlert className="h-4 w-4" />
+            <div>
+              <DialogTitle>{`${t("common.delete")} ${deleteWhat}`}</DialogTitle>
+              <DialogDescription>
+                {t("environments.project.general.this_action_cannot_be_undone")}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <DialogBody>

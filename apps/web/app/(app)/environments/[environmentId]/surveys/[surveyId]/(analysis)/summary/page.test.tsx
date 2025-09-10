@@ -8,8 +8,11 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { cleanup, render, screen } from "@testing-library/react";
 import { notFound } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -114,6 +117,19 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+vi.mock("@/modules/survey/lib/organization", () => ({
+  getOrganizationIdFromEnvironmentId: vi.fn(),
+}));
+
+vi.mock("@/modules/survey/lib/survey", () => ({
+  getOrganizationBilling: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsQuotasEnabled: vi.fn(),
+  getIsContactsEnabled: vi.fn(),
+}));
+
 const mockEnvironmentId = "test-environment-id";
 const mockSurveyId = "test-survey-id";
 const mockUserId = "test-user-id";
@@ -191,7 +207,10 @@ const mockSurveySummary = {
     startsPercentage: 80,
     totalResponses: 20,
     ttcAverage: 120,
+    quotasCompleted: 0,
+    quotasCompletedPercentage: 0,
   },
+  quotas: [],
   dropOff: [],
   summary: [],
 };
@@ -203,6 +222,9 @@ describe("SurveyPage", () => {
       environment: mockEnvironment,
       isReadOnly: false,
     } as unknown as TEnvironmentAuth);
+    vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue("mock-organization-id");
+    vi.mocked(getOrganizationBilling).mockResolvedValue({ plan: "scale" });
+    vi.mocked(getIsQuotasEnabled).mockResolvedValue(false);
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(10);

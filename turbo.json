@@ -1,6 +1,21 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
+    "@formbricks/cache#build": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/cache#go": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/cache#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/cache#test": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/cache#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/database#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
@@ -61,10 +76,10 @@
       "persistent": true
     },
     "@formbricks/web#test": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build", "@formbricks/cache#build"]
     },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build", "@formbricks/cache#build"]
     },
     "build": {
       "dependsOn": ["^build"],
@@ -145,6 +160,7 @@
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
         "SESSION_MAX_AGE",
+        "SENTRY_AUTH_TOKEN",
         "SENTRY_DSN",
         "SENTRY_ENVIRONMENT",
         "SLACK_CLIENT_ID",

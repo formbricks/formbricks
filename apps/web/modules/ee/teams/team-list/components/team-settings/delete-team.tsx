@@ -4,7 +4,6 @@ import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
@@ -43,7 +42,6 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
   return (
     <>
       <div className="flex flex-row items-baseline space-x-2">
-        <Label htmlFor="deleteTeamButton">{t("common.danger_zone")}</Label>
         <TooltipRenderer
           shouldRender={!isOwnerOrManager}
           tooltipContent={t("environments.settings.teams.team_deletion_not_allowed")}

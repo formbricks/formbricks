@@ -1,12 +1,12 @@
 import "server-only";
+import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@/lib/posthogServer";
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
-import { withCache } from "@/modules/cache/lib/withCache";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TJsEnvironmentState } from "@formbricks/types/js";
@@ -24,8 +24,7 @@ import { getEnvironmentStateData } from "./data";
 export const getEnvironmentState = async (
   environmentId: string
 ): Promise<{ data: TJsEnvironmentState["data"] }> => {
-  // Use withCache for efficient Redis caching with automatic fallback
-  const getCachedEnvironmentState = withCache(
+  return cache.withCache(
     async () => {
       // Single optimized database call replacing multiple service calls
       const { environment, organization, surveys, actionClasses } =
@@ -80,13 +79,7 @@ export const getEnvironmentState = async (
 
       return { data };
     },
-    {
-      // Use enterprise-grade cache key pattern
-      key: createCacheKey.environment.state(environmentId),
-      // This is a temporary fix for the invalidation issues, will be changed later with a proper solution
-      ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
-    }
+    createCacheKey.environment.state(environmentId),
+    5 * 60 * 1000 // 5 minutes in milliseconds
   );
-
-  return getCachedEnvironmentState();
 };

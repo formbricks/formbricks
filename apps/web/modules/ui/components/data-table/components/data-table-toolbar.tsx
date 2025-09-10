@@ -16,8 +16,9 @@ interface DataTableToolbarProps<T> {
   table: Table<T>;
   updateRowList: (rowIds: string[]) => void;
   type: "response" | "contact";
-  deleteAction: (id: string) => Promise<void>;
+  deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[], format: string) => Promise<void>;
+  isQuotasAllowed: boolean;
 }
 
 export const DataTableToolbar = <T,>({
@@ -29,6 +30,7 @@ export const DataTableToolbar = <T,>({
   type,
   deleteAction,
   downloadRowsAction,
+  isQuotasAllowed,
 }: DataTableToolbarProps<T>) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -42,6 +44,7 @@ export const DataTableToolbar = <T,>({
           type={type}
           deleteAction={deleteAction}
           downloadRowsAction={downloadRowsAction}
+          isQuotasAllowed={isQuotasAllowed}
         />
       ) : (
         <div></div>

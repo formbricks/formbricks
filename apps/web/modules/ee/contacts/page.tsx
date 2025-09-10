@@ -2,7 +2,7 @@ import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContacts } from "@/modules/ee/contacts/lib/contacts";
-import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -18,11 +18,13 @@ export const ContactsPage = async ({
 }) => {
   const params = await paramsProps;
 
-  const { environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
 
   const t = await getTranslate();
 
   const isContactsEnabled = await getIsContactsEnabled();
+
+  const isQuotasAllowed = await getIsQuotasEnabled(organization.billing.plan);
 
   const contactAttributeKeys = await getContactAttributeKeys(params.environmentId);
   const initialContacts = await getContacts(params.environmentId, 0);
@@ -48,6 +50,7 @@ export const ContactsPage = async ({
           isReadOnly={isReadOnly}
           initialContacts={initialContacts}
           hasMore={initialContacts.length >= ITEMS_PER_PAGE}
+          isQuotasAllowed={isQuotasAllowed}
         />
       ) : (
         <div className="flex items-center justify-center">

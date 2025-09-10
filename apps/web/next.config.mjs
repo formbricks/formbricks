@@ -424,36 +424,21 @@ nextConfig.images.remotePatterns.push({
 const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
-
-  org: "formbricks",
   project: "formbricks-cloud",
-  environment: process.env.SENTRY_ENVIRONMENT,
+  org: "formbricks",
 
-  // Only print logs for uploading source maps in CI
-  silent: true,
+  // Enable logging to debug sourcemap generation issues
+  silent: false,
 
   // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Disable automatic release management
-  automaticVercelMonitors: false,
-  autoUploadSourceMaps: false,
-  hideSourceMaps: false,
-
-  // Don't automatically create releases - we handle this in GitHub Actions
-  release: {
-    create: false,
-    deploy: false,
-    setCommits: false,
-  },
+  disableLogger: false,
 };
 
-const exportConfig =
-  (process.env.SENTRY_DSN && process.env.NODE_ENV === "production")
-    ? withSentryConfig(nextConfig, sentryOptions) :
-    nextConfig;
+// Always enable Sentry plugin to inject Debug IDs
+// Runtime Sentry reporting still depends on DSN being set via environment variables
+const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
 
 export default exportConfig;

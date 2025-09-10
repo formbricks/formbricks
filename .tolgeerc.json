@@ -39,6 +39,10 @@
       {
         "language": "ja-JP",
         "path": "./apps/web/locales/ja-JP.json"
+      },
+      {
+        "language": "zh-Hans-CN",
+        "path": "./apps/web/locales/zh-Hans-CN.json"
       }
     ],
     "forceMode": "OVERRIDE"
