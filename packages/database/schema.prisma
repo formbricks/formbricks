@@ -233,16 +233,15 @@ enum DisplayStatus {
 /// @property status - Whether the survey was just seen or responded to
 /// @property response - The associated response if one exists
 model Display {
-  id         String         @id @default(cuid())
-  createdAt  DateTime       @default(now()) @map(name: "created_at")
-  updatedAt  DateTime       @updatedAt @map(name: "updated_at")
-  survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId   String
-  contact    Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId  String?
-  responseId String?        @unique //deprecated
-  status     DisplayStatus?
-  response   Response?
+  id        String         @id @default(cuid())
+  createdAt DateTime       @default(now()) @map(name: "created_at")
+  updatedAt DateTime       @updatedAt @map(name: "updated_at")
+  survey    Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  contact   Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String?
+  status    DisplayStatus?
+  response  Response?
 
   @@index([surveyId])
   @@index([contactId, createdAt])
@@ -354,7 +353,6 @@ model Survey {
   questions           Json                    @default("[]")
   /// [SurveyEnding]
   endings             Json[]                  @default([])
-  thankYouCard        Json? //deprecated            
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")
   /// [SurveyVariables]
@@ -388,8 +386,6 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  /// [SurveyVerifyEmail]
-  verifyEmail                     Json? // deprecated
   isVerifyEmailEnabled            Boolean          @default(false)
   isSingleResponsePerEmailEnabled Boolean          @default(false)
   isBackButtonHidden              Boolean          @default(false)
@@ -617,29 +613,27 @@ enum WidgetPlacement {
 /// @property recontactDays - Default recontact delay for surveys
 /// @property placement - Default widget placement for in-app surveys
 model Project {
-  id                   String          @id @default(cuid())
-  createdAt            DateTime        @default(now()) @map(name: "created_at")
-  updatedAt            DateTime        @updatedAt @map(name: "updated_at")
-  name                 String
-  organization         Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId       String
-  environments         Environment[]
-  brandColor           String? // deprecated; use styling.brandColor instead
-  highlightBorderColor String? // deprecated
+  id                  String          @id @default(cuid())
+  createdAt           DateTime        @default(now()) @map(name: "created_at")
+  updatedAt           DateTime        @updatedAt @map(name: "updated_at")
+  name                String
+  organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId      String
+  environments        Environment[]
   /// [Styling]
-  styling              Json            @default("{\"allowStyleOverwrite\":true}")
+  styling             Json            @default("{\"allowStyleOverwrite\":true}")
   /// [ProjectConfig]
-  config               Json            @default("{}")
-  recontactDays        Int             @default(7)
-  linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
-  inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
-  placement            WidgetPlacement @default(bottomRight)
-  clickOutsideClose    Boolean         @default(true)
-  darkOverlay          Boolean         @default(false)
-  languages            Language[]
+  config              Json            @default("{}")
+  recontactDays       Int             @default(7)
+  linkSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
+  inAppSurveyBranding Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
+  placement           WidgetPlacement @default(bottomRight)
+  clickOutsideClose   Boolean         @default(true)
+  darkOverlay         Boolean         @default(false)
+  languages           Language[]
   /// [Logo]
-  logo                 Json?
-  projectTeams         ProjectTeam[]
+  logo                Json?
+  projectTeams        ProjectTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -680,14 +674,6 @@ enum OrganizationRole {
   billing
 }
 
-enum MembershipRole {
-  owner
-  admin
-  editor
-  developer
-  viewer
-}
-
 /// Links users to organizations with specific roles.
 /// Manages organization membership and permissions.
 /// Core model for managing user access within organizations.
@@ -702,7 +688,6 @@ model Membership {
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
   accepted       Boolean          @default(false)
-  deprecatedRole MembershipRole? //deprecated
   role           OrganizationRole @default(member)
 
   @@id([userId, organizationId])
@@ -735,7 +720,6 @@ model Invite {
   acceptorId     String?
   createdAt      DateTime         @default(now())
   expiresAt      DateTime
-  deprecatedRole MembershipRole? //deprecated
   role           OrganizationRole @default(member)
   teamIds        String[]         @default([])
 
