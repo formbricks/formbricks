@@ -291,10 +291,12 @@ EOT
       echo "🔑 Generating MinIO credentials..."
       minio_root_user="formbricks-$(openssl rand -hex 4)"
       minio_root_password=$(openssl rand -base64 20)
+      minio_service_user="formbricks-service"
+      minio_service_password=$(openssl rand -base64 20)
       minio_bucket_name="formbricks-uploads"
       
       echo "✅ MinIO will be configured with:"
-      echo "   Access Key: $minio_root_user"
+      echo "   S3 Access Key (least privilege): $minio_service_user"
       echo "   Bucket: $minio_bucket_name"
     fi
   else
@@ -348,8 +350,8 @@ EOT
     echo "🚗 External S3 configuration updated successfully!"
   elif [[ $minio_storage == "y" ]]; then
     echo "🚗 Configuring bundled MinIO..."
-    sed -i "s|# S3_ACCESS_KEY:|S3_ACCESS_KEY: \"$minio_root_user\"|" docker-compose.yml
-    sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$minio_root_password\"|" docker-compose.yml
+    sed -i "s|# S3_ACCESS_KEY:|S3_ACCESS_KEY: \"$minio_service_user\"|" docker-compose.yml
+    sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$minio_service_password\"|" docker-compose.yml
     sed -i "s|# S3_REGION:|S3_REGION: \"us-east-1\"|" docker-compose.yml
     sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$minio_bucket_name\"|" docker-compose.yml
     sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"https://$files_domain\"|" docker-compose.yml
@@ -458,7 +460,6 @@ EOT
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
     volumes:
       - ./traefik.yaml:/traefik.yaml
       - ./traefik-dynamic.yaml:/traefik-dynamic.yaml
@@ -477,7 +478,6 @@ EOF
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
     volumes:
       - ./traefik.yaml:/traefik.yaml
       - ./traefik-dynamic.yaml:/traefik-dynamic.yaml
@@ -547,7 +547,56 @@ if [[ $minio_storage == "y" ]]; then
         minio/mc:latest \
         mb minio/$minio_bucket_name --ignore-existing
 
-    echo "✅ MinIO bucket '$minio_bucket_name' created successfully!"
+    echo "🔒 Creating least-privilege policy and service user for bucket '$minio_bucket_name'..."
+    docker run --rm --network formbricks_default \
+        --entrypoint /bin/sh \
+        -e MC_HOST_minio=http://$minio_root_user:$minio_root_password@minio:9000 \
+        minio/mc:latest \
+        -c "cat > /tmp/formbricks-policy.json << EOF
+{
+  \"Version\": \"2012-10-17\",
+  \"Statement\": [
+    {
+      \"Effect\": \"Allow\",
+      \"Action\": [
+        \"s3:DeleteObject\",
+        \"s3:GetObject\",
+        \"s3:PutObject\"
+      ],
+      \"Resource\": [
+        \"arn:aws:s3:::$minio_bucket_name/*\"
+      ]
+    },
+    {
+      \"Effect\": \"Allow\",
+      \"Action\": [
+        \"s3:ListBucket\"
+      ],
+      \"Resource\": [
+        \"arn:aws:s3:::$minio_bucket_name\"
+      ]
+    }
+  ]
+}
+EOF
+mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json || \
+mc admin policy add minio formbricks-policy /tmp/formbricks-policy.json; \
+mc admin policy info minio formbricks-policy"
+
+    # Create service user
+    docker run --rm --network formbricks_default \
+        -e MC_HOST_minio=http://$minio_root_user:$minio_root_password@minio:9000 \
+        minio/mc:latest \
+        admin user add minio "$minio_service_user" "$minio_service_password" || true
+
+    # Attach policy to service user
+    docker run --rm --network formbricks_default \
+        -e MC_HOST_minio=http://$minio_root_user:$minio_root_password@minio:9000 \
+        minio/mc:latest \
+        admin policy attach minio formbricks-policy --user "$minio_service_user"
+
+
+    echo "✅ MinIO bucket '$minio_bucket_name' created and secured successfully!"
 fi
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
@@ -557,8 +606,8 @@ echo ""
 
 if [[ $minio_storage == "y" ]]; then
     echo "🗄️  MinIO Storage Setup Complete:"
-    echo "   • Access Key: $minio_root_user"
-    echo "   • Bucket: $minio_bucket_name (✅ automatically created)"
+    echo "   • Access Key: $minio_service_user (least privilege)"
+    echo "   • Bucket: $minio_bucket_name (✅ created and secured)"
     echo ""
 fi
 
