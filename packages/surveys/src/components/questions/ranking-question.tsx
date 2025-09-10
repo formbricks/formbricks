@@ -11,6 +11,7 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type {
@@ -50,6 +51,7 @@ export function RankingQuestion({
   currentQuestionId,
   isBackButtonHidden,
 }: Readonly<RankingQuestionProps>) {
+  const { t } = useTranslate();
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {
@@ -122,7 +124,7 @@ export function RankingQuestion({
       (!question.required && sortedItems.length > 0 && sortedItems.length < question.choices.length);
 
     if (hasIncompleteRanking) {
-      setError("Please rank all items before submitting.");
+      setError(t("errors.please_rank_all_items_before_submitting"));
       // Scroll to bottom to show the error message
       setTimeout(() => {
         if (scrollableRef.current?.scrollToBottom) {

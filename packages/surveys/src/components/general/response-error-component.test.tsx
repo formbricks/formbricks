@@ -44,7 +44,7 @@ describe("ResponseErrorComponent", () => {
 
     expect(screen.getByText("common.your_feedback_is_stuck")).toBeDefined();
     expect(screen.getByText(/common.the_servers_cannot_be_reached_at_the_moment/)).toBeDefined();
-    expect(screen.getByText("buttons.retry")).toBeDefined();
+    expect(screen.getByText("common.retry")).toBeDefined();
   });
 
   test("displays questions and responses correctly", () => {
@@ -73,7 +73,7 @@ describe("ResponseErrorComponent", () => {
       />
     );
 
-    const retryButton = screen.getByRole("button", { name: "buttons.retry" });
+    const retryButton = screen.getByRole("button", { name: "common.retry" });
     fireEvent.click(retryButton);
 
     expect(mockOnRetry).toHaveBeenCalledTimes(1);
