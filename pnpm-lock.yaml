@@ -738,9 +738,6 @@ importers:
       i18next:
         specifier: 25.5.2
         version: 25.5.2(typescript@5.8.3)
-      i18next-browser-languagedetector:
-        specifier: 8.2.0
-        version: 8.2.0
       i18next-icu:
         specifier: 2.4.0
         version: 2.4.0(intl-messageformat@10.7.16)
@@ -750,9 +747,6 @@ importers:
       preact:
         specifier: 10.26.6
         version: 10.26.6
-      preact-compat:
-        specifier: 3.19.0
-        version: 3.19.0(preact@10.26.6)
       react-calendar:
         specifier: 5.1.0
         version: 5.1.0(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -762,9 +756,6 @@ importers:
       react-i18next:
         specifier: 15.7.3
         version: 15.7.3(i18next@25.5.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
-      react-intl:
-        specifier: 7.1.11
-        version: 7.1.11(react@19.1.0)(typescript@5.8.3)
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -1645,14 +1636,6 @@ packages:
 
   '@formatjs/intl-localematcher@0.6.1':
     resolution: {integrity: sha512-ePEgLgVCqi2BBFnTMWPfIghu6FkbZnnBVhO2sSxvLfrdFw7wCHAHiDoM2h4NRgjbaY7+B7HgOLZGkK187pZTZg==}
-
-  '@formatjs/intl@3.1.6':
-    resolution: {integrity: sha512-tDkXnA4qpIFcDWac8CyVJq6oW8DR7W44QDUBsfXWIIJD/FYYen0QoH46W7XsVMFfPOVKkvbufjboZrrWbEfmww==}
-    peerDependencies:
-      typescript: ^5.6.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
 
   '@formkit/auto-animate@0.8.2':
     resolution: {integrity: sha512-SwPWfeRa5veb1hOIBMdzI+73te5puUBHmqqaF1Bu7FjvxlYSz/kJcZKSa9Cg60zL0uRNeJL2SbRxV6Jp6Q1nFQ==}
@@ -4105,11 +4088,6 @@ packages:
   '@types/heic-convert@2.1.0':
     resolution: {integrity: sha512-Cf5Sdc2Gm2pfZ0uN1zjj35wcf3mF1lJCMIzws5OdJynrdMJRTIRUGa5LegbVg0hatzOPkH2uAf2JRjPYgl9apg==}
 
-  '@types/hoist-non-react-statics@3.3.7':
-    resolution: {integrity: sha512-PQTyIulDkIDro8P+IHbKCsw7U2xxBYflVzW/FgWdCAePD9xGSidgA76/GeJ6lBKoblyhf9pBY763gbrN+1dI8g==}
-    peerDependencies:
-      '@types/react': '*'
-
   '@types/js-cookie@2.2.7':
     resolution: {integrity: sha512-aLkWa0C0vO5b4Sr798E26QgOkss68Un0bLjs7u9qxzPT5CG+8DuNTffWES58YzJs3hrVAOs1wonycqEBqNJubA==}
 
@@ -6499,9 +6477,6 @@ packages:
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
 
-  i18next-browser-languagedetector@8.2.0:
-    resolution: {integrity: sha512-P+3zEKLnOF0qmiesW383vsLdtQVyKtCNA9cjSoKCppTKPQVfKd2W8hbVo5ZhNJKDqeM7BOcvNoKJOjpHh4Js9g==}
-
   i18next-icu@2.4.0:
     resolution: {integrity: sha512-LnoZOVS/lp2l4jOMVq2vN/LPf1oGi7sMovdcnKiVjcs7Ysek61rkXMOVEbPZ/3N990uToZpKe6kNE1t2wxcsfA==}
     peerDependencies:
@@ -6529,9 +6504,6 @@ packages:
   ignore@7.0.5:
     resolution: {integrity: sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==}
     engines: {node: '>= 4'}
-
-  immutability-helper@2.9.1:
-    resolution: {integrity: sha512-r/RmRG8xO06s/k+PIaif2r5rGc3j4Yhc01jSBfwPCXDLYZwp/yxralI37Df1mwmuzcCsen/E/ITKcTEvc1PQmQ==}
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
@@ -6578,9 +6550,6 @@ packages:
 
   intl-messageformat@10.7.16:
     resolution: {integrity: sha512-UmdmHUmp5CIKKjSoE10la5yfU+AYJAaiYLsodbjL4lji83JNvgOQUjGaGhGrpFCb0Uh7sl7qfP1IyILa8Z40ug==}
-
-  invariant@2.2.4:
-    resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
 
   ip-address@9.0.5:
     resolution: {integrity: sha512-zHtQzGojZXTwZTHQqra+ETKd4Sn3vgi7uBmlPoXVWZqYvuKmtI0l/VZTjqGmJY9x88GGOaZ9+G9ES8hC4T4X8g==}
@@ -7937,30 +7906,10 @@ packages:
     resolution: {integrity: sha512-cVlQPOwOPjakUnrueKRCQe1m2Ku+XzKaOos7Tn/zDZkkZFeBT/byP7tbNf7LiwhaBRWFBRowZZb/MsTtSRaorg==}
     engines: {node: '>=15.0.0'}
 
-  preact-compat@3.19.0:
-    resolution: {integrity: sha512-f83A4hIhH8Uzhb9GbIcGk8SM19ffWlwP9mDaYwQdRnMdekZwcCA7eIAbeV4EMQaV9C0Yuy8iKgBAtyTKPZQt/Q==}
-    peerDependencies:
-      preact: <10
-
-  preact-context@1.1.4:
-    resolution: {integrity: sha512-gcCjPJ65R0MiW9hDu8W/3WAmyTElIvwLyEO6oLQiM6/TbLKLxCpBCWV8GJjx52TTEyUr60HLDcmoCXZlslelzQ==}
-    peerDependencies:
-      preact: ^8.2.7
-
-  preact-render-to-string@3.8.2:
-    resolution: {integrity: sha512-przuZPajiurStGgxMoJP0EJeC4xj5CgHv+M7GfF3YxAdhGgEWAkhOSE0xympAFN20uMayntBZpttIZqqLl77fw==}
-    peerDependencies:
-      preact: '*'
-
   preact-render-to-string@5.2.6:
     resolution: {integrity: sha512-JyhErpYOvBV1hEPwIxc/fHWXPfnEGdRKxc8gFdAZ7XV4tlzyzG847XAyEZqoDnynP88akM4eaHcSOzNcLWFguw==}
     peerDependencies:
       preact: '>=10'
-
-  preact-transition-group@1.1.1:
-    resolution: {integrity: sha512-v89XLodCvylf5lMrhI+LqIhDsAjWfiDKV4keAU+L5yDtxmqn8uvjZXn+haKMEG0x0PZz81own19SuNJD5NlOFQ==}
-    peerDependencies:
-      preact: '*'
 
   preact@10.26.6:
     resolution: {integrity: sha512-5SRRBinwpwkaD+OqlBDeITlRgvd8I8QlxHJw9AxSdMNV6O+LodN9nUyYGpSF7sadHjs6RzeFShMexC6DbtWr9g==}
@@ -8260,15 +8209,6 @@ packages:
         optional: true
       react-native:
         optional: true
-      typescript:
-        optional: true
-
-  react-intl@7.1.11:
-    resolution: {integrity: sha512-tnVoRCWvW5Ie2ikYSdPF7z3+880yCe/9xPmitFeRPw3RYDcCfR4m8ZYa4MBq19W4adt9Z+PQA4FaMBCJ7E+HCQ==}
-    peerDependencies:
-      react: 16 || 17 || 18 || 19
-      typescript: ^5.6.0
-    peerDependenciesMeta:
       typescript:
         optional: true
 
@@ -8773,9 +8713,6 @@ packages:
   stacktrace-parser@0.1.11:
     resolution: {integrity: sha512-WjlahMgHmCJpqzU8bIBy4qtsZdU9lRlcZE3Lvyej6t4tuOuv1vk57OW3MBrj6hXBFx/nNoC9MPMTcr5YA7NQbg==}
     engines: {node: '>=6'}
-
-  standalone-react-addons-pure-render-mixin@0.1.1:
-    resolution: {integrity: sha512-HFkwqpJmvz4vxHyzdeUcjtsp8Am+NauLXdU2/YXT1/InPbszaRo1cLPAy/58H7oOPNNjteqHcv04JEw+d9C+Xw==}
 
   std-env@3.9.0:
     resolution: {integrity: sha512-UGvjygr6F6tpH7o2qyqR6QYpwraIjKSdtzyBdyytFOHmPZY917kwdwLG0RbOjWOnKmnm3PeHjaoLLMie7kPLQw==}
@@ -11344,16 +11281,6 @@ snapshots:
   '@formatjs/intl-localematcher@0.6.1':
     dependencies:
       tslib: 2.8.1
-
-  '@formatjs/intl@3.1.6(typescript@5.8.3)':
-    dependencies:
-      '@formatjs/ecma402-abstract': 2.3.4
-      '@formatjs/fast-memoize': 2.2.7
-      '@formatjs/icu-messageformat-parser': 2.11.2
-      intl-messageformat: 10.7.16
-      tslib: 2.8.1
-    optionalDependencies:
-      typescript: 5.8.3
 
   '@formkit/auto-animate@0.8.2': {}
 
@@ -14117,11 +14044,6 @@ snapshots:
   '@types/estree@1.0.8': {}
 
   '@types/heic-convert@2.1.0': {}
-
-  '@types/hoist-non-react-statics@3.3.7(@types/react@19.1.4)':
-    dependencies:
-      '@types/react': 19.1.4
-      hoist-non-react-statics: 3.3.2
 
   '@types/js-cookie@2.2.7': {}
 
@@ -16970,10 +16892,6 @@ snapshots:
 
   hyphenate-style-name@1.1.0: {}
 
-  i18next-browser-languagedetector@8.2.0:
-    dependencies:
-      '@babel/runtime': 7.28.2
-
   i18next-icu@2.4.0(intl-messageformat@10.7.16):
     dependencies:
       intl-messageformat: 10.7.16
@@ -16993,10 +16911,6 @@ snapshots:
   ignore@5.3.2: {}
 
   ignore@7.0.5: {}
-
-  immutability-helper@2.9.1:
-    dependencies:
-      invariant: 2.2.4
 
   import-fresh@3.3.1:
     dependencies:
@@ -17046,10 +16960,6 @@ snapshots:
       '@formatjs/fast-memoize': 2.2.7
       '@formatjs/icu-messageformat-parser': 2.11.2
       tslib: 2.8.1
-
-  invariant@2.2.4:
-    dependencies:
-      loose-envify: 1.4.0
 
   ip-address@9.0.5:
     dependencies:
@@ -18434,33 +18344,10 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  preact-compat@3.19.0(preact@10.26.6):
-    dependencies:
-      immutability-helper: 2.9.1
-      preact: 10.26.6
-      preact-context: 1.1.4(preact@10.26.6)
-      preact-render-to-string: 3.8.2(preact@10.26.6)
-      preact-transition-group: 1.1.1(preact@10.26.6)
-      prop-types: 15.8.1
-      standalone-react-addons-pure-render-mixin: 0.1.1
-
-  preact-context@1.1.4(preact@10.26.6):
-    dependencies:
-      preact: 10.26.6
-
-  preact-render-to-string@3.8.2(preact@10.26.6):
-    dependencies:
-      preact: 10.26.6
-      pretty-format: 3.8.0
-
   preact-render-to-string@5.2.6(preact@10.26.6):
     dependencies:
       preact: 10.26.6
       pretty-format: 3.8.0
-
-  preact-transition-group@1.1.1(preact@10.26.6):
-    dependencies:
-      preact: 10.26.6
 
   preact@10.26.6: {}
 
@@ -18721,20 +18608,6 @@ snapshots:
       react: 19.1.0
     optionalDependencies:
       react-dom: 19.1.0(react@19.1.0)
-      typescript: 5.8.3
-
-  react-intl@7.1.11(react@19.1.0)(typescript@5.8.3):
-    dependencies:
-      '@formatjs/ecma402-abstract': 2.3.4
-      '@formatjs/icu-messageformat-parser': 2.11.2
-      '@formatjs/intl': 3.1.6(typescript@5.8.3)
-      '@types/hoist-non-react-statics': 3.3.7(@types/react@19.1.4)
-      '@types/react': 19.1.4
-      hoist-non-react-statics: 3.3.2
-      intl-messageformat: 10.7.16
-      react: 19.1.0
-      tslib: 2.8.1
-    optionalDependencies:
       typescript: 5.8.3
 
   react-is@16.13.1: {}
@@ -19371,8 +19244,6 @@ snapshots:
   stacktrace-parser@0.1.11:
     dependencies:
       type-fest: 0.7.1
-
-  standalone-react-addons-pure-render-mixin@0.1.1: {}
 
   std-env@3.9.0: {}
 

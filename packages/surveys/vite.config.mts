@@ -14,12 +14,6 @@ const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return defineConfig({
-    resolve: {
-      alias: {
-        react: "preact-compat",
-        "react-dom": "preact-compat",
-      },
-    },
     test: {
       environment: "node",
       environmentMatchGlobs: [

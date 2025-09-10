@@ -1,3 +1,5 @@
+import i18n from "@/components/i18n/i18n";
+import { getI18nLanguage } from "@/components/i18n/utils";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
@@ -43,9 +45,16 @@ export function LanguageSwitch({
     return surveyLanguage.default;
   })?.language.code;
 
+  const handleI18nLanguage = (languageCode: string) => {
+    const calculatedLanguage = getI18nLanguage(languageCode, surveyLanguages);
+    i18n.changeLanguage(calculatedLanguage);
+  };
+
   const changeLanguage = (languageCode: string) => {
     const calculatedLanguageCode = languageCode === defaultLanguageCode ? "default" : languageCode;
     setSelectedLanguageCode(calculatedLanguageCode);
+
+    handleI18nLanguage(calculatedLanguageCode);
 
     if (setDir) {
       const calculateDir = checkIfSurveyIsRTL(survey, calculatedLanguageCode) ? "rtl" : "auto";
