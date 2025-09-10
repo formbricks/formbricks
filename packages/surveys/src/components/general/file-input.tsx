@@ -171,6 +171,14 @@ export function FileInput({
     handleUploadErrors,
   ]);
 
+  const toBase64 = (file: File) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+    });
+
   const validateFileSize = async (file: File): Promise<boolean> => {
     if (maxSizeInMB) {
       const fileBuffer = await file.arrayBuffer();
@@ -221,14 +229,6 @@ export function FileInput({
   // Helper function to convert files to base64 and upload
   const processAndUploadFiles = useCallback(
     async (files: File[]) => {
-      const toBase64 = (file: File) =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-        });
-
       const filePromises = files.map(async (file) => {
         const base64 = await toBase64(file);
         return { name: file.name, type: file.type, base64: base64 as string };
