@@ -12,6 +12,8 @@
     "finish": "Finish",
     "language_switch": "Language switch",
     "less_than_x_minutes": "{count, plural, one {less than 1 minute} other {less than {count} minutes}}",
+    "move_down": "Move {item} down",
+    "move_up": "Move {item} up",
     "next": "Next",
     "open_in_new_tab": "Open in new tab",
     "optional": "Optional",

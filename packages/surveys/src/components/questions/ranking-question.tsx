@@ -223,7 +223,9 @@ export function RankingQuestion({
                             e.preventDefault();
                             handleMove(item.id, "up");
                           }}
-                          aria-label={`Move ${getLocalizedValue(item.label, languageCode)} up`}
+                          aria-label={t("common.move_up", {
+                            item: getLocalizedValue(item.label, languageCode),
+                          })}
                           className={cn(
                             "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
                             isFirst
@@ -258,7 +260,9 @@ export function RankingQuestion({
                               ? "fb-opacity-30 fb-cursor-not-allowed"
                               : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
                           )}
-                          aria-label={`Move ${getLocalizedValue(item.label, languageCode)} down`}
+                          aria-label={t("common.move_down", {
+                            item: getLocalizedValue(item.label, languageCode),
+                          })}
                           disabled={isLast}>
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

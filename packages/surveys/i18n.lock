@@ -8,11 +8,13 @@ checksums:
     common/click_or_drag_to_upload_files: 15b61e390b6c5501d3e3b9da9f6c7930
     common/close_survey: 36e6aaa19051cb253aa155ad69a9edbc
     common/company_logo: 82d5c0d5994508210ee02d684819f4b8
-    common/delete_file: afee2b8b9f6d0b1e5d9ba05c9987571d
+    common/delete_file: ee2f3e3fb4d2b227aea90e44fdaca861
     common/file_upload: fe254dc8892e76cf5a008d712c6ce9c8
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/language_switch: fd72a9ada13f672f4fd5da863b22cc46
     common/less_than_x_minutes: 8a8528651d0b60dc93be451abf6a139b
+    common/move_down: 479ab9ea756d1d814f7dcfe7cd7c21ba
+    common/move_up: c18fce90954378eb8573f5c3050bf140
     common/next: 89ddbcf710eba274963494f312bdc8a9
     common/open_in_new_tab: 6844e4922a7a40a7ee25c10ea109cdeb
     common/optional: 396fb9a0472daf401c392bdc3e248943
