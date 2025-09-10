@@ -77,7 +77,7 @@ describe("FileInput", () => {
     const file = createFile("image.jpg", 1000, "image/jpeg");
     fireEvent.change(input, { target: { files: [file] } });
 
-    expect(alertSpy).toHaveBeenCalledWith("No valid file types selected. Please select a valid file type.");
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.no_valid_file_types_selected");
     expect(onFileUpload).not.toHaveBeenCalled();
     expect(onUploadCallback).not.toHaveBeenCalled();
   });
@@ -96,7 +96,7 @@ describe("FileInput", () => {
     const files = [createFile("one.txt", 500, "text/plain"), createFile("two.txt", 500, "text/plain")];
     fireEvent.change(input, { target: { files } });
 
-    expect(alertSpy).toHaveBeenCalledWith("Only one file can be uploaded at a time.");
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.only_one_file_can_be_uploaded_at_a_time");
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
@@ -135,9 +135,7 @@ describe("FileInput", () => {
     const input = screen.getByLabelText("File upload");
     const dupFile = createFile("dup.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [dupFile] } });
-    expect(alertSpy).toHaveBeenCalledWith(
-      "The following files are already uploaded: dup.txt. Duplicate files are not allowed."
-    );
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.duplicate_files");
   });
 
   test("handles native file upload event", async () => {
@@ -231,7 +229,7 @@ describe("FileInput", () => {
     const invalidFile = createFile("invalid.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [invalidFile] } });
 
-    expect(alertSpy).toHaveBeenCalledWith("No valid file types selected. Please select a valid file type.");
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.no_valid_file_types_selected");
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
@@ -251,9 +249,7 @@ describe("FileInput", () => {
     const dupFile = createFile("dup.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [dupFile] } });
 
-    expect(alertSpy).toHaveBeenCalledWith(
-      "The following files are already uploaded: dup.txt. Duplicate files are not allowed."
-    );
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.duplicate_files");
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
@@ -286,7 +282,7 @@ describe("FileInput", () => {
 
     // Check that the alert for rejected files was shown
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("exceed the maximum size of 0.5 MB"));
+      expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("errors.file_input.file_size_exceeded"));
     });
 
     // Only the small file should be uploaded
@@ -415,7 +411,7 @@ describe("FileInput", () => {
 
     // Wait for the alert to be called
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith("Upload failed! Please try again.");
+      expect(alertSpy).toHaveBeenCalledWith("errors.file_input.upload_failed");
     });
   });
 
@@ -439,7 +435,7 @@ describe("FileInput", () => {
 
     fireEvent.change(input, { target: { files } });
 
-    expect(alertSpy).toHaveBeenCalledWith("You can only upload a maximum of 25 files.");
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.you_can_only_upload_a_maximum_of_files");
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 });
