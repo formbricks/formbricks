@@ -87,7 +87,7 @@ export const handleFileUpload = async (
     const fileBase64 = (await toBase64(file)) as string;
     const formDataForS3 = new FormData();
 
-    Object.entries(presignedFields as Record<string, string>).forEach(([key, value]) => {
+    Object.entries(presignedFields).forEach(([key, value]) => {
       formDataForS3.append(key, value);
     });
 

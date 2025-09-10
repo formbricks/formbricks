@@ -1,11 +1,9 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { authorizePrivateDownload } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { deleteFile, getSignedUrlForDownload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 import { getServerSession } from "next-auth";
@@ -33,25 +31,11 @@ export const GET = async (
 
   // check auth
   if (accessType === "private") {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      // check for api key auth
-      const auth = await authenticateRequest(request);
-
-      if (!auth) {
-        return responses.notAuthenticatedResponse();
-      }
-
-      if (!hasPermission(auth.environmentPermissions, environmentId, "GET")) {
-        return responses.unauthorizedResponse();
-      }
-    } else {
-      const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-
-      if (!isUserAuthorized) {
-        return responses.unauthorizedResponse();
-      }
+    const authResult = await authorizePrivateDownload(request, environmentId, "GET");
+    if (!authResult.ok) {
+      return authResult.error.unauthorized
+        ? responses.unauthorizedResponse()
+        : responses.notAuthenticatedResponse();
     }
   }
 
@@ -96,53 +80,30 @@ export const DELETE = async (
 
   const session = await getServerSession(authOptions);
 
-  if (!session?.user) {
-    // check for api key auth
-    const auth = await authenticateRequest(request);
+  const authResult = await authorizePrivateDownload(request, environmentId, "DELETE");
 
-    if (!auth) {
-      await logFileDeletion({
-        failureReason: "User not authenticated",
-        accessType,
-        environmentId,
-        apiUrl: request.url,
-      });
-      return responses.notAuthenticatedResponse();
-    }
+  if (!authResult.ok) {
+    await logFileDeletion({
+      failureReason: authResult.error.unauthorized
+        ? "User not authorized to access environment"
+        : "User not authenticated",
+      accessType,
+      environmentId,
+      apiUrl: request.url,
+    });
 
-    if (!hasPermission(auth.environmentPermissions, environmentId, "DELETE")) {
-      await logFileDeletion({
-        failureReason: "User not authorized to access environment",
-        accessType,
-        environmentId,
-        apiUrl: request.url,
-      });
+    return authResult.error.unauthorized
+      ? responses.unauthorizedResponse()
+      : responses.notAuthenticatedResponse();
+  }
 
-      return responses.unauthorizedResponse();
-    }
-
+  if (authResult.ok) {
     try {
-      await applyRateLimit(rateLimitConfigs.storage.delete, auth.hashedApiKey);
-    } catch (error) {
-      return responses.tooManyRequestsResponse(error.message);
-    }
-  } else {
-    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-
-    if (!isUserAuthorized) {
-      await logFileDeletion({
-        failureReason: "User not authorized to access environment",
-        accessType,
-        userId: session.user.id,
-        environmentId,
-        apiUrl: request.url,
-      });
-
-      return responses.unauthorizedResponse();
-    }
-
-    try {
-      await applyRateLimit(rateLimitConfigs.storage.delete, session.user.id);
+      if (authResult.data.authType === "apiKey") {
+        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.hashedApiKey);
+      } else {
+        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
+      }
     } catch (error) {
       return responses.tooManyRequestsResponse(error.message);
     }
