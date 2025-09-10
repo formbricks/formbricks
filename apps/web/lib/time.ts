@@ -99,7 +99,7 @@ const getLocaleForTimeSince = (locale: TUserLocale) => {
       return ro;
     case "ja-JP":
       return ja;
-    case "zh-CN":
+    case "zh-Hans-CN":
       return zhCN;
   }
 };

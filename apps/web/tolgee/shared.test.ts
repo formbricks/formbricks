@@ -14,7 +14,7 @@ vi.mock("@/locales/pt-PT.json", () => ({}));
 vi.mock("@/locales/zh-Hant-TW.json", () => ({}));
 vi.mock("@/locales/ro-RO.json", () => ({}));
 vi.mock("@/locales/ja-JP.json", () => ({}));
-vi.mock("@/locales/zh-CN.json", () => ({}));
+vi.mock("@/locales/zh-Hans-CN.json", () => ({}));
 
 describe("Tolgee Configuration", () => {
   beforeEach(() => {
@@ -40,7 +40,7 @@ describe("Tolgee Configuration", () => {
         "zh-Hant-TW",
         "ro-RO",
         "ja-JP",
-        "zh-CN",
+        "zh-Hans-CN",
       ]);
     });
   });
