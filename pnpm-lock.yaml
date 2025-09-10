@@ -673,8 +673,8 @@ importers:
         specifier: 6.14.0
         version: 6.14.0(magicast@0.3.5)(typescript@5.8.3)
       prisma-json-types-generator:
-        specifier: 3.5.4
-        version: 3.5.4(@prisma/client@6.14.0(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3))(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3)
+        specifier: 3.6.0
+        version: 3.6.0(@prisma/client@6.14.0(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3))(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3)
       ts-node:
         specifier: 10.9.2
         version: 10.9.2(@types/node@22.15.18)(typescript@5.8.3)
@@ -8038,8 +8038,8 @@ packages:
   pretty-format@3.8.0:
     resolution: {integrity: sha512-WuxUnVtlWL1OfZFQFuqvnvs6MiAGk9UNsBostyBOB0Is9wb5uRESevA6rnl/rkksXaGX3GzZhPup5d6Vp1nFew==}
 
-  prisma-json-types-generator@3.5.4:
-    resolution: {integrity: sha512-ALynK9cdSzlASxb78ziTeolkj/ZBFVnXE9f27ruQIbsS9cYwrMKmbTja3KJ9aASiok9SBUhagqhL60Kj1iG+CA==}
+  prisma-json-types-generator@3.6.0:
+    resolution: {integrity: sha512-IZ7WSLzmGU83/K0pXQpHtwdnwnL26rA3pHS/zWMyBbphdfSKrzX9L+EHneU61xpGI0Ciy6gfzEaqPHo14uscEQ==}
     engines: {node: '>=14.0'}
     hasBin: true
     peerDependencies:
@@ -18414,7 +18414,7 @@ snapshots:
 
   pretty-format@3.8.0: {}
 
-  prisma-json-types-generator@3.5.4(@prisma/client@6.14.0(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3))(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3):
+  prisma-json-types-generator@3.6.0(@prisma/client@6.14.0(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3))(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3):
     dependencies:
       '@prisma/client': 6.14.0(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3)
       '@prisma/generator-helper': 6.14.0
