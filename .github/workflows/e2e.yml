@@ -64,8 +64,8 @@ jobs:
           - 9000:9000
         options: >-
           --health-cmd="curl -fsS http://localhost:9000/minio/health/live || exit 1"
-          --health-interval=5s
-          --health-timeout=2s
+          --health-interval=10s
+          --health-timeout=5s
           --health-retries=20
     steps:
       - name: Harden the runner (Audit all outbound calls)
