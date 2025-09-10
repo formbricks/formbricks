@@ -55,6 +55,18 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      minio:
+        image: bitnami/minio:2025.7.23-debian-12-r5
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd="curl -fsS http://localhost:9000/minio/health/live || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
@@ -92,7 +104,52 @@ jobs:
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
           echo "" >> .env
           echo "E2E_TESTING=1" >> .env
+          echo "S3_REGION=us-east-1" >> .env
+          echo "S3_BUCKET_NAME=formbricks-e2e" >> .env
+          echo "S3_ENDPOINT_URL=http://localhost:9000" >> .env
+          echo "S3_ACCESS_KEY=minioadmin" >> .env
+          echo "S3_SECRET_KEY=minioadmin" >> .env
+          echo "S3_FORCE_PATH_STYLE=1" >> .env
         shell: bash
+
+      - name: Install MinIO client (mc)
+        run: |
+          set -euo pipefail
+          MC_VERSION="RELEASE.2025-08-13T08-35-41Z"
+          MC_BASE="https://dl.min.io/client/mc/release/linux-amd64/archive"
+          MC_BIN="mc.${MC_VERSION}"
+          MC_SUM="${MC_BIN}.sha256sum"
+
+          curl -fsSL "${MC_BASE}/${MC_BIN}" -o "${MC_BIN}"
+          curl -fsSL "${MC_BASE}/${MC_SUM}" -o "${MC_SUM}"
+
+          sha256sum -c "${MC_SUM}"
+
+          chmod +x "${MC_BIN}"
+          sudo mv "${MC_BIN}" /usr/local/bin/mc
+
+      - name: Wait for MinIO and create S3 bucket
+        run: |
+          set -euo pipefail
+
+          echo "Waiting for MinIO to be ready..."
+          ready=0
+          for i in {1..60}; do
+            if curl -fsS http://localhost:9000/minio/health/live >/dev/null; then
+              echo "MinIO is up after ${i} seconds"
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::MinIO did not become ready within 60 seconds"
+            exit 1
+          fi
+
+          mc alias set local http://localhost:9000 minioadmin minioadmin
+          mc mb --ignore-existing local/formbricks-e2e
 
       - name: Build App
         run: |

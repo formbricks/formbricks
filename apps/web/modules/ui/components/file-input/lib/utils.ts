@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "react-hot-toast";
-import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { convertHeicToJpegAction } from "./actions";
 
 const isFileSizeExceed = (fileSizeInMB: number, maxSizeInMB?: number) => {

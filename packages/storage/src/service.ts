@@ -13,11 +13,9 @@ import {
 } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@formbricks/logger";
-import { ErrorCode, type Result, type StorageError, err, ok } from "../types/error";
+import { type Result, type StorageError, StorageErrorCode, err, ok } from "../types/error";
 import { createS3Client } from "./client";
 import { S3_BUCKET_NAME } from "./constants";
-
-const s3Client = createS3Client();
 
 /**
  * Get a signed URL for uploading a file to S3
@@ -42,10 +40,12 @@ export const getSignedUploadUrl = async (
   >
 > => {
   try {
+    const s3Client = createS3Client();
+
     if (!s3Client) {
       logger.error("Failed to get signed upload URL: S3 client is not set");
       return err({
-        code: ErrorCode.S3ClientError,
+        code: StorageErrorCode.S3ClientError,
       });
     }
 
@@ -56,7 +56,7 @@ export const getSignedUploadUrl = async (
     if (!S3_BUCKET_NAME) {
       logger.error("Failed to get signed upload URL: S3 bucket name is not set");
       return err({
-        code: ErrorCode.S3CredentialsError,
+        code: StorageErrorCode.S3CredentialsError,
       });
     }
 
@@ -66,7 +66,7 @@ export const getSignedUploadUrl = async (
       Key: `${filePath}/${fileName}`,
       Fields: {
         "Content-Type": contentType,
-        "Content-Encoding": "base64",
+        // "Content-Encoding": "base64",
       },
       Conditions: postConditions,
     });
@@ -79,7 +79,7 @@ export const getSignedUploadUrl = async (
     logger.error({ error }, "Failed to get signed upload URL");
 
     return err({
-      code: ErrorCode.Unknown,
+      code: StorageErrorCode.Unknown,
     });
   }
 };
@@ -91,15 +91,17 @@ export const getSignedUploadUrl = async (
  */
 export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<string, StorageError>> => {
   try {
+    const s3Client = createS3Client();
+
     if (!s3Client) {
       return err({
-        code: ErrorCode.S3ClientError,
+        code: StorageErrorCode.S3ClientError,
       });
     }
 
     if (!S3_BUCKET_NAME) {
       return err({
-        code: ErrorCode.S3CredentialsError,
+        code: StorageErrorCode.S3CredentialsError,
       });
     }
 
@@ -118,7 +120,7 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
         (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404
       ) {
         return err({
-          code: ErrorCode.FileNotFoundError,
+          code: StorageErrorCode.FileNotFoundError,
         });
       }
 
@@ -134,7 +136,7 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
   } catch (error) {
     logger.error({ error }, "Failed to get signed download URL");
     return err({
-      code: ErrorCode.Unknown,
+      code: StorageErrorCode.Unknown,
     });
   }
 };
@@ -146,15 +148,17 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
  */
 export const deleteFile = async (fileKey: string): Promise<Result<void, StorageError>> => {
   try {
+    const s3Client = createS3Client();
+
     if (!s3Client) {
       return err({
-        code: ErrorCode.S3ClientError,
+        code: StorageErrorCode.S3ClientError,
       });
     }
 
     if (!S3_BUCKET_NAME) {
       return err({
-        code: ErrorCode.S3CredentialsError,
+        code: StorageErrorCode.S3CredentialsError,
       });
     }
 
@@ -170,22 +174,29 @@ export const deleteFile = async (fileKey: string): Promise<Result<void, StorageE
     logger.error({ error }, "Failed to delete file");
 
     return err({
-      code: ErrorCode.Unknown,
+      code: StorageErrorCode.Unknown,
     });
   }
 };
 
+/**
+ * Delete all files by prefix
+ * @param prefix - The prefix of the files to delete
+ * @returns A Result containing the void or an error: StorageError
+ */
 export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, StorageError>> => {
   try {
+    const s3Client = createS3Client();
+
     if (!s3Client) {
       return err({
-        code: ErrorCode.S3ClientError,
+        code: StorageErrorCode.S3ClientError,
       });
     }
 
     if (!S3_BUCKET_NAME) {
       return err({
-        code: ErrorCode.S3CredentialsError,
+        code: StorageErrorCode.S3CredentialsError,
       });
     }
 
@@ -193,7 +204,7 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
     if (!normalizedPrefix || normalizedPrefix === "/") {
       logger.error({ prefix }, "Refusing to delete files with an empty or root prefix");
       return err({
-        code: ErrorCode.InvalidInput,
+        code: StorageErrorCode.InvalidInput,
       });
     }
 
@@ -268,7 +279,7 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
     logger.error({ error }, "Failed to delete files by prefix");
 
     return err({
-      code: ErrorCode.Unknown,
+      code: StorageErrorCode.Unknown,
     });
   }
 };

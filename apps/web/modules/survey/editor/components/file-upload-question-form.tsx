@@ -13,7 +13,7 @@ import { PlusIcon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 

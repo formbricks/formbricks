@@ -1,11 +1,20 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { FileInput } from "./index";
 
+vi.mock("react-hot-toast", () => ({
+  default: {
+    error: vi.fn(),
+  },
+  error: vi.fn(),
+}));
+
 // Mock dependencies
-vi.mock("@/app/lib/fileUpload", () => ({
+vi.mock("@/modules/storage/file-upload", () => ({
+  FileUploadError: { INVALID_FILE_NAME: "Invalid file name. Please rename your file and try again." },
   handleFileUpload: vi.fn().mockResolvedValue({ url: "https://example.com/uploaded-file.jpg" }),
 }));
 
@@ -46,6 +55,26 @@ describe("FileInput", () => {
 
     // Check if VideoSettings component is rendered
     expect(screen.getByPlaceholderText("https://www.youtube.com/watch?v=VIDEO_ID")).toBeInTheDocument();
+  });
+
+  test("shows invalid filename toast when upload returns INVALID_FILE_NAME", async () => {
+    const mod = await import("@/modules/storage/file-upload");
+    vi.mocked(mod.handleFileUpload as any).mockResolvedValueOnce({
+      error: mod.FileUploadError.INVALID_FILE_NAME,
+      url: "",
+    });
+
+    render(<FileInput {...defaultProps} />);
+
+    const input = screen.getByTestId("upload-file-input");
+    const file = new File(["dummy"], "----.png", { type: "image/png" });
+    const utils = await import("./lib/utils");
+    vi.mocked(utils.getAllowedFiles as any).mockResolvedValueOnce([file]);
+    await userEvent.upload(input, file);
+    // allow async handlers to finish
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect((toast as any).error).toHaveBeenCalled();
   });
 
   test("displays existing file when fileUrl is provided", () => {

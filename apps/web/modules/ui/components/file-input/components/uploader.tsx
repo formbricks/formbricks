@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 import { ArrowUpFromLineIcon } from "lucide-react";
 import React from "react";
-import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 
 interface UploaderProps {
   id: string;

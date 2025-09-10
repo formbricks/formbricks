@@ -135,6 +135,9 @@ importers:
       '@formbricks/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@formbricks/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@formbricks/surveys':
         specifier: workspace:*
         version: link:../../packages/surveys

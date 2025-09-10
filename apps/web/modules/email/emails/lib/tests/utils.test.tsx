@@ -15,7 +15,7 @@ vi.mock("@react-email/components", () => ({
 }));
 
 // Mock dependencies
-vi.mock("@/lib/storage/utils", () => ({
+vi.mock("@/modules/storage/utils", () => ({
   getOriginalFileNameFromUrl: (url: string) => {
     // Extract filename from the URL for testing purposes
     const parts = url.split("/");
@@ -31,8 +31,8 @@ describe("renderEmailResponseValue", () => {
     test("renders clickable file upload links with file icons and truncated file names when overrideFileUploadResponse is false", async () => {
       // Arrange
       const fileUrls = [
-        "https://example.com/uploads/file1.pdf",
-        "https://example.com/uploads/very-long-filename-that-should-be-truncated.docx",
+        "https://example.com/files/file1.pdf",
+        "https://example.com/files/very-long-filename-that-should-be-truncated.docx",
       ];
 
       // Act
@@ -65,7 +65,7 @@ describe("renderEmailResponseValue", () => {
 
     test("renders a message when overrideFileUploadResponse is true", async () => {
       // Arrange
-      const fileUrls = ["https://example.com/uploads/file1.pdf"];
+      const fileUrls = ["https://example.com/files/file1.pdf"];
       const expectedMessage = "emails.render_email_response_value_file_upload_response_link_not_included";
 
       // Act

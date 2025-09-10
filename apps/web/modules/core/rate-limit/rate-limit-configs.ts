@@ -29,4 +29,9 @@ export const rateLimitConfigs = {
       namespace: "action:send-link-survey-email",
     }, // 10 per hour
   },
+
+  storage: {
+    upload: { interval: 60, allowedPerInterval: 5, namespace: "storage:upload" }, // 5 per minute
+    delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
+  },
 };
