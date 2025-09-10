@@ -30,7 +30,6 @@ export const SurveyStatusDropdown = ({
 }: SurveyStatusDropdownProps) => {
   const { t } = useTranslate();
   const router = useRouter();
-  const isStatusChangeDisabled = false;
 
   const handleStatusChange = async (status: TSurvey["status"]) => {
     const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
@@ -64,12 +63,11 @@ export const SurveyStatusDropdown = ({
       ) : (
         <Select
           value={survey.status}
-          disabled={isStatusChangeDisabled}
           onValueChange={(value: TSurvey["status"]) => {
             handleStatusChange(value);
           }}>
           <TooltipProvider delayDuration={50}>
-            <Tooltip open={isStatusChangeDisabled ? undefined : false}>
+            <Tooltip open={false}>
               <TooltipTrigger asChild>
                 <SelectTrigger className="w-[170px] bg-white md:w-[200px]">
                   <SelectValue>
