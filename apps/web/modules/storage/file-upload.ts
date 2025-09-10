@@ -3,6 +3,7 @@ export enum FileUploadError {
   INVALID_FILE_TYPE = "Please upload an image file.",
   FILE_SIZE_EXCEEDED = "File size must be less than 10 MB.",
   UPLOAD_FAILED = "Upload failed. Please try again.",
+  INVALID_FILE_NAME = "Invalid file name. Please rename your file and try again.",
 }
 
 export const toBase64 = (file: File) =>
@@ -58,6 +59,16 @@ export const handleFileUpload = async (
     });
 
     if (!response.ok) {
+      if (response.status === 400) {
+        const json = (await response.json()) as { details?: { fileName?: string } };
+        if (json.details?.fileName) {
+          return {
+            error: FileUploadError.INVALID_FILE_NAME,
+            url: "",
+          };
+        }
+      }
+
       return {
         error: FileUploadError.UPLOAD_FAILED,
         url: "",

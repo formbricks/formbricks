@@ -2,7 +2,6 @@
 
 import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { handleFileUpload } from "@/modules/storage/file-upload";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 import {
@@ -123,18 +122,21 @@ export const PersonalLinksTab = ({
     });
 
     if (result?.data) {
-      const file = new File([result.data.csvContent], result.data.fileName || "personal-links.csv", {
+      const fileName = result.data.fileName || "personal-links.csv";
+      const file = new File([result.data.csvContent], fileName, {
         type: "text/csv",
       });
 
-      const { url, error } = await handleFileUpload(file, environmentId, ["csv"]);
-
-      if (error) {
+      try {
+        const url = URL.createObjectURL(file);
+        downloadFile(url, fileName);
+        URL.revokeObjectURL(url);
+      } catch {
         toast.error(t("environments.surveys.share.personal_links.error_generating_links"));
+        setIsGenerating(false);
         return;
       }
 
-      downloadFile(url, result.data.fileName || "personal-links.csv");
       toast.success(t("environments.surveys.share.personal_links.links_generated_success_toast"), {
         duration: 5000,
         id: "generating-links",

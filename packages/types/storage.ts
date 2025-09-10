@@ -160,7 +160,7 @@ const refineFileUploadInput = ({
   };
   ctx: z.RefinementCtx;
 }): void => {
-  const fileExtension = data.fileName.split(".").pop() as TAllowedFileExtension | undefined;
+  const fileExtension = data.fileName.split(".").pop()?.toLowerCase() as TAllowedFileExtension | undefined;
 
   if (!fileExtension || fileExtension.toLowerCase() === data.fileName.toLowerCase()) {
     ctx.addIssue({
@@ -184,7 +184,8 @@ const refineFileUploadInput = ({
     return;
   }
 
-  if (data.fileType.toLowerCase() !== mimeTypes[fileExtension]) {
+  const normalizedFileType = data.fileType.toLowerCase().split(";")[0]; // removes parameters from fileType like "image/jpeg; charset=binary"
+  if (normalizedFileType !== mimeTypes[fileExtension]) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "File type doesn't match the file extension",

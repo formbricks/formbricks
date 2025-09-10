@@ -1,40 +1,75 @@
+import { responses } from "@/app/lib/api/response";
 import { logger } from "@formbricks/logger";
+import { StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { TAllowedFileExtension, ZAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const getOriginalFileNameFromUrl = (fileURL: string) => {
   try {
-    const fileNameFromURL = fileURL.startsWith("/storage/")
-      ? fileURL.split("/").pop()
-      : new URL(fileURL).pathname.split("/").pop();
+    const lastSegment = fileURL.startsWith("/storage/")
+      ? fileURL
+      : (new URL(fileURL).pathname.split("/").pop() ?? "");
+    const fileNameFromURL = lastSegment.split(/[?#]/)[0];
 
-    const fileExt = fileNameFromURL?.split(".").pop() ?? "";
-    const originalFileName = fileNameFromURL?.split("--fid--")[0] ?? "";
-    const fileId = fileNameFromURL?.split("--fid--")[1] ?? "";
+    const [namePart, fidPart] = fileNameFromURL.split("--fid--");
+    if (!fidPart) return namePart ? decodeURIComponent(namePart) : "";
 
-    if (!fileId) {
-      const fileName = originalFileName ? decodeURIComponent(originalFileName || "") : "";
-      return fileName;
-    }
+    const dotIdx = fileNameFromURL.lastIndexOf(".");
+    const hasExt = dotIdx > fileNameFromURL.indexOf("--fid--");
+    const ext = hasExt ? fileNameFromURL.slice(dotIdx + 1) : "";
 
-    const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}` || "") : "";
-    return fileName;
+    return decodeURIComponent(ext ? `${namePart}.${ext}` : namePart);
   } catch (error) {
-    logger.error(error, "Error parsing file URL");
+    logger.error({ error, fileURL }, "Error parsing file URL");
+    return "";
   }
 };
 
-export const getFileNameWithIdFromUrl = (fileURL: string) => {
-  try {
-    const fileNameFromURL = fileURL.startsWith("/storage/")
-      ? fileURL.split("/").pop()
-      : new URL(fileURL).pathname.split("/").pop();
+/**
+ * Sanitize a provided file name to a safe subset.
+ * - Removes path separators and backslashes to avoid implicit prefixes
+ * - Drops ASCII control chars and reserved URL chars which often break S3 form fields
+ * - Collapses whitespace
+ * - Limits length to a reasonable maximum
+ * - Preserves last extension only
+ */
+export const sanitizeFileName = (rawFileName: string): string => {
+  if (!rawFileName) return "";
 
-    return fileNameFromURL ? decodeURIComponent(fileNameFromURL || "") : "";
-  } catch (error) {
-    logger.error(error, "Error parsing file URL");
-  }
+  // Normalize to NFC to avoid weird Unicode composition differences
+  let name = rawFileName.normalize("NFC");
+
+  // Replace path separators/backslashes with dash
+  name = name.replace(/[\\/]/g, "-");
+
+  // Disallow: # <> : " | ? * ` ' and control whitespace
+  name = name.replace(/[#<>:"|?*`']/g, "");
+
+  // Collapse and trim whitespace
+  name = name.replace(/\s+/g, " ").trim();
+
+  // Split into base and extension; keep only the last extension
+  const parts = name.split(".");
+  const hasExt = parts.length > 1;
+  const ext = hasExt ? parts.pop()! : "";
+  let base = (hasExt ? parts.join(".") : parts[0]).trim();
+
+  // Fallback base if empty after sanitization
+  if (!base) return "";
+  // Reject bases that are only punctuation like hyphens or dots
+  if (/^-+$/.test(base) || /^\.+$/.test(base)) return "";
+
+  // Enforce max lengths (S3 key limit is 1024; be conservative for filename)
+  const MAX_BASE = 200;
+  const MAX_EXT = 20;
+  if (base.length > MAX_BASE) base = base.slice(0, MAX_BASE);
+  const safeExt = ext.slice(0, MAX_EXT).replace(/[^A-Za-z0-9]/g, "");
+
+  const result = safeExt ? `${base}.${safeExt}` : base;
+  // Final guard: empty or just dots/hyphens shouldn't pass
+  if (!result || /^\.*$/.test(result) || /^-+$/.test(result)) return "";
+  return result;
 };
 
 /**
@@ -72,15 +107,10 @@ export const validateSingleFile = (
   fileUrl: string,
   allowedFileExtensions?: TAllowedFileExtension[]
 ): boolean => {
-  console.log("validateSingleFile", fileUrl);
   const fileName = getOriginalFileNameFromUrl(fileUrl);
-  console.log("fileName", fileName);
   if (!fileName) return false;
-  const extension = fileName.split(".").pop();
-  console.log("extension", extension);
+  const extension = fileName.split(".").pop()?.toLowerCase();
   if (!extension) return false;
-  console.log("allowedFileExtensions", allowedFileExtensions);
-  console.log("includes", allowedFileExtensions?.includes(extension as TAllowedFileExtension));
   return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
 };
 
@@ -111,4 +141,25 @@ export const isValidImageFile = (fileUrl: string): boolean => {
 
   const imageExtensions = ["png", "jpeg", "jpg", "webp", "heic"];
   return imageExtensions.includes(extension);
+};
+
+export const getErrorResponseFromStorageError = (
+  error: StorageError,
+  details?: Record<string, string>
+): Response => {
+  switch (error.code) {
+    case StorageErrorCode.FileNotFoundError:
+      return responses.notFoundResponse("file", details?.fileName ?? null, true);
+    case StorageErrorCode.InvalidInput:
+      return responses.badRequestResponse("Invalid input", details, true);
+    case StorageErrorCode.S3ClientError:
+      return responses.internalServerErrorResponse("Internal server error", true);
+    case StorageErrorCode.S3CredentialsError:
+      return responses.internalServerErrorResponse("Internal server error", true);
+    case StorageErrorCode.Unknown:
+      return responses.internalServerErrorResponse("Internal server error", true);
+    default: {
+      return responses.internalServerErrorResponse("Internal server error", true);
+    }
+  }
 };

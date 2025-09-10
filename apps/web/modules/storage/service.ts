@@ -12,6 +12,7 @@ import {
 } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TAccessType } from "@formbricks/types/storage";
+import { sanitizeFileName } from "./utils";
 
 export const getSignedUrlForUpload = async (
   fileName: string,
@@ -30,8 +31,12 @@ export const getSignedUrlForUpload = async (
   >
 > => {
   try {
-    const fileNameWithoutExtension = fileName.split(".").slice(0, -1).join(".");
-    const fileExtension = fileName.split(".").pop();
+    const safeFileName = sanitizeFileName(fileName);
+    if (!safeFileName) {
+      return err({ code: StorageErrorCode.InvalidInput });
+    }
+    const fileNameWithoutExtension = safeFileName.split(".").slice(0, -1).join(".");
+    const fileExtension = safeFileName.split(".").pop();
 
     const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
 
@@ -52,7 +57,9 @@ export const getSignedUrlForUpload = async (
     return ok({
       signedUrl: signedUrlResult.data.signedUrl,
       presignedFields: signedUrlResult.data.presignedFields,
-      fileUrl: new URL(`${baseUrl}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
+      fileUrl: new URL(
+        `${baseUrl}/storage/${environmentId}/${accessType}/${encodeURIComponent(updatedFileName)}`
+      ).href,
     });
   } catch (error) {
     logger.error({ error }, "Error getting signed url for upload");

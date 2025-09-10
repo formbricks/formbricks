@@ -196,6 +196,27 @@ describe("client.ts", () => {
         expect(result.data).toBeDefined();
       }
     });
+
+    test("should return unknown error when S3Client constructor throws", async () => {
+      // Provide valid credentials so we reach the constructor path
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      // Make the mocked S3Client throw on construction for this test only
+      mockS3Client.mockImplementationOnce((..._args: [S3ClientConfig] | []): S3Client => {
+        throw new Error("constructor failed");
+      });
+
+      const { createS3ClientFromEnv } = await import("./client");
+
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("unknown");
+      }
+    });
   });
 
   describe("createS3Client", () => {
@@ -245,6 +266,74 @@ describe("client.ts", () => {
       const result = createS3Client();
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe("getCachedS3Client (singleton)", () => {
+    test("returns the same instance on multiple calls and constructs once", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const { getCachedS3Client } = await import("./client");
+      const typedGetCachedS3Client = getCachedS3Client as unknown as () => S3Client;
+
+      const first = typedGetCachedS3Client();
+      const second = typedGetCachedS3Client();
+
+      expect(first).toBeDefined();
+      expect(second).toBeDefined();
+      expect(first).toBe(second);
+      expect(mockS3Client).toHaveBeenCalledTimes(1);
+    });
+
+    test("returns undefined when env is invalid and does not construct client", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+        S3_ACCESS_KEY: undefined,
+        S3_SECRET_KEY: undefined,
+      }));
+
+      const { getCachedS3Client } = await import("./client");
+      const typedGetCachedS3Client = getCachedS3Client as unknown as () => S3Client;
+
+      const client = typedGetCachedS3Client();
+      expect(client).toBeUndefined();
+      expect(mockS3Client).not.toHaveBeenCalled();
+    });
+
+    test("createS3Client uses cached instance when available", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const { getCachedS3Client, createS3Client } = await import("./client");
+      const typedGetCachedS3Client = getCachedS3Client as unknown as () => S3Client;
+
+      const cached = typedGetCachedS3Client();
+      const created = createS3Client();
+
+      expect(cached).toBeDefined();
+      expect(created).toBe(cached);
+      expect(mockS3Client).toHaveBeenCalledTimes(1);
+    });
+
+    test("createS3Client returns provided client even if cache exists", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const { getCachedS3Client, createS3Client } = await import("./client");
+      const typedGetCachedS3Client = getCachedS3Client as unknown as () => S3Client;
+      const cached = typedGetCachedS3Client();
+      expect(cached).toBeDefined();
+
+      const injected = new S3Client({});
+      const result = createS3Client(injected);
+
+      expect(result).toBe(injected);
+      // One construction for cached, one for injected
+      expect(mockS3Client).toHaveBeenCalledTimes(2);
     });
   });
 });

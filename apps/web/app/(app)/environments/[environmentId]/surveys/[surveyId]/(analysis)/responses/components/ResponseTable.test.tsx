@@ -1,7 +1,6 @@
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { handleFileUpload } from "@/modules/storage/file-upload";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
@@ -11,6 +10,8 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
+
+vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
 // Mock react-hot-toast
 vi.mock("react-hot-toast", () => ({
@@ -242,7 +243,6 @@ beforeEach(() => {
   vi.mocked(toast.error).mockClear();
   vi.mocked(toast.success).mockClear();
   vi.mocked(getResponsesDownloadUrlAction).mockClear();
-  vi.mocked(handleFileUpload).mockClear();
 
   // Create a mock anchor element for download tests
   globalMockAnchor = {
@@ -273,46 +273,63 @@ beforeEach(() => {
   vi.spyOn(document.body, "removeChild").mockReturnValue(null as any);
 
   // Mock File constructor to avoid arrayBuffer issues
-  global.File = class MockFile {
-    name: string;
-    type: string;
-    size: number;
+  vi.stubGlobal(
+    "File",
+    class MockFile {
+      name: string;
+      type: string;
+      size: number;
 
-    constructor(chunks: any[], name: string, options: any = {}) {
-      this.name = name;
-      this.type = options.type || "";
-      this.size = options.size || 0;
-    }
+      constructor(_chunks: any[], name: string, options: any = {}) {
+        this.name = name;
+        this.type = options.type || "";
+        this.size = options.size || 0;
+      }
 
-    arrayBuffer() {
-      return Promise.resolve(new ArrayBuffer(0));
-    }
-  } as any;
+      arrayBuffer() {
+        return Promise.resolve(new ArrayBuffer(0));
+      }
+    } as any
+  );
 
   // Mock atob for base64 decoding
-  global.atob = vi.fn((str: string) => "decoded binary string");
+  vi.stubGlobal(
+    "atob",
+    vi.fn((_str: string) => "decoded binary string")
+  );
 
   // Mock Uint8Array and Blob
-  global.Uint8Array = class MockUint8Array extends Array {
-    constructor(data: any) {
-      super();
-      this.length = typeof data === "number" ? data : 0;
-    }
+  vi.stubGlobal(
+    "Uint8Array",
+    class MockUint8Array extends Array {
+      constructor(data: any) {
+        super();
+        this.length = typeof data === "number" ? data : 0;
+      }
 
-    static from(source: any) {
-      return new MockUint8Array(source.length || 0);
-    }
-  } as any;
+      static from(source: any) {
+        return new MockUint8Array(source.length || 0);
+      }
+    } as any
+  );
 
-  global.Blob = class MockBlob {
-    size: number;
-    type: string;
+  vi.stubGlobal(
+    "Blob",
+    class MockBlob {
+      size: number;
+      type: string;
 
-    constructor(parts: any[], options: any = {}) {
-      this.size = 0;
-      this.type = options.type || "";
-    }
-  } as any;
+      constructor(_parts: any[], options: any = {}) {
+        this.size = 0;
+        this.type = options.type || "";
+      }
+    } as any
+  );
+
+  vi.stubGlobal("URL", {
+    createObjectURL: vi.fn(),
+    revokeObjectURL: vi.fn(),
+  });
 });
 
 // Cleanup after each test
@@ -323,6 +340,7 @@ afterEach(() => {
   }
   cleanup();
   vi.restoreAllMocks(); // Restore mocks after each test
+  vi.unstubAllGlobals(); // Restore global stubs after each test
 });
 
 describe("ResponseTable", () => {
@@ -383,12 +401,10 @@ describe("ResponseTable", () => {
       },
     });
 
-    vi.mocked(handleFileUpload).mockResolvedValueOnce({
-      url: "https://download.url/file.csv",
-    });
-
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
+    // Ensure URL.createObjectURL returns a deterministic URL for assertions
+    (URL.createObjectURL as any).mockReturnValueOnce("https://download.url/file.csv");
     const downloadCsvButton = screen.getByTestId("download-csv");
     await userEvent.click(downloadCsvButton);
 
@@ -398,8 +414,6 @@ describe("ResponseTable", () => {
         format: "csv",
         filterCriteria: { responseIds: [] },
       });
-
-      expect(handleFileUpload).toHaveBeenCalled();
 
       // Check if link was created and clicked
       expect(document.createElement).toHaveBeenCalledWith("a");
@@ -418,12 +432,10 @@ describe("ResponseTable", () => {
       },
     });
 
-    vi.mocked(handleFileUpload).mockResolvedValueOnce({
-      url: "https://download.url/file.xlsx",
-    });
-
     const container = document.getElementById("test-container");
     render(<ResponseTable {...mockProps} />, { container: container! });
+    // Ensure URL.createObjectURL returns a deterministic URL for assertions
+    (URL.createObjectURL as any).mockReturnValueOnce("https://download.url/file.xlsx");
     const downloadXlsxButton = screen.getByTestId("download-xlsx");
     await userEvent.click(downloadXlsxButton);
 
@@ -433,8 +445,6 @@ describe("ResponseTable", () => {
         format: "xlsx",
         filterCriteria: { responseIds: [] },
       });
-
-      expect(handleFileUpload).toHaveBeenCalled();
 
       // Check if link was created and clicked
       expect(document.createElement).toHaveBeenCalledWith("a");

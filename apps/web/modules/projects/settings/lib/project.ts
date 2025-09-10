@@ -144,11 +144,13 @@ export const deleteProject = async (projectId: string): Promise<TProject> => {
         return deleteFilesByEnvironmentId(environment.id);
       });
 
-      try {
-        await Promise.all(s3FilesPromises);
-      } catch (err) {
-        // fail silently because we don't want to throw an error if the files are not deleted
-        logger.error(err, "Error deleting S3 files");
+      const s3FilesResult = await Promise.all(s3FilesPromises);
+
+      for (const result of s3FilesResult) {
+        if (!result.ok) {
+          // fail silently because we don't want to throw an error if the files are not deleted
+          logger.error(result.error, "Error deleting S3 files");
+        }
       }
     }
 

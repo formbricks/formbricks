@@ -154,14 +154,18 @@ describe("ApiClient", () => {
     });
 
     test("throws an error if fetch for signing fails", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false, status: 400 } as unknown as Response);
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ details: { fileName: "Invalid file name" } }),
+      } as unknown as Response);
       await expect(() =>
         client.uploadFile({
           base64: "data:image/jpeg;base64,abcd",
           name: "test.jpg",
           type: "image/jpeg",
         })
-      ).rejects.toThrow("Upload failed with status: 400");
+      ).rejects.toThrow("Invalid file name");
     });
 
     test("throws an error if actual upload fails", async () => {

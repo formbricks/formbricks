@@ -48,7 +48,6 @@ export function Survey({
   isBrandingEnabled,
   onDisplay,
   onResponse,
-  onFileUpload,
   onClose,
   onFinished,
   onRetry,
@@ -198,7 +197,7 @@ export function Survey({
     return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;
   };
 
-  const onFileUploadApi = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
+  const onFileUpload = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
     if (isPreviewMode) {
       // return mock url since an url is required for the preview
       return `https://example.com/${file.name}`;
@@ -720,7 +719,7 @@ export function Survey({
               onBack={onBack}
               ttc={ttc}
               setTtc={setTtc}
-              onFileUpload={onFileUpload ?? onFileUploadApi}
+              onFileUpload={onFileUpload}
               isFirstQuestion={question.id === localSurvey.questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}

@@ -1,11 +1,13 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { IS_FORMBRICKS_CLOUD, MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
+import { MAX_FILE_UPLOAD_SIZES } from "@/lib/constants";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
+import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TUploadPrivateFileRequest, ZUploadPrivateFileRequest } from "@formbricks/types/storage";
@@ -35,8 +37,17 @@ export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: { req: NextRequest; props: Context }) => {
     const params = await props.params;
     const { environmentId } = params;
+    let jsonInput: TUploadPrivateFileRequest;
 
-    const jsonInput = (await req.json()) as Omit<TUploadPrivateFileRequest, "environmentId">;
+    try {
+      jsonInput = await req.json();
+    } catch (error) {
+      logger.error({ error, url: req.url }, "Error parsing JSON input");
+      return {
+        response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
+      };
+    }
+
     const parsedInputResult = ZUploadPrivateFileRequest.safeParse({
       ...jsonInput,
       environmentId,
@@ -86,12 +97,9 @@ export const POST = withV1ApiWrapper({
     }
 
     const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
-
-    const maxFileUploadSize = IS_FORMBRICKS_CLOUD
-      ? isBiggerFileUploadAllowed
-        ? MAX_FILE_UPLOAD_SIZES.big
-        : MAX_FILE_UPLOAD_SIZES.standard
-      : MAX_FILE_UPLOAD_SIZES.big; // 1GB
+    const maxFileUploadSize = isBiggerFileUploadAllowed
+      ? MAX_FILE_UPLOAD_SIZES.big
+      : MAX_FILE_UPLOAD_SIZES.standard;
 
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,
@@ -103,9 +111,9 @@ export const POST = withV1ApiWrapper({
 
     if (!signedUrlResponse.ok) {
       logger.error({ error: signedUrlResponse.error }, "Error getting signed url for upload");
-
+      const errorResponse = getErrorResponseFromStorageError(signedUrlResponse.error, { fileName });
       return {
-        response: responses.internalServerErrorResponse("Internal server error"),
+        response: errorResponse,
       };
     }
 
@@ -113,4 +121,5 @@ export const POST = withV1ApiWrapper({
       response: responses.successResponse(signedUrlResponse.data),
     };
   },
+  customRateLimitConfig: rateLimitConfigs.storage.upload,
 });

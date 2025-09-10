@@ -91,6 +91,15 @@ export class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 400) {
+        const json = (await response.json()) as ApiErrorResponse;
+        if (json.details?.fileName) {
+          const err = new Error("Invalid file name");
+          err.name = "InvalidFileNameError";
+          throw err;
+        }
+      }
+
       throw new Error(`Upload failed with status: ${String(response.status)}`);
     }
 
@@ -103,6 +112,10 @@ export class ApiClient {
       presignedFields: Record<string, string>;
       fileUrl: string;
     };
+
+    if (!signedUrl || !presignedFields || !fileUrl) {
+      throw new Error("Invalid response");
+    }
 
     const formData = new FormData();
 
@@ -130,6 +143,7 @@ export class ApiClient {
       });
     } catch (err) {
       console.error("Error uploading file", err);
+      throw new Error("Network error while uploading file");
     }
 
     if (!uploadResponse.ok) {

@@ -2,7 +2,9 @@ import { checkAuth } from "@/app/api/v1/management/storage/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
+import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TUploadPublicFileRequest, ZUploadPublicFileRequest } from "@formbricks/types/storage";
@@ -53,8 +55,10 @@ export const POST = withV1ApiWrapper({
     const signedUrlResponse = await getSignedUrlForUpload(fileName, environmentId, fileType, "public");
 
     if (!signedUrlResponse.ok) {
+      logger.error({ error: signedUrlResponse.error }, "Error getting signed url for upload");
+      const errorResponse = getErrorResponseFromStorageError(signedUrlResponse.error, { fileName });
       return {
-        response: responses.internalServerErrorResponse("Internal server error"),
+        response: errorResponse,
       };
     }
 
@@ -62,4 +66,5 @@ export const POST = withV1ApiWrapper({
       response: responses.successResponse(signedUrlResponse.data),
     };
   },
+  customRateLimitConfig: rateLimitConfigs.storage.upload,
 });

@@ -11,6 +11,7 @@ import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditTarget, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
@@ -37,6 +38,7 @@ export interface TWithV1ApiWrapperParams<TResult extends { response: Response },
   handler: (params: THandlerParams<TProps>) => Promise<TResult>;
   action?: TAuditAction;
   targetType?: TAuditTarget;
+  customRateLimitConfig?: TRateLimitConfig;
 }
 
 enum ApiV1RouteTypeEnum {
@@ -48,13 +50,13 @@ enum ApiV1RouteTypeEnum {
 /**
  * Apply client-side API rate limiting (IP-based or sync-specific)
  */
-const applyClientRateLimit = async (url: string): Promise<void> => {
+const applyClientRateLimit = async (url: string, customRateLimitConfig?: TRateLimitConfig): Promise<void> => {
   const syncEndpoint = isSyncWithUserIdentificationEndpoint(url);
   if (syncEndpoint) {
     const syncRateLimitConfig = rateLimitConfigs.api.syncUserIdentification;
     await applyRateLimit(syncRateLimitConfig, syncEndpoint.userId);
   } else {
-    await applyIPRateLimit(rateLimitConfigs.api.client);
+    await applyIPRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.client);
   }
 };
 
@@ -64,16 +66,17 @@ const applyClientRateLimit = async (url: string): Promise<void> => {
 const handleRateLimiting = async (
   url: string,
   authentication: TApiV1Authentication,
-  routeType: ApiV1RouteTypeEnum
+  routeType: ApiV1RouteTypeEnum,
+  customRateLimitConfig?: TRateLimitConfig
 ): Promise<Response | null> => {
   try {
     if (authentication) {
       if ("user" in authentication) {
         // Session-based authentication for integration routes
-        await applyRateLimit(rateLimitConfigs.api.v1, authentication.user.id);
+        await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.v1, authentication.user.id);
       } else if ("hashedApiKey" in authentication) {
         // API key authentication for general routes
-        await applyRateLimit(rateLimitConfigs.api.v1, authentication.hashedApiKey);
+        await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.v1, authentication.hashedApiKey);
       } else {
         logger.error({ authentication }, "Unknown authentication type");
         return responses.internalServerErrorResponse("Invalid authentication configuration");
@@ -81,7 +84,7 @@ const handleRateLimiting = async (
     }
 
     if (routeType === ApiV1RouteTypeEnum.Client) {
-      await applyClientRateLimit(url);
+      await applyClientRateLimit(url, customRateLimitConfig);
     }
   } catch (error) {
     return responses.tooManyRequestsResponse(error.message);
@@ -282,7 +285,7 @@ export const withV1ApiWrapper: {
 } = <TResult extends { response: Response }, TProps = unknown>(
   params: TWithV1ApiWrapperParams<TResult, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
-  const { handler, action, targetType } = params;
+  const { handler, action, targetType, customRateLimitConfig } = params;
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     // === Audit Log Setup ===
     const saveAuditLog = action && targetType;
@@ -312,7 +315,12 @@ export const withV1ApiWrapper: {
 
     // === Rate Limiting ===
     if (isRateLimited) {
-      const rateLimitResponse = await handleRateLimiting(req.nextUrl.pathname, authentication, routeType);
+      const rateLimitResponse = await handleRateLimiting(
+        req.nextUrl.pathname,
+        authentication,
+        routeType,
+        customRateLimitConfig
+      );
       if (rateLimitResponse) return rateLimitResponse;
     }
 
