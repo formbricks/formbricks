@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
 import {
   BuildingIcon,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { logger } from "@formbricks/logger";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
@@ -50,16 +52,16 @@ export const OrganizationBreadcrumb = ({
   const currentOrganization = organizations.find((org) => org.id === currentOrganizationId);
 
   if (!currentOrganization) {
-    return null;
+    const errorMessage = `Organization not found for organization id: ${currentOrganizationId}`;
+    logger.error(errorMessage);
+    Sentry.captureException(new Error(errorMessage));
+    return;
   }
 
   const handleOrganizationChange = (organizationId: string) => {
+    if (organizationId === currentOrganizationId) return;
     setIsLoading(true);
-    try {
-      router.push(`/organizations/${organizationId}/`);
-    } finally {
-      setIsLoading(false);
-    }
+    router.push(`/organizations/${organizationId}/`);
   };
 
   // Hide organization dropdown for single org setups (on-premise)

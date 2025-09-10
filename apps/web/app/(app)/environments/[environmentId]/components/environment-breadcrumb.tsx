@@ -26,11 +26,8 @@ export const EnvironmentBreadcrumb = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  if (!currentEnvironment) {
-    return null;
-  }
-
   const handleEnvironmentChange = (environmentId: string) => {
+    if (environmentId === currentEnvironment.id) return;
     setIsLoading(true);
     router.push(`/environments/${environmentId}/`);
   };

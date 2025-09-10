@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
+import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -92,11 +93,14 @@ export const ProjectBreadcrumb = ({
   const currentProject = projects.find((project) => project.id === currentProjectId);
 
   if (!currentProject) {
-    logger.error(`Project not found for project id: ${currentProjectId}`);
+    const errorMessage = `Project not found for project id: ${currentProjectId}`;
+    logger.error(errorMessage);
+    Sentry.captureException(new Error(errorMessage));
     return;
   }
 
   const handleProjectChange = (projectId: string) => {
+    if (projectId === currentProjectId) return;
     setIsLoading(true);
     router.push(`/projects/${projectId}/`);
   };
