@@ -149,7 +149,7 @@ export function FileInput({
       const fileBuffer = await file.arrayBuffer();
       const bufferKB = fileBuffer.byteLength / 1024;
       if (bufferKB > maxSizeInMB * 1024) {
-        alert(t("errors.file_input.file_size_exceeded", { maxSizeInMB }));
+        alert(t("errors.file_input.file_size_exceeded_alert", { maxSizeInMB }));
         return false;
       }
     }

@@ -47,7 +47,9 @@ export function LanguageSwitch({
 
   const handleI18nLanguage = (languageCode: string) => {
     const calculatedLanguage = getI18nLanguage(languageCode, surveyLanguages);
-    i18n.changeLanguage(calculatedLanguage);
+    if (i18n.language !== calculatedLanguage) {
+      i18n.changeLanguage(calculatedLanguage);
+    }
   };
 
   const changeLanguage = (languageCode: string) => {
