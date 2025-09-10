@@ -93,7 +93,7 @@ describe("WelcomeCard", () => {
 
     render(<WelcomeCard {...propsWithLogo} />);
 
-    const logo = screen.getByAltText("Company Logo");
+    const logo = screen.getByAltText("common.company_logo");
     expect(logo).toBeInTheDocument();
     expect(logo).toHaveAttribute("src", "https://example.com/logo.png");
   });

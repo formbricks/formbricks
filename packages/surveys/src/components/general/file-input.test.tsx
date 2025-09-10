@@ -114,7 +114,7 @@ describe("FileInput", () => {
     );
     expect(screen.getByText("fileA.txt")).toBeInTheDocument();
     expect(screen.getByText("fileB.txt")).toBeInTheDocument();
-    const deleteBtn = screen.getByLabelText("Delete file fileA.txt");
+    const deleteBtn = screen.getByLabelText(/common.delete_file fileA.txt/);
     const svg = deleteBtn.querySelector("svg");
     if (!svg) throw new Error("Delete SVG not found");
     fireEvent.click(svg);
@@ -340,7 +340,7 @@ describe("FileInput", () => {
       />
     );
 
-    const deleteBtn = screen.getByLabelText("Delete file fileA.txt");
+    const deleteBtn = screen.getByLabelText(/common.delete_file fileA.txt/);
     const svg = deleteBtn.querySelector("svg");
     if (!svg) throw new Error("Delete SVG not found");
     fireEvent.click(svg);

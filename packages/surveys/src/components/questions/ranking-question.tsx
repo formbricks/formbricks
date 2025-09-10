@@ -11,8 +11,8 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type {
   TSurveyQuestionChoice,
@@ -51,7 +51,7 @@ export function RankingQuestion({
   currentQuestionId,
   isBackButtonHidden,
 }: Readonly<RankingQuestionProps>) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {

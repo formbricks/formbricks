@@ -201,7 +201,7 @@ describe("PictureSelectionQuestion", () => {
   test("prevents default action when clicking image expand link", async () => {
     render(<PictureSelectionQuestion {...mockProps} />);
 
-    const links = screen.getAllByTitle("Open in new tab");
+    const links = screen.getAllByTitle("common.open_in_new_tab");
     const mockStopPropagation = vi.fn();
 
     // Simulate clicking the link but prevent the event from propagating

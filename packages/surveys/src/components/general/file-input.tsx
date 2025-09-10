@@ -303,7 +303,7 @@ export function FileInput({
               <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
                 <button
                   type="button"
-                  aria-label={t("common.delete_file", { fileName })}
+                  aria-label={`${t("common.delete_file")} ${fileName}`}
                   className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
