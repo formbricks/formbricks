@@ -130,13 +130,23 @@ jobs:
 
       - name: Wait for MinIO and create S3 bucket
         run: |
+          set -euo pipefail
+
+          echo "Waiting for MinIO to be ready..."
+          ready=0
           for i in {1..60}; do
             if curl -fsS http://localhost:9000/minio/health/live >/dev/null; then
-              echo "MinIO is up"
+              echo "MinIO is up after ${i} seconds"
+              ready=1
               break
             fi
             sleep 1
           done
+
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::MinIO did not become ready within 60 seconds"
+            exit 1
+          fi
 
           mc alias set local http://localhost:9000 minioadmin minioadmin
           mc mb --ignore-existing local/formbricks-e2e
