@@ -351,7 +351,11 @@ EOT
     sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$minio_service_password\"|" docker-compose.yml
     sed -i "s|# S3_REGION:|S3_REGION: \"us-east-1\"|" docker-compose.yml
     sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$minio_bucket_name\"|" docker-compose.yml
-    sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"https://$files_domain\"|" docker-compose.yml
+    if [[ $https_setup == "y" ]]; then
+      sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"https://$files_domain\"|" docker-compose.yml
+    else
+      sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"http://$files_domain\"|" docker-compose.yml
+    fi
     sed -i "s|S3_FORCE_PATH_STYLE: 0|S3_FORCE_PATH_STYLE: 1|" docker-compose.yml
     echo "🚗 MinIO S3 configuration updated successfully!"
   fi
