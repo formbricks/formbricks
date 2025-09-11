@@ -312,9 +312,6 @@ EOT
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
   sed -i "/NEXTAUTH_URL:/s|NEXTAUTH_URL:.*|NEXTAUTH_URL: \"https://$domain_name\"|" docker-compose.yml
 
-  # Use experimental Formbricks image for this setup
-  sed -i "s|image: ghcr.io/formbricks/formbricks:latest|image: ghcr.io/formbricks/formbricks-experimental:feat-add-minio-config|" docker-compose.yml
-
   nextauth_secret=$(openssl rand -hex 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
   echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
@@ -498,6 +495,14 @@ EOT
       - ./acme.json:/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
 EOF
+
+    # Downgrade MinIO router to plain HTTP when HTTPS is not configured
+    if [[ $https_setup != "y" ]]; then
+      sed -i 's/traefik.http.routers.minio-s3.entrypoints=websecure/traefik.http.routers.minio-s3.entrypoints=web/' "$services_snippet_file"
+      sed -i '/traefik.http.routers.minio-s3.tls=true/d' "$services_snippet_file"
+      sed -i '/traefik.http.routers.minio-s3.tls.certresolver=default/d' "$services_snippet_file"
+      sed -i "s|accesscontrolalloworiginlist=https://$domain_name|accesscontrolalloworiginlist=http://$domain_name|" "$services_snippet_file"
+    fi
   else
     cat > "$services_snippet_file" << EOF
 
