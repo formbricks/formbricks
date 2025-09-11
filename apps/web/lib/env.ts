@@ -55,7 +55,10 @@ export const env = createEnv({
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
     OPENTELEMETRY_LISTENER_URL: z.string().optional(),
-    REDIS_URL: z.string().min(1, "REDIS_URL is required for caching, rate limiting, and audit logging"),
+    REDIS_URL:
+      process.env.NODE_ENV === "test"
+        ? z.string().optional()
+        : z.string().url("REDIS_URL is required for caching, rate limiting, and audit logging"),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     POSTHOG_API_HOST: z.string().optional(),
     POSTHOG_API_KEY: z.string().optional(),
