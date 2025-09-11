@@ -56,7 +56,7 @@
     "prisma": "6.14.0",
     "prisma-json-types-generator": "3.5.4",
     "ts-node": "10.9.2",
-    "vite": "6.3.5",
+    "vite": "6.3.6",
     "vite-plugin-dts": "4.5.3"
   }
 }

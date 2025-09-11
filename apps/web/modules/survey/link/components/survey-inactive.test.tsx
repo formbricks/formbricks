@@ -121,15 +121,6 @@ describe("SurveyInactive", () => {
     expect(screen.getByTestId("mock-image")).toBeInTheDocument();
   });
 
-  test("renders scheduled status correctly", async () => {
-    const Component = await SurveyInactive({ status: "scheduled" });
-    render(Component);
-
-    expect(screen.getByText("common.survey scheduled.")).toBeInTheDocument();
-    expect(screen.getByTestId("button")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-image")).toBeInTheDocument();
-  });
-
   test("shows branding when linkSurveyBranding is true", async () => {
     const Component = await SurveyInactive({ status: "paused", project: { linkSurveyBranding: true } });
     render(Component);

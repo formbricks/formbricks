@@ -32,8 +32,6 @@ const mockSurvey: TSurvey = {
   createdBy: null,
   segment: null,
   displayPercentage: null,
-  closeOnDate: null,
-  runOnDate: null,
 } as unknown as TSurvey;
 
 describe("AddEndingCardButton", () => {

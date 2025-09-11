@@ -214,12 +214,10 @@ const createMockSurvey = (): TSurvey =>
       showResponseCount: false,
     },
     autoClose: null,
-    closeOnDate: null,
     delay: 0,
     displayOption: "displayOnce",
     recontactDays: null,
     displayLimit: null,
-    runOnDate: null,
     questions: [
       {
         id: "question1",

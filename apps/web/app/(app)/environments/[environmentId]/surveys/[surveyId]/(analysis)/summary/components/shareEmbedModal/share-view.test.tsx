@@ -259,8 +259,6 @@ const mockSurvey = {
   autoClose: null,
   delay: 0,
   autoComplete: null,
-  runOnDate: null,
-  closeOnDate: null,
   singleUse: { enabled: false, isEncrypted: false },
   styling: null,
 } as any;

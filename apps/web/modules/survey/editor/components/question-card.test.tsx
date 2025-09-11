@@ -143,7 +143,6 @@ const baseSurvey = {
   productOverwrites: null,
   singleUse: null,
   surveyClosedMessage: null,
-  closeOnDate: null,
   projectOverwrites: null,
   hiddenFields: { enabled: false },
 } as unknown as TSurvey;

@@ -212,7 +212,6 @@ model TagsOnResponses {
 
 enum SurveyStatus {
   draft
-  scheduled
   inProgress
   paused
   completed
@@ -367,8 +366,6 @@ model Survey {
   autoClose           Int?
   autoComplete        Int?
   delay               Int                     @default(0)
-  runOnDate           DateTime?
-  closeOnDate         DateTime?
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
   segmentId           String?

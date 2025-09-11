@@ -143,7 +143,6 @@ const mockSurvey = {
   segment: null,
   recontactDays: null,
   autoComplete: null,
-  closeOnDate: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   displayOption: "displayOnce",

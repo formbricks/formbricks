@@ -86,8 +86,6 @@ const mockSurvey = {
   autoClose: null,
   delay: 0,
   autoComplete: null,
-  runOnDate: null,
-  closeOnDate: null,
 } as unknown as TSurvey;
 
 const mockProject = {

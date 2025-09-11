@@ -3,7 +3,6 @@
 import { cn } from "@/lib/cn";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
-import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Slider } from "@/modules/ui/components/slider";
@@ -31,8 +30,6 @@ export const ResponseOptionsCard = ({
   const { t } = useTranslate();
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
-  const [runOnDateToggle, setRunOnDateToggle] = useState(false);
-  const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
   const [recaptchaToggle, setRecaptchaToggle] = useState(localSurvey.recaptcha?.enabled ?? false);
@@ -45,37 +42,11 @@ export const ResponseOptionsCard = ({
     subheading: t("environments.surveys.edit.survey_completed_subheading"),
   });
 
-  const [runOnDate, setRunOnDate] = useState<Date | null>(null);
-  const [closeOnDate, setCloseOnDate] = useState<Date | null>(null);
   const [recaptchaThreshold, setRecaptchaThreshold] = useState<number>(localSurvey.recaptcha?.threshold ?? 0);
 
   const isPinProtectionEnabled = localSurvey.pin !== null;
 
   const [verifyProtectWithPinError, setVerifyProtectWithPinError] = useState<string | null>(null);
-
-  const handleRunOnDateToggle = () => {
-    if (runOnDateToggle) {
-      setRunOnDateToggle(false);
-      if (localSurvey.runOnDate) {
-        setRunOnDate(null);
-        setLocalSurvey({ ...localSurvey, runOnDate: null });
-      }
-    } else {
-      setRunOnDateToggle(true);
-    }
-  };
-
-  const handleCloseOnDateToggle = () => {
-    if (closeOnDateToggle) {
-      setCloseOnDateToggle(false);
-      if (localSurvey.closeOnDate) {
-        setCloseOnDate(null);
-        setLocalSurvey({ ...localSurvey, closeOnDate: null });
-      }
-    } else {
-      setCloseOnDateToggle(true);
-    }
-  };
 
   const handleProtectSurveyWithPinToggle = () => {
     setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : "1234" }));
@@ -126,18 +97,6 @@ export const ResponseOptionsCard = ({
     });
   };
 
-  const handleRunOnDateChange = (date: Date) => {
-    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
-    setRunOnDate(utcDate);
-    setLocalSurvey({ ...localSurvey, runOnDate: utcDate ?? null });
-  };
-
-  const handleCloseOnDateChange = (date: Date) => {
-    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
-    setCloseOnDate(utcDate);
-    setLocalSurvey({ ...localSurvey, closeOnDate: utcDate ?? null });
-  };
-
   const handleClosedSurveyMessageChange = ({
     heading,
     subheading,
@@ -146,7 +105,6 @@ export const ResponseOptionsCard = ({
     subheading?: string;
   }) => {
     const message = {
-      enabled: closeOnDateToggle,
       heading: heading ?? surveyClosedMessage.heading,
       subheading: subheading ?? surveyClosedMessage.subheading,
     };
@@ -166,16 +124,6 @@ export const ResponseOptionsCard = ({
         subheading: localSurvey.surveyClosedMessage.subheading ?? surveyClosedMessage.subheading,
       });
       setSurveyClosedMessageToggle(true);
-    }
-
-    if (localSurvey.runOnDate) {
-      setRunOnDate(localSurvey.runOnDate);
-      setRunOnDateToggle(true);
-    }
-
-    if (localSurvey.closeOnDate) {
-      setCloseOnDate(localSurvey.closeOnDate);
-      setCloseOnDateToggle(true);
     }
   }, [localSurvey, surveyClosedMessage.heading, surveyClosedMessage.subheading]);
 
@@ -294,34 +242,6 @@ export const ResponseOptionsCard = ({
                 {t("environments.surveys.edit.completed_responses")}
               </p>
             </label>
-          </AdvancedOptionToggle>
-          {/* Run Survey on Date */}
-          <AdvancedOptionToggle
-            htmlId="runOnDate"
-            isChecked={runOnDateToggle}
-            onToggle={handleRunOnDateToggle}
-            title={t("environments.surveys.edit.release_survey_on_date")}
-            description={t(
-              "environments.surveys.edit.automatically_release_the_survey_at_the_beginning_of_the_day_utc"
-            )}
-            childBorder={true}>
-            <div className="p-4">
-              <DatePicker date={runOnDate} updateSurveyDate={handleRunOnDateChange} />
-            </div>
-          </AdvancedOptionToggle>
-          {/* Close Survey on Date */}
-          <AdvancedOptionToggle
-            htmlId="closeOnDate"
-            isChecked={closeOnDateToggle}
-            onToggle={handleCloseOnDateToggle}
-            title={t("environments.surveys.edit.close_survey_on_date")}
-            description={t(
-              "environments.surveys.edit.automatically_closes_the_survey_at_the_beginning_of_the_day_utc"
-            )}
-            childBorder={true}>
-            <div className="p-4">
-              <DatePicker date={closeOnDate} updateSurveyDate={handleCloseOnDateChange} />
-            </div>
           </AdvancedOptionToggle>
 
           {/* recaptcha for spam protection */}

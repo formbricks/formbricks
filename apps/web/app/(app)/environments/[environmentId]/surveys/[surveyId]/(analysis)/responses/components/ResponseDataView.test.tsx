@@ -77,7 +77,6 @@ const mockSurvey = {
   updatedAt: new Date(),
   environmentId: "env1",
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   displayOption: "displayOnce",
   recontactDays: null,
