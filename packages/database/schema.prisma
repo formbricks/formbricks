@@ -228,17 +228,15 @@ enum DisplayStatus {
 /// @property id - Unique identifier for the display event
 /// @property survey - The survey that was displayed
 /// @property contact - The contact who saw the survey
-/// @property status - Whether the survey was just seen or responded to
 /// @property response - The associated response if one exists
 model Display {
-  id        String         @id @default(cuid())
-  createdAt DateTime       @default(now()) @map(name: "created_at")
-  updatedAt DateTime       @updatedAt @map(name: "updated_at")
-  survey    Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now()) @map(name: "created_at")
+  updatedAt DateTime  @updatedAt @map(name: "updated_at")
+  survey    Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId  String
-  contact   Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId String?
-  status    DisplayStatus?
   response  Response?
 
   @@index([surveyId])

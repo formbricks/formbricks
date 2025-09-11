@@ -245,6 +245,10 @@ export const surveys = {
       question: "This is my Ranking Question",
       choices: ["Work", "Money", "Travel", "Family", "Friends"],
     },
+    endingCard: {
+      headline: "This is my Thank You Card Headline!",
+      description: "This is my Thank you Card Description!",
+    },
   },
   germanCreate: {
     next: "Weiter",
@@ -317,6 +321,11 @@ export const surveys = {
         zip: "Adresse",
         country: "Adresse",
       },
+    },
+    endingCard: {
+      headline: "Dies ist meine Dankeskarte Überschrift!", // German translation
+      description: "Dies ist meine Beschreibung zur Dankeskarte!", // German translation
+      buttonLabel: "Erstellen Sie Ihre eigene Umfrage",
     },
     ranking: {
       question: "Was ist für Sie im Leben am wichtigsten?",
