@@ -126,13 +126,11 @@ export const mockUser: TUser = {
   updatedAt: currentDate,
   twoFactorEnabled: false,
   identityProvider: "google",
-  objective: "improve_user_retention",
   notificationSettings: {
     alert: {},
 
     unsubscribedOrganizationIds: [],
   },
-  role: "other",
   locale: "en-US",
   lastLoginAt: new Date(),
   isActive: true,

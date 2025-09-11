@@ -217,11 +217,6 @@ enum SurveyStatus {
   completed
 }
 
-enum DisplayStatus {
-  seen
-  responded
-}
-
 /// Records when a survey is shown to a user.
 /// Tracks survey display history and response status.
 ///
@@ -809,39 +804,12 @@ model Account {
   @@index([userId])
 }
 
-enum Role {
-  project_manager
-  engineer
-  founder
-  marketing_specialist
-  other
-}
-
-enum Objective {
-  increase_conversion
-  improve_user_retention
-  increase_user_adoption
-  sharpen_marketing_messaging
-  support_sales
-  other
-}
-
-enum Intention {
-  survey_user_segments
-  survey_at_specific_point_in_user_journey
-  enrich_customer_profiles
-  collect_all_user_feedback_on_one_platform
-  other
-}
-
 /// Represents a user in the Formbricks system.
 /// Central model for user authentication and profile management.
 ///
 /// @property id - Unique identifier for the user
 /// @property name - Display name of the user
 /// @property email - User's email address
-/// @property role - User's professional role
-/// @property objective - User's main goal with Formbricks
 /// @property twoFactorEnabled - Whether 2FA is active
 /// @property memberships - Organizations the user belongs to
 /// @property notificationSettings - User's notification preferences
@@ -864,8 +832,6 @@ model User {
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
-  role                      Role?
-  objective                 Objective?
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
   /// [Locale]

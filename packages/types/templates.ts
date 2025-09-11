@@ -7,7 +7,6 @@ import {
   ZSurveyStyling,
   ZSurveyWelcomeCard,
 } from "./surveys/types";
-import { ZUserObjective } from "./user";
 
 export const ZTemplateRole = z.enum([
   "productManager",
@@ -25,7 +24,6 @@ export const ZTemplate = z.object({
   role: ZTemplateRole.optional(),
   channels: z.array(z.enum(["link", "app", "website"])).optional(),
   industries: z.array(z.enum(["eCommerce", "saas", "other"])).optional(),
-  objectives: z.array(ZUserObjective).optional(),
   preset: z.object({
     name: z.string(),
     welcomeCard: ZSurveyWelcomeCard,
