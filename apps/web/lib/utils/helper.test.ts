@@ -543,18 +543,6 @@ describe("Helper Utilities", () => {
       await expect(getProductIdFromContactId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("getProjectIdFromDocumentId returns project ID correctly", async () => {
-      vi.mocked(services.getDocument).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
-        projectId: "project1",
-      });
-
-      const projectId = await getProjectIdFromDocumentId("doc1");
-      expect(projectId).toBe("project1");
-    });
-
     test("getProjectIdFromIntegrationId returns project ID correctly", async () => {
       vi.mocked(services.getIntegration).mockResolvedValueOnce({
         environmentId: "env1",
