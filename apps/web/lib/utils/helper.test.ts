@@ -2,7 +2,6 @@ import * as services from "@/lib/utils/services";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  getEnvironmentIdFromInsightId,
   getEnvironmentIdFromResponseId,
   getEnvironmentIdFromSegmentId,
   getEnvironmentIdFromSurveyId,
@@ -11,9 +10,7 @@ import {
   getOrganizationIdFromActionClassId,
   getOrganizationIdFromApiKeyId,
   getOrganizationIdFromContactId,
-  getOrganizationIdFromDocumentId,
   getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromInsightId,
   getOrganizationIdFromIntegrationId,
   getOrganizationIdFromInviteId,
   getOrganizationIdFromLanguageId,
@@ -28,9 +25,7 @@ import {
   getProductIdFromContactId,
   getProjectIdFromActionClassId,
   getProjectIdFromContactId,
-  getProjectIdFromDocumentId,
   getProjectIdFromEnvironmentId,
-  getProjectIdFromInsightId,
   getProjectIdFromIntegrationId,
   getProjectIdFromLanguageId,
   getProjectIdFromQuotaId,
@@ -58,8 +53,6 @@ vi.mock("@/lib/utils/services", () => ({
   getInvite: vi.fn(),
   getLanguage: vi.fn(),
   getTeam: vi.fn(),
-  getInsight: vi.fn(),
-  getDocument: vi.fn(),
   getTag: vi.fn(),
 }));
 
@@ -541,18 +534,6 @@ describe("Helper Utilities", () => {
     test("getProductIdFromContactId throws error when contact not found", async () => {
       vi.mocked(services.getContact).mockResolvedValueOnce(null);
       await expect(getProductIdFromContactId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("getProjectIdFromDocumentId returns project ID correctly", async () => {
-      vi.mocked(services.getDocument).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
-        projectId: "project1",
-      });
-
-      const projectId = await getProjectIdFromDocumentId("doc1");
-      expect(projectId).toBe("project1");
     });
 
     test("getProjectIdFromIntegrationId returns project ID correctly", async () => {
