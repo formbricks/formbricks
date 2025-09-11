@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
+import { Uploader } from "./components/uploader";
 import { FileInput } from "./index";
 
 vi.mock("react-hot-toast", () => ({
@@ -23,6 +24,15 @@ vi.mock("./lib/utils", () => ({
   checkForYoutubePrivacyMode: vi.fn().mockReturnValue(false),
 }));
 
+vi.mock("./components/uploader", () => ({
+  Uploader: vi.fn(({ children, disabled, ...props }) => (
+    <div data-testid="uploader-mock" {...props}>
+      {children || "Click or drag to upload files."}
+      <input data-testid="upload-file-input" type="file" style={{ display: "none" }} disabled={disabled} />
+    </div>
+  )),
+}));
+
 describe("FileInput", () => {
   afterEach(() => {
     cleanup();
@@ -34,6 +44,7 @@ describe("FileInput", () => {
     allowedFileExtensions: ["jpg", "png", "pdf"] as TAllowedFileExtension[],
     environmentId: "env-123",
     onFileUpload: vi.fn(),
+    isStorageConfigured: true,
   };
 
   test("renders uploader component when no files are selected", () => {
@@ -66,11 +77,18 @@ describe("FileInput", () => {
 
     render(<FileInput {...defaultProps} />);
 
-    const input = screen.getByTestId("upload-file-input");
+    // Get the handleUpload function passed to the mocked Uploader
+    const uploaderCall = vi.mocked(Uploader).mock.calls[0][0];
+    const handleUpload = uploaderCall.handleUpload;
+
+    // Create test file and mock getAllowedFiles to return it
     const file = new File(["dummy"], "----.png", { type: "image/png" });
     const utils = await import("./lib/utils");
     vi.mocked(utils.getAllowedFiles as any).mockResolvedValueOnce([file]);
-    await userEvent.upload(input, file);
+
+    // Call the handleUpload function directly
+    await handleUpload([file]);
+
     // allow async handlers to finish
     await new Promise((r) => setTimeout(r, 0));
 
@@ -100,5 +118,56 @@ describe("FileInput", () => {
 
     const fileInput = screen.getByTestId("upload-file-input");
     expect(fileInput).toBeDisabled();
+  });
+
+  describe("isStorageConfigured functionality", () => {
+    test("passes isStorageConfigured=true to Uploader component", () => {
+      render(<FileInput {...defaultProps} isStorageConfigured={true} />);
+
+      expect(vi.mocked(Uploader)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isStorageConfigured: true,
+        }),
+        undefined
+      );
+    });
+
+    test("passes isStorageConfigured=false to Uploader component", () => {
+      render(<FileInput {...defaultProps} isStorageConfigured={false} />);
+
+      expect(vi.mocked(Uploader)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isStorageConfigured: false,
+        }),
+        undefined
+      );
+    });
+
+    test("passes correct props to Uploader including isStorageConfigured", () => {
+      render(<FileInput {...defaultProps} isStorageConfigured={false} disabled={true} />);
+
+      expect(vi.mocked(Uploader)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isStorageConfigured: false,
+          disabled: true,
+          multiple: false,
+        }),
+        undefined
+      );
+    });
+
+    test("passes uploadMore=true to Uploader when multiple files are present", () => {
+      const fileUrls = ["https://example.com/image1.jpg"];
+
+      render(<FileInput {...defaultProps} isStorageConfigured={true} multiple={true} fileUrl={fileUrls} />);
+
+      // Check that the second call (uploadMore) has the correct props
+      const calls = vi.mocked(Uploader).mock.calls;
+      expect(calls.length).toBeGreaterThan(1);
+      expect(calls[1][0]).toMatchObject({
+        isStorageConfigured: true,
+        uploadMore: true,
+      });
+    });
   });
 });

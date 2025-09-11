@@ -28,6 +28,7 @@ interface FileUploadFormProps {
   isInvalid: boolean;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const FileUploadQuestionForm = ({
@@ -41,6 +42,7 @@ export const FileUploadQuestionForm = ({
   setSelectedLanguageCode,
   isFormbricksCloud,
   locale,
+  isStorageConfigured = true,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
   const { t } = useTranslate();
@@ -142,6 +144,7 @@ export const FileUploadQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -158,6 +161,7 @@ export const FileUploadQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>

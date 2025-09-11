@@ -12,6 +12,10 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { EmailCustomizationSettings } from "./email-customization-settings";
 
+vi.mock("@/lib/constants", () => ({
+  IS_STORAGE_CONFIGURED: true,
+}));
+
 vi.mock("@/modules/ee/whitelabel/email-customization/actions", () => ({
   removeOrganizationEmailLogoUrlAction: vi.fn(),
   sendTestEmailAction: vi.fn(),
@@ -41,6 +45,7 @@ const defaultProps = {
     name: "Test User",
   } as TUser,
   fbLogoUrl: "https://example.com/fallback-logo.png",
+  isStorageConfigured: true,
 };
 
 describe("EmailCustomizationSettings", () => {

@@ -20,6 +20,7 @@ interface AddressQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const AddressQuestionForm = ({
@@ -31,6 +32,7 @@ export const AddressQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
 }: AddressQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
   const { t } = useTranslate();
@@ -104,6 +106,7 @@ export const AddressQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
 
       <div ref={parent}>
@@ -121,6 +124,7 @@ export const AddressQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>
@@ -151,6 +155,7 @@ export const AddressQuestionForm = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           locale={locale}
+          isStorageConfigured={isStorageConfigured}
         />
       </div>
     </form>

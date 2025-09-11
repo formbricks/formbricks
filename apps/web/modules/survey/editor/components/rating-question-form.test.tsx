@@ -131,6 +131,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -185,6 +186,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -240,6 +242,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -295,6 +298,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -354,6 +358,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -376,6 +381,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -432,6 +438,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -452,6 +459,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -507,6 +515,7 @@ describe("RatingQuestionForm", () => {
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 

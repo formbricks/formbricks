@@ -32,6 +32,7 @@ import { TI18nString, TSurvey, TSurveyMetadata } from "@formbricks/types/surveys
 interface LinkSettingsTabProps {
   isReadOnly: boolean;
   locale: string;
+  isStorageConfigured: boolean;
 }
 
 interface LinkSettingsFormData {
@@ -40,7 +41,7 @@ interface LinkSettingsFormData {
   ogImage?: string;
 }
 
-export const LinkSettingsTab = ({ isReadOnly, locale }: LinkSettingsTabProps) => {
+export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: LinkSettingsTabProps) => {
   const { t } = useTranslate();
   const { survey } = useSurvey();
   const enabledLanguages = getEnabledLanguages(survey.languages);
@@ -236,6 +237,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale }: LinkSettingsTabProps) =>
                     fileUrl={field.value}
                     maxSizeInMB={5}
                     disabled={isReadOnly}
+                    isStorageConfigured={isStorageConfigured}
                   />
                 </FormControl>
                 <FormDescription>

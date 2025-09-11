@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { FileUploadError, handleFileUpload } from "@/modules/storage/file-upload";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
+import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 import { useTranslate } from "@tolgee/react";
 import { FileIcon, XIcon } from "lucide-react";
 import Image from "next/image";
@@ -31,6 +32,7 @@ interface FileInputProps {
   maxSizeInMB?: number;
   isVideoAllowed?: boolean;
   disabled?: boolean;
+  isStorageConfigured: boolean;
 }
 
 interface SelectedFile {
@@ -51,6 +53,7 @@ export const FileInput = ({
   maxSizeInMB,
   isVideoAllowed = false,
   disabled = false,
+  isStorageConfigured = true,
 }: FileInputProps) => {
   const { t } = useTranslate();
   const options = [
@@ -64,6 +67,11 @@ export const FileInput = ({
   const [videoUrlTemp, setVideoUrlTemp] = useState(videoUrl ?? "");
 
   const handleUpload = async (files: File[]) => {
+    if (!isStorageConfigured) {
+      showStorageNotConfiguredToast();
+      return;
+    }
+
     if (!multiple && files.length > 1) {
       files = [files[0]];
       toast.error(t("common.only_one_file_allowed"));
@@ -138,6 +146,11 @@ export const FileInput = ({
   };
 
   const handleUploadMore = async (files: File[]) => {
+    if (!isStorageConfigured) {
+      showStorageNotConfiguredToast();
+      return;
+    }
+
     const allowedFiles = await getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
     if (allowedFiles.length === 0) {
       return;
@@ -290,6 +303,7 @@ export const FileInput = ({
                       handleUpload={handleUploadMore}
                       uploadMore={true}
                       disabled={disabled}
+                      isStorageConfigured={isStorageConfigured}
                     />
                   </div>
                 ) : (
@@ -351,6 +365,7 @@ export const FileInput = ({
                   multiple={multiple}
                   handleUpload={handleUpload}
                   disabled={disabled}
+                  isStorageConfigured={isStorageConfigured}
                 />
               )}
             </div>

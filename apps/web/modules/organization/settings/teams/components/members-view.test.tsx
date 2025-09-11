@@ -20,6 +20,7 @@ vi.mock("@/app/(app)/environments/[environmentId]/settings/components/SettingsCa
 vi.mock("@/lib/constants", () => ({
   INVITE_DISABLED: false,
   IS_FORMBRICKS_CLOUD: true,
+  IS_STORAGE_CONFIGURED: true,
 }));
 
 vi.mock("@/modules/organization/settings/teams/components/edit-memberships/organization-actions", () => ({

@@ -31,6 +31,7 @@ interface MatrixSortableItemProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const MatrixSortableItem = ({
@@ -47,6 +48,7 @@ export const MatrixSortableItem = ({
   setSelectedLanguageCode,
   isInvalid,
   locale,
+  isStorageConfigured,
 }: MatrixSortableItemProps): JSX.Element => {
   const { t } = useTranslate();
 
@@ -79,6 +81,7 @@ export const MatrixSortableItem = ({
           isInvalid={isInvalid}
           locale={locale}
           onKeyDown={onKeyDown}
+          isStorageConfigured={isStorageConfigured}
         />
         {canDelete && (
           <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>

@@ -1,12 +1,13 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
-import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@/lib/constants";
+import { IS_STORAGE_CONFIGURED, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@/lib/constants";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EditLogo } from "@/modules/projects/settings/look/components/edit-logo";
 import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/project";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -32,6 +33,11 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
       <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation environmentId={params.environmentId} activeId="look" />
       </PageHeader>
+      {!IS_STORAGE_CONFIGURED && (
+        <Alert variant="warning">
+          <AlertDescription>{t("common.storage_not_configured")}</AlertDescription>
+        </Alert>
+      )}
       <SettingsCard
         title={t("environments.project.look.theme")}
         className={cn(!isReadOnly && "max-w-7xl")}
@@ -42,12 +48,18 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
           colors={SURVEY_BG_COLORS}
           isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
           isReadOnly={isReadOnly}
+          isStorageConfigured={IS_STORAGE_CONFIGURED}
         />
       </SettingsCard>
       <SettingsCard
         title={t("common.logo")}
         description={t("environments.project.look.logo_settings_description")}>
-        <EditLogo project={project} environmentId={params.environmentId} isReadOnly={isReadOnly} />
+        <EditLogo
+          project={project}
+          environmentId={params.environmentId}
+          isReadOnly={isReadOnly}
+          isStorageConfigured={IS_STORAGE_CONFIGURED}
+        />
       </SettingsCard>
       <SettingsCard
         title={t("environments.project.look.app_survey_placement")}

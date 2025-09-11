@@ -41,6 +41,7 @@ interface SurveyMenuBarProps {
   isCxMode: boolean;
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
+  isStorageConfigured: boolean;
 }
 
 export const SurveyMenuBar = ({
@@ -57,6 +58,7 @@ export const SurveyMenuBar = ({
   isCxMode,
   locale,
   setIsCautionDialogOpen,
+  isStorageConfigured = true,
 }: SurveyMenuBarProps) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -331,6 +333,22 @@ export const SurveyMenuBar = ({
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+        {!isStorageConfigured && (
+          <div>
+            <Alert variant="warning" size="small">
+              <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
+              <AlertButton className="flex items-center justify-center">
+                <a
+                  className="flex h-full w-full items-center justify-center !bg-white"
+                  href="https://formbricks.com/docs/self-hosting/configuration/file-uploads"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  <span>{t("common.learn_more")}</span>
+                </a>
+              </AlertButton>
+            </Alert>
+          </div>
+        )}
         {responseCount > 0 && (
           <div>
             <Alert variant="warning" size="small">

@@ -56,6 +56,7 @@ describe("ConsentQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
+        isStorageConfigured={true}
       />
     );
 

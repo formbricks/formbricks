@@ -59,6 +59,7 @@ const defaultProps = {
   isFormbricksCloud: true,
   environmentId: "env-1",
   membershipRole: "owner" as TOrganizationRole,
+  isStorageConfigured: true,
 };
 
 describe("InviteMemberModal", () => {

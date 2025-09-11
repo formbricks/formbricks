@@ -47,6 +47,7 @@ interface SurveyEditorProps {
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
+  isStorageConfigured: boolean;
 }
 
 export const SurveyEditor = ({
@@ -73,6 +74,7 @@ export const SurveyEditor = ({
   isSurveyFollowUpsAllowed = false,
   userEmail,
   teamMemberDetails,
+  isStorageConfigured,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -166,6 +168,7 @@ export const SurveyEditor = ({
         isCxMode={isCxMode}
         locale={locale}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
+        isStorageConfigured={isStorageConfigured}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
@@ -198,6 +201,7 @@ export const SurveyEditor = ({
               locale={locale}
               responseCount={responseCount}
               setIsCautionDialogOpen={setIsCautionDialogOpen}
+              isStorageConfigured={isStorageConfigured}
             />
           )}
 
@@ -214,6 +218,7 @@ export const SurveyEditor = ({
               setLocalStylingChanges={setLocalStylingChanges}
               isUnsplashConfigured={isUnsplashConfigured}
               isCxMode={isCxMode}
+              isStorageConfigured={isStorageConfigured}
             />
           )}
 
