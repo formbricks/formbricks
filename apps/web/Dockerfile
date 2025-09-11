@@ -61,6 +61,7 @@ RUN pnpm build --filter=@formbricks/database
 # This mounts the secrets only during this build step without storing them in layers
 RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
+    --mount=type=secret,id=redis_url \
     --mount=type=secret,id=sentry_auth_token \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 

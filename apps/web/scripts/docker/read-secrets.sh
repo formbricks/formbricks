@@ -6,7 +6,7 @@ if [ -f "/run/secrets/database_url" ]; then
   DATABASE_URL=${DATABASE_URL%$'\n'}
   export DATABASE_URL
 else
-  echo "DATABASE_URL secret not found. Build may fail if this is required."
+  echo "DATABASE_URL secret not found. Build will fail because it is required by the application."
 fi
 
 if [ -f "/run/secrets/encryption_key" ]; then
@@ -14,7 +14,15 @@ if [ -f "/run/secrets/encryption_key" ]; then
   ENCRYPTION_KEY=${ENCRYPTION_KEY%$'\n'}
   export ENCRYPTION_KEY
 else
-  echo "ENCRYPTION_KEY secret not found. Build may fail if this is required."
+  echo "ENCRYPTION_KEY secret not found. Build will fail because it is required by the application."
+fi
+
+if [ -f "/run/secrets/redis_url" ]; then
+  IFS= read -r REDIS_URL < /run/secrets/redis_url || true
+  REDIS_URL=${REDIS_URL%$'\n'}
+  export REDIS_URL
+else
+  echo "REDIS_URL secret not found. Build will fail because it is required by the application."
 fi
 
 if [ -f "/run/secrets/sentry_auth_token" ]; then
@@ -39,6 +47,7 @@ fi
 # Verify environment variables are set before starting build
 echo "  DATABASE_URL: $([ -n "${DATABASE_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  ENCRYPTION_KEY: $([ -n "${ENCRYPTION_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
+echo "  REDIS_URL: $([ -n "${REDIS_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  SENTRY_AUTH_TOKEN: $([ -n "${SENTRY_AUTH_TOKEN:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  TARGETARCH: $([ -n "${TARGETARCH:-}" ] && printf '%s' "${TARGETARCH}" || printf '[NOT SET]')"
 
