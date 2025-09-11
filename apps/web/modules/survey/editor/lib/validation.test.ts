@@ -491,7 +491,6 @@ describe("validation.isSurveyValid", () => {
       displayOption: "displayOnce",
       displayLimit: null,
       runOnDate: null,
-      thankYouCard: { enabled: true, title: { default: "Thank you" } }, // Minimal for type check
       createdAt: new Date(),
       updatedAt: new Date(),
       segment: null,

@@ -63,7 +63,6 @@ const mockSurvey = {
   id: "survey1",
   name: "Test Survey",
   questions: [],
-  thankYouCard: { enabled: true, headline: "Thank You!" },
   hiddenFields: { enabled: true, fieldIds: [] },
   displayOption: "displayOnce",
   recontactDays: 0,

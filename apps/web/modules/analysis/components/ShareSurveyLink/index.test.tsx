@@ -99,7 +99,6 @@ const survey: TSurvey = {
   singleUse: null,
   productOverwrites: null,
   pin: null,
-  verifyEmail: null,
   attributeFilters: [],
   autoComplete: null,
   hiddenFields: { enabled: true },

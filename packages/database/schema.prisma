@@ -310,8 +310,6 @@ model SurveyAttributeFilter {
 
 enum SurveyType {
   link
-  web
-  website
   app
 }
 
@@ -340,7 +338,7 @@ model Survey {
   updatedAt           DateTime                @updatedAt @map(name: "updated_at")
   name                String
   redirectUrl         String?
-  type                SurveyType              @default(web)
+  type                SurveyType              @default(app)
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
   creator             User?                   @relation(fields: [createdBy], references: [id])

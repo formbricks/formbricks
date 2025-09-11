@@ -150,7 +150,6 @@ const mockSurvey: TSurvey = {
   status: "inProgress",
   type: "web",
   questions: [],
-  thankYouCard: { enabled: false },
   endings: [],
   languages: [],
   triggers: [],

@@ -34,7 +34,6 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   environmentId: true,
   questions: true,
   endings: true,
-  thankYouCard: true,
   hiddenFields: true,
   variables: true,
   displayOption: true,
@@ -49,7 +48,6 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   inlineTriggers: true,
-  verifyEmail: true,
   displayPercentage: true,
   welcomeCard: true,
   surveyClosedMessage: true,
@@ -60,7 +58,6 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   .partial({
     redirectUrl: true,
     endings: true,
-    thankYouCard: true,
     variables: true,
     recontactDays: true,
     displayLimit: true,
@@ -73,7 +70,6 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
     projectOverwrites: true,
     showLanguageSwitch: true,
     inlineTriggers: true,
-    verifyEmail: true,
     displayPercentage: true,
   })
   .openapi({

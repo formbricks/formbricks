@@ -220,12 +220,6 @@ const createMockSurvey = (): TSurvey =>
     recontactDays: null,
     displayLimit: null,
     runOnDate: null,
-    thankYouCard: {
-      enabled: true,
-      title: { default: "Thank you" },
-      buttonLabel: { default: "Close" },
-      buttonLink: "",
-    },
     questions: [
       {
         id: "question1",

@@ -246,7 +246,6 @@ describe("Response Processing", () => {
       displayPercentage: 100,
       styling: null,
       projectOverwrites: null,
-      verifyEmail: null,
       inlineTriggers: [],
       pin: null,
       triggers: [],

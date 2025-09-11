@@ -4452,17 +4452,6 @@ components:
         isBackButtonHidden:
           type: boolean
           description: Whether the back button is hidden
-        verifyEmail:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            message:
-              type: string
-          required:
-            - enabled
-            - message
-          description: Email verification configuration (deprecated)
         recaptcha:
           type:
             - object

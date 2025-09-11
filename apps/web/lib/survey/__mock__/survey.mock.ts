@@ -264,8 +264,6 @@ export const mockSyncSurveyOutput: SurveyMock = {
   followUps: [],
   variables: [],
   showLanguageSwitch: null,
-  thankYouCard: null,
-  verifyEmail: null,
   metadata: {},
 };
 
@@ -289,8 +287,6 @@ export const mockSurveyOutput: SurveyMock = {
   followUps: [],
   variables: [],
   showLanguageSwitch: null,
-  thankYouCard: null,
-  verifyEmail: null,
   ...baseSurveyProperties,
 };
 

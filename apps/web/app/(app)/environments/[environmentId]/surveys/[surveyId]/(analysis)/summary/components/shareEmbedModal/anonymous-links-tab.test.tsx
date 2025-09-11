@@ -146,7 +146,6 @@ describe("AnonymousLinksTab", () => {
     createdBy: null,
     status: "draft" as const,
     questions: [],
-    thankYouCard: { enabled: false },
     welcomeCard: { enabled: false },
     hiddenFields: { enabled: false },
     singleUse: {

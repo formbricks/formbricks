@@ -272,54 +272,6 @@ export const getTeam = reactCache(async (teamId: string): Promise<{ organization
   }
 });
 
-export const getInsight = reactCache(async (insightId: string): Promise<{ environmentId: string } | null> => {
-  validateInputs([insightId, ZId]);
-
-  try {
-    const insight = await prisma.insight.findUnique({
-      where: {
-        id: insightId,
-      },
-      select: {
-        environmentId: true,
-      },
-    });
-
-    return insight;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-});
-
-export const getDocument = reactCache(
-  async (documentId: string): Promise<{ environmentId: string } | null> => {
-    validateInputs([documentId, ZId]);
-
-    try {
-      const document = await prisma.document.findUnique({
-        where: {
-          id: documentId,
-        },
-        select: {
-          environmentId: true,
-        },
-      });
-
-      return document;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
-
 export const isProjectPartOfOrganization = async (
   organizationId: string,
   projectId: string

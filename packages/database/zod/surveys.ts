@@ -99,15 +99,6 @@ const ZSurveyBase = z.object({
   endings: z.array(ZSurveyEnding).default([]).openapi({
     description: "The endings of the survey",
   }),
-  thankYouCard: z
-    .object({
-      enabled: z.boolean(),
-      message: z.string(),
-    })
-    .nullable()
-    .openapi({
-      description: "The thank you card of the survey (deprecated)",
-    }),
   hiddenFields: z
     .object({
       enabled: z.boolean(),
@@ -208,14 +199,6 @@ const ZSurveyBase = z.object({
   isBackButtonHidden: z.boolean().openapi({
     description: "Whether the back button is hidden",
   }),
-  verifyEmail: z
-    .object({
-      enabled: z.boolean(),
-      message: z.string(),
-    })
-    .openapi({
-      description: "Email verification configuration (deprecated)",
-    }),
   recaptcha: ZSurveyRecaptcha.openapi({
     description: "Google reCAPTCHA configuration",
   }),
