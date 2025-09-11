@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -66,48 +65,40 @@ export const SurveyStatusDropdown = ({
           onValueChange={(value: TSurvey["status"]) => {
             handleStatusChange(value);
           }}>
-          <TooltipProvider delayDuration={50}>
-            <Tooltip open={false}>
-              <TooltipTrigger asChild>
-                <SelectTrigger className="w-[170px] bg-white md:w-[200px]">
-                  <SelectValue>
-                    <div className="flex items-center">
-                      {(survey.type === "link" || environment.appSetupCompleted) && (
-                        <SurveyStatusIndicator status={survey.status} />
-                      )}
-                      <span className="ml-2 text-sm text-slate-700">
-                        {survey.status === "inProgress" && t("common.in_progress")}
-                        {survey.status === "paused" && t("common.paused")}
-                        {survey.status === "completed" && t("common.completed")}
-                      </span>
-                    </div>
-                  </SelectValue>
-                </SelectTrigger>
-              </TooltipTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
-                  <div className="flex w-full items-center justify-center gap-4">
-                    <SurveyStatusIndicator status={"inProgress"} />
-                    {t("common.in_progress")}
-                  </div>
-                </SelectItem>
-                <SelectItem className="group font-normal hover:text-slate-900" value="paused">
-                  <div className="flex w-full items-center justify-center gap-2">
-                    <SurveyStatusIndicator status={"paused"} />
-                    {t("common.paused")}
-                  </div>
-                </SelectItem>
-                <SelectItem className="group font-normal hover:text-slate-900" value="completed">
-                  <div className="flex w-full items-center justify-center gap-2">
-                    <SurveyStatusIndicator status={"completed"} />
-                    {t("common.completed")}
-                  </div>
-                </SelectItem>
-              </SelectContent>
-
-              <TooltipContent>{t("environments.surveys.survey_status_tooltip")}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <SelectTrigger className="w-[170px] bg-white md:w-[200px]">
+            <SelectValue>
+              <div className="flex items-center">
+                {(survey.type === "link" || environment.appSetupCompleted) && (
+                  <SurveyStatusIndicator status={survey.status} />
+                )}
+                <span className="ml-2 text-sm text-slate-700">
+                  {survey.status === "inProgress" && t("common.in_progress")}
+                  {survey.status === "paused" && t("common.paused")}
+                  {survey.status === "completed" && t("common.completed")}
+                </span>
+              </div>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
+              <div className="flex w-full items-center justify-center gap-4">
+                <SurveyStatusIndicator status={"inProgress"} />
+                {t("common.in_progress")}
+              </div>
+            </SelectItem>
+            <SelectItem className="group font-normal hover:text-slate-900" value="paused">
+              <div className="flex w-full items-center justify-center gap-2">
+                <SurveyStatusIndicator status={"paused"} />
+                {t("common.paused")}
+              </div>
+            </SelectItem>
+            <SelectItem className="group font-normal hover:text-slate-900" value="completed">
+              <div className="flex w-full items-center justify-center gap-2">
+                <SurveyStatusIndicator status={"completed"} />
+                {t("common.completed")}
+              </div>
+            </SelectItem>
+          </SelectContent>
         </Select>
       )}
     </>
