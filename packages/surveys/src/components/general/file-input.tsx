@@ -67,7 +67,7 @@ export function FileInput({
 
       return { filteredFiles, duplicateFiles };
     },
-    [fileUrls, selectedFiles]
+    [fileUrls, selectedFiles, t]
   );
 
   // Listen for the native file-upload event dispatched via window.formbricksSurveys.onFilePick
@@ -142,6 +142,7 @@ export function FileInput({
     onUploadCallback,
     surveyId,
     filterDuplicateFiles,
+    t,
   ]);
 
   const validateFileSize = async (file: File): Promise<boolean> => {
@@ -296,13 +297,13 @@ export function FileInput({
           return (
             <div
               key={index}
-              aria-label={`You've successfully uploaded the file ${fileName}`}
+              aria-label={t("common.you_have_successfully_uploaded_the_file", { fileName })}
               tabIndex={0}
               className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
               <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
                 <button
                   type="button"
-                  aria-label={`Delete file ${fileName}`}
+                  aria-label={`${t("common.delete_file")} ${fileName}`}
                   className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -347,7 +348,7 @@ export function FileInput({
         {isUploading ? (
           <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
             <label htmlFor={uniqueHtmlFor} className="fb-text-subheading fb-text-sm fb-font-medium">
-              Uploading...
+              {t("common.uploading")}...
             </label>
           </div>
         ) : null}
@@ -357,7 +358,7 @@ export function FileInput({
             <button
               type="button"
               className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
-              aria-label="Upload files by clicking or dragging them here"
+              aria-label={t("common.upload_files_by_clicking_or_dragging_them_here")}
               onClick={() => document.getElementById(uniqueHtmlFor)?.click()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -376,7 +377,7 @@ export function FileInput({
               <span
                 className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
                 id={`${uniqueHtmlFor}-label`}>
-                Click or drag to upload files.
+                {t("common.click_or_drag_to_upload_files")}
               </span>
               <input
                 type="file"
@@ -391,7 +392,7 @@ export function FileInput({
                   }
                 }}
                 multiple={allowMultipleFiles}
-                aria-label="File upload"
+                aria-label={t("common.file_upload")}
                 aria-describedby={`${uniqueHtmlFor}-label`}
                 data-accept-multiple={allowMultipleFiles}
                 data-accept-extensions={mimeTypeForAllowedFileExtensions}

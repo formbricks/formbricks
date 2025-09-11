@@ -139,7 +139,11 @@ export function WelcomeCard({
     <ScrollableContainer>
       <div>
         {fileUrl ? (
-          <img src={fileUrl} className="fb-mb-8 fb-max-h-96 fb-w-1/4 fb-object-contain" alt="Company Logo" />
+          <img
+            src={fileUrl}
+            className="fb-mb-8 fb-max-h-96 fb-w-1/4 fb-object-contain"
+            alt={t("common.company_logo")}
+          />
         ) : null}
 
         <Headline

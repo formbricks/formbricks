@@ -76,7 +76,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
         href={imgUrl ? imgUrl : convertToEmbedUrl(videoUrl ?? "")}
         target="_blank"
         rel="noreferrer"
-        aria-label={t("accessibility.open_in_new_tab")}
+        aria-label={t("common.open_in_new_tab")}
         className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
         {imgUrl ? <ImageDownIcon size={20} /> : <ExpandIcon size={20} />}
       </a>

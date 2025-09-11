@@ -84,7 +84,7 @@ describe("LanguageSwitch", () => {
       />
     );
 
-    const toggleButton = screen.getByTitle("Language switch");
+    const toggleButton = screen.getByTitle("common.language_switch");
     // Initially closed
     expect(toggleButton).toHaveAttribute("aria-expanded", "false");
 
@@ -109,7 +109,7 @@ describe("LanguageSwitch", () => {
       />
     );
 
-    const toggleButton = screen.getByTitle("Language switch");
+    const toggleButton = screen.getByTitle("common.language_switch");
     // Open and select default language
     fireEvent.click(toggleButton);
     fireEvent.click(screen.getByText("en"));

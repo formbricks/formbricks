@@ -49,7 +49,7 @@ describe("FileInput", () => {
         allowMultipleFiles={true}
       />
     );
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const file = createFile("test.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [file] } });
 
@@ -73,7 +73,7 @@ describe("FileInput", () => {
         allowMultipleFiles={true}
       />
     );
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const file = createFile("image.jpg", 1000, "image/jpeg");
     fireEvent.change(input, { target: { files: [file] } });
 
@@ -92,7 +92,7 @@ describe("FileInput", () => {
         allowMultipleFiles={false}
       />
     );
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const files = [createFile("one.txt", 500, "text/plain"), createFile("two.txt", 500, "text/plain")];
     fireEvent.change(input, { target: { files } });
 
@@ -114,7 +114,7 @@ describe("FileInput", () => {
     );
     expect(screen.getByText("fileA.txt")).toBeInTheDocument();
     expect(screen.getByText("fileB.txt")).toBeInTheDocument();
-    const deleteBtn = screen.getByLabelText("Delete file fileA.txt");
+    const deleteBtn = screen.getByLabelText(/common.delete_file fileA.txt/);
     const svg = deleteBtn.querySelector("svg");
     if (!svg) throw new Error("Delete SVG not found");
     fireEvent.click(svg);
@@ -132,7 +132,7 @@ describe("FileInput", () => {
         allowMultipleFiles={true}
       />
     );
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const dupFile = createFile("dup.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [dupFile] } });
     expect(alertSpy).toHaveBeenCalledWith("errors.file_input.duplicate_files");
@@ -190,7 +190,7 @@ describe("FileInput", () => {
     );
 
     // Upload a small file first to verify normal behavior
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     fireEvent.change(input, { target: { files: [smallFile] } });
 
     await waitFor(() => {
@@ -225,7 +225,7 @@ describe("FileInput", () => {
       />
     );
 
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const invalidFile = createFile("invalid.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [invalidFile] } });
 
@@ -245,7 +245,7 @@ describe("FileInput", () => {
       />
     );
 
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const dupFile = createFile("dup.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [dupFile] } });
 
@@ -340,7 +340,7 @@ describe("FileInput", () => {
       />
     );
 
-    const deleteBtn = screen.getByLabelText("Delete file fileA.txt");
+    const deleteBtn = screen.getByLabelText(/common.delete_file fileA.txt/);
     const svg = deleteBtn.querySelector("svg");
     if (!svg) throw new Error("Delete SVG not found");
     fireEvent.click(svg);
@@ -360,7 +360,9 @@ describe("FileInput", () => {
       />
     );
 
-    const label = screen.getByLabelText("Upload files by clicking or dragging them here").closest("label");
+    const label = screen
+      .getByLabelText("common.upload_files_by_clicking_or_dragging_them_here")
+      .closest("label");
     if (!label) throw new Error("Label not found");
 
     // Create a mock file and DataTransfer object
@@ -404,7 +406,7 @@ describe("FileInput", () => {
       />
     );
 
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const file = createFile("error.txt", 500, "text/plain");
 
     fireEvent.change(input, { target: { files: [file] } });
@@ -431,7 +433,7 @@ describe("FileInput", () => {
     const files = Array(26)
       .fill(null)
       .map((_, i) => createFile(`file${i}.txt`, 500, "text/plain"));
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
 
     fireEvent.change(input, { target: { files } });
 
