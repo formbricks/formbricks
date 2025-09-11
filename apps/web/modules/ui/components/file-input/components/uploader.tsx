@@ -47,9 +47,10 @@ export const Uploader = ({
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled}
       onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         if (!isStorageConfigured) {
-          e.preventDefault();
-          e.stopPropagation();
           showStorageNotConfiguredToast();
           return;
         }
@@ -59,9 +60,10 @@ export const Uploader = ({
         }
       }}
       onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         if (!isStorageConfigured) {
-          e.preventDefault();
-          e.stopPropagation();
           showStorageNotConfiguredToast();
           return;
         }
