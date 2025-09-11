@@ -1,4 +1,5 @@
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { usePathname, useRouter } from "next/navigation";
@@ -7,7 +8,6 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
-import { getLatestStableFbReleaseAction } from "../actions/actions";
 import { MainNavigation } from "./MainNavigation";
 
 // Mock constants that this test needs
@@ -32,7 +32,7 @@ vi.mock("next-auth/react", () => ({
 vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
   useSignOut: vi.fn(() => ({ signOut: vi.fn() })),
 }));
-vi.mock("@/app/(app)/environments/[environmentId]/actions/actions", () => ({
+vi.mock("@/modules/projects/settings/(setup)/app-connection/actions", () => ({
   getLatestStableFbReleaseAction: vi.fn(),
 }));
 vi.mock("@/app/lib/formbricks", () => ({
@@ -195,14 +195,6 @@ describe("MainNavigation", () => {
     await waitFor(() => {
       expect(screen.getByAltText("environments.formbricks_logo")).toBeInTheDocument();
     });
-  });
-
-  test("renders correct active navigation link", () => {
-    vi.mocked(usePathname).mockReturnValue("/environments/env1/actions");
-    render(<MainNavigation {...defaultProps} />);
-    const actionsLink = screen.getByRole("link", { name: /common.actions/ });
-    // Check if the parent li has the active class styling
-    expect(actionsLink.closest("li")).toHaveClass("border-brand-dark");
   });
 
   test("renders user dropdown and handles logout", async () => {
