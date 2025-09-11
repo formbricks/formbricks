@@ -16,22 +16,18 @@ import { useState } from "react";
 
 export const EnvironmentBreadcrumb = ({
   environments,
-  currentEnvironmentId,
+  currentEnvironment,
 }: {
   environments: { id: string; type: string }[];
-  currentEnvironmentId: string;
+  currentEnvironment: { id: string; type: string };
 }) => {
   const { t } = useTranslate();
   const [isEnvironmentDropdownOpen, setIsEnvironmentDropdownOpen] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const currentEnvironment = environments.find((env) => env.id === currentEnvironmentId);
-
-  if (!currentEnvironment) {
-    return null;
-  }
 
   const handleEnvironmentChange = (environmentId: string) => {
+    if (environmentId === currentEnvironment.id) return;
     setIsLoading(true);
     router.push(`/environments/${environmentId}/`);
   };
@@ -77,7 +73,7 @@ export const EnvironmentBreadcrumb = ({
             {environments.map((env) => (
               <DropdownMenuCheckboxItem
                 key={env.id}
-                checked={env.id === currentEnvironment.id}
+                checked={env.type === currentEnvironment.type}
                 onClick={() => handleEnvironmentChange(env.id)}
                 className="cursor-pointer">
                 <div className="flex items-center gap-2 capitalize">

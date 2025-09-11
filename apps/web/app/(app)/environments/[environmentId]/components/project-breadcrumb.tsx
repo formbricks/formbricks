@@ -8,13 +8,16 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
+import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, ChevronRightIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { logger } from "@formbricks/logger";
 
 interface ProjectBreadcrumbProps {
   currentProjectId: string;
@@ -26,6 +29,7 @@ interface ProjectBreadcrumbProps {
   currentOrganizationId: string;
   currentEnvironmentId: string;
   isAccessControlAllowed: boolean;
+  isEnvironmentBreadcrumbVisible: boolean;
 }
 
 export const ProjectBreadcrumb = ({
@@ -38,6 +42,7 @@ export const ProjectBreadcrumb = ({
   currentOrganizationId,
   currentEnvironmentId,
   isAccessControlAllowed,
+  isEnvironmentBreadcrumbVisible,
 }: ProjectBreadcrumbProps) => {
   const { t } = useTranslate();
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -45,13 +50,57 @@ export const ProjectBreadcrumb = ({
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const pathname = usePathname();
+
+  const projectSettings = [
+    {
+      id: "general",
+      label: t("common.general"),
+      href: `/environments/${currentEnvironmentId}/project/general`,
+    },
+    {
+      id: "look",
+      label: t("common.look_and_feel"),
+      href: `/environments/${currentEnvironmentId}/project/look`,
+    },
+    {
+      id: "app-connection",
+      label: t("common.website_and_app_connection"),
+      href: `/environments/${currentEnvironmentId}/project/app-connection`,
+    },
+    {
+      id: "integrations",
+      label: t("common.integrations"),
+      href: `/environments/${currentEnvironmentId}/project/integrations`,
+    },
+    {
+      id: "teams",
+      label: t("common.team_access"),
+      href: `/environments/${currentEnvironmentId}/project/teams`,
+    },
+    {
+      id: "languages",
+      label: t("common.survey_languages"),
+      href: `/environments/${currentEnvironmentId}/project/languages`,
+    },
+    {
+      id: "tags",
+      label: t("common.tags"),
+      href: `/environments/${currentEnvironmentId}/project/tags`,
+    },
+  ];
+
   const currentProject = projects.find((project) => project.id === currentProjectId);
 
   if (!currentProject) {
-    return null;
+    const errorMessage = `Project not found for project id: ${currentProjectId}`;
+    logger.error(errorMessage);
+    Sentry.captureException(new Error(errorMessage));
+    return;
   }
 
   const handleProjectChange = (projectId: string) => {
+    if (projectId === currentProjectId) return;
     setIsLoading(true);
     router.push(`/projects/${projectId}/`);
   };
@@ -105,14 +154,14 @@ export const ProjectBreadcrumb = ({
             {isProjectDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
-              <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+              isEnvironmentBreadcrumbVisible && <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
             )}
           </div>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start" className="mt-2">
           <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-            <FolderOpenIcon className="mr-2 inline h-4 w-4" />
+            <FolderOpenIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
             {t("common.choose_project")}
           </div>
           <DropdownMenuGroup>
@@ -133,9 +182,25 @@ export const ProjectBreadcrumb = ({
               onClick={handleAddProject}
               className="w-full cursor-pointer justify-between">
               <span>{t("common.add_new_project")}</span>
-              <PlusIcon className="ml-2 h-4 w-4" />
+              <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
             </DropdownMenuCheckboxItem>
           )}
+          <DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+              <CogIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+              {t("common.project_configuration")}
+            </div>
+            {projectSettings.map((setting) => (
+              <DropdownMenuCheckboxItem
+                key={setting.id}
+                checked={pathname.includes(setting.id)}
+                onClick={() => router.push(setting.href)}
+                className="cursor-pointer">
+                {setting.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Modals */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
+import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
 import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { Input } from "@/modules/ui/components/input";
 import { ActionClass } from "@prisma/client";

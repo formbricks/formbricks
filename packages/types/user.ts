@@ -11,6 +11,7 @@ export const ZUserLocale = z.enum([
   "pt-PT",
   "ro-RO",
   "ja-JP",
+  "zh-Hans-CN",
 ]);
 
 export type TUserLocale = z.infer<typeof ZUserLocale>;
