@@ -24,7 +24,7 @@ jobs:
     # Add PostgreSQL and Redis service containers
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
