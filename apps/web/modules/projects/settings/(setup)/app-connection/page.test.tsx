@@ -46,9 +46,28 @@ vi.mock("@/modules/projects/settings/(setup)/components/setup-instructions", () 
     </div>
   ),
 }));
-vi.mock("@/modules/projects/settings/(setup)/components/environment-id-field", () => ({
-  EnvironmentIdField: ({ environmentId }: any) => (
-    <div data-testid="environment-id-field">{environmentId}</div>
+
+vi.mock("../components/action-settings-card", () => ({
+  ActionSettingsCard: () => <div data-testid="action-settings-card">action-settings-card</div>,
+}));
+
+vi.mock("@/modules/ui/components/alert", () => ({
+  Alert: ({ children }: any) => <div data-testid="alert">{children}</div>,
+  AlertButton: ({ children }: any) => <div data-testid="alert-button">{children}</div>,
+  AlertDescription: ({ children }: any) => <div data-testid="alert-description">{children}</div>,
+  AlertTitle: ({ children }: any) => <div data-testid="alert-title">{children}</div>,
+}));
+
+vi.mock("@/modules/ui/components/id-badge", () => ({
+  IdBadge: ({ id }: any) => <div data-testid="id-badge">{id}</div>,
+}));
+
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href, target }: any) => (
+    <a href={href} target={target} data-testid="link">
+      {children}
+    </a>
   ),
 }));
 
@@ -57,15 +76,56 @@ vi.mock("@/tolgee/server", () => ({
 }));
 
 vi.mock("@/modules/environments/lib/utils", () => ({
-  getEnvironmentAuth: vi.fn(async (environmentId: string) => ({ environment: { id: environmentId } })),
+  getEnvironmentAuth: vi.fn(async (environmentId: string) => ({
+    environment: { id: environmentId, projectId: "project-123" },
+    isReadOnly: false,
+  })),
 }));
 
-let mockWebappUrl = "https://example.com";
+vi.mock("@/lib/environment/service", () => ({
+  getEnvironments: vi.fn(async (projectId: string) => [
+    { id: "env-123", projectId },
+    { id: "env-456", projectId },
+  ]),
+}));
+
+vi.mock("@/lib/actionClass/service", () => ({
+  getActionClasses: vi.fn(async () => []),
+}));
+
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn(() => "https://example.com"),
+}));
+
+vi.mock("@/lib/utils/locale", () => ({
+  findMatchingLocale: vi.fn(async () => "en"),
+}));
 
 vi.mock("@/lib/constants", () => ({
-  get WEBAPP_URL() {
-    return mockWebappUrl;
-  },
+  IS_FORMBRICKS_CLOUD: false,
+  POSTHOG_API_KEY: "mock-posthog-api-key",
+  POSTHOG_HOST: "mock-posthog-host",
+  IS_POSTHOG_CONFIGURED: true,
+  ENCRYPTION_KEY: "mock-encryption-key",
+  ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
+  GITHUB_ID: "mock-github-id",
+  GITHUB_SECRET: "test-githubID",
+  GOOGLE_CLIENT_ID: "test-google-client-id",
+  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+  AZUREAD_CLIENT_ID: "test-azuread-client-id",
+  AZUREAD_CLIENT_SECRET: "test-azure",
+  AZUREAD_TENANT_ID: "test-azuread-tenant-id",
+  OIDC_DISPLAY_NAME: "test-oidc-display-name",
+  OIDC_CLIENT_ID: "test-oidc-client-id",
+  OIDC_ISSUER: "test-oidc-issuer",
+  OIDC_CLIENT_SECRET: "test-oidc-client-secret",
+  OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
+  WEBAPP_URL: "test-webapp-url",
+  IS_PRODUCTION: false,
+  SENTRY_DSN: "mock-sentry-dsn",
+  SENTRY_RELEASE: "mock-sentry-release",
+  SENTRY_ENVIRONMENT: "mock-sentry-environment",
+  SESSION_MAX_AGE: 1000,
 }));
 
 vi.mock("@/lib/env", () => ({
@@ -87,16 +147,18 @@ describe("AppConnectionPage", () => {
     expect(await findByTestId("page-header")).toHaveTextContent("common.project_configuration");
     expect(await findByTestId("project-config-navigation")).toHaveTextContent("env-123 app-connection");
     expect(await findByTestId("environment-notice")).toHaveTextContent("env-123 /project/app-connection");
+
+    // Check that ActionSettingsCard is rendered
+    expect(await findByTestId("action-settings-card")).toBeInTheDocument();
+    expect(await findByTestId("action-settings-card")).toHaveTextContent("action-settings-card");
+
     const cards = await findAllByTestId("settings-card");
-    expect(cards.length).toBe(3);
-    expect(cards[0]).toHaveTextContent("environments.project.app-connection.app_connection");
-    expect(cards[0]).toHaveTextContent("environments.project.app-connection.app_connection_description");
-    expect(cards[0]).toHaveTextContent("env-123"); // WidgetStatusIndicator
-    expect(cards[1]).toHaveTextContent("environments.project.app-connection.how_to_setup");
-    expect(cards[1]).toHaveTextContent("environments.project.app-connection.how_to_setup_description");
-    expect(cards[1]).toHaveTextContent("env-123"); // SetupInstructions
-    expect(cards[2]).toHaveTextContent("environments.project.app-connection.environment_id");
-    expect(cards[2]).toHaveTextContent("environments.project.app-connection.environment_id_description");
-    expect(cards[2]).toHaveTextContent("env-123"); // EnvironmentIdField
+    expect(cards.length).toBe(2);
+    expect(cards[0]).toHaveTextContent("environments.project.app-connection.environment_id");
+    expect(cards[0]).toHaveTextContent("environments.project.app-connection.environment_id_description");
+    expect(cards[0]).toHaveTextContent("env-123"); // IdBadge
+    expect(cards[1]).toHaveTextContent("environments.project.app-connection.app_connection");
+    expect(cards[1]).toHaveTextContent("environments.project.app-connection.app_connection_description");
+    expect(cards[1]).toHaveTextContent("env-123"); // WidgetStatusIndicator
   });
 });

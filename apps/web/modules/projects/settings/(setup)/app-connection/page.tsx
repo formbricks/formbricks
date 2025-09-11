@@ -1,56 +1,90 @@
+"use server";
+
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getActionClasses } from "@/lib/actionClass/service";
+import { getEnvironments } from "@/lib/environment/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
-import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
+import Link from "next/link";
+import { ActionSettingsCard } from "../components/action-settings-card";
 
-export const AppConnectionPage = async (props) => {
-  const params = await props.params;
+export const AppConnectionPage = async ({ params }: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslate();
+  const { environmentId } = await params;
 
-  const { environment } = await getEnvironmentAuth(params.environmentId);
+  const { environment, isReadOnly } = await getEnvironmentAuth(environmentId);
 
-  const publicDomain = getPublicDomain();
+  const [environments, actionClasses] = await Promise.all([
+    getEnvironments(environment.projectId),
+    getActionClasses(environmentId),
+  ]);
+  const otherEnvironment = environments.filter((env) => env.id !== environmentId)[0];
+  const [otherEnvActionClasses, locale] = await Promise.all([
+    otherEnvironment ? getActionClasses(otherEnvironment.id) : Promise.resolve([]),
+    findMatchingLocale(),
+  ]);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.project_configuration")}>
-        <ProjectConfigNavigation environmentId={params.environmentId} activeId="app-connection" />
+        <ProjectConfigNavigation environmentId={environmentId} activeId="app-connection" />
       </PageHeader>
       <div className="space-y-4">
-        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/project/app-connection" />
+        <EnvironmentNotice environmentId={environmentId} subPageUrl="/project/app-connection" />
+        <SettingsCard
+          title={t("environments.project.app-connection.environment_id")}
+          description={t("environments.project.app-connection.environment_id_description")}>
+          <IdBadge id={environmentId} />
+        </SettingsCard>
         <SettingsCard
           title={t("environments.project.app-connection.app_connection")}
           description={t("environments.project.app-connection.app_connection_description")}>
           {environment && (
             <div className="space-y-4">
               <WidgetStatusIndicator environment={environment} />
-              <Alert variant="info">
-                <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
-                <AlertDescription>
-                  {t("environments.project.app-connection.cache_update_delay_description")}
-                </AlertDescription>
-              </Alert>
+              {!environment.appSetupCompleted ? (
+                <Alert variant="outbound">
+                  <AlertTitle>{t("environments.project.app-connection.setup_alert_title")}</AlertTitle>
+                  <AlertDescription>
+                    {t("environments.project.app-connection.setup_alert_description")}
+                  </AlertDescription>
+                  <AlertButton asChild>
+                    <Link
+                      href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
+                      target="_blank"
+                      rel="noopener noreferrer">
+                      {t("common.learn_more")}
+                    </Link>
+                  </AlertButton>
+                </Alert>
+              ) : (
+                <Alert variant="warning">
+                  <AlertTitle>{t("environments.project.app-connection.cache_update_delay_title")}</AlertTitle>
+                  <AlertDescription>
+                    {t("environments.project.app-connection.cache_update_delay_description")}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           )}
         </SettingsCard>
-        <SettingsCard
-          title={t("environments.project.app-connection.how_to_setup")}
-          description={t("environments.project.app-connection.how_to_setup_description")}
-          noPadding>
-          <SetupInstructions environmentId={params.environmentId} publicDomain={publicDomain} />
-        </SettingsCard>
-        <SettingsCard
-          title={t("environments.project.app-connection.environment_id")}
-          description={t("environments.project.app-connection.environment_id_description")}>
-          <IdBadge id={params.environmentId} />
-        </SettingsCard>
+        <ActionSettingsCard
+          environment={environment}
+          otherEnvironment={otherEnvironment}
+          otherEnvActionClasses={otherEnvActionClasses}
+          environmentId={environmentId}
+          actionClasses={actionClasses}
+          isReadOnly={isReadOnly}
+          locale={locale}
+        />
       </div>
     </PageContentWrapper>
   );
