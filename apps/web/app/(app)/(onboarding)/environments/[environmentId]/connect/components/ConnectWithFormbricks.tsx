@@ -13,14 +13,14 @@ import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 interface ConnectWithFormbricksProps {
   environment: TEnvironment;
   publicDomain: string;
-  widgetSetupCompleted: boolean;
+  appSetupCompleted: boolean;
   channel: TProjectConfigChannel;
 }
 
 export const ConnectWithFormbricks = ({
   environment,
   publicDomain,
-  widgetSetupCompleted,
+  appSetupCompleted,
   channel,
 }: ConnectWithFormbricksProps) => {
   const { t } = useTranslate();
@@ -51,15 +51,15 @@ export const ConnectWithFormbricks = ({
             environmentId={environment.id}
             publicDomain={publicDomain}
             channel={channel}
-            widgetSetupCompleted={widgetSetupCompleted}
+            appSetupCompleted={appSetupCompleted}
           />
         </div>
         <div
           className={cn(
             "flex h-[30rem] w-1/2 flex-col items-center justify-center rounded-lg border text-center",
-            widgetSetupCompleted ? "border-green-500 bg-green-100" : "border-slate-300 bg-slate-200"
+            appSetupCompleted ? "border-green-500 bg-green-100" : "border-slate-300 bg-slate-200"
           )}>
-          {widgetSetupCompleted ? (
+          {appSetupCompleted ? (
             <div>
               <p className="text-3xl">{t("environments.connect.congrats")}</p>
               <p className="pt-4 text-sm font-medium text-slate-600">
@@ -81,9 +81,9 @@ export const ConnectWithFormbricks = ({
       </div>
       <Button
         id="finishOnboarding"
-        variant={widgetSetupCompleted ? "default" : "ghost"}
+        variant={appSetupCompleted ? "default" : "ghost"}
         onClick={handleFinishOnboarding}>
-        {widgetSetupCompleted
+        {appSetupCompleted
           ? t("environments.connect.finish_onboarding")
           : t("environments.connect.do_it_later")}
         <ArrowRight />

@@ -20,14 +20,14 @@ interface OnboardingSetupInstructionsProps {
   environmentId: string;
   publicDomain: string;
   channel: TProjectConfigChannel;
-  widgetSetupCompleted: boolean;
+  appSetupCompleted: boolean;
 }
 
 export const OnboardingSetupInstructions = ({
   environmentId,
   publicDomain,
   channel,
-  widgetSetupCompleted,
+  appSetupCompleted,
 }: OnboardingSetupInstructionsProps) => {
   const { t } = useTranslate();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
@@ -137,7 +137,7 @@ export const OnboardingSetupInstructions = ({
             <div className="mt-4 flex justify-between space-x-2">
               <Button
                 id="onboarding-inapp-connect-copy-code"
-                variant={widgetSetupCompleted ? "secondary" : "default"}
+                variant={appSetupCompleted ? "secondary" : "default"}
                 onClick={() => {
                   navigator.clipboard.writeText(
                     channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys

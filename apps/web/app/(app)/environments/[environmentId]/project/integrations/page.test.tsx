@@ -226,7 +226,7 @@ describe("Integrations Page", () => {
     expect(screen.getByTestId("card-Activepieces")).toHaveTextContent("5 common.integrations");
   });
 
-  test("renders not connected status when widgetSetupCompleted is false", async () => {
+  test("renders not connected status when appSetupCompleted is false", async () => {
     vi.mocked(getEnvironmentAuth).mockResolvedValue({
       environment: { ...mockEnvironment, appSetupCompleted: false },
       isReadOnly: false,

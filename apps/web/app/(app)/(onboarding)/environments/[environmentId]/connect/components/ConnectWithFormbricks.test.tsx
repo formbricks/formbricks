@@ -23,12 +23,12 @@ describe("ConnectWithFormbricks", () => {
   const webAppUrl = "http://app";
   const channel = {} as any;
 
-  test("renders waiting state when widgetSetupCompleted is false", () => {
+  test("renders waiting state when appSetupCompleted is false", () => {
     render(
       <ConnectWithFormbricks
         environment={environment}
         publicDomain={webAppUrl}
-        widgetSetupCompleted={false}
+        appSetupCompleted={false}
         channel={channel}
       />
     );
@@ -36,12 +36,12 @@ describe("ConnectWithFormbricks", () => {
     expect(screen.getByText("environments.connect.waiting_for_your_signal")).toBeInTheDocument();
   });
 
-  test("renders success state when widgetSetupCompleted is true", () => {
+  test("renders success state when appSetupCompleted is true", () => {
     render(
       <ConnectWithFormbricks
         environment={environment}
         publicDomain={webAppUrl}
-        widgetSetupCompleted={true}
+        appSetupCompleted={true}
         channel={channel}
       />
     );
@@ -54,7 +54,7 @@ describe("ConnectWithFormbricks", () => {
       <ConnectWithFormbricks
         environment={environment}
         publicDomain={webAppUrl}
-        widgetSetupCompleted={true}
+        appSetupCompleted={true}
         channel={channel}
       />
     );
@@ -68,7 +68,7 @@ describe("ConnectWithFormbricks", () => {
       <ConnectWithFormbricks
         environment={environment}
         publicDomain={webAppUrl}
-        widgetSetupCompleted={false}
+        appSetupCompleted={false}
         channel={channel}
       />
     );

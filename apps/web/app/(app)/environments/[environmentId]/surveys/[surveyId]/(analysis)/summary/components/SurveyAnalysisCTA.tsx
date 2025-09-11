@@ -67,7 +67,7 @@ export const SurveyAnalysisCTA = ({
   const { organizationId, project } = useEnvironment();
   const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
-  const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
+  const appSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
   useEffect(() => {
     setModalState((prev) => ({
@@ -184,7 +184,7 @@ export const SurveyAnalysisCTA = ({
 
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
-      {!isReadOnly && (widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
+      {!isReadOnly && (appSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 

@@ -557,29 +557,27 @@ model DataMigration {
 /// @property id - Unique identifier for the environment
 /// @property type - Either 'production' or 'development'
 /// @property project - Reference to parent project
-/// @property widgetSetupCompleted - Tracks initial widget setup status
 /// @property surveys - Collection of surveys in this environment
 /// @property contacts - Collection of contacts/users tracked
 /// @property actionClasses - Defined actions that can trigger surveys
 /// @property attributeKeys - Custom attributes configuration
 model Environment {
-  id                   String                @id @default(cuid())
-  createdAt            DateTime              @default(now()) @map(name: "created_at")
-  updatedAt            DateTime              @updatedAt @map(name: "updated_at")
-  type                 EnvironmentType
-  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId            String
-  widgetSetupCompleted Boolean               @default(false)
-  appSetupCompleted    Boolean               @default(false)
-  surveys              Survey[]
-  contacts             Contact[]
-  actionClasses        ActionClass[]
-  attributeKeys        ContactAttributeKey[]
-  webhooks             Webhook[]
-  tags                 Tag[]
-  segments             Segment[]
-  integration          Integration[]
-  ApiKeyEnvironment    ApiKeyEnvironment[]
+  id                String                @id @default(cuid())
+  createdAt         DateTime              @default(now()) @map(name: "created_at")
+  updatedAt         DateTime              @updatedAt @map(name: "updated_at")
+  type              EnvironmentType
+  project           Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId         String
+  appSetupCompleted Boolean               @default(false)
+  surveys           Survey[]
+  contacts          Contact[]
+  actionClasses     ActionClass[]
+  attributeKeys     ContactAttributeKey[]
+  webhooks          Webhook[]
+  tags              Tag[]
+  segments          Segment[]
+  integration       Integration[]
+  ApiKeyEnvironment ApiKeyEnvironment[]
 
   @@index([projectId])
 }
