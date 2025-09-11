@@ -174,10 +174,6 @@ export const surveys = {
       question: "What is most important for you in life?",
       choices: ["Work", "Money", "Travel", "Family", "Friends"],
     },
-    thankYouCard: {
-      headline: "This is my Thank You Card Headline!",
-      description: "This is my Thank you Card Description!",
-    },
   },
   createWithLogicAndSubmit: {
     welcomeCard: {
@@ -248,10 +244,6 @@ export const surveys = {
     ranking: {
       question: "This is my Ranking Question",
       choices: ["Work", "Money", "Travel", "Family", "Friends"],
-    },
-    thankYouCard: {
-      headline: "This is my Thank You Card Headline!",
-      description: "This is my Thank you Card Description!",
     },
   },
   germanCreate: {
@@ -329,11 +321,6 @@ export const surveys = {
     ranking: {
       question: "Was ist für Sie im Leben am wichtigsten?",
       choices: ["Arbeit", "Geld", "Reisen", "Familie", "Freunde"],
-    },
-    thankYouCard: {
-      headline: "Dies ist meine Dankeskarte Überschrift!", // German translation
-      description: "Dies ist meine Beschreibung zur Dankeskarte!", // German translation
-      buttonLabel: "Erstellen Sie Ihre eigene Umfrage",
     },
   },
 };

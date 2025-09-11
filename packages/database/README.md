@@ -26,9 +26,10 @@ packages/database/
 │       ├── migration-runner.ts
 │       └── create-saml-database.ts
 ├── migration/                 # Custom migrations directory
-│   └── [timestamp_name]/      # Individual migration folders
-│       ├── migration.sql      # Schema migrations
-│       └── migration.ts       # Data migrations
+│   ├── [timestamp_name]/      # Schema migration folder
+│   │   └── migration.sql      # Schema migration file
+│   └── [timestamp_name]/      # Data migration folder
+│       └── migration.ts       # Data migration file
 ├── migrations/                # Prisma internal migrations
 ├── types/                     # Custom TypeScript types
 ├── zod/                       # Zod schema definitions
