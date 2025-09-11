@@ -214,12 +214,10 @@ const createMockSurvey = (): TSurvey =>
       showResponseCount: false,
     },
     autoClose: null,
-    closeOnDate: null,
     delay: 0,
     displayOption: "displayOnce",
     recontactDays: null,
     displayLimit: null,
-    runOnDate: null,
     thankYouCard: {
       enabled: true,
       title: { default: "Thank you" },

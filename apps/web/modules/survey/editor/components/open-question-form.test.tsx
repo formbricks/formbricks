@@ -136,7 +136,6 @@ const mockSurvey = {
   productOverwrites: null,
   singleUse: null,
   verifyEmail: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   inlineTriggers: null,
@@ -146,7 +145,6 @@ const mockSurvey = {
   redirectUrl: null,
   createdBy: null,
   autoComplete: null,
-  runOnDate: null,
   displayProgressBar: true,
 } as unknown as TSurvey;
 
