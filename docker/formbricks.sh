@@ -290,9 +290,10 @@ EOT
       echo "🔑 Generating MinIO credentials..."
       minio_root_user="formbricks-$(openssl rand -hex 4)"
       minio_root_password=$(openssl rand -base64 20)
-      minio_service_user="formbricks-service"
+      minio_service_user="formbricks-service-$(openssl rand -hex 4)"
       minio_service_password=$(openssl rand -base64 20)
       minio_bucket_name="formbricks-uploads"
+      minio_policy_name="formbricks-policy-$(openssl rand -hex 4)"
       
       echo "✅ MinIO will be configured with:"
       echo "   S3 Access Key (least privilege): $minio_service_user"
@@ -460,8 +461,8 @@ EOT
         printf '%s' "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:DeleteObject\",\"s3:GetObject\",\"s3:PutObject\"],\"Resource\":[\"arn:aws:s3:::$minio_bucket_name/*\"]},{\"Effect\":\"Allow\",\"Action\":[\"s3:ListBucket\"],\"Resource\":[\"arn:aws:s3:::$minio_bucket_name\"]}]}" > /tmp/formbricks-policy.json
         
         echo '🔒 Creating policy (idempotent)...';
-        if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
-          mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json || mc admin policy add minio formbricks-policy /tmp/formbricks-policy.json;
+        if ! mc admin policy info minio $minio_policy_name >/dev/null 2>&1; then
+          mc admin policy create minio $minio_policy_name /tmp/formbricks-policy.json || mc admin policy add minio $minio_policy_name /tmp/formbricks-policy.json;
           echo 'Policy created successfully.';
         else
           echo 'Policy already exists, skipping creation.';
@@ -476,7 +477,7 @@ EOT
         fi
         
         echo '🔗 Attaching policy to user (idempotent)...';
-        mc admin policy attach minio formbricks-policy --user "$minio_service_user" || echo 'Policy already attached or attachment failed (non-fatal).';
+        mc admin policy attach minio $minio_policy_name --user "$minio_service_user" || echo 'Policy already attached or attachment failed (non-fatal).';
         
         echo '✅ MinIO setup complete!';
         exit 0;
