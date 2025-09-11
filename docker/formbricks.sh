@@ -235,8 +235,7 @@ EOT
     echo -n "Enter your SMTP username: "
     read smtp_user
 
-    echo -n "Enter your SMTP password: "
-    read smtp_password
+    read -s -p "Enter your SMTP password: " smtp_password; echo "***"
 
     echo -n "Enable Authenticated SMTP? Enter 1 for yes and 0 for no(default is 1): "
     read smtp_authenticated
@@ -276,7 +275,7 @@ EOT
     if [[ $use_external_s3 == "y" ]]; then
       echo "🔧 Enter S3 configuration (leave Endpoint empty for AWS S3):"
       read -p "   S3 Access Key: " ext_s3_access_key
-      read -p "   S3 Secret Key: " ext_s3_secret_key
+      read -s -p "   S3 Secret Key: " ext_s3_secret_key; echo "***"
       read -p "   S3 Region (e.g., us-east-1): " ext_s3_region
       read -p "   S3 Bucket Name: " ext_s3_bucket
       read -p "   S3 Endpoint URL (leave empty if you are using AWS S3, otherwise please enter the endpoint URL of the third party S3 compatible storage service): " ext_s3_endpoint
