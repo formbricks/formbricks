@@ -42,6 +42,8 @@ export const ProjectAndOrgSwitch = ({
     () => organizations.toSorted((a, b) => a.name.localeCompare(b.name)),
     [organizations]
   );
+  const currentEnvironment = environments.find((env) => env.id === currentEnvironmentId);
+  const showEnvironmentBreadcrumb = currentEnvironment?.type === "development";
 
   return (
     <Breadcrumb>
@@ -66,10 +68,11 @@ export const ProjectAndOrgSwitch = ({
             isFormbricksCloud={isFormbricksCloud}
             isLicenseActive={isLicenseActive}
             isAccessControlAllowed={isAccessControlAllowed}
+            isEnvironmentBreadcrumbVisible={showEnvironmentBreadcrumb}
           />
         )}
-        {currentEnvironmentId && (
-          <EnvironmentBreadcrumb environments={environments} currentEnvironmentId={currentEnvironmentId} />
+        {showEnvironmentBreadcrumb && (
+          <EnvironmentBreadcrumb environments={environments} currentEnvironment={currentEnvironment} />
         )}
       </BreadcrumbList>
     </Breadcrumb>

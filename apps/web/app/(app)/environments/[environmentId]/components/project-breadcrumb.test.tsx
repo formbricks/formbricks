@@ -10,6 +10,7 @@ import { ProjectBreadcrumb } from "./project-breadcrumb";
 // Mock the dependencies
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
+  usePathname: vi.fn(() => "/environments/env-123/project/general"),
 }));
 
 vi.mock("@tolgee/react", () => ({
@@ -87,6 +88,7 @@ vi.mock("@/modules/ui/components/dropdown-menu", () => ({
     </button>
   ),
   DropdownMenuGroup: ({ children }: any) => <div data-testid="dropdown-group">{children}</div>,
+  DropdownMenuSeparator: () => <div data-testid="dropdown-separator" />,
 }));
 
 // Mock Lucide React icons
@@ -120,6 +122,16 @@ vi.mock("lucide-react", () => ({
   Loader2: ({ className }: any) => (
     <svg data-testid="loader-2-icon" className={className}>
       <title>Loader2 Icon</title>
+    </svg>
+  ),
+  CogIcon: ({ className }: any) => (
+    <svg data-testid="cog-icon" className={className}>
+      <title>Cog Icon</title>
+    </svg>
+  ),
+  SettingsIcon: ({ className }: any) => (
+    <svg data-testid="settings-icon" className={className}>
+      <title>Settings Icon</title>
     </svg>
   ),
 }));
@@ -177,6 +189,7 @@ describe("ProjectBreadcrumb", () => {
     isLicenseActive: false,
     currentEnvironmentId: "env-123",
     isAccessControlAllowed: true,
+    isEnvironmentBreadcrumbVisible: true,
   };
 
   beforeEach(() => {
@@ -229,7 +242,7 @@ describe("ProjectBreadcrumb", () => {
 
       expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
       expect(screen.getByText("common.choose_project")).toBeInTheDocument();
-      expect(screen.getByTestId("dropdown-group")).toBeInTheDocument();
+      expect(screen.getAllByTestId("dropdown-group")).toHaveLength(2); // Projects group and settings group
     });
 
     test("renders all project options in dropdown", async () => {
@@ -336,6 +349,7 @@ describe("ProjectBreadcrumb", () => {
         projects: [mockProject1, mockProject2, { ...mockProject1, id: "proj-3", name: "Project 3" }],
         organizationProjectsLimit: 3,
         isFormbricksCloud: true,
+        isEnvironmentBreadcrumbVisible: true,
         currentOrganization: {
           ...mockOrganization,
           billing: { ...mockOrganization.billing, plan: "startup" } as unknown as TOrganizationBilling,
@@ -361,6 +375,7 @@ describe("ProjectBreadcrumb", () => {
         organizationProjectsLimit: 3,
         isFormbricksCloud: false,
         isLicenseActive: true,
+        isEnvironmentBreadcrumbVisible: true,
       };
       render(<ProjectBreadcrumb {...props} />);
 
