@@ -34,8 +34,7 @@ export const Uploader = ({
   isStorageConfigured = true,
 }: UploaderProps) => {
   return (
-    // NOSONAR - This is a label for a file input, we need the onClick to trigger storage not configured toast
-    <label
+    <label // NOSONAR - This is a label for a file input, we need the onClick to trigger storage not configured toast
       htmlFor={`${id}-${name}`}
       data-testid="upload-file-label"
       className={cn(
