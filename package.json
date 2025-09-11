@@ -34,7 +34,8 @@
     "prepare": "husky install",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
-    "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./apps/web/locales/*.json"
+    "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./apps/web/locales/*.json",
+    "i18n:generate": " pnpm --filter @formbricks/surveys i18n:generate"
   },
   "dependencies": {
     "react": "19.1.0",
