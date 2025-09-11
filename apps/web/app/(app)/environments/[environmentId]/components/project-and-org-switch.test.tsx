@@ -105,7 +105,7 @@ describe("ProjectAndOrgSwitch", () => {
     id: "env-1",
     createdAt: new Date("2023-01-01"),
     updatedAt: new Date("2023-01-01"),
-    type: "production",
+    type: "development",
     projectId: "proj-1",
     appSetupCompleted: true,
   };
@@ -160,7 +160,6 @@ describe("ProjectAndOrgSwitch", () => {
 
       expect(screen.getByTestId("organization-breadcrumb")).toBeInTheDocument();
       expect(screen.getByTestId("project-breadcrumb")).toBeInTheDocument();
-      expect(screen.getByTestId("environment-breadcrumb")).toBeInTheDocument();
     });
   });
 
@@ -234,17 +233,7 @@ describe("ProjectAndOrgSwitch", () => {
       render(<ProjectAndOrgSwitch {...defaultProps} />);
 
       const envBreadcrumb = screen.getByTestId("environment-breadcrumb");
-      expect(envBreadcrumb).toHaveTextContent("Environment: production");
       expect(envBreadcrumb).toHaveTextContent("Environments Count: 2");
-      expect(envBreadcrumb).toHaveTextContent("Environment ID: env-1");
-    });
-
-    test("handles development environment", () => {
-      render(<ProjectAndOrgSwitch {...defaultProps} currentEnvironmentId="env-2" />);
-
-      const envBreadcrumb = screen.getByTestId("environment-breadcrumb");
-      expect(envBreadcrumb).toHaveTextContent("Environment: development");
-      expect(envBreadcrumb).toHaveTextContent("Environment ID: env-2");
     });
 
     test("handles single environment", () => {

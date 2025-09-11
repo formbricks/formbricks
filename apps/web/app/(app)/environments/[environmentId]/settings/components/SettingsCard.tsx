@@ -2,8 +2,15 @@
 
 import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
-import { H3, Small } from "@/modules/ui/components/typography";
+import { Button } from "@/modules/ui/components/button";
+import { H4, Small } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
+
+interface ButtonInfo {
+  text: string;
+  onClick: () => void;
+  variant: "secondary" | "default" | "outline" | "ghost" | "link";
+}
 
 export const SettingsCard = ({
   title,
@@ -13,6 +20,7 @@ export const SettingsCard = ({
   noPadding = false,
   beta,
   className,
+  buttonInfo,
 }: {
   title: string;
   description: string;
@@ -21,6 +29,7 @@ export const SettingsCard = ({
   noPadding?: boolean;
   beta?: boolean;
   className?: string;
+  buttonInfo?: ButtonInfo;
 }) => {
   const { t } = useTranslate();
   return (
@@ -30,19 +39,24 @@ export const SettingsCard = ({
         className
       )}
       id={title}>
-      <div className="border-b border-slate-200 px-4 pb-4">
-        <div className="flex">
-          <H3 className="capitalize">{title}</H3>
+      <div className="flex justify-between border-b border-slate-200 px-4 pb-4">
+        <div>
+          <H4 className="font-medium capitalize tracking-normal">{title}</H4>
           <div className="ml-2">
             {beta && <Badge size="normal" type="warning" text="Beta" />}
             {soon && (
               <Badge size="normal" type="success" text={t("environments.settings.enterprise.coming_soon")} />
             )}
           </div>
+          <Small color="muted" margin="headerDescription">
+            {description}
+          </Small>
         </div>
-        <Small color="muted" margin="headerDescription">
-          {description}
-        </Small>
+        {buttonInfo && (
+          <Button type="button" onClick={buttonInfo?.onClick} variant={buttonInfo?.variant ?? "default"}>
+            {buttonInfo?.text}
+          </Button>
+        )}
       </div>
       <div className={cn(noPadding ? "" : "px-4 pt-4")}>{children}</div>
     </div>

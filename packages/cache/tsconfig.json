@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "isolatedModules": true,
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "resolveJsonModule": true,
+    "strict": true
+  },
+  "exclude": ["node_modules"],
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "types", "package.json"]
+}
