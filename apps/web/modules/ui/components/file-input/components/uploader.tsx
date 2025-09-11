@@ -44,6 +44,8 @@ export const Uploader = ({
           ? "cursor-not-allowed opacity-50"
           : "hover:bg-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800"
       )}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
       onDragOver={(e) => {
         if (!isStorageConfigured) {
           e.preventDefault();
@@ -74,6 +76,22 @@ export const Uploader = ({
           e.stopPropagation();
           showStorageNotConfiguredToast();
           return;
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        if (!isStorageConfigured) {
+          e.preventDefault();
+          e.stopPropagation();
+          showStorageNotConfiguredToast();
+          return;
+        }
+        if (disabled) return;
+        // With keyboard activation, trigger the hidden input click
+        const input = document.getElementById(`${id}-${name}`) as HTMLInputElement | null;
+        if (input) {
+          e.preventDefault();
+          input.click();
         }
       }}>
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
