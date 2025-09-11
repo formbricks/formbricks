@@ -5,6 +5,12 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { EditLogo } from "./edit-logo";
 
+// Mock next/image to render a plain img tag with original src
+vi.mock("next/image", () => ({
+  __esModule: true,
+  default: ({ src, alt, ...props }: any) => <img src={src} alt={alt} {...props} />,
+}));
+
 // Hoisted mocks
 const h = vi.hoisted(() => ({
   mockHandleFileUpload: vi.fn(),
@@ -125,8 +131,7 @@ describe("EditLogo", () => {
 
     const logoImage = screen.getByAltText("Logo");
     expect(logoImage).toBeInTheDocument();
-    // Next.js Image component transforms URLs, so check if it contains the original URL
-    expect(logoImage.getAttribute("src")).toContain("https%3A%2F%2Fexample.com%2Flogo.png");
+    expect(logoImage.getAttribute("src")).toBe("https://example.com/logo.png");
   });
 
   test("shows read-only warning when isReadOnly is true", () => {
