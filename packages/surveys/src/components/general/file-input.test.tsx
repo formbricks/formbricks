@@ -49,7 +49,7 @@ describe("FileInput", () => {
         allowMultipleFiles={true}
       />
     );
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const file = createFile("test.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [file] } });
 
@@ -73,11 +73,11 @@ describe("FileInput", () => {
         allowMultipleFiles={true}
       />
     );
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const file = createFile("image.jpg", 1000, "image/jpeg");
     fireEvent.change(input, { target: { files: [file] } });
 
-    expect(alertSpy).toHaveBeenCalledWith("No valid file types selected. Please select a valid file type.");
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.no_valid_file_types_selected");
     expect(onFileUpload).not.toHaveBeenCalled();
     expect(onUploadCallback).not.toHaveBeenCalled();
   });
@@ -92,11 +92,11 @@ describe("FileInput", () => {
         allowMultipleFiles={false}
       />
     );
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const files = [createFile("one.txt", 500, "text/plain"), createFile("two.txt", 500, "text/plain")];
     fireEvent.change(input, { target: { files } });
 
-    expect(alertSpy).toHaveBeenCalledWith("Only one file can be uploaded at a time.");
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.only_one_file_can_be_uploaded_at_a_time");
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
@@ -114,7 +114,7 @@ describe("FileInput", () => {
     );
     expect(screen.getByText("fileA.txt")).toBeInTheDocument();
     expect(screen.getByText("fileB.txt")).toBeInTheDocument();
-    const deleteBtn = screen.getByLabelText("Delete file fileA.txt");
+    const deleteBtn = screen.getByLabelText(/common.delete_file fileA.txt/);
     const svg = deleteBtn.querySelector("svg");
     if (!svg) throw new Error("Delete SVG not found");
     fireEvent.click(svg);
@@ -132,12 +132,10 @@ describe("FileInput", () => {
         allowMultipleFiles={true}
       />
     );
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const dupFile = createFile("dup.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [dupFile] } });
-    expect(alertSpy).toHaveBeenCalledWith(
-      "The following files are already uploaded: dup.txt. Duplicate files are not allowed."
-    );
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.duplicate_files");
   });
 
   test("handles native file upload event", async () => {
@@ -192,7 +190,7 @@ describe("FileInput", () => {
     );
 
     // Upload a small file first to verify normal behavior
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     fireEvent.change(input, { target: { files: [smallFile] } });
 
     await waitFor(() => {
@@ -227,11 +225,11 @@ describe("FileInput", () => {
       />
     );
 
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const invalidFile = createFile("invalid.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [invalidFile] } });
 
-    expect(alertSpy).toHaveBeenCalledWith("No valid file types selected. Please select a valid file type.");
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.no_valid_file_types_selected");
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
@@ -247,13 +245,11 @@ describe("FileInput", () => {
       />
     );
 
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const dupFile = createFile("dup.txt", 500, "text/plain");
     fireEvent.change(input, { target: { files: [dupFile] } });
 
-    expect(alertSpy).toHaveBeenCalledWith(
-      "The following files are already uploaded: dup.txt. Duplicate files are not allowed."
-    );
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.duplicate_files");
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 
@@ -286,7 +282,7 @@ describe("FileInput", () => {
 
     // Check that the alert for rejected files was shown
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("exceed the maximum size of 0.5 MB"));
+      expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("errors.file_input.file_size_exceeded"));
     });
 
     // Only the small file should be uploaded
@@ -344,7 +340,7 @@ describe("FileInput", () => {
       />
     );
 
-    const deleteBtn = screen.getByLabelText("Delete file fileA.txt");
+    const deleteBtn = screen.getByLabelText(/common.delete_file fileA.txt/);
     const svg = deleteBtn.querySelector("svg");
     if (!svg) throw new Error("Delete SVG not found");
     fireEvent.click(svg);
@@ -364,7 +360,9 @@ describe("FileInput", () => {
       />
     );
 
-    const label = screen.getByLabelText("Upload files by clicking or dragging them here").closest("label");
+    const label = screen
+      .getByLabelText("common.upload_files_by_clicking_or_dragging_them_here")
+      .closest("label");
     if (!label) throw new Error("Label not found");
 
     // Create a mock file and DataTransfer object
@@ -408,14 +406,14 @@ describe("FileInput", () => {
       />
     );
 
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
     const file = createFile("error.txt", 500, "text/plain");
 
     fireEvent.change(input, { target: { files: [file] } });
 
     // Wait for the alert to be called
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith("Upload failed! Please try again.");
+      expect(alertSpy).toHaveBeenCalledWith("errors.file_input.upload_failed");
     });
   });
 
@@ -435,11 +433,11 @@ describe("FileInput", () => {
     const files = Array(26)
       .fill(null)
       .map((_, i) => createFile(`file${i}.txt`, 500, "text/plain"));
-    const input = screen.getByLabelText("File upload");
+    const input = screen.getByLabelText("common.file_upload");
 
     fireEvent.change(input, { target: { files } });
 
-    expect(alertSpy).toHaveBeenCalledWith("You can only upload a maximum of 25 files.");
+    expect(alertSpy).toHaveBeenCalledWith("errors.file_input.you_can_only_upload_a_maximum_of_files");
     expect(onFileUpload).not.toHaveBeenCalled();
   });
 });

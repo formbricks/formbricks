@@ -5,6 +5,7 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -47,6 +48,7 @@ export function FileUploadQuestion({
   currentQuestionId,
   isBackButtonHidden,
 }: Readonly<FileUploadQuestionProps>) {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
@@ -64,7 +66,7 @@ export function FileUploadQuestion({
             if (value && value.length > 0) {
               onSubmit({ [question.id]: value }, updatedTtcObj);
             } else {
-              alert("Please upload a file");
+              alert(t("errors.please_upload_a_file"));
             }
           } else if (value) {
             onSubmit({ [question.id]: value }, updatedTtcObj);

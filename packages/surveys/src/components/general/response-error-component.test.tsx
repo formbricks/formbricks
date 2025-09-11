@@ -42,9 +42,9 @@ describe("ResponseErrorComponent", () => {
       <ResponseErrorComponent questions={mockQuestions} responseData={mockResponseData} onRetry={() => {}} />
     );
 
-    expect(screen.getByText("Your feedback is stuck :(")).toBeDefined();
-    expect(screen.getByText(/The servers cannot be reached at the moment/)).toBeDefined();
-    expect(screen.getByText("Retry")).toBeDefined();
+    expect(screen.getByText("common.your_feedback_is_stuck")).toBeDefined();
+    expect(screen.getByText(/common.the_servers_cannot_be_reached_at_the_moment/)).toBeDefined();
+    expect(screen.getByText("common.retry")).toBeDefined();
   });
 
   test("displays questions and responses correctly", () => {
@@ -52,10 +52,10 @@ describe("ResponseErrorComponent", () => {
       <ResponseErrorComponent questions={mockQuestions} responseData={mockResponseData} onRetry={() => {}} />
     );
 
-    const questions = screen.getAllByText(/Question \d/);
+    const questions = screen.getAllByText(/common.question \d/);
     expect(questions).toHaveLength(2);
-    expect(questions[0].textContent).toBe("Question 1");
-    expect(questions[1].textContent).toBe("Question 2");
+    expect(questions[0].textContent).toBe("common.question 1");
+    expect(questions[1].textContent).toBe("common.question 2");
 
     const answers = screen.getAllByText(/Answer \d/);
     expect(answers).toHaveLength(2);
@@ -73,7 +73,7 @@ describe("ResponseErrorComponent", () => {
       />
     );
 
-    const retryButton = screen.getByRole("button", { name: "Retry" });
+    const retryButton = screen.getByRole("button", { name: "common.retry" });
     fireEvent.click(retryButton);
 
     expect(mockOnRetry).toHaveBeenCalledTimes(1);
@@ -92,12 +92,12 @@ describe("ResponseErrorComponent", () => {
       />
     );
 
-    const question = screen.getByText(/Question 1/);
-    expect(question.textContent).toBe("Question 1");
+    const question = screen.getByText("common.question 1");
+    expect(question.textContent).toBe("common.question 1");
 
-    const answer = screen.getByText(/Answer 1/);
+    const answer = screen.getByText("Answer 1");
     expect(answer.textContent).toBe("Answer 1");
 
-    expect(screen.queryByText(/Answer 2/)).toBeNull();
+    expect(screen.queryByText("Answer 2")).toBeNull();
   });
 });

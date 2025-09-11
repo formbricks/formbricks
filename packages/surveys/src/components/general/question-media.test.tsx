@@ -21,7 +21,7 @@ describe("QuestionMedia", () => {
     const videoUrl = "https://www.youtube.com/watch?v=test123";
     render(<QuestionMedia videoUrl={videoUrl} />);
 
-    const iframe = screen.getByTitle("Question Video");
+    const iframe = screen.getByTitle("common.question_video");
     expect(iframe).toBeTruthy();
     expect(iframe.getAttribute("src")).toBe(videoUrl + "?controls=0");
   });
@@ -30,7 +30,7 @@ describe("QuestionMedia", () => {
     const videoUrl = "https://vimeo.com/test123";
     render(<QuestionMedia videoUrl={videoUrl} />);
 
-    const iframe = screen.getByTitle("Question Video");
+    const iframe = screen.getByTitle("common.question_video");
     expect(iframe).toBeTruthy();
     expect(iframe.getAttribute("src")).toBe(
       videoUrl +
@@ -42,7 +42,7 @@ describe("QuestionMedia", () => {
     const videoUrl = "https://www.loom.com/share/test123";
     render(<QuestionMedia videoUrl={videoUrl} />);
 
-    const iframe = screen.getByTitle("Question Video");
+    const iframe = screen.getByTitle("common.question_video");
     expect(iframe).toBeTruthy();
     expect(iframe.getAttribute("src")).toBe(
       videoUrl + "?hide_share=true&hideEmbedTopBar=true&hide_title=true"
@@ -105,7 +105,7 @@ describe("QuestionMedia", () => {
     expect(loadingElement).toBeTruthy();
 
     // Get iframe and trigger load
-    const iframe = screen.getByTitle("Question Video");
+    const iframe = screen.getByTitle("common.question_video");
     await iframe.dispatchEvent(new Event("load"));
 
     // Wait for state update
@@ -130,7 +130,7 @@ describe("QuestionMedia", () => {
     const videoUrl = "https://example.com/video.mp4";
     render(<QuestionMedia videoUrl={videoUrl} />);
 
-    const iframe = screen.getByTitle("Question Video");
+    const iframe = screen.getByTitle("common.question_video");
     expect(iframe.getAttribute("src")).toBe(videoUrl);
   });
 });

@@ -11,13 +11,13 @@ describe("SubmitButton", () => {
   test('renders default label "Next" when no buttonLabel is provided and isLastQuestion is false', () => {
     const { getByRole } = render(<SubmitButton buttonLabel={undefined} isLastQuestion={false} />);
     const button = getByRole("button");
-    expect(button.textContent?.trim()).toBe("Next");
+    expect(button.textContent?.trim()).toBe("common.next");
   });
 
   test('renders "Finish" when isLastQuestion is true and no buttonLabel is provided', () => {
     const { getByRole } = render(<SubmitButton buttonLabel={undefined} isLastQuestion />);
     const button = getByRole("button");
-    expect(button.textContent?.trim()).toBe("Finish");
+    expect(button.textContent?.trim()).toBe("common.finish");
   });
 
   test("renders custom buttonLabel when provided", () => {

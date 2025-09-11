@@ -50,14 +50,14 @@ describe("WelcomeCard", () => {
 
     const timeDisplay = container.querySelector(".fb-text-subheading");
     expect(timeDisplay).toBeInTheDocument();
-    expect(timeDisplay).toHaveTextContent(/Takes/);
+    expect(timeDisplay).toHaveTextContent(/common.takes/);
   });
 
   test("shows response count when showResponseCount is true and count > 3", () => {
     const { queryByTestId } = render(<WelcomeCard {...defaultProps} responseCount={10} />);
 
     const responseText = queryByTestId("fb__surveys__welcome-card__response-count");
-    expect(responseText).toHaveTextContent(/10 people responded/);
+    expect(responseText).toHaveTextContent(/common.people_responded/);
   });
 
   test("handles submit button click", () => {
@@ -82,7 +82,7 @@ describe("WelcomeCard", () => {
     const { queryByTestId } = render(<WelcomeCard {...defaultProps} responseCount={3} />);
 
     const responseText = queryByTestId("fb__surveys__welcome-card__response-count");
-    expect(responseText).not.toHaveTextContent(/3 people responded/);
+    expect(responseText).not.toHaveTextContent(/common.people_responded/);
   });
 
   test("shows company logo when fileUrl is provided", () => {
@@ -93,7 +93,7 @@ describe("WelcomeCard", () => {
 
     render(<WelcomeCard {...propsWithLogo} />);
 
-    const logo = screen.getByAltText("Company Logo");
+    const logo = screen.getByAltText("common.company_logo");
     expect(logo).toBeInTheDocument();
     expect(logo).toHaveAttribute("src", "https://example.com/logo.png");
   });
@@ -102,7 +102,7 @@ describe("WelcomeCard", () => {
     // Test short survey (2 questions)
     const { container } = render(<WelcomeCard {...defaultProps} />);
     const timeDisplay = container.querySelector(".fb-text-subheading");
-    expect(timeDisplay).toHaveTextContent(/Takes less than 1 minute/);
+    expect(timeDisplay).toHaveTextContent(/common.takes common.less_than_x_minutes/);
 
     // Test medium survey (12 questions)
     const mediumSurvey = {
@@ -111,7 +111,7 @@ describe("WelcomeCard", () => {
     };
     const { container: mediumContainer } = render(<WelcomeCard {...defaultProps} survey={mediumSurvey} />);
     const mediumTimeDisplay = mediumContainer.querySelector(".fb-text-subheading");
-    expect(mediumTimeDisplay).toHaveTextContent(/Takes 3 minutes/);
+    expect(mediumTimeDisplay).toHaveTextContent(/common.takes common.x_minutes/);
 
     // Test long survey (25 questions)
     const longSurvey = {
@@ -120,7 +120,7 @@ describe("WelcomeCard", () => {
     };
     const { container: longContainer } = render(<WelcomeCard {...defaultProps} survey={longSurvey} />);
     const longTimeDisplay = longContainer.querySelector(".fb-text-subheading");
-    expect(longTimeDisplay).toHaveTextContent(/Takes 6\+ minutes/);
+    expect(longTimeDisplay).toHaveTextContent(/common.takes common.x_plus_minutes/);
   });
 
   test("shows both time and response count when both flags are true", () => {
@@ -140,7 +140,7 @@ describe("WelcomeCard", () => {
     );
 
     const textDisplay = queryByTestId("fb__surveys__welcome-card__info-text-test");
-    expect(textDisplay).toHaveTextContent(/Takes.*10 people responded/);
+    expect(textDisplay).toHaveTextContent(/common.takes.*common.people_responded/);
   });
 
   test("handles missing optional props gracefully", () => {
@@ -206,7 +206,7 @@ describe("WelcomeCard", () => {
       <WelcomeCard {...defaultProps} responseCount={3} />
     );
     expect(queryByTestId3("fb__surveys__welcome-card__response-count")).not.toHaveTextContent(
-      /3 people responded/
+      /common.people_responded/
     );
 
     // unmount to not have conflicting test ids
@@ -215,7 +215,7 @@ describe("WelcomeCard", () => {
     // Test with 4 responses (just above boundary)
     const { queryByTestId: queryByTestId4 } = render(<WelcomeCard {...defaultProps} responseCount={4} />);
     expect(queryByTestId4("fb__surveys__welcome-card__response-count")).toHaveTextContent(
-      /4 people responded/
+      /common.people_responded/
     );
   });
 
@@ -229,7 +229,9 @@ describe("WelcomeCard", () => {
     const { container: emptyContainer } = render(
       <WelcomeCard {...defaultProps} survey={emptyQuestionsSurvey} />
     );
-    expect(emptyContainer.querySelector(".fb-text-subheading")).toHaveTextContent(/Takes less than 1 minute/);
+    expect(emptyContainer.querySelector(".fb-text-subheading")).toHaveTextContent(
+      /common.takes common.less_than_x_minutes/
+    );
 
     // Test with exactly 24 questions (6 minutes boundary)
     const boundaryQuestionsSurvey = {
@@ -239,7 +241,9 @@ describe("WelcomeCard", () => {
     const { container: boundaryContainer } = render(
       <WelcomeCard {...defaultProps} survey={boundaryQuestionsSurvey} />
     );
-    expect(boundaryContainer.querySelector(".fb-text-subheading")).toHaveTextContent(/Takes 6 minutes/);
+    expect(boundaryContainer.querySelector(".fb-text-subheading")).toHaveTextContent(
+      /common.takes common.x_minutes/
+    );
   });
 
   test("correctly processes localized content", () => {

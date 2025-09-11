@@ -115,7 +115,7 @@ describe("RankingQuestion - New Error Handling", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText("Please rank all items before submitting.")).toBeInTheDocument();
+      expect(screen.getByText("errors.please_rank_all_items_before_submitting")).toBeInTheDocument();
     });
   });
 
@@ -126,6 +126,6 @@ describe("RankingQuestion - New Error Handling", () => {
     fireEvent.click(submitButton);
 
     expect(defaultProps.onSubmit).toHaveBeenCalled();
-    expect(screen.queryByText("Please rank all items before submitting.")).not.toBeInTheDocument();
+    expect(screen.queryByText("errors.please_rank_all_items_before_submitting")).not.toBeInTheDocument();
   });
 });

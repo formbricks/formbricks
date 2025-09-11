@@ -50,7 +50,7 @@ describe("Headline", () => {
     const optionalText = container.querySelector("span");
 
     expect(optionalText).toBeInTheDocument();
-    expect(optionalText).toHaveTextContent("Optional");
+    expect(optionalText).toHaveTextContent("common.optional");
     expect(optionalText).toHaveClass("fb-text-xs", "fb-opacity-60", "fb-font-normal");
     expect(optionalText).toHaveAttribute("tabIndex", "-1");
   });

@@ -3,6 +3,7 @@ import { ImageDownIcon } from "@/components/icons/image-down-icon";
 import { cn } from "@/lib/utils";
 import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
 import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 
 //Function to add extra params to videoUrls in order to reduce video controls
 const getVideoUrlWithParams = (videoUrl: string): string => {
@@ -25,6 +26,7 @@ interface QuestionMediaProps {
 }
 
 export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionMediaProps) {
+  const { t } = useTranslation();
   const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,7 +57,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           <div className="fb-rounded-custom fb-bg-black">
             <iframe
               src={videoUrlWithParams}
-              title="Question Video"
+              title={t("common.question_video")}
               frameBorder="0"
               className={cn("fb-rounded-custom fb-aspect-video fb-w-full", isLoading ? "fb-opacity-0" : "")}
               onLoad={() => {
@@ -74,7 +76,7 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
         href={imgUrl ? imgUrl : convertToEmbedUrl(videoUrl ?? "")}
         target="_blank"
         rel="noreferrer"
-        aria-label={"Open in new tab"}
+        aria-label={t("common.open_in_new_tab")}
         className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
         {imgUrl ? <ImageDownIcon size={20} /> : <ExpandIcon size={20} />}
       </a>

@@ -8,6 +8,7 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { type RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -50,6 +51,7 @@ export function OpenTextQuestion({
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
 
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
@@ -71,7 +73,7 @@ export function OpenTextQuestion({
     input?.setCustomValidity("");
 
     if (question.required && (!value || value.trim() === "")) {
-      input?.setCustomValidity("Please fill out this field.");
+      input?.setCustomValidity(t("errors.please_fill_out_this_field"));
       input?.reportValidity();
       return;
     }
@@ -116,7 +118,9 @@ export function OpenTextQuestion({
               }}
               className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
               pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
-              title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
+              title={
+                question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined
+              }
               minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
               maxLength={
                 question.inputType === "text"
@@ -143,7 +147,9 @@ export function OpenTextQuestion({
                 handleInputChange(e.currentTarget.value);
               }}
               className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
-              title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
+              title={
+                question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined
+              }
               minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
               maxLength={question.inputType === "text" ? question.charLimit?.max : undefined}
             />

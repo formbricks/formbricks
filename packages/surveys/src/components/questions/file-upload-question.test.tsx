@@ -196,7 +196,7 @@ describe("FileUploadQuestion", () => {
     const form = container.querySelector("form");
     fireEvent.submit(form as HTMLFormElement);
 
-    expect(window.alert).toHaveBeenCalledWith("Please upload a file");
+    expect(window.alert).toHaveBeenCalledWith("errors.please_upload_a_file");
     expect(onSubmitMock).not.toHaveBeenCalled();
   });
 
