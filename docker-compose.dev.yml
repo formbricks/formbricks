@@ -17,7 +17,7 @@ services:
       - 1025:1025 # smtp server
 
   valkey:
-    image: valkey/valkey:8.1.1
+    image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
     command: "valkey-server"
     ports:
       - 6379:6379

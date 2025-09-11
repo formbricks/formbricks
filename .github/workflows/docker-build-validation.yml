@@ -39,15 +39,9 @@ jobs:
           --health-retries 5
 
       redis:
-        image: valkey/valkey:8.1.1
+        image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
         ports:
           - 6379:6379
-        # Health check to ensure Redis/Valkey is ready before using it
-        options: >-
-          --health-cmd "valkey-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
