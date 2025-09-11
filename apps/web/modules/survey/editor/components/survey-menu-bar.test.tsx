@@ -71,6 +71,22 @@ vi.mock("@formbricks/i18n-utils/src/utils", () => ({
   getLanguageLabel: vi.fn((code) => `Lang(${code})`),
 }));
 
+vi.mock("@formbricks/types/surveys/types", async () => {
+  const actual = await vi.importActual("@formbricks/types/surveys/types");
+  return {
+    ...actual,
+    ZSurvey: {
+      safeParse: vi.fn(() => ({ success: true })),
+    },
+    ZSurveyEndScreenCard: {
+      parse: vi.fn((data) => data),
+    },
+    ZSurveyRedirectUrlCard: {
+      parse: vi.fn((data) => data),
+    },
+  };
+});
+
 vi.mock("react-hot-toast", () => ({
   default: {
     success: vi.fn(),
@@ -302,7 +318,9 @@ describe("SurveyMenuBar", () => {
   });
 
   test("handles save with update action error", async () => {
-    vi.mocked(updateSurveyAction).mockResolvedValue({ error: "Something went wrong" });
+    vi.mocked(updateSurveyAction).mockResolvedValue({
+      serverError: "Something went wrong",
+    });
 
     render(<SurveyMenuBar {...defaultProps} />);
     const saveButton = screen.getByText("common.save").closest("button");
@@ -378,9 +396,28 @@ describe("SurveyMenuBar", () => {
       ...baseSurvey,
       status: "inProgress" as const,
       triggers: ["trigger1"], // Has triggers so buttons are enabled
-    };
+    } as unknown as TSurvey;
     render(<SurveyMenuBar {...defaultProps} localSurvey={publishedSurvey} />);
 
     expect(screen.getByText("environments.surveys.edit.save_and_close")).toBeInTheDocument();
+  });
+
+  test("sets status to 'inProgress' when publishing survey", async () => {
+    vi.mocked(isSurveyValid).mockReturnValue(true);
+    vi.mocked(updateSurveyAction).mockResolvedValue({ data: { ...baseSurvey, status: "inProgress" } });
+
+    render(<SurveyMenuBar {...defaultProps} />);
+
+    const publishButton = screen.getByText("environments.surveys.edit.publish").closest("button");
+    await userEvent.click(publishButton!);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Verify updateSurveyAction was called with status "inProgress"
+    expect(updateSurveyAction).toHaveBeenCalledWith({
+      ...baseSurvey,
+      status: "inProgress",
+      segment: null,
+    });
   });
 });
