@@ -5,7 +5,7 @@ checksums:
     common/apply: eb61ee65aa06a70b2bc908cf0e9f2104
     common/auto_close_wrapper: fd0948e4d47150513e2b354c7685c1a7
     common/back: f541015a827e37cb3b1234e56bc2aa3c
-    common/click_or_drag_to_upload_files: 15b61e390b6c5501d3e3b9da9f6c7930
+    common/click_or_drag_to_upload_files: 64f59bc339568d52b8464b82546b70ea
     common/close_survey: 36e6aaa19051cb253aa155ad69a9edbc
     common/company_logo: 82d5c0d5994508210ee02d684819f4b8
     common/delete_file: ee2f3e3fb4d2b227aea90e44fdaca861

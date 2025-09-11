@@ -1,7 +1,7 @@
-import i18n from "@/components/i18n/i18n";
-import { getI18nLanguage } from "@/components/i18n/utils";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
+import { getI18nLanguage } from "@/lib/i18n-utils";
+import i18n from "@/lib/i18n.config";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { checkIfSurveyIsRTL, cn } from "@/lib/utils";
 import { useRef, useState } from "preact/hooks";

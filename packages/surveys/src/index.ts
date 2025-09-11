@@ -1,7 +1,7 @@
 import { RenderSurvey } from "@/components/general/render-survey";
 import { I18nProvider } from "@/components/i18n/provider";
-import { getI18nLanguage } from "@/components/i18n/utils";
 import { FILE_PICK_EVENT } from "@/lib/constants";
+import { getI18nLanguage } from "@/lib/i18n-utils";
 import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
 import { h, render } from "preact";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
