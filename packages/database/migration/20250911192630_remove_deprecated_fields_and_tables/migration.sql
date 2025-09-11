@@ -1,7 +1,6 @@
 /*
   Warnings:
 
-  - The values [scheduled] on the enum `SurveyStatus` will be removed. If these variants are still used in the database, this will fail.
   - The values [web,website] on the enum `SurveyType` will be removed. If these variants are still used in the database, this will fail.
   - You are about to drop the column `responseId` on the `Display` table. All the data in the column will be lost.
   - You are about to drop the column `status` on the `Display` table. All the data in the column will be lost.
@@ -10,8 +9,6 @@
   - You are about to drop the column `deprecatedRole` on the `Membership` table. All the data in the column will be lost.
   - You are about to drop the column `brandColor` on the `Project` table. All the data in the column will be lost.
   - You are about to drop the column `highlightBorderColor` on the `Project` table. All the data in the column will be lost.
-  - You are about to drop the column `closeOnDate` on the `Survey` table. All the data in the column will be lost.
-  - You are about to drop the column `runOnDate` on the `Survey` table. All the data in the column will be lost.
   - You are about to drop the column `thankYouCard` on the `Survey` table. All the data in the column will be lost.
   - You are about to drop the column `verifyEmail` on the `Survey` table. All the data in the column will be lost.
   - You are about to drop the column `objective` on the `User` table. All the data in the column will be lost.
@@ -21,17 +18,6 @@
   - You are about to drop the `Insight` table. If the table is not empty, all the data it contains will be lost.
 
 */
--- AlterEnum
-BEGIN;
-CREATE TYPE "public"."SurveyStatus_new" AS ENUM ('draft', 'inProgress', 'paused', 'completed');
-ALTER TABLE "public"."Survey" ALTER COLUMN "status" DROP DEFAULT;
-ALTER TABLE "public"."Survey" ALTER COLUMN "status" TYPE "public"."SurveyStatus_new" USING ("status"::text::"public"."SurveyStatus_new");
-ALTER TYPE "public"."SurveyStatus" RENAME TO "SurveyStatus_old";
-ALTER TYPE "public"."SurveyStatus_new" RENAME TO "SurveyStatus";
-DROP TYPE "public"."SurveyStatus_old";
-ALTER TABLE "public"."Survey" ALTER COLUMN "status" SET DEFAULT 'draft';
-COMMIT;
-
 -- AlterEnum
 BEGIN;
 CREATE TYPE "public"."SurveyType_new" AS ENUM ('link', 'app');
@@ -82,9 +68,7 @@ ALTER TABLE "public"."Project" DROP COLUMN "brandColor",
 DROP COLUMN "highlightBorderColor";
 
 -- AlterTable
-ALTER TABLE "public"."Survey" DROP COLUMN "closeOnDate",
-DROP COLUMN "runOnDate",
-DROP COLUMN "thankYouCard",
+ALTER TABLE "public"."Survey" DROP COLUMN "thankYouCard",
 DROP COLUMN "verifyEmail",
 ALTER COLUMN "type" SET DEFAULT 'app';
 
