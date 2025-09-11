@@ -95,7 +95,6 @@
         "AUTH_SKIP_INVITE_FOR_SSO",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
-        "DOCKER_CRON_ENABLED",
         "CRON_SECRET",
         "DATABASE_URL",
         "DEBUG",

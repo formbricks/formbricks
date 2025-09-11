@@ -242,8 +242,6 @@ const mockSurvey = {
   hiddenFields: { enabled: true, fieldIds: [] },
   createdAt: new Date(),
   updatedAt: new Date(),
-  runOnDate: null,
-  closeOnDate: null,
 } as unknown as TSurvey;
 
 const mockProject = {

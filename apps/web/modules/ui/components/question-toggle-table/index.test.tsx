@@ -107,7 +107,6 @@ describe("QuestionToggleTable", () => {
     },
     styling: {},
     autoComplete: false,
-    closeOnDate: null,
     recaptcha: {
       enabled: false,
     },

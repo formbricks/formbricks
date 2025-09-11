@@ -3982,7 +3982,6 @@ components:
           type: string
           enum:
             - draft
-            - scheduled
             - inProgress
             - paused
             - completed
@@ -4098,19 +4097,6 @@ components:
                   - type
           default: []
           description: The endings of the survey
-        thankYouCard:
-          type:
-            - object
-            - "null"
-          properties:
-            enabled:
-              type: boolean
-            message:
-              type: string
-          required:
-            - enabled
-            - message
-          description: The thank you card of the survey (deprecated)
         hiddenFields:
           type: object
           properties:
@@ -4193,16 +4179,6 @@ components:
         delay:
           type: number
           description: Delay before showing survey
-        runOnDate:
-          type:
-            - string
-            - "null"
-          description: Date to run the survey
-        closeOnDate:
-          type:
-            - string
-            - "null"
-          description: Date to close the survey
         surveyClosedMessage:
           type:
             - object
@@ -4503,8 +4479,6 @@ components:
         - autoClose
         - autoComplete
         - delay
-        - runOnDate
-        - closeOnDate
         - surveyClosedMessage
         - segmentId
         - projectOverwrites

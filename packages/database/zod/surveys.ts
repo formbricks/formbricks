@@ -128,12 +128,6 @@ const ZSurveyBase = z.object({
   delay: z.number().openapi({
     description: "Delay before showing survey",
   }),
-  runOnDate: z.date().nullable().openapi({
-    description: "Date to run the survey",
-  }),
-  closeOnDate: z.date().nullable().openapi({
-    description: "Date to close the survey",
-  }),
   surveyClosedMessage: z
     .object({
       enabled: z.boolean(),

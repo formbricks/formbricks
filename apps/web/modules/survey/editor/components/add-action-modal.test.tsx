@@ -109,7 +109,6 @@ const mockSurvey: TSurvey = {
   pin: null,
   displayPercentage: null,
   segment: null,
-  closeOnDate: null,
   createdBy: null,
 } as unknown as TSurvey;
 
