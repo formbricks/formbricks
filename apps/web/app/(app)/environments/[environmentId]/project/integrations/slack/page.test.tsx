@@ -118,8 +118,6 @@ const mockSurveys: TSurvey[] = [
     styling: null,
     segment: null,
     displayPercentage: null,
-    closeOnDate: null,
-    runOnDate: null,
   } as unknown as TSurvey,
 ];
 const mockSlackIntegration = {

@@ -13,7 +13,7 @@ export const ZGetSurveysFilter = z
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().optional(),
     surveyType: z.enum(["link", "app"]).optional(),
-    surveyStatus: z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]).optional(),
+    surveyStatus: z.enum(["draft", "inProgress", "paused", "completed"]).optional(),
   })
   .refine(
     (data) => {
@@ -43,8 +43,6 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   autoClose: true,
   autoComplete: true,
   delay: true,
-  runOnDate: true,
-  closeOnDate: true,
   singleUse: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
@@ -66,8 +64,6 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
     displayLimit: true,
     autoClose: true,
     autoComplete: true,
-    runOnDate: true,
-    closeOnDate: true,
     surveyClosedMessage: true,
     styling: true,
     projectOverwrites: true,

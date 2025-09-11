@@ -3,7 +3,7 @@ import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { isSurveyValid } from "@/modules/survey/editor/lib/validation";
 import { Project } from "@prisma/client";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -71,6 +71,22 @@ vi.mock("@formbricks/i18n-utils/src/utils", () => ({
   getLanguageLabel: vi.fn((code) => `Lang(${code})`),
 }));
 
+vi.mock("@formbricks/types/surveys/types", async () => {
+  const actual = await vi.importActual("@formbricks/types/surveys/types");
+  return {
+    ...actual,
+    ZSurvey: {
+      safeParse: vi.fn(() => ({ success: true })),
+    },
+    ZSurveyEndScreenCard: {
+      parse: vi.fn((data) => data),
+    },
+    ZSurveyRedirectUrlCard: {
+      parse: vi.fn((data) => data),
+    },
+  };
+});
+
 vi.mock("react-hot-toast", () => ({
   default: {
     success: vi.fn(),
@@ -91,7 +107,21 @@ vi.mock("lucide-react", async () => {
 const mockRouter = {
   back: vi.fn(),
   push: vi.fn(),
+  refresh: vi.fn(),
 };
+
+// Mock Next.js router
+vi.mock("next/navigation", () => ({
+  useRouter: () => mockRouter,
+}));
+
+// Mock Tolgee translate
+vi.mock("@tolgee/react", () => ({
+  useTranslate: () => ({
+    t: (key: string) => key, // Return the key as translation for testing
+  }),
+}));
+
 const mockSetLocalSurvey = vi.fn();
 const mockSetActiveId = vi.fn();
 const mockSetInvalidQuestions = vi.fn();
@@ -126,8 +156,6 @@ const baseSurvey = {
   pin: null,
   segment: null,
   languages: [],
-  runOnDate: null,
-  closeOnDate: null,
   welcomeCard: { enabled: false } as TSurvey["welcomeCard"],
 } as unknown as TSurvey;
 
@@ -266,5 +294,130 @@ describe("SurveyMenuBar", () => {
 
     expect(saveButton).not.toBeDisabled();
     expect(saveCloseButton).not.toBeDisabled();
+  });
+
+  test("shows publish button for link surveys", () => {
+    // For link surveys, publish button shows without audience prompt
+    const linkSurvey = { ...baseSurvey, type: "link" as const };
+    render(<SurveyMenuBar {...defaultProps} localSurvey={linkSurvey} />);
+
+    expect(screen.getByText("environments.surveys.edit.publish")).toBeInTheDocument();
+  });
+
+  test("handles save with survey validation failure", async () => {
+    vi.mocked(isSurveyValid).mockReturnValue(false);
+
+    render(<SurveyMenuBar {...defaultProps} />);
+    const saveButton = screen.getByText("common.save").closest("button");
+    await userEvent.click(saveButton!);
+
+    expect(mockSetLocalSurvey).not.toHaveBeenCalled();
+
+    // Reset mock for other tests
+    vi.mocked(isSurveyValid).mockReturnValue(true);
+  });
+
+  test("handles save with update action error", async () => {
+    vi.mocked(updateSurveyAction).mockResolvedValue({
+      serverError: "Something went wrong",
+    });
+
+    render(<SurveyMenuBar {...defaultProps} />);
+    const saveButton = screen.getByText("common.save").closest("button");
+    await userEvent.click(saveButton!);
+
+    // Should not refresh router on error
+    expect(mockRouter.refresh).not.toHaveBeenCalled();
+
+    // Reset mock for other tests
+    vi.mocked(updateSurveyAction).mockResolvedValue({ data: { ...baseSurvey, updatedAt: new Date() } });
+  });
+
+  test("handles save with thrown exception", async () => {
+    vi.mocked(updateSurveyAction).mockRejectedValue(new Error("Network error"));
+
+    render(<SurveyMenuBar {...defaultProps} />);
+    const saveButton = screen.getByText("common.save").closest("button");
+    await userEvent.click(saveButton!);
+
+    expect(mockRouter.refresh).not.toHaveBeenCalled();
+
+    // Reset mock for other tests
+    vi.mocked(updateSurveyAction).mockResolvedValue({ data: { ...baseSurvey, updatedAt: new Date() } });
+  });
+
+  test("handles app survey without triggers", async () => {
+    const appSurveyNoTriggers = { ...baseSurvey, type: "app" as const, triggers: [] };
+    render(<SurveyMenuBar {...defaultProps} localSurvey={appSurveyNoTriggers} />);
+
+    const saveButton = screen.getByText("common.save").closest("button");
+    await userEvent.click(saveButton!);
+
+    // Should show error and not save when no triggers
+    expect(mockSetLocalSurvey).not.toHaveBeenCalled();
+  });
+
+  test("handles back without changes", async () => {
+    render(<SurveyMenuBar {...defaultProps} />);
+    const backButton = screen.getByText("common.back").closest("button");
+    await userEvent.click(backButton!);
+
+    expect(mockRouter.back).toHaveBeenCalled();
+    expect(screen.queryByTestId("alert-dialog")).not.toBeInTheDocument();
+  });
+
+  test("shows dialog buttons when changes exist", () => {
+    const changedSurvey = { ...baseSurvey, name: "Changed Name" };
+    render(<SurveyMenuBar {...defaultProps} localSurvey={changedSurvey} />);
+
+    const backButton = screen.getByText("common.back").closest("button");
+    fireEvent.click(backButton!);
+
+    // Dialog should be visible with both buttons
+    expect(screen.getByTestId("alert-dialog")).toBeInTheDocument();
+    expect(screen.getByText("common.discard")).toBeInTheDocument();
+  });
+
+  test("discards changes from dialog", async () => {
+    const changedSurvey = { ...baseSurvey, name: "Changed Name" };
+    render(<SurveyMenuBar {...defaultProps} localSurvey={changedSurvey} />);
+
+    const backButton = screen.getByText("common.back").closest("button");
+    await userEvent.click(backButton!);
+
+    const discardButton = screen.getByText("common.discard");
+    await userEvent.click(discardButton);
+
+    expect(mockRouter.back).toHaveBeenCalled();
+  });
+
+  test("renders save and close button for published surveys", () => {
+    const publishedSurvey = {
+      ...baseSurvey,
+      status: "inProgress" as const,
+      triggers: ["trigger1"], // Has triggers so buttons are enabled
+    } as unknown as TSurvey;
+    render(<SurveyMenuBar {...defaultProps} localSurvey={publishedSurvey} />);
+
+    expect(screen.getByText("environments.surveys.edit.save_and_close")).toBeInTheDocument();
+  });
+
+  test("sets status to 'inProgress' when publishing survey", async () => {
+    vi.mocked(isSurveyValid).mockReturnValue(true);
+    vi.mocked(updateSurveyAction).mockResolvedValue({ data: { ...baseSurvey, status: "inProgress" } });
+
+    render(<SurveyMenuBar {...defaultProps} />);
+
+    const publishButton = screen.getByText("environments.surveys.edit.publish").closest("button");
+    await userEvent.click(publishButton!);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Verify updateSurveyAction was called with status "inProgress"
+    expect(updateSurveyAction).toHaveBeenCalledWith({
+      ...baseSurvey,
+      status: "inProgress",
+      segment: null,
+    });
   });
 });

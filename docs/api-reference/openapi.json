@@ -6033,7 +6033,6 @@
                     {
                       "autoClose": null,
                       "autoComplete": null,
-                      "closeOnDate": null,
                       "createdAt": "2024-08-05T11:08:27.042Z",
                       "createdBy": "clfv1zvij0000ru0gunwpy43a",
                       "delay": 0,
@@ -6115,7 +6114,6 @@
                       ],
                       "recontactDays": null,
                       "redirectUrl": null,
-                      "runOnDate": null,
                       "segment": null,
                       "showLanguageSwitch": null,
                       "singleUse": {
@@ -6218,7 +6216,6 @@
                 "example": {
                   "autoClose": null,
                   "autoComplete": null,
-                  "closeOnDate": null,
                   "createdBy": null,
                   "delay": 0,
                   "displayLimit": null,
@@ -6298,7 +6295,6 @@
                   ],
                   "recontactDays": null,
                   "redirectUrl": null,
-                  "runOnDate": null,
                   "segmentId": null,
                   "showLanguageSwitch": null,
                   "singleUse": {
@@ -6336,7 +6332,6 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
-                    "closeOnDate": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -6418,7 +6413,6 @@
                     ],
                     "recontactDays": null,
                     "redirectUrl": null,
-                    "runOnDate": null,
                     "segment": null,
                     "showLanguageSwitch": null,
                     "singleUse": {
@@ -6604,7 +6598,6 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
-                    "closeOnDate": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -6686,7 +6679,6 @@
                     ],
                     "recontactDays": null,
                     "redirectUrl": null,
-                    "runOnDate": null,
                     "segment": null,
                     "showLanguageSwitch": null,
                     "singleUse": {
@@ -6859,7 +6851,6 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
-                    "closeOnDate": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -6941,7 +6932,6 @@
                     ],
                     "recontactDays": null,
                     "redirectUrl": null,
-                    "runOnDate": null,
                     "segment": null,
                     "showLanguageSwitch": null,
                     "singleUse": {
@@ -7064,7 +7054,6 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
-                    "closeOnDate": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -7146,7 +7135,6 @@
                     ],
                     "recontactDays": null,
                     "redirectUrl": null,
-                    "runOnDate": null,
                     "segment": null,
                     "showLanguageSwitch": null,
                     "singleUse": {
