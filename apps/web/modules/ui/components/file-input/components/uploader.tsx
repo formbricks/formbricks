@@ -34,6 +34,7 @@ export const Uploader = ({
   isStorageConfigured = true,
 }: UploaderProps) => {
   return (
+    // NOSONAR - This is a label for a file input, we need the onClick to trigger storage not configured toast
     <label
       htmlFor={`${id}-${name}`}
       data-testid="upload-file-label"
@@ -77,23 +78,6 @@ export const Uploader = ({
           e.preventDefault();
           e.stopPropagation();
           showStorageNotConfiguredToast();
-          return;
-        }
-      }}
-      onKeyDown={(e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        if (!isStorageConfigured) {
-          e.preventDefault();
-          e.stopPropagation();
-          showStorageNotConfiguredToast();
-          return;
-        }
-        if (disabled) return;
-        // With keyboard activation, trigger the hidden input click
-        const input = document.getElementById(`${id}-${name}`) as HTMLInputElement | null;
-        if (input) {
-          e.preventDefault();
-          input.click();
         }
       }}>
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
