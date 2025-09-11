@@ -65,7 +65,7 @@ interface QuestionsViewProps {
   locale: TUserLocale;
   responseCount: number;
   setIsCautionDialogOpen: (open: boolean) => void;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionsView = ({
@@ -498,6 +498,7 @@ export const QuestionsView = ({
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
                   locale={locale}
+                  isStorageConfigured={isStorageConfigured}
                 />
               );
             })}

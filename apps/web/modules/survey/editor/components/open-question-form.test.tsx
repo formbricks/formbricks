@@ -174,6 +174,7 @@ describe("OpenQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={"en" as TUserLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -199,6 +200,7 @@ describe("OpenQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={"en" as TUserLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -223,6 +225,7 @@ describe("OpenQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={"en" as TUserLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -251,6 +254,7 @@ describe("OpenQuestionForm", () => {
       setSelectedLanguageCode: mockSetSelectedLanguageCode,
       locale: "en" as TUserLocale,
       lastQuestion: false,
+      isStorageConfigured: true,
     };
     const { rerender } = render(<OpenQuestionForm {...initialProps} />);
 
@@ -343,6 +347,7 @@ describe("OpenQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={"en" as TUserLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 

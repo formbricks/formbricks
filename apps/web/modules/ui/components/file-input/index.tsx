@@ -32,7 +32,7 @@ interface FileInputProps {
   maxSizeInMB?: number;
   isVideoAllowed?: boolean;
   disabled?: boolean;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 interface SelectedFile {
@@ -292,20 +292,19 @@ export const FileInput = ({
                       </div>
                     ))}
 
-                    <div className="border border-red-800">
-                      <Uploader
-                        id={id}
-                        name="uploadMore"
-                        handleDragOver={handleDragOver}
-                        uploaderClassName="h-24 w-40"
-                        handleDrop={handleUploadMoreDrop}
-                        allowedFileExtensions={allowedFileExtensions}
-                        multiple={multiple}
-                        handleUpload={handleUploadMore}
-                        uploadMore={true}
-                        disabled={disabled}
-                      />
-                    </div>
+                    <Uploader
+                      id={id}
+                      name="uploadMore"
+                      handleDragOver={handleDragOver}
+                      uploaderClassName="h-24 w-40"
+                      handleDrop={handleUploadMoreDrop}
+                      allowedFileExtensions={allowedFileExtensions}
+                      multiple={multiple}
+                      handleUpload={handleUploadMore}
+                      uploadMore={true}
+                      disabled={disabled}
+                      isStorageConfigured={isStorageConfigured}
+                    />
                   </div>
                 ) : (
                   <div className="h-52">

@@ -34,7 +34,7 @@ interface MultipleChoiceQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const MultipleChoiceQuestionForm = ({
@@ -198,6 +198,7 @@ export const MultipleChoiceQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>
@@ -266,6 +267,7 @@ export const MultipleChoiceQuestionForm = ({
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
                       locale={locale}
+                      isStorageConfigured={isStorageConfigured}
                     />
                   ))}
               </div>

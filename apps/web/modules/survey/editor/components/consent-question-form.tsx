@@ -17,7 +17,7 @@ interface ConsentQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const ConsentQuestionForm = ({
@@ -80,6 +80,7 @@ export const ConsentQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
     </form>
   );

@@ -21,7 +21,7 @@ interface ContactInfoQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   locale: TUserLocale;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const ContactInfoQuestionForm = ({
@@ -116,6 +116,7 @@ export const ContactInfoQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>
@@ -146,6 +147,7 @@ export const ContactInfoQuestionForm = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           locale={locale}
+          isStorageConfigured={isStorageConfigured}
         />
       </div>
     </form>

@@ -28,7 +28,7 @@ interface MatrixQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const MatrixQuestionForm = ({
@@ -190,6 +190,7 @@ export const MatrixQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>
@@ -238,6 +239,7 @@ export const MatrixQuestionForm = ({
                         !isLabelValidForAllLanguages(question.rows[index].label, localSurvey.languages)
                       }
                       locale={locale}
+                      isStorageConfigured={isStorageConfigured}
                     />
                   ))}
                 </div>
@@ -283,6 +285,7 @@ export const MatrixQuestionForm = ({
                         !isLabelValidForAllLanguages(question.columns[index].label, localSurvey.languages)
                       }
                       locale={locale}
+                      isStorageConfigured={isStorageConfigured}
                     />
                   ))}
                 </div>

@@ -21,7 +21,7 @@ interface IDateQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 const dateOptions = [

@@ -4,7 +4,7 @@ interface UploadImageSurveyBgProps {
   environmentId: string;
   handleBgChange: (url: string, bgType: string) => void;
   background: string;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const UploadImageSurveyBg = ({

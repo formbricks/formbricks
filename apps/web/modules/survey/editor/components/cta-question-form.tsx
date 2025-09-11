@@ -21,7 +21,7 @@ interface CTAQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const CTAQuestionForm = ({
@@ -104,6 +104,7 @@ export const CTAQuestionForm = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           )}
           <QuestionFormInput
@@ -119,6 +120,7 @@ export const CTAQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       </div>
@@ -152,6 +154,7 @@ export const CTAQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       )}

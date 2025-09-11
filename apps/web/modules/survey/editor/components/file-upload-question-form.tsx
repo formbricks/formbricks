@@ -28,7 +28,7 @@ interface FileUploadFormProps {
   isInvalid: boolean;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const FileUploadQuestionForm = ({
@@ -161,6 +161,7 @@ export const FileUploadQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>

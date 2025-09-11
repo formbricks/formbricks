@@ -37,7 +37,7 @@ interface StylingViewProps {
   setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
   isUnsplashConfigured: boolean;
   isCxMode: boolean;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const StylingView = ({

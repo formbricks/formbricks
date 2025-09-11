@@ -110,6 +110,7 @@ const defaultProps = {
   updateSurvey: mockUpdateSurvey,
   endingCard: defaultEndScreenCard,
   locale: "en-US" as TUserLocale,
+  isStorageConfigured: true,
 };
 
 describe("EndScreenForm", () => {
@@ -124,6 +125,7 @@ describe("EndScreenForm", () => {
         ...defaultEndScreenCard,
         subheader: undefined,
       },
+      isStorageConfigured: true,
     };
 
     const { container } = render(<EndScreenForm {...propsWithoutSubheader} />);
@@ -151,6 +153,7 @@ describe("EndScreenForm", () => {
         ...defaultEndScreenCard,
         subheader: createI18nString("Additional information", ["en"]),
       },
+      isStorageConfigured: true,
     };
 
     const { container } = render(<EndScreenForm {...propsWithSubheader} />);

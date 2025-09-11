@@ -39,6 +39,7 @@ interface EditEndingCardProps {
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const EditEndingCard = ({
@@ -54,6 +55,7 @@ export const EditEndingCard = ({
   addEndingCard,
   isFormbricksCloud,
   locale,
+  isStorageConfigured,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
   const { t } = useTranslate();
@@ -262,6 +264,7 @@ export const EditEndingCard = ({
               updateSurvey={updateSurvey}
               endingCard={endingCard}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           )}
           {endingCard.type === "redirectToUrl" && (

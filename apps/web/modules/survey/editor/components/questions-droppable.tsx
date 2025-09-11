@@ -23,7 +23,7 @@ interface QuestionsDraggableProps {
   locale: TUserLocale;
   responseCount: number;
   onAlertTrigger: () => void;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionsDroppable = ({

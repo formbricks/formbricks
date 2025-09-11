@@ -22,7 +22,7 @@ interface BackgroundStylingCardProps {
   environmentId: string;
   isUnsplashConfigured: boolean;
   form: UseFormReturn<TProjectStyling | TSurveyStyling>;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const BackgroundStylingCard = ({

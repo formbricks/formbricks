@@ -62,7 +62,7 @@ interface QuestionCardProps {
   locale: TUserLocale;
   responseCount: number;
   onAlertTrigger: () => void;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionCard = ({
@@ -516,6 +516,7 @@ export const QuestionCard = ({
                           };
                           updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, 0);
                         }}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     )}
                     <div className="w-full">
@@ -546,6 +547,7 @@ export const QuestionCard = ({
                           );
                         }}
                         locale={locale}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     </div>
                   </div>
@@ -567,6 +569,7 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         locale={locale}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     </div>
                   )}

@@ -185,6 +185,7 @@ const defaultProps = {
   locale: "en-US" as const,
   responseCount: 0,
   onAlertTrigger: mockOnAlertTrigger,
+  isStorageConfigured: true,
 };
 
 describe("QuestionCard Component", () => {

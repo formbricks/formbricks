@@ -138,6 +138,7 @@ describe("CalQuestionForm", () => {
         isInvalid={false}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -199,6 +200,7 @@ describe("CalQuestionForm", () => {
         isInvalid={false}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -261,6 +263,7 @@ describe("CalQuestionForm", () => {
         isInvalid={false}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -322,6 +325,7 @@ describe("CalQuestionForm", () => {
         isInvalid={false}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 

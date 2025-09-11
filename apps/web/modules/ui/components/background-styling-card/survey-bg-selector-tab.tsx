@@ -16,7 +16,7 @@ interface SurveyBgSelectorTabProps {
   environmentId: string;
   isUnsplashConfigured: boolean;
   bg: string;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const SurveyBgSelectorTab = ({

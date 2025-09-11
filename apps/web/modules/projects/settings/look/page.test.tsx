@@ -16,6 +16,7 @@ vi.mock("@/app/(app)/environments/[environmentId]/settings/components/SettingsCa
 vi.mock("@/lib/constants", () => ({
   SURVEY_BG_COLORS: ["#fff", "#000"],
   IS_FORMBRICKS_CLOUD: 1,
+  IS_STORAGE_CONFIGURED: true,
   UNSPLASH_ACCESS_KEY: "unsplash-key",
 }));
 

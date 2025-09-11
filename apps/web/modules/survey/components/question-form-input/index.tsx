@@ -55,7 +55,7 @@ interface QuestionFormInputProps {
   className?: string;
   locale: TUserLocale;
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionFormInput = ({
@@ -410,6 +410,7 @@ export const QuestionFormInput = ({
                               variant="secondary"
                               size="icon"
                               aria-label="Toggle image uploader"
+                              data-testid="toggle-image-uploader-button"
                               className="ml-2"
                               onClick={(e) => {
                                 e.preventDefault();

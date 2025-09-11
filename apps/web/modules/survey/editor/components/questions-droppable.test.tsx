@@ -113,6 +113,7 @@ describe("QuestionsDroppable", () => {
         locale="en-US"
         responseCount={0}
         onAlertTrigger={vi.fn()}
+        isStorageConfigured={true}
       />
     );
 
@@ -182,6 +183,7 @@ describe("QuestionsDroppable", () => {
         locale="en-US"
         responseCount={0}
         onAlertTrigger={vi.fn()}
+        isStorageConfigured={true}
       />
     );
 
@@ -251,6 +253,7 @@ describe("QuestionsDroppable", () => {
         locale="en-US"
         responseCount={0}
         onAlertTrigger={vi.fn()}
+        isStorageConfigured={true}
       />
     );
 
@@ -308,6 +311,7 @@ describe("QuestionsDroppable", () => {
         locale="en-US"
         responseCount={0}
         onAlertTrigger={vi.fn()}
+        isStorageConfigured={true}
       />
     );
 
@@ -366,6 +370,7 @@ describe("QuestionsDroppable", () => {
         locale="en-US"
         responseCount={0}
         onAlertTrigger={vi.fn()}
+        isStorageConfigured={true}
       />
     );
 

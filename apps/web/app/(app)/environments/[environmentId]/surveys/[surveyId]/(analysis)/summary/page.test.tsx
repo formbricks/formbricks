@@ -19,6 +19,7 @@ import { TUser } from "@formbricks/types/user";
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
+  IS_STORAGE_CONFIGURED: true,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
   IS_POSTHOG_CONFIGURED: true,

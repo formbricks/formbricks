@@ -37,7 +37,7 @@ interface ThemeStylingProps {
   colors: string[];
   isUnsplashConfigured: boolean;
   isReadOnly: boolean;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const ThemeStyling = ({

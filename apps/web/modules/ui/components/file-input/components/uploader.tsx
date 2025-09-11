@@ -16,7 +16,7 @@ interface UploaderProps {
   handleUpload: (files: File[]) => void;
   uploadMore?: boolean;
   disabled?: boolean;
-  isStorageConfigured?: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const Uploader = ({
@@ -46,6 +46,8 @@ export const Uploader = ({
       )}
       onDragOver={(e) => {
         if (!isStorageConfigured) {
+          e.preventDefault();
+          e.stopPropagation();
           showStorageNotConfiguredToast();
           return;
         }
@@ -56,6 +58,8 @@ export const Uploader = ({
       }}
       onDrop={(e) => {
         if (!isStorageConfigured) {
+          e.preventDefault();
+          e.stopPropagation();
           showStorageNotConfiguredToast();
           return;
         }

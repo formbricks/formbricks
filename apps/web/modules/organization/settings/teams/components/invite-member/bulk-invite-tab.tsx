@@ -17,6 +17,7 @@ interface BulkInviteTabProps {
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const BulkInviteTab = ({
@@ -24,6 +25,7 @@ export const BulkInviteTab = ({
   onSubmit,
   isAccessControlAllowed,
   isFormbricksCloud,
+  isStorageConfigured,
 }: BulkInviteTabProps) => {
   const { t } = useTranslate();
   const [csvFile, setCSVFile] = useState<File>();
@@ -108,6 +110,7 @@ export const BulkInviteTab = ({
           name="bulk-invite"
           disabled={csvFile !== undefined}
           uploaderClassName="h-20 bg-white border border-slate-200"
+          isStorageConfigured={isStorageConfigured}
         />
 
         {csvFile && (

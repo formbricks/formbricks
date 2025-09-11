@@ -17,6 +17,7 @@ import Page from "./page";
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_PRODUCTION: false,
+  IS_STORAGE_CONFIGURED: true,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   ENCRYPTION_KEY: "mock-encryption-key",
   ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
@@ -144,6 +145,7 @@ describe("Page", () => {
         isFormbricksCloud: IS_FORMBRICKS_CLOUD,
         fbLogoUrl: FB_LOGO_URL,
         user: mockUser,
+        isStorageConfigured: true,
       },
       undefined
     );
