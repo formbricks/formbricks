@@ -176,7 +176,6 @@
         "POSTHOG_API_KEY",
         "PRIVACY_URL",
         "RATE_LIMITING_DISABLED",
-        "REDIS_HTTP_URL",
         "REDIS_URL",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",

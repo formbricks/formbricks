@@ -26,6 +26,10 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate a secure one
     CRON_SECRET:
 
+    # Redis URL for caching, rate limiting, and audit logging
+    # To use external Redis/Valkey: remove the redis service below and update this URL
+    REDIS_URL: redis://redis:6379
+
     # Set the minimum log level(debug, info, warn, error, fatal)
     # LOG_LEVEL: info
 
@@ -169,12 +173,6 @@ x-environment: &environment
     # Set the below to send OpenTelemetry data for tracing
     # OPENTELEMETRY_LISTENER_URL: http://localhost:4318/v1/traces
 
-    # Set the below to use Redis for Next Caching (default is In-Memory from Next Cache)
-    # REDIS_URL:
-
-    # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
-    # REDIS_HTTP_URL:
-
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 
     # Set the below to 1 to enable audit logging.
@@ -208,17 +206,35 @@ services:
       # Replace the below with your own secure password & Make sure the password matches the password field in DATABASE_URL above
       - POSTGRES_PASSWORD=postgres
 
+  # Redis/Valkey service for caching, rate limiting, and audit logging
+  # Remove this service if you want to use an external Redis/Valkey instance
+  redis:
+    restart: always
+    image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+    command: valkey-server --appendonly yes
+    volumes:
+      - redis:/data
+    ports:
+      - "6379:6379"
+
   formbricks:
     restart: always
     image: ghcr.io/formbricks/formbricks:latest
     depends_on:
       - postgres
+      - redis
     ports:
       - 3000:3000
     volumes:
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
 
+    
+
 volumes:
   postgres:
+    driver: local
+  redis:
+    driver: local
+  uploads:
     driver: local

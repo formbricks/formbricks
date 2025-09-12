@@ -748,7 +748,6 @@
         "api_key_label": "APIキーのラベル",
         "api_key_security_warning": "セキュリティ上の理由から、APIキーは作成時に一度だけ表示されます。すぐにコピーしてください。",
         "api_key_updated": "APIキーを更新しました",
-        "delete_permission": "削除権限",
         "duplicate_access": "重複したプロジェクトアクセスは許可されません",
         "no_api_keys_yet": "まだAPIキーがありません",
         "no_env_permissions_found": "環境権限が見つかりません",
