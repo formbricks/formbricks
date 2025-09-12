@@ -210,8 +210,6 @@ const mockSurvey = {
   isSingleUse: false, // Explicitly set isSingleUse
   recaptcha: { enabled: false },
   autoClose: null,
-  thankYouCard: null,
-  verifyEmail: null,
   triggers: [],
   redirectUrl: "",
   surveyClosedMessage: { default: "" },

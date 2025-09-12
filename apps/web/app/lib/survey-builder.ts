@@ -19,7 +19,7 @@ import {
   TSurveyRatingQuestion,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
+import { TTemplate } from "@formbricks/types/templates";
 
 const getDefaultButtonLabel = (label: string | undefined, t: TFnType) =>
   createI18nString(label || t("common.next"), []);
@@ -389,7 +389,6 @@ export const getDefaultSurveyPreset = (t: TFnType): TTemplate["preset"] => {
 export const buildSurvey = (
   config: {
     name: string;
-    role: TTemplateRole;
     industries: ("eCommerce" | "saas" | "other")[];
     channels: ("link" | "app" | "website")[];
     description: string;
@@ -402,7 +401,6 @@ export const buildSurvey = (
   const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: config.name,
-    role: config.role,
     industries: config.industries,
     channels: config.channels,
     description: config.description,

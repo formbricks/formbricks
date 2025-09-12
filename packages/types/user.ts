@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
-
 export const ZUserLocale = z.enum([
   "en-US",
   "de-DE",
@@ -15,16 +13,6 @@ export const ZUserLocale = z.enum([
 ]);
 
 export type TUserLocale = z.infer<typeof ZUserLocale>;
-export const ZUserObjective = z.enum([
-  "increase_conversion",
-  "improve_user_retention",
-  "increase_user_adoption",
-  "sharpen_marketing_messaging",
-  "support_sales",
-  "other",
-]);
-
-export type TUserObjective = z.infer<typeof ZUserObjective>;
 
 export const ZUserNotificationSettings = z.object({
   alert: z.record(z.boolean()),
@@ -62,8 +50,6 @@ export const ZUser = z.object({
   identityProvider: ZUserIdentityProvider,
   createdAt: z.date(),
   updatedAt: z.date(),
-  role: ZRole.nullable(),
-  objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
   locale: ZUserLocale,
   lastLoginAt: z.date().nullable(),
@@ -77,8 +63,6 @@ export const ZUserUpdateInput = z.object({
   email: ZUserEmail.optional(),
   emailVerified: z.date().nullish(),
   password: ZUserPassword.optional(),
-  role: ZRole.optional(),
-  objective: ZUserObjective.nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
   locale: ZUserLocale.optional(),
   lastLoginAt: z.date().nullish(),
@@ -92,8 +76,6 @@ export const ZUserCreateInput = z.object({
   email: ZUserEmail,
   password: ZUserPassword.optional(),
   emailVerified: z.date().optional(),
-  role: ZRole.optional(),
-  objective: ZUserObjective.nullish(),
   identityProvider: ZUserIdentityProvider.optional(),
   identityProviderAccountId: z.string().optional(),
   locale: ZUserLocale.optional(),

@@ -565,7 +565,6 @@ describe("Helper Functions", () => {
   test("buildSurvey returns built survey with overridden preset properties", () => {
     const config = {
       name: "Custom Survey",
-      role: "productManager" as TTemplateRole,
       industries: ["eCommerce"] as string[],
       channels: ["link"],
       description: "Test survey",
@@ -595,7 +594,6 @@ describe("Helper Functions", () => {
 
     const survey = buildSurvey(config as any, mockT);
     expect(survey.name).toBe(config.name);
-    expect(survey.role).toBe(config.role);
     expect(survey.industries).toEqual(config.industries);
     expect(survey.channels).toEqual(config.channels);
     expect(survey.description).toBe(config.description);

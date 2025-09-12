@@ -354,15 +354,6 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("button", { name: "Add option" }).click();
   await page.getByPlaceholder("Option 5").click();
   await page.getByPlaceholder("Option 5").fill(params.ranking.choices[4]);
-
-  // Thank You Card
-  await page
-    .locator("div")
-    .filter({ hasText: /^Thank you!Ending card$/ })
-    .nth(1)
-    .click();
-  await page.getByLabel("Note*").fill(params.thankYouCard.headline);
-  await page.locator('input[name="subheader"]').fill(params.thankYouCard.description);
 };
 
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
@@ -1012,13 +1003,4 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "Multiply *" }).click();
   await page.locator("#action-2-value-input").click();
   await page.locator("#action-2-value-input").fill("2");
-
-  // Thank You Card
-  await page
-    .locator("div")
-    .filter({ hasText: /^Thank you!Ending card$/ })
-    .nth(1)
-    .click();
-  await page.getByLabel("Note*").fill(params.thankYouCard.headline);
-  await page.locator('input[name="subheader"]').fill(params.thankYouCard.description);
 };

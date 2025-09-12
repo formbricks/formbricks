@@ -62,7 +62,7 @@ const Page = async (props) => {
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
   const isSlackIntegrationConnected = isIntegrationConnected("slack");
 
-  const widgetSetupCompleted = !!environment?.appSetupCompleted;
+  const appSetupCompleted = !!environment?.appSetupCompleted;
   const integrationCards = [
     {
       docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/zapier",
@@ -202,8 +202,8 @@ const Page = async (props) => {
     label: "Javascript SDK",
     description: t("environments.integrations.website_or_app_integration_description"),
     icon: <Image src={JsLogo} alt="Javascript Logo" />,
-    connected: widgetSetupCompleted,
-    statusText: widgetSetupCompleted ? t("common.connected") : t("common.not_connected"),
+    connected: appSetupCompleted,
+    statusText: appSetupCompleted ? t("common.connected") : t("common.not_connected"),
     disabled: false,
   });
 

@@ -9,9 +9,7 @@ import {
   getActionClass,
   getApiKey,
   getContact,
-  getDocument,
   getEnvironment,
-  getInsight,
   getIntegration,
   getInvite,
   getLanguage,
@@ -448,62 +446,6 @@ describe("Service Functions", () => {
       );
 
       await expect(getTeam(teamId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getInsight", () => {
-    const insightId = "insight123";
-
-    test("returns the insight when found", async () => {
-      const mockInsight = { environmentId: "env123" };
-      vi.mocked(prisma.insight.findUnique).mockResolvedValue(mockInsight);
-
-      const result = await getInsight(insightId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.insight.findUnique).toHaveBeenCalledWith({
-        where: { id: insightId },
-        select: { environmentId: true },
-      });
-      expect(result).toEqual(mockInsight);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.insight.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getInsight(insightId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getDocument", () => {
-    const documentId = "doc123";
-
-    test("returns the document when found", async () => {
-      const mockDocument = { environmentId: "env123" };
-      vi.mocked(prisma.document.findUnique).mockResolvedValue(mockDocument);
-
-      const result = await getDocument(documentId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.document.findUnique).toHaveBeenCalledWith({
-        where: { id: documentId },
-        select: { environmentId: true },
-      });
-      expect(result).toEqual(mockDocument);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.document.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getDocument(documentId)).rejects.toThrow(DatabaseError);
     });
   });
 

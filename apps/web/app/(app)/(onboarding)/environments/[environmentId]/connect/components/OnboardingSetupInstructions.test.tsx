@@ -35,7 +35,7 @@ describe("OnboardingSetupInstructions", () => {
     environmentId: "env-123",
     publicDomain: "https://example.com",
     channel: "app" as const, // Assuming channel is either "app" or "website"
-    widgetSetupCompleted: false,
+    appSetupCompleted: false,
   };
 
   test("renders HTML tab content by default", () => {

@@ -108,15 +108,8 @@ describe("data", () => {
       triggers: [],
       segment: null,
       followUps: [],
-      thankYouCard: {
-        enabled: false,
-        headline: { default: "Thank you!" },
-        subheader: { default: "" },
-        buttonLabel: { default: "Close" },
-      },
       inlineTriggers: [],
       segmentId: null,
-      verifyEmail: null,
     };
 
     const mockTransformedSurvey = {
@@ -231,12 +224,6 @@ describe("data", () => {
         triggers: [],
         segment: null,
         followUps: [],
-        thankYouCard: {
-          enabled: false,
-          headline: { default: "Thank you!" },
-          subheader: { default: "" },
-          buttonLabel: { default: "Close" },
-        },
       };
 
       vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);

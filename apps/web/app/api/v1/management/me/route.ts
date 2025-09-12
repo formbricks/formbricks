@@ -28,7 +28,7 @@ export const GET = async () => {
                 createdAt: true,
                 updatedAt: true,
                 projectId: true,
-                widgetSetupCompleted: true,
+                appSetupCompleted: true,
                 project: {
                   select: {
                     id: true,
@@ -62,7 +62,7 @@ export const GET = async () => {
         type: apiKeyData.apiKeyEnvironments[0].environment.type,
         createdAt: apiKeyData.apiKeyEnvironments[0].environment.createdAt,
         updatedAt: apiKeyData.apiKeyEnvironments[0].environment.updatedAt,
-        widgetSetupCompleted: apiKeyData.apiKeyEnvironments[0].environment.widgetSetupCompleted,
+        appSetupCompleted: apiKeyData.apiKeyEnvironments[0].environment.appSetupCompleted,
         project: {
           id: apiKeyData.apiKeyEnvironments[0].environment.projectId,
           name: apiKeyData.apiKeyEnvironments[0].environment.project.name,

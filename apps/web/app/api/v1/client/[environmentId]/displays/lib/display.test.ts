@@ -59,7 +59,6 @@ const mockDisplay = {
   contactId,
   surveyId,
   responseId: null,
-  status: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -69,7 +68,6 @@ const mockDisplayWithoutContact = {
   contactId: null,
   surveyId,
   responseId: null,
-  status: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

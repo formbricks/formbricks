@@ -218,12 +218,6 @@ const createMockSurvey = (): TSurvey =>
     displayOption: "displayOnce",
     recontactDays: null,
     displayLimit: null,
-    thankYouCard: {
-      enabled: true,
-      title: { default: "Thank you" },
-      buttonLabel: { default: "Close" },
-      buttonLink: "",
-    },
     questions: [
       {
         id: "question1",
