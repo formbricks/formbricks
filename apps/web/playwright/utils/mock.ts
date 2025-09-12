@@ -246,8 +246,8 @@ export const surveys = {
       choices: ["Work", "Money", "Travel", "Family", "Friends"],
     },
     endingCard: {
-      headline: "This is my Thank You Card Headline!",
-      description: "This is my Thank you Card Description!",
+      headline: "Thank you!",
+      description: "We appreciate your feedback.",
     },
   },
   germanCreate: {
