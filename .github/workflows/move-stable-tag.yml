@@ -20,10 +20,16 @@ on:
 permissions:
   contents: read
 
+# Prevent concurrent stable tag operations to avoid race conditions
+concurrency:
+  group: move-stable-tag-${{ github.repository }}
+  cancel-in-progress: true
+
 jobs:
   move-stable-tag:
     name: Move stable tag to release
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # Prevent hung git operations
     permissions:
       contents: write # Required to push tags
     # Only move stable tag for non-prerelease versions
