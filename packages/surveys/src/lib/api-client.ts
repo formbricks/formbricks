@@ -154,7 +154,7 @@ export class ApiClient {
       throw new Error("Error uploading file");
     }
 
-    let uploadResponse: Response = {} as Response;
+    let uploadResponse: Response;
 
     try {
       uploadResponse = await fetch(signedUrl, {
