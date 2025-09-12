@@ -309,6 +309,7 @@ describe("QuestionsView", () => {
         locale={"en" as TUserLocale}
         responseCount={0}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
+        isStorageConfigured={true}
         quotas={[]}
         {...props}
       />

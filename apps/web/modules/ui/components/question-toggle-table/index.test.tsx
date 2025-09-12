@@ -129,6 +129,7 @@ describe("QuestionToggleTable", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={() => {}}
         locale={"en-US"}
+        isStorageConfigured={true}
       />
     );
 
@@ -172,6 +173,7 @@ describe("QuestionToggleTable", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={() => {}}
         locale={"en-US"}
+        isStorageConfigured={true}
       />
     );
 
@@ -193,6 +195,7 @@ describe("QuestionToggleTable", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={() => {}}
         locale={"en-US"}
+        isStorageConfigured={true}
       />
     );
 
@@ -225,6 +228,7 @@ describe("QuestionToggleTable", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={() => {}}
         locale={"en-US"}
+        isStorageConfigured={true}
       />
     );
 
@@ -271,6 +275,7 @@ describe("QuestionToggleTable", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={() => {}}
         locale={"en-US"}
+        isStorageConfigured={true}
       />
     );
 
@@ -309,6 +314,7 @@ describe("QuestionToggleTable", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={() => {}}
         locale={"en-US"}
+        isStorageConfigured={true}
       />
     );
 

@@ -33,6 +33,7 @@ interface SurveyAnalysisCTAProps {
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
+  isStorageConfigured: boolean;
 }
 
 interface ModalState {
@@ -51,6 +52,7 @@ export const SurveyAnalysisCTA = ({
   segments,
   isContactsEnabled,
   isFormbricksCloud,
+  isStorageConfigured,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -213,6 +215,7 @@ export const SurveyAnalysisCTA = ({
           isContactsEnabled={isContactsEnabled}
           isFormbricksCloud={isFormbricksCloud}
           isReadOnly={isReadOnly}
+          isStorageConfigured={isStorageConfigured}
         />
       )}
       <SuccessMessage environment={environment} survey={survey} />

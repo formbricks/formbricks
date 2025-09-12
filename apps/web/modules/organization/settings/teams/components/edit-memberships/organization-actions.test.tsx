@@ -128,6 +128,7 @@ describe("OrganizationActions Component", () => {
     environmentId: "env-123",
     isMultiOrgEnabled: true,
     isUserManagementDisabledFromUi: false,
+    isStorageConfigured: true,
   };
 
   beforeEach(() => {

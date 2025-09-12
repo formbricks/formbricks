@@ -16,6 +16,7 @@ interface SurveyBgSelectorTabProps {
   environmentId: string;
   isUnsplashConfigured: boolean;
   bg: string;
+  isStorageConfigured: boolean;
 }
 
 export const SurveyBgSelectorTab = ({
@@ -25,6 +26,7 @@ export const SurveyBgSelectorTab = ({
   bg,
   environmentId,
   isUnsplashConfigured,
+  isStorageConfigured = true,
 }: SurveyBgSelectorTabProps) => {
   const [activeTab, setActiveTab] = useState(bgType || "color");
   const { t } = useTranslate();
@@ -78,6 +80,7 @@ export const SurveyBgSelectorTab = ({
             environmentId={environmentId}
             handleBgChange={handleBgChange}
             background={uploadBackground}
+            isStorageConfigured={isStorageConfigured}
           />
         );
       case "image":

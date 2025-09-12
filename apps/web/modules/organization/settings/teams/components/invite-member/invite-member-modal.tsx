@@ -25,6 +25,7 @@ interface InviteMemberModalProps {
   isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
+  isStorageConfigured: boolean;
 }
 
 export const InviteMemberModal = ({
@@ -36,6 +37,7 @@ export const InviteMemberModal = ({
   isFormbricksCloud,
   environmentId,
   membershipRole,
+  isStorageConfigured,
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
@@ -59,6 +61,7 @@ export const InviteMemberModal = ({
         onSubmit={onSubmit}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
+        isStorageConfigured={isStorageConfigured}
       />
     ),
   };

@@ -30,7 +30,7 @@ describe("FileUploadResponse", () => {
   });
 
   test("renders 'Download' when filename cannot be extracted", () => {
-    const fileUrls = ["http://example.com/unknown-file"];
+    const fileUrls = [""];
     render(<FileUploadResponse selected={fileUrls} />);
 
     expect(screen.getByText("Download")).toBeInTheDocument();

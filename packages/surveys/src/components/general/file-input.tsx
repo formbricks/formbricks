@@ -5,9 +5,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
 import { useTranslation } from "react-i18next";
-import { type TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TUploadFileConfig } from "@formbricks/types/storage";
+import { TAllowedFileExtension, type TUploadFileConfig, mimeTypes } from "@formbricks/types/storage";
 
 interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
@@ -70,6 +69,42 @@ export function FileInput({
     [fileUrls, selectedFiles, t]
   );
 
+  // Helper function to filter files by size
+  const filterFilesBySize = useCallback(
+    (files: { name: string; type: string; base64: string }[]) => {
+      if (!maxSizeInMB) return { validFiles: files, rejectedFiles: [] };
+
+      const validFiles: typeof files = [];
+      const rejectedFiles: string[] = [];
+
+      for (const file of files) {
+        const base64SizeInKB = (file.base64.length * 0.75) / 1024;
+        if (base64SizeInKB > maxSizeInMB * 1024) {
+          rejectedFiles.push(file.name);
+        } else {
+          validFiles.push(file);
+        }
+      }
+
+      return { validFiles, rejectedFiles };
+    },
+    [maxSizeInMB]
+  );
+
+  // Helper function to handle upload errors
+  const handleUploadErrors = useCallback((rejected: PromiseRejectedResult[]) => {
+    if (rejected.length === 0) return;
+
+    const reason = rejected[0].reason;
+    if (reason?.name === "FileTooLargeError") {
+      alert(reason.message);
+    } else if (reason?.name === "InvalidFileNameError") {
+      alert("Invalid file name. Please rename your file and try again.");
+    } else {
+      alert("Upload failed! Please try again.");
+    }
+  }, []);
+
   // Listen for the native file-upload event dispatched via window.formbricksSurveys.onFilePick
   useEffect(() => {
     const handleNativeFileUpload = async (
@@ -80,48 +115,36 @@ export function FileInput({
       try {
         setIsUploading(true);
 
-        // Filter out files that exceed the maximum size
-        let filteredFiles: typeof filesFromNative = [];
-        const rejectedFiles: string[] = [];
+        // Filter files by size
+        const { validFiles, rejectedFiles } = filterFilesBySize(filesFromNative);
 
-        if (maxSizeInMB) {
-          for (const file of filesFromNative) {
-            // Calculate file size from base64 string
-            // Base64 size in bytes is roughly 3/4 of the string length
-            const base64SizeInKB = (file.base64.length * 0.75) / 1024;
+        // Check for duplicate files
+        const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(validFiles, false);
 
-            if (base64SizeInKB > maxSizeInMB * 1024) {
-              rejectedFiles.push(file.name);
-            } else {
-              filteredFiles.push(file);
-            }
-          }
-        } else {
-          // If no size limit is specified, use all files
-          filteredFiles.push(...filesFromNative);
-        }
-
-        // Check for duplicate files - native uploads don't need to check against selectedFiles
-        const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(filteredFiles, false);
-        filteredFiles = nonDuplicateFiles;
-
-        // Display alert for rejected files
+        // Show size rejection alert
         if (rejectedFiles.length > 0) {
           const fileNames = rejectedFiles.join(", ");
           alert(t("errors.file_input.file_size_exceeded", { fileNames, maxSizeInMB }));
         }
 
-        // If no files remain after filtering, exit early
-        if (filteredFiles.length === 0) {
-          return;
-        }
+        // Exit early if no files to upload
+        if (nonDuplicateFiles.length === 0) return;
 
-        const uploadedUrls = await Promise.all(
-          filteredFiles.map((file) => onFileUpload(file, { allowedFileExtensions, surveyId }))
+        // Upload files
+        const results = await Promise.allSettled(
+          nonDuplicateFiles.map((file) => onFileUpload(file, { allowedFileExtensions, surveyId }))
         );
 
-        // Update file URLs by appending the new URL
-        onUploadCallback(fileUrls ? [...fileUrls, ...uploadedUrls] : uploadedUrls);
+        const fulfilled = results.filter(isFulfilled).map((r) => r.value);
+        const rejected = results.filter(isRejected);
+
+        // Update file URLs on success
+        if (fulfilled.length) {
+          onUploadCallback(fileUrls ? [...fileUrls, ...fulfilled] : fulfilled);
+        }
+
+        // Handle upload errors
+        handleUploadErrors(rejected);
       } catch (err) {
         console.error(`Error uploading native file.`);
         alert(t("errors.file_input.upload_failed"));
@@ -143,7 +166,17 @@ export function FileInput({
     surveyId,
     filterDuplicateFiles,
     t,
+    filterFilesBySize,
+    handleUploadErrors,
   ]);
+
+  const toBase64 = (file: File) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+    });
 
   const validateFileSize = async (file: File): Promise<boolean> => {
     if (maxSizeInMB) {
@@ -157,89 +190,93 @@ export function FileInput({
     return true;
   };
 
-  const handleFileSelection = async (files: FileList) => {
-    let fileArray = Array.from(files);
-
-    if (!allowMultipleFiles && fileArray.length > 1) {
-      alert(t("errors.file_input.only_one_file_can_be_uploaded_at_a_time"));
-      return;
-    }
-
-    if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
-      alert(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
-      return;
-    }
-
-    // Check for duplicate files
-    const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(fileArray);
-
-    if (nonDuplicateFiles.length === 0) {
-      return; // No non-duplicate files to process
-    }
-
-    fileArray = nonDuplicateFiles;
-
-    // filter out files that are not allowed
-    const validFiles = fileArray.filter((file) => {
-      const fileExtension = file.name.split(".").pop()?.toLowerCase() as TAllowedFileExtension;
-      if (!fileExtension || fileExtension === file.name.toLowerCase()) return false;
-
-      if (allowedFileExtensions) {
-        return allowedFileExtensions.includes(fileExtension);
+  // Helper function to validate file limits
+  const validateFileLimits = useCallback(
+    (fileArray: File[]) => {
+      if (!allowMultipleFiles && fileArray.length > 1) {
+        alert(t("errors.file_input.only_one_file_can_be_uploaded_at_a_time"));
+        return false;
       }
 
-      return Object.values(ZAllowedFileExtension.enum).includes(fileExtension);
-    });
-
-    if (!validFiles.length) {
-      alert(t("errors.file_input.no_valid_file_types_selected"));
-      return;
-    }
-
-    const filteredFiles: File[] = [];
-
-    for (const validFile of validFiles) {
-      const isAllowed = await validateFileSize(validFile);
-      if (isAllowed) {
-        filteredFiles.push(validFile);
+      if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
+        alert(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
+        return false;
       }
-    }
 
-    try {
-      setIsUploading(true);
-      const toBase64 = (file: File) =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => {
-            resolve(reader.result);
-          };
-          reader.onerror = reject;
-        });
+      return true;
+    },
+    [allowMultipleFiles, selectedFiles.length, t]
+  );
 
-      const filePromises = filteredFiles.map(async (file) => {
+  // Helper function to validate file extensions
+  const validateFileExtensions = useCallback(
+    (files: File[]) => {
+      return files.filter((file) => {
+        const fileExtension = file.name.split(".").pop()?.toLowerCase() as TAllowedFileExtension;
+        if (!fileExtension || fileExtension === file.name.toLowerCase()) return false;
+
+        if (allowedFileExtensions) {
+          return allowedFileExtensions.includes(fileExtension);
+        }
+
+        return Object.keys(mimeTypes).includes(fileExtension);
+      });
+    },
+    [allowedFileExtensions]
+  );
+
+  // Helper function to convert files to base64 and upload
+  const processAndUploadFiles = useCallback(
+    async (files: File[]) => {
+      const filePromises = files.map(async (file) => {
         const base64 = await toBase64(file);
         return { name: file.name, type: file.type, base64: base64 as string };
       });
 
       const filesToUpload = await Promise.all(filePromises);
-      const uploadPromises = filesToUpload.map((file) => {
-        return onFileUpload(file, { allowedFileExtensions, surveyId });
-      });
+      const uploadPromises = filesToUpload.map((file) =>
+        onFileUpload(file, { allowedFileExtensions, surveyId })
+      );
 
       const uploadedFiles = await Promise.allSettled(uploadPromises);
-
       const rejectedFiles = uploadedFiles.filter(isRejected);
       const uploadedFilesUrl = uploadedFiles.filter(isFulfilled).map((url) => url.value);
 
-      setSelectedFiles((prevFiles) => [...prevFiles, ...filteredFiles]);
+      setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
       onUploadCallback(fileUrls ? [...fileUrls, ...uploadedFilesUrl] : uploadedFilesUrl);
 
-      if (rejectedFiles.length > 0) {
-        if (rejectedFiles[0].reason?.name === "FileTooLargeError") {
-          alert(rejectedFiles[0].reason.message);
-        }
+      handleUploadErrors(rejectedFiles);
+    },
+    [onFileUpload, allowedFileExtensions, surveyId, fileUrls, onUploadCallback, handleUploadErrors]
+  );
+
+  const handleFileSelection = async (files: FileList) => {
+    const fileArray = Array.from(files);
+
+    if (!validateFileLimits(fileArray)) return;
+
+    const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(fileArray);
+    if (nonDuplicateFiles.length === 0) return;
+
+    const validFiles = validateFileExtensions(nonDuplicateFiles);
+    if (!validFiles.length) {
+      alert(t("errors.file_input.no_valid_file_types_selected"));
+      return;
+    }
+
+    const sizeValidatedFiles: File[] = [];
+    for (const validFile of validFiles) {
+      const isAllowed = await validateFileSize(validFile);
+      if (isAllowed) {
+        sizeValidatedFiles.push(validFile);
       }
+    }
+
+    if (sizeValidatedFiles.length === 0) return;
+
+    try {
+      setIsUploading(true);
+      await processAndUploadFiles(sizeValidatedFiles);
     } catch (err: any) {
       console.error("error in uploading file: ", err);
       alert(t("errors.file_input.upload_failed"));

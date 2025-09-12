@@ -102,6 +102,7 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -157,6 +158,7 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -222,6 +224,7 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -275,6 +278,7 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -293,6 +297,7 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -343,6 +348,7 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -401,6 +407,7 @@ describe("AddressQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 

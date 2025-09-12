@@ -64,6 +64,7 @@ describe("CTAQuestionForm", () => {
         selectedLanguageCode="en"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
+        isStorageConfigured={true}
       />
     );
 

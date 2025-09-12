@@ -24,6 +24,7 @@ interface EndScreenFormProps {
   updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const EndScreenForm = ({
@@ -35,6 +36,7 @@ export const EndScreenForm = ({
   updateSurvey,
   endingCard,
   locale,
+  isStorageConfigured,
 }: EndScreenFormProps) => {
   const { t } = useTranslate();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -57,6 +59,7 @@ export const EndScreenForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
       <div>
         {endingCard.subheader !== undefined && (
@@ -73,6 +76,7 @@ export const EndScreenForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>
@@ -138,6 +142,7 @@ export const EndScreenForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
             <div className="space-y-2">

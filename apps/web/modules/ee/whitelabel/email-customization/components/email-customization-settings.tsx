@@ -1,7 +1,6 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { handleFileUpload } from "@/app/lib/fileUpload";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
@@ -9,9 +8,11 @@ import {
   sendTestEmailAction,
   updateOrganizationEmailLogoUrlAction,
 } from "@/modules/ee/whitelabel/email-customization/actions";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
+import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 import { Muted, P, Small } from "@/modules/ui/components/typography";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useTranslate } from "@tolgee/react";
@@ -20,8 +21,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
 
 const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "webp"];
@@ -34,6 +35,7 @@ interface EmailCustomizationSettingsProps {
   isFormbricksCloud: boolean;
   user: TUser | null;
   fbLogoUrl: string;
+  isStorageConfigured: boolean;
 }
 
 export const EmailCustomizationSettings = ({
@@ -44,6 +46,7 @@ export const EmailCustomizationSettings = ({
   isFormbricksCloud,
   user,
   fbLogoUrl,
+  isStorageConfigured,
 }: EmailCustomizationSettingsProps) => {
   const { t } = useTranslate();
 
@@ -57,10 +60,15 @@ export const EmailCustomizationSettings = ({
   const router = useRouter();
 
   const onFileInputChange = (files: File[]) => {
+    if (!isStorageConfigured) {
+      showStorageNotConfiguredToast();
+      return;
+    }
+
     const file = files[0];
     if (!file) return;
 
-    // Revoke any previous object URL so we don’t leak memory
+    // Revoke any previous object URL so we don't leak memory
     if (logoUrl) {
       URL.revokeObjectURL(logoUrl);
     }
@@ -78,6 +86,11 @@ export const EmailCustomizationSettings = ({
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isStorageConfigured) {
+      showStorageNotConfiguredToast();
+      return;
+    }
 
     const files = Array.from(e.dataTransfer.files);
     const file = files[0];
@@ -210,7 +223,13 @@ export const EmailCustomizationSettings = ({
                       <Button
                         data-testid="replace-logo-button"
                         variant="secondary"
-                        onClick={() => inputRef.current?.click()}
+                        onClick={() => {
+                          if (!isStorageConfigured) {
+                            showStorageNotConfiguredToast();
+                            return;
+                          }
+                          inputRef.current?.click();
+                        }}
                         disabled={isReadOnly || isSaving}>
                         <RepeatIcon className="h-4 w-4" />
                         {t("environments.settings.general.replace_logo")}
@@ -240,6 +259,7 @@ export const EmailCustomizationSettings = ({
                   multiple={false}
                   handleUpload={onFileInputChange}
                   disabled={isReadOnly}
+                  isStorageConfigured={isStorageConfigured}
                 />
               </div>
 

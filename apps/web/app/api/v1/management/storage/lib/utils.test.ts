@@ -4,7 +4,7 @@ import { hasPermission } from "@/modules/organization/settings/api-keys/lib/util
 import { Session } from "next-auth";
 import { describe, expect, test, vi } from "vitest";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { checkAuth, checkForRequiredFields } from "./utils";
+import { checkAuth } from "./utils";
 
 // Create mock response objects
 const mockBadRequestResponse = new Response("Bad Request", { status: 400 });
@@ -26,49 +26,6 @@ vi.mock("@/app/lib/api/response", () => ({
     unauthorizedResponse: vi.fn(() => mockUnauthorizedResponse),
   },
 }));
-
-describe("checkForRequiredFields", () => {
-  test("should return undefined when all required fields are present", () => {
-    const result = checkForRequiredFields("env-123", "image/png", "test-file.png");
-    expect(result).toBeUndefined();
-  });
-
-  test("should return bad request response when environmentId is missing", () => {
-    const result = checkForRequiredFields("", "image/png", "test-file.png");
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("environmentId is required");
-    expect(result).toBe(mockBadRequestResponse);
-  });
-
-  test("should return bad request response when fileType is missing", () => {
-    const result = checkForRequiredFields("env-123", "", "test-file.png");
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("contentType is required");
-    expect(result).toBe(mockBadRequestResponse);
-  });
-
-  test("should return bad request response when encodedFileName is missing", () => {
-    const result = checkForRequiredFields("env-123", "image/png", "");
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("fileName is required");
-    expect(result).toBe(mockBadRequestResponse);
-  });
-
-  test("should return bad request response when environmentId is undefined", () => {
-    const result = checkForRequiredFields(undefined as any, "image/png", "test-file.png");
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("environmentId is required");
-    expect(result).toBe(mockBadRequestResponse);
-  });
-
-  test("should return bad request response when fileType is undefined", () => {
-    const result = checkForRequiredFields("env-123", undefined as any, "test-file.png");
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("contentType is required");
-    expect(result).toBe(mockBadRequestResponse);
-  });
-
-  test("should return bad request response when encodedFileName is undefined", () => {
-    const result = checkForRequiredFields("env-123", "image/png", undefined as any);
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("fileName is required");
-    expect(result).toBe(mockBadRequestResponse);
-  });
-});
 
 describe("checkAuth", () => {
   const environmentId = "env-123";

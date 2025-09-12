@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
-import { Logo } from "@/modules/ui/components/logo";
+import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
 import { useTranslate } from "@tolgee/react";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
@@ -51,7 +51,7 @@ export const ConnectIntegration = ({
       <div className="flex w-1/2 flex-col items-center justify-center rounded-lg bg-white p-8 shadow">
         <div className="flex w-1/2 justify-center -space-x-4">
           <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white p-6 shadow-md">
-            <Logo variant="image" />
+            <FormbricksLogo />
           </div>
           <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white p-4 shadow-md">
             <Image className="w-1/2" src={integrationLogoSrc} alt="logo" />

@@ -49,6 +49,7 @@ interface ShareSurveyModalProps {
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
   isReadOnly: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const ShareSurveyModal = ({
@@ -62,6 +63,7 @@ export const ShareSurveyModal = ({
   isContactsEnabled,
   isFormbricksCloud,
   isReadOnly,
+  isStorageConfigured,
 }: ShareSurveyModalProps) => {
   const environmentId = survey.environmentId;
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
@@ -176,7 +178,7 @@ export const ShareSurveyModal = ({
         title: t("environments.surveys.share.link_settings.title"),
         description: t("environments.surveys.share.link_settings.description"),
         componentType: LinkSettingsTab,
-        componentProps: { isReadOnly, locale: user.locale },
+        componentProps: { isReadOnly, locale: user.locale, isStorageConfigured },
       },
     ],
     [
@@ -191,6 +193,7 @@ export const ShareSurveyModal = ({
       isContactsEnabled,
       isFormbricksCloud,
       email,
+      isStorageConfigured,
     ]
   );
 

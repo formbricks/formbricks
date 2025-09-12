@@ -1,12 +1,6 @@
 import { createCipheriv, randomBytes } from "crypto";
 import { describe, expect, test, vi } from "vitest";
-import {
-  generateLocalSignedUrl,
-  getHash,
-  symmetricDecrypt,
-  symmetricEncrypt,
-  validateLocalSignedUrl,
-} from "./crypto";
+import { getHash, symmetricDecrypt, symmetricEncrypt } from "./crypto";
 
 vi.mock("./constants", () => ({ ENCRYPTION_KEY: "0".repeat(32) }));
 
@@ -43,17 +37,5 @@ describe("crypto", () => {
     const h = getHash("abc");
     expect(typeof h).toBe("string");
     expect(h.length).toBeGreaterThan(0);
-  });
-
-  test("signed URL generation & validation", () => {
-    const { uuid, timestamp, signature } = generateLocalSignedUrl("f", "e", "t");
-    expect(uuid).toHaveLength(32);
-    expect(typeof timestamp).toBe("number");
-    expect(typeof signature).toBe("string");
-    expect(validateLocalSignedUrl(uuid, "f", "e", "t", timestamp, signature, key)).toBe(true);
-    expect(validateLocalSignedUrl(uuid, "f", "e", "t", timestamp, "bad", key)).toBe(false);
-    expect(validateLocalSignedUrl(uuid, "f", "e", "t", timestamp - 1000 * 60 * 6, signature, key)).toBe(
-      false
-    );
   });
 });

@@ -4,6 +4,7 @@ import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surv
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -112,6 +113,7 @@ export const ResponseTable = ({
     () => (isFetchingFirstPage ? Array(10).fill({}) : data),
     [data, isFetchingFirstPage]
   );
+
   const tableColumns = useMemo(
     () =>
       isFetchingFirstPage
@@ -198,13 +200,7 @@ export const ResponseTable = ({
       });
 
       if (downloadResponse?.data) {
-        const link = document.createElement("a");
-        link.href = downloadResponse.data;
-        link.download = "";
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        downloadResponsesFile(downloadResponse.data.fileName, downloadResponse.data.fileContents, format);
       } else {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
       }

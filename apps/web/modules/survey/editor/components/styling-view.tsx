@@ -37,6 +37,7 @@ interface StylingViewProps {
   setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
   isUnsplashConfigured: boolean;
   isCxMode: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const StylingView = ({
@@ -51,6 +52,7 @@ export const StylingView = ({
   setLocalStylingChanges,
   isUnsplashConfigured,
   isCxMode,
+  isStorageConfigured = true,
 }: StylingViewProps) => {
   const { t } = useTranslate();
 
@@ -209,6 +211,7 @@ export const StylingView = ({
               disabled={!overwriteThemeStyling}
               isUnsplashConfigured={isUnsplashConfigured}
               form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+              isStorageConfigured={isStorageConfigured}
             />
           )}
 

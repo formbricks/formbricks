@@ -13,7 +13,7 @@ import { PlusIcon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -28,6 +28,7 @@ interface FileUploadFormProps {
   isInvalid: boolean;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const FileUploadQuestionForm = ({
@@ -41,6 +42,7 @@ export const FileUploadQuestionForm = ({
   setSelectedLanguageCode,
   isFormbricksCloud,
   locale,
+  isStorageConfigured = true,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
   const { t } = useTranslate();
@@ -142,6 +144,7 @@ export const FileUploadQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -158,6 +161,7 @@ export const FileUploadQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>

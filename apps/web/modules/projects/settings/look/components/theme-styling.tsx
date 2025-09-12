@@ -37,6 +37,7 @@ interface ThemeStylingProps {
   colors: string[];
   isUnsplashConfigured: boolean;
   isReadOnly: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const ThemeStyling = ({
@@ -45,6 +46,7 @@ export const ThemeStyling = ({
   colors,
   isUnsplashConfigured,
   isReadOnly,
+  isStorageConfigured = true,
 }: ThemeStylingProps) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -165,6 +167,7 @@ export const ThemeStyling = ({
                   isSettingsPage
                   isUnsplashConfigured={isUnsplashConfigured}
                   form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
+                  isStorageConfigured={isStorageConfigured}
                 />
               </div>
             </div>

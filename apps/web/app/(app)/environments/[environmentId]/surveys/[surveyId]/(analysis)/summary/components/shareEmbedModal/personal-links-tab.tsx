@@ -122,7 +122,21 @@ export const PersonalLinksTab = ({
     });
 
     if (result?.data) {
-      downloadFile(result.data.downloadUrl, result.data.fileName || "personal-links.csv");
+      const fileName = result.data.fileName || "personal-links.csv";
+      const file = new File([result.data.csvContent], fileName, {
+        type: "text/csv",
+      });
+
+      try {
+        const url = URL.createObjectURL(file);
+        downloadFile(url, fileName);
+        URL.revokeObjectURL(url);
+      } catch {
+        toast.error(t("environments.surveys.share.personal_links.error_generating_links"));
+        setIsGenerating(false);
+        return;
+      }
+
       toast.success(t("environments.surveys.share.personal_links.links_generated_success_toast"), {
         duration: 5000,
         id: "generating-links",
@@ -134,6 +148,7 @@ export const PersonalLinksTab = ({
         id: "generating-links",
       });
     }
+
     setIsGenerating(false);
   };
 

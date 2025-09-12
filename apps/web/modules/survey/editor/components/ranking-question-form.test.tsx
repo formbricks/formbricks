@@ -89,6 +89,7 @@ describe("RankingQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -135,6 +136,7 @@ describe("RankingQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -189,6 +191,7 @@ describe("RankingQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 

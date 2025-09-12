@@ -60,6 +60,7 @@ describe("QuestionOptionChoice", () => {
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -112,6 +113,7 @@ describe("QuestionOptionChoice", () => {
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -155,6 +157,7 @@ describe("QuestionOptionChoice", () => {
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -196,6 +199,7 @@ describe("QuestionOptionChoice", () => {
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -234,6 +238,7 @@ describe("QuestionOptionChoice", () => {
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -275,6 +280,7 @@ describe("QuestionOptionChoice", () => {
           updateQuestion={vi.fn()}
           surveyLanguageCodes={["default"]}
           locale="en-US"
+          isStorageConfigured={true}
         />
       );
 
@@ -313,6 +319,7 @@ describe("QuestionOptionChoice", () => {
         updateQuestion={vi.fn()}
         surveyLanguageCodes={["default"]}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -349,6 +356,7 @@ describe("QuestionOptionChoice", () => {
         updateQuestion={vi.fn()}
         surveyLanguageCodes={[]}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 

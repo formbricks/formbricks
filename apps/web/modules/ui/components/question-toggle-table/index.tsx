@@ -30,6 +30,7 @@ interface QuestionToggleTableProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionToggleTable = ({
@@ -42,6 +43,7 @@ export const QuestionToggleTable = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured,
 }: QuestionToggleTableProps) => {
   const onShowToggle = (
     field: { id: string; show: boolean; required: boolean; placeholder: TI18nString },
@@ -121,6 +123,7 @@ export const QuestionToggleTable = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </td>
           </tr>

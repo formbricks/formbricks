@@ -31,6 +31,7 @@ describe("UploadImageSurveyBg", () => {
         environmentId={mockEnvironmentId}
         handleBgChange={mockHandleBgChange}
         background={mockBackground}
+        isStorageConfigured={true}
       />
     );
 
@@ -53,6 +54,7 @@ describe("UploadImageSurveyBg", () => {
         environmentId={mockEnvironmentId}
         handleBgChange={mockHandleBgChange}
         background={mockBackground}
+        isStorageConfigured={true}
       />
     );
 
@@ -73,6 +75,7 @@ describe("UploadImageSurveyBg", () => {
         environmentId={mockEnvironmentId}
         handleBgChange={mockHandleBgChange}
         background={mockBackground}
+        isStorageConfigured={true}
       />
     );
 
@@ -92,6 +95,7 @@ describe("UploadImageSurveyBg", () => {
         environmentId={mockEnvironmentId}
         handleBgChange={mockHandleBgChange}
         background={mockBackground}
+        isStorageConfigured={true}
       />
     );
 
@@ -108,6 +112,7 @@ describe("UploadImageSurveyBg", () => {
         environmentId={mockEnvironmentId}
         handleBgChange={mockHandleBgChange}
         background={mockBackground}
+        isStorageConfigured={true}
       />
     );
 
@@ -132,6 +137,7 @@ describe("UploadImageSurveyBg", () => {
         environmentId={mockEnvironmentId}
         handleBgChange={mockHandleBgChange}
         background={mockBackground}
+        isStorageConfigured={true}
       />
     );
 
@@ -164,6 +170,7 @@ describe("UploadImageSurveyBg", () => {
         environmentId={mockEnvironmentId}
         handleBgChange={mockHandleBgChange}
         background={mockBackground}
+        isStorageConfigured={true}
       />
     );
 
@@ -196,6 +203,7 @@ describe("UploadImageSurveyBg", () => {
         environmentId={mockEnvironmentId}
         handleBgChange={mockHandleBgChange}
         background={mockBackground}
+        isStorageConfigured={true}
       />
     );
 
