@@ -748,7 +748,6 @@
         "api_key_label": "API Key Label",
         "api_key_security_warning": "出于安全原因，API 密钥在创建后只会显示一次。 请立即将其复制到您的目标位置。",
         "api_key_updated": "API Key 已更新",
-        "delete_permission": "删除 权限",
         "duplicate_access": "不允许 复制 项目 访问",
         "no_api_keys_yet": "您 还 没有 任 何 API key",
         "no_env_permissions_found": "未找到环境权限",

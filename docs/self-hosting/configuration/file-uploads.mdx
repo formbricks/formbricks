@@ -231,7 +231,7 @@ services:
 
 Ensure your S3 bucket has appropriate permissions:
 
-1. **Public Read Access**: Required for survey images and assets to be accessible
+1. **Appropriate Read Access**: Required for survey images and assets to be accessible, should be restricted to the least privileges.
 2. **Restricted Write Access**: Only your Formbricks instance should be able to upload files
 3. **CORS Configuration**: Allow requests from your Formbricks domain
 
@@ -260,6 +260,7 @@ When using bundled MinIO:
 - Access is restricted through Traefik proxy
 - CORS is automatically configured
 - Rate limiting is applied to prevent abuse
+- A bucket policy with the least privileges is applied to the bucket
 
 ## Troubleshooting
 
