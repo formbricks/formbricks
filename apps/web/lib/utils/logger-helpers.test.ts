@@ -1,15 +1,21 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { deepDiff, redactPII, sanitizeUrlForLogging } from "./logger-helpers";
 
-// Patch redis multi before any imports
+// Patch cache before any imports
 beforeEach(async () => {
-  const redis = (await import("@/modules/cache/redis")).default;
-  if ((redis?.multi as any)?.mockReturnValue) {
-    (redis?.multi as any).mockReturnValue({
-      set: vi.fn(),
-      exec: vi.fn().mockResolvedValue([["OK"]]),
-    });
-  }
+  // Mock the cache service for tests
+  vi.doMock("@/lib/cache", () => ({
+    cache: {
+      getRedisClient: vi.fn().mockResolvedValue({
+        multi: vi.fn().mockReturnValue({
+          set: vi.fn(),
+          exec: vi.fn().mockResolvedValue([["OK"]]),
+        }),
+        watch: vi.fn().mockResolvedValue("OK"),
+        get: vi.fn().mockResolvedValue(null),
+      }),
+    },
+  }));
 });
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -37,16 +43,7 @@ vi.mock("@/modules/ee/audit-logs/lib/service", () => ({
   logAuditEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/modules/cache/redis", () => ({
-  default: {
-    watch: vi.fn().mockResolvedValue("OK"),
-    multi: vi.fn().mockReturnValue({
-      set: vi.fn(),
-      exec: vi.fn().mockResolvedValue([["OK"]]),
-    }),
-    get: vi.fn().mockResolvedValue(null),
-  },
-}));
+// Cache mock is handled in beforeEach above
 
 // Set ENCRYPTION_KEY for all tests unless explicitly testing its absence
 process.env.ENCRYPTION_KEY = "testsecret";

@@ -21,10 +21,10 @@ jobs:
     name: Validate Docker Build
     runs-on: ubuntu-latest
 
-    # Add PostgreSQL service container
+    # Add PostgreSQL and Redis service containers
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
@@ -37,6 +37,11 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+      redis:
+        image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+        ports:
+          - 6379:6379
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -67,6 +72,7 @@ jobs:
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            redis_url=redis://localhost:6379
 
       - name: Verify and Initialize PostgreSQL
         run: |
@@ -96,6 +102,29 @@ jobs:
           echo "Network configuration:"
           netstat -tulpn | grep 5432 || echo "No process listening on port 5432"
 
+      - name: Verify Redis/Valkey Connection
+        run: |
+          echo "Verifying Redis/Valkey connection..."
+          # Install Redis client to test connection
+          sudo apt-get update && sudo apt-get install -y redis-tools
+
+          # Test connection using redis-cli with timeout and proper error handling
+          echo "Testing Redis connection with 30 second timeout..."
+          if timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping >/dev/null 2>&1; do
+            echo "Waiting for Redis to be ready..."
+            sleep 2
+          done'; then
+            echo "✅ Redis connection successful"
+            redis-cli -h localhost -p 6379 info server | head -5
+          else
+            echo "❌ Redis connection failed after 30 seconds"
+            exit 1
+          fi
+
+          # Show network configuration for Redis
+          echo "Redis network configuration:"
+          netstat -tulpn | grep 6379 || echo "No process listening on port 6379"
+
       - name: Test Docker Image with Health Check
         shell: bash
         env:
@@ -113,6 +142,7 @@ jobs:
             -p 3000:3000 \
             -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
             -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
+            -e REDIS_URL="redis://host.docker.internal:6379" \
             -d "formbricks-test:$GITHUB_SHA"
 
           # Start health check polling immediately (every 5 seconds for up to 5 minutes)
