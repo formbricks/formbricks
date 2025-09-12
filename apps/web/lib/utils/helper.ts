@@ -2,9 +2,7 @@ import {
   getActionClass,
   getApiKey,
   getContact,
-  getDocument,
   getEnvironment,
-  getInsight,
   getIntegration,
   getInvite,
   getLanguage,
@@ -176,24 +174,6 @@ export const getOrganizationIdFromTeamId = async (teamId: string) => {
   return team.organizationId;
 };
 
-export const getOrganizationIdFromInsightId = async (insightId: string) => {
-  const insight = await getInsight(insightId);
-  if (!insight) {
-    throw new ResourceNotFoundError("insight", insightId);
-  }
-
-  return await getOrganizationIdFromEnvironmentId(insight.environmentId);
-};
-
-export const getOrganizationIdFromDocumentId = async (documentId: string) => {
-  const document = await getDocument(documentId);
-  if (!document) {
-    throw new ResourceNotFoundError("document", documentId);
-  }
-
-  return await getOrganizationIdFromEnvironmentId(document.environmentId);
-};
-
 export const getOrganizationIdFromQuotaId = async (quotaId: string) => {
   const quota = await getQuota(quotaId);
 
@@ -217,15 +197,6 @@ export const getProjectIdFromSurveyId = async (surveyId: string) => {
   }
 
   return await getProjectIdFromEnvironmentId(survey.environmentId);
-};
-
-export const getProjectIdFromInsightId = async (insightId: string) => {
-  const insight = await getInsight(insightId);
-  if (!insight) {
-    throw new ResourceNotFoundError("insight", insightId);
-  }
-
-  return await getProjectIdFromEnvironmentId(insight.environmentId);
 };
 
 export const getProjectIdFromSegmentId = async (segmentId: string) => {
@@ -282,15 +253,6 @@ export const getProductIdFromContactId = async (contactId: string) => {
   return await getProjectIdFromEnvironmentId(contact.environmentId);
 };
 
-export const getProjectIdFromDocumentId = async (documentId: string) => {
-  const document = await getDocument(documentId);
-  if (!document) {
-    throw new ResourceNotFoundError("document", documentId);
-  }
-
-  return await getProjectIdFromEnvironmentId(document.environmentId);
-};
-
 export const getProjectIdFromIntegrationId = async (integrationId: string) => {
   const integration = await getIntegration(integrationId);
   if (!integration) {
@@ -332,15 +294,6 @@ export const getEnvironmentIdFromResponseId = async (responseId: string) => {
   }
 
   return await getEnvironmentIdFromSurveyId(response.surveyId);
-};
-
-export const getEnvironmentIdFromInsightId = async (insightId: string) => {
-  const insight = await getInsight(insightId);
-  if (!insight) {
-    throw new ResourceNotFoundError("insight", insightId);
-  }
-
-  return insight.environmentId;
 };
 
 export const getEnvironmentIdFromSegmentId = async (segmentId: string) => {

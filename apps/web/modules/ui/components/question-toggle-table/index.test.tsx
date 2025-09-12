@@ -101,9 +101,6 @@ describe("QuestionToggleTable", () => {
     welcomeCard: {
       enabled: false,
     },
-    thankYouCard: {
-      enabled: false,
-    },
     displayProgress: false,
     progressBar: {
       display: false,

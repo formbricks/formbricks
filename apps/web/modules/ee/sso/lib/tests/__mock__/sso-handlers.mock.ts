@@ -16,10 +16,8 @@ export const mockUser: TUser = {
   twoFactorEnabled: false,
   identityProvider: "google",
   locale: "en-US",
-  role: "other",
   createdAt: new Date(),
   updatedAt: new Date(),
-  objective: "improve_user_retention",
   lastLoginAt: new Date(),
   isActive: true,
 };

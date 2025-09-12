@@ -12,7 +12,7 @@ CREATE TABLE "SurveyQuota" (
     "surveyId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "limit" INTEGER NOT NULL,
-    "logic" JSONB NOT NULL,
+    "logic" JSONB NOT NULL DEFAULT '{}'::jsonb,
     "action" "SurveyQuotaAction" NOT NULL,
     "endingCardId" TEXT,
     "countPartialSubmissions" BOOLEAN NOT NULL DEFAULT false,

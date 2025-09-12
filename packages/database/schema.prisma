@@ -165,7 +165,6 @@ model Response {
   // singleUseId, used to prevent multiple responses
   singleUseId       String?
   language          String?
-  documents         Document[]
   displayId         String?             @unique
   display           Display?            @relation(fields: [displayId], references: [id])
 
@@ -218,30 +217,22 @@ enum SurveyStatus {
   completed
 }
 
-enum DisplayStatus {
-  seen
-  responded
-}
-
 /// Records when a survey is shown to a user.
 /// Tracks survey display history and response status.
 ///
 /// @property id - Unique identifier for the display event
 /// @property survey - The survey that was displayed
 /// @property contact - The contact who saw the survey
-/// @property status - Whether the survey was just seen or responded to
 /// @property response - The associated response if one exists
 model Display {
-  id         String         @id @default(cuid())
-  createdAt  DateTime       @default(now()) @map(name: "created_at")
-  updatedAt  DateTime       @updatedAt @map(name: "updated_at")
-  survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId   String
-  contact    Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId  String?
-  responseId String?        @unique //deprecated
-  status     DisplayStatus?
-  response   Response?
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now()) @map(name: "created_at")
+  updatedAt DateTime  @updatedAt @map(name: "updated_at")
+  survey    Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String?
+  response  Response?
 
   @@index([surveyId])
   @@index([contactId, createdAt])
@@ -311,8 +302,6 @@ model SurveyAttributeFilter {
 
 enum SurveyType {
   link
-  web
-  website
   app
 }
 
@@ -341,7 +330,7 @@ model Survey {
   updatedAt           DateTime                @updatedAt @map(name: "updated_at")
   name                String
   redirectUrl         String?
-  type                SurveyType              @default(web)
+  type                SurveyType              @default(app)
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
   creator             User?                   @relation(fields: [createdBy], references: [id])
@@ -353,7 +342,6 @@ model Survey {
   questions           Json                    @default("[]")
   /// [SurveyEnding]
   endings             Json[]                  @default([])
-  thankYouCard        Json? //deprecated            
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")
   /// [SurveyVariables]
@@ -385,8 +373,6 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  /// [SurveyVerifyEmail]
-  verifyEmail                     Json? // deprecated
   isVerifyEmailEnabled            Boolean          @default(false)
   isSingleResponsePerEmailEnabled Boolean          @default(false)
   isBackButtonHidden              Boolean          @default(false)
@@ -394,7 +380,6 @@ model Survey {
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
-  documents                       Document[]
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
   recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
@@ -565,31 +550,27 @@ model DataMigration {
 /// @property id - Unique identifier for the environment
 /// @property type - Either 'production' or 'development'
 /// @property project - Reference to parent project
-/// @property widgetSetupCompleted - Tracks initial widget setup status
 /// @property surveys - Collection of surveys in this environment
 /// @property contacts - Collection of contacts/users tracked
 /// @property actionClasses - Defined actions that can trigger surveys
 /// @property attributeKeys - Custom attributes configuration
 model Environment {
-  id                   String                @id @default(cuid())
-  createdAt            DateTime              @default(now()) @map(name: "created_at")
-  updatedAt            DateTime              @updatedAt @map(name: "updated_at")
-  type                 EnvironmentType
-  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId            String
-  widgetSetupCompleted Boolean               @default(false)
-  appSetupCompleted    Boolean               @default(false)
-  surveys              Survey[]
-  contacts             Contact[]
-  actionClasses        ActionClass[]
-  attributeKeys        ContactAttributeKey[]
-  webhooks             Webhook[]
-  tags                 Tag[]
-  segments             Segment[]
-  integration          Integration[]
-  documents            Document[]
-  insights             Insight[]
-  ApiKeyEnvironment    ApiKeyEnvironment[]
+  id                String                @id @default(cuid())
+  createdAt         DateTime              @default(now()) @map(name: "created_at")
+  updatedAt         DateTime              @updatedAt @map(name: "updated_at")
+  type              EnvironmentType
+  project           Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId         String
+  appSetupCompleted Boolean               @default(false)
+  surveys           Survey[]
+  contacts          Contact[]
+  actionClasses     ActionClass[]
+  attributeKeys     ContactAttributeKey[]
+  webhooks          Webhook[]
+  tags              Tag[]
+  segments          Segment[]
+  integration       Integration[]
+  ApiKeyEnvironment ApiKeyEnvironment[]
 
   @@index([projectId])
 }
@@ -614,29 +595,27 @@ enum WidgetPlacement {
 /// @property recontactDays - Default recontact delay for surveys
 /// @property placement - Default widget placement for in-app surveys
 model Project {
-  id                   String          @id @default(cuid())
-  createdAt            DateTime        @default(now()) @map(name: "created_at")
-  updatedAt            DateTime        @updatedAt @map(name: "updated_at")
-  name                 String
-  organization         Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId       String
-  environments         Environment[]
-  brandColor           String? // deprecated; use styling.brandColor instead
-  highlightBorderColor String? // deprecated
+  id                  String          @id @default(cuid())
+  createdAt           DateTime        @default(now()) @map(name: "created_at")
+  updatedAt           DateTime        @updatedAt @map(name: "updated_at")
+  name                String
+  organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId      String
+  environments        Environment[]
   /// [Styling]
-  styling              Json            @default("{\"allowStyleOverwrite\":true}")
+  styling             Json            @default("{\"allowStyleOverwrite\":true}")
   /// [ProjectConfig]
-  config               Json            @default("{}")
-  recontactDays        Int             @default(7)
-  linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
-  inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
-  placement            WidgetPlacement @default(bottomRight)
-  clickOutsideClose    Boolean         @default(true)
-  darkOverlay          Boolean         @default(false)
-  languages            Language[]
+  config              Json            @default("{}")
+  recontactDays       Int             @default(7)
+  linkSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
+  inAppSurveyBranding Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
+  placement           WidgetPlacement @default(bottomRight)
+  clickOutsideClose   Boolean         @default(true)
+  darkOverlay         Boolean         @default(false)
+  languages           Language[]
   /// [Logo]
-  logo                 Json?
-  projectTeams         ProjectTeam[]
+  logo                Json?
+  projectTeams        ProjectTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -677,14 +656,6 @@ enum OrganizationRole {
   billing
 }
 
-enum MembershipRole {
-  owner
-  admin
-  editor
-  developer
-  viewer
-}
-
 /// Links users to organizations with specific roles.
 /// Manages organization membership and permissions.
 /// Core model for managing user access within organizations.
@@ -699,7 +670,6 @@ model Membership {
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
   accepted       Boolean          @default(false)
-  deprecatedRole MembershipRole? //deprecated
   role           OrganizationRole @default(member)
 
   @@id([userId, organizationId])
@@ -732,7 +702,6 @@ model Invite {
   acceptorId     String?
   createdAt      DateTime         @default(now())
   expiresAt      DateTime
-  deprecatedRole MembershipRole? //deprecated
   role           OrganizationRole @default(member)
   teamIds        String[]         @default([])
 
@@ -835,39 +804,12 @@ model Account {
   @@index([userId])
 }
 
-enum Role {
-  project_manager
-  engineer
-  founder
-  marketing_specialist
-  other
-}
-
-enum Objective {
-  increase_conversion
-  improve_user_retention
-  increase_user_adoption
-  sharpen_marketing_messaging
-  support_sales
-  other
-}
-
-enum Intention {
-  survey_user_segments
-  survey_at_specific_point_in_user_journey
-  enrich_customer_profiles
-  collect_all_user_feedback_on_one_platform
-  other
-}
-
 /// Represents a user in the Formbricks system.
 /// Central model for user authentication and profile management.
 ///
 /// @property id - Unique identifier for the user
 /// @property name - Display name of the user
 /// @property email - User's email address
-/// @property role - User's professional role
-/// @property objective - User's main goal with Formbricks
 /// @property twoFactorEnabled - Whether 2FA is active
 /// @property memberships - Organizations the user belongs to
 /// @property notificationSettings - User's notification preferences
@@ -890,8 +832,6 @@ model User {
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
-  role                      Role?
-  objective                 Objective?
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
   /// [Locale]
@@ -967,85 +907,6 @@ model SurveyLanguage {
   @@id([languageId, surveyId])
   @@index([surveyId])
   @@index([languageId])
-}
-
-enum InsightCategory {
-  featureRequest
-  complaint
-  praise
-  other
-}
-
-/// Stores analyzed insights from survey responses.
-/// Used for tracking patterns and extracting meaningful information.
-///
-/// @property id - Unique identifier for the insight
-/// @property category - Type of insight (feature request, complaint, etc.)
-/// @property title - Summary of the insight
-/// @property description - Detailed explanation
-/// @property vector - Embedding vector for similarity search
-model Insight {
-  id               String                      @id @default(cuid())
-  createdAt        DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                    @updatedAt @map(name: "updated_at")
-  environmentId    String
-  environment      Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  category         InsightCategory
-  title            String
-  description      String
-  vector           Unsupported("vector(512)")?
-  documentInsights DocumentInsight[]
-}
-
-/// Links insights to source documents.
-/// Enables tracing insights back to original responses.
-///
-/// @property document - The source document
-/// @property insight - The derived insight
-model DocumentInsight {
-  documentId String
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  insightId  String
-  insight    Insight  @relation(fields: [insightId], references: [id], onDelete: Cascade)
-
-  @@id([documentId, insightId])
-  @@index([insightId])
-}
-
-enum Sentiment {
-  positive
-  negative
-  neutral
-}
-
-/// Represents a processed text document from survey responses.
-/// Used for analysis and insight generation.
-///
-/// @property id - Unique identifier for the document
-/// @property survey - The associated survey
-/// @property response - The source response
-/// @property sentiment - Analyzed sentiment (positive, negative, neutral)
-/// @property text - The document content
-/// @property vector - Embedding vector for similarity search
-model Document {
-  id               String                      @id @default(cuid())
-  createdAt        DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                    @updatedAt @map(name: "updated_at")
-  environmentId    String
-  environment      Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  surveyId         String?
-  survey           Survey?                     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  responseId       String?
-  response         Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  questionId       String?
-  sentiment        Sentiment
-  isSpam           Boolean
-  text             String
-  vector           Unsupported("vector(512)")?
-  documentInsights DocumentInsight[]
-
-  @@unique([responseId, questionId])
-  @@index([createdAt])
 }
 
 /// Represents a team within an organization.

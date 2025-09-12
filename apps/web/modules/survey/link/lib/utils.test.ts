@@ -140,12 +140,6 @@ describe("survey link utils", () => {
       html: { default: "" },
       buttonLabel: { default: "Start" },
     },
-    thankYouCard: {
-      enabled: true,
-      headline: { default: "Thank You" },
-      html: { default: "" },
-      buttonLabel: { default: "Close" },
-    },
     hiddenFields: {},
     languages: {
       default: "default",

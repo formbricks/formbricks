@@ -3958,19 +3958,6 @@ components:
                   - type
           default: []
           description: The endings of the survey
-        thankYouCard:
-          type:
-            - object
-            - "null"
-          properties:
-            enabled:
-              type: boolean
-            message:
-              type: string
-          required:
-            - enabled
-            - message
-          description: The thank you card of the survey (deprecated)
         hiddenFields:
           type: object
           properties:
@@ -4302,17 +4289,6 @@ components:
         isBackButtonHidden:
           type: boolean
           description: Whether the back button is hidden
-        verifyEmail:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            message:
-              type: string
-          required:
-            - enabled
-            - message
-          description: Email verification configuration (deprecated)
         recaptcha:
           type:
             - object

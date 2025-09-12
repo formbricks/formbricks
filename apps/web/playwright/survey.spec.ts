@@ -235,10 +235,6 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await page.locator("#questionCard-12").getByRole("button", { name: "Next" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
-
-      // Thank You Card
-      await expect(page.getByText(surveys.createAndSubmit.thankYouCard.headline)).toBeVisible();
-      await expect(page.getByText(surveys.createAndSubmit.thankYouCard.description)).toBeVisible();
     });
   });
 });
@@ -611,18 +607,16 @@ test.describe("Multi Language Survey Create", async () => {
     // Fill Thank you card in german
     await page.getByText("Ending card").first().click();
     await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.thankYouCard.headline);
+    await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.endingCard.headline);
     await page.getByPlaceholder("Your description here. Recall").click();
     await page
       .getByPlaceholder("Your description here. Recall")
-      .fill(surveys.germanCreate.thankYouCard.description);
+      .fill(surveys.germanCreate.endingCard.description);
 
     await page.locator("#showButton").check();
 
     await page.getByPlaceholder("Create your own Survey").click();
-    await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.thankYouCard.buttonLabel);
+    await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.endingCard.buttonLabel);
 
     // TODO: @pandeymangg - figure out if this is required
     await page.getByRole("button", { name: "Settings", exact: true }).click();
@@ -892,8 +886,8 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
 
       // Thank You Card
-      await expect(page.getByText(surveys.createWithLogicAndSubmit.thankYouCard.headline)).toBeVisible();
-      await expect(page.getByText(surveys.createWithLogicAndSubmit.thankYouCard.description)).toBeVisible();
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.endingCard.headline)).toBeVisible();
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.endingCard.description)).toBeVisible();
     });
 
     await test.step("Verify Survey Response", async () => {

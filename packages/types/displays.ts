@@ -6,7 +6,6 @@ export const ZDisplay = z.object({
   updatedAt: z.date(),
   contactId: z.string().cuid().nullable(),
   surveyId: z.string().cuid(),
-  status: z.enum(["seen", "responded"]).nullable(),
 });
 
 export type TDisplay = z.infer<typeof ZDisplay>;
