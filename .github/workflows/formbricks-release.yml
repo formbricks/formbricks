@@ -8,8 +8,8 @@ permissions:
   contents: read
 
 jobs:
-  docker-build:
-    name: Build & release docker image
+  docker-build-community:
+    name: Build & release community docker image
     permissions:
       contents: read
       packages: write
@@ -19,6 +19,19 @@ jobs:
     with:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
 
+  docker-build-cloud:
+    name: Build & push Formbricks Cloud to ECR
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-and-push-ecr.yml
+    secrets: inherit
+    with:
+      image_tag: ${{ needs.docker-build-community.outputs.VERSION }}
+      IS_PRERELEASE: ${{ github.event.release.prerelease }}
+    needs:
+      - docker-build-community
+
   helm-chart-release:
     name: Release Helm Chart
     permissions:
@@ -27,22 +40,6 @@ jobs:
     uses: ./.github/workflows/release-helm-chart.yml
     secrets: inherit
     needs:
-      - docker-build
+      - docker-build-community
     with:
-      VERSION: ${{ needs.docker-build.outputs.VERSION }}
-
-  deploy-formbricks-cloud:
-    name: Deploy Helm Chart to Formbricks Cloud
-    permissions:
-      contents: read
-      id-token: write
-    secrets: inherit
-    uses: ./.github/workflows/deploy-formbricks-cloud.yml
-    needs:
-      - docker-build
-      - helm-chart-release
-    with:
-      VERSION: v${{ needs.docker-build.outputs.VERSION }}
-      ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
-
-
+      VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
