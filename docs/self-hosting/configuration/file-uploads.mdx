@@ -229,13 +229,13 @@ services:
 
 ### S3 Bucket Permissions
 
-Ensure your S3 bucket has appropriate permissions:
+Configure your S3 bucket with a least-privileged policy:
 
-1. **Appropriate Read Access**: Required for survey images and assets to be accessible, should be restricted to the least privileges.
+1. **Scoped Public Read Access**: Only allow public read access to specific prefixes where needed
 2. **Restricted Write Access**: Only your Formbricks instance should be able to upload files
 3. **CORS Configuration**: Allow requests from your Formbricks domain
 
-Example S3 bucket policy:
+Example least-privileged S3 bucket policy:
 
 ```json
 {
@@ -244,8 +244,17 @@ Example S3 bucket policy:
       "Action": "s3:GetObject",
       "Effect": "Allow",
       "Principal": "*",
+      "Resource": "arn:aws:s3:::your-bucket-name/uploads/public/*",
+      "Sid": "PublicReadForPublicUploads"
+    },
+    {
+      "Action": ["s3:PutObject", "s3:PutObjectAcl"],
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::123456789012:user/formbricks-service"
+      },
       "Resource": "arn:aws:s3:::your-bucket-name/*",
-      "Sid": "PublicReadGetObject"
+      "Sid": "AllowFormbricksWrite"
     }
   ],
   "Version": "2012-10-17"
