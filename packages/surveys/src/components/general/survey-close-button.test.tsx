@@ -18,7 +18,7 @@ describe("SurveyCloseButton", () => {
     const button = wrapper.querySelector("button");
     expect(button).toBeInTheDocument();
     expect(button).toHaveClass("fb-text-heading", "fb-relative", "fb-h-8", "fb-w-8");
-    expect(button).toHaveAttribute("aria-label", "Close survey");
+    expect(button).toHaveAttribute("aria-label", "common.close_survey");
 
     const backgroundColor = button?.style?.backgroundColor;
     expect(backgroundColor).toBe("transparent");
@@ -33,7 +33,7 @@ describe("SurveyCloseButton", () => {
     const button = wrapper.querySelector("button");
     expect(button).toBeInTheDocument();
     expect(button).toHaveClass("fb-text-heading", "fb-relative", "fb-h-8", "fb-w-8");
-    expect(button).toHaveAttribute("aria-label", "Close survey");
+    expect(button).toHaveAttribute("aria-label", "common.close_survey");
 
     // hover over the button
     fireEvent.mouseEnter(button as HTMLButtonElement);
@@ -51,7 +51,7 @@ describe("SurveyCloseButton", () => {
     const button = wrapper.querySelector("button");
     expect(button).toBeInTheDocument();
     expect(button).toHaveClass("fb-text-heading", "fb-relative", "fb-h-8", "fb-w-8");
-    expect(button).toHaveAttribute("aria-label", "Close survey");
+    expect(button).toHaveAttribute("aria-label", "common.close_survey");
     expect(button).toHaveStyle({
       borderRadius: "12px",
     });

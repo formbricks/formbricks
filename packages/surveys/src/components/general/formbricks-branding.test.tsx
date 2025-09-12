@@ -7,7 +7,7 @@ describe("FormbricksBranding", () => {
   test("renders branding text with correct link", () => {
     render(<FormbricksBranding />);
 
-    const link = screen.getByRole("link", { name: /powered by/i });
+    const link = screen.getByRole("link", { name: /common.powered_by/i });
     expect(link).toHaveAttribute("href", "https://formbricks.com?utm_source=survey_branding");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener");

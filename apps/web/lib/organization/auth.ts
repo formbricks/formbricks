@@ -10,14 +10,7 @@ export const canUserAccessOrganization = async (userId: string, organizationId: 
 
   try {
     const userOrganizations = await getOrganizationsByUserId(userId);
-
-    const givenOrganizationExists = userOrganizations.filter(
-      (organization) => (organization.id = organizationId)
-    );
-    if (!givenOrganizationExists) {
-      return false;
-    }
-    return true;
+    return userOrganizations.some((organization) => organization.id === organizationId);
   } catch (error) {
     throw error;
   }

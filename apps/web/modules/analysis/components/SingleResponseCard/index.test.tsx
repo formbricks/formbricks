@@ -31,7 +31,7 @@ const dummyEnvironment = { id: "env1" } as TEnvironment;
 const dummyUser = { id: "user1", email: "user1@example.com", name: "User One" } as TUser;
 const dummyLocale = "en-US";
 
-const dummyDeleteResponses = vi.fn();
+const dummyUpdateResponseList = vi.fn();
 const dummyUpdateResponse = vi.fn();
 const dummySetSelectedResponseId = vi.fn();
 
@@ -85,7 +85,7 @@ describe("SingleResponseCard", () => {
         environmentTags={[]}
         environment={dummyEnvironment}
         updateResponse={dummyUpdateResponse}
-        deleteResponses={dummyDeleteResponses}
+        updateResponseList={dummyUpdateResponseList}
         isReadOnly={true}
         setSelectedResponseId={dummySetSelectedResponseId}
         locale={dummyLocale}
@@ -105,7 +105,7 @@ describe("SingleResponseCard", () => {
         environmentTags={[]}
         environment={dummyEnvironment}
         updateResponse={dummyUpdateResponse}
-        deleteResponses={dummyDeleteResponses}
+        updateResponseList={dummyUpdateResponseList}
         isReadOnly={false}
         setSelectedResponseId={dummySetSelectedResponseId}
         locale={dummyLocale}
@@ -117,10 +117,13 @@ describe("SingleResponseCard", () => {
     const deleteButton = await screen.findByTestId("DeleteDialog");
     await userEvent.click(deleteButton);
     await waitFor(() => {
-      expect(deleteResponseAction).toHaveBeenCalledWith({ responseId: dummyResponse.id });
+      expect(deleteResponseAction).toHaveBeenCalledWith({
+        responseId: dummyResponse.id,
+        decrementQuotas: false,
+      });
     });
 
-    expect(dummyDeleteResponses).toHaveBeenCalledWith([dummyResponse.id]);
+    expect(dummyUpdateResponseList).toHaveBeenCalledWith([dummyResponse.id]);
   });
 
   test("calls toast.error when deleteResponseAction throws error", async () => {
@@ -133,7 +136,7 @@ describe("SingleResponseCard", () => {
         environmentTags={[]}
         environment={dummyEnvironment}
         updateResponse={dummyUpdateResponse}
-        deleteResponses={dummyDeleteResponses}
+        updateResponseList={dummyUpdateResponseList}
         isReadOnly={false}
         setSelectedResponseId={dummySetSelectedResponseId}
         locale={dummyLocale}
@@ -158,7 +161,7 @@ describe("SingleResponseCard", () => {
         environmentTags={[]}
         environment={dummyEnvironment}
         updateResponse={dummyUpdateResponse}
-        deleteResponses={dummyDeleteResponses}
+        updateResponseList={dummyUpdateResponseList}
         isReadOnly={false}
         setSelectedResponseId={dummySetSelectedResponseId}
         locale={dummyLocale}

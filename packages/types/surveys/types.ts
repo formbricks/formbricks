@@ -389,16 +389,19 @@ export const ZSingleCondition = z
 
 export type TSingleCondition = z.infer<typeof ZSingleCondition>;
 
+export const ZConnector = z.enum(["and", "or"]);
+export type TConnector = z.infer<typeof ZConnector>;
+
 export interface TConditionGroup {
   id: string;
-  connector: "and" | "or";
+  connector: TConnector;
   conditions: (TSingleCondition | TConditionGroup)[];
 }
 
 const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
   z.object({
     id: ZId,
-    connector: z.enum(["and", "or"]),
+    connector: ZConnector,
     conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
   })
 );
@@ -770,7 +773,7 @@ export const ZSurveyType = z.enum(["link", "app"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 
-export const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
+export const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
@@ -852,8 +855,6 @@ export const ZSurvey = z
     ),
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
-    runOnDate: z.date().nullable(),
-    closeOnDate: z.date().nullable(),
     projectOverwrites: ZSurveyProjectOverwrites.nullable(),
     styling: ZSurveyStyling.nullable(),
     showLanguageSwitch: z.boolean().nullable(),
@@ -2505,8 +2506,6 @@ export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateIn
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
-  runOnDate: TSurvey["runOnDate"];
-  closeOnDate: TSurvey["closeOnDate"];
 }
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
@@ -2860,6 +2859,8 @@ export const ZSurveySummary = z.object({
     dropOffCount: z.number(),
     dropOffPercentage: z.number(),
     ttcAverage: z.number(),
+    quotasCompleted: z.number(),
+    quotasCompletedPercentage: z.number(),
   }),
   dropOff: z.array(
     z.object({
@@ -2870,6 +2871,15 @@ export const ZSurveySummary = z.object({
       impressions: z.number(),
       dropOffCount: z.number(),
       dropOffPercentage: z.number(),
+    })
+  ),
+  quotas: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      limit: z.number(),
+      count: z.number(),
+      percentage: z.number(),
     })
   ),
   summary: z.array(z.union([ZSurveyQuestionSummary, ZSurveyQuestionSummaryHiddenFields])),

@@ -4,6 +4,7 @@ import { getMimeType, isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
+import { useTranslation } from "react-i18next";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { TAllowedFileExtension, type TUploadFileConfig, mimeTypes } from "@formbricks/types/storage";
 
@@ -30,6 +31,7 @@ export function FileInput({
   allowMultipleFiles,
   htmlFor = "",
 }: Readonly<FileInputProps>) {
+  const { t } = useTranslation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [parent] = useAutoAnimate();
@@ -59,14 +61,12 @@ export function FileInput({
 
       if (duplicateFiles.length > 0) {
         const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
-        alert(
-          `The following files are already uploaded: ${duplicateNames}. Duplicate files are not allowed.`
-        );
+        alert(t("errors.file_input.duplicate_files", { duplicateNames }));
       }
 
       return { filteredFiles, duplicateFiles };
     },
-    [fileUrls, selectedFiles]
+    [fileUrls, selectedFiles, t]
   );
 
   // Helper function to filter files by size
@@ -124,9 +124,7 @@ export function FileInput({
         // Show size rejection alert
         if (rejectedFiles.length > 0) {
           const fileNames = rejectedFiles.join(", ");
-          alert(
-            `The following file(s) exceed the maximum size of ${maxSizeInMB} MB and were removed: ${fileNames}`
-          );
+          alert(t("errors.file_input.file_size_exceeded", { fileNames, maxSizeInMB }));
         }
 
         // Exit early if no files to upload
@@ -149,7 +147,7 @@ export function FileInput({
         handleUploadErrors(rejected);
       } catch (err) {
         console.error(`Error uploading native file.`);
-        alert(`Upload failed! Please try again.`);
+        alert(t("errors.file_input.upload_failed"));
       } finally {
         setIsUploading(false);
       }
@@ -167,6 +165,7 @@ export function FileInput({
     onUploadCallback,
     surveyId,
     filterDuplicateFiles,
+    t,
     filterFilesBySize,
     handleUploadErrors,
   ]);
@@ -184,7 +183,7 @@ export function FileInput({
       const fileBuffer = await file.arrayBuffer();
       const bufferKB = fileBuffer.byteLength / 1024;
       if (bufferKB > maxSizeInMB * 1024) {
-        alert(`File should be less than ${maxSizeInMB.toString()} MB`);
+        alert(t("errors.file_input.file_size_exceeded_alert", { maxSizeInMB }));
         return false;
       }
     }
@@ -261,7 +260,7 @@ export function FileInput({
 
     const validFiles = validateFileExtensions(nonDuplicateFiles);
     if (!validFiles.length) {
-      alert("No valid file types selected. Please select a valid file type.");
+      alert(t("errors.file_input.no_valid_file_types_selected"));
       return;
     }
 
@@ -280,7 +279,7 @@ export function FileInput({
       await processAndUploadFiles(sizeValidatedFiles);
     } catch (err: any) {
       console.error("error in uploading file: ", err);
-      alert("Upload failed! Please try again.");
+      alert(t("errors.file_input.upload_failed"));
     } finally {
       setIsUploading(false);
     }
@@ -335,13 +334,13 @@ export function FileInput({
           return (
             <div
               key={index}
-              aria-label={`You've successfully uploaded the file ${fileName}`}
+              aria-label={t("common.you_have_successfully_uploaded_the_file", { fileName })}
               tabIndex={0}
               className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
               <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
                 <button
                   type="button"
-                  aria-label={`Delete file ${fileName}`}
+                  aria-label={`${t("common.delete_file")} ${fileName}`}
                   className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -386,7 +385,7 @@ export function FileInput({
         {isUploading ? (
           <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
             <label htmlFor={uniqueHtmlFor} className="fb-text-subheading fb-text-sm fb-font-medium">
-              Uploading...
+              {t("common.uploading")}...
             </label>
           </div>
         ) : null}
@@ -396,7 +395,7 @@ export function FileInput({
             <button
               type="button"
               className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
-              aria-label="Upload files by clicking or dragging them here"
+              aria-label={t("common.upload_files_by_clicking_or_dragging_them_here")}
               onClick={() => document.getElementById(uniqueHtmlFor)?.click()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -415,7 +414,7 @@ export function FileInput({
               <span
                 className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
                 id={`${uniqueHtmlFor}-label`}>
-                Click or drag to upload files.
+                {t("common.click_or_drag_to_upload_files")}
               </span>
               <input
                 type="file"
@@ -430,7 +429,7 @@ export function FileInput({
                   }
                 }}
                 multiple={allowMultipleFiles}
-                aria-label="File upload"
+                aria-label={t("common.file_upload")}
                 aria-describedby={`${uniqueHtmlFor}-label`}
                 data-accept-multiple={allowMultipleFiles}
                 data-accept-extensions={mimeTypeForAllowedFileExtensions}

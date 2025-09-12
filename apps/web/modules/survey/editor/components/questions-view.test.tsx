@@ -133,6 +133,7 @@ vi.mock("@/modules/survey/editor/components/survey-variables-card", () => ({
 
 vi.mock("@/modules/survey/editor/lib/utils", () => ({
   findQuestionUsedInLogic: vi.fn(() => -1),
+  isUsedInQuota: vi.fn(() => false),
 }));
 
 vi.mock("@dnd-kit/core", async (importOriginal) => {
@@ -241,8 +242,6 @@ const mockSurvey = {
   hiddenFields: { enabled: true, fieldIds: [] },
   createdAt: new Date(),
   updatedAt: new Date(),
-  runOnDate: null,
-  closeOnDate: null,
 } as unknown as TSurvey;
 
 const mockProject = {
@@ -311,6 +310,7 @@ describe("QuestionsView", () => {
         responseCount={0}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
         isStorageConfigured={true}
+        quotas={[]}
         {...props}
       />
     );

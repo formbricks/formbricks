@@ -104,7 +104,7 @@ describe("CalQuestion - New Error Handling", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText("Please book an appointment")).toBeInTheDocument();
+      expect(screen.getByText("errors.please_book_an_appointment")).toBeInTheDocument();
     });
   });
 
@@ -116,7 +116,7 @@ describe("CalQuestion - New Error Handling", () => {
 
     await waitFor(() => {
       const calEmbed = screen.getByTestId("cal-embed");
-      const errorMessage = screen.getByText("Please book an appointment");
+      const errorMessage = screen.getByText("errors.please_book_an_appointment");
 
       // Check that error message comes after CalEmbed in DOM order
       expect(calEmbed.compareDocumentPosition(errorMessage)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -129,6 +129,6 @@ describe("CalQuestion - New Error Handling", () => {
     const submitButton = screen.getByTestId("submit-button");
     fireEvent.click(submitButton);
 
-    expect(screen.queryByText("Please book an appointment")).not.toBeInTheDocument();
+    expect(screen.queryByText("errors.please_book_an_appointment")).not.toBeInTheDocument();
   });
 });

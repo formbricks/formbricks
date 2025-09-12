@@ -49,7 +49,6 @@ const survey: TSurvey = {
   ],
   recontactDays: 1,
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   displayLimit: null,

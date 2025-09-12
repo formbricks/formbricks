@@ -12,6 +12,9 @@ vi.mock("@/locales/fr-FR.json", () => ({}));
 vi.mock("@/locales/pt-BR.json", () => ({}));
 vi.mock("@/locales/pt-PT.json", () => ({}));
 vi.mock("@/locales/zh-Hant-TW.json", () => ({}));
+vi.mock("@/locales/ro-RO.json", () => ({}));
+vi.mock("@/locales/ja-JP.json", () => ({}));
+vi.mock("@/locales/zh-Hans-CN.json", () => ({}));
 
 describe("Tolgee Configuration", () => {
   beforeEach(() => {
@@ -28,7 +31,17 @@ describe("Tolgee Configuration", () => {
 
   describe("ALL_LANGUAGES", () => {
     test("should contain all supported languages", () => {
-      expect(ALL_LANGUAGES).toEqual(["en-US", "de-DE", "fr-FR", "pt-BR", "pt-PT", "zh-Hant-TW"]);
+      expect(ALL_LANGUAGES).toEqual([
+        "en-US",
+        "de-DE",
+        "fr-FR",
+        "pt-BR",
+        "pt-PT",
+        "zh-Hant-TW",
+        "ro-RO",
+        "ja-JP",
+        "zh-Hans-CN",
+      ]);
     });
   });
 

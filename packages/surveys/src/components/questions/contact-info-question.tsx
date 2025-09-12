@@ -27,6 +27,7 @@ interface ContactInfoQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   autoFocusEnabled: boolean;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function ContactInfoQuestion({
@@ -43,6 +44,7 @@ export function ContactInfoQuestion({
   currentQuestionId,
   autoFocusEnabled,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<ContactInfoQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -169,6 +171,7 @@ export function ContactInfoQuestion({
                     }}
                     tabIndex={isCurrent ? 0 : -1}
                     aria-label={field.label}
+                    dir={!safeValue[index] ? dir : "auto"}
                   />
                 </div>
               )

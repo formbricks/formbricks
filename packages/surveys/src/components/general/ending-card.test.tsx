@@ -78,7 +78,7 @@ describe("EndingCard", () => {
       />
     );
 
-    expect(screen.getByText("Sending responses...")).toBeInTheDocument();
+    expect(screen.getByText("common.sending_responses")).toBeInTheDocument();
   });
 
   test("calls onOpenExternalURL when button is clicked", async () => {
@@ -121,8 +121,8 @@ describe("EndingCard", () => {
       />
     );
 
-    expect(screen.getByText("Respondents will not see this card")).toBeInTheDocument();
-    expect(screen.getByText("They will be redirected immediately")).toBeInTheDocument();
+    expect(screen.getByText("common.respondents_will_not_see_this_card")).toBeInTheDocument();
+    expect(screen.getByText("common.they_will_be_redirected_immediately")).toBeInTheDocument();
   });
 
   test("handles Enter key press for link surveys", async () => {

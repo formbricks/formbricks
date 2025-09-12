@@ -1,11 +1,11 @@
 import preact from "@preact/preset-vite";
-import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
 import { loadEnv } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 import { defineConfig } from "vitest/config";
+import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,17 +16,18 @@ const config = ({ mode }) => {
   return defineConfig({
     test: {
       environment: "node",
-      environmentMatchGlobs: [["**/*.test.tsx", "jsdom"], ["**/lib/**/*.test.ts", "jsdom"]],
+      environmentMatchGlobs: [
+        ["**/*.test.tsx", "jsdom"],
+        ["**/lib/**/*.test.ts", "jsdom"],
+      ],
+      setupFiles: ["./vitestSetup.ts"],
       exclude: ["dist/**", "node_modules/**"],
       env: env,
       coverage: {
         provider: "v8",
         reporter: ["text", "html", "lcov"],
         reportsDirectory: "./coverage",
-        include: [
-          "src/lib/**/*.{ts,tsx}",
-          "src/components/**/*.{ts,tsx}"
-        ],
+        include: ["src/lib/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
       },
     },
     define: {

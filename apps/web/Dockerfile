@@ -30,8 +30,12 @@ COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
 RUN chmod +x /tmp/read-secrets.sh
 
 # Increase Node.js memory limit as a regular build argument
-ARG NODE_OPTIONS="--max_old_space_size=4096"
+ARG NODE_OPTIONS="--max_old_space_size=8192"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
+
+# Target architecture - automatically provided by Docker in multi-platform builds
+# but needs explicit declaration for some build systems (like Depot)
+ARG TARGETARCH
 
 # Set the working directory
 WORKDIR /app
@@ -57,6 +61,7 @@ RUN pnpm build --filter=@formbricks/database
 # This mounts the secrets only during this build step without storing them in layers
 RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
+    --mount=type=secret,id=sentry_auth_token \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
@@ -108,9 +113,6 @@ RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules
 
 COPY --from=installer /prisma_version.txt .
 RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
-
-COPY /docker/cronjobs /app/docker/cronjobs
-RUN chmod -R 755 /app/docker/cronjobs
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2

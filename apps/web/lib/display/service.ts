@@ -43,10 +43,11 @@ export const getDisplayCountBySurveyId = reactCache(
   }
 );
 
-export const deleteDisplay = async (displayId: string): Promise<TDisplay> => {
+export const deleteDisplay = async (displayId: string, tx?: Prisma.TransactionClient): Promise<TDisplay> => {
   validateInputs([displayId, ZId]);
   try {
-    const display = await prisma.display.delete({
+    const prismaClient = tx ?? prisma;
+    const display = await prismaClient.display.delete({
       where: {
         id: displayId,
       },

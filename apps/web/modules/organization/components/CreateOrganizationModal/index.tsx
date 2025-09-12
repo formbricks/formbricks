@@ -51,7 +51,6 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
     } else {
       const errorMessage = getFormattedErrorMessage(createOrganizationResponse);
       toast.error(errorMessage);
-      console.error(errorMessage);
     }
 
     setLoading(false);

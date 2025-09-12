@@ -10,6 +10,7 @@ import { getOriginalFileNameFromUrl } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -27,6 +28,7 @@ interface PictureSelectionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function PictureSelectionQuestion({
@@ -42,7 +44,9 @@ export function PictureSelectionQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<PictureSelectionProps>) {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(() => {
     const initialLoadingState: Record<string, boolean> = {};
@@ -119,7 +123,7 @@ export function PictureSelectionQuestion({
         />
         <div className="fb-mt-4">
           <fieldset>
-            <legend className="fb-sr-only">Options</legend>
+            <legend className="fb-sr-only">{t("common.options")}</legend>
             <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-1 sm:fb-grid-cols-2 fb-gap-4">
               {questionChoices.map((choice) => (
                 <div className="fb-relative" key={choice.id}>
@@ -169,8 +173,9 @@ export function PictureSelectionQuestion({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
-                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
+                          "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
+                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : "",
+                          dir === "rtl" ? "fb-left-2" : "fb-right-2"
                         )}
                         required={question.required && value.length === 0}
                       />
@@ -182,8 +187,9 @@ export function PictureSelectionQuestion({
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
-                          "fb-border-border fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-rounded-full fb-border",
-                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
+                          "fb-border-border fb-pointer-events-none fb-absolute fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-rounded-full fb-border",
+                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : "",
+                          dir === "rtl" ? "fb-left-2" : "fb-right-2"
                         )}
                         required={question.required && value.length ? false : question.required}
                       />
@@ -193,13 +199,16 @@ export function PictureSelectionQuestion({
                     tabIndex={-1}
                     href={choice.imageUrl}
                     target="_blank"
-                    title="Open in new tab"
+                    title={t("common.open_in_new_tab")}
                     rel="noreferrer"
                     onClick={(e) => {
                       e.stopPropagation();
                     }}
-                    className="fb-absolute fb-bottom-4 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100 fb-z-20">
-                    <span className="fb-sr-only">Open in new tab</span>
+                    className={cn(
+                      "fb-absolute fb-bottom-4 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100 fb-z-20",
+                      dir === "rtl" ? "fb-left-2" : "fb-right-2"
+                    )}>
+                    <span className="fb-sr-only">{t("common.open_in_new_tab")}</span>
                     <ImageDownIcon />
                   </a>
                 </div>

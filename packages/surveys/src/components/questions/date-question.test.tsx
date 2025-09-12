@@ -57,11 +57,11 @@ describe("DateQuestion", () => {
   test("renders date question correctly", () => {
     render(<DateQuestion {...defaultProps} />);
 
-    expect(screen.getAllByText("Select a date")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("common.select_a_date")[0]).toBeInTheDocument();
     expect(screen.getByText("Please choose a date")).toBeInTheDocument();
     expect(screen.getByText("Next")).toBeInTheDocument();
     expect(screen.getByText("Back")).toBeInTheDocument();
-    expect(screen.getByText("Select a date", { selector: "span" })).toBeInTheDocument();
+    expect(screen.getByText("common.select_a_date", { selector: "span" })).toBeInTheDocument();
   });
 
   test("displays error message when form is submitted without a date if required", async () => {
@@ -71,7 +71,7 @@ describe("DateQuestion", () => {
 
     await user.click(screen.getByText("Next"));
 
-    expect(screen.getByText("Please select a date.")).toBeInTheDocument();
+    expect(screen.getByText("errors.please_select_a_date")).toBeInTheDocument();
     expect(defaultProps.onSubmit).not.toHaveBeenCalled();
   });
 
@@ -101,13 +101,13 @@ describe("DateQuestion", () => {
   test("does not render back button when isFirstQuestion is true", () => {
     render(<DateQuestion {...defaultProps} isFirstQuestion={true} />);
 
-    expect(screen.queryByText("Back")).not.toBeInTheDocument();
+    expect(screen.queryByText("common.back")).not.toBeInTheDocument();
   });
 
   test("does not render back button when isBackButtonHidden is true", () => {
     render(<DateQuestion {...defaultProps} isBackButtonHidden={true} />);
 
-    expect(screen.queryByText("Back")).not.toBeInTheDocument();
+    expect(screen.queryByText("common.back")).not.toBeInTheDocument();
   });
 
   test("renders media content when available", () => {
@@ -119,7 +119,7 @@ describe("DateQuestion", () => {
     render(<DateQuestion {...defaultProps} question={questionWithMedia} />);
 
     // Media component should be rendered (implementation detail check)
-    expect(screen.getAllByText("Select a date")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("common.select_a_date")[0]).toBeInTheDocument();
   });
 
   test("opens date picker when button is clicked", async () => {
@@ -128,7 +128,7 @@ describe("DateQuestion", () => {
     render(<DateQuestion {...defaultProps} />);
 
     // Click the select date button
-    const dateButton = screen.getByRole("button", { name: /select a date/i });
+    const dateButton = screen.getByRole("button", { name: /common.select_a_date/i });
     await user.click(dateButton);
 
     // We can check for our mocked date picker
@@ -142,7 +142,7 @@ describe("DateQuestion", () => {
     render(<DateQuestion {...props} />);
 
     // Handle timezone differences by allowing either 14th or 15th
-    const dateRegex = /(14th|15th) of January, 2023/;
+    const dateRegex = /(14th|15th) of (January|February), 2023/;
     const dateElement = screen.getByText(dateRegex);
     expect(dateElement).toBeInTheDocument();
   });

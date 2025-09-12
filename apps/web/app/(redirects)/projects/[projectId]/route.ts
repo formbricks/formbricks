@@ -21,5 +21,5 @@ export const GET = async (_: Request, context: { params: Promise<{ projectId: st
   const environments = await getEnvironments(project.id);
   const prodEnvironment = environments.find((e) => e.type === "production");
   if (!prodEnvironment) return notFound();
-  redirect(`/environments/${prodEnvironment.id}/`);
+  return redirect(`/environments/${prodEnvironment.id}/`);
 };

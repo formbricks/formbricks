@@ -9,7 +9,8 @@ import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -23,6 +24,8 @@ interface ResponsePageProps {
   responsesPerPage: number;
   locale: TUserLocale;
   isReadOnly: boolean;
+  isQuotasAllowed: boolean;
+  quotas: TSurveyQuota[];
 }
 
 export const ResponsePage = ({
@@ -34,8 +37,10 @@ export const ResponsePage = ({
   responsesPerPage,
   locale,
   isReadOnly,
+  isQuotasAllowed,
+  quotas,
 }: ResponsePageProps) => {
-  const [responses, setResponses] = useState<TResponse[]>([]);
+  const [responses, setResponses] = useState<TResponseWithQuotas[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
@@ -53,7 +58,7 @@ export const ResponsePage = ({
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;
 
-    let newResponses: TResponse[] = [];
+    let newResponses: TResponseWithQuotas[] = [];
 
     const getResponsesActionResponse = await getResponsesAction({
       surveyId,
@@ -70,14 +75,12 @@ export const ResponsePage = ({
     setPage(newPage);
   }, [filters, page, responses, responsesPerPage, surveyId]);
 
-  const deleteResponses = (responseIds: string[]) => {
-    setResponses(responses.filter((response) => !responseIds.includes(response.id)));
+  const updateResponseList = (responseIds: string[]) => {
+    setResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
   };
 
-  const updateResponse = (responseId: string, updatedResponse: TResponse) => {
-    if (responses) {
-      setResponses(responses.map((response) => (response.id === responseId ? updatedResponse : response)));
-    }
+  const updateResponse = (responseId: string, updatedResponse: TResponseWithQuotas) => {
+    setResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
   const surveyMemoized = useMemo(() => {
@@ -94,7 +97,7 @@ export const ResponsePage = ({
     const fetchInitialResponses = async () => {
       try {
         setFetchingFirstPage(true);
-        let responses: TResponse[] = [];
+        let responses: TResponseWithQuotas[] = [];
 
         const getResponsesActionResponse = await getResponsesAction({
           surveyId,
@@ -136,10 +139,12 @@ export const ResponsePage = ({
         isReadOnly={isReadOnly}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
-        deleteResponses={deleteResponses}
+        updateResponseList={updateResponseList}
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
         locale={locale}
+        isQuotasAllowed={isQuotasAllowed}
+        quotas={quotas}
       />
     </>
   );

@@ -103,7 +103,6 @@ const mockSurvey = {
   displayOption: "displayOnce",
   recontactDays: 0,
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   autoComplete: null,
   surveyClosedMessage: null,
@@ -145,7 +144,7 @@ const mockLocale: TUserLocale = "en-US";
 
 const mockSetSelectedResponseId = vi.fn();
 const mockUpdateResponse = vi.fn();
-const mockDeleteResponses = vi.fn();
+const mockUpdateResponseList = vi.fn();
 const mockSetOpen = vi.fn();
 
 const defaultProps = {
@@ -157,7 +156,7 @@ const defaultProps = {
   user: mockUser,
   environmentTags: mockEnvironmentTags,
   updateResponse: mockUpdateResponse,
-  deleteResponses: mockDeleteResponses,
+  updateResponseList: mockUpdateResponseList,
   isReadOnly: false,
   open: true,
   setOpen: mockSetOpen,

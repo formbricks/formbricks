@@ -12,7 +12,7 @@ describe("BackButton", () => {
     const { getByRole } = render(<BackButton onClick={onClick} />);
     const button = getByRole("button");
     expect(button).toBeDefined();
-    expect(button.textContent?.trim()).toEqual("Back");
+    expect(button.textContent?.trim()).toEqual("common.back");
     expect(button.tabIndex).toEqual(2);
   });
 

@@ -2,6 +2,7 @@ import { mockWelcomeCard } from "@/lib/i18n/i18n.mock";
 import { Prisma } from "@prisma/client";
 import { isAfter, isBefore, isSameDay } from "date-fns";
 import { TDisplay } from "@formbricks/types/displays";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse, TResponseFilterCriteria, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -77,6 +78,35 @@ export const mockResponse: ResponseMock = {
   language: "English",
   ttc: {},
   variables: {},
+};
+
+const mockSurveyQuota: TSurveyQuota = {
+  id: constantsForTests.uuid,
+  surveyId: mockSurveyId,
+  name: "Quota 1",
+  action: "endSurvey",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  countPartialSubmissions: false,
+  endingCardId: null,
+  limit: 1,
+  logic: {
+    connector: "and",
+    conditions: [],
+  },
+};
+
+type mockResponseWithQuotas = ResponseMock & {
+  quotaLinks: { quota: TSurveyQuota }[];
+};
+
+export const mockResponseWithQuotas: mockResponseWithQuotas = {
+  ...mockResponse,
+  quotaLinks: [
+    {
+      quota: mockSurveyQuota,
+    },
+  ],
 };
 
 const getMockTags = (tags: string[]): { tag: TTag }[] => {
@@ -358,9 +388,12 @@ export const mockSurveySummaryOutput = {
     dropOffPercentage: 0,
     dropOffCount: 0,
     startsPercentage: 0,
+    quotasCompleted: 0,
+    quotasCompletedPercentage: 0,
     totalResponses: 1,
     ttcAverage: 0,
   },
+  quotas: [],
   summary: [
     {
       question: {
@@ -476,8 +509,6 @@ export const mockSurvey: TSurvey = {
   recontactDays: null,
   displayLimit: null,
   autoClose: null,
-  runOnDate: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   autoComplete: null,

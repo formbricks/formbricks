@@ -1,19 +1,20 @@
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
+import { useTranslation } from "react-i18next";
 
 interface ErrorComponentProps {
   readonly errorType: TResponseErrorCodesEnum.RecaptchaError | TResponseErrorCodesEnum.InvalidDeviceError;
 }
 
 export function ErrorComponent({ errorType }: ErrorComponentProps) {
+  const { t } = useTranslation();
   const errorData = {
     [TResponseErrorCodesEnum.RecaptchaError]: {
-      title: "We couldn't verify that you're human.",
-      message:
-        "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",
+      title: t("errors.recaptcha_error.title"),
+      message: t("errors.recaptcha_error.message"),
     },
     [TResponseErrorCodesEnum.InvalidDeviceError]: {
-      title: "This device doesn’t support spam protection.",
-      message: "Please disable spam protection in the survey settings to continue using this device.",
+      title: t("errors.invalid_device_error.title"),
+      message: t("errors.invalid_device_error.message"),
     },
   };
 

@@ -6,9 +6,9 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { isRTL } from "@/lib/utils";
 import { type RefObject } from "preact";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -27,6 +27,7 @@ interface OpenTextQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function OpenTextQuestion({
@@ -43,12 +44,14 @@ export function OpenTextQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  dir = "auto",
 }: Readonly<OpenTextQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [currentLength, setCurrentLength] = useState(value.length || 0);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+  const { t } = useTranslation();
 
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
@@ -70,7 +73,7 @@ export function OpenTextQuestion({
     input?.setCustomValidity("");
 
     if (question.required && (!value || value.trim() === "")) {
-      input?.setCustomValidity("Please fill out this field.");
+      input?.setCustomValidity(t("errors.please_fill_out_this_field"));
       input?.reportValidity();
       return;
     }
@@ -81,11 +84,7 @@ export function OpenTextQuestion({
     onSubmit({ [question.id]: value }, updatedTtc);
   };
 
-  const dir = useMemo(() => {
-    const placeholder = getLocalizedValue(question.placeholder, languageCode);
-    if (!value) return isRTL(placeholder) ? "rtl" : "ltr";
-    return "auto";
-  }, [value, languageCode, question.placeholder]);
+  const computedDir = !value ? dir : "auto";
 
   return (
     <ScrollableContainer>
@@ -109,7 +108,7 @@ export function OpenTextQuestion({
               name={question.id}
               id={question.id}
               placeholder={getLocalizedValue(question.placeholder, languageCode)}
-              dir={dir}
+              dir={computedDir}
               step="any"
               required={question.required}
               value={value ? value : ""}
@@ -119,7 +118,9 @@ export function OpenTextQuestion({
               }}
               className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
               pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
-              title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
+              title={
+                question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined
+              }
               minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
               maxLength={
                 question.inputType === "text"
@@ -138,7 +139,7 @@ export function OpenTextQuestion({
               tabIndex={isCurrent ? 0 : -1}
               aria-label="textarea"
               id={question.id}
-              placeholder={getLocalizedValue(question.placeholder, languageCode)}
+              placeholder={getLocalizedValue(question.placeholder, languageCode, true)}
               dir={dir}
               required={question.required}
               value={value}
@@ -146,7 +147,9 @@ export function OpenTextQuestion({
                 handleInputChange(e.currentTarget.value);
               }}
               className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
-              title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
+              title={
+                question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined
+              }
               minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
               maxLength={question.inputType === "text" ? question.charLimit?.max : undefined}
             />

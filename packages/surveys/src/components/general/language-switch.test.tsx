@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageSwitch } from "./language-switch";
 
@@ -50,6 +51,20 @@ describe("LanguageSwitch", () => {
       enabled: false,
     },
   ];
+  const mockSurvey = {
+    id: "1",
+    name: "Test Survey",
+    description: "Test Description",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    welcomeCard: {
+      enabled: true,
+      headline: {
+        en: "Test Welcome Card",
+      },
+    },
+    questions: [],
+  } as unknown as TJsEnvironmentStateSurvey;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,10 +80,11 @@ describe("LanguageSwitch", () => {
         surveyLanguages={surveyLanguages}
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         setFirstRender={mockSetFirstRender}
+        survey={mockSurvey}
       />
     );
 
-    const toggleButton = screen.getByTitle("Language switch");
+    const toggleButton = screen.getByTitle("common.language_switch");
     // Initially closed
     expect(toggleButton).toHaveAttribute("aria-expanded", "false");
 
@@ -89,10 +105,11 @@ describe("LanguageSwitch", () => {
         surveyLanguages={surveyLanguages}
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         setFirstRender={mockSetFirstRender}
+        survey={mockSurvey}
       />
     );
 
-    const toggleButton = screen.getByTitle("Language switch");
+    const toggleButton = screen.getByTitle("common.language_switch");
     // Open and select default language
     fireEvent.click(toggleButton);
     fireEvent.click(screen.getByText("en"));

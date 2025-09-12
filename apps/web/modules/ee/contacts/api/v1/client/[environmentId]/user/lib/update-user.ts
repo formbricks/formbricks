@@ -1,6 +1,6 @@
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
-import { withCache } from "@/modules/cache/lib/withCache";
+import { cache } from "@/lib/cache";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
@@ -9,19 +9,17 @@ import { getPersonSegmentIds } from "./segments";
 /**
  * Cached environment lookup - environments rarely change
  */
-const getEnvironment = (environmentId: string) =>
-  withCache(
+const getEnvironment = async (environmentId: string) =>
+  await cache.withCache(
     async () => {
       return prisma.environment.findUnique({
         where: { id: environmentId },
         select: { id: true, type: true },
       });
     },
-    {
-      key: createCacheKey.environment.config(environmentId),
-      ttl: 60 * 60 * 1000, // 1 hour TTL in milliseconds - environments rarely change
-    }
-  )();
+    createCacheKey.environment.config(environmentId),
+    60 * 60 * 1000 // 1 hour TTL in milliseconds - environments rarely change
+  );
 
 /**
  * Comprehensive contact data fetcher - gets everything needed in one query

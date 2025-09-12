@@ -31,7 +31,7 @@ export const AccessTable = ({ teams }: AccessTableProps) => {
         <TableBody className="[&_tr:last-child]:border-b">
           {teams.length === 0 && (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={3} className="text-center">
+              <TableCell colSpan={4} className="text-center">
                 {t("environments.project.teams.no_teams_found")}
               </TableCell>
             </TableRow>

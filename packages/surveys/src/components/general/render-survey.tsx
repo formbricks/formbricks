@@ -1,3 +1,4 @@
+import { checkIfSurveyIsRTL } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { SurveyContainer } from "../wrappers/survey-container";
@@ -7,6 +8,14 @@ export function RenderSurvey(props: SurveyContainerProps) {
   const [isOpen, setIsOpen] = useState(true);
   const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isRTL = checkIfSurveyIsRTL(props.survey, props.languageCode);
+  const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "auto");
+
+  useEffect(() => {
+    const isRTL = checkIfSurveyIsRTL(props.survey, props.languageCode);
+    setDir(isRTL ? "rtl" : "auto");
+  }, [props.languageCode, props.survey]);
 
   const close = () => {
     if (onFinishedTimeoutRef.current) {
@@ -51,7 +60,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
       darkOverlay={props.darkOverlay}
       clickOutside={props.clickOutside}
       onClose={close}
-      isOpen={isOpen}>
+      isOpen={isOpen}
+      dir={dir}>
       {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}
@@ -72,6 +82,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
             );
           }
         }}
+        dir={dir}
+        setDir={setDir}
       />
     </SurveyContainer>
   );

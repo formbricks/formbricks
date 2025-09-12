@@ -74,6 +74,8 @@ export function Survey({
   isWebEnvironment = true,
   getRecaptchaToken,
   isSpamProtectionEnabled,
+  dir = "auto",
+  setDir,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -96,6 +98,12 @@ export function Survey({
   }, [appUrl, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
 
   // Update the responseQueue to use the stored responseId
+
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
+  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
+
   const responseQueue = useMemo(() => {
     if (appUrl && environmentId && surveyState) {
       return new ResponseQueue(
@@ -118,6 +126,13 @@ export function Survey({
               getSetIsResponseSendingFinished((_prev) => {});
             }
           },
+          onQuotaFull: (quotaInfo) => {
+            if (quotaInfo.action === "endSurvey") {
+              setIsResponseSendingFinished(true);
+              setIsSurveyFinished(true);
+              setQuestionId(quotaInfo.endingCardId);
+            }
+          },
         },
         surveyState
       );
@@ -125,11 +140,6 @@ export function Survey({
 
     return null;
   }, [appUrl, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
-
-  const [hasInteracted, setHasInteracted] = useState(false);
-
-  const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
-  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
   const originalQuestionRequiredStates = useMemo(() => {
     return survey.questions.reduce<Record<string, boolean>>((acc, question) => {
@@ -171,7 +181,7 @@ export function Survey({
     !getSetIsResponseSendingFinished
   );
   const [isSurveyFinished, setIsSurveyFinished] = useState(false);
-  const [selectedLanguage, setselectedLanguage] = useState(languageCode);
+  const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
@@ -318,7 +328,7 @@ export function Survey({
   }, [getSetIsResponseSendingFinished]);
 
   useEffect(() => {
-    setselectedLanguage(languageCode);
+    setSelectedLanguage(languageCode);
   }, [languageCode]);
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -729,6 +739,7 @@ export function Survey({
               currentQuestionId={questionId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               onOpenExternalURL={onOpenExternalURL}
+              dir={dir}
             />
           )
         );
@@ -759,13 +770,16 @@ export function Survey({
                   "fb-relative fb-w-full",
                   isCloseButtonVisible || isLanguageSwitchVisible ? "fb-h-8" : "fb-h-5"
                 )}>
-                <div className="fb-flex fb-items-center fb-justify-end fb-absolute fb-top-0 fb-right-0">
+                <div className={cn("fb-flex fb-items-center fb-justify-end fb-w-full")}>
                   {isLanguageSwitchVisible && (
                     <LanguageSwitch
+                      survey={localSurvey}
                       surveyLanguages={localSurvey.languages}
-                      setSelectedLanguageCode={setselectedLanguage}
+                      setSelectedLanguageCode={setSelectedLanguage}
                       hoverColor={styling.inputColor?.light ?? "#f8fafc"}
                       borderRadius={styling.roundness ?? 8}
+                      setDir={setDir}
+                      dir={dir}
                     />
                   )}
                   {isLanguageSwitchVisible && isCloseButtonVisible && (

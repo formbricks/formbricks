@@ -3,7 +3,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { SurveyVariablesCardItem } from "./survey-variables-card-item";
@@ -65,12 +64,10 @@ describe("SurveyVariablesCardItem", () => {
         showResponseCount: false,
       },
       autoClose: null,
-      closeOnDate: null,
       delay: 0,
       displayOption: "displayOnce",
       recontactDays: null,
       displayLimit: null,
-      runOnDate: null,
       questions: [],
       endings: [],
       hiddenFields: {
@@ -86,6 +83,7 @@ describe("SurveyVariablesCardItem", () => {
           mode="create"
           localSurvey={initialSurvey}
           setLocalSurvey={mockSetLocalSurvey}
+          quotas={[]}
         />
       </TestWrapper>
     );
@@ -129,12 +127,10 @@ describe("SurveyVariablesCardItem", () => {
         showResponseCount: false,
       },
       autoClose: null,
-      closeOnDate: null,
       delay: 0,
       displayOption: "displayOnce",
       recontactDays: null,
       displayLimit: null,
-      runOnDate: null,
       questions: [],
       endings: [],
       hiddenFields: {
@@ -150,6 +146,7 @@ describe("SurveyVariablesCardItem", () => {
           mode="create"
           localSurvey={initialSurvey}
           setLocalSurvey={mockSetLocalSurvey}
+          quotas={[]}
         />
       </TestWrapper>
     );
@@ -185,12 +182,10 @@ describe("SurveyVariablesCardItem", () => {
         showResponseCount: false,
       },
       autoClose: null,
-      closeOnDate: null,
       delay: 0,
       displayOption: "displayOnce",
       recontactDays: null,
       displayLimit: null,
-      runOnDate: null,
       questions: [],
       endings: [],
       hiddenFields: {
@@ -206,6 +201,7 @@ describe("SurveyVariablesCardItem", () => {
           mode="create"
           localSurvey={initialSurvey}
           setLocalSurvey={mockSetLocalSurvey}
+          quotas={[]}
         />
       </TestWrapper>
     );
@@ -235,12 +231,10 @@ describe("SurveyVariablesCardItem", () => {
         showResponseCount: false,
       },
       autoClose: null,
-      closeOnDate: null,
       delay: 0,
       displayOption: "displayOnce",
       recontactDays: null,
       displayLimit: null,
-      runOnDate: null,
       questions: [],
       endings: [],
       hiddenFields: {
@@ -256,6 +250,7 @@ describe("SurveyVariablesCardItem", () => {
         localSurvey={initialSurvey}
         setLocalSurvey={mockSetLocalSurvey}
         variable={undefined}
+        quotas={[]}
       />
     );
 
@@ -281,12 +276,10 @@ describe("SurveyVariablesCardItem", () => {
         showResponseCount: false,
       },
       autoClose: null,
-      closeOnDate: null,
       delay: 0,
       displayOption: "displayOnce",
       recontactDays: null,
       displayLimit: null,
-      runOnDate: null,
       questions: [],
       endings: [],
       hiddenFields: {
@@ -309,6 +302,7 @@ describe("SurveyVariablesCardItem", () => {
           mode="create"
           localSurvey={initialSurvey}
           setLocalSurvey={mockSetLocalSurvey}
+          quotas={[]}
         />
       </TestWrapper>
     );
@@ -354,12 +348,10 @@ describe("SurveyVariablesCardItem", () => {
         showResponseCount: false,
       },
       autoClose: null,
-      closeOnDate: null,
       delay: 0,
       displayOption: "displayOnce",
       recontactDays: null,
       displayLimit: null,
-      runOnDate: null,
       questions: [
         {
           id: "q1WithLogic",
@@ -384,6 +376,7 @@ describe("SurveyVariablesCardItem", () => {
         localSurvey={initialSurvey}
         setLocalSurvey={mockSetLocalSurvey}
         variable={variableUsedInLogic}
+        quotas={[]}
       />
     );
 
@@ -423,12 +416,10 @@ describe("SurveyVariablesCardItem", () => {
         showResponseCount: false,
       },
       autoClose: null,
-      closeOnDate: null,
       delay: 0,
       displayOption: "displayOnce",
       recontactDays: null,
       displayLimit: null,
-      runOnDate: null,
       questions: [
         {
           id: "q1",
@@ -451,6 +442,7 @@ describe("SurveyVariablesCardItem", () => {
         localSurvey={initialSurvey}
         setLocalSurvey={mockSetLocalSurvey}
         variable={variableToDelete}
+        quotas={[]}
       />
     );
 

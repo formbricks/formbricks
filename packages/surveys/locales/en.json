@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "and",
+    "apply": "apply",
+    "auto_close_wrapper": "Auto close wrapper",
+    "back": "Back",
+    "click_or_drag_to_upload_files": "Click or drag to upload files.",
+    "close_survey": "Close survey",
+    "company_logo": "Company Logo",
+    "delete_file": "Delete file",
+    "file_upload": "File upload",
+    "finish": "Finish",
+    "language_switch": "Language switch",
+    "less_than_x_minutes": "{count, plural, one {less than 1 minute} other {less than {count} minutes}}",
+    "move_down": "Move {item} down",
+    "move_up": "Move {item} up",
+    "next": "Next",
+    "open_in_new_tab": "Open in new tab",
+    "optional": "Optional",
+    "options": "Options",
+    "people_responded": "{count, plural, one {1 person responded} other {{count} people responded}}",
+    "please_retry_now_or_try_again_later": "Please retry now or try again later.",
+    "powered_by": "Powered by",
+    "privacy_policy": "Privacy Policy",
+    "protected_by_reCAPTCHA_and_the_Google": "Protected by reCAPTCHA and the Google",
+    "question": "Question",
+    "question_video": "Question Video",
+    "ranking_items": "Ranking Items",
+    "respondents_will_not_see_this_card": "Respondents will not see this card",
+    "retry": "Retry",
+    "select_a_date": "Select a date",
+    "select_for_ranking": "Select {item} for ranking",
+    "sending_responses": "Sending responses...",
+    "takes": "Takes",
+    "terms_of_service": "Terms of Service",
+    "the_servers_cannot_be_reached_at_the_moment": "The servers cannot be reached at the moment.",
+    "they_will_be_redirected_immediately": "They will be redirected immediately",
+    "upload_files_by_clicking_or_dragging_them_here": "Upload files by clicking or dragging them here",
+    "uploading": "Uploading",
+    "x_minutes": "{count, plural, one {1 minute} other {{count} minutes}}",
+    "x_plus_minutes": "{count}+ minutes",
+    "you_have_selected_x_date": "You have selected {date}",
+    "you_have_successfully_uploaded_the_file": "You've successfully uploaded the file {fileName}",
+    "your_feedback_is_stuck": "Your feedback is stuck :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "The following files are already uploaded: {duplicateNames}. Duplicate files are not allowed.",
+      "file_size_exceeded": "The following file(s) exceed the maximum size of {maxSizeInMB} MB and were removed: {fileNames}",
+      "file_size_exceeded_alert": "File should be less than {maxSizeInMB} MB",
+      "native_upload_failed": "Error uploading native file.",
+      "no_valid_file_types_selected": "No valid file types selected. Please select a valid file type.",
+      "only_one_file_can_be_uploaded_at_a_time": "Only one file can be uploaded at a time.",
+      "upload_failed": "Upload failed! Please try again.",
+      "you_can_only_upload_a_maximum_of_files": "You can only upload a maximum of {FILE_LIMIT} files."
+    },
+    "invalid_device_error": {
+      "message": "Please disable spam protection in the survey settings to continue using this device.",
+      "title": "This device doesn’t support spam protection."
+    },
+    "please_book_an_appointment": "Please book an appointment",
+    "please_enter_a_valid_phone_number": "Please enter a valid phone number",
+    "please_fill_out_this_field": "Please fill out this field",
+    "please_rank_all_items_before_submitting": "Please rank all items before submitting",
+    "please_select_a_date": "Please select a date",
+    "please_upload_a_file": "Please upload a file",
+    "recaptcha_error": {
+      "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",
+      "title": "We couldn't verify that you're human."
+    }
+  }
+}

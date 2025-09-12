@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "und",
+    "apply": "anwenden",
+    "auto_close_wrapper": "Automatisches Schließen",
+    "back": "Zurück",
+    "click_or_drag_to_upload_files": "Klicken oder ziehen Sie, um Dateien hochzuladen.",
+    "close_survey": "Umfrage schließen",
+    "company_logo": "Firmenlogo",
+    "delete_file": "Datei löschen",
+    "file_upload": "Datei-Upload",
+    "finish": "Fertig",
+    "language_switch": "Sprachwechsel",
+    "less_than_x_minutes": "{count, plural, one {weniger als 1 Minute} other {weniger als {count} Minuten}}",
+    "move_down": "{item} nach unten verschieben",
+    "move_up": "{item} nach oben verschieben",
+    "next": "Weiter",
+    "open_in_new_tab": "In neuem Tab öffnen",
+    "optional": "Optional",
+    "options": "Optionen",
+    "people_responded": "{count, plural, one {1 Person hat geantwortet} other {{count} Personen haben geantwortet}}",
+    "please_retry_now_or_try_again_later": "Bitte versuchen Sie es jetzt erneut oder später noch einmal.",
+    "powered_by": "Bereitgestellt von",
+    "privacy_policy": "Datenschutzrichtlinie",
+    "protected_by_reCAPTCHA_and_the_Google": "Geschützt durch reCAPTCHA und die Google",
+    "question": "Frage",
+    "question_video": "Fragevideo",
+    "ranking_items": "Ranking-Elemente",
+    "respondents_will_not_see_this_card": "Befragte werden diese Karte nicht sehen",
+    "retry": "Wiederholen",
+    "select_a_date": "Datum auswählen",
+    "select_for_ranking": "{item} für Ranking auswählen",
+    "sending_responses": "Antworten werden gesendet...",
+    "takes": "Dauert",
+    "terms_of_service": "Nutzungsbedingungen",
+    "the_servers_cannot_be_reached_at_the_moment": "Die Server sind momentan nicht erreichbar.",
+    "they_will_be_redirected_immediately": "Sie werden sofort weitergeleitet",
+    "upload_files_by_clicking_or_dragging_them_here": "Laden Sie Dateien hoch, indem Sie sie hier anklicken oder hierher ziehen",
+    "uploading": "Wird hochgeladen",
+    "x_minutes": "{count, plural, one {1 Minute} other {{count} Minuten}}",
+    "x_plus_minutes": "{count}+ Minuten",
+    "you_have_selected_x_date": "Sie haben {date} ausgewählt",
+    "you_have_successfully_uploaded_the_file": "Sie haben die Datei {fileName} erfolgreich hochgeladen",
+    "your_feedback_is_stuck": "Ihr Feedback steckt fest :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "Die folgenden Dateien sind bereits hochgeladen: {duplicateNames}. Doppelte Dateien sind nicht erlaubt.",
+      "file_size_exceeded": "Die folgenden Dateien überschreiten die maximale Größe von {maxSizeInMB} MB und wurden entfernt: {fileNames}",
+      "file_size_exceeded_alert": "Die Datei sollte kleiner als {maxSizeInMB} MB sein",
+      "native_upload_failed": "Fehler beim Hochladen der nativen Datei.",
+      "no_valid_file_types_selected": "Keine gültigen Dateitypen ausgewählt. Bitte wählen Sie einen gültigen Dateityp.",
+      "only_one_file_can_be_uploaded_at_a_time": "Es kann nur eine Datei gleichzeitig hochgeladen werden.",
+      "upload_failed": "Upload fehlgeschlagen! Bitte versuchen Sie es erneut.",
+      "you_can_only_upload_a_maximum_of_files": "Sie können maximal {FILE_LIMIT} Dateien hochladen."
+    },
+    "invalid_device_error": {
+      "message": "Bitte deaktivieren Sie den Spam-Schutz in den Umfrageeinstellungen, um dieses Gerät weiterhin zu verwenden.",
+      "title": "Dieses Gerät unterstützt keinen Spam-Schutz."
+    },
+    "please_book_an_appointment": "Bitte vereinbaren Sie einen Termin",
+    "please_enter_a_valid_phone_number": "Bitte geben Sie eine gültige Telefonnummer ein",
+    "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
+    "please_rank_all_items_before_submitting": "Bitte ordnen Sie alle Elemente vor dem Absenden",
+    "please_select_a_date": "Bitte wählen Sie ein Datum aus",
+    "please_upload_a_file": "Bitte laden Sie eine Datei hoch",
+    "recaptcha_error": {
+      "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
+      "title": "Wir konnten nicht verifizieren, dass Sie ein Mensch sind."
+    }
+  }
+}

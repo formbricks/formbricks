@@ -12,6 +12,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type {
   TSurveyQuestionChoice,
@@ -50,6 +51,7 @@ export function RankingQuestion({
   currentQuestionId,
   isBackButtonHidden,
 }: Readonly<RankingQuestionProps>) {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {
@@ -122,7 +124,7 @@ export function RankingQuestion({
       (!question.required && sortedItems.length > 0 && sortedItems.length < question.choices.length);
 
     if (hasIncompleteRanking) {
-      setError("Please rank all items before submitting.");
+      setError(t("errors.please_rank_all_items_before_submitting"));
       // Scroll to bottom to show the error message
       setTimeout(() => {
         if (scrollableRef.current?.scrollToBottom) {
@@ -168,7 +170,7 @@ export function RankingQuestion({
         />
         <div className="fb-mt-4">
           <fieldset>
-            <legend className="fb-sr-only">Ranking Items</legend>
+            <legend className="fb-sr-only">{t("common.ranking_items")}</legend>
             <div className="fb-relative" ref={parent}>
               {[...sortedItems, ...unsortedItems].map((item, idx) => {
                 if (!item) return null;
@@ -197,7 +199,9 @@ export function RankingQuestion({
                         handleItemClick(item);
                       }}
                       type="button"
-                      aria-label={`Select ${getLocalizedValue(item.label, languageCode)} for ranking`}
+                      aria-label={t("common.select_for_ranking", {
+                        item: getLocalizedValue(item.label, languageCode),
+                      })}
                       className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group text-left focus:outline-none">
                       <span
                         className={cn(
@@ -221,7 +225,9 @@ export function RankingQuestion({
                             e.preventDefault();
                             handleMove(item.id, "up");
                           }}
-                          aria-label={`Move ${getLocalizedValue(item.label, languageCode)} up`}
+                          aria-label={t("common.move_up", {
+                            item: getLocalizedValue(item.label, languageCode),
+                          })}
                           className={cn(
                             "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
                             isFirst
@@ -256,7 +262,9 @@ export function RankingQuestion({
                               ? "fb-opacity-30 fb-cursor-not-allowed"
                               : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
                           )}
-                          aria-label={`Move ${getLocalizedValue(item.label, languageCode)} down`}
+                          aria-label={t("common.move_down", {
+                            item: getLocalizedValue(item.label, languageCode),
+                          })}
                           disabled={isLast}>
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

@@ -2,13 +2,14 @@ import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { deleteResponse, getResponse, updateResponse } from "@/lib/response/service";
+import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
+import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 async function fetchAndAuthorizeResponse(
   responseId: string,
@@ -148,7 +149,7 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const updated = await updateResponse(params.responseId, inputValidation.data);
+      const updated = await updateResponseWithQuotaEvaluation(params.responseId, inputValidation.data);
       auditLog.newObject = updated;
       return {
         response: responses.successResponse(updated),

@@ -33,7 +33,8 @@ import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -41,17 +42,19 @@ import { TUser, TUserLocale } from "@formbricks/types/user";
 interface ResponseTableProps {
   data: TResponseTableData[];
   survey: TSurvey;
-  responses: TResponse[] | null;
+  responses: TResponseWithQuotas[] | null;
   environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
   isReadOnly: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
-  deleteResponses: (responseIds: string[]) => void;
-  updateResponse: (responseId: string, updatedResponse: TResponse) => void;
+  updateResponseList: (responseIds: string[]) => void;
+  updateResponse: (responseId: string, updatedResponse: TResponseWithQuotas) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
+  isQuotasAllowed: boolean;
+  quotas: TSurveyQuota[];
 }
 
 export const ResponseTable = ({
@@ -64,10 +67,12 @@ export const ResponseTable = ({
   isReadOnly,
   fetchNextPage,
   hasMore,
-  deleteResponses,
+  updateResponseList,
   updateResponse,
   isFetchingFirstPage,
   locale,
+  isQuotasAllowed,
+  quotas,
 }: ResponseTableProps) => {
   const { t } = useTranslate();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -79,8 +84,9 @@ export const ResponseTable = ({
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [parent] = useAutoAnimate();
 
+  const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn);
 
   // Save settings to localStorage when they change
   useEffect(() => {
@@ -180,8 +186,8 @@ export const ResponseTable = ({
     }
   };
 
-  const deleteResponse = async (responseId: string) => {
-    await deleteResponseAction({ responseId });
+  const deleteResponse = async (responseId: string, params?: { decrementQuotas?: boolean }) => {
+    await deleteResponseAction({ responseId, decrementQuotas: params?.decrementQuotas ?? false });
   };
 
   // Handle downloading selected responses
@@ -217,10 +223,11 @@ export const ResponseTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded ?? false}
           table={table}
-          deleteRowsAction={deleteResponses}
+          updateRowList={updateResponseList}
           type="response"
           deleteAction={deleteResponse}
           downloadRowsAction={downloadSelectedRows}
+          isQuotasAllowed={isQuotasAllowed}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">
@@ -295,7 +302,7 @@ export const ResponseTable = ({
             environmentTags={environmentTags}
             isReadOnly={isReadOnly}
             updateResponse={updateResponse}
-            deleteResponses={deleteResponses}
+            updateResponseList={updateResponseList}
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
             open={selectedResponse !== null}

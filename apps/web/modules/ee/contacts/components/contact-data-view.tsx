@@ -3,12 +3,11 @@
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { debounce } from "lodash";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
-import { deleteContactAction, getContactsAction } from "../actions";
+import { getContactsAction } from "../actions";
 import { TContactTableData, TContactWithAttributes } from "../types/contact";
 
 const ContactsTableDynamic = dynamic(() => import("./contacts-table").then((mod) => mod.ContactsTable), {
@@ -23,6 +22,7 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   hasMore: boolean;
+  isQuotasAllowed: boolean;
 }
 
 export const ContactDataView = ({
@@ -32,8 +32,8 @@ export const ContactDataView = ({
   isReadOnly,
   hasMore: initialHasMore,
   initialContacts,
+  isQuotasAllowed,
 }: ContactDataViewProps) => {
-  const router = useRouter();
   const [contacts, setContacts] = useState<TContactWithAttributes[]>([...initialContacts]);
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
@@ -115,11 +115,8 @@ export const ContactDataView = ({
   };
 
   // Delete selected contacts
-  const deleteContacts = async (contactIds: string[]) => {
-    await Promise.all(contactIds.map((contactId) => deleteContactAction({ contactId })));
+  const updateContactList = (contactIds: string[]) => {
     setContacts((prevContacts) => prevContacts.filter((contact) => !contactIds.includes(contact.id)));
-
-    router.refresh();
   };
 
   // Prepare data for the ContactTable component
@@ -144,11 +141,12 @@ export const ContactDataView = ({
       fetchNextPage={fetchNextPage}
       hasMore={hasMore}
       isDataLoaded={isFirstRender.current ? true : isDataLoaded}
-      deleteContacts={deleteContacts}
+      updateContactList={updateContactList}
       environmentId={environment.id}
       searchValue={searchValue}
       setSearchValue={setSearchValue}
       isReadOnly={isReadOnly}
+      isQuotasAllowed={isQuotasAllowed}
     />
   );
 };

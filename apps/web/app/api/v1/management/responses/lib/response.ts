@@ -1,19 +1,18 @@
 import "server-only";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
+import { handleBillingLimitsCheck } from "@/app/api/lib/utils";
+import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
+import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
+import { getSurvey } from "@/lib/survey/service";
 import { captureTelemetry } from "@/lib/telemetry";
 import { validateInputs } from "@/lib/utils/validate";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -59,25 +58,44 @@ export const responseSelection = {
   },
 } satisfies Prisma.ResponseSelect;
 
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+export const createResponseWithQuotaEvaluation = async (
+  responseInput: TResponseInput
+): Promise<TResponse> => {
+  const txResponse = await prisma.$transaction(async (tx) => {
+    const response = await createResponse(responseInput, tx);
+
+    const quotaResult = await evaluateResponseQuotas({
+      surveyId: responseInput.surveyId,
+      responseId: response.id,
+      data: responseInput.data,
+      variables: responseInput.variables,
+      language: responseInput.language,
+      responseFinished: response.finished,
+      tx,
+    });
+
+    if (quotaResult.shouldEndSurvey && quotaResult.refreshedResponse) {
+      return {
+        ...quotaResult.refreshedResponse,
+        tags: response.tags,
+        contact: response.contact,
+      };
+    }
+
+    return response;
+  });
+
+  return txResponse;
+};
+
+export const createResponse = async (
+  responseInput: TResponseInput,
+  tx?: Prisma.TransactionClient
+): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
-  const {
-    environmentId,
-    language,
-    userId,
-    surveyId,
-    displayId,
-    finished,
-    data,
-    meta,
-    singleUseId,
-    variables,
-    ttc: initialTtc,
-    createdAt,
-    updatedAt,
-  } = responseInput;
+  const { environmentId, userId, finished, ttc: initialTtc } = responseInput;
 
   try {
     let contact: { id: string; attributes: TContactAttributes } | null = null;
@@ -93,33 +111,11 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const prismaData: Prisma.ResponseCreateInput = {
-      survey: {
-        connect: {
-          id: surveyId,
-        },
-      },
-      display: displayId ? { connect: { id: displayId } } : undefined,
-      finished: finished,
-      data: data,
-      language: language,
-      ...(contact?.id && {
-        contact: {
-          connect: {
-            id: contact.id,
-          },
-        },
-        contactAttributes: contact.attributes,
-      }),
-      ...(meta && ({ meta } as Prisma.JsonObject)),
-      singleUseId,
-      ...(variables && { variables }),
-      ttc: ttc,
-      createdAt,
-      updatedAt,
-    };
+    const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
 
-    const responsePrisma = await prisma.response.create({
+    const prismaClient = tx ?? prisma;
+
+    const responsePrisma = await prismaClient.response.create({
       data: prismaData,
       select: responseSelection,
     });
@@ -135,28 +131,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
-    if (IS_FORMBRICKS_CLOUD) {
-      const responsesCount = await getMonthlyOrganizationResponseCount(organization.id);
-      const responsesLimit = organization.billing.limits.monthly.responses;
-
-      if (responsesLimit && responsesCount >= responsesLimit) {
-        try {
-          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-            plan: organization.billing.plan,
-            limits: {
-              projects: null,
-              monthly: {
-                responses: responsesLimit,
-                miu: null,
-              },
-            },
-          });
-        } catch (err) {
-          // Log error but do not throw
-          logger.error(err, "Error sending plan limits reached event to Posthog");
-        }
-      }
-    }
+    await handleBillingLimitsCheck(environmentId, organization.id, organization.billing);
 
     return response;
   } catch (error) {
@@ -189,6 +164,50 @@ export const getResponsesByEnvironmentIds = reactCache(
         ],
         take: limit ? limit : undefined,
         skip: offset ? offset : undefined,
+      });
+
+      const transformedResponses: TResponse[] = await Promise.all(
+        responses.map((responsePrisma) => {
+          return {
+            ...responsePrisma,
+            contact: getResponseContact(responsePrisma),
+            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+          };
+        })
+      );
+
+      return transformedResponses;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
+export const getResponses = reactCache(
+  async (surveyId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
+    validateInputs([surveyId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+
+    limit = limit ?? RESPONSES_PER_PAGE;
+    const survey = await getSurvey(surveyId);
+    if (!survey) return [];
+    try {
+      const responses = await prisma.response.findMany({
+        where: { surveyId },
+        select: responseSelection,
+        orderBy: [
+          {
+            createdAt: "desc",
+          },
+          {
+            id: "desc", // Secondary sort by ID for consistent pagination
+          },
+        ],
+        take: limit,
+        skip: offset,
       });
 
       const transformedResponses: TResponse[] = await Promise.all(

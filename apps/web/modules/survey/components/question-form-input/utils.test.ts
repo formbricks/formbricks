@@ -157,7 +157,6 @@ describe("utils", () => {
         type: "app",
         triggers: [],
         recontactDays: null,
-        closeOnDate: null,
         endings: [],
         delay: 0,
         pin: null,
@@ -185,7 +184,6 @@ describe("utils", () => {
         type: "app",
         triggers: [],
         recontactDays: null,
-        closeOnDate: null,
         endings: [],
         delay: 0,
         pin: null,
@@ -216,7 +214,6 @@ describe("utils", () => {
         type: "app",
         triggers: [],
         recontactDays: null,
-        closeOnDate: null,
         endings: [
           {
             type: "endScreen",
@@ -250,7 +247,6 @@ describe("utils", () => {
         type: "app",
         triggers: [],
         recontactDays: null,
-        closeOnDate: null,
         endings: [
           {
             type: "redirectToUrl",
@@ -281,7 +277,6 @@ describe("utils", () => {
         type: "app",
         triggers: [],
         recontactDays: null,
-        closeOnDate: null,
         endings: [],
         delay: 0,
         pin: null,
@@ -314,7 +309,6 @@ describe("utils", () => {
         type: "app",
         triggers: [],
         recontactDays: null,
-        closeOnDate: null,
         endings: [],
         delay: 0,
         pin: null,
@@ -347,7 +341,6 @@ describe("utils", () => {
         type: "app",
         triggers: [],
         recontactDays: null,
-        closeOnDate: null,
         endings: [],
         delay: 0,
         pin: null,
@@ -379,7 +372,6 @@ describe("utils", () => {
         type: "app",
         triggers: [],
         recontactDays: null,
-        closeOnDate: null,
         endings: [],
         delay: 0,
         pin: null,

@@ -72,9 +72,6 @@ x-environment: &environment
     # Set the below to your Unsplash API Key for their Survey Backgrounds
     # UNSPLASH_ACCESS_KEY:
 
-    # Set the below to 0 to disable cron jobs
-    # DOCKER_CRON_ENABLED: 1
-
     # Set the below to your public domain (default is WEBAPP_URL)
     # PUBLIC_URL:
 

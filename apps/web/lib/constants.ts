@@ -174,6 +174,8 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "zh-Hant-TW",
   "pt-PT",
   "ro-RO",
+  "ja-JP",
+  "zh-Hans-CN",
 ];
 
 // Billing constants
@@ -242,7 +244,7 @@ export const SENTRY_RELEASE = (() => {
   // Try to read from package.json with proper error handling
   try {
     const pkg = require("../package.json");
-    return pkg.version === "0.0.0" ? undefined : `v${pkg.version}`;
+    return pkg.version === "0.0.0" ? undefined : `${pkg.version}`;
   } catch {
     // If package.json can't be read (e.g., in some deployment scenarios),
     // return undefined and let Sentry work without release tracking

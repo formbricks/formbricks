@@ -28,9 +28,12 @@ vi.mock("@/modules/ui/components/button", () => ({
 }));
 
 describe("SelectedRowSettings", () => {
-  const rows = [{ id: "r1" }, { id: "r2" }];
+  const rows = [
+    { id: "r1", original: { quotas: [{ quota: { name: "Quota 1" } }] } },
+    { id: "r2", original: { quotas: [{ quota: { name: "Quota 2" } }] } },
+  ];
   let table: any;
-  let deleteRowsAction: ReturnType<typeof vi.fn>;
+  let updateRowList: ReturnType<typeof vi.fn>;
   let deleteAction: ReturnType<typeof vi.fn>;
   let downloadRowsAction: ReturnType<typeof vi.fn>;
 
@@ -39,7 +42,7 @@ describe("SelectedRowSettings", () => {
       getFilteredSelectedRowModel: () => ({ rows }),
       toggleAllPageRowsSelected: vi.fn(),
     };
-    deleteRowsAction = vi.fn();
+    updateRowList = vi.fn();
     deleteAction = vi.fn(() => Promise.resolve());
     downloadRowsAction = vi.fn();
 
@@ -57,7 +60,7 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRowsAction={deleteRowsAction}
+        updateRowList={updateRowList}
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="contact"
@@ -76,7 +79,7 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRowsAction={deleteRowsAction}
+        updateRowList={updateRowList}
         deleteAction={deleteAction}
         type="response"
       />
@@ -88,7 +91,7 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRowsAction={deleteRowsAction}
+        updateRowList={updateRowList}
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="response"
@@ -108,7 +111,7 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRowsAction={deleteRowsAction}
+        updateRowList={updateRowList}
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="contact"
@@ -119,7 +122,7 @@ describe("SelectedRowSettings", () => {
     fireEvent.click(screen.getByText("Confirm Delete"));
     await waitFor(() => {
       expect(deleteAction).toHaveBeenCalledTimes(2);
-      expect(deleteRowsAction).toHaveBeenCalledWith(["r1", "r2"]);
+      expect(updateRowList).toHaveBeenCalledWith(["r1", "r2"]);
       expect(toast.success).toHaveBeenCalledWith("common.table_items_deleted_successfully");
     });
   });
@@ -129,7 +132,7 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRowsAction={deleteRowsAction}
+        updateRowList={updateRowList}
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="response"
@@ -149,7 +152,7 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRowsAction={deleteRowsAction}
+        updateRowList={updateRowList}
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="response"
@@ -160,7 +163,7 @@ describe("SelectedRowSettings", () => {
     fireEvent.click(screen.getByText("Confirm Delete"));
     await waitFor(() => {
       expect(deleteAction).toHaveBeenCalledTimes(2);
-      expect(deleteRowsAction).toHaveBeenCalledWith(["r1", "r2"]);
+      expect(updateRowList).toHaveBeenCalledWith(["r1", "r2"]);
       expect(toast.success).toHaveBeenCalledWith("common.table_items_deleted_successfully");
     });
   });
@@ -170,7 +173,7 @@ describe("SelectedRowSettings", () => {
     render(
       <SelectedRowSettings
         table={table}
-        deleteRowsAction={deleteRowsAction}
+        updateRowList={updateRowList}
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="contact"

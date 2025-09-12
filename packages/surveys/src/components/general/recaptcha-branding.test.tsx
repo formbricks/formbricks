@@ -11,21 +11,21 @@ describe("RecaptchaBranding", () => {
   test("renders with correct text content", () => {
     const { container } = render(<RecaptchaBranding />);
     const paragraph = container.querySelector("p");
-    expect(paragraph).toHaveTextContent("Protected by reCAPTCHA and the Google");
-    expect(paragraph).toHaveTextContent("Privacy Policy");
-    expect(paragraph).toHaveTextContent("Terms of Service");
-    expect(paragraph).toHaveTextContent("apply.");
+    expect(paragraph).toHaveTextContent("common.protected_by_reCAPTCHA_and_the_Google");
+    expect(paragraph).toHaveTextContent("common.privacy_policy");
+    expect(paragraph).toHaveTextContent("common.terms_of_service");
+    expect(paragraph).toHaveTextContent("common.apply");
   });
 
   test("renders links with correct attributes", () => {
     render(<RecaptchaBranding />);
 
-    const privacyLink = screen.getByText("Privacy Policy").closest("a");
+    const privacyLink = screen.getByText("common.privacy_policy").closest("a");
     expect(privacyLink).toHaveAttribute("href", "https://policies.google.com/privacy");
     expect(privacyLink).toHaveAttribute("target", "_blank");
     expect(privacyLink).toHaveAttribute("rel", "noopener");
 
-    const termsLink = screen.getByText("Terms of Service").closest("a");
+    const termsLink = screen.getByText("common.terms_of_service").closest("a");
     expect(termsLink).toHaveAttribute("href", "https://policies.google.com/terms");
     expect(termsLink).toHaveAttribute("target", "_blank");
     expect(termsLink).toHaveAttribute("rel", "noopener");
@@ -40,10 +40,10 @@ describe("RecaptchaBranding", () => {
   test("links are wrapped in bold tags", () => {
     render(<RecaptchaBranding />);
 
-    const privacyLink = screen.getByText("Privacy Policy");
+    const privacyLink = screen.getByText("common.privacy_policy");
     expect(privacyLink.parentElement?.tagName).toBe("B");
 
-    const termsLink = screen.getByText("Terms of Service");
+    const termsLink = screen.getByText("common.terms_of_service");
     expect(termsLink.parentElement?.tagName).toBe("B");
   });
 });

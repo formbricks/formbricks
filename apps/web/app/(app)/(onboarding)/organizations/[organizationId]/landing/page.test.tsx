@@ -1,3 +1,4 @@
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
@@ -15,6 +16,7 @@ vi.mock("@/modules/ee/license-check/lib/license", () => ({
     isPendingDowngrade: false,
     fallbackLevel: "live",
   }),
+  getLicenseFeatures: vi.fn().mockResolvedValue({ isMultiOrgEnabled: true }),
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -101,16 +103,32 @@ vi.mock("@/lib/constants", () => ({
   AUDIT_LOG_ENABLED: true,
 }));
 
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn().mockReturnValue("http://localhost:3000"),
+}));
+
 vi.mock("@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar", () => ({
   LandingSidebar: () => <div data-testid="landing-sidebar" />,
+}));
+vi.mock("@/app/(app)/environments/[environmentId]/components/project-and-org-switch", () => ({
+  ProjectAndOrgSwitch: () => <div data-testid="project-and-org-switch" />,
 }));
 vi.mock("@/modules/organization/lib/utils");
 vi.mock("@/lib/user/service");
 vi.mock("@/lib/organization/service");
+vi.mock("@/lib/membership/service");
 vi.mock("@/tolgee/server");
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(() => "REDIRECT_STUB"),
   notFound: vi.fn(() => "NOT_FOUND_STUB"),
+  usePathname: vi.fn(() => "/organizations/org1"),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+  })),
 }));
 
 // Mock the React cache function
@@ -142,6 +160,7 @@ describe("Page component", () => {
         isPendingDowngrade: false,
         fallbackLevel: "live",
       }),
+      getLicenseFeatures: vi.fn().mockResolvedValue({ isMultiOrgEnabled: true }),
     }));
     const { default: Page } = await import("./page");
     const result = await Page({ params: { organizationId: "org1" } });
@@ -163,6 +182,7 @@ describe("Page component", () => {
         isPendingDowngrade: false,
         fallbackLevel: "live",
       }),
+      getLicenseFeatures: vi.fn().mockResolvedValue({ isMultiOrgEnabled: true }),
     }));
     const { default: Page } = await import("./page");
     const result = await Page({ params: { organizationId: "org1" } });
@@ -173,10 +193,16 @@ describe("Page component", () => {
   test("renders header and sidebar for authenticated user", async () => {
     vi.mocked(getOrganizationAuth).mockResolvedValue({
       session: { user: { id: "user1" } },
-      organization: { id: "org1" },
+      organization: { id: "org1", billing: { plan: "free" } },
     } as any);
     vi.mocked(getUser).mockResolvedValue({ id: "user1", name: "Test User" } as any);
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([{ id: "org1", name: "Org One" } as any]);
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({
+      organizationId: "org1",
+      userId: "user1",
+      accepted: true,
+      role: "member",
+    } as any);
     vi.mocked(getTranslate).mockResolvedValue((props: any) =>
       typeof props === "string" ? props : props.key || ""
     );
@@ -188,11 +214,13 @@ describe("Page component", () => {
         isPendingDowngrade: false,
         fallbackLevel: "live",
       }),
+      getLicenseFeatures: vi.fn().mockResolvedValue({ isMultiOrgEnabled: true }),
     }));
     const { default: Page } = await import("./page");
     const element = await Page({ params: { organizationId: "org1" } });
     render(element as React.ReactElement);
     expect(screen.getByTestId("landing-sidebar")).toBeInTheDocument();
+    expect(screen.getByTestId("project-and-org-switch")).toBeInTheDocument();
     expect(screen.getByText("organizations.landing.no_projects_warning_title")).toBeInTheDocument();
     expect(screen.getByText("organizations.landing.no_projects_warning_subtitle")).toBeInTheDocument();
   });

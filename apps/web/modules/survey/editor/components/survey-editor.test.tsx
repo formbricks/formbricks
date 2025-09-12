@@ -97,7 +97,6 @@ const mockSurvey = {
   environmentId: "env1",
   variables: [],
   welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
-  closeOnDate: null,
   segment: null,
   createdBy: null,
 } as unknown as TSurvey;
