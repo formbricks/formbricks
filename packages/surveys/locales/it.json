@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "e",
+    "apply": "applica",
+    "auto_close_wrapper": "Wrapper a chiusura automatica",
+    "back": "Indietro",
+    "click_or_drag_to_upload_files": "Clicca o trascina per caricare i file.",
+    "close_survey": "Chiudi sondaggio",
+    "company_logo": "Logo aziendale",
+    "delete_file": "Elimina file",
+    "file_upload": "Caricamento file",
+    "finish": "Fine",
+    "language_switch": "Cambio lingua",
+    "less_than_x_minutes": "{count, plural, one {meno di 1 minuto} other {meno di {count} minuti}}",
+    "move_down": "Sposta {item} giù",
+    "move_up": "Sposta {item} su",
+    "next": "Avanti",
+    "open_in_new_tab": "Apri in una nuova scheda",
+    "optional": "Facoltativo",
+    "options": "Opzioni",
+    "people_responded": "{count, plural, one {1 persona ha risposto} other {{count} persone hanno risposto}}",
+    "please_retry_now_or_try_again_later": "Riprova ora o più tardi.",
+    "powered_by": "Offerto da",
+    "privacy_policy": "Informativa sulla privacy",
+    "protected_by_reCAPTCHA_and_the_Google": "Protetto da reCAPTCHA e da Google",
+    "question": "Domanda",
+    "question_video": "Video della domanda",
+    "ranking_items": "Elementi di classifica",
+    "respondents_will_not_see_this_card": "I rispondenti non vedranno questa scheda",
+    "retry": "Riprova",
+    "select_a_date": "Seleziona una data",
+    "select_for_ranking": "Seleziona {item} per la classifica",
+    "sending_responses": "Invio risposte in corso...",
+    "takes": "Riprese",
+    "terms_of_service": "Termini di servizio",
+    "the_servers_cannot_be_reached_at_the_moment": "I server non sono raggiungibili al momento.",
+    "they_will_be_redirected_immediately": "Saranno reindirizzati immediatamente",
+    "upload_files_by_clicking_or_dragging_them_here": "Carica file cliccando o trascinandoli qui",
+    "uploading": "Caricamento in corso",
+    "x_minutes": "{count, plural, one {1 minuto} other {{count} minuti}}",
+    "x_plus_minutes": "{count}+ minuti",
+    "you_have_selected_x_date": "Hai selezionato {date}",
+    "you_have_successfully_uploaded_the_file": "Hai caricato con successo il file {fileName}",
+    "your_feedback_is_stuck": "Il tuo feedback è bloccato :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "I seguenti file sono già caricati: {duplicateNames}. I file duplicati non sono consentiti.",
+      "file_size_exceeded": "I seguenti file superano la dimensione massima di {maxSizeInMB} MB e sono stati rimossi: {fileNames}",
+      "file_size_exceeded_alert": "Il file deve essere inferiore a {maxSizeInMB} MB",
+      "native_upload_failed": "Errore durante il caricamento del file nativo.",
+      "no_valid_file_types_selected": "Nessun tipo di file valido selezionato. Seleziona un tipo di file valido.",
+      "only_one_file_can_be_uploaded_at_a_time": "È possibile caricare solo un file alla volta.",
+      "upload_failed": "Caricamento fallito! Riprova.",
+      "you_can_only_upload_a_maximum_of_files": "Puoi caricare un massimo di {FILE_LIMIT} file."
+    },
+    "invalid_device_error": {
+      "message": "Per continuare a utilizzare questo dispositivo, disabilita la protezione anti-spam nelle impostazioni del sondaggio.",
+      "title": "Questo dispositivo non supporta la protezione anti-spam."
+    },
+    "please_book_an_appointment": "Prenota un appuntamento",
+    "please_enter_a_valid_phone_number": "Inserisci un numero di telefono valido",
+    "please_fill_out_this_field": "Compila questo campo",
+    "please_rank_all_items_before_submitting": "Classifica tutti gli elementi prima di inviare",
+    "please_select_a_date": "Seleziona una data",
+    "please_upload_a_file": "Carica un file",
+    "recaptcha_error": {
+      "message": "La tua risposta non può essere inviata perché è stata segnalata come attività automatizzata. Se respiri, riprova.",
+      "title": "Non siamo riusciti a verificare che sei umano."
+    }
+  }
+}

@@ -7,7 +7,7 @@
   },
   "locale": {
     "source": "en",
-    "targets": ["de"]
+    "targets": ["de", "it", "fr", "es", "ar", "pt", "ru", "uz", "ro", "ja", "zh-Hans", "hi"]
   },
   "version": 1.8
 }

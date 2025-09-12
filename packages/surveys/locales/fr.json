@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "et",
+    "apply": "appliquer",
+    "auto_close_wrapper": "Fermeture automatique du wrapper",
+    "back": "Retour",
+    "click_or_drag_to_upload_files": "Cliquez ou glissez pour télécharger des fichiers.",
+    "close_survey": "Fermer le sondage",
+    "company_logo": "Logo de l'entreprise",
+    "delete_file": "Supprimer le fichier",
+    "file_upload": "Téléchargement de fichier",
+    "finish": "Terminer",
+    "language_switch": "Changement de langue",
+    "less_than_x_minutes": "{count, plural, one {moins d'une minute} other {moins de {count} minutes}}",
+    "move_down": "Déplacer {item} vers le bas",
+    "move_up": "Déplacer {item} vers le haut",
+    "next": "Suivant",
+    "open_in_new_tab": "Ouvrir dans un nouvel onglet",
+    "optional": "Facultatif",
+    "options": "Options",
+    "people_responded": "{count, plural, one {1 personne a répondu} other {{count} personnes ont répondu}}",
+    "please_retry_now_or_try_again_later": "Veuillez réessayer maintenant ou réessayer plus tard.",
+    "powered_by": "Propulsé par",
+    "privacy_policy": "Politique de confidentialité",
+    "protected_by_reCAPTCHA_and_the_Google": "Protégé par reCAPTCHA et Google",
+    "question": "Question",
+    "question_video": "Vidéo de la question",
+    "ranking_items": "Éléments de classement",
+    "respondents_will_not_see_this_card": "Les répondants ne verront pas cette carte",
+    "retry": "Réessayer",
+    "select_a_date": "Sélectionner une date",
+    "select_for_ranking": "Sélectionner {item} pour le classement",
+    "sending_responses": "Envoi des réponses...",
+    "takes": "Prises",
+    "terms_of_service": "Conditions d'utilisation",
+    "the_servers_cannot_be_reached_at_the_moment": "Les serveurs ne sont pas accessibles pour le moment.",
+    "they_will_be_redirected_immediately": "Ils seront redirigés immédiatement",
+    "upload_files_by_clicking_or_dragging_them_here": "Téléchargez des fichiers en cliquant ou en les faisant glisser ici",
+    "uploading": "Téléchargement en cours",
+    "x_minutes": "{count, plural, one {1 minute} other {{count} minutes}}",
+    "x_plus_minutes": "{count}+ minutes",
+    "you_have_selected_x_date": "Vous avez sélectionné {date}",
+    "you_have_successfully_uploaded_the_file": "Vous avez téléchargé le fichier {fileName} avec succès",
+    "your_feedback_is_stuck": "Votre feedback est bloqué :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "Les fichiers suivants sont déjà téléchargés : {duplicateNames}. Les fichiers en double ne sont pas autorisés.",
+      "file_size_exceeded": "Les fichiers suivants dépassent la taille maximale de {maxSizeInMB} Mo et ont été supprimés : {fileNames}",
+      "file_size_exceeded_alert": "Le fichier doit être inférieur à {maxSizeInMB} Mo",
+      "native_upload_failed": "Erreur lors du téléchargement du fichier natif.",
+      "no_valid_file_types_selected": "Aucun type de fichier valide sélectionné. Veuillez sélectionner un type de fichier valide.",
+      "only_one_file_can_be_uploaded_at_a_time": "Un seul fichier peut être téléchargé à la fois.",
+      "upload_failed": "Échec du téléchargement ! Veuillez réessayer.",
+      "you_can_only_upload_a_maximum_of_files": "Vous ne pouvez télécharger qu'un maximum de {FILE_LIMIT} fichiers."
+    },
+    "invalid_device_error": {
+      "message": "Veuillez désactiver la protection contre le spam dans les paramètres du sondage pour continuer à utiliser cet appareil.",
+      "title": "Cet appareil ne prend pas en charge la protection contre le spam."
+    },
+    "please_book_an_appointment": "Veuillez prendre rendez-vous",
+    "please_enter_a_valid_phone_number": "Veuillez saisir un numéro de téléphone valide",
+    "please_fill_out_this_field": "Veuillez remplir ce champ",
+    "please_rank_all_items_before_submitting": "Veuillez classer tous les éléments avant de soumettre",
+    "please_select_a_date": "Veuillez sélectionner une date",
+    "please_upload_a_file": "Veuillez télécharger un fichier",
+    "recaptcha_error": {
+      "message": "Votre réponse n'a pas pu être soumise car elle a été signalée comme une activité automatisée. Si vous respirez, veuillez réessayer.",
+      "title": "Nous n'avons pas pu vérifier que vous êtes humain."
+    }
+  }
+}

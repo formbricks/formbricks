@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "и",
+    "apply": "применить",
+    "auto_close_wrapper": "Автоматическое закрытие оболочки",
+    "back": "Назад",
+    "click_or_drag_to_upload_files": "Нажмите или перетащите, чтобы загрузить файлы.",
+    "close_survey": "Закрыть опрос",
+    "company_logo": "Логотип компании",
+    "delete_file": "Удалить файл",
+    "file_upload": "Загрузка файла",
+    "finish": "Завершить",
+    "language_switch": "Переключение языка",
+    "less_than_x_minutes": "{count, plural, one {менее 1 минуты} other {менее {count} минут}}",
+    "move_down": "Переместить {item} вниз",
+    "move_up": "Переместить {item} вверх",
+    "next": "Далее",
+    "open_in_new_tab": "Открыть в новой вкладке",
+    "optional": "Необязательно",
+    "options": "Опции",
+    "people_responded": "{count, plural, one {1 человек ответил} other {{count} человека ответили}}",
+    "please_retry_now_or_try_again_later": "Пожалуйста, повторите попытку сейчас или попробуйте позже.",
+    "powered_by": "Работает на основе",
+    "privacy_policy": "Политика конфиденциальности",
+    "protected_by_reCAPTCHA_and_the_Google": "Защищено reCAPTCHA и Google",
+    "question": "Вопрос",
+    "question_video": "Видео вопрос",
+    "ranking_items": "Ранжирование элементов",
+    "respondents_will_not_see_this_card": "Респонденты не увидят эту карточку",
+    "retry": "Повторить",
+    "select_a_date": "Выберите дату",
+    "select_for_ranking": "Выберите {item} для ранжирования",
+    "sending_responses": "Отправка ответов...",
+    "takes": "Занимает",
+    "terms_of_service": "Условия использования",
+    "the_servers_cannot_be_reached_at_the_moment": "Сервера в данный момент недоступны.",
+    "they_will_be_redirected_immediately": "Они будут немедленно перенаправлены",
+    "upload_files_by_clicking_or_dragging_them_here": "Загрузите файлы, нажав или перетащив их сюда",
+    "uploading": "Загрузка",
+    "x_minutes": "{count, plural, one {1 минута} few {{count} минуты} many {{count} минут}}",
+    "x_plus_minutes": "{count}+ минут",
+    "you_have_selected_x_date": "Вы выбрали дату {date}",
+    "you_have_successfully_uploaded_the_file": "Вы успешно загрузили файл {fileName}",
+    "your_feedback_is_stuck": "Ваш отзыв застрял :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "Следующие файлы уже загружены: {duplicateNames}. Дублирующие файлы не допускаются.",
+      "file_size_exceeded": "Следующие файлы превышают максимальный размер {maxSizeInMB} МБ и были удалены: {fileNames}",
+      "file_size_exceeded_alert": "Файл должен быть меньше {maxSizeInMB} МБ",
+      "native_upload_failed": "Ошибка загрузки исходного файла.",
+      "no_valid_file_types_selected": "Не выбраны допустимые типы файлов. Пожалуйста, выберите допустимый тип файла.",
+      "only_one_file_can_be_uploaded_at_a_time": "Можно загрузить только один файл за раз.",
+      "upload_failed": "Ошибка загрузки! Пожалуйста, попробуйте снова.",
+      "you_can_only_upload_a_maximum_of_files": "Вы можете загрузить максимум {FILE_LIMIT} файлов."
+    },
+    "invalid_device_error": {
+      "message": "Пожалуйста, отключите защиту от спама в настройках опроса, чтобы продолжить использование этого устройства.",
+      "title": "Это устройство не поддерживает защиту от спама."
+    },
+    "please_book_an_appointment": "Пожалуйста, запишитесь на приём",
+    "please_enter_a_valid_phone_number": "Пожалуйста, введите действительный номер телефона",
+    "please_fill_out_this_field": "Пожалуйста, заполните это поле",
+    "please_rank_all_items_before_submitting": "Пожалуйста, оцените все элементы перед отправкой",
+    "please_select_a_date": "Пожалуйста, выберите дату",
+    "please_upload_a_file": "Пожалуйста, загрузите файл",
+    "recaptcha_error": {
+      "message": "Ваш ответ не может быть отправлен, так как он был помечен как автоматическая активность. Если вы дышите, попробуйте ещё раз.",
+      "title": "Мы не смогли подтвердить, что вы человек."
+    }
+  }
+}

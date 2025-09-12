@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "و",
+    "apply": "تطبيق",
+    "auto_close_wrapper": "غلاف إغلاق تلقائي",
+    "back": "رجوع",
+    "click_or_drag_to_upload_files": "انقر أو اسحب لتحميل الملفات.",
+    "close_survey": "إغلاق الاستبيان",
+    "company_logo": "شعار الشركة",
+    "delete_file": "حذف الملف",
+    "file_upload": "تحميل الملف",
+    "finish": "إنهاء",
+    "language_switch": "تبديل اللغة",
+    "less_than_x_minutes": "{count, plural, one {أقل من دقيقة واحدة} two {أقل من دقيقتين} few {أقل من {count} دقائق} many {أقل من {count} دقيقة} other {أقل من {count} دقيقة}}",
+    "move_down": "نقل {item} للأسفل",
+    "move_up": "نقل {item} للأعلى",
+    "next": "التالي",
+    "open_in_new_tab": "فتح في علامة تبويب جديدة",
+    "optional": "اختياري",
+    "options": "خيارات",
+    "people_responded": "{count, plural, one {شخص واحد استجاب} two {شخصان استجابا} few {{count} أشخاص استجابوا} many {{count} شخصًا استجابوا} other {{count} شخص استجابوا}}",
+    "please_retry_now_or_try_again_later": "يرجى إعادة المحاولة الآن أو المحاولة مرة أخرى لاحقًا.",
+    "powered_by": "مشغل بواسطة",
+    "privacy_policy": "سياسة الخصوصية",
+    "protected_by_reCAPTCHA_and_the_Google": "محمي بواسطة reCAPTCHA و Google",
+    "question": "سؤال",
+    "question_video": "فيديو السؤال",
+    "ranking_items": "عناصر الترتيب",
+    "respondents_will_not_see_this_card": "لن يرى المستجيبون هذه البطاقة",
+    "retry": "إعادة المحاولة",
+    "select_a_date": "اختر تاريخًا",
+    "select_for_ranking": "اختر {item} للترتيب",
+    "sending_responses": "جارٍ إرسال الردود...",
+    "takes": "يأخذ",
+    "terms_of_service": "شروط الخدمة",
+    "the_servers_cannot_be_reached_at_the_moment": "لا يمكن الوصول إلى الخوادم في الوقت الحالي.",
+    "they_will_be_redirected_immediately": "سيتم إعادة توجيههم فورًا",
+    "upload_files_by_clicking_or_dragging_them_here": "قم بتحميل الملفات بالنقر عليها أو سحبها إلى هنا",
+    "uploading": "جارٍ التحميل",
+    "x_minutes": "{count, plural, one {دقيقة واحدة} two {دقيقتان} few {{count} دقائق} many {{count} دقيقة} other {{count} دقيقة}}",
+    "x_plus_minutes": "{count}+ دقيقة",
+    "you_have_selected_x_date": "لقد اخترت {date}",
+    "you_have_successfully_uploaded_the_file": "لقد قمت بتحميل الملف {fileName} بنجاح",
+    "your_feedback_is_stuck": "تعليقك عالق :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "الملفات التالية تم تحميلها بالفعل: {duplicateNames}. لا يُسمح بالملفات المكررة.",
+      "file_size_exceeded": "الملف (الملفات) التالية تتجاوز الحجم الأقصى البالغ {maxSizeInMB} ميجابايت وتم إزالتها: {fileNames}",
+      "file_size_exceeded_alert": "يجب أن يكون حجم الملف أقل من {maxSizeInMB} ميجابايت",
+      "native_upload_failed": "خطأ في تحميل الملف الأصلي.",
+      "no_valid_file_types_selected": "لم يتم اختيار أنواع ملفات صالحة. يرجى اختيار نوع ملف صالح.",
+      "only_one_file_can_be_uploaded_at_a_time": "يمكن تحميل ملف واحد فقط في المرة الواحدة.",
+      "upload_failed": "فشل التحميل! يرجى المحاولة مرة أخرى.",
+      "you_can_only_upload_a_maximum_of_files": "يمكنك تحميل {FILE_LIMIT} ملفات كحد أقصى."
+    },
+    "invalid_device_error": {
+      "message": "يرجى تعطيل حماية البريد المزعج في إعدادات الاستبيان للاستمرار في استخدام هذا الجهاز.",
+      "title": "هذا الجهاز لا يدعم حماية البريد المزعج."
+    },
+    "please_book_an_appointment": "يرجى حجز موعد",
+    "please_enter_a_valid_phone_number": "يرجى إدخال رقم هاتف صحيح",
+    "please_fill_out_this_field": "يرجى ملء هذا الحقل",
+    "please_rank_all_items_before_submitting": "يرجى ترتيب جميع العناصر قبل الإرسال",
+    "please_select_a_date": "يرجى اختيار تاريخ",
+    "please_upload_a_file": "يرجى تحميل ملف",
+    "recaptcha_error": {
+      "message": "تعذر إرسال ردك لأنه تم تصنيفه كنشاط آلي. إذا كنت تتنفس، يرجى المحاولة مرة أخرى.",
+      "title": "لم نتمكن من التحقق من أنك إنسان."
+    }
+  }
+}
