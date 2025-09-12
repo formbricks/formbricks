@@ -14,7 +14,7 @@ vi.mock("@formkit/auto-animate/react", () => ({
 }));
 
 vi.mock("@/modules/ui/components/background-styling-card/survey-bg-selector-tab", () => ({
-  SurveyBgSelectorTab: ({ bg, handleBgChange, colors, bgType, environmentId, isUnsplashConfigured }) => (
+  SurveyBgSelectorTab: ({ bg, handleBgChange, bgType, environmentId, isUnsplashConfigured }) => (
     <div
       data-testid="survey-bg-selector-tab"
       data-bg={bg}
@@ -77,6 +77,7 @@ describe("BackgroundStylingCard", () => {
         environmentId={mockEnvironmentId}
         isUnsplashConfigured={true}
         form={mockForm as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -99,6 +100,7 @@ describe("BackgroundStylingCard", () => {
         environmentId={mockEnvironmentId}
         isUnsplashConfigured={true}
         form={mockForm as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -125,6 +127,7 @@ describe("BackgroundStylingCard", () => {
         environmentId={mockEnvironmentId}
         isUnsplashConfigured={true}
         form={mockForm as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -141,6 +144,7 @@ describe("BackgroundStylingCard", () => {
         environmentId={mockEnvironmentId}
         isUnsplashConfigured={true}
         form={mockForm as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -159,6 +163,7 @@ describe("BackgroundStylingCard", () => {
         environmentId={mockEnvironmentId}
         isUnsplashConfigured={true}
         form={mockForm as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -179,6 +184,7 @@ describe("BackgroundStylingCard", () => {
         environmentId={mockEnvironmentId}
         isUnsplashConfigured={true}
         form={mockForm as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -199,6 +205,7 @@ describe("BackgroundStylingCard", () => {
         environmentId={mockEnvironmentId}
         isUnsplashConfigured={true}
         form={mockForm as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -220,6 +227,7 @@ describe("BackgroundStylingCard", () => {
         environmentId={mockEnvironmentId}
         isUnsplashConfigured={true}
         form={mockForm as any}
+        isStorageConfigured={true}
       />
     );
 

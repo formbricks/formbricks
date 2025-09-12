@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface HeadlineProps {
@@ -7,6 +8,7 @@ interface HeadlineProps {
   alignTextCenter?: boolean;
 }
 export function Headline({ headline, questionId, required = true, alignTextCenter = false }: HeadlineProps) {
+  const { t } = useTranslation();
   return (
     <label htmlFor={questionId} className="fb-text-heading fb-mb-[3px] fb-flex fb-flex-col">
       {!required && (
@@ -14,7 +16,7 @@ export function Headline({ headline, questionId, required = true, alignTextCente
           className="fb-text-xs fb-opacity-60 fb-font-normal fb-leading-6 fb-mb-[3px]"
           tabIndex={-1}
           data-testid="fb__surveys__headline-optional-text-test">
-          Optional
+          {t("common.optional")}
         </span>
       )}
       <div

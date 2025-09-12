@@ -1,7 +1,7 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { IS_FORMBRICKS_CLOUD, RESPONSES_PER_PAGE } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED, RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
@@ -78,6 +78,7 @@ const Page = async (props) => {
             segments={segments}
             isContactsEnabled={isContactsEnabled}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+            isStorageConfigured={IS_STORAGE_CONFIGURED}
           />
         }>
         <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="responses" />

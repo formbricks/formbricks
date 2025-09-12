@@ -230,8 +230,6 @@ const mockSurvey: TSurvey = {
   createdBy: null,
   variables: [],
   followUps: [],
-  runOnDate: null,
-  closeOnDate: null,
   styling: null,
   pin: null,
   recaptcha: null,
@@ -281,6 +279,7 @@ const defaultProps = {
   isContactsEnabled: true,
   isFormbricksCloud: false,
   isReadOnly: false,
+  isStorageConfigured: true,
 };
 
 describe("ShareSurveyModal", () => {

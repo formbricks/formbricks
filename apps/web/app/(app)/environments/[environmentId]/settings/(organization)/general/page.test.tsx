@@ -17,6 +17,7 @@ import Page from "./page";
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   IS_PRODUCTION: false,
+  IS_STORAGE_CONFIGURED: true,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   ENCRYPTION_KEY: "mock-encryption-key",
   ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
@@ -82,6 +83,15 @@ vi.mock("@/modules/ui/components/id-badge", () => ({
   IdBadge: vi.fn(() => <div>IdBadge</div>),
 }));
 
+vi.mock("@/modules/ui/components/alert", () => ({
+  Alert: ({ children, variant }: any) => (
+    <div data-testid="alert" data-variant={variant}>
+      {children}
+    </div>
+  ),
+  AlertDescription: ({ children }: any) => <div data-testid="alert-description">{children}</div>,
+}));
+
 describe("Page", () => {
   afterEach(() => {
     cleanup();
@@ -144,6 +154,7 @@ describe("Page", () => {
         isFormbricksCloud: IS_FORMBRICKS_CLOUD,
         fbLogoUrl: FB_LOGO_URL,
         user: mockUser,
+        isStorageConfigured: true,
       },
       undefined
     );
@@ -276,5 +287,119 @@ describe("Page", () => {
     };
 
     await expect(Page(props)).rejects.toThrow("Authentication error");
+  });
+
+  test("does not show storage warning when IS_STORAGE_CONFIGURED is true", async () => {
+    const props = {
+      params: Promise.resolve(mockParams),
+    };
+
+    const PageComponent = await Page(props);
+    render(PageComponent);
+
+    expect(screen.queryByTestId("alert")).not.toBeInTheDocument();
+  });
+
+  test("shows storage warning when IS_STORAGE_CONFIGURED is false", async () => {
+    // Mock IS_STORAGE_CONFIGURED as false
+    vi.doMock("@/lib/constants", () => ({
+      IS_FORMBRICKS_CLOUD: false,
+      IS_PRODUCTION: false,
+      IS_STORAGE_CONFIGURED: false,
+      FB_LOGO_URL: "https://example.com/mock-logo.png",
+      ENCRYPTION_KEY: "mock-encryption-key",
+      ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
+      GITHUB_ID: "mock-github-id",
+      GITHUB_SECRET: "mock-github-secret",
+      GOOGLE_CLIENT_ID: "mock-google-client-id",
+      GOOGLE_CLIENT_SECRET: "mock-google-client-secret",
+      AZUREAD_CLIENT_ID: "mock-azuread-client-id",
+      AZUREAD_CLIENT_SECRET: "mock-azure-client-secret",
+      AZUREAD_TENANT_ID: "mock-azuread-tenant-id",
+      OIDC_CLIENT_ID: "mock-oidc-client-id",
+      OIDC_CLIENT_SECRET: "mock-oidc-client-secret",
+      OIDC_ISSUER: "mock-oidc-issuer",
+      OIDC_DISPLAY_NAME: "mock-oidc-display-name",
+      OIDC_SIGNING_ALGORITHM: "mock-oidc-signing-algorithm",
+      SAML_DATABASE_URL: "mock-saml-database-url",
+      WEBAPP_URL: "mock-webapp-url",
+      SMTP_HOST: "mock-smtp-host",
+      SMTP_PORT: "mock-smtp-port",
+    }));
+
+    // Re-import the module to get the updated mock
+    const { default: PageWithStorageDisabled } = await import("./page");
+
+    const props = {
+      params: Promise.resolve(mockParams),
+    };
+
+    const PageComponent = await PageWithStorageDisabled(props);
+    render(PageComponent);
+
+    expect(screen.getByTestId("alert")).toBeInTheDocument();
+    expect(screen.getByTestId("alert")).toHaveAttribute("data-variant", "warning");
+    expect(screen.getByTestId("alert-description")).toHaveTextContent("common.storage_not_configured");
+  });
+
+  test("passes isStorageConfigured=true to EmailCustomizationSettings when storage is configured", async () => {
+    const props = {
+      params: Promise.resolve(mockParams),
+    };
+
+    const PageComponent = await Page(props);
+    render(PageComponent);
+
+    expect(EmailCustomizationSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isStorageConfigured: true,
+      }),
+      undefined
+    );
+  });
+
+  test("passes isStorageConfigured=false to EmailCustomizationSettings when storage is not configured", async () => {
+    // Mock IS_STORAGE_CONFIGURED as false
+    vi.doMock("@/lib/constants", () => ({
+      IS_FORMBRICKS_CLOUD: false,
+      IS_PRODUCTION: false,
+      IS_STORAGE_CONFIGURED: false,
+      FB_LOGO_URL: "https://example.com/mock-logo.png",
+      ENCRYPTION_KEY: "mock-encryption-key",
+      ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
+      GITHUB_ID: "mock-github-id",
+      GITHUB_SECRET: "mock-github-secret",
+      GOOGLE_CLIENT_ID: "mock-google-client-id",
+      GOOGLE_CLIENT_SECRET: "mock-google-client-secret",
+      AZUREAD_CLIENT_ID: "mock-azuread-client-id",
+      AZUREAD_CLIENT_SECRET: "mock-azure-client-secret",
+      AZUREAD_TENANT_ID: "mock-azuread-tenant-id",
+      OIDC_CLIENT_ID: "mock-oidc-client-id",
+      OIDC_CLIENT_SECRET: "mock-oidc-client-secret",
+      OIDC_ISSUER: "mock-oidc-issuer",
+      OIDC_DISPLAY_NAME: "mock-oidc-display-name",
+      OIDC_SIGNING_ALGORITHM: "mock-oidc-signing-algorithm",
+      SAML_DATABASE_URL: "mock-saml-database-url",
+      WEBAPP_URL: "mock-webapp-url",
+      SMTP_HOST: "mock-smtp-host",
+      SMTP_PORT: "mock-smtp-port",
+    }));
+
+    // Re-import the module to get the updated mock
+    const { default: PageWithStorageDisabled } = await import("./page");
+
+    const props = {
+      params: Promise.resolve(mockParams),
+    };
+
+    const PageComponent = await PageWithStorageDisabled(props);
+    render(PageComponent);
+
+    expect(EmailCustomizationSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isStorageConfigured: false,
+      }),
+      undefined
+    );
   });
 });

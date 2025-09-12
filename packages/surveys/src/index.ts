@@ -1,5 +1,7 @@
 import { RenderSurvey } from "@/components/general/render-survey";
+import { I18nProvider } from "@/components/i18n/provider";
 import { FILE_PICK_EVENT } from "@/lib/constants";
+import { getI18nLanguage } from "@/lib/i18n-utils";
 import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
 import { h, render } from "preact";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -17,10 +19,12 @@ export const renderSurvey = (props: SurveyContainerProps) => {
   // render SurveyNew
   // if survey type is link, we don't pass the placement, darkOverlay, clickOutside, onClose
 
-  const { mode, containerId } = props;
+  const { mode, containerId, languageCode } = props;
 
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
+
+  const language = getI18nLanguage(languageCode, props.survey.languages);
 
   if (mode === "inline") {
     if (!containerId) {
@@ -35,9 +39,13 @@ export const renderSurvey = (props: SurveyContainerProps) => {
     const { placement, darkOverlay, onClose, clickOutside, ...surveyInlineProps } = props;
 
     render(
-      h(RenderSurvey, {
-        ...surveyInlineProps,
-      }),
+      h(
+        I18nProvider,
+        { language },
+        h(RenderSurvey, {
+          ...surveyInlineProps,
+        })
+      ),
       element
     );
   } else {
@@ -46,9 +54,13 @@ export const renderSurvey = (props: SurveyContainerProps) => {
     document.body.appendChild(modalContainer);
 
     render(
-      h(RenderSurvey, {
-        ...props,
-      }),
+      h(
+        I18nProvider,
+        { language },
+        h(RenderSurvey, {
+          ...props,
+        })
+      ),
       modalContainer
     );
   }

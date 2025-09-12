@@ -748,7 +748,6 @@
         "api_key_label": "Étiquette de clé API",
         "api_key_security_warning": "Pour des raisons de sécurité, la clé API ne sera affichée qu'une seule fois après sa création. Veuillez la copier immédiatement à votre destination.",
         "api_key_updated": "Clé API mise à jour",
-        "delete_permission": "Supprimer une permission",
         "duplicate_access": "L'accès en double au projet n'est pas autorisé",
         "no_api_keys_yet": "Vous n'avez pas encore de clés API.",
         "no_env_permissions_found": "Aucune autorisation d'environnement trouvée",

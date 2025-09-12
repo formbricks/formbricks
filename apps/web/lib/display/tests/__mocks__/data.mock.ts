@@ -17,7 +17,6 @@ const createMockDisplay = (overrides = {}) => {
     surveyId: mockSurveyId,
     responseId: null,
     personId: null,
-    status: null,
     ...overrides,
   };
 };

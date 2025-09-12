@@ -147,6 +147,7 @@ describe("DateQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -181,6 +182,7 @@ describe("DateQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -250,6 +252,7 @@ describe("DateQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -313,6 +316,7 @@ describe("DateQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -375,6 +379,7 @@ describe("DateQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 

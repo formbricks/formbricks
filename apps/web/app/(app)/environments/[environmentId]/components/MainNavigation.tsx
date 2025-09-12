@@ -1,12 +1,12 @@
 "use client";
 
-import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -18,12 +18,10 @@ import {
 import { useTranslate } from "@tolgee/react";
 import {
   ArrowUpRightIcon,
-  BlocksIcon,
   ChevronRightIcon,
   Cog,
   LogOutIcon,
   MessageCircle,
-  MousePointerClick,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RocketIcon,
@@ -111,18 +109,6 @@ export const MainNavigation = ({
         name: t("common.contacts"),
         icon: UserIcon,
         isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
-      },
-      {
-        name: t("common.actions"),
-        href: `/environments/${environment.id}/actions`,
-        icon: MousePointerClick,
-        isActive: pathname?.includes("/actions"),
-      },
-      {
-        name: t("common.integrations"),
-        href: `/environments/${environment.id}/integrations`,
-        icon: BlocksIcon,
-        isActive: pathname?.includes("/integrations"),
       },
       {
         name: t("common.configuration"),

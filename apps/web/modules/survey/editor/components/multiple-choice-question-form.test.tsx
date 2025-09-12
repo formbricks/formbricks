@@ -73,6 +73,7 @@ describe("MultipleChoiceQuestionForm", () => {
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 

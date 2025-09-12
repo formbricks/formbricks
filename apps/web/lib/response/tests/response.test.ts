@@ -30,7 +30,7 @@ import {
   getResponse,
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
-  getResponseDownloadUrl,
+  getResponseDownloadFile,
   getResponsesByEnvironmentId,
   responseSelection,
   updateResponse,
@@ -80,12 +80,12 @@ beforeEach(() => {
   prisma.response.findMany.mockResolvedValue([mockResponse]);
   prisma.response.delete.mockResolvedValue(mockResponse);
 
-  prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" });
+  prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" } as unknown as any);
 
   prisma.response.count.mockResolvedValue(1);
 
-  prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput);
-  prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput);
+  prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput as unknown as any);
+  prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput as unknown as any);
   prisma.project.findMany.mockResolvedValue([]);
   // @ts-expect-error
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
@@ -211,8 +211,8 @@ describe("Tests for getResponseDownloadUrl service", () => {
       prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
       prisma.surveyQuota.findMany.mockResolvedValue([]);
 
-      const url = await getResponseDownloadUrl(mockSurveyId, "csv");
-      const fileExtension = url.split(".").pop();
+      const result = await getResponseDownloadFile(mockSurveyId, "csv");
+      const fileExtension = result.fileName.split(".").pop();
       expect(fileExtension).toEqual("csv");
     });
 
@@ -221,22 +221,22 @@ describe("Tests for getResponseDownloadUrl service", () => {
       prisma.response.count.mockResolvedValue(1);
       prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
 
-      const url = await getResponseDownloadUrl(mockSurveyId, "xlsx", { finished: true });
-      const fileExtension = url.split(".").pop();
+      const result = await getResponseDownloadFile(mockSurveyId, "xlsx", { finished: true });
+      const fileExtension = result.fileName.split(".").pop();
       expect(fileExtension).toEqual("xlsx");
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getResponseDownloadUrl, mockSurveyId, 123);
+    testInputValidation(getResponseDownloadFile, mockSurveyId, 123);
 
     test("Throws error if response file is of different format than expected", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.count.mockResolvedValue(1);
       prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
 
-      const url = await getResponseDownloadUrl(mockSurveyId, "csv", { finished: true });
-      const fileExtension = url.split(".").pop();
+      const result = await getResponseDownloadFile(mockSurveyId, "csv", { finished: true });
+      const fileExtension = result.fileName.split(".").pop();
       expect(fileExtension).not.toEqual("xlsx");
     });
 
@@ -249,7 +249,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
+      await expect(getResponseDownloadFile(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
     });
 
     test("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponses fails", async () => {
@@ -263,7 +263,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
       prisma.response.count.mockResolvedValue(1);
       prisma.response.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
+      await expect(getResponseDownloadFile(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
     });
 
     test("Throws a generic Error for unexpected problems", async () => {
@@ -272,7 +272,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
       // error from getSurvey
       prisma.survey.findUnique.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getResponseDownloadUrl(mockSurveyId, "xlsx")).rejects.toThrow(Error);
+      await expect(getResponseDownloadFile(mockSurveyId, "xlsx")).rejects.toThrow(Error);
     });
   });
 });

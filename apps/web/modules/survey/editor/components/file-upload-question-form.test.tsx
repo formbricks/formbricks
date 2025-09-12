@@ -148,6 +148,7 @@ describe("FileUploadQuestionForm", () => {
         isFormbricksCloud={false}
         locale="en-US"
         project={{} as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -180,6 +181,7 @@ describe("FileUploadQuestionForm", () => {
         isFormbricksCloud={false}
         locale="en-US"
         project={{} as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -249,6 +251,7 @@ describe("FileUploadQuestionForm", () => {
         isFormbricksCloud={false}
         locale="en-US"
         project={{} as any}
+        isStorageConfigured={true}
       />
     );
 
@@ -286,6 +289,7 @@ describe("FileUploadQuestionForm", () => {
         isFormbricksCloud={false}
         locale="en-US"
         project={{} as any}
+        isStorageConfigured={true}
       />
     );
 

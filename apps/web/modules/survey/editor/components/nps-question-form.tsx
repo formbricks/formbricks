@@ -21,6 +21,7 @@ interface NPSQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const NPSQuestionForm = ({
@@ -33,6 +34,7 @@ export const NPSQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
 }: NPSQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -52,6 +54,7 @@ export const NPSQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
 
       <div ref={parent}>
@@ -69,6 +72,7 @@ export const NPSQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>
@@ -104,6 +108,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
         <div className="w-full">
@@ -118,6 +123,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       </div>
@@ -137,6 +143,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       )}

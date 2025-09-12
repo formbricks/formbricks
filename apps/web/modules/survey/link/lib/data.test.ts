@@ -90,8 +90,6 @@ describe("data", () => {
       recontactDays: null,
       displayLimit: null,
       autoClose: null,
-      runOnDate: null,
-      closeOnDate: null,
       delay: 0,
       displayPercentage: null,
       autoComplete: null,
@@ -110,15 +108,8 @@ describe("data", () => {
       triggers: [],
       segment: null,
       followUps: [],
-      thankYouCard: {
-        enabled: false,
-        headline: { default: "Thank you!" },
-        subheader: { default: "" },
-        buttonLabel: { default: "Close" },
-      },
       inlineTriggers: [],
       segmentId: null,
-      verifyEmail: null,
     };
 
     const mockTransformedSurvey = {
@@ -216,8 +207,6 @@ describe("data", () => {
         recontactDays: null,
         displayLimit: null,
         autoClose: null,
-        runOnDate: null,
-        closeOnDate: null,
         delay: 0,
         displayPercentage: null,
         autoComplete: null,
@@ -235,12 +224,6 @@ describe("data", () => {
         triggers: [],
         segment: null,
         followUps: [],
-        thankYouCard: {
-          enabled: false,
-          headline: { default: "Thank you!" },
-          subheader: { default: "" },
-          buttonLabel: { default: "Close" },
-        },
       };
 
       vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);

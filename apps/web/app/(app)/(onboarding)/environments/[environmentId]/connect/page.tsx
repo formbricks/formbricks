@@ -42,7 +42,7 @@ const Page = async (props: ConnectPageProps) => {
       <ConnectWithFormbricks
         environment={environment}
         publicDomain={publicDomain}
-        widgetSetupCompleted={environment.appSetupCompleted}
+        appSetupCompleted={environment.appSetupCompleted}
         channel={channel}
       />
       <Button

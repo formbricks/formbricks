@@ -121,6 +121,7 @@ const defaultProps = {
   setLocalStylingChanges: mockSetLocalStylingChanges,
   isUnsplashConfigured: true,
   isCxMode: false,
+  isStorageConfigured: true,
 };
 
 // Helper component to provide REAL Form context

@@ -25,10 +25,11 @@ describe("ProjectConfigNavigation", () => {
     const cases = [
       { path: "/environments/env-1/project/general", idx: 0 },
       { path: "/environments/env-1/project/look", idx: 1 },
-      { path: "/environments/env-1/project/languages", idx: 2 },
-      { path: "/environments/env-1/project/tags", idx: 3 },
-      { path: "/environments/env-1/project/app-connection", idx: 4 },
-      { path: "/environments/env-1/project/teams", idx: 5 },
+      { path: "/environments/env-1/project/app-connection", idx: 2 },
+      { path: "/environments/env-1/project/integrations", idx: 3 },
+      { path: "/environments/env-1/project/teams", idx: 4 },
+      { path: "/environments/env-1/project/languages", idx: 5 },
+      { path: "/environments/env-1/project/tags", idx: 6 },
     ];
     for (const { path, idx } of cases) {
       mockPathname = path;

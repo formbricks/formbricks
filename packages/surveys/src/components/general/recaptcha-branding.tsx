@@ -1,19 +1,22 @@
+import { useTranslation } from "react-i18next";
+
 export function RecaptchaBranding() {
+  const { t } = useTranslation();
   return (
     <p className="fb-text-signature fb-text-xs fb-text-center fb-leading-6 fb-text-balance">
-      Protected by reCAPTCHA and the Google{" "}
+      {t("common.protected_by_reCAPTCHA_and_the_Google")}{" "}
       <b>
         <a target="_blank" rel="noopener" href="https://policies.google.com/privacy">
-          Privacy Policy
+          {t("common.privacy_policy")}
         </a>
       </b>{" "}
-      and{" "}
+      {t("common.and")}{" "}
       <b>
         <a target="_blank" rel="noopener" href="https://policies.google.com/terms">
-          Terms of Service
+          {t("common.terms_of_service")}
         </a>
       </b>{" "}
-      apply.
+      {t("common.apply")}.
     </p>
   );
 }

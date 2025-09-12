@@ -62,6 +62,7 @@ interface QuestionCardProps {
   locale: TUserLocale;
   responseCount: number;
   onAlertTrigger: () => void;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionCard = ({
@@ -85,6 +86,7 @@ export const QuestionCard = ({
   locale,
   responseCount,
   onAlertTrigger,
+  isStorageConfigured = true,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -291,6 +293,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
@@ -303,6 +306,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
@@ -315,6 +319,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
@@ -327,6 +332,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
@@ -339,6 +345,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
@@ -351,6 +358,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
@@ -362,6 +370,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
@@ -373,6 +382,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
@@ -384,6 +394,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
@@ -397,6 +408,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
@@ -409,6 +421,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
@@ -420,6 +433,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
@@ -431,6 +445,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
@@ -443,6 +458,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
@@ -455,6 +471,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : null}
           <div className="mt-4">
@@ -499,6 +516,7 @@ export const QuestionCard = ({
                           };
                           updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, 0);
                         }}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     )}
                     <div className="w-full">
@@ -529,6 +547,7 @@ export const QuestionCard = ({
                           );
                         }}
                         locale={locale}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     </div>
                   </div>
@@ -550,6 +569,7 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         locale={locale}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     </div>
                   )}

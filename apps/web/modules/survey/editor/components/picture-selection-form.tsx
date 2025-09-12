@@ -24,6 +24,7 @@ interface PictureSelectionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const PictureSelectionForm = ({
@@ -35,6 +36,7 @@ export const PictureSelectionForm = ({
   setSelectedLanguageCode,
   isInvalid,
   locale,
+  isStorageConfigured = true,
 }: PictureSelectionFormProps): JSX.Element => {
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -83,6 +85,7 @@ export const PictureSelectionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -99,6 +102,7 @@ export const PictureSelectionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>
@@ -137,6 +141,7 @@ export const PictureSelectionForm = ({
             onFileUpload={handleFileInputChanges}
             fileUrl={question?.choices?.map((choice) => choice.imageUrl)}
             multiple={true}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       </div>

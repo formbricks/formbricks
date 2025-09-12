@@ -51,7 +51,6 @@ const baseSurvey = {
   recontactDays: null,
   displayOption: "displayOnce",
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   autoComplete: null,
   surveyClosedMessage: null,
@@ -76,6 +75,7 @@ const defaultProps = {
   setSelectedLanguageCode: mockSetSelectedLanguageCode,
   isInvalid: false,
   locale: "en-US" as TUserLocale,
+  isStorageConfigured: true,
 };
 
 describe("PictureSelectionForm", () => {

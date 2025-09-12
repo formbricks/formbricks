@@ -45,6 +45,7 @@ vi.mock(
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
+  IS_STORAGE_CONFIGURED: true,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
   IS_POSTHOG_CONFIGURED: true,
@@ -150,7 +151,6 @@ const mockSurvey: TSurvey = {
   status: "inProgress",
   type: "web",
   questions: [],
-  thankYouCard: { enabled: false },
   endings: [],
   languages: [],
   triggers: [],
@@ -232,6 +232,7 @@ describe("ResponsesPage", () => {
         publicDomain: mockPublicDomain,
         responseCount: 10,
         displayCount: 5,
+        isStorageConfigured: true,
       }),
       undefined
     );

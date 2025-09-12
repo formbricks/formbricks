@@ -1,7 +1,7 @@
 "use server";
 
 import { getOrganization } from "@/lib/organization/service";
-import { getResponseDownloadUrl, getResponseFilteringValues } from "@/lib/response/service";
+import { getResponseDownloadFile, getResponseFilteringValues } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -46,7 +46,11 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
       ],
     });
 
-    return getResponseDownloadUrl(parsedInput.surveyId, parsedInput.format, parsedInput.filterCriteria);
+    return await getResponseDownloadFile(
+      parsedInput.surveyId,
+      parsedInput.format,
+      parsedInput.filterCriteria
+    );
   });
 
 const ZGetSurveyFilterDataAction = z.object({

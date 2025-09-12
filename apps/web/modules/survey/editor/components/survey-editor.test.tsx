@@ -97,7 +97,6 @@ const mockSurvey = {
   environmentId: "env1",
   variables: [],
   welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
-  closeOnDate: null,
   segment: null,
   createdBy: null,
 } as unknown as TSurvey;
@@ -165,6 +164,7 @@ describe("SurveyEditor", () => {
         isSurveyFollowUpsAllowed={true}
         userEmail="user@example.com"
         teamMemberDetails={[]}
+        isStorageConfigured={true}
       />
     );
     expect(screen.getByText("Loading...")).toBeInTheDocument();
@@ -196,6 +196,7 @@ describe("SurveyEditor", () => {
         isSurveyFollowUpsAllowed={true}
         userEmail="user@example.com"
         teamMemberDetails={[]}
+        isStorageConfigured={true}
       />
     );
     expect(screen.getByText("Survey Menu Bar")).toBeInTheDocument();
@@ -231,6 +232,7 @@ describe("SurveyEditor", () => {
         isSurveyFollowUpsAllowed={true}
         userEmail="user@example.com"
         teamMemberDetails={[]}
+        isStorageConfigured={true}
       />
     );
     const stylingTabButton = screen.getByText("Styling Tab");
@@ -267,6 +269,7 @@ describe("SurveyEditor", () => {
         isSurveyFollowUpsAllowed={true}
         userEmail="user@example.com"
         teamMemberDetails={[]}
+        isStorageConfigured={true}
       />
     );
     const settingsTabButton = screen.getByText("Settings Tab");
@@ -303,6 +306,7 @@ describe("SurveyEditor", () => {
         isSurveyFollowUpsAllowed={true}
         userEmail="user@example.com"
         teamMemberDetails={[]}
+        isStorageConfigured={true}
       />
     );
     const followUpsTabButton = screen.getByText("Follow-ups Tab");
@@ -339,6 +343,7 @@ describe("SurveyEditor", () => {
         isSurveyFollowUpsAllowed={true}
         userEmail="user@example.com"
         teamMemberDetails={[]}
+        isStorageConfigured={true}
       />
     );
     expect(screen.queryByText("Edit Alert Dialog")).not.toBeInTheDocument();
@@ -374,6 +379,7 @@ describe("SurveyEditor", () => {
         isSurveyFollowUpsAllowed={true}
         userEmail="user@example.com"
         teamMemberDetails={[]}
+        isStorageConfigured={true}
       />
     );
     expect(screen.queryByText("Styling Tab")).not.toBeInTheDocument();
@@ -402,7 +408,8 @@ describe("SurveyEditor", () => {
         locale={"en" as TUserLocale}
         projectPermission={null as TTeamPermission | null}
         mailFrom="test@example.com"
-        isSurveyFollowUpsAllowed={false} // Set to false
+        isSurveyFollowUpsAllowed={false}
+        isStorageConfigured={true}
         userEmail="user@example.com"
         teamMemberDetails={[]}
       />

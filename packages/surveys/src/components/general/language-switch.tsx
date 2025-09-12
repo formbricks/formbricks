@@ -1,8 +1,11 @@
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
+import { getI18nLanguage } from "@/lib/i18n-utils";
+import i18n from "@/lib/i18n.config";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { checkIfSurveyIsRTL, cn } from "@/lib/utils";
 import { useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -28,6 +31,7 @@ export function LanguageSwitch({
   dir = "auto",
   setDir,
 }: LanguageSwitchProps) {
+  const { t } = useTranslation();
   const hoverColorWithOpacity = hoverColor ?? mixColor("#000000", "#ffffff", 0.8);
 
   const [isHovered, setIsHovered] = useState(false);
@@ -41,9 +45,18 @@ export function LanguageSwitch({
     return surveyLanguage.default;
   })?.language.code;
 
+  const handleI18nLanguage = (languageCode: string) => {
+    const calculatedLanguage = getI18nLanguage(languageCode, surveyLanguages);
+    if (i18n.language !== calculatedLanguage) {
+      i18n.changeLanguage(calculatedLanguage);
+    }
+  };
+
   const changeLanguage = (languageCode: string) => {
     const calculatedLanguageCode = languageCode === defaultLanguageCode ? "default" : languageCode;
     setSelectedLanguageCode(calculatedLanguageCode);
+
+    handleI18nLanguage(calculatedLanguageCode);
 
     if (setDir) {
       const calculateDir = checkIfSurveyIsRTL(survey, calculatedLanguageCode) ? "rtl" : "auto";
@@ -64,7 +77,7 @@ export function LanguageSwitch({
   return (
     <div className="fb-z-[1001] fb-flex fb-w-fit fb-items-center">
       <button
-        title="Language switch"
+        title={t("common.language_switch")}
         type="button"
         className={cn(
           "fb-text-heading fb-relative fb-h-8 fb-w-8 fb-rounded-md focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-justify-center fb-flex fb-items-center"
@@ -78,7 +91,7 @@ export function LanguageSwitch({
         tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}
-        aria-label="Language switch"
+        aria-label={t("common.language_switch")}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}>
         <LanguageIcon />

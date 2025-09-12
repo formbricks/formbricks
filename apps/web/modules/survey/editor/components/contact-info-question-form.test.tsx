@@ -106,6 +106,7 @@ describe("ContactInfoQuestionForm", () => {
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -129,6 +130,7 @@ describe("ContactInfoQuestionForm", () => {
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -156,6 +158,7 @@ describe("ContactInfoQuestionForm", () => {
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -179,6 +182,7 @@ describe("ContactInfoQuestionForm", () => {
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -203,6 +207,7 @@ describe("ContactInfoQuestionForm", () => {
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -222,6 +227,7 @@ describe("ContactInfoQuestionForm", () => {
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -248,6 +254,7 @@ describe("ContactInfoQuestionForm", () => {
         setSelectedLanguageCode={vi.fn()}
         locale="en-US"
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 

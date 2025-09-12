@@ -126,13 +126,11 @@ export const mockUser: TUser = {
   updatedAt: currentDate,
   twoFactorEnabled: false,
   identityProvider: "google",
-  objective: "improve_user_retention",
   notificationSettings: {
     alert: {},
 
     unsubscribedOrganizationIds: [],
   },
-  role: "other",
   locale: "en-US",
   lastLoginAt: new Date(),
   isActive: true,
@@ -198,8 +196,6 @@ const baseSurveyProperties = {
   autoClose: 10,
   delay: 0,
   autoComplete: 7,
-  runOnDate: null,
-  closeOnDate: currentDate,
   redirectUrl: "https://github.com/formbricks/formbricks",
   recontactDays: 3,
   displayLimit: 3,
@@ -264,8 +260,6 @@ export const mockSyncSurveyOutput: SurveyMock = {
   followUps: [],
   variables: [],
   showLanguageSwitch: null,
-  thankYouCard: null,
-  verifyEmail: null,
   metadata: {},
 };
 
@@ -289,8 +283,6 @@ export const mockSurveyOutput: SurveyMock = {
   followUps: [],
   variables: [],
   showLanguageSwitch: null,
-  thankYouCard: null,
-  verifyEmail: null,
   ...baseSurveyProperties,
 };
 

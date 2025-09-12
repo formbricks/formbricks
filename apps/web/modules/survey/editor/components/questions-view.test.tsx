@@ -242,8 +242,6 @@ const mockSurvey = {
   hiddenFields: { enabled: true, fieldIds: [] },
   createdAt: new Date(),
   updatedAt: new Date(),
-  runOnDate: null,
-  closeOnDate: null,
 } as unknown as TSurvey;
 
 const mockProject = {
@@ -311,6 +309,7 @@ describe("QuestionsView", () => {
         locale={"en" as TUserLocale}
         responseCount={0}
         setIsCautionDialogOpen={setIsCautionDialogOpen}
+        isStorageConfigured={true}
         quotas={[]}
         {...props}
       />

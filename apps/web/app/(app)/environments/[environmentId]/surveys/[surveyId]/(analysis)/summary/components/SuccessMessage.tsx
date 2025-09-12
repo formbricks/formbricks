@@ -19,19 +19,19 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
   const [confetti, setConfetti] = useState(false);
 
   const isAppSurvey = survey.type === "app";
-  const widgetSetupCompleted = environment.appSetupCompleted;
+  const appSetupCompleted = environment.appSetupCompleted;
 
   useEffect(() => {
     const newSurveyParam = searchParams?.get("success");
     if (newSurveyParam && survey && environment) {
       setConfetti(true);
       toast.success(
-        isAppSurvey && !widgetSetupCompleted
+        isAppSurvey && !appSetupCompleted
           ? t("environments.surveys.summary.almost_there")
           : t("environments.surveys.summary.congrats"),
         {
           id: "survey-publish-success-toast",
-          icon: isAppSurvey && !widgetSetupCompleted ? "🤏" : "🎉",
+          icon: isAppSurvey && !appSetupCompleted ? "🤏" : "🎉",
           duration: 5000,
           position: "bottom-right",
         }
@@ -47,7 +47,7 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
 
       window.history.replaceState({}, "", url.toString());
     }
-  }, [environment, isAppSurvey, searchParams, survey, widgetSetupCompleted, t]);
+  }, [environment, isAppSurvey, searchParams, survey, appSetupCompleted, t]);
 
   return <>{confetti && <Confetti />}</>;
 };

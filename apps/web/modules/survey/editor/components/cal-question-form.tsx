@@ -22,6 +22,7 @@ interface CalQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const CalQuestionForm = ({
@@ -33,6 +34,7 @@ export const CalQuestionForm = ({
   setSelectedLanguageCode,
   isInvalid,
   locale,
+  isStorageConfigured = true,
 }: CalQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [isCalHostEnabled, setIsCalHostEnabled] = useState(!!question.calHost);
@@ -60,6 +62,7 @@ export const CalQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
       <div>
         {question.subheader !== undefined && (
@@ -76,6 +79,7 @@ export const CalQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>

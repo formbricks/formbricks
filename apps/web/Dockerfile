@@ -115,9 +115,6 @@ RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules
 COPY --from=installer /prisma_version.txt .
 RUN chown nextjs:nextjs ./prisma_version.txt && chmod 644 ./prisma_version.txt
 
-COPY /docker/cronjobs /app/docker/cronjobs
-RUN chmod -R 755 /app/docker/cronjobs
-
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
 

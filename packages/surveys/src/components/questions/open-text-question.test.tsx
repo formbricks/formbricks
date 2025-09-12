@@ -141,7 +141,7 @@ describe("OpenTextQuestion", () => {
 
     const input = screen.getByPlaceholderText("Type here...");
     expect(input).toHaveAttribute("pattern", "^[0-9+][0-9+\\- ]*[0-9]$");
-    expect(input).toHaveAttribute("title", "Enter a valid phone number");
+    expect(input).toHaveAttribute("title", "errors.please_enter_a_valid_phone_number");
   });
 
   test("applies correct attributes for required fields", () => {
@@ -385,7 +385,7 @@ describe("OpenTextQuestion", () => {
     );
 
     const textarea = screen.getByRole("textbox");
-    expect(textarea).toHaveAttribute("title", "Please enter a valid phone number");
+    expect(textarea).toHaveAttribute("title", "errors.please_enter_a_valid_phone_number");
   });
 
   test("applies character limits for textarea", () => {

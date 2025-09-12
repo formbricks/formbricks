@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
 import { DatePickerProps } from "react-date-picker";
+import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import "../../styles/date-picker.css";
@@ -104,6 +105,8 @@ export function DateQuestion({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
   const [hideInvalid, setHideInvalid] = useState(!selectedDate);
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (datePickerOpen) {
       if (!selectedDate) setSelectedDate(new Date());
@@ -140,7 +143,7 @@ export function DateQuestion({
         onSubmit={(e) => {
           e.preventDefault();
           if (question.required && !value) {
-            setErrorMessage("Please select a date.");
+            setErrorMessage(t("errors.please_select_a_date"));
             return;
           }
           const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -175,7 +178,11 @@ export function DateQuestion({
                 onKeyDown={(e) => {
                   if (e.key === " ") setDatePickerOpen(true);
                 }}
-                aria-label={selectedDate ? `You have selected ${formattedDate}` : "Select a date"}
+                aria-label={
+                  selectedDate
+                    ? t("common.you_have_selected_x_date", { date: formattedDate })
+                    : t("common.select_a_date")
+                }
                 aria-describedby={errorMessage ? "error-message" : undefined}
                 className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
                 <div className="fb-flex fb-items-center fb-gap-2">
@@ -185,7 +192,7 @@ export function DateQuestion({
                     </div>
                   ) : (
                     <div className="fb-flex fb-items-center fb-gap-2">
-                      <CalendarIcon /> <span>Select a date</span>
+                      <CalendarIcon /> <span>{t("common.select_a_date")}</span>
                     </div>
                   )}
                 </div>

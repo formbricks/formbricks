@@ -16,12 +16,10 @@ describe("ErrorComponent", () => {
     expect(alertDiv).toBeInTheDocument();
 
     const titleSpan = alertDiv.querySelector("span");
-    expect(titleSpan?.textContent?.trim()).toBe("We couldn't verify that you're human.");
+    expect(titleSpan?.textContent?.trim()).toBe("errors.recaptcha_error.title");
 
     const messageP = alertDiv.querySelector("p");
-    expect(messageP?.textContent?.trim()).toBe(
-      "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again."
-    );
+    expect(messageP?.textContent?.trim()).toBe("errors.recaptcha_error.message");
   });
 
   test("renders InvalidDeviceError correctly", () => {
@@ -31,12 +29,10 @@ describe("ErrorComponent", () => {
     expect(alertDiv).toBeInTheDocument();
 
     const titleSpan = alertDiv.querySelector("span");
-    expect(titleSpan?.textContent?.trim()).toBe("This device doesn’t support spam protection.");
+    expect(titleSpan?.textContent?.trim()).toBe("errors.invalid_device_error.title");
 
     const messageP = alertDiv.querySelector("p");
-    expect(messageP?.textContent?.trim()).toBe(
-      "Please disable spam protection in the survey settings to continue using this device."
-    );
+    expect(messageP?.textContent?.trim()).toBe("errors.invalid_device_error.message");
   });
 
   test("has correct accessibility attributes", () => {
@@ -59,7 +55,7 @@ describe("ErrorComponent", () => {
       "fb-items-center"
     );
 
-    const titleSpan = screen.getByText(/We couldn't verify that you're human/);
+    const titleSpan = screen.getByText("errors.recaptcha_error.title");
     expect(titleSpan).toHaveClass(
       "fb-mb-1.5",
       "fb-text-base",
@@ -68,7 +64,7 @@ describe("ErrorComponent", () => {
       "fb-text-slate-900"
     );
 
-    const messageP = screen.getByText(/Your response could not be submitted/);
+    const messageP = screen.getByText("errors.recaptcha_error.message");
     expect(messageP).toHaveClass(
       "fb-max-w-lg",
       "fb-text-sm",

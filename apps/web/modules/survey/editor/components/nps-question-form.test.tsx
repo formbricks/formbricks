@@ -102,6 +102,7 @@ describe("NPSQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -128,6 +129,7 @@ describe("NPSQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
     expect(screen.getByLabelText("common.description")).toBeInTheDocument();
@@ -148,6 +150,7 @@ describe("NPSQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -170,6 +173,7 @@ describe("NPSQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
     expect(screen.getByLabelText("environments.surveys.edit.next_button_label")).toBeInTheDocument();
@@ -190,6 +194,7 @@ describe("NPSQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
 
@@ -212,6 +217,7 @@ describe("NPSQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         isInvalid={false}
         locale={locale}
+        isStorageConfigured={true}
       />
     );
     expect(screen.getByLabelText("environments.surveys.edit.next_button_label")).toBeInTheDocument();

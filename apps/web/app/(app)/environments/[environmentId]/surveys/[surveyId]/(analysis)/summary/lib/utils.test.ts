@@ -60,7 +60,6 @@ describe("Utils Tests", () => {
       triggers: [],
       recontactDays: null,
       autoClose: null,
-      closeOnDate: null,
       delay: 0,
       autoComplete: null,
       singleUse: null,

@@ -232,8 +232,6 @@ describe("Response Processing", () => {
       autoClose: null,
       autoComplete: null,
       recontactDays: null,
-      runOnDate: null,
-      closeOnDate: null,
       welcomeCard: {
         enabled: false,
         timeToFinish: false,
@@ -246,7 +244,6 @@ describe("Response Processing", () => {
       displayPercentage: 100,
       styling: null,
       projectOverwrites: null,
-      verifyEmail: null,
       inlineTriggers: [],
       pin: null,
       triggers: [],

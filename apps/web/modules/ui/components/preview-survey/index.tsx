@@ -119,8 +119,6 @@ export const PreviewSurvey = ({
   const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
   const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
-  const widgetSetupCompleted = appSetupCompleted;
-
   const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
     // allow style overwrite is disabled from the project
     if (!project.styling.allowStyleOverwrite) {
@@ -211,7 +209,7 @@ export const PreviewSurvey = ({
   };
 
   if (!previewType) {
-    previewType = widgetSetupCompleted ? "modal" : "fullwidth";
+    previewType = appSetupCompleted ? "modal" : "fullwidth";
 
     if (!questionId) {
       return <></>;

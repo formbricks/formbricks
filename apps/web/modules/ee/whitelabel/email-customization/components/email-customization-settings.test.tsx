@@ -1,9 +1,9 @@
-import { handleFileUpload } from "@/app/lib/fileUpload";
 import {
   removeOrganizationEmailLogoUrlAction,
   sendTestEmailAction,
   updateOrganizationEmailLogoUrlAction,
 } from "@/modules/ee/whitelabel/email-customization/actions";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -12,13 +12,17 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { EmailCustomizationSettings } from "./email-customization-settings";
 
+vi.mock("@/lib/constants", () => ({
+  IS_STORAGE_CONFIGURED: true,
+}));
+
 vi.mock("@/modules/ee/whitelabel/email-customization/actions", () => ({
   removeOrganizationEmailLogoUrlAction: vi.fn(),
   sendTestEmailAction: vi.fn(),
   updateOrganizationEmailLogoUrlAction: vi.fn(),
 }));
 
-vi.mock("@/app/lib/fileUpload", () => ({
+vi.mock("@/modules/storage/file-upload", () => ({
   handleFileUpload: vi.fn(),
 }));
 
@@ -41,6 +45,7 @@ const defaultProps = {
     name: "Test User",
   } as TUser,
   fbLogoUrl: "https://example.com/fallback-logo.png",
+  isStorageConfigured: true,
 };
 
 describe("EmailCustomizationSettings", () => {

@@ -420,7 +420,6 @@ describe("endpoint-validator", () => {
       expect(isAdminDomainRoute("/api/v2/management/surveys")).toBe(true);
       expect(isAdminDomainRoute("/api/v1/integrations/webhook")).toBe(true);
       expect(isAdminDomainRoute("/pipeline/jobs")).toBe(true);
-      expect(isAdminDomainRoute("/cron/tasks")).toBe(true);
       expect(isAdminDomainRoute("/random/route")).toBe(true);
     });
 
@@ -472,7 +471,6 @@ describe("endpoint-validator", () => {
         expect(isRouteAllowedForDomain("/health", false)).toBe(true);
         expect(isRouteAllowedForDomain("/storage/env123/public/file.jpg", false)).toBe(true);
         expect(isRouteAllowedForDomain("/pipeline/jobs", false)).toBe(true);
-        expect(isRouteAllowedForDomain("/cron/tasks", false)).toBe(true);
         expect(isRouteAllowedForDomain("/unknown/route", false)).toBe(true);
       });
 

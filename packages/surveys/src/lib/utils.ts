@@ -1,8 +1,8 @@
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
-import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/common";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
 import {
   type TShuffleOption,
   type TSurveyLogic,

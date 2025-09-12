@@ -1,10 +1,11 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
+import { ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
+import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import {
   FORBIDDEN_IDS,
@@ -772,7 +773,7 @@ export const ZSurveyType = z.enum(["link", "app"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 
-export const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
+export const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
@@ -854,8 +855,6 @@ export const ZSurvey = z
     ),
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
-    runOnDate: z.date().nullable(),
-    closeOnDate: z.date().nullable(),
     projectOverwrites: ZSurveyProjectOverwrites.nullable(),
     styling: ZSurveyStyling.nullable(),
     showLanguageSwitch: z.boolean().nullable(),
@@ -2507,8 +2506,6 @@ export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateIn
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
-  runOnDate: TSurvey["runOnDate"];
-  closeOnDate: TSurvey["closeOnDate"];
 }
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;

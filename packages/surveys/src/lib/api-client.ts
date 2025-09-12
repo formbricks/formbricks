@@ -111,6 +111,15 @@ export class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 400) {
+        const json = (await response.json()) as ApiErrorResponse;
+        if (json.details?.fileName) {
+          const err = new Error("Invalid file name");
+          err.name = "InvalidFileNameError";
+          throw err;
+        }
+      }
+
       throw new Error(`Upload failed with status: ${String(response.status)}`);
     }
 
@@ -118,74 +127,48 @@ export class ApiClient {
 
     const { data } = json;
 
-    const { signedUrl, fileUrl, signingData, presignedFields, updatedFileName } = data;
+    const { signedUrl, fileUrl, presignedFields } = data as {
+      signedUrl: string;
+      presignedFields: Record<string, string>;
+      fileUrl: string;
+    };
 
-    let localUploadDetails: Record<string, string> = {};
-
-    if (signingData) {
-      const { signature, timestamp, uuid } = signingData;
-
-      localUploadDetails = {
-        fileType: file.type,
-        fileName: encodeURIComponent(updatedFileName),
-        surveyId: surveyId ?? "",
-        signature,
-        timestamp: String(timestamp),
-        uuid,
-      };
+    if (!signedUrl || !presignedFields || !fileUrl) {
+      throw new Error("Invalid response");
     }
 
-    const formData: Record<string, string> = {};
-    const formDataForS3 = new FormData();
+    const formData = new FormData();
 
-    if (presignedFields) {
-      Object.entries(presignedFields).forEach(([key, value]) => {
-        formDataForS3.append(key, value);
-      });
-
-      try {
-        const binaryString = atob(file.base64.split(",")[1]);
-        const uint8Array = Uint8Array.from([...binaryString].map((char) => char.charCodeAt(0)));
-        const blob = new Blob([uint8Array], { type: file.type });
-
-        formDataForS3.append("file", blob);
-      } catch (err) {
-        console.error(err);
-        throw new Error("Error uploading file");
-      }
-    }
-
-    formData.fileBase64String = file.base64;
-
-    let uploadResponse: Response = {} as Response;
-
-    const signedUrlCopy = signedUrl.replace("http://localhost:3000", this.appUrl);
+    Object.entries(presignedFields).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
 
     try {
-      uploadResponse = await fetch(signedUrlCopy, {
+      const binaryString = atob(file.base64.split(",")[1]);
+      const uint8Array = Uint8Array.from([...binaryString].map((char) => char.charCodeAt(0)));
+      const blob = new Blob([uint8Array], { type: file.type });
+
+      formData.append("file", blob);
+    } catch (err) {
+      console.error(err);
+      throw new Error("Error uploading file");
+    }
+
+    let uploadResponse: Response;
+
+    try {
+      uploadResponse = await fetch(signedUrl, {
         method: "POST",
-        body: presignedFields
-          ? formDataForS3
-          : JSON.stringify({
-              ...formData,
-              ...localUploadDetails,
-            }),
+        body: formData,
       });
     } catch (err) {
       console.error("Error uploading file", err);
+      throw new Error("Network error while uploading file");
     }
 
     if (!uploadResponse.ok) {
-      // if local storage is used, we'll use the json response:
-      if (signingData) {
-        const uploadJson = (await uploadResponse.json()) as { message: string };
-        const error = new Error(uploadJson.message);
-        error.name = "FileTooLargeError";
-        throw error;
-      }
-
-      // if s3 is used, we'll use the text response:
       const errorText = await uploadResponse.text();
+
       if (presignedFields && errorText.includes("EntityTooLarge")) {
         const error = new Error("File size exceeds the size limit for your plan");
         error.name = "FileTooLargeError";

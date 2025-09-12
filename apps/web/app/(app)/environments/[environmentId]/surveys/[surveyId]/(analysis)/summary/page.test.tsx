@@ -22,6 +22,7 @@ import { TUser } from "@formbricks/types/user";
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
+  IS_STORAGE_CONFIGURED: true,
   POSTHOG_API_KEY: "mock-posthog-api-key",
   POSTHOG_HOST: "mock-posthog-host",
   IS_POSTHOG_CONFIGURED: true,
@@ -156,11 +157,9 @@ const mockSurvey = {
   triggers: [],
   welcomeCard: { enabled: false } as unknown as TSurvey["welcomeCard"],
   autoComplete: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   languages: [],
-  runOnDate: null,
   singleUse: null,
   surveyClosedMessage: null,
   segment: null,

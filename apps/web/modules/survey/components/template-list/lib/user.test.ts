@@ -6,7 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser } from "@formbricks/types/user";
 import { updateUser } from "./user";
 
-vi.mock("@/lib/fileValidation", () => ({
+vi.mock("@/modules/storage/utils", () => ({
   isValidImageFile: vi.fn(),
 }));
 
@@ -25,10 +25,8 @@ describe("updateUser", () => {
     email: "test@example.com",
     createdAt: new Date(),
     updatedAt: new Date(),
-    role: "project_manager",
     twoFactorEnabled: false,
     identityProvider: "email",
-    objective: null,
     locale: "en-US",
     lastLoginAt: new Date(),
     isActive: true,
@@ -54,10 +52,8 @@ describe("updateUser", () => {
         emailVerified: true,
         createdAt: true,
         updatedAt: true,
-        role: true,
         twoFactorEnabled: true,
         identityProvider: true,
-        objective: true,
         notificationSettings: true,
         locale: true,
         lastLoginAt: true,
