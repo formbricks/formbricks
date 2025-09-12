@@ -143,7 +143,6 @@ const baseSurvey = {
   productOverwrites: null,
   singleUse: null,
   surveyClosedMessage: null,
-  verifyEmail: null,
   projectOverwrites: null,
   hiddenFields: { enabled: false },
 } as unknown as TSurvey;
@@ -184,6 +183,7 @@ const defaultProps = {
   locale: "en-US" as const,
   responseCount: 0,
   onAlertTrigger: mockOnAlertTrigger,
+  isStorageConfigured: true,
 };
 
 describe("QuestionCard Component", () => {

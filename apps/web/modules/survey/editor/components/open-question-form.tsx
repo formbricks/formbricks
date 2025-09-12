@@ -28,6 +28,7 @@ interface OpenQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const OpenQuestionForm = ({
@@ -39,6 +40,7 @@ export const OpenQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
 }: OpenQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const questionTypes = [
@@ -92,6 +94,7 @@ export const OpenQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         label={t("environments.surveys.edit.question") + "*"}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
 
       <div ref={parent}>
@@ -109,6 +112,7 @@ export const OpenQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 label={t("common.description")}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>
@@ -145,6 +149,7 @@ export const OpenQuestionForm = ({
           setSelectedLanguageCode={setSelectedLanguageCode}
           label={t("common.placeholder")}
           locale={locale}
+          isStorageConfigured={isStorageConfigured}
         />
       </div>
 

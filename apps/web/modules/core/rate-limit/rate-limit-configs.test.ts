@@ -134,6 +134,8 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.client, identifier: "client-api-key" },
         { config: rateLimitConfigs.api.syncUserIdentification, identifier: "sync-user-id" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
+        { config: rateLimitConfigs.storage.upload, identifier: "storage-upload" },
+        { config: rateLimitConfigs.storage.delete, identifier: "storage-delete" },
       ];
 
       for (const { config, identifier } of testCases) {
@@ -176,6 +178,24 @@ describe("rateLimitConfigs", () => {
       if (exceededResult.ok) {
         expect(exceededResult.data.allowed).toBe(false);
       }
+    });
+
+    test("should properly configure storage upload rate limit", async () => {
+      const config = rateLimitConfigs.storage.upload;
+
+      // Verify configuration values
+      expect(config.interval).toBe(60); // 1 minute
+      expect(config.allowedPerInterval).toBe(5); // 5 requests per minute
+      expect(config.namespace).toBe("storage:upload");
+    });
+
+    test("should properly configure storage delete rate limit", async () => {
+      const config = rateLimitConfigs.storage.delete;
+
+      // Verify configuration values
+      expect(config.interval).toBe(60); // 1 minute
+      expect(config.allowedPerInterval).toBe(5); // 5 requests per minute
+      expect(config.namespace).toBe("storage:delete");
     });
   });
 });

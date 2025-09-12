@@ -117,6 +117,7 @@ describe("SurveyBgSelectorTab", () => {
     bg: "#FF0000",
     environmentId: mockEnvironmentId,
     isUnsplashConfigured: true,
+    isStorageConfigured: true,
   };
 
   afterEach(() => {

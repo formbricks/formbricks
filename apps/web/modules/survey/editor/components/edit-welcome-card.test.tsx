@@ -79,6 +79,7 @@ describe("EditWelcomeCard", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -99,6 +100,7 @@ describe("EditWelcomeCard", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -126,6 +128,7 @@ describe("EditWelcomeCard", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -149,6 +152,7 @@ describe("EditWelcomeCard", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -174,6 +178,7 @@ describe("EditWelcomeCard", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -200,6 +205,7 @@ describe("EditWelcomeCard", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -228,6 +234,7 @@ describe("EditWelcomeCard", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -247,6 +254,7 @@ describe("EditWelcomeCard", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 

@@ -19,7 +19,7 @@ vi.mock("./QuestionSummaryHeader", () => ({
 }));
 
 // Mock utility functions
-vi.mock("@/lib/storage/utils", () => ({
+vi.mock("@/modules/storage/utils", () => ({
   getOriginalFileNameFromUrl: (url: string) => `original-${url.split("/").pop()}`,
 }));
 

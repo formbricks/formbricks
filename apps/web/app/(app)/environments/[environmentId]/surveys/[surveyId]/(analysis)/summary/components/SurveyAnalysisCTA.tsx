@@ -33,6 +33,7 @@ interface SurveyAnalysisCTAProps {
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
+  isStorageConfigured: boolean;
 }
 
 interface ModalState {
@@ -51,6 +52,7 @@ export const SurveyAnalysisCTA = ({
   segments,
   isContactsEnabled,
   isFormbricksCloud,
+  isStorageConfigured,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const router = useRouter();
@@ -67,7 +69,7 @@ export const SurveyAnalysisCTA = ({
   const { organizationId, project } = useEnvironment();
   const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
-  const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
+  const appSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
   useEffect(() => {
     setModalState((prev) => ({
@@ -184,7 +186,7 @@ export const SurveyAnalysisCTA = ({
 
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
-      {!isReadOnly && (widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
+      {!isReadOnly && (appSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 
@@ -213,6 +215,7 @@ export const SurveyAnalysisCTA = ({
           isContactsEnabled={isContactsEnabled}
           isFormbricksCloud={isFormbricksCloud}
           isReadOnly={isReadOnly}
+          isStorageConfigured={isStorageConfigured}
         />
       )}
       <SuccessMessage environment={environment} survey={survey} />

@@ -118,7 +118,6 @@ const mockSurvey = {
   status: "inProgress",
   questions: [mockQuestion],
   languages: [{ code: "en", default: true, enabled: true }],
-  thankYouCard: { enabled: true },
   welcomeCard: { enabled: false },
   autoClose: null,
   triggers: [],
@@ -135,7 +134,6 @@ const mockSurvey = {
   variables: [],
   productOverwrites: null,
   singleUse: null,
-  verifyEmail: null,
   delay: 0,
   displayPercentage: null,
   inlineTriggers: null,
@@ -172,6 +170,7 @@ describe("OpenQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={"en" as TUserLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -197,6 +196,7 @@ describe("OpenQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={"en" as TUserLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -221,6 +221,7 @@ describe("OpenQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={"en" as TUserLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 
@@ -249,6 +250,7 @@ describe("OpenQuestionForm", () => {
       setSelectedLanguageCode: mockSetSelectedLanguageCode,
       locale: "en" as TUserLocale,
       lastQuestion: false,
+      isStorageConfigured: true,
     };
     const { rerender } = render(<OpenQuestionForm {...initialProps} />);
 
@@ -341,6 +343,7 @@ describe("OpenQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={"en" as TUserLocale}
         lastQuestion={false}
+        isStorageConfigured={true}
       />
     );
 

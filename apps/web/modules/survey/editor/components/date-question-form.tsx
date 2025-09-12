@@ -21,6 +21,7 @@ interface IDateQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 const dateOptions = [
@@ -47,6 +48,7 @@ export const DateQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
 }: IDateQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
@@ -64,6 +66,7 @@ export const DateQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -80,6 +83,7 @@ export const DateQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
           </div>

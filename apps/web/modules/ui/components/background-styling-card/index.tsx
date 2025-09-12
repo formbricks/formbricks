@@ -22,6 +22,7 @@ interface BackgroundStylingCardProps {
   environmentId: string;
   isUnsplashConfigured: boolean;
   form: UseFormReturn<TProjectStyling | TSurveyStyling>;
+  isStorageConfigured: boolean;
 }
 
 export const BackgroundStylingCard = ({
@@ -33,6 +34,7 @@ export const BackgroundStylingCard = ({
   environmentId,
   isUnsplashConfigured,
   form,
+  isStorageConfigured = true,
 }: BackgroundStylingCardProps) => {
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
@@ -108,6 +110,7 @@ export const BackgroundStylingCard = ({
                     bgType={field.value?.bgType ?? "color"}
                     environmentId={environmentId}
                     isUnsplashConfigured={isUnsplashConfigured}
+                    isStorageConfigured={isStorageConfigured}
                   />
                 </FormControl>
               </FormItem>

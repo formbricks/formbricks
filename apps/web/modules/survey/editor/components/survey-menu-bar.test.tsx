@@ -188,6 +188,7 @@ const defaultProps = {
   isCxMode: false,
   locale: "en",
   setIsCautionDialogOpen: mockSetIsCautionDialogOpen,
+  isStorageConfigured: true,
 };
 
 describe("SurveyMenuBar", () => {
@@ -214,6 +215,52 @@ describe("SurveyMenuBar", () => {
     expect(screen.getByText("environments.surveys.edit.publish")).toBeInTheDocument();
   });
 
+  describe("isStorageConfigured functionality", () => {
+    test("does not show storage warning when isStorageConfigured is true", () => {
+      render(<SurveyMenuBar {...defaultProps} isStorageConfigured={true} />);
+
+      // Storage warning should not be present
+      expect(screen.queryByText("common.storage_not_configured")).not.toBeInTheDocument();
+      expect(screen.queryByText("common.learn_more")).not.toBeInTheDocument();
+    });
+
+    test("shows storage warning when isStorageConfigured is false", () => {
+      render(<SurveyMenuBar {...defaultProps} isStorageConfigured={false} />);
+
+      // Storage warning should be present
+      expect(screen.getByText("common.storage_not_configured")).toBeInTheDocument();
+      expect(screen.getByText("common.learn_more")).toBeInTheDocument();
+    });
+
+    test("storage warning has correct link to documentation", () => {
+      render(<SurveyMenuBar {...defaultProps} isStorageConfigured={false} />);
+
+      const learnMoreButton = screen.getByText("common.learn_more");
+      const link = learnMoreButton.closest("a");
+
+      expect(link).toHaveAttribute(
+        "href",
+        "https://formbricks.com/docs/self-hosting/configuration/file-uploads"
+      );
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    });
+
+    test("storage warning behavior with explicit true value", () => {
+      render(<SurveyMenuBar {...defaultProps} isStorageConfigured={true} />);
+
+      // Storage warning should not be present when explicitly set to true
+      expect(screen.queryByText("common.storage_not_configured")).not.toBeInTheDocument();
+    });
+
+    test("storage warning appears in CX mode", () => {
+      render(<SurveyMenuBar {...defaultProps} isStorageConfigured={false} isCxMode={true} />);
+
+      // Storage warning should appear even in CX mode
+      expect(screen.getByText("common.storage_not_configured")).toBeInTheDocument();
+    });
+  });
+
   test("updates survey name on input change", async () => {
     render(<SurveyMenuBar {...defaultProps} />);
     const input = screen.getByTestId("survey-name-input");
@@ -229,6 +276,12 @@ describe("SurveyMenuBar", () => {
     expect(mockRouter.back).not.toHaveBeenCalled();
     expect(screen.getByTestId("alert-dialog")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.edit.confirm_survey_changes")).toBeInTheDocument();
+  });
+
+  test("shows storage not configured alert when isStorageConfigured is false", () => {
+    render(<SurveyMenuBar {...defaultProps} isStorageConfigured={false} />);
+    expect(screen.getByText("common.storage_not_configured")).toBeInTheDocument();
+    expect(screen.getByText("common.learn_more")).toBeInTheDocument();
   });
 
   test("shows caution alert when responseCount > 0", () => {

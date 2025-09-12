@@ -1,4 +1,6 @@
 import { createI18nString } from "@/lib/i18n/utils";
+// Import FileInput to get the mocked version
+import { FileInput } from "@/modules/ui/components/file-input";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -187,7 +189,7 @@ vi.mock("@/modules/survey/components/question-form-input/components/recall-wrapp
 
 // Mock file input component
 vi.mock("@/modules/ui/components/file-input", () => ({
-  FileInput: () => <div data-testid="file-input">environments.surveys.edit.add_photo_or_video</div>,
+  FileInput: vi.fn(() => <div data-testid="file-input">environments.surveys.edit.add_photo_or_video</div>),
 }));
 
 // Mock license-check module
@@ -335,6 +337,7 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="Headline"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -357,6 +360,7 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="Headline"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -390,6 +394,7 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="Choice"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -421,6 +426,7 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="Welcome Headline"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -448,6 +454,7 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="End Screen Headline"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -477,6 +484,7 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="Lower Label"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -502,11 +510,12 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="Headline"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
-    // The button should have aria-label="Toggle image uploader"
-    const toggleButton = screen.getByTestId("Toggle image uploader");
+    // The button should have data-testid="toggle-image-uploader-button"
+    const toggleButton = screen.getByTestId("toggle-image-uploader-button");
     await user.click(toggleButton);
 
     expect(screen.getByTestId("file-input")).toBeInTheDocument();
@@ -527,6 +536,7 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="Subheader"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -551,6 +561,7 @@ describe("QuestionFormInput", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         label="Headline"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -571,6 +582,7 @@ describe("QuestionFormInput", () => {
         label="Headline"
         maxLength={10}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -592,6 +604,7 @@ describe("QuestionFormInput", () => {
         label="Headline"
         placeholder="Custom placeholder"
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -616,6 +629,7 @@ describe("QuestionFormInput", () => {
         label="Headline"
         onBlur={onBlurMock}
         locale="en-US"
+        isStorageConfigured={true}
       />
     );
 
@@ -624,5 +638,180 @@ describe("QuestionFormInput", () => {
     fireEvent.blur(input);
 
     expect(onBlurMock).toHaveBeenCalled();
+  });
+
+  describe("isStorageConfigured functionality", () => {
+    test("passes isStorageConfigured=true to FileInput when image uploader is shown for headline", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <QuestionFormInput
+          id="headline"
+          value={createI18nString("Test Headline", ["en"])}
+          localSurvey={mockSurvey}
+          questionIdx={0}
+          updateQuestion={mockUpdateQuestion}
+          isInvalid={false}
+          selectedLanguageCode="en"
+          setSelectedLanguageCode={mockSetSelectedLanguageCode}
+          label="Headline"
+          locale="en-US"
+          isStorageConfigured={true}
+        />
+      );
+
+      // Click the image uploader toggle button
+      const toggleButton = screen.getByTestId("toggle-image-uploader-button");
+      await user.click(toggleButton);
+
+      // Verify FileInput receives isStorageConfigured=true
+      expect(vi.mocked(FileInput)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isStorageConfigured: true,
+        }),
+        undefined
+      );
+    });
+
+    test("passes isStorageConfigured=false to FileInput when image uploader is shown for headline", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <QuestionFormInput
+          id="headline"
+          value={createI18nString("Test Headline", ["en"])}
+          localSurvey={mockSurvey}
+          questionIdx={0}
+          updateQuestion={mockUpdateQuestion}
+          isInvalid={false}
+          selectedLanguageCode="en"
+          setSelectedLanguageCode={mockSetSelectedLanguageCode}
+          label="Headline"
+          locale="en-US"
+          isStorageConfigured={false}
+        />
+      );
+
+      // Click the image uploader toggle button
+      const toggleButton = screen.getByTestId("toggle-image-uploader-button");
+      await user.click(toggleButton);
+
+      // Verify FileInput receives isStorageConfigured=false
+      expect(vi.mocked(FileInput)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isStorageConfigured: false,
+        }),
+        undefined
+      );
+    });
+
+    test("does not render FileInput when id is not headline", async () => {
+      render(
+        <QuestionFormInput
+          id="subheader"
+          value={createI18nString("Test Subheader", ["en"])}
+          localSurvey={mockSurvey}
+          questionIdx={0}
+          updateQuestion={mockUpdateQuestion}
+          isInvalid={false}
+          selectedLanguageCode="en"
+          setSelectedLanguageCode={mockSetSelectedLanguageCode}
+          label="Subheader"
+          locale="en-US"
+          isStorageConfigured={false}
+        />
+      );
+
+      // Image uploader toggle button should not be present for non-headline fields
+      expect(screen.queryByTestId("toggle-image-uploader-button")).not.toBeInTheDocument();
+
+      // FileInput should not be called
+      expect(vi.mocked(FileInput)).not.toHaveBeenCalled();
+    });
+
+    test("FileInput is only rendered when image uploader is toggled on for headline", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <QuestionFormInput
+          id="headline"
+          value={createI18nString("Test Headline", ["en"])}
+          localSurvey={mockSurvey}
+          questionIdx={0}
+          updateQuestion={mockUpdateQuestion}
+          isInvalid={false}
+          selectedLanguageCode="en"
+          setSelectedLanguageCode={mockSetSelectedLanguageCode}
+          label="Headline"
+          locale="en-US"
+          isStorageConfigured={true}
+        />
+      );
+
+      // Initially, FileInput should not be rendered (uploader is closed by default)
+      expect(vi.mocked(FileInput)).not.toHaveBeenCalled();
+
+      // Click the image uploader toggle button
+      const toggleButton = screen.getByTestId("toggle-image-uploader-button");
+      await user.click(toggleButton);
+
+      // Now FileInput should be rendered with correct props
+      expect(vi.mocked(FileInput)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "question-image",
+          allowedFileExtensions: ["png", "jpeg", "jpg", "webp", "heic"],
+          environmentId: mockSurvey.environmentId,
+          isVideoAllowed: true,
+          isStorageConfigured: true,
+        }),
+        undefined
+      );
+    });
+
+    test("FileInput receives correct file upload callback", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <QuestionFormInput
+          id="headline"
+          value={createI18nString("Test Headline", ["en"])}
+          localSurvey={mockSurvey}
+          questionIdx={0}
+          updateQuestion={mockUpdateQuestion}
+          isInvalid={false}
+          selectedLanguageCode="en"
+          setSelectedLanguageCode={mockSetSelectedLanguageCode}
+          label="Headline"
+          locale="en-US"
+          isStorageConfigured={true}
+        />
+      );
+
+      // Click the image uploader toggle button
+      const toggleButton = screen.getByTestId("toggle-image-uploader-button");
+      await user.click(toggleButton);
+
+      // Get the onFileUpload callback that was passed to FileInput
+      const fileInputCall = vi.mocked(FileInput).mock.calls[0][0];
+      const onFileUpload = fileInputCall.onFileUpload;
+
+      // Simulate an image upload
+      onFileUpload(["https://example.com/image.jpg"], "image");
+
+      // Verify updateQuestion was called with the correct image data
+      expect(mockUpdateQuestion).toHaveBeenCalledWith(0, {
+        imageUrl: "https://example.com/image.jpg",
+        videoUrl: "",
+      });
+
+      // Simulate a video upload
+      onFileUpload(["https://example.com/video.mp4"], "video");
+
+      // Verify updateQuestion was called with the correct video data
+      expect(mockUpdateQuestion).toHaveBeenCalledWith(0, {
+        videoUrl: "https://example.com/video.mp4",
+        imageUrl: "",
+      });
+    });
   });
 });

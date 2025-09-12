@@ -1,8 +1,8 @@
 "use client";
 
-import { getOriginalFileNameFromUrl } from "@/lib/storage/utils";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
+import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";

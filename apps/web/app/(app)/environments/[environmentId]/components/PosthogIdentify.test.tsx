@@ -36,8 +36,6 @@ describe("PosthogIdentify", () => {
           {
             name: "Test User",
             email: "test@example.com",
-            role: "engineer",
-            objective: "increase_conversion",
           } as TUser
         }
         environmentId="env-456"
@@ -57,8 +55,6 @@ describe("PosthogIdentify", () => {
     expect(mockIdentify).toHaveBeenCalledWith("user-123", {
       name: "Test User",
       email: "test@example.com",
-      role: "engineer",
-      objective: "increase_conversion",
     });
 
     // environment + organization groups
@@ -142,8 +138,6 @@ describe("PosthogIdentify", () => {
     expect(mockIdentify).toHaveBeenCalledWith("user-123", {
       name: "Test User",
       email: "test@example.com",
-      role: undefined,
-      objective: undefined,
     });
     // No environmentId or organizationId => no group calls
     expect(mockGroup).not.toHaveBeenCalled();

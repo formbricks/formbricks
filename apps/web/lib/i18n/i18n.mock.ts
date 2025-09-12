@@ -508,11 +508,3 @@ export const mockTranslatedEndings = [
     buttonLabel: { default: "Create your own Survey", de: "" },
   },
 ];
-
-export const mockLegacyThankYouCard = {
-  buttonLink: "https://formbricks.com",
-  enabled: true,
-  headline: "Thank you!",
-  subheader: "We appreciate your feedback.",
-  buttonLabel: "Create your own Survey",
-};

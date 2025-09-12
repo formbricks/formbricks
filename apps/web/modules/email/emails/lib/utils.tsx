@@ -1,4 +1,4 @@
-import { getOriginalFileNameFromUrl } from "@/lib/storage/utils";
+import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 import { Column, Container, Img, Link, Row, Text } from "@react-email/components";
 import { TFnType } from "@tolgee/react";
 import { FileIcon } from "lucide-react";

@@ -1,6 +1,7 @@
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,
+  IS_STORAGE_CONFIGURED,
   MAIL_FROM,
   SURVEY_BG_COLORS,
   UNSPLASH_ACCESS_KEY,
@@ -123,6 +124,7 @@ export const SurveyEditorPage = async (props) => {
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
       userEmail={userEmail}
       teamMemberDetails={teamMemberDetails}
+      isStorageConfigured={IS_STORAGE_CONFIGURED}
       isQuotasAllowed={isQuotasAllowed}
       quotas={quotas}
     />

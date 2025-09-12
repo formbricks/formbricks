@@ -36,6 +36,7 @@ interface OrganizationActionsProps {
   environmentId: string;
   isMultiOrgEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const OrganizationActions = ({
@@ -50,6 +51,7 @@ export const OrganizationActions = ({
   environmentId,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
+  isStorageConfigured,
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const { t } = useTranslate();
@@ -158,6 +160,7 @@ export const OrganizationActions = ({
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}
         teams={teams}
+        isStorageConfigured={isStorageConfigured}
       />
 
       <Dialog open={isLeaveOrganizationModalOpen} onOpenChange={setLeaveOrganizationModalOpen}>

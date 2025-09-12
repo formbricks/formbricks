@@ -279,6 +279,7 @@ const defaultProps = {
   isContactsEnabled: true,
   isFormbricksCloud: false,
   isReadOnly: false,
+  isStorageConfigured: true,
 };
 
 describe("ShareSurveyModal", () => {

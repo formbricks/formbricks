@@ -56,10 +56,6 @@ describe("ResponseFeed", () => {
           headline: "",
           html: "",
         },
-        verifyEmail: {
-          name: "",
-          subheading: "",
-        },
         displayLimit: null,
         autoComplete: null,
         productOverwrites: null,
@@ -69,11 +65,6 @@ describe("ResponseFeed", () => {
         hiddenFields: {},
         variables: [],
         followUps: [],
-        thankYouCard: {
-          enabled: false,
-          headline: "",
-          subheader: "",
-        },
         delay: 0,
         displayPercentage: 100,
         surveyClosedMessage: "",

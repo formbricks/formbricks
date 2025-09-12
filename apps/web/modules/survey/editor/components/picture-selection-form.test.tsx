@@ -75,6 +75,7 @@ const defaultProps = {
   setSelectedLanguageCode: mockSetSelectedLanguageCode,
   isInvalid: false,
   locale: "en-US" as TUserLocale,
+  isStorageConfigured: true,
 };
 
 describe("PictureSelectionForm", () => {

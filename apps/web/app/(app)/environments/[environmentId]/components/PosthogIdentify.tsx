@@ -32,8 +32,6 @@ export const PosthogIdentify = ({
       posthog.identify(session.user.id, {
         name: user.name,
         email: user.email,
-        role: user.role,
-        objective: user.objective,
       });
       if (environmentId) {
         posthog.group("environment", environmentId, { name: environmentId });
@@ -56,8 +54,6 @@ export const PosthogIdentify = ({
     organizationBilling,
     user.name,
     user.email,
-    user.role,
-    user.objective,
     isPosthogEnabled,
   ]);
 

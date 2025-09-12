@@ -1,5 +1,5 @@
-import { deleteFile } from "@/lib/storage/service";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { deleteFile } from "@/modules/storage/service";
 import { Response, Survey } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import { Result, okVoid } from "@formbricks/types/error-handlers";

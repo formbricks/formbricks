@@ -13,7 +13,6 @@ export const selectDisplay = {
   updatedAt: true,
   surveyId: true,
   contactId: true,
-  status: true,
 } satisfies Prisma.DisplaySelect;
 
 export const getDisplayCountBySurveyId = reactCache(

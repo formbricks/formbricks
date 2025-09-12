@@ -39,6 +39,7 @@ interface ChoiceProps {
   ) => void;
   surveyLanguageCodes: string[];
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionOptionChoice = ({
@@ -57,6 +58,7 @@ export const QuestionOptionChoice = ({
   surveyLanguageCodes,
   updateQuestion,
   locale,
+  isStorageConfigured,
 }: ChoiceProps) => {
   const { t } = useTranslate();
   const isDragDisabled = choice.id === "other";
@@ -98,6 +100,7 @@ export const QuestionOptionChoice = ({
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
           locale={locale}
+          isStorageConfigured={isStorageConfigured}
         />
         {choice.id === "other" && (
           <QuestionFormInput
@@ -119,6 +122,7 @@ export const QuestionOptionChoice = ({
             }
             className="border border-dashed"
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         )}
       </div>

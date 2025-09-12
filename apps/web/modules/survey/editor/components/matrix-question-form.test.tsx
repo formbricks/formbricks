@@ -189,6 +189,7 @@ const defaultProps = {
   setSelectedLanguageCode: vi.fn(),
   isInvalid: false,
   locale: "en-US" as TUserLocale,
+  isStorageConfigured: true,
 };
 
 describe("MatrixQuestionForm", () => {
@@ -199,7 +200,7 @@ describe("MatrixQuestionForm", () => {
   });
 
   test("renders the matrix question form with rows and columns", () => {
-    render(<MatrixQuestionForm {...defaultProps} />);
+    render(<MatrixQuestionForm {...defaultProps} isStorageConfigured={true} />);
 
     expect(screen.getByTestId("question-input-headline")).toBeInTheDocument();
 
@@ -223,7 +224,9 @@ describe("MatrixQuestionForm", () => {
       },
     };
 
-    const { getByText } = render(<MatrixQuestionForm {...propsWithoutSubheader} />);
+    const { getByText } = render(
+      <MatrixQuestionForm {...propsWithoutSubheader} isStorageConfigured={true} />
+    );
 
     const addDescriptionButton = getByText("environments.surveys.edit.add_description");
     await user.click(addDescriptionButton);

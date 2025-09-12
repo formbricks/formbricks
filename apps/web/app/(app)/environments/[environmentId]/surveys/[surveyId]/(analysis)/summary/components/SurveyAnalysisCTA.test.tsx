@@ -282,7 +282,7 @@ const mockSurvey: TSurvey = {
   recaptcha: null,
   isSingleResponsePerEmailEnabled: false,
   isBackButtonHidden: false,
-};
+} as unknown as TSurvey;
 
 const mockUser: TUser = {
   id: "test-user-id",
@@ -320,6 +320,7 @@ const defaultProps = {
   segments: mockSegments,
   isContactsEnabled: true,
   isFormbricksCloud: false,
+  isStorageConfigured: true,
 };
 
 describe("SurveyAnalysisCTA", () => {

@@ -1,6 +1,7 @@
 import "server-only";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
+import { deleteFile } from "@/modules/storage/service";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { Prisma } from "@prisma/client";
@@ -21,9 +22,8 @@ import {
 } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { deleteDisplay } from "../display/service";
-import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
@@ -336,11 +336,11 @@ export const getResponses = reactCache(
   }
 );
 
-export const getResponseDownloadUrl = async (
+export const getResponseDownloadFile = async (
   surveyId: string,
   format: "csv" | "xlsx",
   filterCriteria?: TResponseFilterCriteria
-): Promise<string> => {
+): Promise<{ fileContents: string; fileName: string }> => {
   validateInputs([surveyId, ZId], [format, ZString], [filterCriteria, ZResponseFilterCriteria.optional()]);
   try {
     const survey = await getSurvey(surveyId);
@@ -349,9 +349,6 @@ export const getResponseDownloadUrl = async (
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const environmentId = survey.environmentId;
-
-    const accessType = "private";
     const batchSize = 3000;
 
     // Use cursor-based pagination instead of count + offset to avoid expensive queries
@@ -419,18 +416,19 @@ export const getResponseDownloadUrl = async (
     );
 
     const fileName = getResponsesFileName(survey?.name || "", format);
-    let fileBuffer: Buffer;
+    let fileContents: string;
 
     if (format === "xlsx") {
-      fileBuffer = convertToXlsxBuffer(headers, jsonData);
+      const buffer = convertToXlsxBuffer(headers, jsonData);
+      fileContents = buffer.toString("base64");
     } else {
-      const csvFile = await convertToCsv(headers, jsonData);
-      fileBuffer = Buffer.from(csvFile);
+      fileContents = await convertToCsv(headers, jsonData);
     }
 
-    await putFile(fileName, fileBuffer, accessType, environmentId);
-
-    return `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`;
+    return {
+      fileContents,
+      fileName,
+    };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

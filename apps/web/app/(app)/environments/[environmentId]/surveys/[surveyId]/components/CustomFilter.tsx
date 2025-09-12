@@ -5,8 +5,8 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Calendar } from "@/modules/ui/components/calendar";
 import {
@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { cn } from "@/modules/ui/lib/utils";
+import * as Sentry from "@sentry/nextjs";
 import { TFnType, useTranslate } from "@tolgee/react";
 import {
   differenceInDays,
@@ -238,29 +239,32 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     setSelectingDate(DateSelected.FROM);
   };
 
-  const handleDownloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
-    const responseFilters = filter === FilterDownload.ALL ? {} : filters;
-    setIsDownloading(true);
+  const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
+    try {
+      const responseFilters = filter === FilterDownload.ALL ? {} : filters;
+      setIsDownloading(true);
 
-    const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
-      surveyId: survey.id,
-      format: filetype,
-      filterCriteria: responseFilters,
-    });
+      const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
+        surveyId: survey.id,
+        format: fileType,
+        filterCriteria: responseFilters,
+      });
 
-    if (responsesDownloadUrlResponse?.data) {
-      const link = document.createElement("a");
-      link.href = responsesDownloadUrlResponse.data;
-      link.download = "";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      const errorMessage = getFormattedErrorMessage(responsesDownloadUrlResponse);
-      toast.error(errorMessage);
+      if (responsesDownloadUrlResponse?.data) {
+        downloadResponsesFile(
+          responsesDownloadUrlResponse.data.fileName,
+          responsesDownloadUrlResponse.data.fileContents,
+          fileType
+        );
+      } else {
+        toast.error(t("environments.surveys.responses.error_downloading_responses"));
+      }
+    } catch (err) {
+      Sentry.captureException(err);
+      toast.error(t("environments.surveys.responses.error_downloading_responses"));
+    } finally {
+      setIsDownloading(false);
     }
-
-    setIsDownloading(false);
   };
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());

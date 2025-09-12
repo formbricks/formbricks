@@ -1,9 +1,10 @@
 import { createEnvironment } from "@/lib/environment/service";
-import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "@/lib/storage/service";
+import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { StorageErrorCode } from "@formbricks/storage";
 import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { ZProject } from "@formbricks/types/project";
@@ -64,20 +65,12 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/lib/storage/service", () => ({
-  deleteLocalFilesByEnvironmentId: vi.fn(),
-  deleteS3FilesByEnvironmentId: vi.fn(),
+vi.mock("@/modules/storage/service", () => ({
+  deleteFilesByEnvironmentId: vi.fn(),
 }));
 
 vi.mock("@/lib/environment/service", () => ({
   createEnvironment: vi.fn(),
-}));
-
-let mockIsS3Configured = true;
-vi.mock("@/lib/constants", () => ({
-  isS3Configured: () => {
-    return mockIsS3Configured;
-  },
 }));
 
 describe("project lib", () => {
@@ -156,28 +149,21 @@ describe("project lib", () => {
   });
 
   describe("deleteProject", () => {
-    test("deletes project, deletes files, and revalidates cache (S3)", async () => {
+    test("deletes project, deletes files, and revalidates cache", async () => {
       vi.mocked(prisma.project.delete).mockResolvedValueOnce(baseProject as any);
 
-      vi.mocked(deleteS3FilesByEnvironmentId).mockResolvedValue(undefined);
+      vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({ ok: true, data: undefined });
       const result = await deleteProject("p1");
       expect(result).toEqual(baseProject);
-      expect(deleteS3FilesByEnvironmentId).toHaveBeenCalledWith("prodenv");
-    });
-
-    test("deletes project, deletes files, and revalidates cache (local)", async () => {
-      vi.mocked(prisma.project.delete).mockResolvedValueOnce(baseProject as any);
-      mockIsS3Configured = false;
-      vi.mocked(deleteLocalFilesByEnvironmentId).mockResolvedValue(undefined);
-      const result = await deleteProject("p1");
-      expect(result).toEqual(baseProject);
-      expect(deleteLocalFilesByEnvironmentId).toHaveBeenCalledWith("prodenv");
+      expect(deleteFilesByEnvironmentId).toHaveBeenCalledWith("prodenv");
     });
 
     test("logs error if file deletion fails", async () => {
       vi.mocked(prisma.project.delete).mockResolvedValueOnce(baseProject as any);
-      mockIsS3Configured = true;
-      vi.mocked(deleteS3FilesByEnvironmentId).mockRejectedValueOnce(new Error("fail"));
+      vi.mocked(deleteFilesByEnvironmentId).mockResolvedValue({
+        ok: false,
+        error: { code: StorageErrorCode.Unknown },
+      } as any);
       vi.mocked(logger.error).mockImplementation(() => {});
       await deleteProject("p1");
       expect(logger.error).toHaveBeenCalled();
