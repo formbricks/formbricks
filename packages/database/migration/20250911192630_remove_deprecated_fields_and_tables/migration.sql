@@ -73,9 +73,6 @@ DROP COLUMN "verifyEmail",
 ALTER COLUMN "type" SET DEFAULT 'app';
 
 -- AlterTable
-ALTER TABLE "public"."SurveyQuota" ALTER COLUMN "logic" SET DEFAULT '{}';
-
--- AlterTable
 ALTER TABLE "public"."User" DROP COLUMN "objective",
 DROP COLUMN "role";
 
