@@ -194,18 +194,18 @@ export function FileInput({
   const validateFileLimits = useCallback(
     (fileArray: File[]) => {
       if (!allowMultipleFiles && fileArray.length > 1) {
-        alert("Only one file can be uploaded at a time.");
+        alert(t("errors.file_input.only_one_file_can_be_uploaded_at_a_time"));
         return false;
       }
 
       if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
-        alert(`You can only upload a maximum of ${FILE_LIMIT.toString()} files.`);
+        alert(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
         return false;
       }
 
       return true;
     },
-    [allowMultipleFiles, selectedFiles.length]
+    [allowMultipleFiles, selectedFiles.length, t]
   );
 
   // Helper function to validate file extensions
