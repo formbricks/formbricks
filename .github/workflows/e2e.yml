@@ -49,6 +49,18 @@ jobs:
         image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
         ports:
           - 6379:6379
+      minio:
+        image: bitnami/minio:2025.7.23-debian-12-r5
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd="curl -fsS http://localhost:9000/minio/health/live || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
