@@ -11,7 +11,8 @@ The image is pre-built and requires minimal setup—just download it and start t
 Make sure Docker and Docker Compose are installed on your system. These are usually included in tools like Docker Desktop and Rancher Desktop.
 
 <Note>
-  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the Docker documentation.
+  `docker compose` without the hyphen is now the primary method of using docker-compose, according to the
+  Docker documentation.
 </Note>
 
 ## Start
@@ -29,7 +30,7 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    Get the docker-compose file from the Formbricks repository by running:
 
    ```bash
-   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
    ```
 
 1. **Generate NextAuth Secret**
@@ -64,21 +65,21 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    sed -i '' "s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
    ```
 
-1. **Generate Cron Secret**	
+1. **Generate Cron Secret**
 
-   You require a Cron secret to secure API access for running cron jobs. Run one of the commands below based on your operating system:	
+   You require a Cron secret to secure API access for running cron jobs. Run one of the commands below based on your operating system:
 
-   For Linux:	
+   For Linux:
 
-   ```bash	
-   sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml	
-   ```	
+   ```bash
+   sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
 
-   For macOS:	
+   For macOS:
 
-   ```bash	
-   sed -i '' "s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml	
-   ```	
+   ```bash
+   sed -i '' "s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
 
 1. **Start the Docker Setup**
 
