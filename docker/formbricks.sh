@@ -276,7 +276,7 @@ EOT
       echo "🔧 Enter S3 configuration (leave Endpoint empty for AWS S3):"
       read -p "   S3 Access Key: " ext_s3_access_key
       read -s -p "   S3 Secret Key: " ext_s3_secret_key; echo "***"
-      read -p "   S3 Region (e.g., eu-central-1): " ext_s3_region
+      read -p "   S3 Region (e.g., us-east-1): " ext_s3_region
       read -p "   S3 Bucket Name: " ext_s3_bucket
       read -p "   S3 Endpoint URL (leave empty if you are using AWS S3, otherwise please enter the endpoint URL of the third party S3 compatible storage service): " ext_s3_endpoint
       
@@ -351,7 +351,7 @@ EOT
     echo "🚗 Configuring bundled MinIO..."
     sed -i "s|# S3_ACCESS_KEY:|S3_ACCESS_KEY: \"$minio_service_user\"|" docker-compose.yml
     sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$minio_service_password\"|" docker-compose.yml
-    sed -i "s|# S3_REGION:|S3_REGION: \"eu-central-1\"|" docker-compose.yml
+    sed -i "s|# S3_REGION:|S3_REGION: \"us-east-1\"|" docker-compose.yml
     sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$minio_bucket_name\"|" docker-compose.yml
     if [[ $https_setup == "y" ]]; then
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"https://$files_domain\"|" docker-compose.yml
