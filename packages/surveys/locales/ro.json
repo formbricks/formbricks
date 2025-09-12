@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "și",
+    "apply": "aplică",
+    "auto_close_wrapper": "Închidere automată a învelișului",
+    "back": "Înapoi",
+    "click_or_drag_to_upload_files": "Fă clic sau trage pentru a încărca fișiere.",
+    "close_survey": "Închide sondajul",
+    "company_logo": "Sigla companiei",
+    "delete_file": "Șterge fișierul",
+    "file_upload": "Încărcare fișier",
+    "finish": "Finalizează",
+    "language_switch": "Schimbare limbă",
+    "less_than_x_minutes": "{count, plural, one {mai puțin de 1 minut} other {mai puțin de {count} minute}}",
+    "move_down": "Mută {item} în jos",
+    "move_up": "Mută {item} în sus",
+    "next": "Următorul",
+    "open_in_new_tab": "Deschide într-o filă nouă",
+    "optional": "Opțional",
+    "options": "Opțiuni",
+    "people_responded": "{count, plural, one {1 persoană a răspuns} other {{count} persoane au răspuns}}",
+    "please_retry_now_or_try_again_later": "Te rugăm să încerci din nou acum sau mai târziu.",
+    "powered_by": "Susținut de",
+    "privacy_policy": "Politica de confidențialitate",
+    "protected_by_reCAPTCHA_and_the_Google": "Protejat de reCAPTCHA și de Google",
+    "question": "Întrebare",
+    "question_video": "Video întrebare",
+    "ranking_items": "Clasificare articole",
+    "respondents_will_not_see_this_card": "Respondenții nu vor vedea acest card",
+    "retry": "Reîncearcă",
+    "select_a_date": "Selectează o dată",
+    "select_for_ranking": "Selectează {item} pentru clasificare",
+    "sending_responses": "Trimiterea răspunsurilor...",
+    "takes": "Durează",
+    "terms_of_service": "Termeni și condiții",
+    "the_servers_cannot_be_reached_at_the_moment": "Serverele nu pot fi accesate momentan.",
+    "they_will_be_redirected_immediately": "Vor fi redirecționați imediat",
+    "upload_files_by_clicking_or_dragging_them_here": "Încarcă fișiere făcând clic sau trăgându-le aici",
+    "uploading": "Se încarcă",
+    "x_minutes": "{count, plural, one {1 minut} other {{count} minute}}",
+    "x_plus_minutes": "{count}+ minute",
+    "you_have_selected_x_date": "Ai selectat data {date}",
+    "you_have_successfully_uploaded_the_file": "Ai încărcat cu succes fișierul {fileName}",
+    "your_feedback_is_stuck": "Feedback-ul tău este blocat :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "Următoarele fișiere sunt deja încărcate: {duplicateNames}. Fișierele duplicate nu sunt permise.",
+      "file_size_exceeded": "Următoarele fișiere depășesc dimensiunea maximă de {maxSizeInMB} MB și au fost eliminate: {fileNames}",
+      "file_size_exceeded_alert": "Fișierul trebuie să fie mai mic de {maxSizeInMB} MB",
+      "native_upload_failed": "Eroare la încărcarea fișierului nativ.",
+      "no_valid_file_types_selected": "Nu au fost selectate tipuri de fișiere valide. Te rugăm să selectezi un tip de fișier valid.",
+      "only_one_file_can_be_uploaded_at_a_time": "Poți încărca doar un singur fișier odată.",
+      "upload_failed": "Încărcarea a eșuat! Te rugăm să încerci din nou.",
+      "you_can_only_upload_a_maximum_of_files": "Poți încărca un număr maxim de {FILE_LIMIT} fișiere."
+    },
+    "invalid_device_error": {
+      "message": "Dezactivați protecția împotriva spamului în setările sondajului pentru a continua să utilizați acest dispozitiv.",
+      "title": "Acest dispozitiv nu acceptă protecția împotriva spamului."
+    },
+    "please_book_an_appointment": "Vă rugăm să faceți o programare",
+    "please_enter_a_valid_phone_number": "Vă rugăm să introduceți un număr de telefon valid",
+    "please_fill_out_this_field": "Vă rugăm să completați acest câmp",
+    "please_rank_all_items_before_submitting": "Vă rugăm să clasificați toate elementele înainte de a trimite",
+    "please_select_a_date": "Vă rugăm să selectați o dată",
+    "please_upload_a_file": "Vă rugăm să încărcați un fișier",
+    "recaptcha_error": {
+      "message": "Răspunsul dumneavoastră nu a putut fi trimis deoarece a fost marcat ca activitate automată. Dacă respirați, încercați din nou.",
+      "title": "Nu am putut verifica dacă sunteți uman."
+    }
+  }
+}

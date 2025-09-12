@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "और",
+    "apply": "लागू करें",
+    "auto_close_wrapper": "स्वचालित बंद रैपर",
+    "back": "वापस",
+    "click_or_drag_to_upload_files": "फ़ाइलें अपलोड करने के लिए क्लिक करें या खींचें।",
+    "close_survey": "सर्वेक्षण बंद करें",
+    "company_logo": "कंपनी लोगो",
+    "delete_file": "फ़ाइल हटाएं",
+    "file_upload": "फ़ाइल अपलोड",
+    "finish": "समाप्त करें",
+    "language_switch": "भाषा बदलें",
+    "less_than_x_minutes": "{count, plural, one {1 मिनट से कम} other {{count} मिनट से कम}}",
+    "move_down": "{item} को नीचे ले जाएं",
+    "move_up": "{item} को ऊपर ले जाएं",
+    "next": "अगला",
+    "open_in_new_tab": "नए टैब में खोलें",
+    "optional": "वैकल्पिक",
+    "options": "विकल्प",
+    "people_responded": "{count, plural, one {1 व्यक्ति ने जवाब दिया} other {{count} लोगों ने जवाब दिया}}",
+    "please_retry_now_or_try_again_later": "कृपया अभी पुनः प्रयास करें या बाद में फिर से प्रयास करें।",
+    "powered_by": "द्वारा संचालित",
+    "privacy_policy": "गोपनीयता नीति",
+    "protected_by_reCAPTCHA_and_the_Google": "reCAPTCHA और Google द्वारा संरक्षित",
+    "question": "प्रश्न",
+    "question_video": "प्रश्न वीडियो",
+    "ranking_items": "रैंकिंग आइटम",
+    "respondents_will_not_see_this_card": "उत्तरदाता इस कार्ड को नहीं देखेंगे",
+    "retry": "पुनः प्रयास करें",
+    "select_a_date": "एक तिथि चुनें",
+    "select_for_ranking": "रैंकिंग के लिए {item} चुनें",
+    "sending_responses": "प्रतिक्रियाएँ भेज रहे हैं...",
+    "takes": "लेता है",
+    "terms_of_service": "सेवा की शर्तें",
+    "the_servers_cannot_be_reached_at_the_moment": "इस समय सर्वर तक पहुंचा नहीं जा सकता है।",
+    "they_will_be_redirected_immediately": "उन्हें तुरंत रीडायरेक्ट किया जाएगा",
+    "upload_files_by_clicking_or_dragging_them_here": "क्लिक करके या यहां खींचकर फ़ाइलें अपलोड करें",
+    "uploading": "अपलोड हो रहा है",
+    "x_minutes": "{count, plural, one {1 मिनट} other {{count} मिनट}}",
+    "x_plus_minutes": "{count}+ मिनट",
+    "you_have_selected_x_date": "आपने {date} चुना है",
+    "you_have_successfully_uploaded_the_file": "आपने {fileName} फ़ाइल सफलतापूर्वक अपलोड कर दी है",
+    "your_feedback_is_stuck": "आपकी प्रतिक्रिया अटक गई है :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "निम्नलिखित फ़ाइलें पहले से ही अपलोड की गई हैं: {duplicateNames}। डुप्लिकेट फ़ाइलों की अनुमति नहीं है।",
+      "file_size_exceeded": "निम्नलिखित फ़ाइल(ें) अधिकतम आकार {maxSizeInMB} MB से अधिक हैं और हटा दी गई हैं: {fileNames}",
+      "file_size_exceeded_alert": "फ़ाइल {maxSizeInMB} MB से कम होनी चाहिए",
+      "native_upload_failed": "नेटिव फ़ाइल अपलोड करने में त्रुटि।",
+      "no_valid_file_types_selected": "कोई मान्य फ़ाइल प्रकार नहीं चुना गया है। कृपया एक मान्य फ़ाइल प्रकार चुनें।",
+      "only_one_file_can_be_uploaded_at_a_time": "एक समय में केवल एक फ़ाइल अपलोड की जा सकती है।",
+      "upload_failed": "अपलोड विफल! कृपया पुनः प्रयास करें।",
+      "you_can_only_upload_a_maximum_of_files": "आप अधिकतम {FILE_LIMIT} फ़ाइलें ही अपलोड कर सकते हैं।"
+    },
+    "invalid_device_error": {
+      "message": "इस डिवाइस का उपयोग जारी रखने के लिए कृपया सर्वेक्षण सेटिंग्स में स्पैम सुरक्षा को अक्षम करें।",
+      "title": "यह डिवाइस स्पैम सुरक्षा का समर्थन नहीं करता है।"
+    },
+    "please_book_an_appointment": "कृपया एक अपॉइंटमेंट बुक करें",
+    "please_enter_a_valid_phone_number": "कृपया एक वैध फोन नंबर दर्ज करें",
+    "please_fill_out_this_field": "कृपया इस फील्ड को भरें",
+    "please_rank_all_items_before_submitting": "जमा करने से पहले कृपया सभी आइटम्स को रैंक करें",
+    "please_select_a_date": "कृपया एक तारीख चुनें",
+    "please_upload_a_file": "कृपया एक फाइल अपलोड करें",
+    "recaptcha_error": {
+      "message": "आपका प्रतिसाद जमा नहीं किया जा सका क्योंकि इसे स्वचालित गतिविधि के रूप में चिह्नित किया गया था। यदि आप सांस लेते हैं, तो कृपया पुनः प्रयास करें।",
+      "title": "हम यह सत्यापित नहीं कर सके कि आप मानव हैं।"
+    }
+  }
+}
