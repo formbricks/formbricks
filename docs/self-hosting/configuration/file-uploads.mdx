@@ -1,0 +1,316 @@
+---
+title: "File Uploads Configuration"
+description: "Configure file storage for survey images, file uploads, and project assets in your self-hosted Formbricks instance"
+icon: "upload"
+---
+
+Formbricks requires S3-compatible storage for file uploads. You can use external cloud storage services or the bundled MinIO option for a self-hosted solution.
+
+## Why Configure File Uploads?
+
+Setting up file storage enables important features in Formbricks, including:
+
+- Adding images to surveys (questions, backgrounds, logos)
+- 'File Upload' and 'Picture Selection' question types
+- Project logos and branding
+- Custom organization logos in emails
+- Survey background images from uploads
+
+<Warning>
+  If file uploads are not configured, the above features will be disabled and users won't be able to upload
+  files or images.
+</Warning>
+
+## Storage Options
+
+Formbricks supports S3-compatible storage with two main configurations:
+
+### 1. External S3-Compatible Storage
+
+Use cloud storage services for production deployments:
+
+- **AWS S3** (Amazon Web Services)
+- **DigitalOcean Spaces**
+- **Backblaze B2**
+- **Wasabi**
+- **StorJ**
+- Any S3-compatible storage service
+
+### 2. Bundled MinIO Storage (Self-Hosted)
+
+<Warning>
+  **Important**: MinIO requires a dedicated subdomain to function properly. You must configure a subdomain
+  like `files.yourdomain.com` that points to your server. MinIO will not work without this subdomain setup.
+</Warning>
+
+MinIO provides a self-hosted S3-compatible storage solution that runs alongside Formbricks. This option:
+
+- Runs in a Docker container alongside Formbricks
+- Provides full S3 API compatibility
+- Requires minimal additional configuration
+
+## Configuration Methods
+
+### Option 1: One-Click Setup Script
+
+When using the Formbricks installation script, you'll be prompted to configure file uploads:
+
+```bash
+📁 Do you want to configure file uploads?
+   If you skip this, the following features will be disabled:
+   - Adding images to surveys (e.g., in questions or as background)
+   - 'File Upload' and 'Picture Selection' question types
+   - Project logos
+   - Custom organization logo in emails
+Configure file uploads now? [Y/n] y
+```
+
+#### External S3-Compatible Storage
+
+Choose this option for AWS S3, DigitalOcean Spaces, or other cloud providers:
+
+```bash
+🗄️  Do you want to use an external S3-compatible storage (AWS S3/DO Spaces/etc.)? [y/N] y
+🔧 Enter S3 configuration (leave Endpoint empty for AWS S3):
+   S3 Access Key: your_access_key
+   S3 Secret Key: your_secret_key
+   S3 Region (e.g., us-east-1): us-east-1
+   S3 Bucket Name: your-bucket-name
+   S3 Endpoint URL (leave empty if you are using AWS S3): https://your-endpoint.com
+```
+
+#### Bundled MinIO Storage
+
+Choose this option for a self-hosted S3-compatible storage that runs alongside Formbricks:
+
+<Note>
+  **Critical Requirement**: Before proceeding, ensure you have configured a subdomain (e.g.,
+  `files.yourdomain.com`) that points to your server's IP address. MinIO will not function without this
+  subdomain setup.
+</Note>
+
+```bash
+🗄️  Do you want to use an external S3-compatible storage (AWS S3/DO Spaces/etc.)? [y/N] n
+🔗 Enter the files subdomain for object storage (e.g., files.yourdomain.com): files.yourdomain.com
+```
+
+The script will automatically:
+
+- Generate secure MinIO credentials
+- Create the storage bucket
+- Configure SSL certificates for the files subdomain
+- Configure Traefik routing for the subdomain
+
+### Option 2: Manual Environment Variables
+
+Add the following environment variables to your `docker-compose.yml` or `.env` file:
+
+#### For S3-Compatible Storage
+
+```bash
+# S3 Storage Configuration
+S3_ACCESS_KEY=your_access_key
+S3_SECRET_KEY=your_secret_key
+S3_REGION=us-east-1
+S3_BUCKET_NAME=your-bucket-name
+
+# Optional: For third-party S3-compatible services (leave empty for AWS S3)
+S3_ENDPOINT_URL=https://your-endpoint.com
+
+# Enable path-style URLs for third-party services (1 for enabled, 0 for disabled)
+S3_FORCE_PATH_STYLE=1
+```
+
+## Provider-Specific Examples
+
+### AWS S3
+
+```bash
+S3_ACCESS_KEY=AKIA1234567890EXAMPLE
+S3_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+S3_REGION=us-east-1
+S3_BUCKET_NAME=my-formbricks-uploads
+# S3_ENDPOINT_URL is not needed for AWS S3
+# S3_FORCE_PATH_STYLE=0
+```
+
+### DigitalOcean Spaces
+
+```bash
+S3_ACCESS_KEY=your_spaces_key
+S3_SECRET_KEY=your_spaces_secret
+S3_REGION=nyc3
+S3_BUCKET_NAME=my-formbricks-space
+S3_ENDPOINT_URL=https://nyc3.digitaloceanspaces.com
+S3_FORCE_PATH_STYLE=1
+```
+
+### MinIO (Self-Hosted)
+
+```bash
+S3_ACCESS_KEY=minio_access_key
+S3_SECRET_KEY=minio_secret_key
+S3_REGION=us-east-1
+S3_BUCKET_NAME=formbricks-uploads
+S3_ENDPOINT_URL=https://files.yourdomain.com
+S3_FORCE_PATH_STYLE=1
+```
+
+### Backblaze B2
+
+```bash
+S3_ACCESS_KEY=your_b2_key_id
+S3_SECRET_KEY=your_b2_application_key
+S3_REGION=us-west-000
+S3_BUCKET_NAME=my-formbricks-bucket
+S3_ENDPOINT_URL=https://s3.us-west-000.backblazeb2.com
+S3_FORCE_PATH_STYLE=1
+```
+
+## Bundled MinIO Setup
+
+When using the bundled MinIO option through the setup script, you get:
+
+### Automatic Configuration
+
+- **Storage Service**: MinIO running in a Docker container
+- **Credentials**: Auto-generated secure access keys
+- **Bucket**: Automatically created `formbricks-uploads` bucket
+- **SSL**: Automatic certificate generation for the files subdomain
+
+### Access Information
+
+After setup, you'll see:
+
+```bash
+🗄️  MinIO Storage Setup Complete:
+   • S3 API: https://files.yourdomain.com
+   • Access Key: formbricks-a1b2c3d4
+   • Bucket: formbricks-uploads (✅ automatically created)
+```
+
+### DNS Requirements
+
+<Warning>
+  **Critical for MinIO**: The subdomain configuration is mandatory for MinIO to function. Without proper
+  subdomain DNS setup, MinIO will fail to work entirely.
+</Warning>
+
+For the bundled MinIO setup, ensure:
+
+1. **Main domain**: `yourdomain.com` points to your server IP
+2. **Files subdomain**: `files.yourdomain.com` points to your server IP (this is required for MinIO to work)
+3. **Firewall**: Ports 80 and 443 are open in your server's firewall
+4. **DNS propagation**: Allow time for DNS changes to propagate globally
+
+## Docker Compose Configuration
+
+For manual setup, update your `docker-compose.yml`:
+
+```yaml
+services:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    environment:
+      # ... other environment variables ...
+
+      # S3 Storage Configuration
+      S3_ACCESS_KEY: your_access_key
+      S3_SECRET_KEY: your_secret_key
+      S3_REGION: us-east-1
+      S3_BUCKET_NAME: your-bucket-name
+      S3_ENDPOINT_URL: https://your-endpoint.com # Optional
+      S3_FORCE_PATH_STYLE: 1 # For third-party services
+    volumes:
+      - uploads:/home/nextjs/apps/web/uploads/ # Still needed for temporary files
+```
+
+## Security Considerations
+
+### S3 Bucket Permissions
+
+Configure your S3 bucket with a least-privileged policy:
+
+1. **Scoped Public Read Access**: Only allow public read access to specific prefixes where needed
+2. **Restricted Write Access**: Only your Formbricks instance should be able to upload files
+3. **CORS Configuration**: Allow requests from your Formbricks domain
+
+Example least-privileged S3 bucket policy:
+
+```json
+{
+  "Statement": [
+    {
+      "Action": "s3:GetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Resource": "arn:aws:s3:::your-bucket-name/uploads/public/*",
+      "Sid": "PublicReadForPublicUploads"
+    },
+    {
+      "Action": ["s3:PutObject", "s3:PutObjectAcl"],
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::123456789012:user/formbricks-service"
+      },
+      "Resource": "arn:aws:s3:::your-bucket-name/*",
+      "Sid": "AllowFormbricksWrite"
+    }
+  ],
+  "Version": "2012-10-17"
+}
+```
+
+### MinIO Security
+
+When using bundled MinIO:
+
+- Credentials are auto-generated and secure
+- Access is restricted through Traefik proxy
+- CORS is automatically configured
+- Rate limiting is applied to prevent abuse
+- A bucket policy with the least privileges is applied to the bucket
+
+## Troubleshooting
+
+### Common Issues
+
+**Files not uploading:**
+
+1. Check that S3 credentials are correct
+2. Verify bucket exists and is accessible
+3. Ensure bucket permissions allow uploads from your server
+4. Check network connectivity to S3 endpoint
+
+**Images not displaying in surveys:**
+
+1. Verify bucket has public read access
+2. Check CORS configuration allows requests from your domain
+3. Ensure S3_ENDPOINT_URL is correctly set for third-party services
+
+**MinIO not starting:**
+
+1. **Verify subdomain DNS**: Ensure `files.yourdomain.com` points to your server IP (this is the most common issue)
+2. **Check DNS propagation**: Use tools like `nslookup` or `dig` to verify DNS resolution
+3. **Verify ports**: Ensure ports 80 and 443 are open in your firewall
+4. **SSL certificate**: Check that SSL certificate generation completed successfully
+5. **Container logs**: Check Docker container logs: `docker compose logs minio`
+
+### Testing Your Configuration
+
+To test if file uploads are working:
+
+1. **Admin Panel**: Try uploading a project logo in the project settings
+2. **Survey Editor**: Attempt to add a background image to a survey
+3. **Question Types**: Create a 'File Upload' or 'Picture Selection' question
+4. **Check Logs**: Monitor container logs for any storage-related errors
+
+```bash
+# Check Formbricks logs
+docker compose logs formbricks
+
+# Check MinIO logs (if using bundled MinIO)
+docker compose logs minio
+```
+
+For additional help, join the conversation on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).

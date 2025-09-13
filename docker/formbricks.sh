@@ -340,9 +340,11 @@ EOT
     sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$ext_s3_bucket\"|" docker-compose.yml
     if [[ -n $ext_s3_endpoint ]]; then
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"$ext_s3_endpoint\"|" docker-compose.yml
-      sed -i "s|S3_FORCE_PATH_STYLE: 0|S3_FORCE_PATH_STYLE: 1|" docker-compose.yml
+      # Ensure S3_FORCE_PATH_STYLE is enabled for S3-compatible endpoints (match commented or uncommented)
+      sed -i 's|#\? *S3_FORCE_PATH_STYLE:.*|S3_FORCE_PATH_STYLE: 1|' docker-compose.yml
     else
-      sed -i "s|S3_FORCE_PATH_STYLE: 0|# S3_FORCE_PATH_STYLE:|" docker-compose.yml
+      # Comment out S3_FORCE_PATH_STYLE for native AWS S3 (match commented or uncommented)
+      sed -i 's|#\? *S3_FORCE_PATH_STYLE:.*|# S3_FORCE_PATH_STYLE:|' docker-compose.yml
     fi
     echo "🚗 External S3 configuration updated successfully!"
   elif [[ $minio_storage == "y" ]]; then
@@ -356,7 +358,8 @@ EOT
     else
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"http://$files_domain\"|" docker-compose.yml
     fi
-    sed -i "s|S3_FORCE_PATH_STYLE: 0|S3_FORCE_PATH_STYLE: 1|" docker-compose.yml
+    # Ensure S3_FORCE_PATH_STYLE is enabled for MinIO (match commented or uncommented)
+    sed -i 's|#\? *S3_FORCE_PATH_STYLE:.*|S3_FORCE_PATH_STYLE: 1|' docker-compose.yml
     echo "🚗 MinIO S3 configuration updated successfully!"
   fi
 
@@ -407,7 +410,7 @@ EOT
 
   minio:
     restart: always
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
     command: server /data
     environment:
       MINIO_ROOT_USER: "$minio_root_user"
@@ -438,7 +441,7 @@ EOT
       - "traefik.http.middlewares.minio-ratelimit.ratelimit.average=100"
       - "traefik.http.middlewares.minio-ratelimit.ratelimit.burst=200"
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
     depends_on:
       minio:
         condition: service_healthy

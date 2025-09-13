@@ -3843,6 +3843,7 @@ components:
           type: string
           enum:
             - draft
+            - scheduled
             - inProgress
             - paused
             - completed
