@@ -1,37 +1,31 @@
-name: Docker Release to Github Experimental
+name: Build Community Testing Images
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# This workflow builds experimental/testing versions of Formbricks for self-hosting customers
+# to test fixes and features before official releases. Images are pushed to GHCR with
+# timestamped experimental versions for easy identification and testing.
 
 on:
   workflow_dispatch:
-
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}-experimental
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+    inputs:
+      version_override:
+        description: "Override version (SemVer only, e.g., 1.2.3-beta). Leave empty for auto-generated experimental version."
+        required: false
+        type: string
 
 permissions:
   contents: read
+  packages: write
+  id-token: write
 
 jobs:
-  build:
+  build-community-testing:
+    name: Build Community Testing Image
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
-      id-token: write
+    timeout-minutes: 45
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: audit
 
@@ -40,70 +34,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Resolve experimental version
-        id: version
-        uses: ./.github/actions/resolve-docker-version
+      - name: Build and push community testing image
+        uses: ./.github/actions/build-and-push-docker
         with:
-          event_name: ${{ github.event_name }}
-          current_branch: ${{ github.ref_name }}
+          registry_type: "ghcr"
+          ghcr_image_name: "${{ github.repository }}-experimental"
           experimental_mode: "true"
-          ref_type: ${{ github.ref_type }}
-
-      - name: Update package.json version
-        uses: ./.github/actions/update-package-version
-        with:
-          version: ${{ steps.version.outputs.version }}
-
-      - name: Set up Docker build tools
-        uses: ./.github/actions/docker-build-setup
-        with:
-          registry: ${{ env.REGISTRY }}
-          setup_cosign: "true"
-          skip_login_on_pr: "true" # Skip login on PRs - we don't push anyway
+          version_override: ${{ inputs.version_override }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Extract metadata (tags, labels) for Docker
-      # https://github.com/docker/metadata-action
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=raw,value=${{ steps.version.outputs.version }}
-
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
-        id: build-and-push
-        uses: depot/build-push-action@636daae76684e38c301daa0c5eca1c095b24e780 # v1.14.0
-        with:
-          project: tw0fqmsx3c
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          context: .
-          file: ./apps/web/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          secrets: |
-            database_url=${{ secrets.DUMMY_DATABASE_URL }}
-            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
-            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
-
-      # Sign the resulting Docker image digest except on PRs.
-      # This will only write to the public Rekor transparency log when the Docker
-      # repository is public to avoid leaking data.  If you would like to publish
-      # transparency data even for private images, pass --force to cosign below.
-      # https://github.com/sigstore/cosign
-      - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
-        env:
-          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        # This step uses the identity token to provision an ephemeral certificate
-        # against the sigstore community Fulcio instance.
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes "{}@${DIGEST}"
+          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
