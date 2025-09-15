@@ -57,11 +57,19 @@ runs:
 
         # Resolve to absolute path within workspace for additional security
         WORKSPACE_ROOT="${GITHUB_WORKSPACE:-$(pwd)}"
-        RESOLVED_PATH="${WORKSPACE_ROOT}/${PACKAGE_PATH}"
 
-        # Ensure the resolved path is still within the workspace (double-check)
-        if [[ ! "$RESOLVED_PATH" =~ ^"$WORKSPACE_ROOT"/ ]]; then
+        # Use realpath to resolve both paths and handle symlinks properly
+        WORKSPACE_ROOT=$(realpath "$WORKSPACE_ROOT")
+        RESOLVED_PATH=$(realpath "${WORKSPACE_ROOT}/${PACKAGE_PATH}")
+
+        # Ensure WORKSPACE_ROOT has a trailing slash for proper prefix matching
+        WORKSPACE_ROOT="${WORKSPACE_ROOT}/"
+
+        # Use shell string matching to ensure RESOLVED_PATH is within workspace
+        # This is more secure than regex and handles edge cases properly
+        if [[ "$RESOLVED_PATH" != "$WORKSPACE_ROOT"* ]]; then
           echo "❌ Error: Resolved path is outside workspace: $RESOLVED_PATH"
+          echo "Workspace root: $WORKSPACE_ROOT"
           exit 1
         fi
 
