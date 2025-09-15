@@ -1,12 +1,16 @@
 name: Build & Push Docker to ECR
 
+# This workflow builds Formbricks Docker images for ECR deployment:
+# - workflow_call: Used by releases with explicit SemVer versions
+# - workflow_dispatch: Auto-detects version from current branch or uses override
+
 on:
   workflow_dispatch:
     inputs:
-      image_tag:
-        description: "Image tag to push (e.g., 3.16.1, main, feature-branch)"
-        required: true
-        default: "3.16.1"
+      version_override:
+        description: "Override version (SemVer only, e.g., 1.2.3). Leave empty to auto-detect from branch."
+        required: false
+        type: string
       deploy_production:
         description: "Tag image for production deployment"
         required: false
@@ -69,21 +73,23 @@ jobs:
         id: image_tag
         shell: bash
         env:
-          MANUAL_TAG: ${{ inputs.image_tag }}
+          VERSION_OVERRIDE: ${{ inputs.version_override }}
+          WORKFLOW_CALL_TAG: ${{ inputs.image_tag }}
           IS_PRERELEASE: ${{ inputs.IS_PRERELEASE }}
+          CURRENT_BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
 
-          # For workflow_call, image_tag is required
+          # For workflow_call (releases), use provided image_tag
           if [[ "${{ github.event_name }}" == "workflow_call" ]]; then
-            if [[ -z "${MANUAL_TAG}" ]]; then
+            if [[ -z "${WORKFLOW_CALL_TAG}" ]]; then
               echo "❌ Error: image_tag input is required for workflow_call"
               exit 1
             fi
             
-            TAG="${MANUAL_TAG}"
+            TAG="${WORKFLOW_CALL_TAG}"
             
-            # Validate the tag format (allows uppercase in prerelease/build)
+            # Validate the tag format (uppercase will be normalized to lowercase)
             if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
               echo "❌ Error: Invalid release tag format. Must be semver (e.g., 1.2.3, 1.2.3-alpha)"
               echo "Provided tag: $TAG"
@@ -92,43 +98,48 @@ jobs:
             
             # Normalize to lowercase for Docker/ECR compatibility
             IMAGE_TAG="${TAG,,}"
-            echo "Using provided version (normalized to lowercase): $IMAGE_TAG"
+            echo "🎯 Using release version (normalized to lowercase): $IMAGE_TAG"
             if [[ "$TAG" != "$IMAGE_TAG" ]]; then
               echo "ℹ️  Original tag contained uppercase characters, normalized: $TAG → $IMAGE_TAG"
             fi
           else
-            IMAGE_TAG="${MANUAL_TAG}"
-          fi
-
-          # For manual workflow_dispatch, ensure valid SemVer format
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            ORIGINAL_TAG="${IMAGE_TAG}"
-            
-            # Check if already valid SemVer
-            if [[ "${IMAGE_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
-              echo "✅ Manual tag is already valid SemVer: ${IMAGE_TAG}"
+            # For workflow_dispatch, determine version from override or branch
+            if [[ -n "${VERSION_OVERRIDE}" ]]; then
+              # User provided explicit SemVer override
+              if [[ ! "${VERSION_OVERRIDE}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+                echo "❌ Error: version_override must be valid SemVer (e.g., 1.2.3, 1.2.3-alpha)"
+                echo "Provided: ${VERSION_OVERRIDE}"
+                exit 1
+              fi
+              IMAGE_TAG="${VERSION_OVERRIDE}"
+              echo "🎯 Using explicit version override: ${IMAGE_TAG}"
             else
-              # Convert to valid SemVer prerelease format with semantic indicators
+              # Auto-detect from current branch
+              echo "🔍 Auto-detecting version from branch: ${CURRENT_BRANCH}"
               TIMESTAMP=$(date +%s)
-              SANITIZED_TAG=$(echo "${IMAGE_TAG}" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
+              SANITIZED_BRANCH=$(echo "${CURRENT_BRANCH}" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
               
-              # Add semantic context based on branch type
-              if [[ "${SANITIZED_TAG}" == "main" ]]; then
+              # Generate semantic version based on branch pattern
+              if [[ "${CURRENT_BRANCH}" == "main" ]]; then
                 # Main branch - development towards next release
                 IMAGE_TAG="0.0.0-dev-${TIMESTAMP}"
-                echo "ℹ️  Main branch converted to development version: ${ORIGINAL_TAG} → ${IMAGE_TAG}"
-              elif [[ "${SANITIZED_TAG}" =~ ^(feature|feat)- ]]; then
+                echo "🚀 Main branch detected → development version: ${IMAGE_TAG}"
+              elif [[ "${CURRENT_BRANCH}" =~ ^(feature|feat)/ ]]; then
                 # Feature branch - experimental feature
-                IMAGE_TAG="0.0.0-alpha-${SANITIZED_TAG}-${TIMESTAMP}"
-                echo "ℹ️  Feature branch converted to alpha version: ${ORIGINAL_TAG} → ${IMAGE_TAG}"
-              elif [[ "${SANITIZED_TAG}" =~ ^(hotfix|fix)- ]]; then
+                IMAGE_TAG="0.0.0-alpha-${SANITIZED_BRANCH}-${TIMESTAMP}"
+                echo "🧪 Feature branch detected → alpha version: ${IMAGE_TAG}"
+              elif [[ "${CURRENT_BRANCH}" =~ ^(hotfix|fix)/ ]]; then
                 # Hotfix branch - urgent fix
-                IMAGE_TAG="0.0.0-hotfix-${SANITIZED_TAG}-${TIMESTAMP}"
-                echo "ℹ️  Hotfix branch converted to hotfix version: ${ORIGINAL_TAG} → ${IMAGE_TAG}"
+                IMAGE_TAG="0.0.0-hotfix-${SANITIZED_BRANCH}-${TIMESTAMP}"
+                echo "🔥 Hotfix branch detected → hotfix version: ${IMAGE_TAG}"
+              elif [[ "${CURRENT_BRANCH}" =~ ^(release|rel)/ ]]; then
+                # Release branch - release candidate
+                IMAGE_TAG="0.0.0-rc-${SANITIZED_BRANCH}-${TIMESTAMP}"
+                echo "📦 Release branch detected → release candidate version: ${IMAGE_TAG}"
               else
                 # Generic branch - experimental
-                IMAGE_TAG="0.0.0-alpha-${SANITIZED_TAG}-${TIMESTAMP}"
-                echo "ℹ️  Branch converted to experimental version: ${ORIGINAL_TAG} → ${IMAGE_TAG}"
+                IMAGE_TAG="0.0.0-alpha-${SANITIZED_BRANCH}-${TIMESTAMP}"
+                echo "🔬 Generic branch detected → experimental version: ${IMAGE_TAG}"
               fi
             fi
           fi
@@ -143,20 +154,10 @@ jobs:
             exit 1
           fi
 
-          # For manual workflow_dispatch, validate sanitized tag format
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ ! "${IMAGE_TAG}" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-              echo "❌ Image tag may only contain letters, digits, '.', '_' and '-'."
-              echo "ℹ️  Note: Forward slashes (/) are automatically converted to dashes (-) for Docker compatibility."
-              exit 1
-            fi
-          else
-            # For workflow_call (releases), validate normalized lowercase format
-            if [[ ! "${IMAGE_TAG}" =~ ^[a-z0-9._-]+$ ]]; then
-              echo "❌ Image tag may only contain lowercase letters, digits, '.', '_' and '-'."
-              echo "ℹ️  Note: Tags are automatically normalized to lowercase for Docker/ECR compatibility."
-              exit 1
-            fi
+          # All IMAGE_TAGs are now guaranteed to be valid SemVer format
+          if [[ ! "${IMAGE_TAG}" =~ ^[a-z0-9._-]+$ ]]; then
+            echo "❌ Image tag may only contain lowercase letters, digits, '.', '_' and '-'."
+            exit 1
           fi
 
           if [[ "${IMAGE_TAG}" =~ ^[.-] || "${IMAGE_TAG}" =~ [.-]$ ]]; then
