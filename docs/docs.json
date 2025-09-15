@@ -5,6 +5,11 @@
     "light": "#00C4B8",
     "primary": "#00C4B8"
   },
+  "errors": {
+    "404": {
+      "redirect": true
+    }
+  },
   "favicon": "/images/favicon.svg",
   "footer": {
     "socials": {
