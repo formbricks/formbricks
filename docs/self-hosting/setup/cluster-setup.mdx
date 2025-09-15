@@ -120,13 +120,14 @@ graph TD
 
 ## Redis Configuration
 
-<Note>Redis integration is an Enterprise Edition feature and requires an enterprise license key.</Note>
+<Note>
+  Redis is required for Formbricks to function. The application will not start without a Redis URL configured.
+</Note>
 
-Configure Redis by adding the following environment variables to your instances:
+Configure Redis by adding the following **required** environment variable to your instances:
 
 ```sh env
 REDIS_URL=redis://your-redis-host:6379
-REDIS_HTTP_URL=http://your-redis-host:8000
 ```
 
 ## S3 Configuration

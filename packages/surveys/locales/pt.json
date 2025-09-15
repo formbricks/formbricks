@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "e",
+    "apply": "aplicar",
+    "auto_close_wrapper": "Fechamento automático do wrapper",
+    "back": "Voltar",
+    "click_or_drag_to_upload_files": "Clique ou arraste para carregar arquivos.",
+    "close_survey": "Fechar pesquisa",
+    "company_logo": "Logo da empresa",
+    "delete_file": "Excluir arquivo",
+    "file_upload": "Carregamento de arquivo",
+    "finish": "Finalizar",
+    "language_switch": "Alternar idioma",
+    "less_than_x_minutes": "{count, plural, one {menos de 1 minuto} other {menos de {count} minutos}}",
+    "move_down": "Mover {item} para baixo",
+    "move_up": "Mover {item} para cima",
+    "next": "Próximo",
+    "open_in_new_tab": "Abrir em nova aba",
+    "optional": "Opcional",
+    "options": "Opções",
+    "people_responded": "{count, plural, one {1 pessoa respondeu} other {{count} pessoas responderam}}",
+    "please_retry_now_or_try_again_later": "Por favor, tente novamente agora ou mais tarde.",
+    "powered_by": "Desenvolvido por",
+    "privacy_policy": "Política de privacidade",
+    "protected_by_reCAPTCHA_and_the_Google": "Protegido pelo reCAPTCHA e o Google",
+    "question": "Pergunta",
+    "question_video": "Vídeo da pergunta",
+    "ranking_items": "Itens de classificação",
+    "respondents_will_not_see_this_card": "Os respondentes não verão este cartão",
+    "retry": "Tentar novamente",
+    "select_a_date": "Selecione uma data",
+    "select_for_ranking": "Selecione {item} para classificação",
+    "sending_responses": "Enviando respostas...",
+    "takes": "Leva",
+    "terms_of_service": "Termos de serviço",
+    "the_servers_cannot_be_reached_at_the_moment": "Os servidores não podem ser alcançados no momento.",
+    "they_will_be_redirected_immediately": "Eles serão redirecionados imediatamente",
+    "upload_files_by_clicking_or_dragging_them_here": "Carregue arquivos clicando ou arrastando-os aqui",
+    "uploading": "Carregando",
+    "x_minutes": "{count, plural, one {1 minuto} other {{count} minutos}}",
+    "x_plus_minutes": "{count}+ minutos",
+    "you_have_selected_x_date": "Você selecionou {date}",
+    "you_have_successfully_uploaded_the_file": "Você carregou o arquivo {fileName} com sucesso",
+    "your_feedback_is_stuck": "Seu feedback está preso :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "Os seguintes arquivos já foram carregados: {duplicateNames}. Arquivos duplicados não são permitidos.",
+      "file_size_exceeded": "Os seguintes arquivos excedem o tamanho máximo de {maxSizeInMB} MB e foram removidos: {fileNames}",
+      "file_size_exceeded_alert": "O arquivo deve ter menos de {maxSizeInMB} MB",
+      "native_upload_failed": "Erro ao carregar arquivo nativo.",
+      "no_valid_file_types_selected": "Nenhum tipo de arquivo válido selecionado. Por favor, selecione um tipo de arquivo válido.",
+      "only_one_file_can_be_uploaded_at_a_time": "Apenas um arquivo pode ser carregado de cada vez.",
+      "upload_failed": "Falha no carregamento! Por favor, tente novamente.",
+      "you_can_only_upload_a_maximum_of_files": "Você só pode carregar um máximo de {FILE_LIMIT} arquivos."
+    },
+    "invalid_device_error": {
+      "message": "Por favor, desative a proteção contra spam nas configurações da pesquisa para continuar usando este dispositivo.",
+      "title": "Este dispositivo não suporta proteção contra spam."
+    },
+    "please_book_an_appointment": "Por favor, marque uma consulta",
+    "please_enter_a_valid_phone_number": "Por favor, insira um número de telefone válido",
+    "please_fill_out_this_field": "Por favor, preencha este campo",
+    "please_rank_all_items_before_submitting": "Por favor, classifique todos os itens antes de enviar",
+    "please_select_a_date": "Por favor, selecione uma data",
+    "please_upload_a_file": "Por favor, carregue um arquivo",
+    "recaptcha_error": {
+      "message": "Sua resposta não pôde ser enviada porque foi sinalizada como atividade automatizada. Se você respira, por favor tente novamente.",
+      "title": "Não conseguimos verificar que você é humano."
+    }
+  }
+}

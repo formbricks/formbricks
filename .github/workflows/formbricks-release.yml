@@ -45,4 +45,14 @@ jobs:
       VERSION: v${{ needs.docker-build.outputs.VERSION }}
       ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
 
-
+  move-stable-tag:
+    name: Move stable tag to release
+    permissions:
+      contents: read
+    uses: ./.github/workflows/move-stable-tag.yml
+    needs:
+      - docker-build # Ensure release is successful first
+    with:
+      release_tag: ${{ github.event.release.tag_name }}
+      commit_sha: ${{ github.sha }}
+      is_prerelease: ${{ github.event.release.prerelease }}

@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "va",
+    "apply": "qo‘llash",
+    "auto_close_wrapper": "Avtomatik yopiladigan o‘ram",
+    "back": "Orqaga",
+    "click_or_drag_to_upload_files": "Fayllarni yuklash uchun bosing yoki sudrab olib keling.",
+    "close_survey": "So‘rovnomani yopish",
+    "company_logo": "Kompaniya logotipi",
+    "delete_file": "Faylni o‘chirish",
+    "file_upload": "Fayl yuklash",
+    "finish": "Tugatish",
+    "language_switch": "Tilni almashtirish",
+    "less_than_x_minutes": "{count, plural, one {1 daqiqadan kam} other {{count} daqiqadan kam}}",
+    "move_down": "{item} ni pastga tushirish",
+    "move_up": "{item} ni yuqoriga ko‘tarish",
+    "next": "Keyingisi",
+    "open_in_new_tab": "Yangi oynada ochish",
+    "optional": "Ixtiyoriy",
+    "options": "Variantlar",
+    "people_responded": "{count, plural, one {1 kishi javob berdi} other {{count} kishi javob berdi}}",
+    "please_retry_now_or_try_again_later": "Iltimos, hozir qayta urinib ko‘ring yoki keyinroq urinib ko‘ring.",
+    "powered_by": "Quvvatlanadi",
+    "privacy_policy": "Maxfiylik siyosati",
+    "protected_by_reCAPTCHA_and_the_Google": "reCAPTCHA va Google tomonidan himoyalangan",
+    "question": "Savol",
+    "question_video": "Savol videosi",
+    "ranking_items": "Reyting elementlari",
+    "respondents_will_not_see_this_card": "Javob beruvchilar ushbu kartani ko'rmaydi",
+    "retry": "Qayta urinib ko'ring",
+    "select_a_date": "Sanani tanlang",
+    "select_for_ranking": "Reyting uchun {item} ni tanlang",
+    "sending_responses": "Javoblar yuborilmoqda...",
+    "takes": "Davomiyligi",
+    "terms_of_service": "Xizmat ko'rsatish shartlari",
+    "the_servers_cannot_be_reached_at_the_moment": "Hozirda serverlarga ulanish imkoni yo'q.",
+    "they_will_be_redirected_immediately": "Ular darhol yo'naltiriladi",
+    "upload_files_by_clicking_or_dragging_them_here": "Fayllarni bu yerga bosish yoki sudrab olib kelish orqali yuklang",
+    "uploading": "Yuklanmoqda",
+    "x_minutes": "{count, plural, one {1 daqiqa} other {{count} daqiqa}}",
+    "x_plus_minutes": "{count}+ daqiqa",
+    "you_have_selected_x_date": "Siz {date} sanasini tanladingiz",
+    "you_have_successfully_uploaded_the_file": "Siz {fileName} faylini muvaffaqiyatli yukladingiz",
+    "your_feedback_is_stuck": "Sizning fikr-mulohazangiz qotib qoldi :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "Quyidagi fayllar allaqachon yuklangan: {duplicateNames}. Takroriy fayllarga ruxsat berilmaydi.",
+      "file_size_exceeded": "Quyidagi fayl(lar) {maxSizeInMB} MB maksimal hajmdan oshib ketdi va olib tashlandi: {fileNames}",
+      "file_size_exceeded_alert": "Fayl hajmi {maxSizeInMB} MB dan kam bo'lishi kerak",
+      "native_upload_failed": "Mahalliy faylni yuklashda xatolik yuz berdi.",
+      "no_valid_file_types_selected": "Hech qanday yaroqli fayl turi tanlanmadi. Iltimos, yaroqli fayl turini tanlang.",
+      "only_one_file_can_be_uploaded_at_a_time": "Bir vaqtning o'zida faqat bitta fayl yuklanishi mumkin.",
+      "upload_failed": "Yuklash muvaffaqiyatsiz tugadi! Iltimos, qayta urinib ko'ring.",
+      "you_can_only_upload_a_maximum_of_files": "Siz faqat {FILE_LIMIT} ta faylni maksimal yuklashingiz mumkin."
+    },
+    "invalid_device_error": {
+      "message": "Iltimos, ushbu qurilmadan foydalanishni davom ettirish uchun so'rov sozlamalarida spam himoyasini o'chiring.",
+      "title": "Ushbu qurilma spam himoyasini qo'llab-quvvatlamaydi."
+    },
+    "please_book_an_appointment": "Iltimos, uchrashuvni bron qiling",
+    "please_enter_a_valid_phone_number": "Iltimos, to'g'ri telefon raqamini kiriting",
+    "please_fill_out_this_field": "Iltimos, ushbu maydonni to'ldiring",
+    "please_rank_all_items_before_submitting": "Iltimos, yuborishdan oldin barcha elementlarni baholang",
+    "please_select_a_date": "Iltimos, sanani tanlang",
+    "please_upload_a_file": "Iltimos, faylni yuklang",
+    "recaptcha_error": {
+      "message": "Sizning javobingiz avtomatlashtirilgan faoliyat sifatida belgilanganligi sababli yuborilmadi. Agar siz nafas olayotgan bo'lsangiz, qayta urinib ko'ring.",
+      "title": "Biz sizning inson ekanligingizni tasdiqlay olmadik."
+    }
+  }
+}

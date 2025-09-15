@@ -46,15 +46,9 @@ jobs:
           --health-timeout=5s
           --health-retries=5
       valkey:
-        image: valkey/valkey:8.1.1
+        image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
         ports:
           - 6379:6379
-        options: >-
-          --entrypoint "valkey-server"
-          --health-cmd="valkey-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
       minio:
         image: bitnami/minio:2025.7.23-debian-12-r5
         env:

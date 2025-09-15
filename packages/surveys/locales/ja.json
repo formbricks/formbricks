@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "および",
+    "apply": "適用",
+    "auto_close_wrapper": "自動クローズラッパー",
+    "back": "戻る",
+    "click_or_drag_to_upload_files": "クリックまたはドラッグしてファイルをアップロード。",
+    "close_survey": "アンケートを閉じる",
+    "company_logo": "会社ロゴ",
+    "delete_file": "ファイルを削除",
+    "file_upload": "ファイルアップロード",
+    "finish": "完了",
+    "language_switch": "言語切替",
+    "less_than_x_minutes": "{count, plural, other {{count}分未満}}",
+    "move_down": "{item}を下に移動",
+    "move_up": "{item}を上に移動",
+    "next": "次へ",
+    "open_in_new_tab": "新しいタブで開く",
+    "optional": "任意",
+    "options": "オプション",
+    "people_responded": "{count, plural, other {{count}人が回答しました}}",
+    "please_retry_now_or_try_again_later": "今すぐ再試行するか、後でもう一度お試しください。",
+    "powered_by": "提供：",
+    "privacy_policy": "プライバシーポリシー",
+    "protected_by_reCAPTCHA_and_the_Google": "reCAPTCHAとGoogleによって保護されています",
+    "question": "質問",
+    "question_video": "質問ビデオ",
+    "ranking_items": "ランキング項目",
+    "respondents_will_not_see_this_card": "回答者はこのカードを見ることができません",
+    "retry": "再試行",
+    "select_a_date": "日付を選択",
+    "select_for_ranking": "ランキング用に{item}を選択",
+    "sending_responses": "回答を送信中...",
+    "takes": "所要時間",
+    "terms_of_service": "利用規約",
+    "the_servers_cannot_be_reached_at_the_moment": "現在サーバーに接続できません。",
+    "they_will_be_redirected_immediately": "すぐにリダイレクトされます",
+    "upload_files_by_clicking_or_dragging_them_here": "クリックまたはドラッグしてファイルをアップロード",
+    "uploading": "アップロード中",
+    "x_minutes": "{count, plural, one {1分} other {{count}分}}",
+    "x_plus_minutes": "{count}分以上",
+    "you_have_selected_x_date": "{date}を選択しました",
+    "you_have_successfully_uploaded_the_file": "ファイル{fileName}のアップロードに成功しました",
+    "your_feedback_is_stuck": "フィードバックが送信できません :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "以下のファイルはすでにアップロードされています：{duplicateNames}。重複ファイルは許可されていません。",
+      "file_size_exceeded": "以下のファイルは最大サイズ{maxSizeInMB}MBを超えているため削除されました：{fileNames}",
+      "file_size_exceeded_alert": "ファイルは{maxSizeInMB}MB未満である必要があります",
+      "native_upload_failed": "ネイティブファイルのアップロードエラー。",
+      "no_valid_file_types_selected": "有効なファイルタイプが選択されていません。有効なファイルタイプを選択してください。",
+      "only_one_file_can_be_uploaded_at_a_time": "一度にアップロードできるファイルは1つだけです。",
+      "upload_failed": "アップロードに失敗しました！もう一度お試しください。",
+      "you_can_only_upload_a_maximum_of_files": "アップロードできるファイルは最大{FILE_LIMIT}個までです。"
+    },
+    "invalid_device_error": {
+      "message": "このデバイスを引き続き使用するには、アンケート設定でスパム保護を無効にしてください。",
+      "title": "このデバイスはスパム保護に対応していません。"
+    },
+    "please_book_an_appointment": "予約をお取りください",
+    "please_enter_a_valid_phone_number": "有効な電話番号を入力してください",
+    "please_fill_out_this_field": "このフィールドに入力してください",
+    "please_rank_all_items_before_submitting": "送信する前にすべての項目をランク付けしてください",
+    "please_select_a_date": "日付を選択してください",
+    "please_upload_a_file": "ファイルをアップロードしてください",
+    "recaptcha_error": {
+      "message": "自動化された活動としてフラグが立てられたため、回答を送信できませんでした。人間の方は、もう一度お試しください。",
+      "title": "あなたが人間であることを確認できませんでした。"
+    }
+  }
+}

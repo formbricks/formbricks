@@ -1,0 +1,72 @@
+{
+  "common": {
+    "and": "和",
+    "apply": "应用",
+    "auto_close_wrapper": "自动关闭包装器",
+    "back": "返回",
+    "click_or_drag_to_upload_files": "点击或拖动上传文件。",
+    "close_survey": "关闭调查",
+    "company_logo": "公司标志",
+    "delete_file": "删除文件",
+    "file_upload": "文件上传",
+    "finish": "完成",
+    "language_switch": "语言切换",
+    "less_than_x_minutes": "{count, plural, one {少于 1 分钟} other {少于 {count} 分钟}}",
+    "move_down": "将{item}下移",
+    "move_up": "将{item}上移",
+    "next": "下一步",
+    "open_in_new_tab": "在新标签页中打开",
+    "optional": "可选",
+    "options": "选项",
+    "people_responded": "{count, plural, one {1 人已回应} other {{count} 人已回应}}",
+    "please_retry_now_or_try_again_later": "请立即重试或稍后再试。",
+    "powered_by": "技术支持",
+    "privacy_policy": "隐私政策",
+    "protected_by_reCAPTCHA_and_the_Google": "受 reCAPTCHA 和 Google 保护",
+    "question": "问题",
+    "question_video": "问题视频",
+    "ranking_items": "排名项目",
+    "respondents_will_not_see_this_card": "受访者将不会看到此卡片",
+    "retry": "重试",
+    "select_a_date": "选择日期",
+    "select_for_ranking": "选择{item}进行排名",
+    "sending_responses": "正在发送响应...",
+    "takes": "需要",
+    "terms_of_service": "服务条款",
+    "the_servers_cannot_be_reached_at_the_moment": "目前无法连接到服务器。",
+    "they_will_be_redirected_immediately": "他们将立即被重定向",
+    "upload_files_by_clicking_or_dragging_them_here": "通过点击或拖动文件到此处上传",
+    "uploading": "正在上传",
+    "x_minutes": "{count, plural, one {1 分钟} other {{count} 分钟}}",
+    "x_plus_minutes": "{count}+ 分钟",
+    "you_have_selected_x_date": "您已选择日期 {date}",
+    "you_have_successfully_uploaded_the_file": "您已成功上传文件 {fileName}",
+    "your_feedback_is_stuck": "您的反馈卡住了 :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "以下文件已上传：{duplicateNames}。不允许重复文件。",
+      "file_size_exceeded": "以下文件超过了最大大小 {maxSizeInMB} MB，已被移除：{fileNames}",
+      "file_size_exceeded_alert": "文件应小于 {maxSizeInMB} MB",
+      "native_upload_failed": "上传原始文件时出错。",
+      "no_valid_file_types_selected": "未选择有效的文件类型。请选择有效的文件类型。",
+      "only_one_file_can_be_uploaded_at_a_time": "一次只能上传一个文件。",
+      "upload_failed": "上传失败！请重试。",
+      "you_can_only_upload_a_maximum_of_files": "您最多只能上传 {FILE_LIMIT} 个文件。"
+    },
+    "invalid_device_error": {
+      "message": "请在调查设置中禁用垃圾邮件保护以继续使用此设备。",
+      "title": "此设备不支持垃圾邮件保护。"
+    },
+    "please_book_an_appointment": "请预约",
+    "please_enter_a_valid_phone_number": "请输入有效的电话号码",
+    "please_fill_out_this_field": "请填写此字段",
+    "please_rank_all_items_before_submitting": "请在提交之前对所有项目进行排名",
+    "please_select_a_date": "请选择一个日期",
+    "please_upload_a_file": "请上传一个文件",
+    "recaptcha_error": {
+      "message": "您的响应未能提交，因为它被标记为自动活动。如果您是人类，请重试。",
+      "title": "我们无法验证您是人类。"
+    }
+  }
+}
