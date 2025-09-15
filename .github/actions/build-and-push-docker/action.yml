@@ -148,8 +148,6 @@ runs:
         registry: ${{ inputs.registry_type == 'ghcr' && 'ghcr.io' || '' }}
         setup_cosign: ${{ inputs.registry_type == 'ghcr' && 'true' || 'false' }}
         skip_login_on_pr: ${{ inputs.registry_type == 'ghcr' && 'true' || 'false' }}
-      env:
-        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
 
     - name: Build ECR tag list
       if: ${{ inputs.registry_type == 'ecr' }}

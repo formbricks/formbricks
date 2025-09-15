@@ -12,7 +12,7 @@ description: |
 
 inputs:
   registry:
-    description: "Docker registry to login to (e.g., ghcr.io)"
+    description: "Docker registry hostname to login to (e.g., ghcr.io, registry.example.com:5000). No paths allowed."
     required: false
     default: "ghcr.io"
   setup_cosign:
@@ -36,10 +36,18 @@ runs:
       run: |
         set -euo pipefail
 
-        # Security: Validate registry input to prevent malicious URLs
-        if [[ ! "$REGISTRY" =~ ^[a-zA-Z0-9.-]+(\:[0-9]+)?(/[a-zA-Z0-9._-]+)*/?$ ]]; then
+        # Security: Validate registry input - must be hostname[:port] only, no paths
+        if [[ "$REGISTRY" =~ / ]]; then
           echo "ERROR: Invalid registry format: $REGISTRY"
-          echo "Registry must be a valid hostname optionally with port and path"
+          echo "Registry must be host[:port] with no path (e.g., 'ghcr.io' or 'registry.example.com:5000')"
+          echo "Path components like 'ghcr.io/org' are not allowed as they break docker login"
+          exit 1
+        fi
+
+        # Validate hostname with optional port format
+        if [[ ! "$REGISTRY" =~ ^[a-zA-Z0-9.-]+(\:[0-9]+)?$ ]]; then
+          echo "ERROR: Invalid registry hostname format: $REGISTRY"
+          echo "Registry must be a valid hostname optionally with port (e.g., 'ghcr.io' or 'registry.example.com:5000')"
           exit 1
         fi
 
@@ -71,9 +79,7 @@ runs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ env.GITHUB_TOKEN }}
-      env:
-        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        password: ${{ github.token }}
 
     - name: Verify setup completion
       shell: bash
