@@ -60,6 +60,8 @@ runs:
       uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
 
     - name: Install cosign
+      # Install cosign when requested AND when we might actually sign images
+      # (i.e., non-PR contexts or when we login on PRs)
       if: ${{ inputs.setup_cosign == 'true' && (inputs.skip_login_on_pr == 'false' || github.event_name != 'pull_request') }}
       uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
 
@@ -84,7 +86,7 @@ runs:
           exit 1
         fi
 
-        # Verify cosign if it should be installed
+        # Verify cosign if it should be installed (same conditions as install step)
         if [[ "${{ inputs.setup_cosign }}" == "true" ]] && [[ "${{ inputs.skip_login_on_pr }}" == "false" || "${{ github.event_name }}" != "pull_request" ]]; then
           if ! command -v cosign >/dev/null 2>&1; then
             echo "ERROR: Cosign not found in PATH despite being requested"

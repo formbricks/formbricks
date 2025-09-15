@@ -59,7 +59,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           setup_cosign: "true"
-          skip_login_on_pr: "true"
+          skip_login_on_pr: "true" # Skip login on PRs - we don't push anyway
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

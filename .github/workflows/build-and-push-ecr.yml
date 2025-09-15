@@ -162,7 +162,7 @@ jobs:
         uses: ./.github/actions/docker-build-setup
         with:
           setup_cosign: "false" # ECR builds don't need cosign
-          skip_login_on_pr: "true"
+          skip_login_on_pr: "false" # ECR workflow doesn't run on PRs anyway
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
