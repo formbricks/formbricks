@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     outputs:
-      IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
+      IMAGE_TAG: ${{ steps.version.outputs.version }}
       tags: ${{ steps.tags.outputs.tags }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -69,104 +69,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Determine and validate image tag
-        id: image_tag
-        shell: bash
-        env:
-          VERSION_OVERRIDE: ${{ inputs.version_override }}
-          WORKFLOW_CALL_TAG: ${{ inputs.image_tag }}
-          IS_PRERELEASE: ${{ inputs.IS_PRERELEASE }}
-          CURRENT_BRANCH: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-
-          # For workflow_call (releases), use provided image_tag
-          if [[ "${{ github.event_name }}" == "workflow_call" ]]; then
-            if [[ -z "${WORKFLOW_CALL_TAG}" ]]; then
-              echo "❌ Error: image_tag input is required for workflow_call"
-              exit 1
-            fi
-            
-            TAG="${WORKFLOW_CALL_TAG}"
-            
-            # Validate the tag format (uppercase will be normalized to lowercase)
-            if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
-              echo "❌ Error: Invalid release tag format. Must be semver (e.g., 1.2.3, 1.2.3-alpha)"
-              echo "Provided tag: $TAG"
-              exit 1
-            fi
-            
-            # Normalize to lowercase for Docker/ECR compatibility
-            IMAGE_TAG="${TAG,,}"
-            echo "🎯 Using release version (normalized to lowercase): $IMAGE_TAG"
-            if [[ "$TAG" != "$IMAGE_TAG" ]]; then
-              echo "ℹ️  Original tag contained uppercase characters, normalized: $TAG → $IMAGE_TAG"
-            fi
-          else
-            # For workflow_dispatch, determine version from override or branch
-            if [[ -n "${VERSION_OVERRIDE}" ]]; then
-              # User provided explicit SemVer override
-              if [[ ! "${VERSION_OVERRIDE}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
-                echo "❌ Error: version_override must be valid SemVer (e.g., 1.2.3, 1.2.3-alpha)"
-                echo "Provided: ${VERSION_OVERRIDE}"
-                exit 1
-              fi
-              IMAGE_TAG="${VERSION_OVERRIDE}"
-              echo "🎯 Using explicit version override: ${IMAGE_TAG}"
-            else
-              # Auto-detect from current branch
-              echo "🔍 Auto-detecting version from branch: ${CURRENT_BRANCH}"
-              TIMESTAMP=$(date +%s)
-              SANITIZED_BRANCH=$(echo "${CURRENT_BRANCH}" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
-              
-              # Generate semantic version based on branch pattern
-              if [[ "${CURRENT_BRANCH}" == "main" ]]; then
-                # Main branch - development towards next release
-                IMAGE_TAG="0.0.0-dev-${TIMESTAMP}"
-                echo "🚀 Main branch detected → development version: ${IMAGE_TAG}"
-              elif [[ "${CURRENT_BRANCH}" =~ ^(feature|feat)/ ]]; then
-                # Feature branch - experimental feature
-                IMAGE_TAG="0.0.0-alpha-${SANITIZED_BRANCH}-${TIMESTAMP}"
-                echo "🧪 Feature branch detected → alpha version: ${IMAGE_TAG}"
-              elif [[ "${CURRENT_BRANCH}" =~ ^(hotfix|fix)/ ]]; then
-                # Hotfix branch - urgent fix
-                IMAGE_TAG="0.0.0-hotfix-${SANITIZED_BRANCH}-${TIMESTAMP}"
-                echo "🔥 Hotfix branch detected → hotfix version: ${IMAGE_TAG}"
-              elif [[ "${CURRENT_BRANCH}" =~ ^(release|rel)/ ]]; then
-                # Release branch - release candidate
-                IMAGE_TAG="0.0.0-rc-${SANITIZED_BRANCH}-${TIMESTAMP}"
-                echo "📦 Release branch detected → release candidate version: ${IMAGE_TAG}"
-              else
-                # Generic branch - experimental
-                IMAGE_TAG="0.0.0-alpha-${SANITIZED_BRANCH}-${TIMESTAMP}"
-                echo "🔬 Generic branch detected → experimental version: ${IMAGE_TAG}"
-              fi
-            fi
-          fi
-
-          # Validate image tag
-          if [[ -z "${IMAGE_TAG}" ]]; then
-            echo "❌ Image tag is required (non-empty)."
-            exit 1
-          fi
-          if (( ${#IMAGE_TAG} > 128 )); then
-            echo "❌ Image tag must be at most 128 characters."
-            exit 1
-          fi
-
-          # All IMAGE_TAGs are now guaranteed to be valid SemVer format
-          if [[ ! "${IMAGE_TAG}" =~ ^[a-z0-9._-]+$ ]]; then
-            echo "❌ Image tag may only contain lowercase letters, digits, '.', '_' and '-'."
-            exit 1
-          fi
-
-          if [[ "${IMAGE_TAG}" =~ ^[.-] || "${IMAGE_TAG}" =~ [.-]$ ]]; then
-            echo "❌ Image tag must not start or end with '.' or '-'."
-            exit 1
-          fi
-
-          echo "✅ Valid image tag: ${IMAGE_TAG}"
-          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+      - name: Resolve Docker version
+        id: version
+        uses: ./.github/actions/resolve-docker-version
+        with:
+          event_name: ${{ github.event_name }}
+          version_override: ${{ inputs.version_override }}
+          workflow_call_tag: ${{ inputs.image_tag }}
+          current_branch: ${{ github.ref_name }}
 
       - name: Validate required variables
         shell: bash
@@ -184,14 +94,13 @@ jobs:
       - name: Update package.json version
         shell: bash
         env:
-          IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
+          VERSION: ${{ steps.version.outputs.version }}
+          VERSION_SOURCE: ${{ steps.version.outputs.source }}
         run: |
           set -euo pipefail
 
-          # IMAGE_TAG is now guaranteed to be valid SemVer for all build types
-          VERSION="${IMAGE_TAG}"
-
-          echo "Updating package.json version to: ${VERSION}"
+          # VERSION is guaranteed to be valid SemVer by the resolve-docker-version action
+          echo "Updating package.json version to: ${VERSION} (source: ${VERSION_SOURCE})"
 
           # Use jq to safely update the version field
           jq --arg version "${VERSION}" '.version = $version' ./apps/web/package.json > ./apps/web/package.json.tmp
@@ -213,7 +122,7 @@ jobs:
         id: tags
         shell: bash
         env:
-          IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
+          IMAGE_TAG: ${{ steps.version.outputs.version }}
           DEPLOY_PRODUCTION: ${{ inputs.deploy_production }}
           DEPLOY_STAGING: ${{ inputs.deploy_staging }}
           IS_PRERELEASE: ${{ inputs.IS_PRERELEASE }}
@@ -292,7 +201,8 @@ jobs:
       - name: Output build summary
         shell: bash
         env:
-          IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
+          IMAGE_TAG: ${{ steps.version.outputs.version }}
+          VERSION_SOURCE: ${{ steps.version.outputs.source }}
           IS_PRERELEASE: ${{ inputs.IS_PRERELEASE }}
           DEPLOY_PRODUCTION: ${{ inputs.deploy_production }}
           DEPLOY_STAGING: ${{ inputs.deploy_staging }}
@@ -301,7 +211,7 @@ jobs:
         run: |
           echo "✅ Successfully built and pushed Formbricks Docker image to ECR"
           echo "Event: ${EVENT_NAME}"
-          echo "Image Tag: ${IMAGE_TAG}"
+          echo "Image Tag: ${IMAGE_TAG} (source: ${VERSION_SOURCE})"
           if [[ "${EVENT_NAME}" == "workflow_call" ]]; then
             echo "Prerelease: ${IS_PRERELEASE}"
           else
