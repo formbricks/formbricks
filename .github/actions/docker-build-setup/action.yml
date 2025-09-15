@@ -37,18 +37,21 @@ runs:
         set -euo pipefail
 
         # Security: Validate registry input - must be hostname[:port] only, no paths
-        if [[ "$REGISTRY" =~ / ]]; then
-          echo "ERROR: Invalid registry format: $REGISTRY"
-          echo "Registry must be host[:port] with no path (e.g., 'ghcr.io' or 'registry.example.com:5000')"
-          echo "Path components like 'ghcr.io/org' are not allowed as they break docker login"
-          exit 1
-        fi
+        # Allow empty registry for cases where login is handled externally (e.g., ECR)
+        if [[ -n "$REGISTRY" ]]; then
+          if [[ "$REGISTRY" =~ / ]]; then
+            echo "ERROR: Invalid registry format: $REGISTRY"
+            echo "Registry must be host[:port] with no path (e.g., 'ghcr.io' or 'registry.example.com:5000')"
+            echo "Path components like 'ghcr.io/org' are not allowed as they break docker login"
+            exit 1
+          fi
 
-        # Validate hostname with optional port format
-        if [[ ! "$REGISTRY" =~ ^[a-zA-Z0-9.-]+(\:[0-9]+)?$ ]]; then
-          echo "ERROR: Invalid registry hostname format: $REGISTRY"
-          echo "Registry must be a valid hostname optionally with port (e.g., 'ghcr.io' or 'registry.example.com:5000')"
-          exit 1
+          # Validate hostname with optional port format
+          if [[ ! "$REGISTRY" =~ ^[a-zA-Z0-9.-]+(\:[0-9]+)?$ ]]; then
+            echo "ERROR: Invalid registry hostname format: $REGISTRY"
+            echo "Registry must be a valid hostname optionally with port (e.g., 'ghcr.io' or 'registry.example.com:5000')"
+            exit 1
+          fi
         fi
 
         # Validate boolean inputs
@@ -74,7 +77,7 @@ runs:
       uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
 
     - name: Log into registry
-      if: ${{ inputs.skip_login_on_pr == 'false' || github.event_name != 'pull_request' }}
+      if: ${{ inputs.registry != '' && (inputs.skip_login_on_pr == 'false' || github.event_name != 'pull_request') }}
       uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
       with:
         registry: ${{ inputs.registry }}
