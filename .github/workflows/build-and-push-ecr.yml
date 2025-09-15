@@ -100,14 +100,36 @@ jobs:
             IMAGE_TAG="${MANUAL_TAG}"
           fi
 
-          # For manual workflow_dispatch, sanitize branch-like tags for Docker compatibility
+          # For manual workflow_dispatch, ensure valid SemVer format
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             ORIGINAL_TAG="${IMAGE_TAG}"
-            # Replace forward slashes with dashes for Docker compatibility
-            IMAGE_TAG="${IMAGE_TAG//\//-}"
             
-            if [[ "$ORIGINAL_TAG" != "$IMAGE_TAG" ]]; then
-              echo "ℹ️  Sanitized tag for Docker compatibility: $ORIGINAL_TAG → $IMAGE_TAG"
+            # Check if already valid SemVer
+            if [[ "${IMAGE_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+              echo "✅ Manual tag is already valid SemVer: ${IMAGE_TAG}"
+            else
+              # Convert to valid SemVer prerelease format with semantic indicators
+              TIMESTAMP=$(date +%s)
+              SANITIZED_TAG=$(echo "${IMAGE_TAG}" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
+              
+              # Add semantic context based on branch type
+              if [[ "${SANITIZED_TAG}" == "main" ]]; then
+                # Main branch - development towards next release
+                IMAGE_TAG="0.0.0-dev-${TIMESTAMP}"
+                echo "ℹ️  Main branch converted to development version: ${ORIGINAL_TAG} → ${IMAGE_TAG}"
+              elif [[ "${SANITIZED_TAG}" =~ ^(feature|feat)- ]]; then
+                # Feature branch - experimental feature
+                IMAGE_TAG="0.0.0-alpha-${SANITIZED_TAG}-${TIMESTAMP}"
+                echo "ℹ️  Feature branch converted to alpha version: ${ORIGINAL_TAG} → ${IMAGE_TAG}"
+              elif [[ "${SANITIZED_TAG}" =~ ^(hotfix|fix)- ]]; then
+                # Hotfix branch - urgent fix
+                IMAGE_TAG="0.0.0-hotfix-${SANITIZED_TAG}-${TIMESTAMP}"
+                echo "ℹ️  Hotfix branch converted to hotfix version: ${ORIGINAL_TAG} → ${IMAGE_TAG}"
+              else
+                # Generic branch - experimental
+                IMAGE_TAG="0.0.0-alpha-${SANITIZED_TAG}-${TIMESTAMP}"
+                echo "ℹ️  Branch converted to experimental version: ${ORIGINAL_TAG} → ${IMAGE_TAG}"
+              fi
             fi
           fi
 
@@ -159,14 +181,13 @@ jobs:
           fi
 
       - name: Update package.json version
-        if: github.event_name == 'workflow_call'
         shell: bash
         env:
           IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
         run: |
           set -euo pipefail
 
-          # Use IMAGE_TAG directly as it's already clean SemVer for releases
+          # IMAGE_TAG is now guaranteed to be valid SemVer for all build types
           VERSION="${IMAGE_TAG}"
 
           echo "Updating package.json version to: ${VERSION}"
@@ -186,13 +207,6 @@ jobs:
           fi
 
           echo "✅ Successfully updated package.json version to: ${UPDATED_VERSION}"
-
-      - name: Skip package.json update for manual builds
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          echo "ℹ️  Skipping package.json version update for manual build"
-          echo "Manual builds use experimental tags and should not modify package.json"
-          echo "Current package.json version will remain unchanged"
 
       - name: Build tag list
         id: tags
