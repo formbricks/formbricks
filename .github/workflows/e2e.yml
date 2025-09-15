@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 60
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a
         env:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
@@ -158,6 +158,12 @@ jobs:
         run: |
           echo "Running rate limiter load tests with Redis/Valkey..."
           cd apps/web && pnpm vitest run modules/core/rate-limit/rate-limit-load.test.ts
+        shell: bash
+
+      - name: Run Cache Integration Tests
+        run: |
+          echo "Running cache integration tests with Redis/Valkey..."
+          cd packages/cache && pnpm vitest run src/cache-integration.test.ts
         shell: bash
 
       - name: Check for Enterprise License
