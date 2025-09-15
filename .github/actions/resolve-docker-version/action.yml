@@ -185,20 +185,20 @@ runs:
 
         # Security: Validate inputs to prevent command injection
         # Branch names should not contain dangerous characters
-        if [[ "$CURRENT_BRANCH" =~ [';|&`$(){}[\]\\] ]]; then
+        if [[ "$CURRENT_BRANCH" =~ [';|&`$(){}\\]]; then
           echo "ERROR: Branch name contains potentially dangerous characters: $CURRENT_BRANCH"
           echo "Branch names should only contain letters, numbers, hyphens, underscores, dots, and forward slashes"
           exit 1
         fi
 
         # Validate workflow_call_tag if provided
-        if [[ -n "$WORKFLOW_CALL_TAG" ]] && [[ "$WORKFLOW_CALL_TAG" =~ [';|&`$(){}[\]\\] ]]; then
+        if [[ -n "$WORKFLOW_CALL_TAG" ]] && [[ "$WORKFLOW_CALL_TAG" =~ [';|&`$(){}\\]]; then
           echo "ERROR: Workflow call tag contains potentially dangerous characters: $WORKFLOW_CALL_TAG"
           exit 1
         fi
 
         # Validate version_override if provided
-        if [[ -n "$VERSION_OVERRIDE" ]] && [[ "$VERSION_OVERRIDE" =~ [';|&`$(){}[\]\\] ]]; then
+        if [[ -n "$VERSION_OVERRIDE" ]] && [[ "$VERSION_OVERRIDE" =~ [';|&`$(){}\\]]; then
           echo "ERROR: Version override contains potentially dangerous characters: $VERSION_OVERRIDE"
           exit 1
         fi
