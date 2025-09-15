@@ -48,6 +48,7 @@ jobs:
     name: Verify Cloud Build Outputs
     runs-on: ubuntu-latest
     needs:
+<<<<<<< HEAD
       - docker-build-cloud
     steps:
       - name: Display ECR build outputs
@@ -56,3 +57,22 @@ jobs:
           echo "Image Tag: ${{ needs.docker-build-cloud.outputs.IMAGE_TAG }}"
           echo "ECR Tags:"
           echo "${{ needs.docker-build-cloud.outputs.TAGS }}"
+=======
+      - docker-build
+      - helm-chart-release
+    with:
+      VERSION: v${{ needs.docker-build.outputs.VERSION }}
+      ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
+
+  move-stable-tag:
+    name: Move stable tag to release
+    permissions:
+      contents: read
+    uses: ./.github/workflows/move-stable-tag.yml
+    needs:
+      - docker-build # Ensure release is successful first
+    with:
+      release_tag: ${{ github.event.release.tag_name }}
+      commit_sha: ${{ github.sha }}
+      is_prerelease: ${{ github.event.release.prerelease }}
+>>>>>>> 717adddeae604f2c1816d410577126f649b72193
