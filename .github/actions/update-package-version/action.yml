@@ -95,9 +95,21 @@ runs:
         fi
 
         # Additional validation: Check for reasonable version component sizes
-        IFS='.' read -ra VERSION_PARTS <<< "${VERSION%-*}" # Remove prerelease part
-        if (( VERSION_PARTS[0] > 999 || VERSION_PARTS[1] > 999 || VERSION_PARTS[2] > 999 )); then
+        # Extract base version (MAJOR.MINOR.PATCH) without prerelease/build metadata
+        if [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          BASE_VERSION="${BASH_REMATCH[1]}"
+        else
+          echo "ERROR: Could not extract base version from: $VERSION"
+          exit 1
+        fi
+
+        # Split version components safely
+        IFS='.' read -ra VERSION_PARTS <<< "$BASE_VERSION"
+
+        # Validate component sizes (should have exactly 3 parts due to regex above)
+        if (( ${VERSION_PARTS[0]} > 999 || ${VERSION_PARTS[1]} > 999 || ${VERSION_PARTS[2]} > 999 )); then
           echo "ERROR: Version components too large (max 999 each): $VERSION"
+          echo "Components: ${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
           exit 1
         fi
 
