@@ -226,10 +226,9 @@ services:
     ports:
       - 3000:3000
     volumes:
+      - uploads:/home/nextjs/apps/web/uploads/
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
-
-    
 
 volumes:
   postgres:
