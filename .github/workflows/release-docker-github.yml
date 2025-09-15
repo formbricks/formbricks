@@ -77,8 +77,25 @@ jobs:
         env:
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
-          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${RELEASE_TAG}\"/" ./apps/web/package.json
-          cat ./apps/web/package.json | grep version
+          set -euo pipefail
+
+          echo "Updating package.json version to: ${RELEASE_TAG}"
+
+          # Use jq to safely update the version field
+          jq --arg version "${RELEASE_TAG}" '.version = $version' ./apps/web/package.json > ./apps/web/package.json.tmp
+          mv ./apps/web/package.json.tmp ./apps/web/package.json
+
+          # Verify the update was successful
+          UPDATED_VERSION=$(jq -r '.version' ./apps/web/package.json)
+
+          if [[ "${UPDATED_VERSION}" != "${RELEASE_TAG}" ]]; then
+            echo "❌ Version update failed!"
+            echo "Expected: ${RELEASE_TAG}"
+            echo "Actual: ${UPDATED_VERSION}"
+            exit 1
+          fi
+
+          echo "✅ Successfully updated package.json version to: ${UPDATED_VERSION}"
 
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0

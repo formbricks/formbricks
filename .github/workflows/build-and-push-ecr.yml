@@ -169,15 +169,22 @@ jobs:
           VERSION="${IMAGE_TAG}"
 
           echo "Updating package.json version to: ${VERSION}"
-          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${VERSION}\"/" ./apps/web/package.json
+
+          # Use jq to safely update the version field
+          jq --arg version "${VERSION}" '.version = $version' ./apps/web/package.json > ./apps/web/package.json.tmp
+          mv ./apps/web/package.json.tmp ./apps/web/package.json
 
           # Verify the update was successful
-          if grep -q "\"version\": \"${VERSION}\"" ./apps/web/package.json; then
-            echo "✅ Successfully updated package.json version to: ${VERSION}"
-          else
-            echo "❌ Failed to update package.json version"
+          UPDATED_VERSION=$(jq -r '.version' ./apps/web/package.json)
+
+          if [[ "${UPDATED_VERSION}" != "${VERSION}" ]]; then
+            echo "❌ Version update failed!"
+            echo "Expected: ${VERSION}"
+            echo "Actual: ${UPDATED_VERSION}"
             exit 1
           fi
+
+          echo "✅ Successfully updated package.json version to: ${UPDATED_VERSION}"
 
       - name: Build tag list
         id: tags
