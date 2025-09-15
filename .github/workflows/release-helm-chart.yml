@@ -61,7 +61,7 @@ jobs:
       - name: Update Chart.yaml with new version
         run: |
           yq -i ".version = \"$VERSION\"" helm-chart/Chart.yaml
-          yq -i ".appVersion = \"v$VERSION\"" helm-chart/Chart.yaml
+          yq -i ".appVersion = \"$VERSION\"" helm-chart/Chart.yaml
 
       - name: Package Helm chart
         run: |

@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Image tag to push (e.g., v3.16.1, main, feature-branch)"
+        description: "Image tag to push (e.g., 3.16.1, main, feature-branch)"
         required: true
-        default: "v3.16.1"
+        default: "3.16.1"
       deploy_production:
         description: "Tag image for production deployment"
         required: false
@@ -155,8 +155,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Remove 'v' prefix if present (e.g., v3.16.1 -> 3.16.1)
-          VERSION="${IMAGE_TAG#v}"
+          # Use IMAGE_TAG directly as it's already clean SemVer
+          VERSION="${IMAGE_TAG}"
 
           echo "Updating package.json version to: ${VERSION}"
           sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${VERSION}\"/" ./apps/web/package.json

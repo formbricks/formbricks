@@ -54,15 +54,16 @@ jobs:
       - name: Get Release Tag
         id: extract_release_tag
         run: |
-          # Extract version from tag (e.g., refs/tags/v1.2.3 -> 1.2.3)
+          # Extract version from tag (e.g., refs/tags/1.2.3 -> 1.2.3)
           TAG="$GITHUB_REF"
-          TAG=${TAG#refs/tags/v}
+          TAG=${TAG#refs/tags/}
 
-          # Validate the extracted tag format
+          # Validate the extracted tag format (clean SemVer expected)
           if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
-            echo "❌ Error: Invalid release tag format after extraction. Must be semver (e.g., 1.2.3, 1.2.3-alpha)"
+            echo "❌ Error: Invalid release tag format. Must be clean semver (e.g., 1.2.3, 1.2.3-alpha)"
             echo "Original ref: $GITHUB_REF"
             echo "Extracted tag: $TAG"
+            echo "Expected: Clean SemVer without 'v' prefix"
             exit 1
           fi
 
@@ -70,11 +71,13 @@ jobs:
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
 
           echo "VERSION=$TAG" >> $GITHUB_OUTPUT
-          echo "Using tag-based version: $TAG"
+          echo "Using clean SemVer version: $TAG"
 
       - name: Update package.json version
+        env:
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
-          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.RELEASE_TAG }}\"/" ./apps/web/package.json
+          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${RELEASE_TAG}\"/" ./apps/web/package.json
           cat ./apps/web/package.json | grep version
 
       - name: Set up Depot CLI
