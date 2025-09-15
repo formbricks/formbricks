@@ -265,11 +265,13 @@ runs:
         secrets: |
           database_url=${{ env.DUMMY_DATABASE_URL }}
           encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}
+          redis_url=${{ env.DUMMY_REDIS_URL }}
           sentry_auth_token=${{ env.SENTRY_AUTH_TOKEN }}
       env:
         DEPOT_PROJECT_TOKEN: ${{ env.DEPOT_PROJECT_TOKEN }}
         DUMMY_DATABASE_URL: ${{ env.DUMMY_DATABASE_URL }}
         DUMMY_ENCRYPTION_KEY: ${{ env.DUMMY_ENCRYPTION_KEY }}
+        DUMMY_REDIS_URL: ${{ env.DUMMY_REDIS_URL }}
         SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
 
     - name: Sign GHCR image (GHCR only)
