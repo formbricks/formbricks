@@ -74,47 +74,18 @@ jobs:
           echo "Using clean SemVer version: $TAG"
 
       - name: Update package.json version
-        env:
-          RELEASE_TAG: ${{ env.RELEASE_TAG }}
-        run: |
-          set -euo pipefail
+        uses: ./.github/actions/update-package-version
+        with:
+          version: ${{ steps.extract_release_tag.outputs.VERSION }}
 
-          echo "Updating package.json version to: ${RELEASE_TAG}"
-
-          # Use jq to safely update the version field
-          jq --arg version "${RELEASE_TAG}" '.version = $version' ./apps/web/package.json > ./apps/web/package.json.tmp
-          mv ./apps/web/package.json.tmp ./apps/web/package.json
-
-          # Verify the update was successful
-          UPDATED_VERSION=$(jq -r '.version' ./apps/web/package.json)
-
-          if [[ "${UPDATED_VERSION}" != "${RELEASE_TAG}" ]]; then
-            echo "❌ Version update failed!"
-            echo "Expected: ${RELEASE_TAG}"
-            echo "Actual: ${UPDATED_VERSION}"
-            exit 1
-          fi
-
-          echo "✅ Successfully updated package.json version to: ${UPDATED_VERSION}"
-
-      - name: Set up Depot CLI
-        uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
-
-      # Install the cosign tool except on PR
-      # https://github.com/sigstore/cosign-installer
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
-
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
-      - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+      - name: Set up Docker build tools
+        uses: ./.github/actions/docker-build-setup
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          setup_cosign: "true"
+          skip_login_on_pr: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action

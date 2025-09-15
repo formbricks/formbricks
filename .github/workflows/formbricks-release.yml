@@ -47,20 +47,31 @@ jobs:
   verify-cloud-build:
     name: Verify Cloud Build Outputs
     runs-on: ubuntu-latest
+    timeout-minutes: 5 # Simple verification should be quick
     needs:
       - docker-build-cloud
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
       - name: Display ECR build outputs
+        env:
+          IMAGE_TAG: ${{ needs.docker-build-cloud.outputs.IMAGE_TAG }}
+          TAGS: ${{ needs.docker-build-cloud.outputs.TAGS }}
         run: |
+          set -euo pipefail
+
           echo "✅ ECR Build Completed Successfully"
-          echo "Image Tag: ${{ needs.docker-build-cloud.outputs.IMAGE_TAG }}"
+          echo "Image Tag: ${IMAGE_TAG}"
           echo "ECR Tags:"
-          echo "${{ needs.docker-build-cloud.outputs.TAGS }}"
+          printf '%s\n' "${TAGS}"
 
   move-stable-tag:
     name: Move stable tag to release
     permissions:
-      contents: read
+      contents: write # Required for tag push operations in called workflow
     uses: ./.github/workflows/move-stable-tag.yml
     needs:
       - docker-build-community # Ensure release is successful first

@@ -1,5 +1,15 @@
 name: Resolve Docker Version
-description: Resolves and validates Docker-compatible SemVer versions for container builds
+description: |
+  Resolves and validates Docker-compatible SemVer versions for container builds with comprehensive security.
+
+  Security Features:
+  - Command injection protection
+  - Input sanitization and validation
+  - Docker tag character restrictions
+  - Length limits and boundary checks
+  - Safe branch name handling
+
+  Supports multiple modes: release, manual override, branch auto-detection, and experimental timestamped versions.
 
 inputs:
   event_name:
@@ -14,6 +24,13 @@ inputs:
   current_branch:
     description: "Current branch name for auto-detection"
     required: true
+  experimental_mode:
+    description: "Enable experimental mode with timestamp-based versions"
+    required: false
+    default: "false"
+  ref_type:
+    description: "GitHub ref type (branch or tag) for experimental mode"
+    required: false
 
 outputs:
   version:
@@ -37,6 +54,8 @@ runs:
         VERSION_OVERRIDE: ${{ inputs.version_override }}
         WORKFLOW_CALL_TAG: ${{ inputs.workflow_call_tag }}
         CURRENT_BRANCH: ${{ inputs.current_branch }}
+        EXPERIMENTAL_MODE: ${{ inputs.experimental_mode }}
+        REF_TYPE: ${{ inputs.ref_type }}
       run: |
         set -euo pipefail
 
@@ -56,7 +75,15 @@ runs:
         # Function to generate branch-based version
         generate_branch_version() {
           local branch="$1"
-          local timestamp=$(date +%s)
+          local use_timestamp="${2:-true}"
+          local timestamp
+          
+          if [[ "$use_timestamp" == "true" ]]; then
+            timestamp=$(date +%s)
+          else
+            timestamp=""
+          fi
+          
           # Sanitize branch name for Docker compatibility
           local sanitized_branch=$(echo "$branch" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
           
@@ -68,26 +95,78 @@ runs:
           local version
           
           if [[ "$branch" == "main" ]]; then
-            version="0.0.0-dev-$timestamp"
-            echo "🚀 Main branch detected → development version: $version" >&2
+            if [[ -n "$timestamp" ]]; then
+              version="0.0.0-dev-$timestamp"
+              echo "🚀 Main branch detected → development version: $version" >&2
+            else
+              version="0.0.0-dev"
+              echo "🚀 Main branch detected → development version: $version" >&2
+            fi
           elif [[ "$branch" =~ ^(feature|feat)/ ]]; then
-            version="0.0.0-alpha-$sanitized_branch-$timestamp"
-            echo "🧪 Feature branch detected → alpha version: $version" >&2
+            if [[ -n "$timestamp" ]]; then
+              version="0.0.0-alpha-$sanitized_branch-$timestamp"
+              echo "🧪 Feature branch detected → alpha version: $version" >&2
+            else
+              version="0.0.0-alpha-$sanitized_branch"
+              echo "🧪 Feature branch detected → alpha version: $version" >&2
+            fi
           elif [[ "$branch" =~ ^(hotfix|fix)/ ]]; then
-            version="0.0.0-hotfix-$sanitized_branch-$timestamp"
-            echo "🔥 Hotfix branch detected → hotfix version: $version" >&2
+            if [[ -n "$timestamp" ]]; then
+              version="0.0.0-hotfix-$sanitized_branch-$timestamp"
+              echo "🔥 Hotfix branch detected → hotfix version: $version" >&2
+            else
+              version="0.0.0-hotfix-$sanitized_branch"
+              echo "🔥 Hotfix branch detected → hotfix version: $version" >&2
+            fi
           elif [[ "$branch" =~ ^(release|rel)/ ]]; then
-            version="0.0.0-rc-$sanitized_branch-$timestamp"
-            echo "📦 Release branch detected → release candidate version: $version" >&2
+            if [[ -n "$timestamp" ]]; then
+              version="0.0.0-rc-$sanitized_branch-$timestamp"
+              echo "📦 Release branch detected → release candidate version: $version" >&2
+            else
+              version="0.0.0-rc-$sanitized_branch"
+              echo "📦 Release branch detected → release candidate version: $version" >&2
+            fi
           else
-            version="0.0.0-alpha-$sanitized_branch-$timestamp"
-            echo "🔬 Generic branch detected → experimental version: $version" >&2
+            if [[ -n "$timestamp" ]]; then
+              version="0.0.0-alpha-$sanitized_branch-$timestamp"
+              echo "🔬 Generic branch detected → experimental version: $version" >&2
+            else
+              version="0.0.0-alpha-$sanitized_branch"
+              echo "🔬 Generic branch detected → experimental version: $version" >&2
+            fi
           fi
           
           echo "$version"
         }
 
-        # Input validation
+        # Function for experimental version generation (with timestamps)
+        generate_experimental_version() {
+          local ref_name="$1"
+          local ref_type="$2"
+          local timestamp=$(date +%s)
+          
+          if [[ "$ref_type" == "tag" ]]; then
+            # If running from a tag, use the tag name + timestamp
+            if [[ "$ref_name" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+              # Tag looks like a SemVer, use it directly (remove 'v' prefix if present)
+              local base_version=$(echo "$ref_name" | sed 's/^v//')
+              echo "${base_version}-${timestamp}"
+              echo "🏷️  SemVer tag detected → timestamped version: ${base_version}-${timestamp}" >&2
+            else
+              # Tag is not SemVer, treat as prerelease
+              local sanitized_tag=$(echo "$ref_name" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
+              echo "0.0.0-${sanitized_tag}-${timestamp}"
+              echo "🏷️  Non-SemVer tag detected → experimental version: 0.0.0-${sanitized_tag}-${timestamp}" >&2
+            fi
+          else
+            # Running from branch, use branch name as prerelease + timestamp
+            local sanitized_branch=$(echo "$ref_name" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
+            echo "0.0.0-${sanitized_branch}-${timestamp}"
+            echo "🌿 Branch detected → experimental version: 0.0.0-${sanitized_branch}-${timestamp}" >&2
+          fi
+        }
+
+        # Input validation and sanitization
         if [[ -z "$EVENT_NAME" ]]; then
           echo "❌ Error: event_name input is required"
           exit 1
@@ -101,6 +180,26 @@ runs:
 
         if [[ -z "$CURRENT_BRANCH" ]]; then
           echo "❌ Error: current_branch input is required"
+          exit 1
+        fi
+
+        # Security: Validate inputs to prevent command injection
+        # Branch names should not contain dangerous characters
+        if [[ "$CURRENT_BRANCH" =~ [';|&`$(){}[\]\\] ]]; then
+          echo "❌ Error: Branch name contains potentially dangerous characters: $CURRENT_BRANCH"
+          echo "Branch names should only contain letters, numbers, hyphens, underscores, dots, and forward slashes"
+          exit 1
+        fi
+
+        # Validate workflow_call_tag if provided
+        if [[ -n "$WORKFLOW_CALL_TAG" ]] && [[ "$WORKFLOW_CALL_TAG" =~ [';|&`$(){}[\]\\] ]]; then
+          echo "❌ Error: Workflow call tag contains potentially dangerous characters: $WORKFLOW_CALL_TAG"
+          exit 1
+        fi
+
+        # Validate version_override if provided
+        if [[ -n "$VERSION_OVERRIDE" ]] && [[ "$VERSION_OVERRIDE" =~ [';|&`$(){}[\]\\] ]]; then
+          echo "❌ Error: Version override contains potentially dangerous characters: $VERSION_OVERRIDE"
           exit 1
         fi
 
@@ -135,10 +234,18 @@ runs:
             SOURCE="override"
             echo "🎯 Using explicit version override: $RESOLVED_VERSION"
           else
-            # Auto-detect from branch
-            echo "🔍 Auto-detecting version from branch: $CURRENT_BRANCH"
-            RESOLVED_VERSION=$(generate_branch_version "$CURRENT_BRANCH")
-            SOURCE="branch"
+            # Check for experimental mode
+            if [[ "$EXPERIMENTAL_MODE" == "true" ]]; then
+              # Use experimental version generation (always with timestamps)
+              echo "🧪 Experimental mode: generating timestamped version"
+              RESOLVED_VERSION=$(generate_experimental_version "$CURRENT_BRANCH" "${REF_TYPE:-branch}")
+              SOURCE="experimental"
+            else
+              # Auto-detect from branch (standard mode)
+              echo "🔍 Auto-detecting version from branch: ${CURRENT_BRANCH}"
+              RESOLVED_VERSION=$(generate_branch_version "$CURRENT_BRANCH")
+              SOURCE="branch"
+            fi
             echo "Generated version: $RESOLVED_VERSION"
           fi
         fi
