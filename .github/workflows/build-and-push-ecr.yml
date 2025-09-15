@@ -159,13 +159,14 @@ jobs:
           fi
 
       - name: Update package.json version
+        if: github.event_name == 'workflow_call'
         shell: bash
         env:
           IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
         run: |
           set -euo pipefail
 
-          # Use IMAGE_TAG directly as it's already clean SemVer
+          # Use IMAGE_TAG directly as it's already clean SemVer for releases
           VERSION="${IMAGE_TAG}"
 
           echo "Updating package.json version to: ${VERSION}"
@@ -185,6 +186,13 @@ jobs:
           fi
 
           echo "✅ Successfully updated package.json version to: ${UPDATED_VERSION}"
+
+      - name: Skip package.json update for manual builds
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "ℹ️  Skipping package.json version update for manual build"
+          echo "Manual builds use experimental tags and should not modify package.json"
+          echo "Current package.json version will remain unchanged"
 
       - name: Build tag list
         id: tags
