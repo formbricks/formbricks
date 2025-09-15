@@ -184,22 +184,33 @@ runs:
         fi
 
         # Security: Validate inputs to prevent command injection
-        # Branch names should not contain dangerous characters
-        if [[ "$CURRENT_BRANCH" =~ [';|&`$(){}\\]]; then
-          echo "ERROR: Branch name contains potentially dangerous characters: $CURRENT_BRANCH"
-          echo "Branch names should only contain letters, numbers, hyphens, underscores, dots, and forward slashes"
+        # Use grep to check for dangerous characters (more reliable than bash regex)
+        validate_input() {
+          local input="$1"
+          local name="$2"
+          
+          # Check for dangerous characters using grep
+          if echo "$input" | grep -q '[;|&`$(){}\\[:space:]]'; then
+            echo "ERROR: $name contains potentially dangerous characters: $input"
+            echo "Input should only contain letters, numbers, hyphens, underscores, dots, and forward slashes"
+            return 1
+          fi
+          
+          return 0
+        }
+
+        # Validate current branch
+        if ! validate_input "$CURRENT_BRANCH" "Branch name"; then
           exit 1
         fi
 
         # Validate workflow_call_tag if provided
-        if [[ -n "$WORKFLOW_CALL_TAG" ]] && [[ "$WORKFLOW_CALL_TAG" =~ [';|&`$(){}\\]]; then
-          echo "ERROR: Workflow call tag contains potentially dangerous characters: $WORKFLOW_CALL_TAG"
+        if [[ -n "$WORKFLOW_CALL_TAG" ]] && ! validate_input "$WORKFLOW_CALL_TAG" "Workflow call tag"; then
           exit 1
         fi
 
         # Validate version_override if provided
-        if [[ -n "$VERSION_OVERRIDE" ]] && [[ "$VERSION_OVERRIDE" =~ [';|&`$(){}\\]]; then
-          echo "ERROR: Version override contains potentially dangerous characters: $VERSION_OVERRIDE"
+        if [[ -n "$VERSION_OVERRIDE" ]] && ! validate_input "$VERSION_OVERRIDE" "Version override"; then
           exit 1
         fi
 
