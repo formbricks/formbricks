@@ -65,7 +65,7 @@ runs:
           local context="$2"
           
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
-            echo "❌ Error: Invalid $context format. Must be semver without build metadata (e.g., 1.2.3, 1.2.3-alpha)"
+            echo "ERROR: Invalid $context format. Must be semver without build metadata (e.g., 1.2.3, 1.2.3-alpha)"
             echo "Provided: $version"
             echo "Note: Docker tags cannot contain '+' characters. Use prerelease identifiers instead."
             exit 1
@@ -90,49 +90,49 @@ runs:
           # Additional safety: truncate if too long (reserve space for prefix and timestamp)
           if (( ${#sanitized_branch} > 80 )); then
             sanitized_branch="${sanitized_branch:0:80}"
-            echo "ℹ️  Branch name truncated for Docker compatibility" >&2
+            echo "INFO: Branch name truncated for Docker compatibility" >&2
           fi
           local version
           
           if [[ "$branch" == "main" ]]; then
             if [[ -n "$timestamp" ]]; then
               version="0.0.0-dev-$timestamp"
-              echo "🚀 Main branch detected → development version: $version" >&2
+              echo "INFO: Main branch detected - development version: $version" >&2
             else
               version="0.0.0-dev"
-              echo "🚀 Main branch detected → development version: $version" >&2
+              echo "INFO: Main branch detected - development version: $version" >&2
             fi
           elif [[ "$branch" =~ ^(feature|feat)/ ]]; then
             if [[ -n "$timestamp" ]]; then
               version="0.0.0-alpha-$sanitized_branch-$timestamp"
-              echo "🧪 Feature branch detected → alpha version: $version" >&2
+              echo "INFO: Feature branch detected - alpha version: $version" >&2
             else
               version="0.0.0-alpha-$sanitized_branch"
-              echo "🧪 Feature branch detected → alpha version: $version" >&2
+              echo "INFO: Feature branch detected - alpha version: $version" >&2
             fi
           elif [[ "$branch" =~ ^(hotfix|fix)/ ]]; then
             if [[ -n "$timestamp" ]]; then
               version="0.0.0-hotfix-$sanitized_branch-$timestamp"
-              echo "🔥 Hotfix branch detected → hotfix version: $version" >&2
+              echo "INFO: Hotfix branch detected - hotfix version: $version" >&2
             else
               version="0.0.0-hotfix-$sanitized_branch"
-              echo "🔥 Hotfix branch detected → hotfix version: $version" >&2
+              echo "INFO: Hotfix branch detected - hotfix version: $version" >&2
             fi
           elif [[ "$branch" =~ ^(release|rel)/ ]]; then
             if [[ -n "$timestamp" ]]; then
               version="0.0.0-rc-$sanitized_branch-$timestamp"
-              echo "📦 Release branch detected → release candidate version: $version" >&2
+              echo "INFO: Release branch detected - release candidate version: $version" >&2
             else
               version="0.0.0-rc-$sanitized_branch"
-              echo "📦 Release branch detected → release candidate version: $version" >&2
+              echo "INFO: Release branch detected - release candidate version: $version" >&2
             fi
           else
             if [[ -n "$timestamp" ]]; then
               version="0.0.0-alpha-$sanitized_branch-$timestamp"
-              echo "🔬 Generic branch detected → experimental version: $version" >&2
+              echo "INFO: Generic branch detected - experimental version: $version" >&2
             else
               version="0.0.0-alpha-$sanitized_branch"
-              echo "🔬 Generic branch detected → experimental version: $version" >&2
+              echo "INFO: Generic branch detected - experimental version: $version" >&2
             fi
           fi
           
@@ -151,55 +151,55 @@ runs:
               # Tag looks like a SemVer, use it directly (remove 'v' prefix if present)
               local base_version=$(echo "$ref_name" | sed 's/^v//')
               echo "${base_version}-${timestamp}"
-              echo "🏷️  SemVer tag detected → timestamped version: ${base_version}-${timestamp}" >&2
+              echo "INFO: SemVer tag detected - timestamped version: ${base_version}-${timestamp}" >&2
             else
               # Tag is not SemVer, treat as prerelease
               local sanitized_tag=$(echo "$ref_name" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
               echo "0.0.0-${sanitized_tag}-${timestamp}"
-              echo "🏷️  Non-SemVer tag detected → experimental version: 0.0.0-${sanitized_tag}-${timestamp}" >&2
+              echo "INFO: Non-SemVer tag detected - experimental version: 0.0.0-${sanitized_tag}-${timestamp}" >&2
             fi
           else
             # Running from branch, use branch name as prerelease + timestamp
             local sanitized_branch=$(echo "$ref_name" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
             echo "0.0.0-${sanitized_branch}-${timestamp}"
-            echo "🌿 Branch detected → experimental version: 0.0.0-${sanitized_branch}-${timestamp}" >&2
+            echo "INFO: Branch detected - experimental version: 0.0.0-${sanitized_branch}-${timestamp}" >&2
           fi
         }
 
         # Input validation and sanitization
         if [[ -z "$EVENT_NAME" ]]; then
-          echo "❌ Error: event_name input is required"
+          echo "ERROR: event_name input is required"
           exit 1
         fi
 
         if [[ "$EVENT_NAME" != "workflow_call" && "$EVENT_NAME" != "workflow_dispatch" ]]; then
-          echo "❌ Error: event_name must be 'workflow_call' or 'workflow_dispatch'"
+          echo "ERROR: event_name must be 'workflow_call' or 'workflow_dispatch'"
           echo "Provided: $EVENT_NAME"
           exit 1
         fi
 
         if [[ -z "$CURRENT_BRANCH" ]]; then
-          echo "❌ Error: current_branch input is required"
+          echo "ERROR: current_branch input is required"
           exit 1
         fi
 
         # Security: Validate inputs to prevent command injection
         # Branch names should not contain dangerous characters
         if [[ "$CURRENT_BRANCH" =~ [';|&`$(){}[\]\\] ]]; then
-          echo "❌ Error: Branch name contains potentially dangerous characters: $CURRENT_BRANCH"
+          echo "ERROR: Branch name contains potentially dangerous characters: $CURRENT_BRANCH"
           echo "Branch names should only contain letters, numbers, hyphens, underscores, dots, and forward slashes"
           exit 1
         fi
 
         # Validate workflow_call_tag if provided
         if [[ -n "$WORKFLOW_CALL_TAG" ]] && [[ "$WORKFLOW_CALL_TAG" =~ [';|&`$(){}[\]\\] ]]; then
-          echo "❌ Error: Workflow call tag contains potentially dangerous characters: $WORKFLOW_CALL_TAG"
+          echo "ERROR: Workflow call tag contains potentially dangerous characters: $WORKFLOW_CALL_TAG"
           exit 1
         fi
 
         # Validate version_override if provided
         if [[ -n "$VERSION_OVERRIDE" ]] && [[ "$VERSION_OVERRIDE" =~ [';|&`$(){}[\]\\] ]]; then
-          echo "❌ Error: Version override contains potentially dangerous characters: $VERSION_OVERRIDE"
+          echo "ERROR: Version override contains potentially dangerous characters: $VERSION_OVERRIDE"
           exit 1
         fi
 
@@ -209,7 +209,7 @@ runs:
         if [[ "$EVENT_NAME" == "workflow_call" ]]; then
           # Release workflow - use provided tag
           if [[ -z "$WORKFLOW_CALL_TAG" ]]; then
-            echo "❌ Error: workflow_call_tag input is required for workflow_call events"
+            echo "ERROR: workflow_call_tag input is required for workflow_call events"
             exit 1
           fi
           
@@ -219,11 +219,11 @@ runs:
           RESOLVED_VERSION="${WORKFLOW_CALL_TAG,,}"
           if [[ "$WORKFLOW_CALL_TAG" != "$RESOLVED_VERSION" ]]; then
             NORMALIZED="true"
-            echo "ℹ️  Original tag contained uppercase characters, normalized: $WORKFLOW_CALL_TAG → $RESOLVED_VERSION"
+            echo "INFO: Original tag contained uppercase characters, normalized: $WORKFLOW_CALL_TAG -> $RESOLVED_VERSION"
           fi
           
           SOURCE="release"
-          echo "🎯 Using release version: $RESOLVED_VERSION"
+          echo "INFO: Using release version: $RESOLVED_VERSION"
           
         else
           # Manual workflow_dispatch
@@ -232,17 +232,17 @@ runs:
             validate_semver "$VERSION_OVERRIDE" "version override"
             RESOLVED_VERSION="$VERSION_OVERRIDE"
             SOURCE="override"
-            echo "🎯 Using explicit version override: $RESOLVED_VERSION"
+            echo "INFO: Using explicit version override: $RESOLVED_VERSION"
           else
             # Check for experimental mode
             if [[ "$EXPERIMENTAL_MODE" == "true" ]]; then
               # Use experimental version generation (always with timestamps)
-              echo "🧪 Experimental mode: generating timestamped version"
+              echo "INFO: Experimental mode: generating timestamped version"
               RESOLVED_VERSION=$(generate_experimental_version "$CURRENT_BRANCH" "${REF_TYPE:-branch}")
               SOURCE="experimental"
             else
               # Auto-detect from branch (standard mode)
-              echo "🔍 Auto-detecting version from branch: ${CURRENT_BRANCH}"
+              echo "INFO: Auto-detecting version from branch: ${CURRENT_BRANCH}"
               RESOLVED_VERSION=$(generate_branch_version "$CURRENT_BRANCH")
               SOURCE="branch"
             fi
@@ -252,30 +252,30 @@ runs:
 
         # Final validation - ensure result is valid Docker tag
         if [[ -z "$RESOLVED_VERSION" ]]; then
-          echo "❌ Error: Failed to resolve version"
+          echo "ERROR: Failed to resolve version"
           exit 1
         fi
 
         if (( ${#RESOLVED_VERSION} > 128 )); then
-          echo "❌ Error: Version must be at most 128 characters (Docker limitation)"
+          echo "ERROR: Version must be at most 128 characters (Docker limitation)"
           echo "Generated version: $RESOLVED_VERSION (${#RESOLVED_VERSION} chars)"
           exit 1
         fi
 
         if [[ ! "$RESOLVED_VERSION" =~ ^[a-z0-9._-]+$ ]]; then
-          echo "❌ Error: Version contains invalid characters for Docker tags"
+          echo "ERROR: Version contains invalid characters for Docker tags"
           echo "Version: $RESOLVED_VERSION"
           exit 1
         fi
 
         if [[ "$RESOLVED_VERSION" =~ ^[.-] || "$RESOLVED_VERSION" =~ [.-]$ ]]; then
-          echo "❌ Error: Version must not start or end with '.' or '-'"
+          echo "ERROR: Version must not start or end with '.' or '-'"
           echo "Version: $RESOLVED_VERSION"
           exit 1
         fi
 
         # Output results
-        echo "✅ Resolved Docker version: $RESOLVED_VERSION (source: $SOURCE)"
+        echo "SUCCESS: Resolved Docker version: $RESOLVED_VERSION (source: $SOURCE)"
         echo "version=$RESOLVED_VERSION" >> $GITHUB_OUTPUT
         echo "source=$SOURCE" >> $GITHUB_OUTPUT
         echo "normalized=$NORMALIZED" >> $GITHUB_OUTPUT

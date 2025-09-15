@@ -38,20 +38,20 @@ runs:
 
         # Validate inputs
         if [[ -z "$VERSION" ]]; then
-          echo "❌ Error: version input is required"
+          echo "ERROR: version input is required"
           exit 1
         fi
 
         # Security: Validate package_path to prevent path traversal attacks
         # Only allow paths within the workspace and must end with package.json
         if [[ "$PACKAGE_PATH" =~ \.\./|^/|^~ ]]; then
-          echo "❌ Error: Invalid package path - path traversal detected: $PACKAGE_PATH"
+          echo "ERROR: Invalid package path - path traversal detected: $PACKAGE_PATH"
           echo "Package path must be relative to workspace root and cannot contain '../', start with '/', or '~'"
           exit 1
         fi
 
         if [[ ! "$PACKAGE_PATH" =~ package\.json$ ]]; then
-          echo "❌ Error: Package path must end with 'package.json': $PACKAGE_PATH"
+          echo "ERROR: Package path must end with 'package.json': $PACKAGE_PATH"
           exit 1
         fi
 
@@ -68,13 +68,13 @@ runs:
         # Use shell string matching to ensure RESOLVED_PATH is within workspace
         # This is more secure than regex and handles edge cases properly
         if [[ "$RESOLVED_PATH" != "$WORKSPACE_ROOT"* ]]; then
-          echo "❌ Error: Resolved path is outside workspace: $RESOLVED_PATH"
+          echo "ERROR: Resolved path is outside workspace: $RESOLVED_PATH"
           echo "Workspace root: $WORKSPACE_ROOT"
           exit 1
         fi
 
         if [[ ! -f "$RESOLVED_PATH" ]]; then
-          echo "❌ Error: package.json not found at: $RESOLVED_PATH"
+          echo "ERROR: package.json not found at: $RESOLVED_PATH"
           exit 1
         fi
 
@@ -83,12 +83,12 @@ runs:
 
         # Validate SemVer format with additional security checks
         if [[ ${#VERSION} -gt 128 ]]; then
-          echo "❌ Error: Version string too long (${#VERSION} chars, max 128): $VERSION"
+          echo "ERROR: Version string too long (${#VERSION} chars, max 128): $VERSION"
           exit 1
         fi
 
         if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
-          echo "❌ Error: Invalid SemVer format: $VERSION"
+          echo "ERROR: Invalid SemVer format: $VERSION"
           echo "Expected format: MAJOR.MINOR.PATCH[-PRERELEASE]"
           echo "Only alphanumeric characters, dots, and hyphens allowed in prerelease"
           exit 1
@@ -97,7 +97,7 @@ runs:
         # Additional validation: Check for reasonable version component sizes
         IFS='.' read -ra VERSION_PARTS <<< "${VERSION%-*}" # Remove prerelease part
         if (( VERSION_PARTS[0] > 999 || VERSION_PARTS[1] > 999 || VERSION_PARTS[2] > 999 )); then
-          echo "❌ Error: Version components too large (max 999 each): $VERSION"
+          echo "ERROR: Version components too large (max 999 each): $VERSION"
           exit 1
         fi
 
@@ -109,21 +109,21 @@ runs:
 
         # Use jq to safely update the version field with error handling
         if ! jq --arg version "$VERSION" '.version = $version' "$PACKAGE_PATH" > "${PACKAGE_PATH}.tmp"; then
-          echo "❌ Error: jq failed to process package.json"
+          echo "ERROR: jq failed to process package.json"
           rm -f "${PACKAGE_PATH}.tmp" "$BACKUP_PATH"
           exit 1
         fi
 
         # Validate the generated JSON before applying changes
         if ! jq empty "${PACKAGE_PATH}.tmp" 2>/dev/null; then
-          echo "❌ Error: Generated invalid JSON"
+          echo "ERROR: Generated invalid JSON"
           rm -f "${PACKAGE_PATH}.tmp" "$BACKUP_PATH"
           exit 1
         fi
 
         # Atomic move operation
         if ! mv "${PACKAGE_PATH}.tmp" "$PACKAGE_PATH"; then
-          echo "❌ Error: Failed to update package.json"
+          echo "ERROR: Failed to update package.json"
           # Restore backup
           mv "$BACKUP_PATH" "$PACKAGE_PATH"
           exit 1
@@ -133,7 +133,7 @@ runs:
         UPDATED_VERSION=$(jq -r '.version' "$PACKAGE_PATH" 2>/dev/null)
 
         if [[ "$UPDATED_VERSION" != "$VERSION" ]]; then
-          echo "❌ Version update failed!"
+          echo "ERROR: Version update failed!"
           echo "Expected: $VERSION"
           echo "Actual: $UPDATED_VERSION"
           # Restore backup
@@ -144,5 +144,5 @@ runs:
         # Clean up backup on success
         rm -f "$BACKUP_PATH"
 
-        echo "✅ Successfully updated package.json version to: $UPDATED_VERSION"
+        echo "SUCCESS: Updated package.json version to: $UPDATED_VERSION"
         echo "updated_version=$UPDATED_VERSION" >> $GITHUB_OUTPUT

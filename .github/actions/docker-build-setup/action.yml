@@ -38,23 +38,23 @@ runs:
 
         # Security: Validate registry input to prevent malicious URLs
         if [[ ! "$REGISTRY" =~ ^[a-zA-Z0-9.-]+(\:[0-9]+)?(/[a-zA-Z0-9._-]+)*/?$ ]]; then
-          echo "❌ Error: Invalid registry format: $REGISTRY"
+          echo "ERROR: Invalid registry format: $REGISTRY"
           echo "Registry must be a valid hostname optionally with port and path"
           exit 1
         fi
 
         # Validate boolean inputs
         if [[ "$SETUP_COSIGN" != "true" && "$SETUP_COSIGN" != "false" ]]; then
-          echo "❌ Error: setup_cosign must be 'true' or 'false', got: $SETUP_COSIGN"
+          echo "ERROR: setup_cosign must be 'true' or 'false', got: $SETUP_COSIGN"
           exit 1
         fi
 
         if [[ "$SKIP_LOGIN_ON_PR" != "true" && "$SKIP_LOGIN_ON_PR" != "false" ]]; then
-          echo "❌ Error: skip_login_on_pr must be 'true' or 'false', got: $SKIP_LOGIN_ON_PR"
+          echo "ERROR: skip_login_on_pr must be 'true' or 'false', got: $SKIP_LOGIN_ON_PR"
           exit 1
         fi
 
-        echo "✅ Input validation passed"
+        echo "SUCCESS: Input validation passed"
 
     - name: Set up Depot CLI
       uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
@@ -80,16 +80,16 @@ runs:
 
         # Verify Depot CLI is available
         if ! command -v depot >/dev/null 2>&1; then
-          echo "❌ Error: Depot CLI not found in PATH"
+          echo "ERROR: Depot CLI not found in PATH"
           exit 1
         fi
 
         # Verify cosign if it should be installed
         if [[ "${{ inputs.setup_cosign }}" == "true" ]] && [[ "${{ inputs.skip_login_on_pr }}" == "false" || "${{ github.event_name }}" != "pull_request" ]]; then
           if ! command -v cosign >/dev/null 2>&1; then
-            echo "❌ Error: Cosign not found in PATH despite being requested"
+            echo "ERROR: Cosign not found in PATH despite being requested"
             exit 1
           fi
         fi
 
-        echo "✅ Docker build setup completed successfully"
+        echo "SUCCESS: Docker build setup completed successfully"
