@@ -43,3 +43,16 @@ jobs:
       - docker-build-community
     with:
       VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
+
+  verify-cloud-build:
+    name: Verify Cloud Build Outputs
+    runs-on: ubuntu-latest
+    needs:
+      - docker-build-cloud
+    steps:
+      - name: Display ECR build outputs
+        run: |
+          echo "✅ ECR Build Completed Successfully"
+          echo "Image Tag: ${{ needs.docker-build-cloud.outputs.IMAGE_TAG }}"
+          echo "ECR Tags:"
+          echo "${{ needs.docker-build-cloud.outputs.TAGS }}"

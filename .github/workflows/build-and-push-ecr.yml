@@ -28,6 +28,13 @@ on:
         required: false
         type: boolean
         default: false
+    outputs:
+      IMAGE_TAG:
+        description: "Normalized image tag used for the build"
+        value: ${{ jobs.build-and-push.outputs.IMAGE_TAG }}
+      TAGS:
+        description: "Newline-separated list of ECR tags pushed"
+        value: ${{ jobs.build-and-push.outputs.tags }}
 
 permissions:
   contents: read
@@ -46,6 +53,9 @@ jobs:
     name: Build and Push
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    outputs:
+      IMAGE_TAG: ${{ steps.image_tag.outputs.IMAGE_TAG }}
+      tags: ${{ steps.tags.outputs.tags }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
