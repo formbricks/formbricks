@@ -1,6 +1,6 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
-import { getOrganizationAccessKeyDisplayName, hasPermission } from "./utils";
+import { hasPermission } from "./utils";
 
 describe("hasPermission", () => {
   const envId = "env1";
@@ -81,19 +81,5 @@ describe("hasPermission", () => {
       },
     ];
     expect(hasPermission(permissions, "other", "GET")).toBe(false);
-  });
-});
-
-describe("getOrganizationAccessKeyDisplayName", () => {
-  test("returns tolgee string for accessControl", () => {
-    const t = vi.fn((k) => k);
-    expect(getOrganizationAccessKeyDisplayName("accessControl", t)).toBe(
-      "environments.project.api_keys.access_control"
-    );
-    expect(t).toHaveBeenCalledWith("environments.project.api_keys.access_control");
-  });
-  test("returns tolgee string for other keys", () => {
-    const t = vi.fn((k) => k);
-    expect(getOrganizationAccessKeyDisplayName("otherKey", t)).toBe("otherKey");
   });
 });
