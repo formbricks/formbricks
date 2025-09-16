@@ -228,6 +228,10 @@ runs:
         echo "Generated GHCR tags:"
         echo -e "${TAGS}"
 
+        # Debug: Show what will be passed to Docker build
+        echo "DEBUG: Tags for Docker build step:"
+        echo -e "${TAGS}"
+
         {
           echo "tags<<EOF"
           echo -e "${TAGS}"
@@ -244,6 +248,24 @@ runs:
           type=ref,event=branch
           type=raw,value=${{ steps.version.outputs.version }}
 
+    - name: Debug Docker build tags
+      shell: bash
+      run: |
+        echo "=== DEBUG: Docker Build Configuration ==="
+        echo "Registry Type: ${{ inputs.registry_type }}"
+        echo "Experimental Mode: ${{ inputs.experimental_mode }}"
+        echo "Event Name: ${{ github.event_name }}"
+        echo "Is Prerelease: ${{ inputs.is_prerelease }}"
+        echo "Version: ${{ steps.version.outputs.version }}"
+
+        if [[ "${{ inputs.registry_type }}" == "ecr" ]]; then
+          echo "ECR Tags: ${{ steps.ecr-tags.outputs.tags }}"
+        elif [[ "${{ inputs.experimental_mode }}" == "true" ]]; then
+          echo "GHCR Experimental Tags: ${{ steps.ghcr-meta-experimental.outputs.tags }}"
+        else
+          echo "GHCR Extra Tags: ${{ steps.ghcr-extra-tags.outputs.tags }}"
+        fi
+
     - name: Build and push Docker image
       id: build
       uses: depot/build-push-action@636daae76684e38c301daa0c5eca1c095b24e780 # v1.14.0
@@ -254,7 +276,7 @@ runs:
         file: ${{ inputs.dockerfile }}
         platforms: linux/amd64,linux/arm64
         push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags || steps.ghcr-extra-tags.outputs.tags) }}
+        tags: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && steps.ghcr-extra-tags.outputs.tags) }}
         labels: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.labels || '' }}
         secrets: |
           database_url=${{ env.DUMMY_DATABASE_URL }}
