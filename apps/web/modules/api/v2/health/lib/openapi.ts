@@ -8,6 +8,7 @@ export const healthCheckEndpoint: ZodOpenApiOperationObject = {
   description: "Check the health status of critical application dependencies including database and cache.",
   requestParams: {},
   operationId: "healthCheck",
+  security: [],
   responses: {
     "200": {
       description:

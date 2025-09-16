@@ -7,6 +7,8 @@ servers:
   - url: https://app.formbricks.com/api/v2
     description: Formbricks Cloud
 tags:
+  - name: Health
+    description: Operations for checking critical application dependencies health status.
   - name: Roles
     description: Operations for managing roles.
   - name: Me
@@ -391,6 +393,36 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks API Server
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health Check
+      description: Check the health status of critical application dependencies
+        including database and cache.
+      operationId: healthCheck
+      security: []
+      responses:
+        "200":
+          description: Health check completed successfully. Check individual dependency
+            status in response data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  main_database:
+                    type: boolean
+                    description: Main database connection status - true if database is reachable and
+                      running
+                    example: true
+                  cache_database:
+                    type: boolean
+                    description: Cache database connection status - true if cache database is
+                      reachable and running
+                    example: true
+                title: Health Check Response
+                description: Health check status for critical application dependencies
   /roles:
     get:
       operationId: getRoles
@@ -3500,6 +3532,24 @@ components:
       name: x-api-key
       description: Use your Formbricks x-api-key to authenticate.
   schemas:
+    health:
+      type: object
+      properties:
+        main_database:
+          type: boolean
+          description: Main database connection status - true if database is reachable and
+            running
+          example: true
+        cache_database:
+          type: boolean
+          description: Cache database connection status - true if cache database is
+            reachable and running
+          example: true
+      required:
+        - main_database
+        - cache_database
+      title: Health Check Response
+      description: Health check status for critical application dependencies
     role:
       type: object
       properties:
@@ -3835,15 +3885,12 @@ components:
           type: string
           enum:
             - link
-            - web
-            - website
             - app
           description: The type of the survey
         status:
           type: string
           enum:
             - draft
-            - scheduled
             - inProgress
             - paused
             - completed
@@ -4347,7 +4394,6 @@ components:
         - createdBy
         - environmentId
         - endings
-        - thankYouCard
         - hiddenFields
         - variables
         - displayOption
@@ -4365,7 +4411,6 @@ components:
         - isSingleResponsePerEmailEnabled
         - inlineTriggers
         - isBackButtonHidden
-        - verifyEmail
         - recaptcha
         - metadata
         - displayPercentage
