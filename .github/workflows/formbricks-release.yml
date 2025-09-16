@@ -8,8 +8,8 @@ permissions:
   contents: read
 
 jobs:
-  docker-build:
-    name: Build & release docker image
+  docker-build-community:
+    name: Build & release community docker image
     permissions:
       contents: read
       packages: write
@@ -19,6 +19,19 @@ jobs:
     with:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
 
+  docker-build-cloud:
+    name: Build & push Formbricks Cloud to ECR
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-and-push-ecr.yml
+    secrets: inherit
+    with:
+      image_tag: ${{ needs.docker-build-community.outputs.VERSION }}
+      IS_PRERELEASE: ${{ github.event.release.prerelease }}
+    needs:
+      - docker-build-community
+
   helm-chart-release:
     name: Release Helm Chart
     permissions:
@@ -27,31 +40,41 @@ jobs:
     uses: ./.github/workflows/release-helm-chart.yml
     secrets: inherit
     needs:
-      - docker-build
+      - docker-build-community
     with:
-      VERSION: ${{ needs.docker-build.outputs.VERSION }}
+      VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
 
-  deploy-formbricks-cloud:
-    name: Deploy Helm Chart to Formbricks Cloud
-    permissions:
-      contents: read
-      id-token: write
-    secrets: inherit
-    uses: ./.github/workflows/deploy-formbricks-cloud.yml
+  verify-cloud-build:
+    name: Verify Cloud Build Outputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5 # Simple verification should be quick
     needs:
-      - docker-build
-      - helm-chart-release
-    with:
-      VERSION: v${{ needs.docker-build.outputs.VERSION }}
-      ENVIRONMENT: ${{ github.event.release.prerelease && 'staging' || 'production' }}
+      - docker-build-cloud
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Display ECR build outputs
+        env:
+          IMAGE_TAG: ${{ needs.docker-build-cloud.outputs.IMAGE_TAG }}
+          TAGS: ${{ needs.docker-build-cloud.outputs.TAGS }}
+        run: |
+          set -euo pipefail
+
+          echo "✅ ECR Build Completed Successfully"
+          echo "Image Tag: ${IMAGE_TAG}"
+          echo "ECR Tags:"
+          printf '%s\n' "${TAGS}"
 
   move-stable-tag:
     name: Move stable tag to release
     permissions:
-      contents: read
+      contents: write # Required for tag push operations in called workflow
     uses: ./.github/workflows/move-stable-tag.yml
     needs:
-      - docker-build # Ensure release is successful first
+      - docker-build-community # Ensure release is successful first
     with:
       release_tag: ${{ github.event.release.tag_name }}
       commit_sha: ${{ github.sha }}
