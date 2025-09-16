@@ -1,7 +1,6 @@
 import { ApiKeyPermission } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import React from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
@@ -104,6 +103,8 @@ describe("ViewPermissionModal", () => {
     setOpen: vi.fn(),
     projects: mockProjects,
     apiKey: mockApiKey,
+    onSubmit: vi.fn(),
+    isUpdating: false,
   };
 
   test("renders the modal with correct title", () => {
@@ -154,7 +155,7 @@ describe("ViewPermissionModal", () => {
     expect(screen.getByTestId("organization-access-accessControl-read")).toBeDisabled();
     expect(screen.getByTestId("organization-access-accessControl-write")).not.toBeChecked();
     expect(screen.getByTestId("organization-access-accessControl-write")).toBeDisabled();
-    expect(screen.getByTestId("organization-access-otherAccess-read")).not.toBeChecked();
+    expect(screen.getByTestId("organization-access-otherAccess-read")).toBeChecked();
     expect(screen.getByTestId("organization-access-otherAccess-write")).toBeChecked();
   });
 });
