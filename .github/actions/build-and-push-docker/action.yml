@@ -160,28 +160,23 @@ runs:
         # Start with the base image tag
         TAGS="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
 
-        # Handle automatic tagging for workflow_call (releases)
-        if [[ "${{ github.event_name }}" == "workflow_call" ]]; then
-          if [[ "${IS_PRERELEASE}" == "true" ]]; then
-            TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
-            echo "Adding staging tag for prerelease"
-          else
-            TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:production"
-            echo "Adding production tag for stable release"
-          fi
+        # Handle automatic tagging based on release type
+        if [[ "${IS_PRERELEASE}" == "true" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
+          echo "Adding staging tag for prerelease"
+        elif [[ "${IS_PRERELEASE}" == "false" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:production"
+          echo "Adding production tag for stable release"
         fi
 
-        # Handle manual tagging for workflow_dispatch
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          if [[ "${DEPLOY_PRODUCTION}" == "true" ]]; then
-            TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:production"
-            echo "Adding production tag (manual)"
-          fi
-          
-          if [[ "${DEPLOY_STAGING}" == "true" ]]; then
-            TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
-            echo "Adding staging tag (manual)"
-          fi
+        # Handle manual deployment overrides
+        if [[ "${DEPLOY_PRODUCTION}" == "true" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:production"
+          echo "Adding production tag (manual override)"
+        fi
+        if [[ "${DEPLOY_STAGING}" == "true" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
+          echo "Adding staging tag (manual override)"
         fi
 
         echo "ECR tags generated:"
@@ -194,7 +189,7 @@ runs:
         } >> "${GITHUB_OUTPUT}"
 
     - name: Generate additional GHCR tags for releases
-      if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && github.event_name == 'workflow_call' }}
+      if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' }}
       id: ghcr-extra-tags
       shell: bash
       env:
@@ -291,7 +286,7 @@ runs:
         SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
 
     - name: Sign GHCR image (GHCR only)
-      if: ${{ inputs.registry_type == 'ghcr' && github.event_name != 'pull_request' }}
+      if: ${{ inputs.registry_type == 'ghcr' }}
       shell: bash
       env:
         TAGS: ${{ inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags || steps.ghcr-extra-tags.outputs.tags }}
