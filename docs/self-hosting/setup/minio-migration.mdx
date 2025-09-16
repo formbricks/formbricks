@@ -1,0 +1,111 @@
+---
+title: Migrate local uploads to MinIO (Formbricks 4.0)
+description: One‑click migration from local file storage to the new MinIO storage required in 4.0
+---
+
+## Why this migration is required
+
+Formbricks 4.0 uses an S3‑compatible object store for all file uploads. For One‑Click installs that previously stored files locally (named volume `uploads` or a host bind like `./uploads`), you must migrate those files to MinIO.
+
+This guide shows a safe, idempotent migration using the script `docker/migrate-to-minio.sh` included in this repository.
+
+## Prerequisites
+
+- DNS: a subdomain for object storage, e.g. `files.<your-domain>` pointing to your server IP
+- Your One‑Click installation directory (contains `docker-compose.yml`)
+- Docker/Compose installed and working
+
+## What the script does
+
+- Adds MinIO services (`minio`, `minio-init`) and S3 env vars to `docker-compose.yml`
+- Asks to restart your Compose stack (you should say Yes)
+- Detects your existing upload sources post‑start and migrates them to MinIO
+  - Host bind mounts (e.g., `./uploads`)
+  - Named volume target in the container (legacy: `/home/nextjs/apps/web/uploads` or custom target)
+  - Absolute `UPLOADS_DIR` in the container if set
+- Cleans up `docker-compose.yml` after success: removes `UPLOADS_DIR`, removes all `uploads` volume mappings and the root `uploads:` definition
+- Optionally restarts again to apply the cleanup
+
+The migration is idempotent: you can re‑run it; existing objects are not duplicated.
+
+## Run the migration
+
+From the directory that contains your `docker-compose.yml`:
+
+```bash
+# Download the latest script
+curl -fsSL -o migrate-to-minio.sh \
+  https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/migrate-to-minio.sh
+
+# Make it executable
+chmod +x migrate-to-minio.sh
+
+# Launch the guided migration
+./migrate-to-minio.sh
+```
+
+The script will:
+
+1. Confirm you have a files subdomain (e.g., `files.example.com`)
+2. Ask for the files subdomain to use
+3. Inject MinIO + S3 settings into `docker-compose.yml`
+4. Ask to restart Docker Compose to start MinIO (answer Yes)
+5. Detect upload sources and show a preview
+6. Ask to proceed with migration (answer Yes)
+7. After success, remove local upload volumes and `UPLOADS_DIR` and ask to restart to apply cleanup
+
+## Verifying the migration
+
+- Check the UI: previously uploaded images/logos/files should load
+- List bucket contents with `mc` (reuses minio‑init service env):
+
+```bash
+docker compose run --rm --entrypoint /bin/sh minio-init -lc \
+'mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" && \
+ mc ls -r "minio/$MINIO_BUCKET_NAME" | head -200'
+```
+
+- Confirm `docker-compose.yml` no longer contains `UPLOADS_DIR` or `uploads:` volume mappings (post‑cleanup)
+
+## Notes on sources
+
+- The script migrates from multiple sources, in order:
+  - Host bind (absolute path resolved by `docker compose config`)
+  - Container mount target for named volume `uploads` (e.g., `/home/nextjs/apps/web/uploads` or your custom `.../files/uploads`)
+  - Absolute `UPLOADS_DIR` (container path)
+- The relative path/key structure is preserved: `${environmentId}/${accessType}/fileName.ext`
+- Re‑runs copy only new/changed files (idempotent)
+
+## Troubleshooting
+
+- MinIO 404 on file URLs
+  - If you use virtual‑hosted style (`bucket.files.domain`), ensure Traefik router rule includes wildcard:
+  ```
+  traefik.http.routers.minio-s3.rule=Host(`files.domain`) || HostRegexp(`{any:.+}.files.domain`)
+  ```
+- InvalidAccessKeyId in UI
+
+  - Happens if keys rotated between runs. Re‑run the script; it reuses S3\_\* credentials and reattaches policy.
+
+- Undefined volume `minio-data`
+
+  - Re‑run; the script ensures `minio-data` exists in the root `volumes:` block.
+
+- List bucket contents
+  ```bash
+  docker compose run --rm --entrypoint /bin/sh minio-init -lc \
+  'mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; \
+   mc ls -r "minio/$MINIO_BUCKET_NAME" | head -200'
+  ```
+
+## Rollback
+
+- Your original `docker-compose.yml` is backed up as `docker-compose.yml.backup.<timestamp>`
+- To revert, restore the backup and restart Compose:
+
+```bash
+cp docker-compose.yml.backup.<timestamp> docker-compose.yml
+docker compose down && docker compose up -d
+```
+
+That’s it — you’re on the new MinIO storage for Formbricks 4.0. ✅
