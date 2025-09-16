@@ -54,24 +54,26 @@ jobs:
         id: extract_release_tag
         run: |
           set -euo pipefail
-          # Extract version from tag (e.g., refs/tags/1.2.3 or refs/tags/v1.2.3 -> 1.2.3)
-          TAG="$GITHUB_REF"
-          TAG=${TAG#refs/tags/}
 
-          # Strip leading 'v' or 'V' if present for backward compatibility
+          # Extract tag name (workflow_call uses GITHUB_REF_NAME, direct triggers use GITHUB_REF)
+          if [[ -n "${GITHUB_REF_NAME:-}" && "$GITHUB_REF_NAME" != "main" ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="$GITHUB_REF"
+            TAG=${TAG#refs/tags/}
+          fi
+
+          # Strip leading 'v' prefix if present (backward compatibility)
           TAG=${TAG#[vV]}
 
-          # Validate the extracted tag format (clean SemVer expected)
+          # Validate SemVer format (supports prereleases like 4.0.0-rc.1)
           if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
-            echo "ERROR: Invalid release tag format. Must be clean semver (e.g., 1.2.3, 1.2.3-alpha)"
-            echo "Original ref: $GITHUB_REF"
-            echo "Extracted tag: $TAG"
-            echo "Expected: Clean SemVer (v-prefix is automatically stripped for backward compatibility)"
+            echo "ERROR: Invalid tag format '$TAG'. Expected SemVer (e.g., 1.2.3, 4.0.0-rc.1)"
             exit 1
           fi
 
           echo "VERSION=$TAG" >> $GITHUB_OUTPUT
-          echo "Using clean SemVer version: $TAG"
+          echo "Using version: $TAG"
 
       - name: Build and push community release image
         id: build
