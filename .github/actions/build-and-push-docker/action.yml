@@ -189,7 +189,7 @@ runs:
         } >> "${GITHUB_OUTPUT}"
 
     - name: Generate additional GHCR tags for releases
-      if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && (github.event_name == 'workflow_call' || github.event_name == 'release') }}
+      if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && (github.event_name == 'workflow_call' || github.event_name == 'release' || github.event_name == 'workflow_dispatch') }}
       id: ghcr-extra-tags
       shell: bash
       env:
