@@ -271,7 +271,7 @@ runs:
         file: ${{ inputs.dockerfile }}
         platforms: linux/amd64,linux/arm64
         push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && steps.ghcr-extra-tags.outputs.tags) }}
+        tags: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && steps.ghcr-extra-tags.outputs.tags) || (inputs.registry_type == 'ghcr' && format('ghcr.io/{0}:{1}', inputs.ghcr_image_name, steps.version.outputs.version)) || (inputs.registry_type == 'ecr' && format('{0}/{1}:{2}', inputs.ecr_registry, inputs.ecr_repository, steps.version.outputs.version)) }}
         labels: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.labels || '' }}
         secrets: |
           database_url=${{ env.DUMMY_DATABASE_URL }}
