@@ -8,7 +8,7 @@ import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
-import { CopyPlusIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -154,7 +154,7 @@ export const FollowUpItem = ({
                 setDeleteFollowUpModalOpen(true);
               }}
               aria-label={t("common.delete")}>
-              <TrashIcon className="h-4 w-4 text-slate-500" />
+              <Trash2Icon className="h-4 w-4 text-slate-500" />
             </Button>
           </TooltipRenderer>
 
@@ -167,7 +167,7 @@ export const FollowUpItem = ({
                 duplicateFollowUp();
               }}
               aria-label={t("common.duplicate")}>
-              <CopyPlusIcon className="h-4 w-4 text-slate-500" />
+              <CopyIcon className="h-4 w-4 text-slate-500" />
             </Button>
           </TooltipRenderer>
         </div>
