@@ -55,13 +55,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Extract tag name (workflow_call uses GITHUB_REF_NAME, direct triggers use GITHUB_REF)
-          if [[ -n "${GITHUB_REF_NAME:-}" && "$GITHUB_REF_NAME" != "main" ]]; then
-            TAG="$GITHUB_REF_NAME"
-          else
-            TAG="$GITHUB_REF"
-            TAG=${TAG#refs/tags/}
-          fi
+          # Extract tag name from GITHUB_REF_NAME (clean tag without refs/tags/ prefix)
+          TAG="$GITHUB_REF_NAME"
 
           # Strip leading 'v' prefix if present (backward compatibility)
           TAG=${TAG#[vV]}
