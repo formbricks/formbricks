@@ -55,11 +55,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Extract tag name from GITHUB_REF_NAME (clean tag without refs/tags/ prefix)
+          # Extract tag name from GITHUB_REF_NAME (clean SemVer format)
           TAG="$GITHUB_REF_NAME"
-
-          # Strip leading 'v' prefix if present (backward compatibility)
-          TAG=${TAG#[vV]}
 
           # Validate SemVer format (supports prereleases like 4.0.0-rc.1)
           if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
