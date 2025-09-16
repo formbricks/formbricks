@@ -38,7 +38,7 @@ on:
         value: ${{ jobs.build-and-push.outputs.IMAGE_TAG }}
       TAGS:
         description: "Newline-separated list of ECR tags pushed"
-        value: ${{ jobs.build-and-push.outputs.tags }}
+        value: ${{ jobs.build-and-push.outputs.TAGS }}
 
 permissions:
   contents: read
@@ -57,7 +57,7 @@ jobs:
     timeout-minutes: 45
     outputs:
       IMAGE_TAG: ${{ steps.build.outputs.image_tag }}
-      tags: ${{ steps.build.outputs.registry_tags }}
+      TAGS: ${{ steps.build.outputs.registry_tags }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -76,8 +76,7 @@ jobs:
           ecr_repository: ${{ env.ECR_REPOSITORY }}
           ecr_region: ${{ env.ECR_REGION }}
           aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-          version_override: ${{ inputs.version_override }}
-          workflow_call_tag: ${{ inputs.image_tag }}
+          version: ${{ inputs.version_override || inputs.image_tag }}
           deploy_production: ${{ inputs.deploy_production }}
           deploy_staging: ${{ inputs.deploy_staging }}
           is_prerelease: ${{ inputs.IS_PRERELEASE }}

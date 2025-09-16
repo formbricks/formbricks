@@ -40,7 +40,7 @@ jobs:
           registry_type: "ghcr"
           ghcr_image_name: "${{ github.repository }}-experimental"
           experimental_mode: "true"
-          version_override: ${{ inputs.version_override }}
+          version: ${{ inputs.version_override }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}

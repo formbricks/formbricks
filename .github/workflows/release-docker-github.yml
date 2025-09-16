@@ -54,16 +54,19 @@ jobs:
         id: extract_release_tag
         run: |
           set -euo pipefail
-          # Extract version from tag (e.g., refs/tags/1.2.3 -> 1.2.3)
+          # Extract version from tag (e.g., refs/tags/1.2.3 or refs/tags/v1.2.3 -> 1.2.3)
           TAG="$GITHUB_REF"
           TAG=${TAG#refs/tags/}
+
+          # Strip leading 'v' or 'V' if present for backward compatibility
+          TAG=${TAG#[vV]}
 
           # Validate the extracted tag format (clean SemVer expected)
           if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
             echo "ERROR: Invalid release tag format. Must be clean semver (e.g., 1.2.3, 1.2.3-alpha)"
             echo "Original ref: $GITHUB_REF"
             echo "Extracted tag: $TAG"
-            echo "Expected: Clean SemVer without 'v' prefix and no build metadata"
+            echo "Expected: Clean SemVer (v-prefix is automatically stripped for backward compatibility)"
             exit 1
           fi
 
@@ -76,7 +79,7 @@ jobs:
         with:
           registry_type: "ghcr"
           ghcr_image_name: ${{ env.IMAGE_NAME }}
-          workflow_call_tag: ${{ steps.extract_release_tag.outputs.VERSION }}
+          version: ${{ steps.extract_release_tag.outputs.VERSION }}
           is_prerelease: ${{ inputs.IS_PRERELEASE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

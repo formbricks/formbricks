@@ -13,12 +13,9 @@ inputs:
     description: "Registry type: 'ecr' or 'ghcr'"
     required: true
 
-  # Version inputs
-  version_override:
-    description: "Override version (SemVer only, e.g., 1.2.3). Leave empty to auto-detect."
-    required: false
-  workflow_call_tag:
-    description: "Version from workflow_call (for releases)"
+  # Version input
+  version:
+    description: "Explicit version (SemVer only, e.g., 1.2.3). If provided, this version is used directly. If empty, version is auto-generated from branch name."
     required: false
   experimental_mode:
     description: "Enable experimental timestamped versions"
@@ -119,12 +116,9 @@ runs:
       id: version
       uses: ./.github/actions/resolve-docker-version
       with:
-        event_name: ${{ github.event_name }}
-        version_override: ${{ inputs.version_override }}
-        workflow_call_tag: ${{ inputs.workflow_call_tag }}
+        version: ${{ inputs.version }}
         current_branch: ${{ github.ref_name }}
         experimental_mode: ${{ inputs.experimental_mode }}
-        ref_type: ${{ github.ref_type }}
 
     - name: Update package.json version
       uses: ./.github/actions/update-package-version
@@ -200,7 +194,7 @@ runs:
         } >> "${GITHUB_OUTPUT}"
 
     - name: Generate additional GHCR tags for releases
-      if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && inputs.workflow_call_tag != '' }}
+      if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && github.event_name == 'workflow_call' }}
       id: ghcr-extra-tags
       shell: bash
       env:

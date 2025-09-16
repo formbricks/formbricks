@@ -12,14 +12,8 @@ description: |
   Supports multiple modes: release, manual override, branch auto-detection, and experimental timestamped versions.
 
 inputs:
-  event_name:
-    description: "GitHub event name (workflow_call or workflow_dispatch)"
-    required: true
-  version_override:
-    description: "Explicit version override (SemVer only, e.g., 1.2.3-beta)"
-    required: false
-  workflow_call_tag:
-    description: "Version from workflow_call (required for releases)"
+  version:
+    description: "Explicit version (SemVer only, e.g., 1.2.3-beta). If provided, this version is used directly. If empty, version is auto-generated from branch name."
     required: false
   current_branch:
     description: "Current branch name for auto-detection"
@@ -28,9 +22,6 @@ inputs:
     description: "Enable experimental mode with timestamp-based versions"
     required: false
     default: "false"
-  ref_type:
-    description: "GitHub ref type (branch or tag) for experimental mode"
-    required: false
 
 outputs:
   version:
@@ -50,12 +41,9 @@ runs:
       id: resolve
       shell: bash
       env:
-        EVENT_NAME: ${{ inputs.event_name }}
-        VERSION_OVERRIDE: ${{ inputs.version_override }}
-        WORKFLOW_CALL_TAG: ${{ inputs.workflow_call_tag }}
+        EXPLICIT_VERSION: ${{ inputs.version }}
         CURRENT_BRANCH: ${{ inputs.current_branch }}
         EXPERIMENTAL_MODE: ${{ inputs.experimental_mode }}
-        REF_TYPE: ${{ inputs.ref_type }}
       run: |
         set -euo pipefail
 
@@ -94,90 +82,21 @@ runs:
           fi
           local version
           
-          if [[ "$branch" == "main" ]]; then
-            if [[ -n "$timestamp" ]]; then
-              version="0.0.0-dev-$timestamp"
-              echo "INFO: Main branch detected - development version: $version" >&2
-            else
-              version="0.0.0-dev"
-              echo "INFO: Main branch detected - development version: $version" >&2
-            fi
-          elif [[ "$branch" =~ ^(feature|feat)/ ]]; then
-            if [[ -n "$timestamp" ]]; then
-              version="0.0.0-alpha-$sanitized_branch-$timestamp"
-              echo "INFO: Feature branch detected - alpha version: $version" >&2
-            else
-              version="0.0.0-alpha-$sanitized_branch"
-              echo "INFO: Feature branch detected - alpha version: $version" >&2
-            fi
-          elif [[ "$branch" =~ ^(hotfix|fix)/ ]]; then
-            if [[ -n "$timestamp" ]]; then
-              version="0.0.0-hotfix-$sanitized_branch-$timestamp"
-              echo "INFO: Hotfix branch detected - hotfix version: $version" >&2
-            else
-              version="0.0.0-hotfix-$sanitized_branch"
-              echo "INFO: Hotfix branch detected - hotfix version: $version" >&2
-            fi
-          elif [[ "$branch" =~ ^(release|rel)/ ]]; then
-            if [[ -n "$timestamp" ]]; then
-              version="0.0.0-rc-$sanitized_branch-$timestamp"
-              echo "INFO: Release branch detected - release candidate version: $version" >&2
-            else
-              version="0.0.0-rc-$sanitized_branch"
-              echo "INFO: Release branch detected - release candidate version: $version" >&2
-            fi
+          # Generate version based on branch name (unified approach)
+          # All branches get alpha versions with sanitized branch name
+          if [[ -n "$timestamp" ]]; then
+            version="0.0.0-alpha-$sanitized_branch-$timestamp"
+            echo "INFO: Branch '$branch' detected - alpha version: $version" >&2
           else
-            if [[ -n "$timestamp" ]]; then
-              version="0.0.0-alpha-$sanitized_branch-$timestamp"
-              echo "INFO: Generic branch detected - experimental version: $version" >&2
-            else
-              version="0.0.0-alpha-$sanitized_branch"
-              echo "INFO: Generic branch detected - experimental version: $version" >&2
-            fi
+            version="0.0.0-alpha-$sanitized_branch"
+            echo "INFO: Branch '$branch' detected - alpha version: $version" >&2
           fi
           
           echo "$version"
         }
 
-        # Function for experimental version generation (with timestamps)
-        generate_experimental_version() {
-          local ref_name="$1"
-          local ref_type="$2"
-          local timestamp=$(date +%s)
-          
-          if [[ "$ref_type" == "tag" ]]; then
-            # If running from a tag, use the tag name + timestamp
-            if [[ "$ref_name" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
-              # Tag looks like a SemVer, use it directly (remove 'v' prefix if present)
-              local base_version=$(echo "$ref_name" | sed 's/^v//')
-              echo "${base_version}-${timestamp}"
-              echo "INFO: SemVer tag detected - timestamped version: ${base_version}-${timestamp}" >&2
-            else
-              # Tag is not SemVer, treat as prerelease
-              local sanitized_tag=$(echo "$ref_name" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
-              echo "0.0.0-${sanitized_tag}-${timestamp}"
-              echo "INFO: Non-SemVer tag detected - experimental version: 0.0.0-${sanitized_tag}-${timestamp}" >&2
-            fi
-          else
-            # Running from branch, use branch name as prerelease + timestamp
-            local sanitized_branch=$(echo "$ref_name" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
-            echo "0.0.0-${sanitized_branch}-${timestamp}"
-            echo "INFO: Branch detected - experimental version: 0.0.0-${sanitized_branch}-${timestamp}" >&2
-          fi
-        }
 
         # Input validation and sanitization
-        if [[ -z "$EVENT_NAME" ]]; then
-          echo "ERROR: event_name input is required"
-          exit 1
-        fi
-
-        if [[ "$EVENT_NAME" != "workflow_call" && "$EVENT_NAME" != "workflow_dispatch" ]]; then
-          echo "ERROR: event_name must be 'workflow_call' or 'workflow_dispatch'"
-          echo "Provided: $EVENT_NAME"
-          exit 1
-        fi
-
         if [[ -z "$CURRENT_BRANCH" ]]; then
           echo "ERROR: current_branch input is required"
           exit 1
@@ -204,61 +123,42 @@ runs:
           exit 1
         fi
 
-        # Validate workflow_call_tag if provided
-        if [[ -n "$WORKFLOW_CALL_TAG" ]] && ! validate_input "$WORKFLOW_CALL_TAG" "Workflow call tag"; then
+        # Validate explicit version if provided
+        if [[ -n "$EXPLICIT_VERSION" ]] && ! validate_input "$EXPLICIT_VERSION" "Explicit version"; then
           exit 1
         fi
 
-        # Validate version_override if provided
-        if [[ -n "$VERSION_OVERRIDE" ]] && ! validate_input "$VERSION_OVERRIDE" "Version override"; then
-          exit 1
-        fi
-
-        # Main resolution logic
+        # Main resolution logic (ultra-simplified)
         NORMALIZED="false"
 
-        if [[ "$EVENT_NAME" == "workflow_call" ]]; then
-          # Release workflow - use provided tag
-          if [[ -z "$WORKFLOW_CALL_TAG" ]]; then
-            echo "ERROR: workflow_call_tag input is required for workflow_call events"
-            exit 1
-          fi
-          
-          validate_semver "$WORKFLOW_CALL_TAG" "release tag"
+        if [[ -n "$EXPLICIT_VERSION" ]]; then
+          # Use provided explicit version (from either workflow_call or manual input)
+          validate_semver "$EXPLICIT_VERSION" "explicit version"
           
           # Normalize to lowercase for Docker/ECR compatibility
-          RESOLVED_VERSION="${WORKFLOW_CALL_TAG,,}"
-          if [[ "$WORKFLOW_CALL_TAG" != "$RESOLVED_VERSION" ]]; then
+          RESOLVED_VERSION="${EXPLICIT_VERSION,,}"
+          if [[ "$EXPLICIT_VERSION" != "$RESOLVED_VERSION" ]]; then
             NORMALIZED="true"
-            echo "INFO: Original tag contained uppercase characters, normalized: $WORKFLOW_CALL_TAG -> $RESOLVED_VERSION"
+            echo "INFO: Original version contained uppercase characters, normalized: $EXPLICIT_VERSION -> $RESOLVED_VERSION"
           fi
           
-          SOURCE="release"
-          echo "INFO: Using release version: $RESOLVED_VERSION"
+          SOURCE="explicit"
+          echo "INFO: Using explicit version: $RESOLVED_VERSION"
           
         else
-          # Manual workflow_dispatch
-          if [[ -n "$VERSION_OVERRIDE" ]]; then
-            # User provided explicit override
-            validate_semver "$VERSION_OVERRIDE" "version override"
-            RESOLVED_VERSION="$VERSION_OVERRIDE"
-            SOURCE="override"
-            echo "INFO: Using explicit version override: $RESOLVED_VERSION"
+          # Auto-generate version from branch name
+          if [[ "$EXPERIMENTAL_MODE" == "true" ]]; then
+            # Use timestamped version generation
+            echo "INFO: Experimental mode: generating timestamped version from branch: $CURRENT_BRANCH"
+            RESOLVED_VERSION=$(generate_branch_version "$CURRENT_BRANCH" "true")
+            SOURCE="experimental"
           else
-            # Check for experimental mode
-            if [[ "$EXPERIMENTAL_MODE" == "true" ]]; then
-              # Use experimental version generation (always with timestamps)
-              echo "INFO: Experimental mode: generating timestamped version"
-              RESOLVED_VERSION=$(generate_experimental_version "$CURRENT_BRANCH" "${REF_TYPE:-branch}")
-              SOURCE="experimental"
-            else
-              # Auto-detect from branch (standard mode)
-              echo "INFO: Auto-detecting version from branch: ${CURRENT_BRANCH}"
-              RESOLVED_VERSION=$(generate_branch_version "$CURRENT_BRANCH")
-              SOURCE="branch"
-            fi
-            echo "Generated version: $RESOLVED_VERSION"
+            # Standard branch version (no timestamp)
+            echo "INFO: Auto-detecting version from branch: $CURRENT_BRANCH"
+            RESOLVED_VERSION=$(generate_branch_version "$CURRENT_BRANCH" "false")
+            SOURCE="branch"
           fi
+          echo "Generated version: $RESOLVED_VERSION"
         fi
 
         # Final validation - ensure result is valid Docker tag
