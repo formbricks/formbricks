@@ -167,31 +167,28 @@ export const ViewPermissionModal = ({
                   })}
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>{t("environments.project.api_keys.organization_access")}</Label>
-                  {Object.keys(organizationAccess).map((key) => (
-                    <div key={key} className="mb-2 flex items-center gap-6">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">Read</Label>
-                        <Switch
-                          disabled={true}
-                          data-testid={`organization-access-${key}-read`}
-                          checked={organizationAccess[key].read || organizationAccess[key].write}
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">Write</Label>
-                        <Switch
-                          disabled={true}
-                          data-testid={`organization-access-${key}-write`}
-                          checked={organizationAccess[key].write}
-                        />
-                      </div>
+              <div className="space-y-4">
+                <Label>{t("environments.project.api_keys.organization_access")}</Label>
+                {Object.keys(organizationAccess).map((key) => (
+                  <div key={key} className="mb-2 flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Read</Label>
+                      <Switch
+                        disabled={true}
+                        data-testid={`organization-access-${key}-read`}
+                        checked={organizationAccess[key].read || organizationAccess[key].write}
+                      />
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Write</Label>
+                      <Switch
+                        disabled={true}
+                        data-testid={`organization-access-${key}-write`}
+                        checked={organizationAccess[key].write}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </form>

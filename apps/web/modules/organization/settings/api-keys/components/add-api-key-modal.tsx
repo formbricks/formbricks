@@ -346,33 +346,29 @@ export const AddApiKeyModal = ({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>{t("environments.project.api_keys.organization_access")}</Label>
-                {Object.keys(selectedOrganizationAccess).map((key) => (
-                  <div key={key} className="flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium">Read</Label>
-                      <Switch
-                        data-testid={`organization-access-${key}-read`}
-                        checked={
-                          selectedOrganizationAccess[key].read || selectedOrganizationAccess[key].write
-                        }
-                        onCheckedChange={(newVal) => setSelectedOrganizationAccessValue(key, "read", newVal)}
-                        disabled={selectedOrganizationAccess[key].write}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium">Write</Label>
-                      <Switch
-                        data-testid={`organization-access-${key}-write`}
-                        checked={selectedOrganizationAccess[key].write}
-                        onCheckedChange={(newVal) => setSelectedOrganizationAccessValue(key, "write", newVal)}
-                      />
-                    </div>
+            <div className="space-y-4">
+              <Label>{t("environments.project.api_keys.organization_access")}</Label>
+              {Object.keys(selectedOrganizationAccess).map((key) => (
+                <div key={key} className="mt-2 flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <Label>Read</Label>
+                    <Switch
+                      data-testid={`organization-access-${key}-read`}
+                      checked={selectedOrganizationAccess[key].read || selectedOrganizationAccess[key].write}
+                      onCheckedChange={(newVal) => setSelectedOrganizationAccessValue(key, "read", newVal)}
+                      disabled={selectedOrganizationAccess[key].write}
+                    />
                   </div>
-                ))}
-              </div>
+                  <div className="flex items-center gap-2">
+                    <Label>Write</Label>
+                    <Switch
+                      data-testid={`organization-access-${key}-write`}
+                      checked={selectedOrganizationAccess[key].write}
+                      onCheckedChange={(newVal) => setSelectedOrganizationAccessValue(key, "write", newVal)}
+                    />
+                  </div>
+                </div>
+              ))}
               <p className="text-sm text-slate-500">
                 {t("environments.project.api_keys.organization_access_description")}
               </p>
