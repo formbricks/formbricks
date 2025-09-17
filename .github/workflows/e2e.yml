@@ -50,7 +50,7 @@ jobs:
         ports:
           - 6379:6379
       minio:
-        image: bitnami/minio:2025.7.23-debian-12-r5
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
