@@ -26,6 +26,22 @@ print_info() {
     echo -e "${BLUE}ℹ️  $1${NC}"
 }
 
+# Guard: cancel if an external S3 is already configured (no bundled MinIO service)
+external_s3_guard() {
+    local acc sec
+    acc=$(read_compose_value "S3_ACCESS_KEY")
+    sec=$(read_compose_value "S3_SECRET_KEY")
+    # If S3 creds are present and no bundled MinIO service, assume external S3/AWS is in use
+    if [[ -n "$acc" && -n "$sec" ]]; then
+        if ! has_service minio; then
+            print_warning "Detected existing S3 credentials in docker-compose.yml and no bundled MinIO service."
+            print_error "This migration is intended only for setups using local uploads."
+            print_info "No changes were made. If you already use external S3 (incl. AWS), you don't need this migration."
+            exit 0
+        fi
+    fi
+}
+
 # Function to cleanup sensitive output from terminal and history (best effort)
 cleanup_sensitive_output() {
     echo ""
@@ -762,52 +778,21 @@ migrate_container_files_to_minio() {
     
     print_info "Found $file_count files to migrate from container"
     
-    # Create a migration script inside the container
+    # Use a one-off mc container that mounts the formbricks container filesystem and mirrors the path
     print_info "Starting container-to-MinIO migration..."
-    
-    docker compose exec -T formbricks sh -c "
-        echo '📁 Starting file migration from container to MinIO...';
-        file_count=0;
-        error_count=0;
-        
-        # Install mc (MinIO client) in the formbricks container temporarily
-        curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /tmp/mc;
-        chmod +x /tmp/mc;
-        
-        # Set up MinIO alias
-        /tmp/mc alias set minio http://minio:9000 '$minio_root_user' '$minio_root_password';
-        
-        # Migrate files
-        find '$container_path' -type f | while read file; do
-            relative_path=\"\${file#$container_path/}\";
-            echo \"Uploading: \$relative_path\";
-            
-            if /tmp/mc cp \"\$file\" \"minio/$minio_bucket_name/\$relative_path\"; then
-                file_count=\$((file_count + 1));
-                if [ \$((file_count % 10)) -eq 0 ]; then
-                    echo \"✅ Migrated \$file_count files so far...\";
-                fi
-            else
-                echo \"❌ Failed to upload: \$relative_path\";
-                error_count=\$((error_count + 1));
-            fi
-        done;
-        
-        echo '📊 Migration Summary:';
-        echo \"   Files processed: \$file_count\";
-        echo \"   Errors: \$error_count\";
-        
-        # Clean up mc binary
-        rm -f /tmp/mc;
-        
-        if [ \$error_count -eq 0 ]; then
-            echo '✅ All files migrated successfully!';
-            exit 0;
-        else
-            echo \"⚠️  Migration completed with \$error_count errors.\";
-            exit 1;
-        fi
-    "
+    local FORMBRICKS_CID
+    FORMBRICKS_CID=$(docker compose ps -q formbricks)
+    docker run --rm \
+        --network "$(basename $(pwd))_default" \
+        --volumes-from "$FORMBRICKS_CID" \
+        -e MINIO_ROOT_USER="$minio_root_user" \
+        -e MINIO_ROOT_PASSWORD="$minio_root_password" \
+        -e MINIO_BUCKET_NAME="$minio_bucket_name" \
+        --entrypoint /bin/sh minio/mc:latest -lc '
+            echo "📁 Starting file migration from container to MinIO...";
+            mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD";
+            mc mirror --overwrite --preserve '"$container_path"' "minio/$MINIO_BUCKET_NAME"
+        '
     
     if [[ $? -eq 0 ]]; then
         print_status "Container file migration completed successfully!"
@@ -941,6 +926,8 @@ migrate_to_minio() {
     
     # Check if we're in the right directory
     check_formbricks_directory
+    # Abort early if external S3 already configured and no bundled MinIO
+    external_s3_guard
     
     # Check if MinIO is already configured unless migrating only
     if [[ "$MIGRATE_ONLY" != true ]]; then
@@ -971,7 +958,7 @@ migrate_to_minio() {
         # Derive files domain from existing S3_ENDPOINT_URL
         files_domain=$(read_compose_value "S3_ENDPOINT_URL" | sed -E 's#^https?://##')
         if [[ -z "$files_domain" ]]; then
-            print_error "S3_ENDPOINT_URL not found. Re-run without --migrate-only to configure MinIO."
+            print_error "S3_ENDPOINT_URL not found. Please configure it in your docker-compose.yml"
             exit 1
         fi
         print_info "Using existing files domain: $files_domain"
@@ -1032,7 +1019,7 @@ migrate_to_minio() {
         print_status "Docker Compose configuration updated successfully!"
         echo ""
     else
-        print_info "Skipping MinIO reconfiguration (--migrate-only)."
+        print_info "Skipping MinIO reconfiguration."
     fi
     
     # Restart Docker Compose when reconfiguring; otherwise ensure services are up
@@ -1053,8 +1040,11 @@ migrate_to_minio() {
         restart_success=true
         echo ""
         
-        # Ensure formbricks container is up so uploads path is visible
-        wait_for_service_up formbricks || true
+        # Ensure formbricks container is up so uploads path is visible; hard-fail otherwise
+        if ! wait_for_service_up formbricks; then
+            print_error "Formbricks service is not up. Aborting migration."
+            return 1
+        fi
         
         # Collect multiple sources post-start (rendered compose)
         local sources
@@ -1161,13 +1151,15 @@ migrate_to_minio() {
         print_info "  docker compose down && docker compose up -d"
     fi
     
-    echo ""
-    print_info "🔒 Important: Save these MinIO credentials securely:"
-    echo "Root User: $minio_root_user"
-    echo "Root Password: $minio_root_password"
-    echo "Service User: $minio_service_user"
-    echo "Service Password: $minio_service_password"
-    cleanup_sensitive_output
+    if [[ "$MIGRATE_ONLY" != true ]]; then
+        echo ""
+        print_info "🔒 Important: Save these MinIO credentials securely:"
+        echo "Root User: $minio_root_user"
+        echo "Root Password: $minio_root_password"
+        echo "Service User: $minio_service_user"
+        echo "Service Password: $minio_service_password"
+        cleanup_sensitive_output
+    fi
 }
 
 # Guarded early definition to avoid 'command not found' in any flow
