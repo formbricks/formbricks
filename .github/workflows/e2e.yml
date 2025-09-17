@@ -49,21 +49,6 @@ jobs:
         image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
         ports:
           - 6379:6379
-      minio:
-        image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-        env:
-          MINIO_ROOT_USER: devminio
-          MINIO_ROOT_PASSWORD: devminio123
-        ports:
-          - 9000:9000
-          - 9001:9001
-        options: >-
-          --health-cmd="curl -fsS http://localhost:9000/minio/health/live || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=20
-          --entrypoint=""
-          --command="minio server /data --console-address :9001"
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -126,6 +111,22 @@ jobs:
 
           chmod +x "${MC_BIN}"
           sudo mv "${MC_BIN}" /usr/local/bin/mc
+
+      - name: Start MinIO Server
+        run: |
+          set -euo pipefail
+          
+          # Start MinIO server in background
+          docker run -d \
+            --name minio-server \
+            -p 9000:9000 \
+            -p 9001:9001 \
+            -e MINIO_ROOT_USER=devminio \
+            -e MINIO_ROOT_PASSWORD=devminio123 \
+            minio/minio:RELEASE.2025-09-07T16-13-09Z \
+            server /data --console-address :9001
+          
+          echo "MinIO server started"
 
       - name: Wait for MinIO and create S3 bucket
         run: |
