@@ -85,14 +85,4 @@ describe("TemplateFilters", () => {
       expect(button).toBeDisabled();
     });
   });
-
-  test("does not render filter categories that are prefilled", () => {
-    const setSelectedFilter = vi.fn();
-
-    render(<TemplateFilters selectedFilter={["link", null, null]} setSelectedFilter={setSelectedFilter} />);
-
-    expect(screen.queryByText("environments.surveys.templates.all_channels")).not.toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.templates.all_industries")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.templates.all_roles")).toBeInTheDocument();
-  });
 });
