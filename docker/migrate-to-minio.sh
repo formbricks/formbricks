@@ -26,6 +26,35 @@ print_info() {
     echo -e "${BLUE}ℹ️  $1${NC}"
 }
 
+# Function to cleanup sensitive output from terminal and history (best effort)
+cleanup_sensitive_output() {
+    echo ""
+    print_warning "⚠️  SECURITY NOTICE: Sensitive credentials were displayed above."
+    print_info "Please copy and securely save these credentials before proceeding."
+    echo ""
+    if [ -t 0 ] && [ -t 1 ]; then
+        echo -n "After you have safely saved the credentials, press Enter to clear the terminal and command history: "
+        read -r
+        # Clear the terminal screen and scrollback buffer (best effort across terminals)
+        clear 2>/dev/null || true
+        printf '\033[3J' 2>/dev/null || true
+        # Clear bash history for current session (no-op in non-interactive shells)
+        history -c 2>/dev/null || true
+        history -w 2>/dev/null || true
+        print_status "✅ Terminal and command history cleared for security."
+        print_info "The credentials are no longer visible in this terminal session."
+    else
+        print_info "Non-interactive session detected. Skipping terminal/history cleanup."
+    fi
+    print_warning "Remember: The credentials are still in your docker-compose.yml file - keep it secure!"
+    echo ""
+}
+
+# Mode flags (set interactively)
+FORCE_RECONFIGURE=false
+MIGRATE_ONLY=false
+REGENERATE_CREDS=false
+
 # Quietly detect uploads path inside the running formbricks container (returns only the path or empty)
 get_container_uploads_path_quiet() {
     # Prefer explicit container target from compose, else UPLOADS_DIR (absolute), else legacy
@@ -108,9 +137,10 @@ collect_upload_sources_post_start() {
     local env_path
     env_path=$(read_compose_value "UPLOADS_DIR")
 
-    # Parse rendered compose volumes for formbricks service
-    local entries
-    entries=$(docker compose config 2>/dev/null | awk '
+    # Parse rendered compose volumes for formbricks service (write awk program to a tmp file to avoid any escape/ANSI issues)
+    local __awk_tmp__
+    __awk_tmp__=$(mktemp)
+    cat > "$__awk_tmp__" <<'AWK_EOF'
       /^  formbricks:/ { in_svc=1; next }
       /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:/ { in_svc=0 }
       in_svc && /^    volumes:/ { in_vol=1; next }
@@ -120,7 +150,10 @@ collect_upload_sources_post_start() {
         else if ($0 ~ /source:/){ line=$0; sub(/^[^:]*:[[:space:]]*/, "", line); src=line }
         else if ($0 ~ /target:/){ line=$0; sub(/^[^:]*:[[:space:]]*/, "", line); tgt=line; if (tp!="" && tgt!="") printf "%s|%s|%s\n", tp, src, tgt }
       }
-    ')
+AWK_EOF
+    local entries
+    entries=$(docker compose config 2>/dev/null | awk -f "$__awk_tmp__")
+    rm -f "$__awk_tmp__"
 
     # From entries, add bind mounts to uploads (host path) and the uploads named volume target (container path)
     while IFS= read -r e; do
@@ -205,7 +238,7 @@ read_compose_value() {
     echo "$val"
 }
 
-# Read container mount target for the named volume `uploads` under the formbricks service (e.g., /home/nextjs/apps/web/files/uploads)
+# Read container mount target for the named volume `uploads` under the formbricks service (e.g., /home/nextjs/apps/web/uploads)
 get_uploads_container_target() {
     docker compose config 2>/dev/null | awk '
       /^  formbricks:/ { in_svc=1; next }
@@ -225,17 +258,17 @@ get_uploads_container_target() {
 
 # Idempotency helpers
 has_service() {
-    grep -q "^  $1:\s*$" docker-compose.yml
+    grep -q "^  $1:[[:space:]]*$" docker-compose.yml
 }
 
 add_or_replace_env_var() {
     local key="$1"; local value="$2"
-    if grep -q "^\s*$key:" docker-compose.yml; then
+    if grep -q "^[[:space:]]*$key:" docker-compose.yml; then
         # Replace existing uncommented key
-        sed -i "s|^\(\s*$key:\).*|\1 \"$value\"|" docker-compose.yml
-    elif grep -q "^\s*#\s*$key:" docker-compose.yml; then
+        if sed --version >/dev/null 2>&1; then sed -i "s|^\([[:space:]]*$key:\).*|\1 \"$value\"|" docker-compose.yml; else sed -i '' "s|^\([[:space:]]*$key:\).*|\1 \"$value\"|" docker-compose.yml; fi
+    elif grep -q "^[[:space:]]*#[[:space:]]*$key:" docker-compose.yml; then
         # Uncomment placeholder and set
-        sed -i "s|^\s*#\s*$key:.*|    $key: \"$value\"|" docker-compose.yml
+        if sed --version >/dev/null 2>&1; then sed -i "s|^[[:space:]]*#[[:space:]]*$key:.*|    $key: \"$value\"|" docker-compose.yml; else sed -i '' "s|^[[:space:]]*#[[:space:]]*$key:.*|    $key: \"$value\"|" docker-compose.yml; fi
     else
         # Append into STORAGE section before OAUTH header if present
         awk -v insert_key="$key" -v insert_val="$value" '
@@ -269,110 +302,53 @@ backup_docker_compose() {
     print_status "Backed up docker-compose.yml to $backup_file"
 }
 
-# Function to detect current uploads directory
-detect_uploads_directory() {
-    local uploads_dir=""
-    local container_uploads=""
-    
-    # Prefer UPLOADS_DIR from docker-compose.yml if present
-    local uploads_env
-    uploads_env=$(read_compose_value "UPLOADS_DIR")
-    if [[ -n "$uploads_env" ]]; then
-        # Treat absolute paths as container paths
-        if [[ "$uploads_env" =~ ^/ ]]; then
-            uploads_dir="container:$uploads_env"
-            print_info "Found UPLOADS_DIR (container): $uploads_env"
-        else
-            # Relative or host path. Prefer existing host dir if present
-            if [[ -d "$uploads_env" ]]; then
-                uploads_dir="$uploads_env"
-                print_info "Found UPLOADS_DIR (host): $uploads_env"
-            elif [[ -d "./$uploads_env" ]]; then
-                uploads_dir="./$uploads_env"
-                print_info "Found UPLOADS_DIR (host): ./$uploads_env"
-            else
-                # If compose maps the container path, use that as container path
-                if grep -q "${uploads_env}:$" docker-compose.yml || grep -q ":$uploads_env\/?$" docker-compose.yml; then
-                    uploads_dir="container:$uploads_env"
-                    print_info "Using UPLOADS_DIR as container path: $uploads_env"
-                fi
-            fi
-        fi
-    else
-        # Check for uploads volume mount on host (bind mounts)
-        if grep -q "./uploads:" docker-compose.yml; then
-            uploads_dir="./uploads"
-            print_info "Found uploads volume mount: $uploads_dir"
-        elif [[ -d "./apps/web/uploads" ]]; then
-            uploads_dir="./apps/web/uploads"
-            print_info "Found default uploads directory: $uploads_dir"
-        elif [[ -d "./uploads" ]]; then
-            uploads_dir="./uploads"
-            print_info "Found uploads directory: $uploads_dir"
-        fi
-        
-        # If not found on host, check if compose maps a named volume to the container uploads path
-        if [[ -z "$uploads_dir" ]]; then
-            # Prefer actual mount target from compose (e.g., uploads:/home/nextjs/apps/web/files/uploads)
-            local target
-            target=$(get_uploads_container_target)
-            if [[ -n "$target" ]]; then
-                uploads_dir="container:$target"
-                print_info "Detected uploads mounted to container path: $target"
-            elif grep -q "/home/nextjs/apps/web/uploads" docker-compose.yml; then
-                uploads_dir="container:/home/nextjs/apps/web/uploads"
-                print_info "Detected legacy uploads mount target: /home/nextjs/apps/web/uploads"
-            fi
-        fi
-        
-        # Finally, if still not found, and container is running, probe inside container
-        if [[ -z "$uploads_dir" ]]; then
-            # Check if uploads exist inside the running container
-            if docker compose ps formbricks | grep -q "Up"; then
-                # Prefer UPLOADS_DIR if it was set but resolved empty host path
-                local probe_path="/home/nextjs/apps/web/uploads"
-                if [[ -n "$uploads_env" ]]; then
-                  if [[ "$uploads_env" =~ ^/ ]]; then
-                    probe_path="$uploads_env"
-                  fi
-                fi
-                if docker compose exec -T formbricks test -d "$probe_path" 2>/dev/null; then
-                    # Count files in container uploads directory
-                    local file_count=$(docker compose exec -T formbricks find "$probe_path" -type f 2>/dev/null | wc -l)
-                    if [[ $file_count -gt 0 ]]; then
-                        container_uploads="container:$probe_path"
-                        print_info "Found uploads directory inside container with $file_count files: $probe_path"
-                        uploads_dir="$container_uploads"
-                    else
-                        print_info "Found empty uploads directory inside container: $probe_path"
-                        uploads_dir="container:$probe_path"
-                    fi
-                else
-                    print_warning "No existing uploads directory found. This might be a fresh installation."
-                    uploads_dir=""
-                fi
-            else
-                print_warning "Formbricks container is not running. Cannot check for uploads inside container."
-                uploads_dir=""
-            fi
-        fi
-    fi
-    
-    echo "$uploads_dir"
-}
-
 # Function to check if MinIO is already configured
 check_minio_configured() {
     if grep -q "minio:" docker-compose.yml; then
-        print_warning "MinIO appears to already be configured in docker-compose.yml"
-        echo -n "Do you want to continue and reconfigure MinIO? [y/N]: "
-        read continue_anyway
-        continue_anyway=$(echo "$continue_anyway" | tr '[:upper:]' '[:lower:]')
-        if [[ "$continue_anyway" != "y" ]]; then
-            print_info "Migration cancelled."
-            exit 0
+        # Respect explicit CLI flags first
+        if [[ "$FORCE_RECONFIGURE" == true ]]; then
+            print_info "MinIO already configured; proceeding with reconfiguration (flag)."
+            return 0
         fi
+        if [[ "$MIGRATE_ONLY" == true ]]; then
+            print_info "MinIO already configured; proceeding with files migration only (flag)."
+            return 0
+        fi
+
+        print_warning "MinIO appears to already be configured in docker-compose.yml"
+        echo -n "Reconfigure MinIO and rerun the full migration? [y/N]: "
+        read ans
+        ans=$(echo "$ans" | tr '[:upper:]' '[:lower:]')
+        if [[ "$ans" == "y" ]]; then
+            FORCE_RECONFIGURE=true
+            REGENERATE_CREDS=true
+            return 0
+        fi
+
+        echo -n "Run files migration only (skip MinIO reconfiguration)? [Y/n]: "
+        read only_mig
+        only_mig=$(echo "$only_mig" | tr '[:upper:]' '[:lower:]')
+        if [[ -z "$only_mig" || "$only_mig" == "y" ]]; then
+            MIGRATE_ONLY=true
+            return 0
+        fi
+
+        print_info "Operation cancelled by user."
+        exit 0
     fi
+}
+
+# Remove existing minio and minio-init service blocks from docker-compose.yml
+remove_minio_services() {
+    awk '
+      BEGIN{in_svc=0; skip=0}
+      /^services:[[:space:]]*$/ {print; next}
+      /^  minio:/ {skip=1; next}
+      /^  minio-init:/ {skip=1; next}
+      /^  [A-Za-z0-9_-]+:/ { if(skip){ skip=0 } }
+      { if(!skip) print }
+    ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+    print_status "Removed existing MinIO services from docker-compose.yml"
 }
 
 # Function to generate MinIO credentials
@@ -388,7 +364,10 @@ generate_minio_credentials() {
     existing_service_password=$(read_compose_value "MINIO_SERVICE_PASSWORD")
 
     # Service account (used by Formbricks) — prefer existing S3_* first, then existing MINIO_SERVICE_*, else generate
-    if [[ -n "$existing_s3_access" && -n "$existing_s3_secret" ]]; then
+    if [[ "$REGENERATE_CREDS" == true ]]; then
+        minio_service_user="formbricks-service-$(openssl rand -hex 4)"
+        minio_service_password=$(openssl rand -base64 20)
+    elif [[ -n "$existing_s3_access" && -n "$existing_s3_secret" ]]; then
         minio_service_user="$existing_s3_access"
         minio_service_password="$existing_s3_secret"
     elif [[ -n "$existing_service_user" && -n "$existing_service_password" ]]; then
@@ -407,7 +386,10 @@ generate_minio_credentials() {
     fi
 
     # Root credentials for MinIO server — prefer existing if present
-    if [[ -n "$existing_root_user" && -n "$existing_root_password" ]]; then
+    if [[ "$REGENERATE_CREDS" == true ]]; then
+        minio_root_user="formbricks-$(openssl rand -hex 4)"
+        minio_root_password=$(openssl rand -base64 20)
+    elif [[ -n "$existing_root_user" && -n "$existing_root_password" ]]; then
         minio_root_user="$existing_root_user"
         minio_root_password="$existing_root_password"
     else
@@ -415,13 +397,20 @@ generate_minio_credentials() {
         minio_root_password=$(openssl rand -base64 20)
     fi
 
-    # Use a stable policy name to avoid duplicates across runs
+    # Shared policy across rotations for simplicity and no dangling policies
     minio_policy_name="formbricks-policy"
+    if [[ "$REGENERATE_CREDS" == true ]]; then
+        prev_service_user="${existing_s3_access:-$existing_service_user}"
+    else
+        prev_service_user=""
+    fi
     
-    print_status "Generated MinIO credentials"
-    print_info "Root User: $minio_root_user"
-    print_info "Service User: $minio_service_user"
-    print_info "Bucket: $minio_bucket_name"
+    if [[ "$MIGRATE_ONLY" != true || "$REGENERATE_CREDS" == true ]]; then
+        print_status "Generated MinIO credentials"
+        print_info "Root User: $minio_root_user"
+        print_info "Service User: $minio_service_user"
+        print_info "Bucket: $minio_bucket_name"
+    fi
 }
 
 # Function to detect HTTPS setup
@@ -484,103 +473,12 @@ add_minio_service() {
     local minio_service_config=""
     
     if [[ "$https_setup" == "y" ]]; then
-        minio_service_config="
-  minio:
-    restart: always
-    image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
-    command: server /data
-    environment:
-      MINIO_ROOT_USER: \"$minio_root_user\"
-      MINIO_ROOT_PASSWORD: \"$minio_root_password\"
-    volumes:
-      - minio-data:/data
-    healthcheck:
-      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:9000/minio/health/live\"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    labels:
-      - \"traefik.enable=true\"
-      # S3 API on files subdomain
-      - \"traefik.http.routers.minio-s3.rule=Host(\`$files_domain\`)\"
-      - \"traefik.http.routers.minio-s3.entrypoints=websecure\"
-      - \"traefik.http.routers.minio-s3.tls=true\"
-      - \"traefik.http.routers.minio-s3.tls.certresolver=default\"
-      - \"traefik.http.routers.minio-s3.service=minio-s3\"
-      - \"traefik.http.services.minio-s3.loadbalancer.server.port=9000\"
-      # CORS and rate limit
-      - \"traefik.http.routers.minio-s3.middlewares=minio-cors,minio-ratelimit\"
-      - \"traefik.http.middlewares.minio-cors.headers.accesscontrolallowmethods=GET,PUT,POST,DELETE,HEAD,OPTIONS\"
-      - \"traefik.http.middlewares.minio-cors.headers.accesscontrolallowheaders=*\"
-      - \"traefik.http.middlewares.minio-cors.headers.accesscontrolalloworiginlist=https://$main_domain\"
-      - \"traefik.http.middlewares.minio-cors.headers.accesscontrolmaxage=100\"
-      - \"traefik.http.middlewares.minio-cors.headers.addvaryheader=true\"
-      - \"traefik.http.middlewares.minio-ratelimit.ratelimit.average=100\"
-      - \"traefik.http.middlewares.minio-ratelimit.ratelimit.burst=200\"
-
-  minio-init:
-    image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ROOT_USER: \"$minio_root_user\"
-      MINIO_ROOT_PASSWORD: \"$minio_root_password\"
-      MINIO_SERVICE_USER: \"$minio_service_user\"
-      MINIO_SERVICE_PASSWORD: \"$minio_service_password\"
-      MINIO_BUCKET_NAME: \"$minio_bucket_name\"
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        echo '🔗 Setting up MinIO alias...';
-        mc alias set minio http://minio:9000 \"$minio_root_user\" \"$minio_root_password\";
-        
-        echo '🪣 Creating bucket (idempotent)...';
-        mc mb minio/$minio_bucket_name --ignore-existing;
-        
-        echo '📄 Creating JSON policy file...';
-        cat > /tmp/formbricks-policy.json << 'POLICY_EOF'
-        {
-          \"Version\": \"2012-10-17\",
-          \"Statement\": [
-            {
-              \"Effect\": \"Allow\",
-              \"Action\": [\"s3:DeleteObject\", \"s3:GetObject\", \"s3:PutObject\"],
-              \"Resource\": [\"arn:aws:s3:::$minio_bucket_name/*\"]
-            },
-            {
-              \"Effect\": \"Allow\",
-              \"Action\": [\"s3:ListBucket\"],
-              \"Resource\": [\"arn:aws:s3:::$minio_bucket_name\"]
-            }
-          ]
-        }
-        POLICY_EOF
-        
-        echo '🔒 Creating policy (idempotent)...';
-        if ! mc admin policy info minio $minio_policy_name >/dev/null 2>&1; then
-          mc admin policy create minio $minio_policy_name /tmp/formbricks-policy.json || true;
-          echo 'Policy created successfully.';
-        else
-          echo 'Policy already exists, skipping creation.';
-        fi
-        
-        echo '👤 Creating service user (idempotent)...';
-        if ! mc admin user info minio \"$minio_service_user\" >/dev/null 2>&1; then
-          mc admin user add minio \"$minio_service_user\" \"$minio_service_password\";
-          echo 'User created successfully.';
-        else
-          echo 'User already exists, skipping creation.';
-        fi
-        
-        echo '🔗 Attaching policy to user (idempotent)...';
-        mc admin policy attach minio $minio_policy_name --user \"$minio_service_user\" || echo 'Policy already attached or attachment failed (non-fatal).';
-        
-        echo '✅ MinIO setup complete!';
-        exit 0;"
+      traefik_entrypoints="websecure"; cors_origin="https://$main_domain"; tls_block=$'      - "traefik.http.routers.minio-s3.tls=true"\n      - "traefik.http.routers.minio-s3.tls.certresolver=default"'
     else
-        minio_service_config="
+      traefik_entrypoints="web"; cors_origin="http://$main_domain"; tls_block=""
+    fi
+
+    minio_service_config="
   minio:
     restart: always
     image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
@@ -590,23 +488,17 @@ add_minio_service() {
       MINIO_ROOT_PASSWORD: \"$minio_root_password\"
     volumes:
       - minio-data:/data
-    healthcheck:
-      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:9000/minio/health/live\"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
     labels:
       - \"traefik.enable=true\"
-      # S3 API on files subdomain
       - \"traefik.http.routers.minio-s3.rule=Host(\`$files_domain\`)\"
-      - \"traefik.http.routers.minio-s3.entrypoints=web\"
+      - \"traefik.http.routers.minio-s3.entrypoints=$traefik_entrypoints\"
+${tls_block}
       - \"traefik.http.routers.minio-s3.service=minio-s3\"
       - \"traefik.http.services.minio-s3.loadbalancer.server.port=9000\"
-      # CORS and rate limit
       - \"traefik.http.routers.minio-s3.middlewares=minio-cors,minio-ratelimit\"
       - \"traefik.http.middlewares.minio-cors.headers.accesscontrolallowmethods=GET,PUT,POST,DELETE,HEAD,OPTIONS\"
       - \"traefik.http.middlewares.minio-cors.headers.accesscontrolallowheaders=*\"
-      - \"traefik.http.middlewares.minio-cors.headers.accesscontrolalloworiginlist=http://$main_domain\"
+      - \"traefik.http.middlewares.minio-cors.headers.accesscontrolalloworiginlist=$cors_origin\"
       - \"traefik.http.middlewares.minio-cors.headers.accesscontrolmaxage=100\"
       - \"traefik.http.middlewares.minio-cors.headers.addvaryheader=true\"
       - \"traefik.http.middlewares.minio-ratelimit.ratelimit.average=100\"
@@ -615,8 +507,7 @@ add_minio_service() {
   minio-init:
     image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
     depends_on:
-      minio:
-        condition: service_healthy
+      - minio
     environment:
       MINIO_ROOT_USER: \"$minio_root_user\"
       MINIO_ROOT_PASSWORD: \"$minio_root_password\"
@@ -627,8 +518,20 @@ add_minio_service() {
       - /bin/sh
       - -c
       - |
-        echo '🔗 Setting up MinIO alias...';
-        mc alias set minio http://minio:9000 \"$minio_root_user\" \"$minio_root_password\";
+        echo '⏳ Waiting for MinIO to be ready...';
+        attempts=0
+        max_attempts=30
+        until mc alias set minio http://minio:9000 "$minio_root_user" "$minio_root_password" >/dev/null 2>&1 \
+          && mc ls minio >/dev/null 2>&1; do
+          attempts=$((attempts + 1))
+          if [ $attempts -ge $max_attempts ]; then
+            printf '❌ Failed to connect to MinIO after %s attempts\n' "$max_attempts"
+            exit 1
+          fi
+          printf '...still waiting attempt %s/%s\n' "$attempts" "$max_attempts"
+          sleep 2
+        done
+        echo '🔗 MinIO reachable; alias configured.';
         
         echo '🪣 Creating bucket (idempotent)...';
         mc mb minio/$minio_bucket_name --ignore-existing;
@@ -670,10 +573,14 @@ add_minio_service() {
         
         echo '🔗 Attaching policy to user (idempotent)...';
         mc admin policy attach minio $minio_policy_name --user \"$minio_service_user\" || echo 'Policy already attached or attachment failed (non-fatal).';
+        # If creds were rotated, delete the previous service user (shared policy retained)
+        if [ \"$REGENERATE_CREDS\" = true ] && [ -n \"$prev_service_user\" ] && [ \"$prev_service_user\" != \"$minio_service_user\" ]; then
+          echo '🧹 Cleaning up previous service user...';
+          mc admin user remove minio \"$prev_service_user\" || echo 'Previous user removal failed or not found (non-fatal).';
+        fi
         
         echo '✅ MinIO setup complete!';
         exit 0;"
-    fi
     
     # Write MinIO service to temporary file
     echo "$minio_service_config" > minio_service.tmp
@@ -700,7 +607,11 @@ add_minio_service() {
 add_minio_dependency() {
     # Only add if not already present
     if ! awk '/formbricks:/,/depends_on:/{ if($0 ~ /minio-init/) found=1 } END{ exit(found) }' docker-compose.yml; then
-        sed -i '/formbricks:/,/depends_on:/{/- postgres/a\      - minio-init}' docker-compose.yml
+        if sed --version >/dev/null 2>&1; then sed -i '/formbricks:/,/depends_on:/{/- postgres/a\
+      - minio-init
+}' docker-compose.yml; else sed -i '' '/formbricks:/,/depends_on:/{/- postgres/a\
+      - minio-init
+}' docker-compose.yml; fi
         print_status "Added minio-init dependency to formbricks service"
     else
         print_info "minio-init dependency already present."
@@ -712,7 +623,11 @@ update_traefik_config() {
     # Check if traefik service exists and add minio dependency
     if grep -q "traefik:" docker-compose.yml; then
         if ! awk '/traefik:/,/depends_on:/{ if($0 ~ /- minio$/) found=1 } END{ exit(found) }' docker-compose.yml; then
-            sed -i '/traefik:/,/depends_on:/{/- formbricks/a\      - minio}' docker-compose.yml
+            if sed --version >/dev/null 2>&1; then sed -i '/traefik:/,/depends_on:/{/- formbricks/a\
+      - minio
+}' docker-compose.yml; else sed -i '' '/traefik:/,/depends_on:/{/- formbricks/a\
+      - minio
+}' docker-compose.yml; fi
             print_status "Updated Traefik configuration to include MinIO dependency"
         else
             print_info "Traefik already depends_on minio."
@@ -755,9 +670,11 @@ wait_for_minio_ready() {
     local attempt=1
 
     while [[ $attempt -le $max_attempts ]]; do
-        if docker compose exec -T minio sh -lc 'curl -sf http://localhost:9000/minio/health/ready >/dev/null 2>&1'; then
-            print_status "MinIO is ready!"
-            return 0
+        # Probe using mc from a one-off mc container to avoid relying on service state
+        if docker run --rm --network "$(basename $(pwd))_default" --entrypoint /bin/sh minio/mc:latest -lc \
+          "mc alias set minio http://minio:9000 '$minio_root_user' '$minio_root_password' >/dev/null 2>&1 && mc admin info minio >/dev/null 2>&1"; then
+          print_status "MinIO is ready!"
+          return 0
         fi
         if [[ $attempt -eq $max_attempts ]]; then
             print_error "MinIO did not become ready within expected time. Please check the logs."
@@ -769,14 +686,65 @@ wait_for_minio_ready() {
     done
 }
 
+# Ensure the target bucket exists (idempotent)
+ensure_bucket_exists() {
+    print_info "Ensuring bucket '$minio_bucket_name' exists..."
+    docker run --rm \
+        --network "$(basename $(pwd))_default" \
+        -e MINIO_ROOT_USER="$minio_root_user" \
+        -e MINIO_ROOT_PASSWORD="$minio_root_password" \
+        -e MINIO_BUCKET_NAME="$minio_bucket_name" \
+        --entrypoint /bin/sh \
+        minio/mc:latest -lc '
+            mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1;
+            mc mb minio/"$MINIO_BUCKET_NAME" --ignore-existing
+        '
+}
+
+# Ensure service user and shared policy exist and are attached (idempotent)
+ensure_service_user_and_policy() {
+    print_info "Ensuring service user and policy exist..."
+    docker run --rm \
+        --network "$(basename $(pwd))_default" \
+        -e MINIO_ROOT_USER="$minio_root_user" \
+        -e MINIO_ROOT_PASSWORD="$minio_root_password" \
+        -e MINIO_SERVICE_USER="$minio_service_user" \
+        -e MINIO_SERVICE_PASSWORD="$minio_service_password" \
+        -e MINIO_BUCKET_NAME="$minio_bucket_name" \
+        --entrypoint /bin/sh minio/mc:latest -lc '
+            mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1;
+            # Create shared policy if missing
+            if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
+                cat > /tmp/formbricks-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Effect": "Allow", "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"], "Resource": ["arn:aws:s3:::$MINIO_BUCKET_NAME/*"] },
+    { "Effect": "Allow", "Action": ["s3:ListBucket"], "Resource": ["arn:aws:s3:::$MINIO_BUCKET_NAME"] }
+  ]
+}
+EOF
+                mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json >/dev/null 2>&1 || true
+            fi;
+            # Create service user if missing
+            if ! mc admin user info minio "$MINIO_SERVICE_USER" >/dev/null 2>&1; then
+                mc admin user add minio "$MINIO_SERVICE_USER" "$MINIO_SERVICE_PASSWORD" >/dev/null 2>&1 || true
+            fi;
+            # Attach policy (idempotent)
+            mc admin policy attach minio formbricks-policy --user "$MINIO_SERVICE_USER" >/dev/null 2>&1 || true
+        '
+}
+
 # Function to migrate files from container storage to MinIO
 migrate_container_files_to_minio() {
     local container_path="$1"
     
     print_info "Starting file migration from container path $container_path to MinIO..."
     
-    # Wait for MinIO to be ready
+    # Wait for MinIO to be ready, then ensure user/policy (idempotent)
     wait_for_minio_ready || return 1
+    ensure_service_user_and_policy
+    ensure_bucket_exists || return 1
     
     # Count files to migrate
     local file_count=$(docker compose exec -T formbricks find "$container_path" -type f 2>/dev/null | wc -l)
@@ -866,8 +834,10 @@ migrate_files_to_minio() {
     
     print_info "Starting file migration from $uploads_dir to MinIO..."
     
-    # Wait for MinIO to be ready
+    # Wait for MinIO to be ready, then ensure user/policy (idempotent)
     wait_for_minio_ready || return 1
+    ensure_service_user_and_policy
+    ensure_bucket_exists || return 1
     
     # Count files to migrate
     local file_count=$(find "$uploads_dir" -type f 2>/dev/null | wc -l)
@@ -965,8 +935,14 @@ migrate_to_minio() {
     # Check if we're in the right directory
     check_formbricks_directory
     
-    # Check if MinIO is already configured
-    check_minio_configured
+    # Check if MinIO is already configured unless migrating only
+    if [[ "$MIGRATE_ONLY" != true ]]; then
+        if [[ "$FORCE_RECONFIGURE" == true ]]; then
+            print_info "Reconfiguring MinIO as requested (--reconfigure)."
+        else
+            check_minio_configured
+        fi
+    fi
     
     # Detect current setup (pre-start)
     local main_domain=$(get_main_domain)
@@ -983,60 +959,90 @@ migrate_to_minio() {
     print_info "  HTTPS setup: $https_setup"
     echo ""
     
-    # Confirm subdomain requirement and get subdomain
-    print_warning "IMPORTANT: MinIO requires a subdomain to function properly."
-    print_info "You need to have DNS configured for a files subdomain (e.g., files.$main_domain)"
-    print_info "Make sure the subdomain points to the same server IP as your main domain."
-    echo ""
-    echo -n "Do you have a subdomain configured for MinIO? [y/N]: "
-    read subdomain_confirmed
-    subdomain_confirmed=$(echo "$subdomain_confirmed" | tr '[:upper:]' '[:lower:]')
-    
-    if [[ "$subdomain_confirmed" != "y" ]]; then
-        print_error "Please configure a subdomain for MinIO before running this migration."
-        print_info "Example: Create a DNS A record for files.$main_domain pointing to your server IP"
-        exit 1
+    local files_domain
+    if [[ "$MIGRATE_ONLY" == true ]]; then
+        # Derive files domain from existing S3_ENDPOINT_URL
+        files_domain=$(read_compose_value "S3_ENDPOINT_URL" | sed -E 's#^https?://##')
+        if [[ -z "$files_domain" ]]; then
+            print_error "S3_ENDPOINT_URL not found. Re-run without --migrate-only to configure MinIO."
+            exit 1
+        fi
+        print_info "Using existing files domain: $files_domain"
+        # Ensure we have current MinIO credentials in variables for readiness and migration
+        generate_minio_credentials
+    else
+        # Confirm subdomain requirement and get subdomain
+        print_warning "IMPORTANT: MinIO requires a subdomain to function properly."
+        print_info "You need to have DNS configured for a files subdomain (e.g., files.$main_domain)"
+        print_info "Make sure the subdomain points to the same server IP as your main domain."
+        echo ""
+        echo -n "Do you have a subdomain configured for MinIO? [y/N]: "
+        read subdomain_confirmed
+        subdomain_confirmed=$(echo "$subdomain_confirmed" | tr '[:upper:]' '[:lower:]')
+        if [[ "$subdomain_confirmed" != "y" ]]; then
+            print_error "Please configure a subdomain for MinIO before running this migration."
+            print_info "Example: Create a DNS A record for files.$main_domain pointing to your server IP"
+            exit 1
+        fi
+        local default_files_domain="files.$main_domain"
+        echo -n "Enter the files subdomain for MinIO (e.g., $default_files_domain): "
+        read files_domain
+        if [[ -z "$files_domain" ]]; then
+            files_domain="$default_files_domain"
+        fi
+        print_info "Using files domain: $files_domain"
+        echo ""
     fi
     
-    # Get the files subdomain
-    local default_files_domain="files.$main_domain"
-    echo -n "Enter the files subdomain for MinIO (e.g., $default_files_domain): "
-    read files_domain
-    if [[ -z "$files_domain" ]]; then
-        files_domain="$default_files_domain"
-    fi
-    
-    print_info "Using files domain: $files_domain"
-    echo ""
-    
-    # Generate MinIO credentials
-    generate_minio_credentials
-    echo ""
-    
-    # Backup docker-compose.yml
-    backup_docker_compose
-    
-    # Add S3 environment variables
+    if [[ "$MIGRATE_ONLY" != true ]]; then
+        # Generate or rotate MinIO credentials
+        generate_minio_credentials
+        echo ""
+        
+        # Backup docker-compose.yml
+        backup_docker_compose
+        
+        # If reconfiguring/rotating creds, remove existing service blocks so reinjection is clean
+        if [[ "$REGENERATE_CREDS" == true || "$FORCE_RECONFIGURE" == true ]]; then
+            remove_minio_services || true
+        fi
+
+    # Add S3 environment variables (updated if credentials rotated)
     add_s3_environment_variables "$files_domain" "$https_setup"
+        
+        # Add MinIO service
+        add_minio_service "$files_domain" "$main_domain" "$https_setup"
+        
+        # Add MinIO dependency to formbricks
+        add_minio_dependency
+        
+        # Update Traefik configuration
+        update_traefik_config
+        
+        # Add MinIO volume
+        add_minio_volume
+        
+        print_status "Docker Compose configuration updated successfully!"
+        echo ""
+    else
+        print_info "Skipping MinIO reconfiguration (--migrate-only)."
+    fi
     
-    # Add MinIO service
-    add_minio_service "$files_domain" "$main_domain" "$https_setup"
-    
-    # Add MinIO dependency to formbricks
-    add_minio_dependency
-    
-    # Update Traefik configuration
-    update_traefik_config
-    
-    # Add MinIO volume
-    add_minio_volume
-    
-    print_status "Docker Compose configuration updated successfully!"
-    echo ""
-    
-    # Restart Docker Compose
+    # Restart Docker Compose when reconfiguring; otherwise ensure services are up
     local restart_success=false
-    if restart_docker_compose; then
+    local proceed_migration=false
+    if [[ "$MIGRATE_ONLY" != true ]]; then
+        if restart_docker_compose; then
+            restart_success=true
+            proceed_migration=true
+        fi
+    else
+        # Try to ensure services are up without full restart
+        docker compose up -d >/dev/null 2>&1 || true
+        proceed_migration=true
+    fi
+
+    if [[ "$proceed_migration" == true ]]; then
         restart_success=true
         echo ""
         
@@ -1086,12 +1092,31 @@ migrate_to_minio() {
                         print_status "No files detected to migrate. Cleaning compose as requested."
                     fi
                     cleanup_uploads_from_compose
+                    # Auto-remove minio-init so it won't run again on future 'docker compose up'
+                    awk '
+                      BEGIN{in_svc=0; skip=0}
+                      /^  minio-init:/ {skip=1; next}
+                      skip && /^  [A-Za-z0-9_-]+:/ {skip=0}
+                      { if(!skip) print }
+                    ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+                    # Remove depends_on reference from formbricks (portable via awk)
+                    awk '
+                      BEGIN{in_fb=0}
+                      /^  formbricks:/ {in_fb=1}
+                      in_fb && /^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/ {next}
+                      /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:/ {in_fb=0}
+                      {print}
+                    ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+                    # Remove any stopped container for minio-init and server orphan containers
+                    docker compose rm -f -s minio-init >/dev/null 2>&1 || true
+                    docker compose up -d --remove-orphans >/dev/null 2>&1 || true
+                    print_status "Removed minio-init service, dependency, and cleaned up any leftover container."
                     echo ""
                     read -p "Restart Docker Compose now to apply cleanup changes? [Y/n]: " apply_restart
                     apply_restart=$(echo "$apply_restart" | tr '[:upper:]' '[:lower:]')
                     if [[ -z "$apply_restart" || "$apply_restart" == "y" ]]; then
                         print_info "Applying cleanup changes..."
-                        docker compose up -d
+                        docker compose up -d --remove-orphans
                         print_status "Cleanup applied. Services are up."
                     else
                         print_info "You can apply changes later with: docker compose up -d"
@@ -1135,6 +1160,7 @@ migrate_to_minio() {
     echo "Root Password: $minio_root_password"
     echo "Service User: $minio_service_user"
     echo "Service Password: $minio_service_password"
+    cleanup_sensitive_output
 }
 
 # Guarded early definition to avoid 'command not found' in any flow
@@ -1142,7 +1168,7 @@ if ! declare -F cleanup_uploads_from_compose >/dev/null 2>&1; then
 cleanup_uploads_from_compose() {
     print_info "Cleaning docker-compose.yml uploads configuration..."
     # 1) Comment out UPLOADS_DIR if present
-    sed -i 's/^\([[:space:]]*\)UPLOADS_DIR:[[:space:]].*/\1# UPLOADS_DIR:/' docker-compose.yml || true
+    if sed --version >/dev/null 2>&1; then sed -i 's/^\([[:space:]]*\)UPLOADS_DIR:[[:space:]].*/\1# UPLOADS_DIR:/' docker-compose.yml || true; else sed -i '' 's/^\([[:space:]]*\)UPLOADS_DIR:[[:space:]].*/\1# UPLOADS_DIR:/' docker-compose.yml || true; fi
 
     # 2) Remove uploads mapping from formbricks service volumes
     awk '
