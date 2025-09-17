@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 60
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector:pg17-0.8.0
         env:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
@@ -68,6 +68,8 @@ jobs:
           egress-policy: audit
           allowed-endpoints: |
             ee.formbricks.com:443
+            registry-1.docker.io:443
+            docker.io:443
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: ./.github/actions/dangerous-git-checkout
