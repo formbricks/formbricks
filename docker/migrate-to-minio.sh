@@ -273,10 +273,10 @@ add_or_replace_env_var() {
         # Append into STORAGE section before OAUTH header if present
         awk -v insert_key="$key" -v insert_val="$value" '
           BEGIN{printed=0}
-          /################################################### OPTIONAL \(STORAGE\) ###################################################/ {print; in=1; next}
-          in && /############################################# OPTIONAL \(OAUTH CONFIGURATION\) #############################################/ && !printed { print "    " insert_key ": \"" insert_val "\""; printed=1; print; in=0; next }
+          /################################################### OPTIONAL \(STORAGE\) ###################################################/ {print; in_storage=1; next}
+          in_storage && /############################################# OPTIONAL \(OAUTH CONFIGURATION\) #############################################/ && !printed { print "    " insert_key ": \"" insert_val "\""; printed=1; print; in_storage=0; next }
           { print }
-          END { if(in && !printed) print "    " insert_key ": \"" insert_val "\"" }
+          END { if(in_storage && !printed) print "    " insert_key ": \"" insert_val "\"" }
         ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
     fi
 }
@@ -426,7 +426,14 @@ detect_https_setup() {
 get_main_domain() {
     local domain=""
     if grep -q "WEBAPP_URL:" docker-compose.yml; then
-        domain=$(grep "WEBAPP_URL:" docker-compose.yml | sed 's/.*WEBAPP_URL: *"\?\([^"]*\)"\?.*/\1/' | sed 's|https\?://||')
+        # Extract URL value (handle both quoted and unquoted)
+        domain=$(grep "WEBAPP_URL:" docker-compose.yml | sed 's/.*WEBAPP_URL: *"\([^"]*\)".*/\1/' 2>/dev/null)
+        # Fallback for unquoted values
+        if [[ -z "$domain" ]]; then
+            domain=$(grep "WEBAPP_URL:" docker-compose.yml | sed 's/.*WEBAPP_URL: *\([^[:space:]]*\).*/\1/')
+        fi
+        # Remove protocol (BSD sed compatible)
+        domain=$(echo "$domain" | sed -e 's|https://||' -e 's|http://||')
         echo "$domain"
     else
         echo ""
