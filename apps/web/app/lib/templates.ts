@@ -24,6 +24,7 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.card_abandonment_survey"),
+      role: "productManager",
       industries: ["eCommerce"],
       channels: ["app", "website", "link"],
       description: t("templates.card_abandonment_survey_description"),
@@ -124,6 +125,7 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.site_abandonment_survey"),
+      role: "productManager",
       industries: ["eCommerce"],
       channels: ["app", "website"],
       description: t("templates.site_abandonment_survey_description"),
@@ -221,6 +223,7 @@ const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.product_market_fit_superhuman"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.product_market_fit_superhuman_description"),
@@ -295,6 +298,7 @@ const onboardingSegmentation = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.onboarding_segmentation"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.onboarding_segmentation_description"),
@@ -358,6 +362,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.churn_survey"),
+      role: "sales",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link"],
       description: t("templates.churn_survey_description"),
@@ -447,6 +452,7 @@ const earnedAdvocacyScore = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.earned_advocacy_score_name"),
+      role: "customerSuccess",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link"],
       description: t("templates.earned_advocacy_score_description"),
@@ -519,6 +525,7 @@ const usabilityScoreRatingSurvey = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.usability_score_name"),
+      role: "customerSuccess",
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.usability_rating_description"),
@@ -644,6 +651,7 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.improve_trial_conversion_name"),
+      role: "sales",
       industries: ["saas"],
       channels: ["link", "app"],
       description: t("templates.improve_trial_conversion_description"),
@@ -745,6 +753,7 @@ const reviewPrompt = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.review_prompt_name"),
+      role: "marketing",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link", "app"],
       description: t("templates.review_prompt_description"),
@@ -823,6 +832,7 @@ const interviewPrompt = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.interview_prompt_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.interview_prompt_description"),
@@ -850,6 +860,7 @@ const improveActivationRate = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.improve_activation_rate_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["link"],
       description: t("templates.improve_activation_rate_description"),
@@ -940,6 +951,7 @@ const employeeSatisfaction = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.employee_satisfaction_name"),
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link"],
       description: t("templates.employee_satisfaction_description"),
@@ -1017,6 +1029,7 @@ const uncoverStrengthsAndWeaknesses = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.uncover_strengths_and_weaknesses_name"),
+      role: "productManager",
       industries: ["saas", "other"],
       channels: ["app", "link"],
       description: t("templates.uncover_strengths_and_weaknesses_description"),
@@ -1070,6 +1083,7 @@ const productMarketFitShort = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.product_market_fit_short_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.product_market_fit_short_description"),
@@ -1106,6 +1120,7 @@ const marketAttribution = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.market_attribution_name"),
+      role: "marketing",
       industries: ["saas", "eCommerce"],
       channels: ["website", "app", "link"],
       description: t("templates.market_attribution_description"),
@@ -1136,6 +1151,7 @@ const changingSubscriptionExperience = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.changing_subscription_experience_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.changing_subscription_experience_description"),
@@ -1178,6 +1194,7 @@ const identifyCustomerGoals = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.identify_customer_goals_name"),
+      role: "productManager",
       industries: ["saas", "other"],
       channels: ["app", "website"],
       description: t("templates.identify_customer_goals_description"),
@@ -1207,6 +1224,7 @@ const featureChaser = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.feature_chaser_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.feature_chaser_description"),
@@ -1245,6 +1263,7 @@ const fakeDoorFollowUp = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.fake_door_follow_up_name"),
+      role: "productManager",
       industries: ["saas", "eCommerce"],
       channels: ["app", "website"],
       description: t("templates.fake_door_follow_up_description"),
@@ -1288,6 +1307,7 @@ const feedbackBox = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.feedback_box_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.feedback_box_description"),
@@ -1357,6 +1377,7 @@ const integrationSetupSurvey = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.integration_setup_survey_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.integration_setup_survey_description"),
@@ -1429,6 +1450,7 @@ const newIntegrationSurvey = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.new_integration_survey_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.new_integration_survey_description"),
@@ -1460,6 +1482,7 @@ const docsFeedback = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.docs_feedback_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app", "website", "link"],
       description: t("templates.docs_feedback_description"),
@@ -1499,6 +1522,7 @@ const nps = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.nps_name"),
+      role: "customerSuccess",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link", "website"],
       description: t("templates.nps_description"),
@@ -1539,6 +1563,7 @@ const customerSatisfactionScore = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.csat_name"),
+      role: "customerSuccess",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link", "website"],
       description: t("templates.csat_description"),
@@ -1707,6 +1732,7 @@ const collectFeedback = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.collect_feedback_name"),
+      role: "productManager",
       industries: ["other", "eCommerce"],
       channels: ["website", "link"],
       description: t("templates.collect_feedback_description"),
@@ -1853,6 +1879,7 @@ const identifyUpsellOpportunities = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.identify_upsell_opportunities_name"),
+      role: "sales",
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.identify_upsell_opportunities_description"),
@@ -1882,6 +1909,7 @@ const prioritizeFeatures = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.prioritize_features_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.prioritize_features_description"),
@@ -1934,6 +1962,7 @@ const gaugeFeatureSatisfaction = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.gauge_feature_satisfaction_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.gauge_feature_satisfaction_description"),
@@ -1967,6 +1996,7 @@ const marketSiteClarity = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.market_site_clarity_name"),
+      role: "marketing",
       industries: ["saas", "eCommerce", "other"],
       channels: ["website"],
       description: t("templates.market_site_clarity_description"),
@@ -2008,6 +2038,7 @@ const customerEffortScore = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.customer_effort_score_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.customer_effort_score_description"),
@@ -2039,6 +2070,7 @@ const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.career_development_survey_name"),
+      role: "productManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.career_development_survey_description"),
@@ -2125,6 +2157,7 @@ const professionalDevelopmentSurvey = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.professional_development_survey_name"),
+      role: "productManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.professional_development_survey_description"),
@@ -2212,6 +2245,7 @@ const rateCheckoutExperience = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.rate_checkout_experience_name"),
+      role: "productManager",
       industries: ["eCommerce"],
       channels: ["website", "app"],
       description: t("templates.rate_checkout_experience_description"),
@@ -2288,6 +2322,7 @@ const measureSearchExperience = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.measure_search_experience_name"),
+      role: "productManager",
       industries: ["saas", "eCommerce"],
       channels: ["app", "website"],
       description: t("templates.measure_search_experience_description"),
@@ -2364,6 +2399,7 @@ const evaluateContentQuality = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.evaluate_content_quality_name"),
+      role: "marketing",
       industries: ["other"],
       channels: ["website"],
       description: t("templates.evaluate_content_quality_description"),
@@ -2441,6 +2477,7 @@ const measureTaskAccomplishment = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.measure_task_accomplishment_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app", "website"],
       description: t("templates.measure_task_accomplishment_description"),
@@ -2623,6 +2660,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.identify_sign_up_barriers_name"),
+      role: "marketing",
       industries: ["saas", "eCommerce", "other"],
       channels: ["website"],
       description: t("templates.identify_sign_up_barriers_description"),
@@ -2774,6 +2812,7 @@ const buildProductRoadmap = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.build_product_roadmap_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.build_product_roadmap_description"),
@@ -2808,6 +2847,7 @@ const understandPurchaseIntention = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.understand_purchase_intention_name"),
+      role: "sales",
       industries: ["eCommerce"],
       channels: ["website", "link", "app"],
       description: t("templates.understand_purchase_intention_description"),
@@ -2863,6 +2903,7 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.improve_newsletter_content_name"),
+      role: "marketing",
       industries: ["eCommerce", "saas", "other"],
       channels: ["link"],
       description: t("templates.improve_newsletter_content_description"),
@@ -2953,6 +2994,7 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.evaluate_a_product_idea_name"),
+      role: "productManager",
       industries: ["saas", "other"],
       channels: ["link", "app"],
       description: t("templates.evaluate_a_product_idea_description"),
@@ -3055,6 +3097,7 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.understand_low_engagement_name"),
+      role: "productManager",
       industries: ["saas"],
       channels: ["link"],
       description: t("templates.understand_low_engagement_description"),
@@ -3140,6 +3183,7 @@ const employeeWellBeing = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.employee_well_being_name"),
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.employee_well_being_description"),
@@ -3189,6 +3233,7 @@ const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.long_term_retention_check_in_name"),
+      role: "peopleManager",
       industries: ["saas", "other"],
       channels: ["app", "link"],
       description: t("templates.long_term_retention_check_in_description"),
@@ -3297,6 +3342,7 @@ const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.professional_development_growth_survey_name"),
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.professional_development_growth_survey_description"),
@@ -3346,6 +3392,7 @@ const recognitionAndReward = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.recognition_and_reward_survey_name"),
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.recognition_and_reward_survey_description"),
@@ -3394,6 +3441,7 @@ const alignmentAndEngagement = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.alignment_and_engagement_survey_name"),
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.alignment_and_engagement_survey_description"),
@@ -3442,6 +3490,7 @@ const supportiveWorkCulture = (t: TFnType): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.supportive_work_culture_survey_name"),
+      role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.supportive_work_culture_survey_description"),
