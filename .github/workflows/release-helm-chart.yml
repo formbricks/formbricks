@@ -19,7 +19,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: audit
 
@@ -59,14 +59,35 @@ jobs:
         uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
 
       - name: Update Chart.yaml with new version
+        env:
+          VERSION: ${{ env.VERSION }}
         run: |
-          yq -i ".version = \"$VERSION\"" helm-chart/Chart.yaml
-          yq -i ".appVersion = \"v$VERSION\"" helm-chart/Chart.yaml
+          set -euo pipefail
+
+          echo "Updating Chart.yaml with version: ${VERSION}"
+          yq -i ".version = \"${VERSION}\"" helm-chart/Chart.yaml
+          yq -i ".appVersion = \"${VERSION}\"" helm-chart/Chart.yaml
+
+          echo "✅ Successfully updated Chart.yaml"
 
       - name: Package Helm chart
+        env:
+          VERSION: ${{ env.VERSION }}
         run: |
+          set -euo pipefail
+
+          echo "Packaging Helm chart version: ${VERSION}"
           helm package ./helm-chart
 
+          echo "✅ Successfully packaged formbricks-${VERSION}.tgz"
+
       - name: Push Helm chart to GitHub Container Registry
+        env:
+          VERSION: ${{ env.VERSION }}
         run: |
-          helm push "formbricks-$VERSION.tgz" oci://ghcr.io/formbricks/helm-charts
+          set -euo pipefail
+
+          echo "Pushing Helm chart to registry: formbricks-${VERSION}.tgz"
+          helm push "formbricks-${VERSION}.tgz" oci://ghcr.io/formbricks/helm-charts
+
+          echo "✅ Successfully pushed Helm chart to registry"

@@ -1,39 +1,31 @@
-name: Docker Release to Github Experimental
+name: Build Community Testing Images
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# This workflow builds experimental/testing versions of Formbricks for self-hosting customers
+# to test fixes and features before official releases. Images are pushed to GHCR with
+# timestamped experimental versions for easy identification and testing.
 
 on:
   workflow_dispatch:
-
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}-experimental
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+    inputs:
+      version_override:
+        description: "Override version (SemVer only, e.g., 1.2.3-beta). Leave empty for auto-generated experimental version."
+        required: false
+        type: string
 
 permissions:
   contents: read
+  packages: write
+  id-token: write
 
 jobs:
-  build:
+  build-community-testing:
+    name: Build Community Testing Image
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
-      id-token: write
-
-
+    timeout-minutes: 45
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: audit
 
@@ -42,110 +34,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate SemVer version from branch or tag
-        id: generate_version
+      - name: Build and push community testing image
+        uses: ./.github/actions/build-and-push-docker
+        with:
+          registry_type: "ghcr"
+          ghcr_image_name: "${{ github.repository }}-experimental"
+          experimental_mode: "true"
+          version: ${{ inputs.version_override }}
         env:
-          REF_NAME: ${{ github.ref_name }}
-          REF_TYPE: ${{ github.ref_type }}
-        run: |
-          # Get reference name and type from environment variables
-          echo "Reference type: $REF_TYPE"
-          echo "Reference name: $REF_NAME"
-
-          # Create unique timestamped version for testing sourcemap resolution
-          TIMESTAMP=$(date +%s)
-          
-          if [[ "$REF_TYPE" == "tag" ]]; then
-            # If running from a tag, use the tag name + timestamp
-            if [[ "$REF_NAME" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
-              # Tag looks like a SemVer, use it directly (remove 'v' prefix if present)
-              BASE_VERSION=$(echo "$REF_NAME" | sed 's/^v//')
-              VERSION="${BASE_VERSION}-${TIMESTAMP}"
-              echo "Using SemVer tag with timestamp: $VERSION"
-            else
-              # Tag is not SemVer, treat as prerelease
-              SANITIZED_TAG=$(echo "$REF_NAME" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
-              VERSION="0.0.0-${SANITIZED_TAG}-${TIMESTAMP}"
-              echo "Using tag as prerelease with timestamp: $VERSION"
-            fi
-          else
-            # Running from branch, use branch name as prerelease + timestamp
-            SANITIZED_BRANCH=$(echo "$REF_NAME" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
-            VERSION="0.0.0-${SANITIZED_BRANCH}-${TIMESTAMP}"
-            echo "Using branch as prerelease with timestamp: $VERSION"
-          fi
-
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Generated SemVer version: $VERSION"
-
-      - name: Update package.json version
-        run: |
-          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.VERSION }}\"/" ./apps/web/package.json
-          cat ./apps/web/package.json | grep version
-
-      - name: Set up Depot CLI
-        uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
-
-      # Install the cosign tool except on PR
-      # https://github.com/sigstore/cosign-installer
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
-
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
-      - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Extract metadata (tags, labels) for Docker
-      # https://github.com/docker/metadata-action
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=raw,value=${{ env.VERSION }}
-
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
-        id: build-and-push
-        uses: depot/build-push-action@636daae76684e38c301daa0c5eca1c095b24e780 # v1.14.0
-        with:
-          project: tw0fqmsx3c
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          context: .
-          file: ./apps/web/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          secrets: |
-            database_url=${{ secrets.DUMMY_DATABASE_URL }}
-            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
-            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
-
-
-
-      # Sign the resulting Docker image digest except on PRs.
-      # This will only write to the public Rekor transparency log when the Docker
-      # repository is public to avoid leaking data.  If you would like to publish
-      # transparency data even for private images, pass --force to cosign below.
-      # https://github.com/sigstore/cosign
-      - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
-        env:
-          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        # This step uses the identity token to provision an ephemeral certificate
-        # against the sigstore community Fulcio instance.
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes "{}@${DIGEST}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+          DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
