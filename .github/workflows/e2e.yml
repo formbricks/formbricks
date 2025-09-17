@@ -52,15 +52,18 @@ jobs:
       minio:
         image: minio/minio:RELEASE.2025-09-07T16-13-09Z
         env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_ROOT_USER: devminio
+          MINIO_ROOT_PASSWORD: devminio123
         ports:
           - 9000:9000
+          - 9001:9001
         options: >-
           --health-cmd="curl -fsS http://localhost:9000/minio/health/live || exit 1"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=20
+          --entrypoint=""
+          --command="minio server /data --console-address :9001"
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -103,8 +106,8 @@ jobs:
           echo "S3_REGION=us-east-1" >> .env
           echo "S3_BUCKET_NAME=formbricks-e2e" >> .env
           echo "S3_ENDPOINT_URL=http://localhost:9000" >> .env
-          echo "S3_ACCESS_KEY=minioadmin" >> .env
-          echo "S3_SECRET_KEY=minioadmin" >> .env
+          echo "S3_ACCESS_KEY=devminio" >> .env
+          echo "S3_SECRET_KEY=devminio123" >> .env
           echo "S3_FORCE_PATH_STYLE=1" >> .env
         shell: bash
 
@@ -144,7 +147,7 @@ jobs:
             exit 1
           fi
 
-          mc alias set local http://localhost:9000 minioadmin minioadmin
+          mc alias set local http://localhost:9000 devminio devminio123
           mc mb --ignore-existing local/formbricks-e2e
 
       - name: Build App
