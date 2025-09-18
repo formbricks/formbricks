@@ -112,7 +112,7 @@ export function MultipleChoiceSingleQuestion({
           e.preventDefault();
           const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
           setTtc(updatedTtcObj);
-          onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
+          onSubmit({ [question.id]: value }, updatedTtcObj);
         }}
         className="fb-w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
@@ -208,9 +208,13 @@ export function MultipleChoiceSingleQuestion({
                       value={getLocalizedValue(otherOption.label, languageCode)}
                       className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${otherOption.id}-label`}
-                      onChange={() => {
-                        setOtherSelected(!otherSelected);
-                        onChange({ [question.id]: "" });
+                      onClick={() => {
+                        if (otherSelected) {
+                          onChange({ [question.id]: undefined });
+                        } else {
+                          setOtherSelected(!otherSelected);
+                          onChange({ [question.id]: "" });
+                        }
                       }}
                       checked={otherSelected}
                     />

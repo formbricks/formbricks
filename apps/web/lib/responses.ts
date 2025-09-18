@@ -1,11 +1,11 @@
 import { parseRecallInfo } from "@/lib/utils/recall";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseDataValue } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
 import { getLanguageCode, getLocalizedValue } from "./i18n/utils";
 
 // function to convert response value of type string | number | string[] or Record<string, string> to string | string[]
 export const convertResponseValue = (
-  answer: string | number | string[] | Record<string, string>,
+  answer: TResponseDataValue,
   question: TSurveyQuestion
 ): string | string[] => {
   switch (question.type) {
@@ -57,9 +57,7 @@ export const getQuestionResponseMapping = (
   return questionResponseMapping;
 };
 
-export const processResponseData = (
-  responseData: string | number | string[] | Record<string, string>
-): string => {
+export const processResponseData = (responseData: TResponseDataValue): string => {
   switch (typeof responseData) {
     case "string":
       return responseData;
