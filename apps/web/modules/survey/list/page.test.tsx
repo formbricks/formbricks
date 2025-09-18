@@ -5,7 +5,6 @@ import { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
-import { TTemplateRole } from "@formbricks/types/templates";
 import { SurveysPage } from "./page";
 
 // Mock all dependencies
@@ -53,19 +52,16 @@ vi.mock("@/modules/survey/list/lib/survey", () => ({
 }));
 
 vi.mock("@/modules/survey/templates/components/template-container", () => ({
-  TemplateContainerWithPreview: vi.fn(
-    ({ userId, environment, project, prefilledFilters, isTemplatePage }) => (
-      <div
-        data-testid="template-container"
-        data-user-id={userId}
-        data-environment-id={environment.id}
-        data-project-id={project.id}
-        data-prefilled-filters={JSON.stringify(prefilledFilters)}
-        data-is-template-page={isTemplatePage}>
-        Template Container
-      </div>
-    )
-  ),
+  TemplateContainerWithPreview: vi.fn(({ userId, environment, project, isTemplatePage }) => (
+    <div
+      data-testid="template-container"
+      data-user-id={userId}
+      data-environment-id={environment.id}
+      data-project-id={project.id}
+      data-is-template-page={isTemplatePage}>
+      Template Container
+    </div>
+  )),
 }));
 
 vi.mock("@/modules/ui/components/button", () => ({
@@ -207,9 +203,8 @@ describe("SurveysPage", () => {
     mockTranslate.mockReturnValue("Project not found");
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    await expect(SurveysPage({ params, searchParams })).rejects.toThrow("Project not found");
+    await expect(SurveysPage({ params })).rejects.toThrow("Project not found");
 
     expect(mockGetProjectWithTeamIdsByEnvironmentId).toHaveBeenCalledWith("env-123");
     expect(mockTranslate).toHaveBeenCalledWith("common.project_not_found");
@@ -225,9 +220,8 @@ describe("SurveysPage", () => {
     });
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    await SurveysPage({ params, searchParams });
+    await SurveysPage({ params });
 
     expect(mockRedirect).toHaveBeenCalledWith("/environments/env-123/settings/billing");
   });
@@ -236,9 +230,8 @@ describe("SurveysPage", () => {
     mockGetSurveyCount.mockResolvedValue(0);
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({ role: "product_manager" as TTemplateRole });
 
-    const result = await SurveysPage({ params, searchParams });
+    const result = await SurveysPage({ params });
     render(result);
 
     expect(screen.getByTestId("template-container")).toBeInTheDocument();
@@ -246,20 +239,14 @@ describe("SurveysPage", () => {
     expect(screen.getByTestId("template-container")).toHaveAttribute("data-environment-id", "env-123");
     expect(screen.getByTestId("template-container")).toHaveAttribute("data-project-id", "project-123");
     expect(screen.getByTestId("template-container")).toHaveAttribute("data-is-template-page", "false");
-
-    const prefilledFilters = JSON.parse(
-      screen.getByTestId("template-container").getAttribute("data-prefilled-filters") || "[]"
-    );
-    expect(prefilledFilters).toEqual(["website", "other", "product_manager"]);
   });
 
   test("renders surveys list when survey count is greater than 0", async () => {
     mockGetSurveyCount.mockResolvedValue(5);
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    const result = await SurveysPage({ params, searchParams });
+    const result = await SurveysPage({ params });
     render(result);
 
     expect(screen.getByTestId("page-content-wrapper")).toBeInTheDocument();
@@ -289,9 +276,8 @@ describe("SurveysPage", () => {
     mockGetSurveyCount.mockResolvedValue(5);
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    const result = await SurveysPage({ params, searchParams });
+    const result = await SurveysPage({ params });
     render(result);
 
     expect(screen.getByTestId("page-header")).toBeInTheDocument();
@@ -307,9 +293,8 @@ describe("SurveysPage", () => {
     mockGetSurveyCount.mockResolvedValue(0);
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    const result = await SurveysPage({ params, searchParams });
+    const result = await SurveysPage({ params });
     render(result);
 
     // When survey count is 0, it should render TemplateContainer regardless of read-only status
@@ -330,16 +315,11 @@ describe("SurveysPage", () => {
     mockGetSurveyCount.mockResolvedValue(0);
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    const result = await SurveysPage({ params, searchParams });
+    const result = await SurveysPage({ params });
     render(result);
 
     expect(screen.getByTestId("template-container")).toBeInTheDocument();
-    const prefilledFilters = JSON.parse(
-      screen.getByTestId("template-container").getAttribute("data-prefilled-filters") || "[]"
-    );
-    expect(prefilledFilters).toEqual([null, null, null]);
   });
 
   test("handles project with null styling", async () => {
@@ -351,9 +331,8 @@ describe("SurveysPage", () => {
     mockGetSurveyCount.mockResolvedValue(0);
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    const result = await SurveysPage({ params, searchParams });
+    const result = await SurveysPage({ params });
     render(result);
 
     expect(screen.getByTestId("template-container")).toBeInTheDocument();
@@ -365,9 +344,8 @@ describe("SurveysPage", () => {
     mockGetSurveyCount.mockResolvedValue(5);
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    const result = await SurveysPage({ params, searchParams });
+    const result = await SurveysPage({ params });
     render(result);
 
     expect(screen.getByTestId("surveys-list")).toHaveAttribute("data-locale", "en-US");
@@ -377,9 +355,8 @@ describe("SurveysPage", () => {
     mockGetSurveyCount.mockResolvedValue(5);
 
     const params = Promise.resolve({ environmentId: "env-123" });
-    const searchParams = Promise.resolve({});
 
-    const result = await SurveysPage({ params, searchParams });
+    const result = await SurveysPage({ params });
     render(result);
 
     expect(screen.getByTestId("link")).toHaveAttribute("href", "/environments/env-123/surveys/templates");

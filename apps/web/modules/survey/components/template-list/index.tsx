@@ -21,7 +21,6 @@ interface TemplateListProps {
   project: Project;
   templateSearch?: string;
   showFilters?: boolean;
-  prefilledFilters: TTemplateFilter[];
   onTemplateClick?: (template: TTemplate) => void;
   noPreview?: boolean; // single click to create survey
 }
@@ -32,7 +31,6 @@ export const TemplateList = ({
   environmentId,
   showFilters = true,
   templateSearch,
-  prefilledFilters,
   onTemplateClick = () => {},
   noPreview,
 }: TemplateListProps) => {
@@ -40,7 +38,7 @@ export const TemplateList = ({
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
+  const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>([null, null, null]);
   const surveyType: TSurveyType = useMemo(() => {
     if (project.config.channel) {
       if (project.config.channel === "website") {
