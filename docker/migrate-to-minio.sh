@@ -26,6 +26,15 @@ print_info() {
     echo -e "${BLUE}ℹ️  $1${NC}"
 }
 
+# Return "--network <compose_default_network>" if it exists, otherwise nothing
+compose_network_flag() {
+    local name
+    name="$(docker network ls --format '{{.Name}}' | awk -v d="$(basename "$PWD")" '$0==d"_default"{print; exit}')" || true
+    if [[ -n "$name" ]]; then
+        echo --network "$name"
+    fi
+}
+
 # Guard: cancel if an external S3 is already configured (no bundled MinIO service)
 external_s3_guard() {
     local acc sec
@@ -689,12 +698,12 @@ add_minio_volume() {
 # Function to check if MinIO is ready by probing the minio container
 wait_for_minio_ready() {
     print_info "Waiting for MinIO to be ready..."
-    local max_attempts=30
-    local attempt=1
+    local max_attempts=30 attempt=1
 
     while [[ $attempt -le $max_attempts ]]; do
         # Probe using mc from a one-off mc container to avoid relying on service state
-        if docker run --rm --network "$(basename $(pwd))_default" --entrypoint /bin/sh minio/mc:latest -lc \
+        if docker run --rm $(compose_network_flag) --entrypoint /bin/sh \
+          minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc \
           "mc alias set minio http://minio:9000 '$minio_root_user' '$minio_root_password' >/dev/null 2>&1 && mc admin info minio >/dev/null 2>&1"; then
           print_status "MinIO is ready!"
           return 0
@@ -712,13 +721,12 @@ wait_for_minio_ready() {
 # Ensure the target bucket exists (idempotent)
 ensure_bucket_exists() {
     print_info "Ensuring bucket '$minio_bucket_name' exists..."
-    docker run --rm \
-        --network "$(basename $(pwd))_default" \
+    docker run --rm $(compose_network_flag) \
         -e MINIO_ROOT_USER="$minio_root_user" \
         -e MINIO_ROOT_PASSWORD="$minio_root_password" \
         -e MINIO_BUCKET_NAME="$minio_bucket_name" \
         --entrypoint /bin/sh \
-        minio/mc:latest -lc '
+        minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
             mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1;
             mc mb minio/"$MINIO_BUCKET_NAME" --ignore-existing
         '
@@ -727,14 +735,13 @@ ensure_bucket_exists() {
 # Ensure service user and shared policy exist and are attached (idempotent)
 ensure_service_user_and_policy() {
     print_info "Ensuring service user and policy exist..."
-    docker run --rm \
-        --network "$(basename $(pwd))_default" \
+    docker run --rm $(compose_network_flag) \
         -e MINIO_ROOT_USER="$minio_root_user" \
         -e MINIO_ROOT_PASSWORD="$minio_root_password" \
         -e MINIO_SERVICE_USER="$minio_service_user" \
         -e MINIO_SERVICE_PASSWORD="$minio_service_password" \
         -e MINIO_BUCKET_NAME="$minio_bucket_name" \
-        --entrypoint /bin/sh minio/mc:latest -lc '
+        --entrypoint /bin/sh minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
             mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1;
             # Create shared policy if missing
             if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
@@ -782,13 +789,12 @@ migrate_container_files_to_minio() {
     print_info "Starting container-to-MinIO migration..."
     local FORMBRICKS_CID
     FORMBRICKS_CID=$(docker compose ps -q formbricks)
-    docker run --rm \
-        --network "$(basename $(pwd))_default" \
+    docker run --rm $(compose_network_flag) \
         --volumes-from "$FORMBRICKS_CID" \
         -e MINIO_ROOT_USER="$minio_root_user" \
         -e MINIO_ROOT_PASSWORD="$minio_root_password" \
         -e MINIO_BUCKET_NAME="$minio_bucket_name" \
-        --entrypoint /bin/sh minio/mc:latest -lc '
+        --entrypoint /bin/sh minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
             echo "📁 Starting file migration from container to MinIO...";
             mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD";
             mc mirror --overwrite --preserve '"$container_path"' "minio/$MINIO_BUCKET_NAME"
@@ -849,14 +855,13 @@ migrate_files_to_minio() {
         host_src="$PWD/$host_src"
     fi
 
-    docker run --rm \
-        --network "$(basename $(pwd))_default" \
+    docker run --rm $(compose_network_flag) \
         -v "$host_src:/source:ro" \
         -e MINIO_ROOT_USER="$minio_root_user" \
         -e MINIO_ROOT_PASSWORD="$minio_root_password" \
         -e MINIO_BUCKET_NAME="$minio_bucket_name" \
         --entrypoint /bin/sh \
-        minio/mc:latest -lc '
+        minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
             echo "🔗 Setting up MinIO alias for migration...";
             mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD";
             
