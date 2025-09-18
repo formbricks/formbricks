@@ -14,7 +14,6 @@ import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { TTemplateRole } from "@formbricks/types/templates";
 
 export const metadata: Metadata = {
   title: "Your Surveys",
@@ -24,17 +23,10 @@ interface SurveyTemplateProps {
   params: Promise<{
     environmentId: string;
   }>;
-  searchParams: Promise<{
-    role?: TTemplateRole;
-  }>;
 }
 
-export const SurveysPage = async ({
-  params: paramsProps,
-  searchParams: searchParamsProps,
-}: SurveyTemplateProps) => {
+export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) => {
   const publicDomain = getPublicDomain();
-  const searchParams = await searchParamsProps;
   const params = await paramsProps;
   const t = await getTranslate();
 
@@ -45,8 +37,6 @@ export const SurveysPage = async ({
   }
 
   const { session, isBilling, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
-
-  const prefilledFilters = [project?.config.channel, project.config.industry, searchParams.role ?? null];
 
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
@@ -79,7 +69,6 @@ export const SurveysPage = async ({
         userId={session.user.id}
         environment={environment}
         project={projectWithRequiredProps}
-        prefilledFilters={prefilledFilters}
         isTemplatePage={false}
       />
     );
