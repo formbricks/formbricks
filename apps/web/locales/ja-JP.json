@@ -750,7 +750,6 @@
     },
     "project": {
       "api_keys": {
-        "access_control": "アクセス制御",
         "add_api_key": "APIキーを追加",
         "api_key": "APIキー",
         "api_key_copied_to_clipboard": "APIキーをクリップボードにコピーしました",
