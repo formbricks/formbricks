@@ -1,4 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, type S3ClientConfig } from "@aws-sdk/client-s3";
 import { logger } from "@formbricks/logger";
 import { type Result, type StorageError, StorageErrorCode, err, ok } from "../types/error";
 import {
@@ -19,19 +19,31 @@ let cachedS3Client: S3Client | undefined;
  */
 export const createS3ClientFromEnv = (): Result<S3Client, StorageError> => {
   try {
-    if (!S3_ACCESS_KEY || !S3_SECRET_KEY || !S3_BUCKET_NAME || !S3_REGION) {
-      logger.error("S3 Client: S3 credentials are not set");
+    // S3_REGION and S3_BUCKET_NAME are always required
+    if (!S3_BUCKET_NAME || !S3_REGION) {
+      logger.error("S3 Client: S3_REGION and S3_BUCKET_NAME are required");
       return err({
         code: StorageErrorCode.S3CredentialsError,
       });
     }
 
-    const s3ClientInstance = new S3Client({
-      credentials: { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY },
+    // Build S3 client configuration
+    const s3Config: S3ClientConfig = {
       region: S3_REGION,
       endpoint: S3_ENDPOINT_URL,
       forcePathStyle: S3_FORCE_PATH_STYLE,
-    });
+    };
+
+    // Only add credentials if both access key and secret key are provided
+    // This allows the AWS SDK to use IAM roles, instance profiles, or other credential providers
+    if (S3_ACCESS_KEY && S3_SECRET_KEY) {
+      s3Config.credentials = {
+        accessKeyId: S3_ACCESS_KEY,
+        secretAccessKey: S3_SECRET_KEY,
+      };
+    }
+
+    const s3ClientInstance = new S3Client(s3Config);
 
     return ok(s3ClientInstance);
   } catch (error) {

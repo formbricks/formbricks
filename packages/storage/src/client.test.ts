@@ -82,8 +82,8 @@ describe("client.ts", () => {
       }
     });
 
-    test("should return error when access key is missing", async () => {
-      // Mock constants with missing access key
+    test("should create S3 client without credentials (IAM role authentication)", async () => {
+      // Mock constants with missing access key (IAM role scenario)
       vi.doMock("./constants", () => ({
         ...mockConstants,
         S3_ACCESS_KEY: undefined,
@@ -93,14 +93,20 @@ describe("client.ts", () => {
 
       const result = createS3ClientFromEnv();
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe("s3_credentials_error");
+      expect(mockS3Client).toHaveBeenCalledWith({
+        region: mockConstants.S3_REGION,
+        endpoint: mockConstants.S3_ENDPOINT_URL,
+        forcePathStyle: mockConstants.S3_FORCE_PATH_STYLE,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeDefined();
       }
     });
 
-    test("should return error when secret key is missing", async () => {
-      // Mock constants with missing secret key
+    test("should create S3 client without secret key (IAM role authentication)", async () => {
+      // Mock constants with missing secret key (IAM role scenario)
       vi.doMock("./constants", () => ({
         ...mockConstants,
         S3_SECRET_KEY: undefined,
@@ -110,14 +116,20 @@ describe("client.ts", () => {
 
       const result = createS3ClientFromEnv();
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe("s3_credentials_error");
+      expect(mockS3Client).toHaveBeenCalledWith({
+        region: mockConstants.S3_REGION,
+        endpoint: mockConstants.S3_ENDPOINT_URL,
+        forcePathStyle: mockConstants.S3_FORCE_PATH_STYLE,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeDefined();
       }
     });
 
-    test("should return error when both credentials are missing", async () => {
-      // Mock constants with no credentials
+    test("should create S3 client without any credentials (IAM role authentication)", async () => {
+      // Mock constants with no credentials (full IAM role scenario)
       vi.doMock("./constants", () => ({
         ...mockConstants,
         S3_ACCESS_KEY: undefined,
@@ -128,14 +140,20 @@ describe("client.ts", () => {
 
       const result = createS3ClientFromEnv();
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe("s3_credentials_error");
+      expect(mockS3Client).toHaveBeenCalledWith({
+        region: mockConstants.S3_REGION,
+        endpoint: mockConstants.S3_ENDPOINT_URL,
+        forcePathStyle: mockConstants.S3_FORCE_PATH_STYLE,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeDefined();
       }
     });
 
-    test("should return error when credentials are empty strings", async () => {
-      // Mock constants with empty string credentials
+    test("should create S3 client with empty string credentials (IAM role authentication)", async () => {
+      // Mock constants with empty string credentials (treated as undefined)
       vi.doMock("./constants", () => ({
         ...mockConstants,
         S3_ACCESS_KEY: "",
@@ -146,14 +164,20 @@ describe("client.ts", () => {
 
       const result = createS3ClientFromEnv();
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe("s3_credentials_error");
+      expect(mockS3Client).toHaveBeenCalledWith({
+        region: mockConstants.S3_REGION,
+        endpoint: mockConstants.S3_ENDPOINT_URL,
+        forcePathStyle: mockConstants.S3_FORCE_PATH_STYLE,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeDefined();
       }
     });
 
-    test("should return error when mixed empty and undefined credentials", async () => {
-      // Mock constants with mixed empty and undefined
+    test("should create S3 client with mixed empty and undefined credentials (IAM role authentication)", async () => {
+      // Mock constants with mixed empty and undefined (both treated as missing)
       vi.doMock("./constants", () => ({
         ...mockConstants,
         S3_ACCESS_KEY: "",
@@ -164,9 +188,15 @@ describe("client.ts", () => {
 
       const result = createS3ClientFromEnv();
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.code).toBe("s3_credentials_error");
+      expect(mockS3Client).toHaveBeenCalledWith({
+        region: mockConstants.S3_REGION,
+        endpoint: mockConstants.S3_ENDPOINT_URL,
+        forcePathStyle: mockConstants.S3_FORCE_PATH_STYLE,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBeDefined();
       }
     });
 
@@ -194,6 +224,40 @@ describe("client.ts", () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toBeDefined();
+      }
+    });
+
+    test("should return error when region is missing", async () => {
+      // Mock constants with missing region
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+        S3_REGION: undefined,
+      }));
+
+      const { createS3ClientFromEnv } = await import("./client");
+
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+      }
+    });
+
+    test("should return error when bucket name is missing", async () => {
+      // Mock constants with missing bucket name
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+        S3_BUCKET_NAME: undefined,
+      }));
+
+      const { createS3ClientFromEnv } = await import("./client");
+
+      const result = createS3ClientFromEnv();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
       }
     });
 
@@ -254,11 +318,11 @@ describe("client.ts", () => {
     });
 
     test("should return undefined when creating from env fails and no client provided", async () => {
-      // Mock constants with missing credentials
+      // Mock constants with missing required fields (region and bucket)
       vi.doMock("./constants", () => ({
         ...mockConstants,
-        S3_ACCESS_KEY: undefined,
-        S3_SECRET_KEY: undefined,
+        S3_REGION: undefined,
+        S3_BUCKET_NAME: undefined,
       }));
 
       const { createS3Client } = await import("./client");
@@ -290,8 +354,8 @@ describe("client.ts", () => {
     test("returns undefined when env is invalid and does not construct client", async () => {
       vi.doMock("./constants", () => ({
         ...mockConstants,
-        S3_ACCESS_KEY: undefined,
-        S3_SECRET_KEY: undefined,
+        S3_REGION: undefined,
+        S3_BUCKET_NAME: undefined,
       }));
 
       const { getCachedS3Client } = await import("./client");
