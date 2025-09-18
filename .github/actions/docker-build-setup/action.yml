@@ -1,0 +1,106 @@
+name: Docker Build Setup
+description: |
+  Sets up common Docker build tools and authentication with security validation.
+
+  Security Features:
+  - Registry URL validation
+  - Input sanitization
+  - Conditional setup based on event type
+  - Post-setup verification
+
+  Supports Depot CLI, Cosign signing, and Docker registry authentication.
+
+inputs:
+  registry:
+    description: "Docker registry hostname to login to (e.g., ghcr.io, registry.example.com:5000). No paths allowed."
+    required: false
+    default: "ghcr.io"
+  setup_cosign:
+    description: "Whether to install cosign for image signing"
+    required: false
+    default: "true"
+  skip_login_on_pr:
+    description: "Whether to skip registry login on pull requests"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate inputs
+      shell: bash
+      env:
+        REGISTRY: ${{ inputs.registry }}
+        SETUP_COSIGN: ${{ inputs.setup_cosign }}
+        SKIP_LOGIN_ON_PR: ${{ inputs.skip_login_on_pr }}
+      run: |
+        set -euo pipefail
+
+        # Security: Validate registry input - must be hostname[:port] only, no paths
+        # Allow empty registry for cases where login is handled externally (e.g., ECR)
+        if [[ -n "$REGISTRY" ]]; then
+          if [[ "$REGISTRY" =~ / ]]; then
+            echo "ERROR: Invalid registry format: $REGISTRY"
+            echo "Registry must be host[:port] with no path (e.g., 'ghcr.io' or 'registry.example.com:5000')"
+            echo "Path components like 'ghcr.io/org' are not allowed as they break docker login"
+            exit 1
+          fi
+
+          # Validate hostname with optional port format
+          if [[ ! "$REGISTRY" =~ ^[a-zA-Z0-9.-]+(\:[0-9]+)?$ ]]; then
+            echo "ERROR: Invalid registry hostname format: $REGISTRY"
+            echo "Registry must be a valid hostname optionally with port (e.g., 'ghcr.io' or 'registry.example.com:5000')"
+            exit 1
+          fi
+        fi
+
+        # Validate boolean inputs
+        if [[ "$SETUP_COSIGN" != "true" && "$SETUP_COSIGN" != "false" ]]; then
+          echo "ERROR: setup_cosign must be 'true' or 'false', got: $SETUP_COSIGN"
+          exit 1
+        fi
+
+        if [[ "$SKIP_LOGIN_ON_PR" != "true" && "$SKIP_LOGIN_ON_PR" != "false" ]]; then
+          echo "ERROR: skip_login_on_pr must be 'true' or 'false', got: $SKIP_LOGIN_ON_PR"
+          exit 1
+        fi
+
+        echo "SUCCESS: Input validation passed"
+
+    - name: Set up Depot CLI
+      uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
+
+    - name: Install cosign
+      # Install cosign when requested AND when we might actually sign images
+      # (i.e., non-PR contexts or when we login on PRs)
+      if: ${{ inputs.setup_cosign == 'true' && (inputs.skip_login_on_pr == 'false' || github.event_name != 'pull_request') }}
+      uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
+
+    - name: Log into registry
+      if: ${{ inputs.registry != '' && (inputs.skip_login_on_pr == 'false' || github.event_name != 'pull_request') }}
+      uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    - name: Verify setup completion
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        # Verify Depot CLI is available
+        if ! command -v depot >/dev/null 2>&1; then
+          echo "ERROR: Depot CLI not found in PATH"
+          exit 1
+        fi
+
+        # Verify cosign if it should be installed (same conditions as install step)
+        if [[ "${{ inputs.setup_cosign }}" == "true" ]] && [[ "${{ inputs.skip_login_on_pr }}" == "false" || "${{ github.event_name }}" != "pull_request" ]]; then
+          if ! command -v cosign >/dev/null 2>&1; then
+            echo "ERROR: Cosign not found in PATH despite being requested"
+            exit 1
+          fi
+        fi
+
+        echo "SUCCESS: Docker build setup completed successfully"

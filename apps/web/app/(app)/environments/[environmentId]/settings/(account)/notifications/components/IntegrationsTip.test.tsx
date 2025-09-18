@@ -31,6 +31,6 @@ describe("IntegrationsTip", () => {
 
     const linkElement = screen.getByText("environments.settings.notifications.use_the_integration");
     expect(linkElement).toBeInTheDocument();
-    expect(linkElement).toHaveAttribute("href", `/environments/${environmentId}/integrations`);
+    expect(linkElement).toHaveAttribute("href", `/environments/${environmentId}/project/integrations`);
   });
 });

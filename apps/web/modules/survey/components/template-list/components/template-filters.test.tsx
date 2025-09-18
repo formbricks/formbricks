@@ -32,13 +32,7 @@ describe("TemplateFilters", () => {
 
   test("renders all filter categories and options", () => {
     const setSelectedFilter = vi.fn();
-    render(
-      <TemplateFilters
-        selectedFilter={[null, null, null]}
-        setSelectedFilter={setSelectedFilter}
-        prefilledFilters={[null, null, null]}
-      />
-    );
+    render(<TemplateFilters selectedFilter={[null, null, null]} setSelectedFilter={setSelectedFilter} />);
 
     expect(screen.getByText("environments.surveys.templates.all_channels")).toBeInTheDocument();
     expect(screen.getByText("environments.surveys.templates.all_industries")).toBeInTheDocument();
@@ -54,13 +48,7 @@ describe("TemplateFilters", () => {
     const setSelectedFilter = vi.fn();
     const user = userEvent.setup();
 
-    render(
-      <TemplateFilters
-        selectedFilter={[null, null, null]}
-        setSelectedFilter={setSelectedFilter}
-        prefilledFilters={[null, null, null]}
-      />
-    );
+    render(<TemplateFilters selectedFilter={[null, null, null]} setSelectedFilter={setSelectedFilter} />);
 
     await user.click(screen.getByText("environments.surveys.templates.channel1"));
     expect(setSelectedFilter).toHaveBeenCalledWith(["channel1", null, null]);
@@ -74,11 +62,7 @@ describe("TemplateFilters", () => {
     const user = userEvent.setup();
 
     render(
-      <TemplateFilters
-        selectedFilter={["link", "app", "website"]}
-        setSelectedFilter={setSelectedFilter}
-        prefilledFilters={[null, null, null]}
-      />
+      <TemplateFilters selectedFilter={["link", "app", "website"]} setSelectedFilter={setSelectedFilter} />
     );
 
     await user.click(screen.getByText("environments.surveys.templates.all_channels"));
@@ -93,7 +77,6 @@ describe("TemplateFilters", () => {
         selectedFilter={[null, null, null]}
         setSelectedFilter={setSelectedFilter}
         templateSearch="search term"
-        prefilledFilters={[null, null, null]}
       />
     );
 
@@ -101,21 +84,5 @@ describe("TemplateFilters", () => {
     buttons.forEach((button) => {
       expect(button).toBeDisabled();
     });
-  });
-
-  test("does not render filter categories that are prefilled", () => {
-    const setSelectedFilter = vi.fn();
-
-    render(
-      <TemplateFilters
-        selectedFilter={["link", null, null]}
-        setSelectedFilter={setSelectedFilter}
-        prefilledFilters={["link", null, null]}
-      />
-    );
-
-    expect(screen.queryByText("environments.surveys.templates.all_channels")).not.toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.templates.all_industries")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.templates.all_roles")).toBeInTheDocument();
   });
 });
