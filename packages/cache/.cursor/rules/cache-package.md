@@ -149,9 +149,20 @@ await cacheService.exists(key): Promise<Result<boolean, CacheError>>
 // withCache never fails - returns T directly, handles cache errors internally
 await cacheService.withCache<T>(fn, key, ttlMs): Promise<T>
 
+// Redis availability check with ping test (standardized across codebase)
+await cacheService.isRedisAvailable(): Promise<boolean>
+
 // Direct Redis access for advanced operations (rate limiting, etc.)
 cacheService.getRedisClient(): RedisClient | null
 ```
+
+### Redis Availability Method
+Standardized Redis connectivity check across the codebase.
+
+**Method Implementation:**
+- `isRedisAvailable()`: Checks client state (`isReady && isOpen`) + Redis ping test
+- Returns `Promise<boolean>` - true if Redis is available and responsive
+- Used for health monitoring, status checks, and external validation
 
 ### Service Implementation - Cognitive Complexity Reduction
 The `withCache` method is split into helper methods to reduce cognitive complexity:
@@ -326,10 +337,11 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
 1. **globalThis Singleton**: Use `getCacheService()` - cross-platform singleton
 2. **Result Types**: Core ops return `Result<T, CacheError>` - no throwing  
 3. **Never-Failing withCache**: Returns `T` directly, handles cache errors internally
-4. **Structured Logging**: Context object first, then message string
-5. **Fast-Fail Strategy**: Early Redis availability checks, no blocking timeouts
-6. **Integration Testing**: E2E tests with auto-skip logic for development
-7. **Production Validation**: Mandatory `REDIS_URL` with startup validation
-8. **Cross-Platform**: Uses `globalThis` for Edge Runtime/Lambda compatibility
-9. **CI Integration**: Cache tests run in E2E workflow with Redis service
-10. **Cognitive Complexity**: Split complex methods into focused helper methods
+4. **Standardized Redis Check**: Use `isRedisAvailable()` method with ping test
+5. **Structured Logging**: Context object first, then message string
+6. **Fast-Fail Strategy**: Early Redis availability checks, no blocking timeouts
+7. **Integration Testing**: E2E tests with auto-skip logic for development
+8. **Production Validation**: Mandatory `REDIS_URL` with startup validation
+9. **Cross-Platform**: Uses `globalThis` for Edge Runtime/Lambda compatibility
+10. **CI Integration**: Cache tests run in E2E workflow with Redis service
+11. **Cognitive Complexity**: Split complex methods into focused helper methods

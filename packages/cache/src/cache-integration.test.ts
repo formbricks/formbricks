@@ -24,17 +24,15 @@ async function checkRedisAvailability(): Promise<boolean> {
       return false;
     }
 
-    const redis = cacheServiceResult.data.getRedisClient();
-    if (redis === null) {
-      logger.info("Redis client is null - Redis not available");
-      return false;
+    const isAvailable = await cacheServiceResult.data.isRedisAvailable();
+    if (isAvailable) {
+      logger.info("Redis availability check successful - Redis is available");
+      cacheService = cacheServiceResult.data;
+      return true;
     }
 
-    // Test basic Redis operation
-    await redis.ping();
-    logger.info("Redis ping successful - Redis is available");
-    cacheService = cacheServiceResult.data;
-    return true;
+    logger.info("Redis availability check failed - Redis not available");
+    return false;
   } catch (error) {
     logger.error({ error }, "Error checking Redis availability");
     return false;

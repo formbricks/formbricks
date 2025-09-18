@@ -1,9 +1,9 @@
-import { OverallHealthStatus } from "@/modules/api/v2/health/types/health-status";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { type OverallHealthStatus } from "@/modules/api/v2/health/types/health-status";
+import { type ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 /**
  * Check if the main database is reachable and responding
@@ -36,18 +36,21 @@ export const checkDatabaseHealth = async (): Promise<Result<boolean, ApiErrorRes
 export const checkCacheHealth = async (): Promise<Result<boolean, ApiErrorResponseV2>> => {
   try {
     const cacheServiceResult = await getCacheService();
-    if (cacheServiceResult.ok) {
-      const redis = cacheServiceResult.data.getRedisClient();
-      if (redis && redis.isReady && redis.isOpen) {
-        // Test basic Redis operation
-        await redis.ping();
-        return ok(true);
-      }
+    if (!cacheServiceResult.ok) {
+      return err({
+        type: "internal_server_error",
+        details: [{ field: "cache_database", issue: "Cache service not available" }],
+      });
     }
-    // Cache service not available or Redis not ready
+
+    const isAvailable = await cacheServiceResult.data.isRedisAvailable();
+    if (isAvailable) {
+      return ok(true);
+    }
+
     return err({
       type: "internal_server_error",
-      details: [{ field: "cache_database", issue: "Cache service not available or not ready" }],
+      details: [{ field: "cache_database", issue: "Redis not available" }],
     });
   } catch (error) {
     logger

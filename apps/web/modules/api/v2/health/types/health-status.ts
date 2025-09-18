@@ -3,11 +3,6 @@ import { extendZodWithOpenApi } from "zod-openapi";
 
 extendZodWithOpenApi(z);
 
-export interface OverallHealthStatus {
-  main_database: boolean;
-  cache_database: boolean;
-}
-
 export const ZOverallHealthStatus = z
   .object({
     main_database: z.boolean().openapi({
@@ -23,3 +18,5 @@ export const ZOverallHealthStatus = z
     title: "Health Check Response",
     description: "Health check status for critical application dependencies",
   });
+
+export type OverallHealthStatus = z.infer<typeof ZOverallHealthStatus>;

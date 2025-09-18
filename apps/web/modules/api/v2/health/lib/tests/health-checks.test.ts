@@ -35,8 +35,8 @@ describe("Health Checks", () => {
   });
 
   // Helper function to create a mock CacheService
-  const createMockCacheService = (redisClient: any) => ({
-    getRedisClient: vi.fn().mockReturnValue(redisClient),
+  const createMockCacheService = (isRedisAvailable: boolean = true) => ({
+    getRedisClient: vi.fn(),
     withTimeout: vi.fn(),
     get: vi.fn(),
     exists: vi.fn(),
@@ -47,7 +47,7 @@ describe("Health Checks", () => {
     flush: vi.fn(),
     tryGetCachedValue: vi.fn(),
     trySetCache: vi.fn(),
-    isRedisAvailable: vi.fn(),
+    isRedisAvailable: vi.fn().mockResolvedValue(isRedisAvailable),
   });
 
   describe("checkDatabaseHealth", () => {
@@ -92,26 +92,18 @@ describe("Health Checks", () => {
   });
 
   describe("checkCacheHealth", () => {
-    test("should return healthy when Redis is accessible and ping succeeds", async () => {
-      const mockRedisClient = {
-        isReady: true,
-        isOpen: true,
-        ping: vi.fn().mockResolvedValue("PONG"),
-      };
-
-      const mockCacheService = createMockCacheService(mockRedisClient);
-
+    test("should return healthy when Redis is available", async () => {
+      const mockCacheService = createMockCacheService(true);
       vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
 
       const result = await checkCacheHealth();
 
       expect(result).toEqual({ ok: true, data: true });
       expect(getCacheService).toHaveBeenCalled();
-      expect(mockCacheService.getRedisClient).toHaveBeenCalled();
-      expect(mockRedisClient.ping).toHaveBeenCalled();
+      expect(mockCacheService.isRedisAvailable).toHaveBeenCalled();
     });
 
-    test("should return unhealthy when cache service fails", async () => {
+    test("should return unhealthy when cache service fails to initialize", async () => {
       const cacheError = { code: ErrorCode.RedisConnectionError };
       vi.mocked(getCacheService).mockResolvedValue(err(cacheError));
 
@@ -121,76 +113,28 @@ describe("Health Checks", () => {
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");
         expect(result.error.details).toEqual([
-          { field: "cache_database", issue: "Cache service not available or not ready" },
+          { field: "cache_database", issue: "Cache service not available" },
         ]);
       }
     });
 
-    test("should return unhealthy when Redis client is not ready", async () => {
-      const notReadyClient = {
-        isReady: false,
-        isOpen: true,
-        ping: vi.fn().mockResolvedValue("PONG"),
-      };
-      const mockCacheServiceNotReady = createMockCacheService(notReadyClient);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheServiceNotReady as any));
+    test("should return unhealthy when Redis is not available", async () => {
+      const mockCacheService = createMockCacheService(false);
+      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
 
       const result = await checkCacheHealth();
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");
-        expect(result.error.details).toEqual([
-          { field: "cache_database", issue: "Cache service not available or not ready" },
-        ]);
+        expect(result.error.details).toEqual([{ field: "cache_database", issue: "Redis not available" }]);
       }
+      expect(mockCacheService.isRedisAvailable).toHaveBeenCalled();
     });
 
-    test("should return unhealthy when Redis client is not open", async () => {
-      const notOpenClient = {
-        isReady: true,
-        isOpen: false,
-        ping: vi.fn().mockResolvedValue("PONG"),
-      };
-      const mockCacheServiceNotOpen = createMockCacheService(notOpenClient);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheServiceNotOpen as any));
-
-      const result = await checkCacheHealth();
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.type).toBe("internal_server_error");
-        expect(result.error.details).toEqual([
-          { field: "cache_database", issue: "Cache service not available or not ready" },
-        ]);
-      }
-    });
-
-    test("should return unhealthy when Redis client is null", async () => {
-      const mockCacheServiceNull = createMockCacheService(null);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheServiceNull as any));
-
-      const result = await checkCacheHealth();
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.type).toBe("internal_server_error");
-        expect(result.error.details).toEqual([
-          { field: "cache_database", issue: "Cache service not available or not ready" },
-        ]);
-      }
-    });
-
-    test("should handle ping errors", async () => {
-      const pingError = new Error("Redis ping failed");
-      const mockRedisClient = {
-        isReady: true,
-        isOpen: true,
-        ping: vi.fn().mockRejectedValue(pingError),
-      };
-
-      const mockCacheService = createMockCacheService(mockRedisClient);
-
+    test("should handle Redis availability check exceptions", async () => {
+      const mockCacheService = createMockCacheService(true);
+      mockCacheService.isRedisAvailable.mockRejectedValue(new Error("Redis ping failed"));
       vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
 
       const result = await checkCacheHealth();
@@ -204,7 +148,7 @@ describe("Health Checks", () => {
       }
     });
 
-    test("should handle cache service exceptions", async () => {
+    test("should handle cache service initialization exceptions", async () => {
       const serviceException = new Error("Cache service unavailable");
       vi.mocked(getCacheService).mockRejectedValue(serviceException);
 
@@ -218,6 +162,17 @@ describe("Health Checks", () => {
         ]);
       }
     });
+
+    test("should verify isRedisAvailable is called asynchronously", async () => {
+      const mockCacheService = createMockCacheService(true);
+      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
+
+      await checkCacheHealth();
+
+      // Verify the async method was called
+      expect(mockCacheService.isRedisAvailable).toHaveBeenCalledTimes(1);
+      expect(mockCacheService.isRedisAvailable).toReturnWith(Promise.resolve(true));
+    });
   });
 
   describe("performHealthChecks", () => {
@@ -226,12 +181,7 @@ describe("Health Checks", () => {
       vi.mocked(prisma.$queryRaw).mockResolvedValue([{ "?column?": 1 }]);
 
       // Mock successful cache check
-      const mockRedisClient = {
-        isReady: true,
-        isOpen: true,
-        ping: vi.fn().mockResolvedValue("PONG"),
-      };
-      const mockCacheService = createMockCacheService(mockRedisClient);
+      const mockCacheService = createMockCacheService(true);
       vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
 
       const result = await performHealthChecks();
@@ -268,12 +218,7 @@ describe("Health Checks", () => {
       vi.mocked(prisma.$queryRaw).mockRejectedValue(new Error("DB Error"));
 
       // Mock successful cache check
-      const mockRedisClient = {
-        isReady: true,
-        isOpen: true,
-        ping: vi.fn().mockResolvedValue("PONG"),
-      };
-      const mockCacheService = createMockCacheService(mockRedisClient);
+      const mockCacheService = createMockCacheService(true);
       vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
 
       const result = await performHealthChecks();
@@ -307,16 +252,12 @@ describe("Health Checks", () => {
 
     test("should run both checks in parallel", async () => {
       const dbPromise = new Promise((resolve) => setTimeout(() => resolve([{ "?column?": 1 }]), 100));
-      const redisPromise = new Promise((resolve) => setTimeout(() => resolve("PONG"), 100));
+      const redisPromise = new Promise((resolve) => setTimeout(() => resolve(true), 100));
 
       vi.mocked(prisma.$queryRaw).mockReturnValue(dbPromise as any);
 
-      const mockRedisClient = {
-        isReady: true,
-        isOpen: true,
-        ping: vi.fn().mockReturnValue(redisPromise),
-      };
-      const mockCacheService = createMockCacheService(mockRedisClient);
+      const mockCacheService = createMockCacheService(true);
+      mockCacheService.isRedisAvailable.mockReturnValue(redisPromise as any);
       vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
 
       const startTime = Date.now();
