@@ -13,7 +13,6 @@
 - **Branded Cache Keys**: Use `CacheKey` type to prevent raw string usage
 - **Runtime Validation**: Use `validateInputs()` function with Zod schemas
 - **Error Codes**: Use `ErrorCode` enum for consistent error categorization
-- **Build-Time Detection**: Automatically detects Next.js build phase to prevent Redis connections
 
 ## File Organization
 
