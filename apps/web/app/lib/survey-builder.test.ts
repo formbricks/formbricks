@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import { TShuffleOption, TSurveyLogic, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TTemplateRole } from "@formbricks/types/templates";
 import {
   buildCTAQuestion,
   buildConsentQuestion,

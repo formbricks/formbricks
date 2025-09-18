@@ -9,14 +9,12 @@ interface TemplateFiltersProps {
   selectedFilter: TTemplateFilter[];
   setSelectedFilter: (filter: TTemplateFilter[]) => void;
   templateSearch?: string;
-  prefilledFilters: TTemplateFilter[];
 }
 
 export const TemplateFilters = ({
   selectedFilter,
   setSelectedFilter,
   templateSearch,
-  prefilledFilters,
 }: TemplateFiltersProps) => {
   const { t } = useTranslate();
   const handleFilterSelect = (filterValue: TTemplateFilter, index: number) => {
@@ -31,7 +29,6 @@ export const TemplateFilters = ({
   return (
     <div className="mb-6 gap-3">
       {allFilters.map((filters, index) => {
-        if (prefilledFilters[index] !== null) return;
         return (
           <div key={filters[0]?.value || index} className="mt-2 flex flex-wrap gap-1 last:border-r-0">
             <button
