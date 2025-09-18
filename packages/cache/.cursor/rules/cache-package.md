@@ -19,7 +19,7 @@
 
 ```text
 src/
-├── index.ts                    # Main exports + validateRedisConfig for production
+├── index.ts                    # Main exports
 ├── client.ts                   # globalThis singleton with getCacheService()
 ├── service.ts                  # CacheService class with Result types + withCache
 ├── cache-keys.ts               # Cache key generators with branded types
