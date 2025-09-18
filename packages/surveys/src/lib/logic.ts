@@ -407,7 +407,7 @@ const evaluateSingleCondition = (
         return (
           Array.isArray(leftValue) &&
           Array.isArray(rightValue) &&
-          rightValue.some((v) => !leftValue.includes(v))
+          !rightValue.some((v) => leftValue.includes(v))
         );
       case "isAccepted":
         return leftValue === "accepted";

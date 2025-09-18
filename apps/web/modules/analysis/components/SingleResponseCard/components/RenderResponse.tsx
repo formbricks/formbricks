@@ -13,6 +13,7 @@ import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
+import { TResponseDataValue } from "@formbricks/types/responses";
 import {
   TSurvey,
   TSurveyMatrixQuestion,
@@ -23,7 +24,7 @@ import {
 } from "@formbricks/types/surveys/types";
 
 interface RenderResponseProps {
-  responseData: string | number | string[] | Record<string, string>;
+  responseData: TResponseDataValue;
   question: TSurveyQuestion;
   survey: TSurvey;
   language: string | null;

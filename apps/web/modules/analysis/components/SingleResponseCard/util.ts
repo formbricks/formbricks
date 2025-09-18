@@ -1,4 +1,6 @@
-export const isValidValue = (value: string | number | Record<string, string> | string[]) => {
+import { TResponseDataValue } from "@formbricks/types/responses";
+
+export const isValidValue = (value: TResponseDataValue) => {
   return (
     (typeof value === "string" && value.trim() !== "") ||
     (Array.isArray(value) && value.length > 0) ||
