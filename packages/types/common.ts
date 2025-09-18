@@ -53,7 +53,14 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   // Skip further validation for mailto URLs as they have different structure
   if (url.startsWith("mailto:")) {
     try {
-      new URL(url); // Just validate it's a valid mailto URL format
+      const parsed = new URL(url);
+      if (parsed.protocol !== "mailto:") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid mailto URL format",
+        });
+        return;
+      }
     } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
