@@ -4,12 +4,9 @@ import { ZSurveyQuota } from "./quota";
 import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
-export const ZResponseDataValue = z.union([
-  z.string(),
-  z.number(),
-  z.array(z.string()),
-  z.record(z.string()),
-]);
+export const ZResponseDataValue = z
+  .union([z.string(), z.number(), z.array(z.string()), z.record(z.string())])
+  .optional();
 
 export const ZResponseFilterCondition = z.enum([
   "accepted",

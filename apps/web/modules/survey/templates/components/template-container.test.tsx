@@ -3,7 +3,6 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
-import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./template-container";
 
 // Mock dependencies
@@ -59,8 +58,6 @@ const mockEnvironment = {
   appSetupCompleted: true,
 };
 
-const mockPrefilledFilters: (TProjectConfigChannel | TProjectConfigIndustry | TTemplateRole | null)[] = [];
-
 describe("TemplateContainerWithPreview", () => {
   afterEach(() => {
     cleanup();
@@ -72,7 +69,6 @@ describe("TemplateContainerWithPreview", () => {
         project={mockProject}
         environment={mockEnvironment}
         userId="user1"
-        prefilledFilters={mockPrefilledFilters}
         isTemplatePage={true}
       />
     );
@@ -86,7 +82,6 @@ describe("TemplateContainerWithPreview", () => {
         project={mockProject}
         environment={mockEnvironment}
         userId="user1"
-        prefilledFilters={mockPrefilledFilters}
         isTemplatePage={false}
       />
     );
@@ -100,7 +95,6 @@ describe("TemplateContainerWithPreview", () => {
         project={mockProject}
         environment={mockEnvironment}
         userId="user1"
-        prefilledFilters={mockPrefilledFilters}
         isTemplatePage={true}
       />
     );
@@ -114,7 +108,6 @@ describe("TemplateContainerWithPreview", () => {
         project={mockProject}
         environment={mockEnvironment}
         userId="user1"
-        prefilledFilters={mockPrefilledFilters}
         isTemplatePage={false}
       />
     );
@@ -128,7 +121,6 @@ describe("TemplateContainerWithPreview", () => {
         project={mockProject}
         environment={mockEnvironment}
         userId="user1"
-        prefilledFilters={mockPrefilledFilters}
         isTemplatePage={true}
       />
     );
@@ -144,7 +136,6 @@ describe("TemplateContainerWithPreview", () => {
         project={mockProject}
         environment={mockEnvironment}
         userId="user1"
-        prefilledFilters={mockPrefilledFilters}
         isTemplatePage={true}
       />
     );
@@ -158,7 +149,6 @@ describe("TemplateContainerWithPreview", () => {
         project={mockProject}
         environment={mockEnvironment}
         userId="user1"
-        prefilledFilters={mockPrefilledFilters}
         isTemplatePage={true}
       />
     );
@@ -172,7 +162,6 @@ describe("TemplateContainerWithPreview", () => {
         project={mockProject}
         environment={mockEnvironment}
         userId="user1"
-        prefilledFilters={mockPrefilledFilters}
         isTemplatePage={true}
       />
     );

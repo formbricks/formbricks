@@ -90,7 +90,9 @@ export const GET = withV1ApiWrapper({
       };
       await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
       return {
-        response: Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`),
+        response: Response.redirect(
+          `${WEBAPP_URL}/environments/${environmentId}/project/integrations/airtable`
+        ),
       };
     } catch (error) {
       logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
