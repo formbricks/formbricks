@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { TConditionGroup, TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { createSharedConditionsFactory } from "@/modules/survey/editor/lib/shared-conditions-factory";
 import { getDefaultOperatorForQuestion } from "@/modules/survey/editor/lib/utils";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
-import { useTranslate } from "@tolgee/react";
-import { TConditionGroup, TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface LogicEditorConditionsProps {
   conditions: TConditionGroup;
@@ -14,6 +14,7 @@ interface LogicEditorConditionsProps {
   questionIdx: number;
   logicIdx: number;
   depth?: number;
+  isLast: boolean;
 }
 
 export function LogicEditorConditions({
@@ -24,6 +25,7 @@ export function LogicEditorConditions({
   questionIdx,
   updateQuestion,
   depth = 0,
+  isLast,
 }: LogicEditorConditionsProps) {
   const { t } = useTranslate();
 
@@ -50,6 +52,19 @@ export function LogicEditorConditions({
       },
     }
   );
+  const onRemoveCondition = (conditionId: string) => {
+    callbacks.onRemoveCondition(conditionId);
+    if (isLast) {
+      updateQuestion(questionIdx, { logicFallback: undefined });
+    }
+  };
 
-  return <ConditionsEditor conditions={conditions} config={config} callbacks={callbacks} depth={depth} />;
+  return (
+    <ConditionsEditor
+      conditions={conditions}
+      config={config}
+      callbacks={{ ...callbacks, onRemoveCondition }}
+      depth={depth}
+    />
+  );
 }
