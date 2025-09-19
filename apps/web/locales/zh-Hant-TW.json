@@ -750,6 +750,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
@@ -1373,7 +1374,7 @@
         "follow_ups_modal_action_subject_placeholder": "電子郵件主旨",
         "follow_ups_modal_action_to_description": "傳送電子郵件的電子郵件地址",
         "follow_ups_modal_action_to_label": "收件者",
-        "follow_ups_modal_action_to_warning": "問卷中未偵測到電子郵件欄位",
+        "follow_ups_modal_action_to_warning": "未找到 發送電子郵件 有效選項，請添加 一些 開放文本 / 聯絡資訊 問題或隱藏欄位",
         "follow_ups_modal_create_heading": "建立新的後續追蹤",
         "follow_ups_modal_created_successfull_toast": "後續 動作 已 建立 並 將 在 你 儲存 調查 後 儲存",
         "follow_ups_modal_edit_heading": "編輯此後續追蹤",
@@ -1385,7 +1386,7 @@
         "follow_ups_modal_trigger_label": "觸發器",
         "follow_ups_modal_trigger_type_ending": "回應者看到特定結尾",
         "follow_ups_modal_trigger_type_ending_select": "選取結尾：",
-        "follow_ups_modal_trigger_type_ending_warning": "問卷中找不到結尾！",
+        "follow_ups_modal_trigger_type_ending_warning": "請選擇至少一個結尾或更改觸發類型",
         "follow_ups_modal_trigger_type_response": "回應者完成問卷",
         "follow_ups_modal_updated_successfull_toast": "後續 動作 已 更新 並 將 在 你 儲存 調查 後 儲存",
         "follow_ups_new": "新增後續追蹤",

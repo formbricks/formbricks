@@ -750,6 +750,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "访问控制",
         "add_api_key": "添加 API 密钥",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API 密钥 已复制到 剪贴板",
@@ -1373,7 +1374,7 @@
         "follow_ups_modal_action_subject_placeholder": "电子邮件主题",
         "follow_ups_modal_action_to_description": "发送邮件的电子邮箱地址",
         "follow_ups_modal_action_to_label": "到",
-        "follow_ups_modal_action_to_warning": "调查中未 检测到 电子邮件 字段",
+        "follow_ups_modal_action_to_warning": "为 发送 邮件 找不到 有效 选项 ，请 增加 一些 开放文本 / 联系 信息 问题 或 隐藏 字段",
         "follow_ups_modal_create_heading": "创建一个新的跟进",
         "follow_ups_modal_created_successfull_toast": "后续 操作 已 创建， 并且 在 你 保存 调查 后 将 被 保存。",
         "follow_ups_modal_edit_heading": "编辑此跟进",
@@ -1385,7 +1386,7 @@
         "follow_ups_modal_trigger_label": "触发",
         "follow_ups_modal_trigger_type_ending": "受访者 看到 一个 特定 的 结尾",
         "follow_ups_modal_trigger_type_ending_select": "选择结尾：",
-        "follow_ups_modal_trigger_type_ending_warning": "在 调查 中 未找到 结尾 ！",
+        "follow_ups_modal_trigger_type_ending_warning": "请选择至少 一个结束条件 或更改触发条件类型",
         "follow_ups_modal_trigger_type_response": "受访者 完成 调查",
         "follow_ups_modal_updated_successfull_toast": "后续 操作 已 更新， 并且 在 你 保存 调查 后 将 被 保存。",
         "follow_ups_new": "新的跟进",
