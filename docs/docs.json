@@ -261,7 +261,6 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/migration",
-              "self-hosting/setup/minio-migration",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
               {
