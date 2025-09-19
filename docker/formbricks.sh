@@ -293,7 +293,7 @@ EOT
       minio_service_user="formbricks-service-$(openssl rand -hex 4)"
       minio_service_password=$(openssl rand -base64 20)
       minio_bucket_name="formbricks-uploads"
-      minio_policy_name="formbricks-policy-$(openssl rand -hex 4)"
+      minio_policy_name="formbricks-policy"
       
       echo "✅ MinIO will be configured with:"
       echo "   S3 Access Key (least privilege): $minio_service_user"
@@ -306,7 +306,7 @@ EOT
   fi
 
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
-  curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+  curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
 
   echo "🚙 Updating docker-compose.yml with your custom inputs..."
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
@@ -340,9 +340,11 @@ EOT
     sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$ext_s3_bucket\"|" docker-compose.yml
     if [[ -n $ext_s3_endpoint ]]; then
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"$ext_s3_endpoint\"|" docker-compose.yml
-      sed -i "s|S3_FORCE_PATH_STYLE: 0|S3_FORCE_PATH_STYLE: 1|" docker-compose.yml
+      # Ensure S3_FORCE_PATH_STYLE is enabled for S3-compatible endpoints
+      sed -E -i 's|^([[:space:]]*)#?[[:space:]]*S3_FORCE_PATH_STYLE:[[:space:]]*.*$|\1S3_FORCE_PATH_STYLE: 1|' docker-compose.yml
     else
-      sed -i "s|S3_FORCE_PATH_STYLE: 0|# S3_FORCE_PATH_STYLE:|" docker-compose.yml
+      # Comment out S3_FORCE_PATH_STYLE for native AWS S3
+      sed -E -i 's|^([[:space:]]*)#?[[:space:]]*S3_FORCE_PATH_STYLE:[[:space:]]*.*$|\1# S3_FORCE_PATH_STYLE:|' docker-compose.yml
     fi
     echo "🚗 External S3 configuration updated successfully!"
   elif [[ $minio_storage == "y" ]]; then
@@ -356,7 +358,8 @@ EOT
     else
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"http://$files_domain\"|" docker-compose.yml
     fi
-    sed -i "s|S3_FORCE_PATH_STYLE: 0|S3_FORCE_PATH_STYLE: 1|" docker-compose.yml
+    # Ensure S3_FORCE_PATH_STYLE is enabled for MinIO
+    sed -E -i 's|^([[:space:]]*)#?[[:space:]]*S3_FORCE_PATH_STYLE:[[:space:]]*.*$|\1S3_FORCE_PATH_STYLE: 1|' docker-compose.yml
     echo "🚗 MinIO S3 configuration updated successfully!"
   fi
 
@@ -391,11 +394,34 @@ EOT
 { print }
 ' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
 
-  # Step 2: Add minio-init dependency to formbricks if MinIO enabled
+  # Step 2: Ensure formbricks waits for minio-init to complete successfully (mapping depends_on)
   if [[ $minio_storage == "y" ]]; then
-    sed -i '/formbricks:/,/depends_on:/{
-      /- postgres/a\      - minio-init
-    }' docker-compose.yml
+    # Remove any existing simple depends_on list and replace with mapping
+    awk '
+      BEGIN{in_fb=0; removing=0}
+      /^  formbricks:/ {in_fb=1}
+      in_fb && /^    depends_on:/ {removing=1; next}
+      in_fb && removing && /^    [A-Za-z0-9_-]+:/ {removing=0}
+      /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:/ {in_fb=0}
+      { if(!removing) print }
+    ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+
+    awk '
+      BEGIN{in_fb=0; inserted=0}
+      /^  formbricks:/ {in_fb=1}
+      /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:/ {in_fb=0}
+      {
+        print
+        if (in_fb && !inserted && $0 ~ /^    image:/) {
+          print "    depends_on:"
+          print "      postgres:"
+          print "        condition: service_started"
+          print "      minio-init:"
+          print "        condition: service_completed_successfully"
+          inserted=1
+        }
+      }
+    ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
   fi
 
   # Step 3: Build service snippets and inject them BEFORE the volumes section (robust, no sed -i multiline)
@@ -407,18 +433,13 @@ EOT
 
   minio:
     restart: always
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
     command: server /data
     environment:
       MINIO_ROOT_USER: "$minio_root_user"
       MINIO_ROOT_PASSWORD: "$minio_root_password"
     volumes:
       - minio-data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
     labels:
       - "traefik.enable=true"
       # S3 API on files subdomain
@@ -438,50 +459,18 @@ EOT
       - "traefik.http.middlewares.minio-ratelimit.ratelimit.average=100"
       - "traefik.http.middlewares.minio-ratelimit.ratelimit.burst=200"
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
     depends_on:
-      minio:
-        condition: service_healthy
+      - minio
     environment:
       MINIO_ROOT_USER: "$minio_root_user"
       MINIO_ROOT_PASSWORD: "$minio_root_password"
       MINIO_SERVICE_USER: "$minio_service_user"
       MINIO_SERVICE_PASSWORD: "$minio_service_password"
       MINIO_BUCKET_NAME: "$minio_bucket_name"
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        echo '🔗 Setting up MinIO alias...';
-        mc alias set minio http://minio:9000 "$minio_root_user" "$minio_root_password";
-        
-        echo '🪣 Creating bucket (idempotent)...';
-        mc mb minio/$minio_bucket_name --ignore-existing;
-        
-        echo '📄 Creating JSON policy file...';
-        printf '%s' "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:DeleteObject\",\"s3:GetObject\",\"s3:PutObject\"],\"Resource\":[\"arn:aws:s3:::$minio_bucket_name/*\"]},{\"Effect\":\"Allow\",\"Action\":[\"s3:ListBucket\"],\"Resource\":[\"arn:aws:s3:::$minio_bucket_name\"]}]}" > /tmp/formbricks-policy.json
-        
-        echo '🔒 Creating policy (idempotent)...';
-        if ! mc admin policy info minio $minio_policy_name >/dev/null 2>&1; then
-          mc admin policy create minio $minio_policy_name /tmp/formbricks-policy.json || mc admin policy add minio $minio_policy_name /tmp/formbricks-policy.json;
-          echo 'Policy created successfully.';
-        else
-          echo 'Policy already exists, skipping creation.';
-        fi
-        
-        echo '👤 Creating service user (idempotent)...';
-        if ! mc admin user info minio "$minio_service_user" >/dev/null 2>&1; then
-          mc admin user add minio "$minio_service_user" "$minio_service_password";
-          echo 'User created successfully.';
-        else
-          echo 'User already exists, skipping creation.';
-        fi
-        
-        echo '🔗 Attaching policy to user (idempotent)...';
-        mc admin policy attach minio $minio_policy_name --user "$minio_service_user" || echo 'Policy already attached or attachment failed (non-fatal).';
-        
-        echo '✅ MinIO setup complete!';
-        exit 0;
+    entrypoint: ["/bin/sh", "/tmp/minio-init.sh"]
+    volumes:
+      - ./minio-init.sh:/tmp/minio-init.sh:ro
 
   traefik:
     image: "traefik:v2.7"
@@ -559,10 +548,174 @@ EOF
   { if (!skip) print }
   ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
 
+  # Create minio-init script outside heredoc to avoid variable expansion issues
+  if [[ $minio_storage == "y" ]]; then
+    cat > minio-init.sh << 'MINIO_SCRIPT_EOF'
+#!/bin/sh
+echo '⏳ Waiting for MinIO to be ready...'
+attempts=0
+max_attempts=30
+until mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1 \
+  && mc ls minio >/dev/null 2>&1; do
+  attempts=$((attempts + 1))
+  if [ $attempts -ge $max_attempts ]; then
+    printf '❌ Failed to connect to MinIO after %s attempts\n' $max_attempts
+    exit 1
+  fi
+  printf '...still waiting attempt %s/%s\n' $attempts $max_attempts
+  sleep 2
+done
+echo '🔗 MinIO reachable; alias configured.'
+
+echo '🪣 Creating bucket (idempotent)...';
+mc mb minio/$MINIO_BUCKET_NAME --ignore-existing;
+
+echo '📄 Creating JSON policy file...';
+cat > /tmp/formbricks-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+      "Resource": ["arn:aws:s3:::$MINIO_BUCKET_NAME/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::$MINIO_BUCKET_NAME"]
+    }
+  ]
+}
+EOF
+
+echo '🔒 Creating policy (idempotent)...';
+if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
+  mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json || mc admin policy add minio formbricks-policy /tmp/formbricks-policy.json;
+  echo 'Policy created successfully.';
+else
+  echo 'Policy already exists, skipping creation.';
+fi
+
+echo '👤 Creating service user (idempotent)...';
+if ! mc admin user info minio "$MINIO_SERVICE_USER" >/dev/null 2>&1; then
+  mc admin user add minio "$MINIO_SERVICE_USER" "$MINIO_SERVICE_PASSWORD";
+  echo 'User created successfully.';
+else
+  echo 'User already exists, skipping creation.';
+fi
+
+echo '🔗 Attaching policy to user (idempotent)...';
+mc admin policy attach minio formbricks-policy --user "$MINIO_SERVICE_USER" || echo 'Policy already attached or attachment failed (non-fatal).';
+
+echo '✅ MinIO setup complete!';
+exit 0;
+MINIO_SCRIPT_EOF
+    chmod +x minio-init.sh
+  fi
+
   newgrp docker <<END
 
 docker compose up -d
 
+
+if [[ $minio_storage == "y" ]]; then
+  echo "ℹ️  Waiting for MinIO to be ready..."
+  attempts=0
+  max_attempts=30
+  until docker run --rm --network $(basename "$PWD")_default --entrypoint /bin/sh \
+    minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc \
+    "mc alias set minio http://minio:9000 '$minio_root_user' '$minio_root_password' >/dev/null 2>&1 && mc admin info minio >/dev/null 2>&1"; do
+    attempts=$((attempts+1))
+    if [ $attempts -ge $max_attempts ]; then
+      echo "❌ MinIO did not become ready in time. Proceeding, but subsequent steps may fail."
+      break
+    fi
+    echo "...attempt $attempts/$max_attempts"
+    sleep 5
+  done
+
+  echo "ℹ️  Ensuring bucket exists..."
+  docker run --rm --network $(basename "$PWD")_default \
+    -e MINIO_ROOT_USER="$minio_root_user" \
+    -e MINIO_ROOT_PASSWORD="$minio_root_password" \
+    -e MINIO_BUCKET_NAME="$minio_bucket_name" \
+    --entrypoint /bin/sh \
+    minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
+      mc alias set minio http://minio:9000 "$minio_root_user" "$minio_root_password" >/dev/null 2>&1;
+      mc mb minio/"$minio_bucket_name" --ignore-existing
+    '
+
+  echo "ℹ️  Ensuring service user and policy exist (idempotent)..."
+  docker run --rm --network $(basename "$PWD")_default \
+    -e MINIO_ROOT_USER="$minio_root_user" \
+    -e MINIO_ROOT_PASSWORD="$minio_root_password" \
+    -e MINIO_SERVICE_USER="$minio_service_user" \
+    -e MINIO_SERVICE_PASSWORD="$minio_service_password" \
+    -e MINIO_BUCKET_NAME="$minio_bucket_name" \
+    --entrypoint /bin/sh \
+    minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
+      mc alias set minio http://minio:9000 "$minio_root_user" "$minio_root_password" >/dev/null 2>&1;
+      if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
+        cat > /tmp/formbricks-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Effect": "Allow", "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"], "Resource": ["arn:aws:s3:::$minio_bucket_name/*"] },
+    { "Effect": "Allow", "Action": ["s3:ListBucket"], "Resource": ["arn:aws:s3:::$minio_bucket_name"] }
+  ]
+}
+EOF
+        mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json >/dev/null 2>&1 || true
+      fi;
+      if ! mc admin user info minio "$minio_service_user" >/dev/null 2>&1; then
+        mc admin user add minio "$minio_service_user" "$minio_service_password" >/dev/null 2>&1 || true
+      fi;
+      mc admin policy attach minio formbricks-policy --user "$minio_service_user" >/dev/null 2>&1 || true
+    '
+fi
+
+if [[ $minio_storage == "y" ]]; then
+  echo "⏳ Finalizing MinIO setup..."
+  attempts=0; max_attempts=60
+  while cid=$(docker compose ps -q minio-init 2>/dev/null); do
+    status=$(docker inspect -f '{{.State.Status}}' "$cid" 2>/dev/null || echo "")
+    if [ "$status" = "exited" ] || [ -z "$status" ]; then
+      break
+    fi
+    attempts=$((attempts+1))
+    if [ $attempts -ge $max_attempts ]; then
+      echo "⚠️  minio-init still running after wait; proceeding with cleanup anyway."
+      break
+    fi
+    sleep 2
+  done
+
+  echo "🧹 Cleaning up minio-init service and references..."
+
+  awk '
+    BEGIN{skip=0}
+    /^services:[[:space:]]*$/ { print; next }
+    /^  minio-init:/          { skip=1; next }
+    /^  [A-Za-z0-9_-]+:/      { if (skip) skip=0 }
+    { if (!skip) print }
+  ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+
+  # Remove list-style "- minio-init" lines under depends_on (if any)
+  sed -E -i '/^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/d' docker-compose.yml
+
+  # Remove the minio-init mapping and its condition line
+  sed -i '/^[[:space:]]*minio-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
+
+  # Remove any stopped minio-init container and restart without orphans
+  docker compose rm -f -s minio-init >/dev/null 2>&1 || true
+  docker compose up -d --remove-orphans
+  
+  # Clean up the temporary minio-init script
+  rm -f minio-init.sh
+
+  echo "✅ MinIO one-time init cleaned up."
+fi
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
 
