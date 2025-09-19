@@ -1,9 +1,9 @@
+import { logger } from "@formbricks/logger";
 import type { RedisClient } from "@/types/client";
 import { type CacheError, CacheErrorClass, ErrorCode, type Result, err, ok } from "@/types/error";
 import type { CacheKey } from "@/types/keys";
 import { ZCacheKey } from "@/types/keys";
 import { ZTtlMs } from "@/types/service";
-import { logger } from "@formbricks/logger";
 import { validateInputs } from "./utils/validation";
 
 /**
@@ -32,7 +32,7 @@ export class CacheService {
    * @returns The Redis client instance or null if not ready
    */
   getRedisClient(): RedisClient | null {
-    if (!this.isRedisAvailable()) {
+    if (!this.isRedisClientReady()) {
       return null;
     }
     return this.redis;
@@ -45,7 +45,7 @@ export class CacheService {
    */
   async get<T>(key: CacheKey): Promise<Result<T | null, CacheError>> {
     // Check Redis availability first
-    if (!this.isRedisAvailable()) {
+    if (!this.isRedisClientReady()) {
       return err({
         code: ErrorCode.RedisConnectionError,
       });
@@ -90,7 +90,7 @@ export class CacheService {
    */
   async exists(key: CacheKey): Promise<Result<boolean, CacheError>> {
     // Check Redis availability first
-    if (!this.isRedisAvailable()) {
+    if (!this.isRedisClientReady()) {
       return err({
         code: ErrorCode.RedisConnectionError,
       });
@@ -121,7 +121,7 @@ export class CacheService {
    */
   async set(key: CacheKey, value: unknown, ttlMs: number): Promise<Result<void, CacheError>> {
     // Check Redis availability first
-    if (!this.isRedisAvailable()) {
+    if (!this.isRedisClientReady()) {
       return err({
         code: ErrorCode.RedisConnectionError,
       });
@@ -155,7 +155,7 @@ export class CacheService {
    */
   async del(keys: CacheKey[]): Promise<Result<void, CacheError>> {
     // Check Redis availability first
-    if (!this.isRedisAvailable()) {
+    if (!this.isRedisClientReady()) {
       return err({
         code: ErrorCode.RedisConnectionError,
       });
@@ -192,7 +192,7 @@ export class CacheService {
    * @returns Cached value if present, otherwise fresh result from fn()
    */
   async withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<T> {
-    if (!this.isRedisAvailable()) {
+    if (!this.isRedisClientReady()) {
       return await fn();
     }
 
@@ -257,7 +257,29 @@ export class CacheService {
     }
   }
 
-  private isRedisAvailable(): boolean {
+  /**
+   * Check if Redis is available and healthy by testing connectivity with ping
+   * @returns Promise<boolean> indicating if Redis is available and responsive
+   */
+  async isRedisAvailable(): Promise<boolean> {
+    if (!this.isRedisClientReady()) {
+      return false;
+    }
+
+    try {
+      await this.withTimeout(this.redis.ping());
+      return true;
+    } catch (error) {
+      logger.debug({ error }, "Redis ping failed during availability check");
+      return false;
+    }
+  }
+
+  /**
+   * Fast synchronous check of Redis client state for internal use
+   * @returns Boolean indicating if Redis client is ready and connected
+   */
+  private isRedisClientReady(): boolean {
     return this.redis.isReady && this.redis.isOpen;
   }
 }
