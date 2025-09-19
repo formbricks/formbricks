@@ -1,3 +1,4 @@
+import { TFnType } from "@tolgee/react";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { TAPIKeyEnvironmentPermission, TAuthenticationApiKey } from "@formbricks/types/auth";
 
@@ -39,6 +40,15 @@ export const hasPermission = (
       return requiredPermission === "read";
     default:
       return false;
+  }
+};
+
+export const getOrganizationAccessKeyDisplayName = (key: string, t: TFnType) => {
+  switch (key) {
+    case "accessControl":
+      return t("environments.project.api_keys.access_control");
+    default:
+      return key;
   }
 };
 

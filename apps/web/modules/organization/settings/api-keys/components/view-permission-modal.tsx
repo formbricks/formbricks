@@ -1,5 +1,6 @@
 "use client";
 
+import { getOrganizationAccessKeyDisplayName } from "@/modules/organization/settings/api-keys/lib/utils";
 import {
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
@@ -21,7 +22,7 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 
@@ -167,28 +168,36 @@ export const ViewPermissionModal = ({
                   })}
                 </div>
               </div>
-              <div className="space-y-4">
+
+              <div className="space-y-2">
                 <Label>{t("environments.project.api_keys.organization_access")}</Label>
-                {Object.keys(organizationAccess).map((key) => (
-                  <div key={key} className="mb-2 flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium">Read</Label>
-                      <Switch
-                        disabled={true}
-                        data-testid={`organization-access-${key}-read`}
-                        checked={organizationAccess[key].read || organizationAccess[key].write}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium">Write</Label>
-                      <Switch
-                        disabled={true}
-                        data-testid={`organization-access-${key}-write`}
-                        checked={organizationAccess[key].write}
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[auto_100px_100px] gap-4">
+                    <div></div>
+                    <span className="flex items-center justify-center text-sm font-medium">Read</span>
+                    <span className="flex items-center justify-center text-sm font-medium">Write</span>
+
+                    {Object.keys(organizationAccess).map((key) => (
+                      <Fragment key={key}>
+                        <div className="py-1 text-sm">{getOrganizationAccessKeyDisplayName(key, t)}</div>
+                        <div className="flex items-center justify-center py-1">
+                          <Switch
+                            disabled={true}
+                            data-testid={`organization-access-${key}-read`}
+                            checked={organizationAccess[key].read}
+                          />
+                        </div>
+                        <div className="flex items-center justify-center py-1">
+                          <Switch
+                            disabled={true}
+                            data-testid={`organization-access-${key}-write`}
+                            checked={organizationAccess[key].write}
+                          />
+                        </div>
+                      </Fragment>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
             </div>
           </form>

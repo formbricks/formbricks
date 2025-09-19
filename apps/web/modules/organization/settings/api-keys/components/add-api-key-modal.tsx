@@ -1,5 +1,6 @@
 "use client";
 
+import { getOrganizationAccessKeyDisplayName } from "@/modules/organization/settings/api-keys/lib/utils";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -23,7 +24,7 @@ import { Switch } from "@/modules/ui/components/switch";
 import { ApiKeyPermission } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
@@ -219,10 +220,10 @@ export const AddApiKeyModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="px-1">{t("environments.project.api_keys.add_api_key")}</DialogTitle>
+          <DialogTitle>{t("environments.project.api_keys.add_api_key")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitAPIKey)} className="contents">
-          <DialogBody className="space-y-4 overflow-y-auto px-1 py-4">
+          <DialogBody className="space-y-4 overflow-y-auto py-4">
             <div className="space-y-2">
               <Label>{t("environments.project.api_keys.api_key_label")}</Label>
               <Input
@@ -347,31 +348,43 @@ export const AddApiKeyModal = ({
             </div>
 
             <div className="space-y-4">
-              <Label>{t("environments.project.api_keys.organization_access")}</Label>
-              {Object.keys(selectedOrganizationAccess).map((key) => (
-                <div key={key} className="mt-2 flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <Label>Read</Label>
-                    <Switch
-                      data-testid={`organization-access-${key}-read`}
-                      checked={selectedOrganizationAccess[key].read || selectedOrganizationAccess[key].write}
-                      onCheckedChange={(newVal) => setSelectedOrganizationAccessValue(key, "read", newVal)}
-                      disabled={selectedOrganizationAccess[key].write}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label>Write</Label>
-                    <Switch
-                      data-testid={`organization-access-${key}-write`}
-                      checked={selectedOrganizationAccess[key].write}
-                      onCheckedChange={(newVal) => setSelectedOrganizationAccessValue(key, "write", newVal)}
-                    />
-                  </div>
+              <div>
+                <Label>{t("environments.project.api_keys.organization_access")}</Label>
+                <p className="text-sm text-slate-500">
+                  {t("environments.project.api_keys.organization_access_description")}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="grid grid-cols-[auto_100px_100px] gap-4">
+                  <div></div>
+                  <span className="flex items-center justify-center text-sm font-medium">Read</span>
+                  <span className="flex items-center justify-center text-sm font-medium">Write</span>
+
+                  {Object.keys(selectedOrganizationAccess).map((key) => (
+                    <Fragment key={key}>
+                      <div className="py-1 text-sm">{getOrganizationAccessKeyDisplayName(key, t)}</div>
+                      <div className="flex items-center justify-center py-1">
+                        <Switch
+                          data-testid={`organization-access-${key}-read`}
+                          checked={selectedOrganizationAccess[key].read}
+                          onCheckedChange={(newVal) =>
+                            setSelectedOrganizationAccessValue(key, "read", newVal)
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center justify-center py-1">
+                        <Switch
+                          data-testid={`organization-access-${key}-write`}
+                          checked={selectedOrganizationAccess[key].write}
+                          onCheckedChange={(newVal) =>
+                            setSelectedOrganizationAccessValue(key, "write", newVal)
+                          }
+                        />
+                      </div>
+                    </Fragment>
+                  ))}
                 </div>
-              ))}
-              <p className="text-sm text-slate-500">
-                {t("environments.project.api_keys.organization_access_description")}
-              </p>
+              </div>
             </div>
             <Alert variant="warning">
               <AlertTitle>{t("environments.project.api_keys.api_key_security_warning")}</AlertTitle>

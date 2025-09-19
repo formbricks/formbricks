@@ -2,7 +2,6 @@
 
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon, Trash2Icon } from "lucide-react";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -38,30 +37,26 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
           </div>
 
           <div className="flex items-center gap-2">
-            <TooltipRenderer tooltipContent={t("common.delete")}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteQuota(quota);
-                }}
-                className="h-8 w-8 p-0 text-slate-500">
-                <Trash2Icon className="h-4 w-4" />
-              </Button>
-            </TooltipRenderer>
-            <TooltipRenderer tooltipContent={t("common.duplicate")}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  duplicateQuota(quota);
-                }}
-                className="h-8 w-8 p-0 text-slate-500">
-                <CopyIcon className="h-4 w-4" />
-              </Button>
-            </TooltipRenderer>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteQuota(quota);
+              }}
+              className="h-8 w-8 p-0 text-slate-500">
+              <Trash2Icon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                duplicateQuota(quota);
+              }}
+              className="h-8 w-8 p-0 text-slate-500">
+              <CopyIcon className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       ))}
