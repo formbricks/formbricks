@@ -4,9 +4,10 @@
 
 ### Redis-Only Architecture
 - **Mandatory Redis**: All deployments MUST use Redis via `REDIS_URL` environment variable
-- **Singleton Client**: Use `getCacheService()` - returns singleton instance per process
+- **Singleton Client**: Use `getCacheService()` - returns singleton instance per process using `globalThis`
 - **Result Types**: Core operations return `Result<T, CacheError>` for explicit error handling
 - **Never-Failing Wrappers**: `withCache()` always returns function result, handling cache errors internally
+- **Cross-Platform**: Uses `globalThis` for Edge Runtime, Lambda, and HMR compatibility
 
 ### Type Safety & Validation
 - **Branded Cache Keys**: Use `CacheKey` type to prevent raw string usage
@@ -17,34 +18,40 @@
 
 ```text
 src/
-├── index.ts          # Main exports (getCacheService, createCacheKey, types)
-├── client.ts         # Singleton cache service client with Redis connection
-├── service.ts        # Core CacheService class with Result types + withCache helpers
-├── cache-keys.ts     # Cache key generators with branded types
+├── index.ts                    # Main exports
+├── client.ts                   # globalThis singleton with getCacheService()
+├── service.ts                  # CacheService class with Result types + withCache
+├── cache-keys.ts               # Cache key generators with branded types
+├── cache-integration.test.ts   # E2E tests exercising Redis operations
 ├── utils/
-│   ├── validation.ts # Zod validation utilities
-│   └── key.ts        # makeCacheKey utility (not exported)
-└── *.test.ts         # Unit tests
+│   ├── validation.ts           # Zod validation utilities
+│   └── key.ts                  # makeCacheKey utility (not exported)
+└── *.test.ts                   # Unit tests
 types/
-├── keys.ts           # Branded CacheKey type & CustomCacheNamespace
-├── client.ts         # RedisClient type definition
-├── service.ts        # Zod schemas and validateInputs function
-├── error.ts          # Result type system and error definitions
-└── *.test.ts         # Type tests
+├── keys.ts                     # Branded CacheKey type & CustomCacheNamespace
+├── client.ts                   # RedisClient type definition
+├── service.ts                  # Zod schemas and validateInputs function
+├── error.ts                    # Result type system and error definitions
+└── *.test.ts                   # Type tests
 ```
 
 ## Required Patterns
 
-### Singleton Client Pattern
+### globalThis Singleton Pattern
 ```typescript
-// ✅ GOOD - Use singleton client
+// ✅ GOOD - Use globalThis singleton client
 import { getCacheService } from "@formbricks/cache";
 const result = await getCacheService();
 if (!result.ok) {
-  // Handle initialization error
+  // Handle initialization error - Redis connection failed
+  logger.error({ error: result.error }, "Cache service unavailable");
   throw new Error(`Cache failed: ${result.error.code}`);
 }
 const cacheService = result.data;
+
+// ✅ GOOD - Production validation (index.ts)
+import { validateRedisConfig } from "@formbricks/cache";
+validateRedisConfig(); // Throws if REDIS_URL missing in production
 
 // ❌ BAD - CacheService class not exported for direct instantiation
 import { CacheService } from "@formbricks/cache"; // Won't work!
@@ -71,6 +78,10 @@ const environmentData = await cacheService.withCache(
   createCacheKey.environment.state(environmentId),
   60000
 ); // Returns T directly, handles cache errors internally
+
+// ✅ GOOD - Structured logging with context first
+logger.error({ error, key, operation: "cache_get" }, "Cache operation failed");
+logger.warn({ error }, "Cache unavailable; executing function directly");
 ```
 
 ### Core Validation & Error Types
@@ -91,7 +102,7 @@ export const ZCacheKey = z.string().min(1).refine(k => k.trim().length > 0);
 // TTL validation: min 1000ms for Redis seconds conversion  
 export const ZTtlMs = z.number().int().min(1000).finite();
 
-// Generic validation function
+// Generic validation function (returns array of validated values)
 export function validateInputs(...pairs: [unknown, ZodType][]): Result<unknown[], CacheError>;
 ```
 
@@ -137,9 +148,20 @@ await cacheService.exists(key): Promise<Result<boolean, CacheError>>
 // withCache never fails - returns T directly, handles cache errors internally
 await cacheService.withCache<T>(fn, key, ttlMs): Promise<T>
 
+// Redis availability check with ping test (standardized across codebase)
+await cacheService.isRedisAvailable(): Promise<boolean>
+
 // Direct Redis access for advanced operations (rate limiting, etc.)
 cacheService.getRedisClient(): RedisClient | null
 ```
+
+### Redis Availability Method
+Standardized Redis connectivity check across the codebase.
+
+**Method Implementation:**
+- `isRedisAvailable()`: Checks client state (`isReady && isOpen`) + Redis ping test
+- Returns `Promise<boolean>` - true if Redis is available and responsive
+- Used for health monitoring, status checks, and external validation
 
 ### Service Implementation - Cognitive Complexity Reduction
 The `withCache` method is split into helper methods to reduce cognitive complexity:
@@ -223,12 +245,41 @@ return await fn(); // Always return function result
 
 ## Testing Patterns
 
-### Key Test Areas  
+### Unit Tests (*.test.ts)
 - **Result error cases**: Validation, Redis, corruption errors
 - **Null vs undefined**: Caching behavior differences
 - **withCache fallbacks**: Cache failures gracefully handled  
 - **Edge cases**: Empty arrays, invalid TTLs, malformed keys
 - **Mock dependencies**: Redis client, logger with all levels
+
+### Integration Tests (cache-integration.test.ts)
+- **End-to-End Redis Operations**: Tests against live Redis instance
+- **Auto-Skip Logic**: Automatically skips when Redis unavailable (`REDIS_URL` not set)
+- **Comprehensive Coverage**: All cache operations through real code paths
+- **CI Integration**: Runs in E2E workflow with Redis/Valkey service
+- **Logger Integration**: Uses `@formbricks/logger` with structured logging
+
+```typescript
+// ✅ Integration test pattern
+describe("Cache Integration Tests", () => {
+  beforeAll(async () => {
+    isRedisAvailable = await checkRedisAvailability();
+    if (!isRedisAvailable) {
+      logger.info("🟡 Tests skipped - Redis not available");
+      return;
+    }
+    logger.info("🟢 Tests will run - Redis available");
+  });
+
+  test("withCache miss/hit pattern", async () => {
+    if (!isRedisAvailable) {
+      logger.info("Skipping test: Redis not available");
+      return;
+    }
+    // Test cache miss -> hit behavior with real Redis
+  });
+});
+```
 
 ## Web App Integration Pattern
 
@@ -255,37 +306,41 @@ const redis = await cache.getRedisClient();
 ```
 
 ### Proxy Implementation
-- **No Singleton Management**: Calls `getCacheService()` for each operation
-- **Proxy Pattern**: Transparent method forwarding to underlying cache service  
-- **Graceful Degradation**: withCache falls back to direct execution on cache failure
+- **Lazy Initialization**: Calls `getCacheService()` for each operation via Proxy
+- **Graceful Degradation**: `withCache` falls back to direct execution on cache failure
 - **Server-Only**: Uses "server-only" import to prevent client-side usage
+- **Production Validation**: Validates `REDIS_URL` at module initialization
 
-## Import/Export Standards
+## Architecture Updates
 
+### globalThis Singleton (client.ts)
 ```typescript
-// ✅ GOOD - Package root exports (index.ts)
-export { getCacheService } from "./client";
-export type { CacheService } from "./service";
-export { createCacheKey } from "./cache-keys";
-export type { CacheKey } from "../types/keys";
-export type { Result, CacheError } from "../types/error";
-export { CacheErrorClass, ErrorCode } from "../types/error";
+// Cross-platform singleton using globalThis (not global)
+const globalForCache = globalThis as unknown as {
+  formbricksCache: CacheService | undefined;
+  formbricksCacheInitializing: Promise<Result<CacheService, CacheError>> | undefined;
+};
 
-// ❌ BAD - Don't export these (encapsulation)
-// export { createRedisClientFromEnv } from "./client"; // Internal only
-// export type { RedisClient } from "../types/client"; // Internal only
-// export { CacheService } from "./service"; // Only type exported
+// Prevents multiple Redis connections in HMR/serverless/Edge Runtime
+export async function getCacheService(): Promise<Result<CacheService, CacheError>>;
 ```
+
+### Fast-Fail Connection Strategy
+- **No Reconnection in Factory**: Redis client uses fast-fail connection
+- **Background Reconnection**: Handled by Redis client's built-in retry logic
+- **Early Checks**: `isReady` check at method start to avoid 1-second timeouts
+- **Graceful Degradation**: `withCache` executes function when cache unavailable
 
 ## Key Rules Summary
 
-1. **Singleton Client**: Use `getCacheService()` - returns singleton per process  
-2. **Result Types**: Core ops return `Result<T, CacheError>` - no throwing
+1. **globalThis Singleton**: Use `getCacheService()` - cross-platform singleton
+2. **Result Types**: Core ops return `Result<T, CacheError>` - no throwing  
 3. **Never-Failing withCache**: Returns `T` directly, handles cache errors internally
-4. **Validation**: Use `validateInputs()` function for all input validation
-5. **Error Interface**: Single `CacheError` interface with just `code` field
-6. **Logging**: Rich logging at source, clean Results for consumers
-7. **TTL Minimum**: 1000ms minimum for Redis conversion (ms → seconds)
-8. **Type Safety**: Branded `CacheKey` type prevents raw string usage
-9. **Encapsulation**: RedisClient and createRedisClientFromEnv are internal only
-10. **Cognitive Complexity**: Split complex methods into focused helper methods
+4. **Standardized Redis Check**: Use `isRedisAvailable()` method with ping test
+5. **Structured Logging**: Context object first, then message string
+6. **Fast-Fail Strategy**: Early Redis availability checks, no blocking timeouts
+7. **Integration Testing**: E2E tests with auto-skip logic for development
+8. **Production Validation**: Mandatory `REDIS_URL` with startup validation
+9. **Cross-Platform**: Uses `globalThis` for Edge Runtime/Lambda compatibility
+10. **CI Integration**: Cache tests run in E2E workflow with Redis service
+11. **Cognitive Complexity**: Split complex methods into focused helper methods

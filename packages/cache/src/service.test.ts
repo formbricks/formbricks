@@ -20,6 +20,7 @@ interface MockRedisClient {
   setEx: ReturnType<typeof vi.fn>;
   del: ReturnType<typeof vi.fn>;
   exists: ReturnType<typeof vi.fn>;
+  ping: ReturnType<typeof vi.fn>;
   isReady: boolean;
   isOpen: boolean;
 }
@@ -34,6 +35,7 @@ describe("CacheService", () => {
       setEx: vi.fn(),
       del: vi.fn(),
       exists: vi.fn(),
+      ping: vi.fn().mockResolvedValue("PONG"),
       isReady: true,
       isOpen: true,
     };
@@ -466,6 +468,89 @@ describe("CacheService", () => {
       const result = cacheService.getRedisClient();
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe("isRedisAvailable", () => {
+    test("should return true when Redis is ready, open, and ping succeeds", async () => {
+      mockRedis.ping.mockResolvedValue("PONG");
+
+      const result = await cacheService.isRedisAvailable();
+
+      expect(result).toBe(true);
+      expect(mockRedis.ping).toHaveBeenCalledOnce();
+    });
+
+    test("should return false when Redis is not ready", async () => {
+      mockRedis.isReady = false;
+      mockRedis.ping.mockResolvedValue("PONG");
+
+      const result = await cacheService.isRedisAvailable();
+
+      expect(result).toBe(false);
+      expect(mockRedis.ping).not.toHaveBeenCalled();
+    });
+
+    test("should return false when Redis is not open", async () => {
+      mockRedis.isOpen = false;
+      mockRedis.ping.mockResolvedValue("PONG");
+
+      const result = await cacheService.isRedisAvailable();
+
+      expect(result).toBe(false);
+      expect(mockRedis.ping).not.toHaveBeenCalled();
+    });
+
+    test("should return false when Redis ping fails", async () => {
+      mockRedis.ping.mockRejectedValue(new Error("Connection lost"));
+
+      const result = await cacheService.isRedisAvailable();
+
+      expect(result).toBe(false);
+      expect(mockRedis.ping).toHaveBeenCalledOnce();
+      expect(logger.debug).toHaveBeenCalledWith(
+        { error: expect.any(Error) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        "Redis ping failed during availability check"
+      );
+    });
+
+    test("should return false when ping times out", async () => {
+      // Mock ping to hang indefinitely
+      const hangingPromise = new Promise(() => {
+        // This promise never resolves to simulate timeout
+      });
+      mockRedis.ping.mockImplementation(() => hangingPromise);
+
+      const result = await cacheService.isRedisAvailable();
+
+      expect(result).toBe(false);
+      expect(mockRedis.ping).toHaveBeenCalledOnce();
+    });
+
+    test("should handle different ping responses correctly", async () => {
+      // Test with standard PONG response
+      mockRedis.ping.mockResolvedValue("PONG");
+      let result = await cacheService.isRedisAvailable();
+      expect(result).toBe(true);
+
+      // Test with custom ping message
+      mockRedis.ping.mockResolvedValue("custom-message");
+      result = await cacheService.isRedisAvailable();
+      expect(result).toBe(true);
+
+      // Test with empty response (still success if no error thrown)
+      mockRedis.ping.mockResolvedValue("");
+      result = await cacheService.isRedisAvailable();
+      expect(result).toBe(true);
+    });
+
+    test("should be async and return Promise<boolean>", async () => {
+      mockRedis.ping.mockResolvedValue("PONG");
+
+      const result = cacheService.isRedisAvailable();
+
+      expect(result).toBeInstanceOf(Promise);
+      expect(await result).toBe(true);
     });
   });
 

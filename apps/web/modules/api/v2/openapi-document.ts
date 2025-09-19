@@ -1,3 +1,5 @@
+import { healthPaths } from "@/modules/api/v2/health/lib/openapi";
+import { ZOverallHealthStatus } from "@/modules/api/v2/health/types/health-status";
 import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-attribute-keys/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
 import { surveyContactLinksBySegmentPaths } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/lib/openapi";
@@ -35,6 +37,7 @@ const document = createDocument({
     version: "2.0.0",
   },
   paths: {
+    ...healthPaths,
     ...rolePaths,
     ...mePaths,
     ...responsePaths,
@@ -55,6 +58,10 @@ const document = createDocument({
     },
   ],
   tags: [
+    {
+      name: "Health",
+      description: "Operations for checking critical application dependencies health status.",
+    },
     {
       name: "Roles",
       description: "Operations for managing roles.",
@@ -114,6 +121,7 @@ const document = createDocument({
       },
     },
     schemas: {
+      health: ZOverallHealthStatus,
       role: ZRoles,
       me: ZApiKeyData,
       response: ZResponse,

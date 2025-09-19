@@ -232,6 +232,35 @@ const internalServerErrorResponse = ({
   );
 };
 
+const serviceUnavailableResponse = ({
+  details = [],
+  cors = false,
+  cache = "private, no-store",
+}: {
+  details?: ApiErrorDetails;
+  cors?: boolean;
+  cache?: string;
+} = {}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      error: {
+        code: 503,
+        message: "Service Unavailable",
+        details,
+      },
+    },
+    {
+      status: 503,
+      headers,
+    }
+  );
+};
+
 const successResponse = ({
   data,
   meta,
@@ -325,6 +354,7 @@ export const responses = {
   unprocessableEntityResponse,
   tooManyRequestsResponse,
   internalServerErrorResponse,
+  serviceUnavailableResponse,
   successResponse,
   createdResponse,
   multiStatusResponse,

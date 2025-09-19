@@ -1,7 +1,7 @@
-import type { RedisClient } from "@/types/client";
-import { ErrorCode } from "@/types/error";
 import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { RedisClient } from "@/types/client";
+import { ErrorCode } from "@/types/error";
 import { createRedisClientFromEnv, getCacheService, resetCacheFactory } from "./client";
 
 // Mock the redis module
