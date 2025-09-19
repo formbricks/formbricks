@@ -186,14 +186,12 @@ export const FollowUpModal = ({
 
   const handleSubmit = (data: TCreateSurveyFollowUpForm) => {
     if (data.triggerType === "endings" && data.endingIds?.length === 0) {
-      toast.error("Please select at least one ending or change the trigger type");
+      toast.error(t("environments.surveys.edit.follow_ups_modal_trigger_type_ending_warning"));
       return;
     }
 
     if (!emailSendToOptions.length) {
-      toast.error(
-        "No valid options found for sending emails, please add some open-text / contact-info questions or hidden fields"
-      );
+      toast.error(t("environments.surveys.edit.follow_ups_modal_action_to_warning"));
 
       return;
     }
@@ -264,7 +262,7 @@ export const FollowUpModal = ({
         },
       };
 
-      toast.success("Survey follow up updated successfully");
+      toast.success(t("environments.surveys.edit.follow_ups_modal_updated_successfull_toast"));
       setOpen(false);
       setLocalSurvey((prev) => {
         return {
@@ -311,7 +309,7 @@ export const FollowUpModal = ({
       },
     };
 
-    toast.success("Survey follow up created successfully");
+    toast.success(t("environments.surveys.edit.follow_ups_modal_created_successfull_toast"));
     setOpen(false);
     form.reset();
     setLocalSurvey((prev) => {
