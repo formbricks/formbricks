@@ -234,5 +234,3 @@ volumes:
     driver: local
   redis:
     driver: local
-  uploads:
-    driver: local
