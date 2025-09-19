@@ -750,6 +750,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "访问控制",
         "add_api_key": "添加 API 密钥",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API 密钥 已复制到 剪贴板",

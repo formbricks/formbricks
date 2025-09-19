@@ -750,6 +750,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Control acces",
         "add_api_key": "Adaugă Cheie API",
         "api_key": "Cheie API",
         "api_key_copied_to_clipboard": "Cheia API a fost copiată în clipboard",
