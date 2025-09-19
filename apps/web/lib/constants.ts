@@ -114,7 +114,10 @@ export const MAX_FILE_UPLOAD_SIZES = {
   standard: 1024 * 1024 * 10, // 10MB
   big: 1024 * 1024 * 1024, // 1GB
 } as const;
-export const IS_STORAGE_CONFIGURED = Boolean(S3_ACCESS_KEY && S3_SECRET_KEY && S3_REGION && S3_BUCKET_NAME);
+// Storage is considered configured if we have the minimum required settings:
+// - S3_REGION and S3_BUCKET_NAME are always required
+// - S3_ACCESS_KEY and S3_SECRET_KEY are optional (for IAM role-based authentication)
+export const IS_STORAGE_CONFIGURED = Boolean(S3_REGION && S3_BUCKET_NAME);
 
 // Colors for Survey Bg
 export const SURVEY_BG_COLORS = [
