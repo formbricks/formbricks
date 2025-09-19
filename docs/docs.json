@@ -260,14 +260,7 @@
           {
             "group": "Advanced",
             "pages": [
-              {
-                "group": "Migration",
-                "icon": "arrow-right",
-                "pages": [
-                  "self-hosting/advanced/migration",
-                  "self-hosting/advanced/migration/minio-migration"
-                ]
-              },
+              "self-hosting/advanced/migration",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
               {
