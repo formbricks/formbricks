@@ -1,13 +1,124 @@
 ---
-title: "Migration"
+title: "Migration Guides"
 description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
-### v4.0
+## v4.0
 
-- Migrate local uploads to the new MinIO storage (required in 4.0):
-  see [minio migration](/self-hosting/setup/minio-migration)
+Formbricks 4.0 is a **major milestone** that sets up the technical foundation for future iterations and feature improvements. This release focuses on modernizing core infrastructure components to improve reliability, scalability, and enable advanced features going forward.
+
+### What's New in Formbricks 4.0
+
+**🚀 New Enterprise Features:**
+- **Quotas Management**: Advanced quota controls for enterprise users
+- **Enhanced File Storage**: Improved file handling with better performance and reliability
+
+**🏗️ Technical Foundation Improvements:**
+- **Standardized Caching**: Migration from single-instance in-memory cache to dedicated Redis
+- **Modern File Storage**: Complete migration to S3-compatible object storage
+- **Database Optimization**: Removal of unused database tables and fields for better performance
+- **Future-Ready Architecture**: Standardized infrastructure components for upcoming features
+
+### Why These Changes Are Required
+
+**Deprecated Components:**
+- **Local File Storage**: No longer supported to improve reliability and enable advanced file features
+- **In-Memory Caching**: Replaced with Redis for better performance and multi-instance support
+
+**Benefits of the New Architecture:**
+- **Improved Reliability**: Dedicated components for critical functions
+- **Better Scalability**: Support for multi-instance deployments
+- **Enhanced Performance**: Optimized caching and file storage
+- **Future-Proof**: Standardized foundation for upcoming enterprise features
+
+<Warning>
+  **Important: Migration Required**
+
+  Users currently using **one-click hosting** or other setups without dedicated Redis and S3-compatible storage **must migrate** before upgrading to 4.0:
+  
+  - **File Storage**: Migrate from local storage to MinIO (S3-compatible)
+  - **Caching**: Configure Redis for caching (automatically handled in one-click setups)
+  - **Database**: Automatic cleanup will remove unused tables/fields (backup recommended)
+</Warning>
+
+### Migration Steps for v4.0
+
+This guide is for users who are **self-hosting Formbricks** using the **one-click setup**. If you have a different setup, you may need to adjust the commands accordingly.
+
+Before running these steps, **navigate to the `formbricks` directory** where your `docker-compose.yml` file is located.
+
+#### 1. Backup your Database
+
+**Critical Step**: Create a complete database backup before proceeding. Formbricks 4.0 will automatically remove unused database tables and fields during startup.
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v4.0_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into "**No such container**", use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Info>
+
+#### 2. Migrate to MinIO (Required for Local Storage Users)
+
+If your installation currently uses local file storage, you must migrate to MinIO:
+
+```bash
+# Download the migration script
+curl -fsSL -o migrate-to-minio.sh \
+  https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/migrate-to-minio.sh
+
+# Make it executable and run
+chmod +x migrate-to-minio.sh
+./migrate-to-minio.sh
+```
+
+For detailed instructions, troubleshooting, and manual migration steps, see the [MinIO migration guide](/self-hosting/advanced/migration/minio-migration).
+
+#### 3. Upgrade to Formbricks 4.0
+
+Once your MinIO migration is complete (if required):
+
+```bash
+# Pull the latest version
+docker compose pull
+
+# Stop the current instance
+docker compose down
+
+# Start with Formbricks 4.0
+docker compose up -d
+```
+
+#### 4. Automatic Database Migration
+
+When you start Formbricks 4.0 for the first time, it will **automatically**:
+- Detect and apply required database schema updates
+- Remove unused database tables and fields
+- Optimize the database structure for better performance
+
+No manual intervention is required for the database migration.
+
+#### 5. Verify Your Upgrade
+
+- Access your Formbricks instance at the same URL as before
+- Test file uploads to ensure MinIO integration works correctly
+- Verify that existing surveys and data are intact
+- Check that previously uploaded files are accessible
+
+<Info>
+  **Redis Caching**: For one-click setups, Redis caching is automatically configured. For custom setups, ensure you have Redis configured as per the [configuration documentation](/self-hosting/configuration/environment-variables).
+</Info>
+
+### Post-Migration Benefits
+
+After upgrading to Formbricks 4.0, you'll benefit from:
+- **Better Performance**: Improved caching and file storage performance
+- **Enhanced Reliability**: Dedicated components for critical functions
+- **Future Features**: Access to new enterprise features like Quotas Management
+- **Scalability**: Foundation for multi-instance deployments
 
 ### v3.3
 
