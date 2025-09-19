@@ -27,7 +27,7 @@ import {
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
-  value: string | number | string[] | Record<string, string>;
+  value: TResponseDataValue;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;

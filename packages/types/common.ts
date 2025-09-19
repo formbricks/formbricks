@@ -42,12 +42,32 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
     });
   }
 
-  // Allow localhost for easy recall testing on self-hosted environments
-  if (!url.startsWith("https://") && !url.startsWith("http://localhost")) {
+  // Allow localhost for easy recall testing on self-hosted environments and mailto links
+  if (!url.startsWith("https://") && !url.startsWith("http://localhost") && !url.startsWith("mailto:")) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "URL must start with https://",
+      message: "URL must start with https:// or mailto:",
     });
+  }
+
+  // Skip further validation for mailto URLs as they have different structure
+  if (url.startsWith("mailto:")) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "mailto:") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid mailto URL format",
+        });
+        return;
+      }
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid mailto URL format",
+      });
+    }
+    return;
   }
 
   try {

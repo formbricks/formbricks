@@ -102,41 +102,20 @@ describe("TemplateList", () => {
   });
 
   test("renders correctly with default props", () => {
-    render(
-      <TemplateList
-        userId="user-id"
-        environmentId="env-id"
-        project={mockProject}
-        prefilledFilters={[null, null, null]}
-      />
-    );
+    render(<TemplateList userId="user-id" environmentId="env-id" project={mockProject} />);
 
     expect(screen.getByText("Start from scratch")).toBeInTheDocument();
   });
 
   test("renders filters when showFilters is true", () => {
-    render(
-      <TemplateList
-        userId="user-id"
-        environmentId="env-id"
-        project={mockProject}
-        prefilledFilters={[null, null, null]}
-        showFilters={true}
-      />
-    );
+    render(<TemplateList userId="user-id" environmentId="env-id" project={mockProject} showFilters={true} />);
 
     expect(screen.queryByTestId("template-filters")).toBeInTheDocument();
   });
 
   test("doesn't render filters when showFilters is false", () => {
     render(
-      <TemplateList
-        userId="user-id"
-        environmentId="env-id"
-        project={mockProject}
-        prefilledFilters={[null, null, null]}
-        showFilters={false}
-      />
+      <TemplateList userId="user-id" environmentId="env-id" project={mockProject} showFilters={false} />
     );
 
     expect(screen.queryByTestId("template-filters")).not.toBeInTheDocument();
@@ -150,7 +129,6 @@ describe("TemplateList", () => {
         userId="user-id"
         environmentId="env-id"
         project={mockProject}
-        prefilledFilters={[null, null, null]}
         templateSearch="Template 1"
       />
     );
@@ -167,7 +145,6 @@ describe("TemplateList", () => {
         userId="user-id"
         environmentId="env-id"
         project={mockProject}
-        prefilledFilters={[null, null, null]}
         onTemplateClick={onTemplateClickMock}
         noPreview={true}
       />
@@ -186,14 +163,7 @@ describe("TemplateList", () => {
 
     const user = userEvent.setup();
 
-    render(
-      <TemplateList
-        userId="user-id"
-        environmentId="env-id"
-        project={mockProject}
-        prefilledFilters={[null, null, null]}
-      />
-    );
+    render(<TemplateList userId="user-id" environmentId="env-id" project={mockProject} />);
 
     // First select the template
     const selectButton = screen.getAllByText("Select")[0];
@@ -220,14 +190,7 @@ describe("TemplateList", () => {
 
     const user = userEvent.setup();
 
-    render(
-      <TemplateList
-        userId="user-id"
-        environmentId="env-id"
-        project={mockProject}
-        prefilledFilters={[null, null, null]}
-      />
-    );
+    render(<TemplateList userId="user-id" environmentId="env-id" project={mockProject} />);
 
     // First select the template
     const selectButton = screen.getAllByText("Select")[0];
@@ -250,12 +213,7 @@ describe("TemplateList", () => {
     };
 
     const { rerender } = render(
-      <TemplateList
-        userId="user-id"
-        environmentId="env-id"
-        project={mobileProject as Project}
-        prefilledFilters={[null, null, null]}
-      />
+      <TemplateList userId="user-id" environmentId="env-id" project={mobileProject as Project} />
     );
 
     // Test with no channel config
@@ -264,14 +222,7 @@ describe("TemplateList", () => {
       config: {},
     };
 
-    rerender(
-      <TemplateList
-        userId="user-id"
-        environmentId="env-id"
-        project={noChannelProject as Project}
-        prefilledFilters={[null, null, null]}
-      />
-    );
+    rerender(<TemplateList userId="user-id" environmentId="env-id" project={noChannelProject as Project} />);
 
     expect(screen.getByText("Template 1")).toBeInTheDocument();
   });
@@ -279,14 +230,7 @@ describe("TemplateList", () => {
   test("development mode shows templates correctly", () => {
     vi.stubEnv("NODE_ENV", "development");
 
-    render(
-      <TemplateList
-        userId="user-id"
-        environmentId="env-id"
-        project={mockProject}
-        prefilledFilters={[null, null, null]}
-      />
-    );
+    render(<TemplateList userId="user-id" environmentId="env-id" project={mockProject} />);
 
     expect(screen.getByText("Template 1")).toBeInTheDocument();
     expect(screen.getByText("Template 2")).toBeInTheDocument();
