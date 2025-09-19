@@ -229,12 +229,8 @@ services:
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
 
-    
-
 volumes:
   postgres:
     driver: local
   redis:
-    driver: local
-  uploads:
     driver: local
