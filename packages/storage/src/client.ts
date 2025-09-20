@@ -19,9 +19,9 @@ let cachedS3Client: S3Client | undefined;
  */
 export const createS3ClientFromEnv = (): Result<S3Client, StorageError> => {
   try {
-    // S3_REGION and S3_BUCKET_NAME are always required
-    if (!S3_BUCKET_NAME || !S3_REGION) {
-      logger.error("S3 Client: S3_REGION and S3_BUCKET_NAME are required");
+    // Only S3_BUCKET_NAME is required - S3_REGION is optional and will default to AWS SDK defaults
+    if (!S3_BUCKET_NAME) {
+      logger.error("S3 Client: S3_BUCKET_NAME is required");
       return err({
         code: StorageErrorCode.S3CredentialsError,
       });
@@ -29,10 +29,14 @@ export const createS3ClientFromEnv = (): Result<S3Client, StorageError> => {
 
     // Build S3 client configuration
     const s3Config: S3ClientConfig = {
-      region: S3_REGION,
       endpoint: S3_ENDPOINT_URL,
       forcePathStyle: S3_FORCE_PATH_STYLE,
     };
+
+    // Only set region if it's provided, otherwise let AWS SDK use its defaults
+    if (S3_REGION) {
+      s3Config.region = S3_REGION;
+    }
 
     // Only add credentials if both access key and secret key are provided
     // This allows the AWS SDK to use IAM roles, instance profiles, or other credential providers
