@@ -133,11 +133,13 @@ REDIS_URL=redis://your-redis-host:6379
 Configure S3 storage by adding the following environment variables to your instances:
 
 ```sh env
-# Required for file uploads in serverless environments
+# Required
+S3_BUCKET_NAME=your-bucket-name
+
+# Optional - if not provided, AWS SDK will use defaults (us-east-1) or auto-detect
 S3_ACCESS_KEY=your-access-key
 S3_SECRET_KEY=your-secret-key
 S3_REGION=your-region
-S3_BUCKET_NAME=your-bucket-name
 
 # For S3-compatible storage (e.g., StorJ, MinIO)
 # Leave empty for Amazon S3
