@@ -45,7 +45,7 @@ external_s3_guard() {
         if ! has_service minio; then
             print_warning "Detected existing S3 credentials in docker-compose.yml and no bundled MinIO service."
             print_error "This migration is intended only for setups using local uploads."
-            print_info "No changes were made. If you already use external S3 (incl. AWS), you don't need this migration."
+            print_info "No files were migrated. If you already use external S3 (incl. AWS), you don't need this migration."
             exit 0
         fi
     fi
@@ -299,11 +299,11 @@ add_or_replace_env_var() {
         # Add to specified section with fallback
         local section_found=false
         
-        if [[ "$section" == "REQUIRED" ]] && grep -q "######################################################## REQUIRED ########################################################" docker-compose.yml; then
+        if [[ "$section" == "REQUIRED" ]] && grep -q -E "^[[:space:]]*#+[[:space:]]*REQUIRED[[:space:]]*#+[[:space:]]*$" docker-compose.yml; then
             # Add to REQUIRED section
             awk -v insert_key="$key" -v insert_val="$value" '
-              /######## REQUIRED ########/ {print; in_required=1; next}
-              in_required && /############################################# OPTIONAL/ && !printed { 
+              /^[[:space:]]*#+[[:space:]]*REQUIRED[[:space:]]*#+[[:space:]]*$/ {print; in_required=1; next}
+              in_required && /^[[:space:]]*#+.*OPTIONAL/ && !printed { 
                 print ""; print "    # " insert_key " (required for Formbricks 4.0)"; 
                 print "    " insert_key ": \"" insert_val "\""; printed=1 
               }
@@ -311,12 +311,14 @@ add_or_replace_env_var() {
               END { if(in_required && !printed) { print ""; print "    # " insert_key " (required for Formbricks 4.0)"; print "    " insert_key ": \"" insert_val "\"" } }
             ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
             section_found=true
-        elif [[ "$section" == "STORAGE" ]] && grep -q "################################################### OPTIONAL (STORAGE) ###################################################" docker-compose.yml; then
+        elif [[ "$section" == "STORAGE" ]] && grep -q -E "^[[:space:]]*#+[[:space:]]*OPTIONAL[[:space:]]*\\([[:space:]]*STORAGE[[:space:]]*\\)[[:space:]]*#+[[:space:]]*$" docker-compose.yml; then
             # Add to STORAGE section (original behavior)
             awk -v insert_key="$key" -v insert_val="$value" '
               BEGIN{printed=0}
-              /################################################### OPTIONAL \(STORAGE\) ###################################################/ {print; in_storage=1; next}
-              in_storage && /############################################# OPTIONAL \(OAUTH CONFIGURATION\) #############################################/ && !printed { print "    " insert_key ": \"" insert_val "\""; printed=1; print; in_storage=0; next }
+              /^[[:space:]]*#+[[:space:]]*OPTIONAL[[:space:]]*\([[:space:]]*STORAGE[[:space:]]*\)[[:space:]]*#+[[:space:]]*$/ {print; in_storage=1; next}
+              in_storage && /^[[:space:]]*#+.*OPTIONAL.*OAUTH/ && !printed { 
+                print "    " insert_key ": \"" insert_val "\""; printed=1; print; in_storage=0; next 
+              }
               { print }
               END { if(in_storage && !printed) print "    " insert_key ": \"" insert_val "\"" }
             ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
@@ -815,8 +817,6 @@ add_redis_service() {
     command: valkey-server --appendonly yes
     volumes:
       - redis:/data
-    ports:
-      - \"6379:6379\"
 "
     
     # Write Redis service to temporary file
@@ -1430,6 +1430,6 @@ cleanup_uploads_from_compose() {
 fi
 
 # Check if script is being run directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -n "${BASH_SOURCE:-}" && "${BASH_SOURCE[0]}" == "${0}" ]]; then
     migrate_to_minio
 fi
