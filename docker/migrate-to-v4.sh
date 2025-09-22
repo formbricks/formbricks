@@ -342,16 +342,31 @@ add_or_replace_env_var() {
 
 # Function to check if we're in the correct directory
 check_formbricks_directory() {
-    if [[ ! -f "docker-compose.yml" ]]; then
-        print_error "docker-compose.yml not found in current directory!"
-        print_info "Please run this script from your Formbricks installation directory (usually ./formbricks/)"
-        exit 1
+    # Case 1: docker-compose.yml in current directory
+    if [[ -f "docker-compose.yml" ]]; then
+        if grep -q "formbricks" docker-compose.yml; then
+            return 0
+        else
+            print_error "This doesn't appear to be a Formbricks docker-compose.yml file!"
+            exit 1
+        fi
     fi
-    
-    if ! grep -q "formbricks" docker-compose.yml; then
-        print_error "This doesn't appear to be a Formbricks docker-compose.yml file!"
-        exit 1
+
+    # Case 2: one-click setup parent directory containing ./formbricks/docker-compose.yml
+    if [[ -f "formbricks/docker-compose.yml" ]]; then
+        cd formbricks
+        print_status "Detected one-click setup layout. Switched to ./formbricks directory."
+        if ! grep -q "formbricks" docker-compose.yml; then
+            print_error "This doesn't appear to be a Formbricks docker-compose.yml file!"
+            exit 1
+        fi
+        return 0
     fi
+
+    # Neither current directory nor ./formbricks contains a compose file
+    print_error "docker-compose.yml not found in current directory or in ./formbricks/"
+    print_info "Run this script from the parent directory created by the one-click setup (containing ./formbricks/), or from the directory containing docker-compose.yml."
+    exit 1
 }
 
 # Function to backup existing docker-compose.yml
@@ -1086,19 +1101,21 @@ migrate_files_to_minio() {
 
 # Function to restart Docker Compose
 restart_docker_compose() {
-    echo -n "Restart Docker Compose now to start MinIO and apply changes? [Y/n]: "
+    echo -n "Restart now to apply changes and continue the migration? (recommended) [Y/n]: "
     local restart_confirm
     read -r restart_confirm
     restart_confirm=$(echo "$restart_confirm" | tr '[:upper:]' '[:lower:]')
     if [[ -z "$restart_confirm" || "$restart_confirm" == "y" ]]; then
-        print_info "Stopping current services..."
+        print_info "We need to briefly restart Formbricks to apply the changes."
+        print_info "Stopping services..."
         docker compose down
         print_info "Starting services with MinIO..."
         docker compose up -d
         print_status "Docker Compose restarted successfully!"
         return 0
     else
-        print_warning "Skipping restart. You can run 'docker compose down && docker compose up -d' later to start MinIO."
+        print_warning "Skipping restart for now."
+        print_info "When you're ready, run: docker compose down && docker compose up -d"
         return 1
     fi
 }
@@ -1126,13 +1143,14 @@ wait_for_service_up() {
 
 # Main migration function
 migrate_to_minio() {
-    echo "🧱 Formbricks v4.0 Migration Script (Redis + MinIO)"
-    echo "==================================================="
+    echo "🧱 Formbricks v4.0 Migration"
+    echo "============================"
     echo ""
-    print_info "This script will set up the required infrastructure for Formbricks 4.0:"
-    print_info "  • Redis for caching"
-    print_info "  • MinIO for S3-compatible file storage"
-    print_info "  • Migrate existing files to MinIO"
+    print_info "We'll prepare your Formbricks instance for v4.0 by:"
+    print_info "- Adding Redis (for caching)"
+    print_info "- Adding MinIO (for file storage)"
+    print_info "- Moving your existing files into MinIO"
+    print_info "You'll be asked to restart briefly so changes take effect."
     echo ""
     
     # Check if we're in the right directory
@@ -1170,8 +1188,8 @@ migrate_to_minio() {
     fi
     
     print_info "Detected configuration:"
-    print_info "  Main domain: $main_domain"
-    print_info "  HTTPS setup: $https_setup"
+    print_info "Main domain: $main_domain"
+    print_info "HTTPS setup: $https_setup"
     echo ""
     
     local files_domain
@@ -1200,7 +1218,7 @@ migrate_to_minio() {
             exit 1
         fi
         local default_files_domain="files.$main_domain"
-        echo -n "Enter the files subdomain for MinIO (e.g., $default_files_domain): "
+        echo -n "Enter the files subdomain to use for MinIO (e.g., $default_files_domain): "
         read files_domain
         if [[ -z "$files_domain" ]]; then
             files_domain="$default_files_domain"
@@ -1250,6 +1268,26 @@ migrate_to_minio() {
         if restart_docker_compose; then
             restart_success=true
             proceed_migration=true
+        else
+            # User declined restart; confirm they understand migration cannot proceed without it
+            print_warning "Without restarting now, the migration cannot proceed."
+            echo -n "Restart Docker Compose now to proceed with migration? [Y/n]: "
+            read -r confirm_restart
+            confirm_restart=$(echo "$confirm_restart" | tr '[:upper:]' '[:lower:]')
+            if [[ -z "$confirm_restart" || "$confirm_restart" == "y" ]]; then
+                if restart_docker_compose; then
+                    restart_success=true
+                    proceed_migration=true
+                else
+                    print_warning "Migration cancelled because restart was declined."
+                    print_info "You can run 'docker compose down && docker compose up -d' later, then rerun this script to migrate files."
+                    return 0
+                fi
+            else
+                print_warning "Migration cancelled at your request. No files were migrated."
+                print_info "You can restart later and rerun this script to migrate files."
+                return 0
+            fi
         fi
     else
         # Try to ensure services are up without full restart
@@ -1358,21 +1396,21 @@ migrate_to_minio() {
     echo "======================================="
     echo ""
     print_status "Infrastructure Configuration:"
-    print_info "  Redis URL: redis://redis:6379"
-    print_info "  Files Domain: $files_domain"
-    print_info "  S3 Access Key: $minio_service_user"
-    print_info "  S3 Bucket: $minio_bucket_name"
+    print_info "Redis://redis:6379"
+    print_info "Files Domain: $files_domain"
+    print_info "S3 Access Key: $minio_service_user"
+    print_info "S3 Bucket: $minio_bucket_name"
     echo ""
     
     if [[ "$restart_success" == true ]]; then
         print_status "Your Formbricks instance is now ready for v4.0!"
-        print_info "• Redis is configured for caching"
-        print_info "• MinIO is configured for file storage"
-        print_info "You can check the status with: docker compose ps"
-        print_info "View logs with: docker compose logs"
+        print_info "- Redis is configured for caching"
+        print_info "- MinIO is configured for file storage"
+        print_info "To check that everything is running, use: docker compose ps"
+        print_info "To view logs (for troubleshooting), use: docker compose logs"
     else
-        print_warning "Remember to restart your Docker Compose setup:"
-        print_info "  docker compose down && docker compose up -d"
+        print_warning "Before migration can happen, please remember to restart your services:"
+        print_info "docker compose down && docker compose up -d"
     fi
     
     if [[ "$MIGRATE_ONLY" != true ]]; then
