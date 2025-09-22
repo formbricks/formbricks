@@ -2017,6 +2017,18 @@ paths:
             type: string
             description: The ID of the contact
           required: true
+        - in: query
+          name: expirationDays
+          description: Number of days until the generated JWT expires. If not provided,
+            there is no expiration.
+          schema:
+            type:
+              - number
+              - undefined
+            minimum: 1
+            default: undefined
+            description: Number of days until the generated JWT expires. If not provided,
+              there is no expiration.
       responses:
         "200":
           description: Personalized survey link retrieved successfully.
@@ -2031,6 +2043,11 @@ paths:
                       surveyUrl:
                         type: string
                         format: uri
+                      expiresAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        description: The date and time the link expires, null if no expiration
                     required:
                       - surveyUrl
   /surveys/{surveyId}/contact-links/segments/{segmentId}:

@@ -8,6 +8,7 @@ import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contac
 import {
   TContactLinkParams,
   ZContactLinkParams,
+  ZContactLinkQuery,
 } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/types/survey";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
@@ -19,9 +20,10 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
     externalParams: props.params,
     schemas: {
       params: ZContactLinkParams,
+      query: ZContactLinkQuery,
     },
     handler: async ({ authentication, parsedInput }) => {
-      const { params } = parsedInput;
+      const { params, query } = parsedInput;
 
       if (!params) {
         return handleApiError(request, {
@@ -92,12 +94,29 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
         });
       }
 
-      const surveyUrlResult = await getContactSurveyLink(params.contactId, params.surveyId, 7);
+      // Calculate expiration date based on expirationDays
+      let expiresAt: string | null = null;
+      if (query?.expirationDays) {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + query.expirationDays);
+        expiresAt = expirationDate.toISOString();
+      }
+
+      const surveyUrlResult = await getContactSurveyLink(
+        params.contactId,
+        params.surveyId,
+        query?.expirationDays || undefined
+      );
 
       if (!surveyUrlResult.ok) {
         return handleApiError(request, surveyUrlResult.error);
       }
 
-      return responses.successResponse({ data: { surveyUrl: surveyUrlResult.data } });
+      return responses.successResponse({
+        data: {
+          surveyUrl: surveyUrlResult.data,
+          expiresAt,
+        },
+      });
     },
   });
