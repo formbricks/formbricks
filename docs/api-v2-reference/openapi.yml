@@ -2026,7 +2026,6 @@ paths:
               - number
               - undefined
             minimum: 1
-            default: undefined
             description: Number of days until the generated JWT expires. If not provided,
               there is no expiration.
       responses:
