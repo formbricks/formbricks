@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { TConditionGroup, TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { createSharedConditionsFactory } from "@/modules/survey/editor/lib/shared-conditions-factory";
 import { getDefaultOperatorForQuestion } from "@/modules/survey/editor/lib/utils";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
-import { useTranslate } from "@tolgee/react";
-import { TConditionGroup, TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface LogicEditorConditionsProps {
   conditions: TConditionGroup;

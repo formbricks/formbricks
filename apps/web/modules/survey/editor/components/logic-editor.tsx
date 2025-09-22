@@ -1,5 +1,9 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { ArrowRightIcon } from "lucide-react";
+import { ReactElement, useMemo } from "react";
+import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
@@ -11,10 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslate } from "@tolgee/react";
-import { ArrowRightIcon } from "lucide-react";
-import { ReactElement, useMemo } from "react";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface LogicEditorProps {
   localSurvey: TSurvey;
