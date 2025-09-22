@@ -107,7 +107,6 @@ describe("LogicEditor", () => {
       questionIdx: questionIdx,
       localSurvey: mockLocalSurvey,
       logicIdx: logicIdx,
-      isLast: false,
     });
 
     // Assert that LogicEditorActions is rendered with the correct props

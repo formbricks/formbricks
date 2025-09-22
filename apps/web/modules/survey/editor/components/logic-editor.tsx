@@ -75,7 +75,6 @@ export function LogicEditor({
         questionIdx={questionIdx}
         localSurvey={localSurvey}
         logicIdx={logicIdx}
-        isLast={isLast}
       />
       <LogicEditorActions
         logicItem={logicItem}

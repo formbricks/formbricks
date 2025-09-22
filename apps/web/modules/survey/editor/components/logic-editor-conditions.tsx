@@ -14,7 +14,6 @@ interface LogicEditorConditionsProps {
   questionIdx: number;
   logicIdx: number;
   depth?: number;
-  isLast: boolean;
 }
 
 export function LogicEditorConditions({
@@ -25,7 +24,6 @@ export function LogicEditorConditions({
   questionIdx,
   updateQuestion,
   depth = 0,
-  isLast,
 }: LogicEditorConditionsProps) {
   const { t } = useTranslate();
 
@@ -52,19 +50,6 @@ export function LogicEditorConditions({
       },
     }
   );
-  const onRemoveCondition = (conditionId: string) => {
-    callbacks.onRemoveCondition(conditionId);
-    if (isLast) {
-      updateQuestion(questionIdx, { logicFallback: undefined });
-    }
-  };
 
-  return (
-    <ConditionsEditor
-      conditions={conditions}
-      config={config}
-      callbacks={{ ...callbacks, onRemoveCondition }}
-      depth={depth}
-    />
-  );
+  return <ConditionsEditor conditions={conditions} config={config} callbacks={callbacks} depth={depth} />;
 }
