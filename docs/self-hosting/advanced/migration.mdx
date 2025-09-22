@@ -9,7 +9,8 @@ icon: "arrow-right"
 <Warning>
   **Important: Migration Required**
 
-  Formbricks 4 introduces additional requirements for self-hosting setups and makes a dedicated Redis cache as well as S3-compatible file storage mandatory.
+Formbricks 4 introduces additional requirements for self-hosting setups and makes a dedicated Redis cache as well as S3-compatible file storage mandatory.
+
 </Warning>
 
 Formbricks 4.0 is a **major milestone** that sets up the technical foundation for future iterations and feature improvements. This release focuses on modernizing core infrastructure components to improve reliability, scalability, and enable advanced features going forward.
@@ -17,9 +18,11 @@ Formbricks 4.0 is a **major milestone** that sets up the technical foundation fo
 ### What's New in Formbricks 4.0
 
 **🚀 New Enterprise Features:**
+
 - **Quotas Management**: Advanced quota controls for enterprise users
 
 **🏗️ Technical Foundation Improvements:**
+
 - **Enhanced File Storage**: Improved file handling with better performance and reliability
 - **Improved Caching**: New caching functionality improving speed, extensibility and reliability
 - **Database Optimization**: Removal of unused database tables and fields for better performance
@@ -39,7 +42,8 @@ These services are already included in the updated one-click setup for self-host
 We know this represents more moving parts in your infrastructure and might even introduce more complexity in hosting Formbricks, and we don't take this decision lightly. As Formbricks grows into a comprehensive Survey and Experience Management platform, we've reached a point where the simple, single-service approach was holding back our ability to deliver the reliable, feature-rich product our users demand and deserve.
 
 By moving to dedicated, professional-grade services for these critical functions, we're building the foundation needed to deliver:
-- **Enterprise-grade reliability** with proper redundancy and backup capabilities  
+
+- **Enterprise-grade reliability** with proper redundancy and backup capabilities
 - **Advanced features** that require sophisticated caching and file processing
 - **Better performance** through optimized, dedicated services
 - **Future scalability** to support larger deployments and more complex use cases without the need to maintain two different approaches
@@ -52,25 +56,25 @@ Additional migration steps are needed if you are using a self-hosted Formbricks 
 
 ### One-Click Setup
 
-For users using our official one-click setup, we provide an automated migration using a migration script: 
+For users using our official one-click setup, we provide an automated migration using a migration script:
 
 ```bash
 # Download the latest script
-curl -fsSL -o migrate-to-minio.sh \
-  https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/migrate-to-minio.sh
+curl -fsSL -o migrate-to-v4.sh \
+  https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/migrate-to-v4.sh
 
 # Make it executable
-chmod +x migrate-to-minio.sh
+chmod +x migrate-to-v4.sh
 
 # Launch the guided migration
-./migrate-to-minio.sh
+./migrate-to-v4.sh
 ```
 
 This script guides you through the steps for the infrastructure migration and does the following:
+
 - Adds a Redis service to your setup and configures it
 - Adds a MinIO service (open source S3-alternative) to your setup, configures it and migrates local files to it
 - Pulls the latest Formbricks image and updates your instance
-
 
 ### Manual Setup
 
@@ -87,6 +91,7 @@ You need to configure the `REDIS_URL` environment variable and point it to your 
 To use file storage (e.g., file upload questions, image choice questions, custom survey backgrounds, etc.), you need to have S3-compatible file storage set up and connected to Formbricks.
 
 Formbricks supports multiple storage providers (among many other S3-compatible storages):
+
 - AWS S3
 - Digital Ocean Spaces
 - Hetzner Object Storage
@@ -101,6 +106,7 @@ Please make sure to set up a storage bucket with one of these solutions and then
   S3_BUCKET_NAME: formbricks-uploads
   S3_ENDPOINT_URL: http://minio:9000 # not needed for AWS S3
 ```
+
 #### Upgrade Process
 
 **1. Backup your Database**
@@ -112,8 +118,8 @@ docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbr
 ```
 
 <Info>
-  If you run into "**No such container**", use `docker ps` to find your container name,
-  e.g. `formbricks_postgres_1`.
+  If you run into "**No such container**", use `docker ps` to find your container name, e.g.
+  `formbricks_postgres_1`.
 </Info>
 
 **2. Upgrade to Formbricks 4.0**
@@ -134,6 +140,7 @@ docker compose up -d
 **3. Automatic Database Migration**
 
 When you start Formbricks 4.0 for the first time, it will **automatically**:
+
 - Detect and apply required database schema updates
 - Remove unused database tables and fields
 - Optimize the database structure for better performance
