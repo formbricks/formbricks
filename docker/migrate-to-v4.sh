@@ -1142,7 +1142,7 @@ wait_for_service_up() {
 }
 
 # Main migration function
-migrate_to_minio() {
+migrate_to_v4() {
     echo "🧱 Formbricks v4.0 Migration"
     echo "============================"
     echo ""
@@ -1156,6 +1156,8 @@ migrate_to_minio() {
     # Check if we're in the right directory
     check_formbricks_directory
 
+    # Backup docker-compose.yml before making any changes
+    backup_docker_compose
     
     # Add Redis configuration first (prerequisite for Formbricks 4.0)
     print_status "Setting up Redis..."
@@ -1231,9 +1233,6 @@ migrate_to_minio() {
         # Generate or rotate MinIO credentials
         generate_minio_credentials
         echo ""
-        
-        # Backup docker-compose.yml
-        backup_docker_compose
         
         # If reconfiguring/rotating creds, remove existing service blocks so reinjection is clean
         if [[ "$REGENERATE_CREDS" == true || "$FORCE_RECONFIGURE" == true ]]; then
@@ -1469,5 +1468,5 @@ fi
 
 # Check if script is being run directly
 if [[ -n "${BASH_SOURCE:-}" && "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    migrate_to_minio
+    migrate_to_v4
 fi
