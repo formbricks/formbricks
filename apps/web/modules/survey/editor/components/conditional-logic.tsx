@@ -1,5 +1,19 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CopyIcon,
+  EllipsisVerticalIcon,
+  PlusIcon,
+  SplitIcon,
+  TrashIcon,
+} from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { duplicateLogicItem } from "@/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
@@ -15,20 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Label } from "@/modules/ui/components/label";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CopyIcon,
-  EllipsisVerticalIcon,
-  PlusIcon,
-  SplitIcon,
-  TrashIcon,
-} from "lucide-react";
-import { useMemo } from "react";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface ConditionalLogicProps {
   localSurvey: TSurvey;
@@ -116,6 +116,12 @@ export function ConditionalLogic({
     });
   };
   const [parent] = useAutoAnimate();
+
+  useEffect(() => {
+    if (question.logic?.length === 0 && question.logicFallback) {
+      updateQuestion(questionIdx, { logicFallback: undefined });
+    }
+  }, [question.logic, questionIdx, question.logicFallback, updateQuestion]);
 
   return (
     <div className="mt-4" ref={parent}>

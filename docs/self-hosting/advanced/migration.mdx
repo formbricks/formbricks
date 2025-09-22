@@ -71,7 +71,6 @@ chmod +x migrate-to-v4.sh
 ```
 
 This script guides you through the steps for the infrastructure migration and does the following:
-
 - Adds a Redis service to your setup and configures it
 - Adds a MinIO service (open source S3-alternative) to your setup, configures it and migrates local files to it
 - Pulls the latest Formbricks image and updates your instance
@@ -91,7 +90,6 @@ You need to configure the `REDIS_URL` environment variable and point it to your 
 To use file storage (e.g., file upload questions, image choice questions, custom survey backgrounds, etc.), you need to have S3-compatible file storage set up and connected to Formbricks.
 
 Formbricks supports multiple storage providers (among many other S3-compatible storages):
-
 - AWS S3
 - Digital Ocean Spaces
 - Hetzner Object Storage
@@ -106,7 +104,6 @@ Please make sure to set up a storage bucket with one of these solutions and then
   S3_BUCKET_NAME: formbricks-uploads
   S3_ENDPOINT_URL: http://minio:9000 # not needed for AWS S3
 ```
-
 #### Upgrade Process
 
 **1. Backup your Database**
@@ -140,7 +137,6 @@ docker compose up -d
 **3. Automatic Database Migration**
 
 When you start Formbricks 4.0 for the first time, it will **automatically**:
-
 - Detect and apply required database schema updates
 - Remove unused database tables and fields
 - Optimize the database structure for better performance

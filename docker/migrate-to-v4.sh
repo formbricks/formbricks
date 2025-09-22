@@ -45,7 +45,7 @@ external_s3_guard() {
         if ! has_service minio; then
             print_warning "Detected existing S3 credentials in docker-compose.yml and no bundled MinIO service."
             print_error "This migration is intended only for setups using local uploads."
-            print_info "No changes were made. If you already use external S3 (incl. AWS), you don't need this migration."
+            print_info "No files were migrated. If you already use external S3 (incl. AWS), you don't need this migration."
             exit 0
         fi
     fi
@@ -287,7 +287,8 @@ has_service() {
 }
 
 add_or_replace_env_var() {
-    local key="$1"; local value="$2"
+    local key="$1"; local value="$2"; local section="${3:-STORAGE}"
+    
     if grep -q "^[[:space:]]*$key:" docker-compose.yml; then
         # Replace existing uncommented key
         if sed --version >/dev/null 2>&1; then sed -i "s|^\([[:space:]]*$key:\).*|\1 \"$value\"|" docker-compose.yml; else sed -i '' "s|^\([[:space:]]*$key:\).*|\1 \"$value\"|" docker-compose.yml; fi
@@ -295,29 +296,77 @@ add_or_replace_env_var() {
         # Uncomment placeholder and set
         if sed --version >/dev/null 2>&1; then sed -i "s|^[[:space:]]*#[[:space:]]*$key:.*|    $key: \"$value\"|" docker-compose.yml; else sed -i '' "s|^[[:space:]]*#[[:space:]]*$key:.*|    $key: \"$value\"|" docker-compose.yml; fi
     else
-        # Append into STORAGE section before OAUTH header if present
-        awk -v insert_key="$key" -v insert_val="$value" '
-          BEGIN{printed=0}
-          /################################################### OPTIONAL \(STORAGE\) ###################################################/ {print; in_storage=1; next}
-          in_storage && /############################################# OPTIONAL \(OAUTH CONFIGURATION\) #############################################/ && !printed { print "    " insert_key ": \"" insert_val "\""; printed=1; print; in_storage=0; next }
-          { print }
-          END { if(in_storage && !printed) print "    " insert_key ": \"" insert_val "\"" }
-        ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+        # Add to specified section with fallback
+        local section_found=false
+        
+        if [[ "$section" == "REQUIRED" ]] && grep -q -E "^[[:space:]]*#+[[:space:]]*REQUIRED[[:space:]]*#+[[:space:]]*$" docker-compose.yml; then
+            # Add to REQUIRED section
+            awk -v insert_key="$key" -v insert_val="$value" '
+              /^[[:space:]]*#+[[:space:]]*REQUIRED[[:space:]]*#+[[:space:]]*$/ {print; in_required=1; next}
+              in_required && /^[[:space:]]*#+.*OPTIONAL/ && !printed { 
+                print ""; print "    # " insert_key " (required for Formbricks 4.0)"; 
+                print "    " insert_key ": \"" insert_val "\""; printed=1 
+              }
+              { print }
+              END { if(in_required && !printed) { print ""; print "    # " insert_key " (required for Formbricks 4.0)"; print "    " insert_key ": \"" insert_val "\"" } }
+            ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+            section_found=true
+        elif [[ "$section" == "STORAGE" ]] && grep -q -E "^[[:space:]]*#+[[:space:]]*OPTIONAL[[:space:]]*\\([[:space:]]*STORAGE[[:space:]]*\\)[[:space:]]*#+[[:space:]]*$" docker-compose.yml; then
+            # Add to STORAGE section (original behavior)
+            awk -v insert_key="$key" -v insert_val="$value" '
+              BEGIN{printed=0}
+              /^[[:space:]]*#+[[:space:]]*OPTIONAL[[:space:]]*\([[:space:]]*STORAGE[[:space:]]*\)[[:space:]]*#+[[:space:]]*$/ {print; in_storage=1; next}
+              in_storage && /^[[:space:]]*#+.*OPTIONAL.*OAUTH/ && !printed { 
+                print "    " insert_key ": \"" insert_val "\""; printed=1; print; in_storage=0; next 
+              }
+              { print }
+              END { if(in_storage && !printed) print "    " insert_key ": \"" insert_val "\"" }
+            ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+            section_found=true
+        fi
+        
+        # Fallback: add at the end of environment block if section not found
+        if [[ "$section_found" == false ]]; then
+            awk -v insert_key="$key" -v insert_val="$value" '
+              /^  environment:/ {print; in_env=1; next}
+              in_env && /^[^[:space:]]/ {
+                if (!printed) { print "    " insert_key ": \"" insert_val "\""; printed=1 }
+                in_env=0
+              }
+              { print }
+              END { if(in_env && !printed) print "    " insert_key ": \"" insert_val "\"" }
+            ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+        fi
     fi
 }
 
 # Function to check if we're in the correct directory
 check_formbricks_directory() {
-    if [[ ! -f "docker-compose.yml" ]]; then
-        print_error "docker-compose.yml not found in current directory!"
-        print_info "Please run this script from your Formbricks installation directory (usually ./formbricks/)"
-        exit 1
+    # Case 1: docker-compose.yml in current directory
+    if [[ -f "docker-compose.yml" ]]; then
+        if grep -q "formbricks" docker-compose.yml; then
+            return 0
+        else
+            print_error "This doesn't appear to be a Formbricks docker-compose.yml file!"
+            exit 1
+        fi
     fi
-    
-    if ! grep -q "formbricks" docker-compose.yml; then
-        print_error "This doesn't appear to be a Formbricks docker-compose.yml file!"
-        exit 1
+
+    # Case 2: one-click setup parent directory containing ./formbricks/docker-compose.yml
+    if [[ -f "formbricks/docker-compose.yml" ]]; then
+        cd formbricks
+        print_status "Detected one-click setup layout. Switched to ./formbricks directory."
+        if ! grep -q "formbricks" docker-compose.yml; then
+            print_error "This doesn't appear to be a Formbricks docker-compose.yml file!"
+            exit 1
+        fi
+        return 0
     fi
+
+    # Neither current directory nor ./formbricks contains a compose file
+    print_error "docker-compose.yml not found in current directory or in ./formbricks/"
+    print_info "Run this script from the parent directory created by the one-click setup (containing ./formbricks/), or from the directory containing docker-compose.yml."
+    exit 1
 }
 
 # Function to backup existing docker-compose.yml
@@ -635,35 +684,202 @@ ${tls_block}
     print_status "Added MinIO service to docker-compose.yml"
 }
 
-# Function to add minio-init dependency to formbricks service
-add_minio_dependency() {
-    # Only add if not already present
-    if ! awk '/formbricks:/,/depends_on:/{ if($0 ~ /minio-init/) found=1 } END{ exit(found) }' docker-compose.yml; then
-        if sed --version >/dev/null 2>&1; then sed -i '/formbricks:/,/depends_on:/{/- postgres/a\
-      - minio-init
-}' docker-compose.yml; else sed -i '' '/formbricks:/,/depends_on:/{/- postgres/a\
-      - minio-init
-}' docker-compose.yml; fi
-        print_status "Added minio-init dependency to formbricks service"
+# Generic function to add service dependency
+add_service_dependency() {
+    local service="$1"     # Target service (e.g., "formbricks", "traefik")
+    local dependency="$2"  # Dependency to add (e.g., "redis", "minio-init", "minio")
+    local optional="${3:-false}"  # Optional parameter - if true, don't exit if service not found
+    
+    # Check if service exists
+    if ! grep -q "^  $service:" docker-compose.yml; then
+        if [[ "$optional" == "true" ]]; then
+            print_info "$service service not found - skipping dependency addition."
+            return 0
+        else
+            print_error "$service service not found in docker-compose.yml!"
+            print_info "Please ensure the $service service is properly configured before running this migration."
+            exit 1
+        fi
+    fi
+    
+    # Check if dependency is already present in the service depends_on section
+    if awk -v srv="$service" -v dep="$dependency" 'BEGIN{found=0} /^  / && $0 ~ "^  " srv ":" {in_svc=1} in_svc && /^  [a-zA-Z]/ && $0 !~ "^  " srv ":" {in_svc=0} in_svc && $0 ~ "^[[:space:]]*-[[:space:]]*" dep "[[:space:]]*$" {found=1} END{exit(!found)}' docker-compose.yml; then
+        # Dependency already present, skip addition
+        print_info "$dependency dependency already present in $service service."
     else
-        print_info "minio-init dependency already present."
+        # Write awk script to temporary file to avoid shell escaping issues
+        local awk_script_tmp
+        awk_script_tmp=$(mktemp)
+        cat > "$awk_script_tmp" << 'AWK_EOF'
+# Store all lines to be able to look ahead
+{
+    lines[NR] = $0
+}
+END {
+    # First pass: check if target service has depends_on
+    for (i = 1; i <= NR; i++) {
+        if (lines[i] ~ "^  " srv ":") {
+            in_target = 1
+            start_line = i
+        } else if (in_target && lines[i] ~ /^  [a-zA-Z]/ && lines[i] !~ "^  " srv ":") {
+            in_target = 0
+            end_line = i - 1
+            break
+        }
+        if (in_target && lines[i] ~ /^[[:space:]]*depends_on:[[:space:]]*$/) {
+            has_depends_on = 1
+        }
+    }
+    if (in_target && !end_line) end_line = NR
+    
+    # Second pass: output with modifications
+    in_svc = 0; in_depends = 0; added = 0
+    for (i = 1; i <= NR; i++) {
+        line = lines[i]
+        
+        if (line ~ "^  " srv ":") {
+            in_svc = 1
+            print line
+            continue
+        }
+        
+        if (in_svc && line ~ /^  [a-zA-Z]/ && line !~ "^  " srv ":") {
+            # Exiting service
+            if (!has_depends_on && !added) {
+                print "    depends_on:"
+                print "      - " new_dep
+                added = 1
+            }
+            in_svc = 0; in_depends = 0
+            print line
+            continue
+        }
+        
+        if (in_svc && line ~ /^[[:space:]]*depends_on:[[:space:]]*$/) {
+            in_depends = 1
+            print line
+            continue
+        }
+        
+        if (in_svc && in_depends && line ~ /^[[:space:]]*-[[:space:]]*/) {
+            print line
+            continue
+        }
+        
+        if (in_svc && in_depends && line !~ /^[[:space:]]*-[[:space:]]*/) {
+            # End of depends_on list
+            if (!added) {
+                print "      - " new_dep
+                added = 1
+            }
+            in_depends = 0
+            print line
+            continue
+        }
+        
+        if (in_svc && line ~ /^[[:space:]]+[a-zA-Z_][^:]*:[[:space:]]*/) {
+            # First property in service without depends_on
+            if (!has_depends_on && !added) {
+                print "    depends_on:"
+                print "      - " new_dep
+                added = 1
+                has_depends_on = 1
+            }
+            print line
+            continue
+        }
+        
+        print line
+    }
+    
+    # Handle case where service ends at EOF
+    if (in_depends && !added) {
+        print "      - " new_dep
+    } else if (in_svc && !has_depends_on && !added) {
+        print "    depends_on:"
+        print "      - " new_dep
+    }
+}
+AWK_EOF
+        
+        # Use the awk script with variables
+        awk -v srv="$service" -v new_dep="$dependency" -f "$awk_script_tmp" docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+        rm -f "$awk_script_tmp"
+        print_status "Added $dependency dependency to $service service"
     fi
 }
 
-# Function to update Traefik configuration to include MinIO dependency
-update_traefik_config() {
-    # Check if traefik service exists and add minio dependency
-    if grep -q "traefik:" docker-compose.yml; then
-        if ! awk '/traefik:/,/depends_on:/{ if($0 ~ /- minio$/) found=1 } END{ exit(found) }' docker-compose.yml; then
-            if sed --version >/dev/null 2>&1; then sed -i '/traefik:/,/depends_on:/{/- formbricks/a\
-      - minio
-}' docker-compose.yml; else sed -i '' '/traefik:/,/depends_on:/{/- formbricks/a\
-      - minio
-}' docker-compose.yml; fi
-            print_status "Updated Traefik configuration to include MinIO dependency"
-        else
-            print_info "Traefik already depends_on minio."
-        fi
+# Function to add Redis environment variable  
+add_redis_environment_variables() {
+    # Use the enhanced helper function with REQUIRED section
+    add_or_replace_env_var "REDIS_URL" "redis://redis:6379" "REQUIRED"
+    print_status "Redis environment variables ensured in docker-compose.yml"
+}
+
+# Function to add Redis service to docker-compose.yml
+add_redis_service() {
+    # Skip injecting if service already exists
+    if has_service redis; then
+        print_info "Redis service already present. Skipping service injection."
+        return 0
+    fi
+    
+    # Create Redis service configuration
+    local redis_service_config="
+  redis:
+    restart: always
+    image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+    command: valkey-server --appendonly yes
+    volumes:
+      - redis:/data
+"
+    
+    # Write Redis service to temporary file
+    echo "$redis_service_config" > redis_service.tmp
+    
+    # Add Redis service before the volumes section
+    awk '
+    {
+        print
+        if ($0 ~ /^services:$/ && !inserted) {
+            while ((getline line < "redis_service.tmp") > 0) print line
+            close("redis_service.tmp")
+            inserted = 1
+        }
+    }
+    ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+    
+    # Clean up temporary file
+    rm -f redis_service.tmp
+    
+    print_status "Added Redis service to docker-compose.yml"
+}
+
+# Function to add redis volume
+add_redis_volume() {
+    # Ensure redis volume exists once
+    if grep -q '^volumes:' docker-compose.yml; then
+      # volumes block exists; check for redis inside it
+      if awk '/^volumes:/{invol=1; next} invol && NF==0{invol=0} invol{ if($1=="redis:") found=1 } END{ exit(!found) }' docker-compose.yml; then
+        print_info "Redis volume already present."
+      else
+        awk '
+          /^volumes:/ { print; invol=1; next }
+          invol && /^[^[:space:]]/ { if(!added){ print "  redis:"; print "    driver: local"; added=1 } ; invol=0 }
+          { print }
+          END { if (invol && !added) { print "  redis:"; print "    driver: local" } }
+        ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+        print_status "Redis volume ensured"
+      fi
+    else
+      # no volumes block; append one with redis only (non-destructive to services)
+      {
+        echo ""
+        echo "volumes:"
+        echo "  redis:"
+        echo "    driver: local"
+      } >> docker-compose.yml
+      print_status "Added volumes section with Redis"
     fi
 }
 
@@ -885,19 +1101,21 @@ migrate_files_to_minio() {
 
 # Function to restart Docker Compose
 restart_docker_compose() {
-    echo -n "Restart Docker Compose now to start MinIO and apply changes? [Y/n]: "
+    echo -n "Restart now to apply changes and continue the migration? (recommended) [Y/n]: "
     local restart_confirm
     read -r restart_confirm
     restart_confirm=$(echo "$restart_confirm" | tr '[:upper:]' '[:lower:]')
     if [[ -z "$restart_confirm" || "$restart_confirm" == "y" ]]; then
-        print_info "Stopping current services..."
+        print_info "We need to briefly restart Formbricks to apply the changes."
+        print_info "Stopping services..."
         docker compose down
         print_info "Starting services with MinIO..."
         docker compose up -d
         print_status "Docker Compose restarted successfully!"
         return 0
     else
-        print_warning "Skipping restart. You can run 'docker compose down && docker compose up -d' later to start MinIO."
+        print_warning "Skipping restart for now."
+        print_info "When you're ready, run: docker compose down && docker compose up -d"
         return 1
     fi
 }
@@ -924,16 +1142,34 @@ wait_for_service_up() {
 }
 
 # Main migration function
-migrate_to_minio() {
-    echo "🧱 Formbricks MinIO Migration Script for v4.0"
-    echo "=============================================="
+migrate_to_v4() {
+    echo "🧱 Formbricks v4.0 Migration"
+    echo "============================"
+    echo ""
+    print_info "We'll prepare your Formbricks instance for v4.0 by:"
+    print_info "- Adding Redis (for caching)"
+    print_info "- Adding MinIO (for file storage)"
+    print_info "- Moving your existing files into MinIO"
+    print_info "You'll be asked to restart briefly so changes take effect."
     echo ""
     
     # Check if we're in the right directory
     check_formbricks_directory
+
+    # Backup docker-compose.yml before making any changes
+    backup_docker_compose
+    
+    # Add Redis configuration first (prerequisite for Formbricks 4.0)
+    print_status "Setting up Redis..."
+    add_redis_environment_variables
+    add_redis_service
+    add_redis_volume
+    add_service_dependency "formbricks" "redis"
+    echo ""
+    
     # Abort early if external S3 already configured and no bundled MinIO
     external_s3_guard
-    
+
     # Check if MinIO is already configured unless migrating only
     if [[ "$MIGRATE_ONLY" != true ]]; then
         if [[ "$FORCE_RECONFIGURE" == true ]]; then
@@ -954,8 +1190,8 @@ migrate_to_minio() {
     fi
     
     print_info "Detected configuration:"
-    print_info "  Main domain: $main_domain"
-    print_info "  HTTPS setup: $https_setup"
+    print_info "Main domain: $main_domain"
+    print_info "HTTPS setup: $https_setup"
     echo ""
     
     local files_domain
@@ -984,7 +1220,7 @@ migrate_to_minio() {
             exit 1
         fi
         local default_files_domain="files.$main_domain"
-        echo -n "Enter the files subdomain for MinIO (e.g., $default_files_domain): "
+        echo -n "Enter the files subdomain to use for MinIO (e.g., $default_files_domain): "
         read files_domain
         if [[ -z "$files_domain" ]]; then
             files_domain="$default_files_domain"
@@ -998,9 +1234,6 @@ migrate_to_minio() {
         generate_minio_credentials
         echo ""
         
-        # Backup docker-compose.yml
-        backup_docker_compose
-        
         # If reconfiguring/rotating creds, remove existing service blocks so reinjection is clean
         if [[ "$REGENERATE_CREDS" == true || "$FORCE_RECONFIGURE" == true ]]; then
             remove_minio_services || true
@@ -1013,10 +1246,10 @@ migrate_to_minio() {
         add_minio_service "$files_domain" "$main_domain" "$https_setup"
         
         # Add MinIO dependency to formbricks
-        add_minio_dependency
+        add_service_dependency "formbricks" "minio-init"
         
-        # Update Traefik configuration
-        update_traefik_config
+        # Update Traefik configuration (optional - skip if traefik not present)
+        add_service_dependency "traefik" "minio" "true"
         
         # Add MinIO volume
         add_minio_volume
@@ -1034,6 +1267,26 @@ migrate_to_minio() {
         if restart_docker_compose; then
             restart_success=true
             proceed_migration=true
+        else
+            # User declined restart; confirm they understand migration cannot proceed without it
+            print_warning "Without restarting now, the migration cannot proceed."
+            echo -n "Restart Docker Compose now to proceed with migration? [Y/n]: "
+            read -r confirm_restart
+            confirm_restart=$(echo "$confirm_restart" | tr '[:upper:]' '[:lower:]')
+            if [[ -z "$confirm_restart" || "$confirm_restart" == "y" ]]; then
+                if restart_docker_compose; then
+                    restart_success=true
+                    proceed_migration=true
+                else
+                    print_warning "Migration cancelled because restart was declined."
+                    print_info "You can run 'docker compose down && docker compose up -d' later, then rerun this script to migrate files."
+                    return 0
+                fi
+            else
+                print_warning "Migration cancelled at your request. No files were migrated."
+                print_info "You can restart later and rerun this script to migrate files."
+                return 0
+            fi
         fi
     else
         # Try to ensure services are up without full restart
@@ -1138,22 +1391,25 @@ migrate_to_minio() {
     fi
     
     echo ""
-    echo "🎉 MinIO Migration Complete!"
-    echo "============================="
+    echo "🎉 Formbricks v4.0 Migration Complete!"
+    echo "======================================="
     echo ""
-    print_status "MinIO Configuration:"
-    print_info "  Files Domain: $files_domain"
-    print_info "  S3 Access Key: $minio_service_user"
-    print_info "  S3 Bucket: $minio_bucket_name"
+    print_status "Infrastructure Configuration:"
+    print_info "Redis://redis:6379"
+    print_info "Files Domain: $files_domain"
+    print_info "S3 Access Key: $minio_service_user"
+    print_info "S3 Bucket: $minio_bucket_name"
     echo ""
     
     if [[ "$restart_success" == true ]]; then
-        print_status "Your Formbricks instance is now using MinIO for file storage!"
-        print_info "You can check the status with: docker compose ps"
-        print_info "View logs with: docker compose logs"
+        print_status "Your Formbricks instance is now ready for v4.0!"
+        print_info "- Redis is configured for caching"
+        print_info "- MinIO is configured for file storage"
+        print_info "To check that everything is running, use: docker compose ps"
+        print_info "To view logs (for troubleshooting), use: docker compose logs"
     else
-        print_warning "Remember to restart your Docker Compose setup:"
-        print_info "  docker compose down && docker compose up -d"
+        print_warning "Before migration can happen, please remember to restart your services:"
+        print_info "docker compose down && docker compose up -d"
     fi
     
     if [[ "$MIGRATE_ONLY" != true ]]; then
@@ -1211,6 +1467,6 @@ cleanup_uploads_from_compose() {
 fi
 
 # Check if script is being run directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    migrate_to_minio
+if [[ -n "${BASH_SOURCE:-}" && "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    migrate_to_v4
 fi

@@ -1,5 +1,24 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
+import DOMpurify from "isomorphic-dompurify";
+import {
+  ArrowDownIcon,
+  EyeOffIcon,
+  HandshakeIcon,
+  MailIcon,
+  TriangleAlertIcon,
+  UserIcon,
+  ZapIcon,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
@@ -41,25 +60,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { cn } from "@/modules/ui/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import DOMpurify from "isomorphic-dompurify";
-import {
-  ArrowDownIcon,
-  EyeOffIcon,
-  HandshakeIcon,
-  MailIcon,
-  TriangleAlertIcon,
-  UserIcon,
-  ZapIcon,
-} from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface AddFollowUpModalProps {
   localSurvey: TSurvey;
@@ -186,14 +186,12 @@ export const FollowUpModal = ({
 
   const handleSubmit = (data: TCreateSurveyFollowUpForm) => {
     if (data.triggerType === "endings" && data.endingIds?.length === 0) {
-      toast.error("Please select at least one ending or change the trigger type");
+      toast.error(t("environments.surveys.edit.follow_ups_modal_trigger_type_ending_warning"));
       return;
     }
 
     if (!emailSendToOptions.length) {
-      toast.error(
-        "No valid options found for sending emails, please add some open-text / contact-info questions or hidden fields"
-      );
+      toast.error(t("environments.surveys.edit.follow_ups_modal_action_to_warning"));
 
       return;
     }
@@ -264,7 +262,7 @@ export const FollowUpModal = ({
         },
       };
 
-      toast.success("Survey follow up updated successfully");
+      toast.success(t("environments.surveys.edit.follow_ups_modal_updated_successfull_toast"));
       setOpen(false);
       setLocalSurvey((prev) => {
         return {
@@ -311,7 +309,7 @@ export const FollowUpModal = ({
       },
     };
 
-    toast.success("Survey follow up created successfully");
+    toast.success(t("environments.surveys.edit.follow_ups_modal_created_successfull_toast"));
     setOpen(false);
     form.reset();
     setLocalSurvey((prev) => {

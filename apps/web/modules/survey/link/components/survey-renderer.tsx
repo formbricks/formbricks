@@ -1,3 +1,6 @@
+import { type Response } from "@prisma/client";
+import { notFound } from "next/navigation";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   IMPRINT_URL,
   IS_FORMBRICKS_CLOUD,
@@ -16,9 +19,6 @@ import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
-import { type Response } from "@prisma/client";
-import { notFound } from "next/navigation";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyRendererProps {
   survey: TSurvey;
@@ -59,7 +59,7 @@ export const renderSurvey = async ({
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 
-  if (survey.status !== "inProgress" && !isPreview) {
+  if (survey.status !== "inProgress") {
     const project = await getProjectByEnvironmentId(survey.environmentId);
     return (
       <SurveyInactive
