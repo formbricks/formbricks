@@ -176,14 +176,6 @@ const logErrorDetails = (res: Response, req: NextRequest, correlationId: string,
     // Set correlation ID as a tag for easy filtering
     Sentry.withScope((scope) => {
       scope.setTag("correlationId", correlationId);
-      scope.setContext("request", {
-        method: req.method,
-        url: req.url,
-        headers: {
-          userAgent: req.headers.get("user-agent"),
-          referer: req.headers.get("referer"),
-        },
-      });
       scope.setLevel("error");
 
       // If we have an actual error, capture it with full stacktrace
@@ -191,8 +183,9 @@ const logErrorDetails = (res: Response, req: NextRequest, correlationId: string,
       if (error instanceof Error) {
         Sentry.captureException(error);
       } else {
+        scope.setExtra("originalError", error);
         const genericError = new Error(`API V1 error, id: ${correlationId}`);
-        Sentry.captureException(genericError, { extra: { originalError: error } });
+        Sentry.captureException(genericError);
       }
     });
   }

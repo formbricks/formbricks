@@ -13,18 +13,11 @@ export const logApiErrorEdge = (request: Request, error: ApiErrorResponseV2): vo
     // Use Sentry scope to add correlation ID as a tag for easy filtering
     Sentry.withScope((scope) => {
       scope.setTag("correlationId", correlationId);
-      scope.setContext("request", {
-        method: request.method,
-        url: request.url,
-        headers: {
-          userAgent: request.headers.get("user-agent"),
-          referer: request.headers.get("referer"),
-        },
-      });
       scope.setLevel("error");
 
+      scope.setExtra("originalError", error);
       const err = new Error(`API V2 error, id: ${correlationId}`);
-      Sentry.captureException(err, { extra: { originalError: error } });
+      Sentry.captureException(err);
     });
   }
 
