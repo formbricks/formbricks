@@ -1,27 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { NoMobileOverlay } from "./index";
-
-// Mock the tolgee translation
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => {
-      switch (key) {
-        case "common.mobile_overlay_title":
-          return "Works best on desktop";
-        case "common.mobile_overlay_app_works_best_on_desktop":
-          return "The app works best on desktop.";
-        case "common.mobile_overlay_surveys_look_good":
-          return "Surveys still look good on mobile.";
-        case "common.mobile_overlay_learn_more":
-          return "Learn more";
-        default:
-          return key;
-      }
-    },
-  }),
-}));
 
 describe("NoMobileOverlay", () => {
   afterEach(() => {
@@ -31,9 +11,11 @@ describe("NoMobileOverlay", () => {
   test("renders title and paragraphs", () => {
     render(<NoMobileOverlay />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Works best on desktop" })).toBeInTheDocument();
-    expect(screen.getByText("The app works best on desktop.")).toBeInTheDocument();
-    expect(screen.getByText("Surveys still look good on mobile.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "common.mobile_overlay_title" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("common.mobile_overlay_app_works_best_on_desktop")).toBeInTheDocument();
+    expect(screen.getByText("common.mobile_overlay_surveys_look_good")).toBeInTheDocument();
   });
 
   test("has proper overlay classes (z-index and responsive hide)", () => {
@@ -48,7 +30,7 @@ describe("NoMobileOverlay", () => {
   test("renders learn more link with correct href", () => {
     render(<NoMobileOverlay />);
 
-    const link = screen.getByRole("link", { name: "Learn more" });
+    const link = screen.getByRole("link", { name: "common.learn_more" });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "https://formbricks.com/docs/xm-and-surveys/overview");
   });
