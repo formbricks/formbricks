@@ -21,14 +21,10 @@ export const logApiErrorEdge = (request: Request, error: ApiErrorResponseV2): vo
           referer: request.headers.get("referer"),
         },
       });
-      scope.setContext("apiError", {
-        type: error.type,
-        details: error.details,
-      });
       scope.setLevel("error");
 
-      const err = new Error(`API V2 ${error.type}, id: ${correlationId}`);
-      Sentry.captureException(err);
+      const err = new Error(`API V2 error, id: ${correlationId}`);
+      Sentry.captureException(err, { extra: { originalError: error } });
     });
   }
 

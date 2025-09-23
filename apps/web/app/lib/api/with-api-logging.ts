@@ -178,8 +178,11 @@ const logErrorDetails = (res: Response, req: NextRequest, correlationId: string,
       scope.setTag("correlationId", correlationId);
       scope.setContext("request", {
         method: req.method,
-        path: req.url,
-        status: res.status,
+        url: req.url,
+        headers: {
+          userAgent: req.headers.get("user-agent"),
+          referer: req.headers.get("referer"),
+        },
       });
       scope.setLevel("error");
 
