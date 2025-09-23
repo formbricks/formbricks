@@ -15,12 +15,8 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
   withScope: vi.fn((callback) => {
-    const mockScope = {
-      setTag: vi.fn(),
-      setContext: vi.fn(),
-      setLevel: vi.fn(),
-    };
-    callback(mockScope);
+    callback(mockSentryScope);
+    return mockSentryScope;
   }),
 }));
 
@@ -28,6 +24,14 @@ vi.mock("@sentry/nextjs", () => ({
 const mockContextualLoggerError = vi.fn();
 const mockContextualLoggerWarn = vi.fn();
 const mockContextualLoggerInfo = vi.fn();
+
+// Mock Sentry scope that can be referenced in tests
+const mockSentryScope = {
+  setTag: vi.fn(),
+  setExtra: vi.fn(),
+  setContext: vi.fn(),
+  setLevel: vi.fn(),
+};
 
 vi.mock("@formbricks/logger", () => {
   const mockWithContextInstance = vi.fn(() => ({
@@ -118,6 +122,12 @@ describe("withV1ApiWrapper", () => {
     }));
 
     vi.clearAllMocks();
+
+    // Reset mock Sentry scope calls
+    mockSentryScope.setTag.mockClear();
+    mockSentryScope.setExtra.mockClear();
+    mockSentryScope.setContext.mockClear();
+    mockSentryScope.setLevel.mockClear();
   });
 
   test("logs and audits on error response with API key authentication", async () => {
@@ -170,10 +180,8 @@ describe("withV1ApiWrapper", () => {
       })
     );
     expect(Sentry.withScope).toHaveBeenCalled();
-    expect(Sentry.captureException).toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.objectContaining({ extra: expect.objectContaining({ originalError: undefined }) })
-    );
+    expect(mockSentryScope.setExtra).toHaveBeenCalledWith("originalError", undefined);
+    expect(Sentry.captureException).toHaveBeenCalledWith(expect.any(Error));
   });
 
   test("does not log Sentry if not 500", async () => {

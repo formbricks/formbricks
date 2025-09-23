@@ -12,11 +12,12 @@ mockRequest.headers.set("x-request-id", "123");
 
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
-  withScope: vi.fn((callback) => {
+  withScope: vi.fn((callback: (scope: any) => void) => {
     const mockScope = {
       setTag: vi.fn(),
       setContext: vi.fn(),
       setLevel: vi.fn(),
+      setExtra: vi.fn(),
     };
     callback(mockScope);
   }),
