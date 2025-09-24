@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
-import { env } from "@/lib/env";
 
 // Helper function to decrypt with fallback to plain text
 const decryptWithFallback = (encryptedText: string, key: string): string => {
@@ -18,7 +17,7 @@ export const createToken = (userId: string, options = {}): string => {
   if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
-  const encryptedUserId = symmetricEncrypt(userId, env.ENCRYPTION_KEY);
+  const encryptedUserId = symmetricEncrypt(userId, ENCRYPTION_KEY);
   return jwt.sign({ id: encryptedUserId }, NEXTAUTH_SECRET, options);
 };
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
@@ -30,19 +29,19 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
 };
 
 export const verifyEmailChangeToken = async (token: string): Promise<{ id: string; email: string }> => {
-  if (!env.NEXTAUTH_SECRET) {
+  if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
 
-  const payload = jwt.verify(token, env.NEXTAUTH_SECRET) as { id: string; email: string };
+  const payload = jwt.verify(token, NEXTAUTH_SECRET) as { id: string; email: string };
 
   if (!payload?.id || !payload?.email) {
     throw new Error("Token is invalid or missing required fields");
   }
 
   // Decrypt both fields with fallback
-  const decryptedId = decryptWithFallback(payload.id, env.ENCRYPTION_KEY);
-  const decryptedEmail = decryptWithFallback(payload.email, env.ENCRYPTION_KEY);
+  const decryptedId = decryptWithFallback(payload.id, ENCRYPTION_KEY);
+  const decryptedEmail = decryptWithFallback(payload.email, ENCRYPTION_KEY);
 
   return {
     id: decryptedId,
@@ -51,43 +50,47 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
 };
 
 export const createEmailChangeToken = (userId: string, email: string): string => {
-  const encryptedUserId = symmetricEncrypt(userId, env.ENCRYPTION_KEY);
-  const encryptedEmail = symmetricEncrypt(email, env.ENCRYPTION_KEY);
+  const encryptedUserId = symmetricEncrypt(userId, ENCRYPTION_KEY);
+  const encryptedEmail = symmetricEncrypt(email, ENCRYPTION_KEY);
 
   const payload = {
     id: encryptedUserId,
     email: encryptedEmail,
   };
 
-  return jwt.sign(payload, env.NEXTAUTH_SECRET as string, {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  return jwt.sign(payload, NEXTAUTH_SECRET as string, {
     expiresIn: "1d",
   });
 };
 export const createEmailToken = (email: string): string => {
-  if (!env.NEXTAUTH_SECRET) {
+  if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
 
-  const encryptedEmail = symmetricEncrypt(email, env.ENCRYPTION_KEY);
-  return jwt.sign({ email: encryptedEmail }, env.NEXTAUTH_SECRET);
+  const encryptedEmail = symmetricEncrypt(email, ENCRYPTION_KEY);
+  return jwt.sign({ email: encryptedEmail }, NEXTAUTH_SECRET);
 };
 
 export const getEmailFromEmailToken = (token: string): string => {
-  if (!env.NEXTAUTH_SECRET) {
+  if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
 
-  const payload = jwt.verify(token, env.NEXTAUTH_SECRET) as JwtPayload;
-  return decryptWithFallback(payload.email, env.ENCRYPTION_KEY);
+  const payload = jwt.verify(token, NEXTAUTH_SECRET) as JwtPayload;
+  return decryptWithFallback(payload.email, ENCRYPTION_KEY);
 };
 
 export const createInviteToken = (inviteId: string, email: string, options = {}): string => {
-  if (!env.NEXTAUTH_SECRET) {
+  if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
-  const encryptedInviteId = symmetricEncrypt(inviteId, env.ENCRYPTION_KEY);
-  const encryptedEmail = symmetricEncrypt(email, env.ENCRYPTION_KEY);
-  return jwt.sign({ inviteId: encryptedInviteId, email: encryptedEmail }, env.NEXTAUTH_SECRET, options);
+  const encryptedInviteId = symmetricEncrypt(inviteId, ENCRYPTION_KEY);
+  const encryptedEmail = symmetricEncrypt(email, ENCRYPTION_KEY);
+  return jwt.sign({ inviteId: encryptedInviteId, email: encryptedEmail }, NEXTAUTH_SECRET, options);
 };
 
 export const verifyTokenForLinkSurvey = (token: string, surveyId: string): string | null => {
@@ -137,14 +140,19 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
 
 // Helper function to get user email for legacy verification
 const getUserEmailForLegacyVerification = async (
-  token: string
+  token: string,
+  userId?: string
 ): Promise<{ userId: string; userEmail: string }> => {
-  const decoded = jwt.decode(token) as JwtPayload;
-  if (!decoded?.id) {
+  if (!userId) {
+    const decoded = jwt.decode(token) as JwtPayload;
+    userId = decoded.id;
+  }
+
+  if (!userId) {
     throw new Error("Invalid token");
   }
 
-  const decryptedId = decryptWithFallback(decoded.id, ENCRYPTION_KEY);
+  const decryptedId = decryptWithFallback(userId, ENCRYPTION_KEY);
 
   const foundUser = await prisma.user.findUnique({
     where: { id: decryptedId },
@@ -188,7 +196,7 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
   }
 
   // Get user email if we don't have it yet
-  userData ??= await getUserEmailForLegacyVerification(token);
+  userData ??= await getUserEmailForLegacyVerification(token, payload.id);
 
   return { id: userData.userId, email: userData.userEmail };
 };
@@ -208,8 +216,8 @@ export const verifyInviteToken = (token: string): { inviteId: string; email: str
     }
 
     // Decrypt both fields with fallback to original values
-    const decryptedInviteId = decryptWithFallback(inviteId, env.ENCRYPTION_KEY);
-    const decryptedEmail = decryptWithFallback(email, env.ENCRYPTION_KEY);
+    const decryptedInviteId = decryptWithFallback(inviteId, ENCRYPTION_KEY);
+    const decryptedEmail = decryptWithFallback(email, ENCRYPTION_KEY);
 
     return {
       inviteId: decryptedInviteId,
