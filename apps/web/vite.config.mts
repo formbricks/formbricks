@@ -23,6 +23,7 @@ export default defineConfig({
         "**/Dockerfile", // Dockerfiles
         "**/vitestSetup.ts", // Vitest setup files
         "**/*.setup.*", // Setup files
+        "**/lingodotdev/**", // Lingodotdev files
 
         // Test and mock related files
         "**/*.spec.*", // Test files

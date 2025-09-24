@@ -1,9 +1,7 @@
 import i18n from "i18next";
 import ICU from "i18next-icu";
-import resourcesToBackend from "i18next-resources-to-backend";
 import { initReactI18next } from "react-i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DEFAULT_LANGUAGE } from "@/lingodotdev/shared";
 
 // Mock all the modules before importing them
 vi.mock("i18next", () => ({
@@ -32,8 +30,6 @@ vi.mock("@/lingodotdev/shared", () => ({
 const mockI18n = vi.mocked(i18n);
 const mockICU = vi.mocked(ICU);
 const mockInitReactI18next = vi.mocked(initReactI18next);
-const mockResourcesToBackend = vi.mocked(resourcesToBackend);
-const mockDefaultLanguage = vi.mocked(DEFAULT_LANGUAGE);
 
 describe("i18n Configuration", () => {
   beforeEach(() => {

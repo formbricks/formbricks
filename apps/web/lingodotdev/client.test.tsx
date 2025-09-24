@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { I18nProvider } from "./client";
@@ -54,13 +54,17 @@ describe("I18nProvider", () => {
     expect(screen.getByText("Test Child")).toBeInTheDocument();
   });
 
-  test("should use DEFAULT_LANGUAGE when no language provided", () => {
+  test("should use DEFAULT_LANGUAGE when no language provided", async () => {
+    mockI18n.language = "de-DE";
     render(
       <I18nProvider language="">
         <div>Test</div>
       </I18nProvider>
     );
 
+    await waitFor(() => {
+      expect(mockI18n.changeLanguage).toHaveBeenCalledWith("en-US");
+    });
     expect(mockI18nextProvider).toHaveBeenCalled();
     const callArgs = mockI18nextProvider.mock.calls[0][0];
     expect(callArgs.i18n).toBe(mockI18n);
