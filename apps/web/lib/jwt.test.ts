@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { env } from "@/lib/env";
 import {
   createEmailChangeToken,
   createEmailToken,
@@ -140,6 +139,19 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       // Restore
       (constants as any).NEXTAUTH_SECRET = originalSecret;
     });
+
+    test("should throw error if ENCRYPTION_KEY is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalKey = (constants as any).ENCRYPTION_KEY;
+      (constants as any).ENCRYPTION_KEY = undefined;
+
+      expect(() => createTokenForLinkSurvey("survey-id", mockUser.email)).toThrow(
+        "ENCRYPTION_KEY is not set"
+      );
+
+      // Restore
+      (constants as any).ENCRYPTION_KEY = originalKey;
+    });
   });
 
   describe("createEmailToken", () => {
@@ -160,6 +172,17 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       // Restore
       (constants as any).NEXTAUTH_SECRET = originalSecret;
     });
+
+    test("should throw error if ENCRYPTION_KEY is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalKey = (constants as any).ENCRYPTION_KEY;
+      (constants as any).ENCRYPTION_KEY = undefined;
+
+      expect(() => createEmailToken(mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
+
+      // Restore
+      (constants as any).ENCRYPTION_KEY = originalKey;
+    });
   });
 
   describe("createEmailChangeToken", () => {
@@ -174,6 +197,28 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(decoded.iat).toBeDefined();
       // Should expire in approximately 1 day (86400 seconds)
       expect(decoded.exp - decoded.iat).toBe(86400);
+    });
+
+    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalSecret = (constants as any).NEXTAUTH_SECRET;
+      (constants as any).NEXTAUTH_SECRET = undefined;
+
+      expect(() => createEmailChangeToken(mockUser.id, mockUser.email)).toThrow("NEXTAUTH_SECRET is not set");
+
+      // Restore
+      (constants as any).NEXTAUTH_SECRET = originalSecret;
+    });
+
+    test("should throw error if ENCRYPTION_KEY is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalKey = (constants as any).ENCRYPTION_KEY;
+      (constants as any).ENCRYPTION_KEY = undefined;
+
+      expect(() => createEmailChangeToken(mockUser.id, mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
+
+      // Restore
+      (constants as any).ENCRYPTION_KEY = originalKey;
     });
   });
 
@@ -195,6 +240,28 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
       const decoded = jwt.decode(token) as any;
       expect(decoded.exp).toBeDefined();
+    });
+
+    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalSecret = (constants as any).NEXTAUTH_SECRET;
+      (constants as any).NEXTAUTH_SECRET = undefined;
+
+      expect(() => createInviteToken("invite-id", mockUser.email)).toThrow("NEXTAUTH_SECRET is not set");
+
+      // Restore
+      (constants as any).NEXTAUTH_SECRET = originalSecret;
+    });
+
+    test("should throw error if ENCRYPTION_KEY is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalKey = (constants as any).ENCRYPTION_KEY;
+      (constants as any).ENCRYPTION_KEY = undefined;
+
+      expect(() => createInviteToken("invite-id", mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
+
+      // Restore
+      (constants as any).ENCRYPTION_KEY = originalKey;
     });
   });
 
@@ -227,6 +294,18 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
       // Restore
       (constants as any).NEXTAUTH_SECRET = originalSecret;
+    });
+
+    test("should throw error if ENCRYPTION_KEY is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalKey = (constants as any).ENCRYPTION_KEY;
+      (constants as any).ENCRYPTION_KEY = undefined;
+
+      const token = jwt.sign({ email: "test@example.com" }, TEST_NEXTAUTH_SECRET);
+      expect(() => getEmailFromEmailToken(token)).toThrow("ENCRYPTION_KEY is not set");
+
+      // Restore
+      (constants as any).ENCRYPTION_KEY = originalKey;
     });
   });
 
@@ -476,6 +555,17 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       (constants as any).NEXTAUTH_SECRET = originalSecret;
     });
 
+    test("should throw error if ENCRYPTION_KEY is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalKey = (constants as any).ENCRYPTION_KEY;
+      (constants as any).ENCRYPTION_KEY = undefined;
+
+      expect(() => verifyInviteToken("any-token")).toThrow("ENCRYPTION_KEY is not set");
+
+      // Restore
+      (constants as any).ENCRYPTION_KEY = originalKey;
+    });
+
     test("should throw error if inviteId is missing", () => {
       const tokenWithoutInviteId = jwt.sign({ email: mockUser.email }, TEST_NEXTAUTH_SECRET);
       expect(() => verifyInviteToken(tokenWithoutInviteId)).toThrow("Invalid or expired invite token");
@@ -540,6 +630,17 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       (constants as any).NEXTAUTH_SECRET = originalSecret;
     });
 
+    test("should throw error if ENCRYPTION_KEY is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalKey = (constants as any).ENCRYPTION_KEY;
+      (constants as any).ENCRYPTION_KEY = undefined;
+
+      await expect(verifyEmailChangeToken("any-token")).rejects.toThrow("ENCRYPTION_KEY is not set");
+
+      // Restore
+      (constants as any).ENCRYPTION_KEY = originalKey;
+    });
+
     test("should throw error if token is invalid or missing fields", async () => {
       const token = jwt.sign({ foo: "bar" }, TEST_NEXTAUTH_SECRET);
       await expect(verifyEmailChangeToken(token)).rejects.toThrow(
@@ -587,6 +688,140 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
   // SECURITY SCENARIO TESTS
   describe("Security Scenarios", () => {
+    describe("Algorithm Confusion Attack Prevention", () => {
+      test("should reject 'none' algorithm tokens in verifyToken", async () => {
+        // Create malicious token with "none" algorithm
+        const maliciousToken =
+          Buffer.from(
+            JSON.stringify({
+              alg: "none",
+              typ: "JWT",
+            })
+          ).toString("base64url") +
+          "." +
+          Buffer.from(
+            JSON.stringify({
+              id: "encrypted_malicious-id",
+            })
+          ).toString("base64url") +
+          ".";
+
+        await expect(verifyToken(maliciousToken)).rejects.toThrow("Invalid token");
+      });
+
+      test("should reject 'none' algorithm tokens in verifyTokenForLinkSurvey", () => {
+        const maliciousToken =
+          Buffer.from(
+            JSON.stringify({
+              alg: "none",
+              typ: "JWT",
+            })
+          ).toString("base64url") +
+          "." +
+          Buffer.from(
+            JSON.stringify({
+              email: "encrypted_attacker@evil.com",
+              surveyId: "test-survey-id",
+            })
+          ).toString("base64url") +
+          ".";
+
+        const result = verifyTokenForLinkSurvey(maliciousToken, "test-survey-id");
+        expect(result).toBeNull();
+      });
+
+      test("should reject 'none' algorithm tokens in verifyInviteToken", () => {
+        const maliciousToken =
+          Buffer.from(
+            JSON.stringify({
+              alg: "none",
+              typ: "JWT",
+            })
+          ).toString("base64url") +
+          "." +
+          Buffer.from(
+            JSON.stringify({
+              inviteId: "encrypted_malicious-invite",
+              email: "encrypted_attacker@evil.com",
+            })
+          ).toString("base64url") +
+          ".";
+
+        expect(() => verifyInviteToken(maliciousToken)).toThrow("Invalid or expired invite token");
+      });
+
+      test("should reject 'none' algorithm tokens in verifyEmailChangeToken", async () => {
+        const maliciousToken =
+          Buffer.from(
+            JSON.stringify({
+              alg: "none",
+              typ: "JWT",
+            })
+          ).toString("base64url") +
+          "." +
+          Buffer.from(
+            JSON.stringify({
+              id: "encrypted_malicious-id",
+              email: "encrypted_attacker@evil.com",
+            })
+          ).toString("base64url") +
+          ".";
+
+        await expect(verifyEmailChangeToken(maliciousToken)).rejects.toThrow();
+      });
+
+      test("should reject RS256 algorithm tokens (HS256/RS256 confusion)", async () => {
+        // Create malicious token with RS256 algorithm header but HS256 signature
+        const maliciousHeader = Buffer.from(
+          JSON.stringify({
+            alg: "RS256",
+            typ: "JWT",
+          })
+        ).toString("base64url");
+
+        const maliciousPayload = Buffer.from(
+          JSON.stringify({
+            id: "encrypted_malicious-id",
+          })
+        ).toString("base64url");
+
+        // Create signature using HMAC (as if it were HS256)
+        const crypto = require("crypto");
+        const signature = crypto
+          .createHmac("sha256", TEST_NEXTAUTH_SECRET)
+          .update(`${maliciousHeader}.${maliciousPayload}`)
+          .digest("base64url");
+
+        const maliciousToken = `${maliciousHeader}.${maliciousPayload}.${signature}`;
+
+        await expect(verifyToken(maliciousToken)).rejects.toThrow("Invalid token");
+      });
+
+      test("should only accept HS256 algorithm", async () => {
+        // Test that other valid algorithms are rejected
+        const otherAlgorithms = ["HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512"];
+
+        for (const alg of otherAlgorithms) {
+          const maliciousHeader = Buffer.from(
+            JSON.stringify({
+              alg,
+              typ: "JWT",
+            })
+          ).toString("base64url");
+
+          const maliciousPayload = Buffer.from(
+            JSON.stringify({
+              id: "encrypted_test-id",
+            })
+          ).toString("base64url");
+
+          const maliciousToken = `${maliciousHeader}.${maliciousPayload}.fake-signature`;
+
+          await expect(verifyToken(maliciousToken)).rejects.toThrow("Invalid token");
+        }
+      });
+    });
+
     describe("Token Tampering", () => {
       test("should reject tokens with modified payload", async () => {
         const token = createToken(mockUser.id);
@@ -669,9 +904,17 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
           throw new Error("Authentication tag verification failed");
         });
 
+        // Mock findUnique to only return user for correct decrypted ID, not ciphertext
+        (prisma.user.findUnique as any).mockImplementation(({ where }: { where: { id: string } }) => {
+          if (where.id === mockUser.id) {
+            return Promise.resolve(mockUser);
+          }
+          return Promise.resolve(null); // Return null for ciphertext IDs
+        });
+
         const token = createToken(mockUser.id);
-        // Should fall back to treating encrypted data as plain text
-        await expect(verifyToken(token)).resolves.toBeDefined();
+        // Should fail because ciphertext passed as userId won't match any user in DB
+        await expect(verifyToken(token)).rejects.toThrow(/User not found/i);
       });
 
       test("should handle encryption key not set gracefully", async () => {
