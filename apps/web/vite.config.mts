@@ -15,7 +15,12 @@ export default defineConfig({
       provider: "v8", // Use V8 as the coverage provider
       reporter: ["text", "html", "lcov"], // Generate text summary and HTML reports
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
-      include: ["app/**/*.{ts,tsx}", "modules/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
+      include: [
+        "app/**/*.{ts,tsx}",
+        "modules/**/*.{ts,tsx}",
+        "lib/**/*.{ts,tsx}",
+        "lingodotdev/**/*.{ts,tsx}",
+      ],
       exclude: [
         // Build and configuration files
         "**/.next/**", // Next.js build output
@@ -23,7 +28,6 @@ export default defineConfig({
         "**/Dockerfile", // Dockerfiles
         "**/vitestSetup.ts", // Vitest setup files
         "**/*.setup.*", // Setup files
-        "**/lingodotdev/**", // Lingodotdev files
 
         // Test and mock related files
         "**/*.spec.*", // Test files
