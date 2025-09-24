@@ -1,3 +1,8 @@
+import * as Sentry from "@sentry/nextjs";
+import { Session, getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -14,11 +19,6 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditTarget, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import * as Sentry from "@sentry/nextjs";
-import { Session, getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
 export type TApiAuditLog = Parameters<typeof queueAuditEvent>[0];
 export type TApiV1Authentication = TAuthenticationApiKey | Session | null;
@@ -173,8 +173,21 @@ const logErrorDetails = (res: Response, req: NextRequest, correlationId: string,
   logger.withContext(logContext).error("V1 API Error Details");
 
   if (SENTRY_DSN && IS_PRODUCTION && res.status >= 500) {
-    const err = new Error(`API V1 error, id: ${correlationId}`);
-    Sentry.captureException(err, { extra: { error, correlationId } });
+    // Set correlation ID as a tag for easy filtering
+    Sentry.withScope((scope) => {
+      scope.setTag("correlationId", correlationId);
+      scope.setLevel("error");
+
+      // If we have an actual error, capture it with full stacktrace
+      // Otherwise, create a generic error with context
+      if (error instanceof Error) {
+        Sentry.captureException(error);
+      } else {
+        scope.setExtra("originalError", error);
+        const genericError = new Error(`API V1 error, id: ${correlationId}`);
+        Sentry.captureException(genericError);
+      }
+    });
   }
 };
 
