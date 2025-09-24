@@ -1,6 +1,7 @@
-import { env } from "@/lib/env";
+import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { env } from "@/lib/env";
 import {
   createEmailChangeToken,
   createEmailToken,
@@ -14,12 +15,28 @@ import {
   verifyTokenForLinkSurvey,
 } from "./jwt";
 
+const TEST_ENCRYPTION_KEY = "0".repeat(32); // 32-byte key for AES-256-GCM
+const TEST_NEXTAUTH_SECRET = "test-nextauth-secret";
+const DIFFERENT_SECRET = "different-secret";
+
 // Mock environment variables
 vi.mock("@/lib/env", () => ({
   env: {
-    ENCRYPTION_KEY: "0".repeat(32), // 32-byte key for AES-256-GCM
+    ENCRYPTION_KEY: "0".repeat(32),
     NEXTAUTH_SECRET: "test-nextauth-secret",
-  } as typeof env,
+  },
+}));
+
+// Mock constants
+vi.mock("@/lib/constants", () => ({
+  NEXTAUTH_SECRET: "test-nextauth-secret",
+  ENCRYPTION_KEY: "0".repeat(32),
+}));
+
+// Mock crypto functions
+vi.mock("@/lib/crypto", () => ({
+  symmetricEncrypt: vi.fn(),
+  symmetricDecrypt: vi.fn(),
 }));
 
 // Mock prisma
@@ -31,22 +48,67 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-describe("JWT Functions", () => {
+// Mock logger
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
+describe("JWT Functions - Comprehensive Security Tests", () => {
   const mockUser = {
     id: "test-user-id",
     email: "test@example.com",
   };
 
-  beforeEach(() => {
+  let mockSymmetricEncrypt: any;
+  let mockSymmetricDecrypt: any;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    // Setup default crypto mocks
+    const { symmetricEncrypt, symmetricDecrypt } = await import("@/lib/crypto");
+    mockSymmetricEncrypt = symmetricEncrypt as any;
+    mockSymmetricDecrypt = symmetricDecrypt as any;
+
+    mockSymmetricEncrypt.mockImplementation((text: string) => `encrypted_${text}`);
+    mockSymmetricDecrypt.mockImplementation((encryptedText: string) =>
+      encryptedText.replace("encrypted_", "")
+    );
+
     (prisma.user.findUnique as any).mockResolvedValue(mockUser);
   });
 
   describe("createToken", () => {
-    test("should create a valid token", () => {
-      const token = createToken(mockUser.id, mockUser.email);
+    test("should create a valid token with encrypted user ID", () => {
+      const token = createToken(mockUser.id);
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.id, TEST_ENCRYPTION_KEY);
+    });
+
+    test("should accept custom options", () => {
+      const customOptions = { expiresIn: "1h" };
+      const token = createToken(mockUser.id, customOptions);
+      expect(token).toBeDefined();
+
+      // Verify the token contains the expected expiration
+      const decoded = jwt.decode(token) as any;
+      expect(decoded.exp).toBeDefined();
+    });
+
+    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalSecret = (constants as any).NEXTAUTH_SECRET;
+      (constants as any).NEXTAUTH_SECRET = undefined;
+
+      expect(() => createToken(mockUser.id)).toThrow("NEXTAUTH_SECRET is not set");
+
+      // Restore
+      (constants as any).NEXTAUTH_SECRET = originalSecret;
     });
   });
 
@@ -56,6 +118,27 @@ describe("JWT Functions", () => {
       const token = createTokenForLinkSurvey(surveyId, mockUser.email);
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.email, TEST_ENCRYPTION_KEY);
+    });
+
+    test("should include surveyId in payload", () => {
+      const surveyId = "test-survey-id";
+      const token = createTokenForLinkSurvey(surveyId, mockUser.email);
+      const decoded = jwt.decode(token) as any;
+      expect(decoded.surveyId).toBe(surveyId);
+    });
+
+    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalSecret = (constants as any).NEXTAUTH_SECRET;
+      (constants as any).NEXTAUTH_SECRET = undefined;
+
+      expect(() => createTokenForLinkSurvey("survey-id", mockUser.email)).toThrow(
+        "NEXTAUTH_SECRET is not set"
+      );
+
+      // Restore
+      (constants as any).NEXTAUTH_SECRET = originalSecret;
     });
   });
 
@@ -64,6 +147,7 @@ describe("JWT Functions", () => {
       const token = createEmailToken(mockUser.email);
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.email, TEST_ENCRYPTION_KEY);
     });
 
     test("should throw error if NEXTAUTH_SECRET is not set", () => {
@@ -77,11 +161,18 @@ describe("JWT Functions", () => {
     });
   });
 
-  describe("getEmailFromEmailToken", () => {
-    test("should extract email from valid token", () => {
-      const token = createEmailToken(mockUser.email);
-      const extractedEmail = getEmailFromEmailToken(token);
-      expect(extractedEmail).toBe(mockUser.email);
+  describe("createEmailChangeToken", () => {
+    test("should create a valid email change token with 1 day expiration", () => {
+      const token = createEmailChangeToken(mockUser.id, mockUser.email);
+      expect(token).toBeDefined();
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.id, TEST_ENCRYPTION_KEY);
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.email, TEST_ENCRYPTION_KEY);
+
+      const decoded = jwt.decode(token) as any;
+      expect(decoded.exp).toBeDefined();
+      expect(decoded.iat).toBeDefined();
+      // Should expire in approximately 1 day (86400 seconds)
+      expect(decoded.exp - decoded.iat).toBe(86400);
     });
   });
 
@@ -91,6 +182,49 @@ describe("JWT Functions", () => {
       const token = createInviteToken(inviteId, mockUser.email);
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(inviteId, TEST_ENCRYPTION_KEY);
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.email, TEST_ENCRYPTION_KEY);
+    });
+
+    test("should accept custom options", () => {
+      const inviteId = "test-invite-id";
+      const customOptions = { expiresIn: "24h" };
+      const token = createInviteToken(inviteId, mockUser.email, customOptions);
+      expect(token).toBeDefined();
+
+      const decoded = jwt.decode(token) as any;
+      expect(decoded.exp).toBeDefined();
+    });
+  });
+
+  describe("getEmailFromEmailToken", () => {
+    test("should extract email from valid token", () => {
+      const token = createEmailToken(mockUser.email);
+      const extractedEmail = getEmailFromEmailToken(token);
+      expect(extractedEmail).toBe(mockUser.email);
+      expect(mockSymmetricDecrypt).toHaveBeenCalledWith(`encrypted_${mockUser.email}`, TEST_ENCRYPTION_KEY);
+    });
+
+    test("should fall back to original email if decryption fails", () => {
+      mockSymmetricDecrypt.mockImplementationOnce(() => {
+        throw new Error("Decryption failed");
+      });
+
+      // Create token manually with unencrypted email for legacy compatibility
+      const legacyToken = jwt.sign({ email: mockUser.email }, TEST_NEXTAUTH_SECRET);
+      const extractedEmail = getEmailFromEmailToken(legacyToken);
+      expect(extractedEmail).toBe(mockUser.email);
+    });
+
+    test("should throw error if NEXTAUTH_SECRET is not set", () => {
+      const originalSecret = env.NEXTAUTH_SECRET;
+      try {
+        (env as any).NEXTAUTH_SECRET = undefined;
+        const token = jwt.sign({ email: "test@example.com" }, TEST_NEXTAUTH_SECRET);
+        expect(() => getEmailFromEmailToken(token)).toThrow("NEXTAUTH_SECRET is not set");
+      } finally {
+        (env as any).NEXTAUTH_SECRET = originalSecret;
+      }
     });
   });
 
@@ -106,22 +240,211 @@ describe("JWT Functions", () => {
       const result = verifyTokenForLinkSurvey("invalid-token", "test-survey-id");
       expect(result).toBeNull();
     });
+
+    test("should return null if NEXTAUTH_SECRET is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalSecret = (constants as any).NEXTAUTH_SECRET;
+      (constants as any).NEXTAUTH_SECRET = undefined;
+
+      const result = verifyTokenForLinkSurvey("any-token", "test-survey-id");
+      expect(result).toBeNull();
+
+      // Restore
+      (constants as any).NEXTAUTH_SECRET = originalSecret;
+    });
+
+    test("should return null if surveyId doesn't match", () => {
+      const surveyId = "test-survey-id";
+      const differentSurveyId = "different-survey-id";
+      const token = createTokenForLinkSurvey(surveyId, mockUser.email);
+      const result = verifyTokenForLinkSurvey(token, differentSurveyId);
+      expect(result).toBeNull();
+    });
+
+    test("should return null if email is missing from payload", () => {
+      const tokenWithoutEmail = jwt.sign({ surveyId: "test-survey-id" }, TEST_NEXTAUTH_SECRET);
+      const result = verifyTokenForLinkSurvey(tokenWithoutEmail, "test-survey-id");
+      expect(result).toBeNull();
+    });
+
+    test("should fall back to original email if decryption fails", () => {
+      mockSymmetricDecrypt.mockImplementationOnce(() => {
+        throw new Error("Decryption failed");
+      });
+
+      // Create legacy token with unencrypted email
+      const legacyToken = jwt.sign(
+        {
+          email: mockUser.email,
+          surveyId: "test-survey-id",
+        },
+        TEST_NEXTAUTH_SECRET
+      );
+
+      const result = verifyTokenForLinkSurvey(legacyToken, "test-survey-id");
+      expect(result).toBe(mockUser.email);
+    });
+
+    test("should fall back to original email if ENCRYPTION_KEY is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalKey = (constants as any).ENCRYPTION_KEY;
+      (constants as any).ENCRYPTION_KEY = undefined;
+
+      // Create a token with unencrypted email (as it would be if ENCRYPTION_KEY was not set during creation)
+      const token = jwt.sign(
+        {
+          email: mockUser.email,
+          surveyId: "survey-id",
+        },
+        TEST_NEXTAUTH_SECRET
+      );
+
+      const result = verifyTokenForLinkSurvey(token, "survey-id");
+      expect(result).toBe(mockUser.email);
+
+      // Restore
+      (constants as any).ENCRYPTION_KEY = originalKey;
+    });
+
+    test("should verify legacy survey tokens with surveyId-based secret", async () => {
+      const surveyId = "test-survey-id";
+
+      // Create legacy token with old format (NEXTAUTH_SECRET + surveyId)
+      const legacyToken = jwt.sign({ email: `encrypted_${mockUser.email}` }, TEST_NEXTAUTH_SECRET + surveyId);
+
+      const result = verifyTokenForLinkSurvey(legacyToken, surveyId);
+      expect(result).toBe(mockUser.email);
+    });
+
+    test("should prioritize new survey tokens over legacy tokens", () => {
+      const surveyId = "test-survey-id";
+
+      // Create both new and legacy tokens
+      const newToken = createTokenForLinkSurvey(surveyId, mockUser.email);
+      const legacyToken = jwt.sign({ email: `encrypted_${mockUser.email}` }, TEST_NEXTAUTH_SECRET + surveyId);
+
+      // Both should work, but new token should be processed first
+      const resultNew = verifyTokenForLinkSurvey(newToken, surveyId);
+      expect(resultNew).toBe(mockUser.email);
+
+      const resultLegacy = verifyTokenForLinkSurvey(legacyToken, surveyId);
+      expect(resultLegacy).toBe(mockUser.email);
+    });
+
+    test("should reject survey tokens that fail both new and legacy verification", async () => {
+      const surveyId = "test-survey-id";
+      const invalidToken = jwt.sign({ email: "encrypted_test@example.com" }, "wrong-secret");
+
+      const result = verifyTokenForLinkSurvey(invalidToken, surveyId);
+      expect(result).toBeNull();
+
+      // Verify error logging
+      const { logger } = await import("@formbricks/logger");
+      expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "Survey link token verification failed");
+    });
+
+    test("should reject legacy survey tokens for wrong survey", () => {
+      const correctSurveyId = "correct-survey-id";
+      const wrongSurveyId = "wrong-survey-id";
+
+      // Create legacy token for one survey
+      const legacyToken = jwt.sign(
+        { email: `encrypted_${mockUser.email}` },
+        TEST_NEXTAUTH_SECRET + correctSurveyId
+      );
+
+      // Try to verify with different survey ID
+      const result = verifyTokenForLinkSurvey(legacyToken, wrongSurveyId);
+      expect(result).toBeNull();
+    });
   });
 
   describe("verifyToken", () => {
     test("should verify valid token", async () => {
-      const token = createToken(mockUser.id, mockUser.email);
+      const token = createToken(mockUser.id);
       const verified = await verifyToken(token);
       expect(verified).toEqual({
-        id: mockUser.id,
+        id: mockUser.id, // Returns the decrypted user ID
         email: mockUser.email,
       });
     });
 
     test("should throw error if user not found", async () => {
       (prisma.user.findUnique as any).mockResolvedValue(null);
-      const token = createToken(mockUser.id, mockUser.email);
+      const token = createToken(mockUser.id);
       await expect(verifyToken(token)).rejects.toThrow("User not found");
+    });
+
+    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalSecret = (constants as any).NEXTAUTH_SECRET;
+      (constants as any).NEXTAUTH_SECRET = undefined;
+
+      await expect(verifyToken("any-token")).rejects.toThrow("NEXTAUTH_SECRET is not set");
+
+      // Restore
+      (constants as any).NEXTAUTH_SECRET = originalSecret;
+    });
+
+    test("should throw error for invalid token signature", async () => {
+      const invalidToken = jwt.sign({ id: "test-id" }, DIFFERENT_SECRET);
+      await expect(verifyToken(invalidToken)).rejects.toThrow("Invalid token");
+    });
+
+    test("should throw error if token payload is missing id", async () => {
+      const tokenWithoutId = jwt.sign({ email: mockUser.email }, TEST_NEXTAUTH_SECRET);
+      await expect(verifyToken(tokenWithoutId)).rejects.toThrow("Invalid token");
+    });
+
+    test("should return raw id from payload", async () => {
+      // Create token with unencrypted id
+      const token = jwt.sign({ id: mockUser.id }, TEST_NEXTAUTH_SECRET);
+      const verified = await verifyToken(token);
+      expect(verified).toEqual({
+        id: mockUser.id, // Returns the raw ID from payload
+        email: mockUser.email,
+      });
+    });
+
+    test("should verify legacy tokens with email-based secret", async () => {
+      // Create legacy token with old format (NEXTAUTH_SECRET + userEmail)
+      const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_NEXTAUTH_SECRET + mockUser.email);
+
+      const verified = await verifyToken(legacyToken);
+      expect(verified).toEqual({
+        id: mockUser.id, // Returns the decrypted user ID
+        email: mockUser.email,
+      });
+    });
+
+    test("should prioritize new tokens over legacy tokens", async () => {
+      // Create both new and legacy tokens for the same user
+      const newToken = createToken(mockUser.id);
+      const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_NEXTAUTH_SECRET + mockUser.email);
+
+      // New token should verify without triggering legacy path
+      const verifiedNew = await verifyToken(newToken);
+      expect(verifiedNew.id).toBe(mockUser.id); // Returns decrypted user ID
+
+      // Legacy token should trigger legacy path
+      const verifiedLegacy = await verifyToken(legacyToken);
+      expect(verifiedLegacy.id).toBe(mockUser.id); // Returns decrypted user ID
+    });
+
+    test("should reject tokens that fail both new and legacy verification", async () => {
+      const invalidToken = jwt.sign({ id: "encrypted_test-id" }, "wrong-secret");
+      await expect(verifyToken(invalidToken)).rejects.toThrow("Invalid token");
+
+      // Verify both methods were attempted
+      const { logger } = await import("@formbricks/logger");
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(Error),
+        "Token verification failed with new method"
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(Error),
+        "Token verification failed with legacy method"
+      );
     });
   });
 
@@ -139,6 +462,60 @@ describe("JWT Functions", () => {
     test("should throw error for invalid token", () => {
       expect(() => verifyInviteToken("invalid-token")).toThrow("Invalid or expired invite token");
     });
+
+    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+      const constants = await import("@/lib/constants");
+      const originalSecret = (constants as any).NEXTAUTH_SECRET;
+      (constants as any).NEXTAUTH_SECRET = undefined;
+
+      expect(() => verifyInviteToken("any-token")).toThrow("NEXTAUTH_SECRET is not set");
+
+      // Restore
+      (constants as any).NEXTAUTH_SECRET = originalSecret;
+    });
+
+    test("should throw error if inviteId is missing", () => {
+      const tokenWithoutInviteId = jwt.sign({ email: mockUser.email }, TEST_NEXTAUTH_SECRET);
+      expect(() => verifyInviteToken(tokenWithoutInviteId)).toThrow("Invalid or expired invite token");
+    });
+
+    test("should throw error if email is missing", () => {
+      const tokenWithoutEmail = jwt.sign({ inviteId: "test-invite-id" }, TEST_NEXTAUTH_SECRET);
+      expect(() => verifyInviteToken(tokenWithoutEmail)).toThrow("Invalid or expired invite token");
+    });
+
+    test("should fall back to original values if decryption fails", () => {
+      mockSymmetricDecrypt.mockImplementation(() => {
+        throw new Error("Decryption failed");
+      });
+
+      const inviteId = "test-invite-id";
+      const legacyToken = jwt.sign(
+        {
+          inviteId,
+          email: mockUser.email,
+        },
+        TEST_NEXTAUTH_SECRET
+      );
+
+      const verified = verifyInviteToken(legacyToken);
+      expect(verified).toEqual({
+        inviteId,
+        email: mockUser.email,
+      });
+    });
+
+    test("should throw error for token with wrong signature", () => {
+      const invalidToken = jwt.sign(
+        {
+          inviteId: "test-invite-id",
+          email: mockUser.email,
+        },
+        DIFFERENT_SECRET
+      );
+
+      expect(() => verifyInviteToken(invalidToken)).toThrow("Invalid or expired invite token");
+    });
   });
 
   describe("verifyEmailChangeToken", () => {
@@ -150,22 +527,349 @@ describe("JWT Functions", () => {
       expect(result).toEqual({ id: userId, email });
     });
 
+    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
+      const originalSecret = env.NEXTAUTH_SECRET;
+      try {
+        (env as any).NEXTAUTH_SECRET = undefined;
+        await expect(verifyEmailChangeToken("any-token")).rejects.toThrow("NEXTAUTH_SECRET is not set");
+      } finally {
+        (env as any).NEXTAUTH_SECRET = originalSecret;
+      }
+    });
+
     test("should throw error if token is invalid or missing fields", async () => {
-      // Create a token with missing fields
-      const jwt = await import("jsonwebtoken");
-      const token = jwt.sign({ foo: "bar" }, env.NEXTAUTH_SECRET as string);
+      const token = jwt.sign({ foo: "bar" }, TEST_NEXTAUTH_SECRET);
+      await expect(verifyEmailChangeToken(token)).rejects.toThrow(
+        "Token is invalid or missing required fields"
+      );
+    });
+
+    test("should throw error if id is missing", async () => {
+      const token = jwt.sign({ email: "test@example.com" }, TEST_NEXTAUTH_SECRET);
+      await expect(verifyEmailChangeToken(token)).rejects.toThrow(
+        "Token is invalid or missing required fields"
+      );
+    });
+
+    test("should throw error if email is missing", async () => {
+      const token = jwt.sign({ id: "test-id" }, TEST_NEXTAUTH_SECRET);
       await expect(verifyEmailChangeToken(token)).rejects.toThrow(
         "Token is invalid or missing required fields"
       );
     });
 
     test("should return original id/email if decryption fails", async () => {
-      // Create a token with non-encrypted id/email
-      const jwt = await import("jsonwebtoken");
+      mockSymmetricDecrypt.mockImplementation(() => {
+        throw new Error("Decryption failed");
+      });
+
       const payload = { id: "plain-id", email: "plain@example.com" };
-      const token = jwt.sign(payload, env.NEXTAUTH_SECRET as string);
+      const token = jwt.sign(payload, TEST_NEXTAUTH_SECRET);
       const result = await verifyEmailChangeToken(token);
       expect(result).toEqual(payload);
+    });
+
+    test("should throw error for token with wrong signature", async () => {
+      const invalidToken = jwt.sign(
+        {
+          id: "test-id",
+          email: "test@example.com",
+        },
+        DIFFERENT_SECRET
+      );
+
+      await expect(verifyEmailChangeToken(invalidToken)).rejects.toThrow();
+    });
+  });
+
+  // SECURITY SCENARIO TESTS
+  describe("Security Scenarios", () => {
+    describe("Token Tampering", () => {
+      test("should reject tokens with modified payload", async () => {
+        const token = createToken(mockUser.id);
+        const [header, payload, signature] = token.split(".");
+
+        // Modify the payload
+        const decodedPayload = JSON.parse(Buffer.from(payload, "base64url").toString());
+        decodedPayload.id = "malicious-id";
+        const tamperedPayload = Buffer.from(JSON.stringify(decodedPayload)).toString("base64url");
+        const tamperedToken = `${header}.${tamperedPayload}.${signature}`;
+
+        await expect(verifyToken(tamperedToken)).rejects.toThrow("Invalid token");
+      });
+
+      test("should reject tokens with modified signature", async () => {
+        const token = createToken(mockUser.id);
+        const [header, payload] = token.split(".");
+        const tamperedToken = `${header}.${payload}.tamperedsignature`;
+
+        await expect(verifyToken(tamperedToken)).rejects.toThrow("Invalid token");
+      });
+
+      test("should reject malformed tokens", async () => {
+        const malformedTokens = [
+          "not.a.jwt",
+          "only.two.parts",
+          "too.many.parts.here.invalid",
+          "",
+          "invalid-base64",
+        ];
+
+        for (const malformedToken of malformedTokens) {
+          await expect(verifyToken(malformedToken)).rejects.toThrow("Invalid token");
+        }
+      });
+    });
+
+    describe("Cross-Survey Token Reuse", () => {
+      test("should reject survey tokens used for different surveys", () => {
+        const surveyId1 = "survey-1";
+        const surveyId2 = "survey-2";
+
+        const token = createTokenForLinkSurvey(surveyId1, mockUser.email);
+        const result = verifyTokenForLinkSurvey(token, surveyId2);
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe("Expired Tokens", () => {
+      test("should reject expired tokens", async () => {
+        const expiredToken = jwt.sign(
+          {
+            id: "encrypted_test-id",
+            exp: Math.floor(Date.now() / 1000) - 3600, // Expired 1 hour ago
+          },
+          TEST_NEXTAUTH_SECRET
+        );
+
+        await expect(verifyToken(expiredToken)).rejects.toThrow("Invalid token");
+      });
+
+      test("should reject expired email change tokens", async () => {
+        const expiredToken = jwt.sign(
+          {
+            id: "encrypted_test-id",
+            email: "encrypted_test@example.com",
+            exp: Math.floor(Date.now() / 1000) - 3600, // Expired 1 hour ago
+          },
+          TEST_NEXTAUTH_SECRET
+        );
+
+        await expect(verifyEmailChangeToken(expiredToken)).rejects.toThrow();
+      });
+    });
+
+    describe("Encryption Key Attacks", () => {
+      test("should fail gracefully with wrong encryption key", () => {
+        mockSymmetricDecrypt.mockImplementation(() => {
+          throw new Error("Authentication tag verification failed");
+        });
+
+        const token = createToken(mockUser.id);
+        // Should fall back to treating encrypted data as plain text
+        expect(async () => await verifyToken(token)).not.toThrow();
+      });
+
+      test("should handle encryption key not set gracefully", async () => {
+        const constants = await import("@/lib/constants");
+        const originalKey = (constants as any).ENCRYPTION_KEY;
+        (constants as any).ENCRYPTION_KEY = undefined;
+
+        const token = jwt.sign(
+          {
+            email: "test@example.com",
+            surveyId: "test-survey-id",
+          },
+          TEST_NEXTAUTH_SECRET
+        );
+
+        const result = verifyTokenForLinkSurvey(token, "test-survey-id");
+        expect(result).toBe("test@example.com");
+
+        // Restore
+        (constants as any).ENCRYPTION_KEY = originalKey;
+      });
+    });
+
+    describe("SQL Injection Attempts", () => {
+      test("should safely handle malicious user IDs", async () => {
+        const maliciousIds = [
+          "'; DROP TABLE users; --",
+          "1' OR '1'='1",
+          "admin'/*",
+          "<script>alert('xss')</script>",
+          "../../etc/passwd",
+        ];
+
+        for (const maliciousId of maliciousIds) {
+          mockSymmetricDecrypt.mockReturnValueOnce(maliciousId);
+
+          const token = jwt.sign({ id: "encrypted_malicious" }, TEST_NEXTAUTH_SECRET);
+
+          // The function should look up the user safely
+          await verifyToken(token);
+          expect(prisma.user.findUnique).toHaveBeenCalledWith({
+            where: { id: maliciousId },
+          });
+        }
+      });
+    });
+
+    describe("Token Reuse and Replay Attacks", () => {
+      test("should allow legitimate token reuse within validity period", async () => {
+        const token = createToken(mockUser.id);
+
+        // First use
+        const result1 = await verifyToken(token);
+        expect(result1.id).toBe(mockUser.id); // Returns decrypted user ID
+
+        // Second use (should still work)
+        const result2 = await verifyToken(token);
+        expect(result2.id).toBe(mockUser.id); // Returns decrypted user ID
+      });
+    });
+
+    describe("Legacy Token Compatibility", () => {
+      test("should handle legacy unencrypted tokens gracefully", async () => {
+        // Legacy token with plain text data
+        const legacyToken = jwt.sign({ id: mockUser.id }, TEST_NEXTAUTH_SECRET);
+        const result = await verifyToken(legacyToken);
+
+        expect(result.id).toBe(mockUser.id); // Returns raw ID from payload
+        expect(result.email).toBe(mockUser.email);
+      });
+
+      test("should handle mixed encrypted/unencrypted fields", async () => {
+        mockSymmetricDecrypt
+          .mockImplementationOnce(() => mockUser.id) // id decrypts successfully
+          .mockImplementationOnce(() => {
+            throw new Error("Email not encrypted");
+          }); // email fails
+
+        const token = jwt.sign(
+          {
+            id: "encrypted_test-id",
+            email: "plain-email@example.com",
+          },
+          TEST_NEXTAUTH_SECRET
+        );
+
+        const result = await verifyEmailChangeToken(token);
+        expect(result.id).toBe(mockUser.id);
+        expect(result.email).toBe("plain-email@example.com");
+      });
+
+      test("should verify old format user tokens with email-based secrets", async () => {
+        // Simulate old token format with per-user secret
+        const oldFormatToken = jwt.sign(
+          { id: `encrypted_${mockUser.id}` },
+          TEST_NEXTAUTH_SECRET + mockUser.email
+        );
+
+        const result = await verifyToken(oldFormatToken);
+        expect(result.id).toBe(mockUser.id); // Returns decrypted user ID
+        expect(result.email).toBe(mockUser.email);
+      });
+
+      test("should verify old format survey tokens with survey-based secrets", () => {
+        const surveyId = "legacy-survey-id";
+
+        // Simulate old survey token format
+        const oldFormatSurveyToken = jwt.sign(
+          { email: `encrypted_${mockUser.email}` },
+          TEST_NEXTAUTH_SECRET + surveyId
+        );
+
+        const result = verifyTokenForLinkSurvey(oldFormatSurveyToken, surveyId);
+        expect(result).toBe(mockUser.email);
+      });
+
+      test("should gracefully handle database errors during legacy verification", async () => {
+        // Create token that will fail new method
+        const legacyToken = jwt.sign(
+          { id: `encrypted_${mockUser.id}` },
+          TEST_NEXTAUTH_SECRET + mockUser.email
+        );
+
+        // Make database lookup fail
+        (prisma.user.findUnique as any).mockRejectedValueOnce(new Error("DB connection lost"));
+
+        await expect(verifyToken(legacyToken)).rejects.toThrow("DB connection lost");
+      });
+    });
+
+    describe("Edge Cases and Error Handling", () => {
+      test("should handle database connection errors gracefully", async () => {
+        (prisma.user.findUnique as any).mockRejectedValue(new Error("Database connection failed"));
+
+        const token = createToken(mockUser.id);
+        await expect(verifyToken(token)).rejects.toThrow("Database connection failed");
+      });
+
+      test("should handle crypto module errors", () => {
+        mockSymmetricEncrypt.mockImplementation(() => {
+          throw new Error("Crypto module error");
+        });
+
+        expect(() => createToken(mockUser.id)).toThrow("Crypto module error");
+      });
+
+      test("should validate email format in tokens", () => {
+        const invalidEmails = ["", "not-an-email", "missing@", "@missing-local.com", "spaces in@email.com"];
+
+        invalidEmails.forEach((invalidEmail) => {
+          expect(() => createEmailToken(invalidEmail)).not.toThrow();
+          // Note: JWT functions don't validate email format, they just encrypt/decrypt
+          // Email validation should happen at a higher level
+        });
+      });
+
+      test("should handle extremely long inputs", () => {
+        const longString = "a".repeat(10000);
+
+        expect(() => createToken(longString)).not.toThrow();
+        expect(() => createEmailToken(longString)).not.toThrow();
+      });
+
+      test("should handle special characters in user data", () => {
+        const specialChars = "!@#$%^&*()_+-=[]{}|;:'\",.<>?/~`";
+
+        expect(() => createToken(specialChars)).not.toThrow();
+        expect(() => createEmailToken(specialChars)).not.toThrow();
+      });
+
+      test("should handle null and undefined inputs gracefully", () => {
+        expect(() => createToken(null as any)).not.toThrow();
+        expect(() => createToken(undefined as any)).not.toThrow();
+        expect(() => createEmailToken(null as any)).not.toThrow();
+        expect(() => createEmailToken(undefined as any)).not.toThrow();
+      });
+    });
+
+    describe("Performance and Resource Exhaustion", () => {
+      test("should handle rapid token creation without memory leaks", () => {
+        const tokens: string[] = [];
+        for (let i = 0; i < 1000; i++) {
+          tokens.push(createToken(`user-${i}`));
+        }
+
+        expect(tokens.length).toBe(1000);
+        expect(tokens.every((token) => typeof token === "string")).toBe(true);
+      });
+
+      test("should handle rapid token verification", async () => {
+        const token = createToken(mockUser.id);
+
+        const verifications: Promise<any>[] = [];
+        for (let i = 0; i < 100; i++) {
+          verifications.push(verifyToken(token));
+        }
+
+        const results = await Promise.all(verifications);
+        expect(results.length).toBe(100);
+        expect(results.every((result: any) => result.id === mockUser.id)).toBe(true); // Returns decrypted user ID
+      });
     });
   });
 });

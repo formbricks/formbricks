@@ -1,12 +1,12 @@
+import { randomBytes } from "crypto";
+import { Provider } from "next-auth/providers/index";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
 import { createToken } from "@/lib/jwt";
 // Import mocked rate limiting functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { randomBytes } from "crypto";
-import { Provider } from "next-auth/providers/index";
-import { afterEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
@@ -261,7 +261,7 @@ describe("authOptions", () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
 
-      const credentials = { token: createToken(mockUser.id, mockUser.email) };
+      const credentials = { token: createToken(mockUser.id) };
 
       await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
         "Email already verified"
@@ -280,7 +280,7 @@ describe("authOptions", () => {
         groupId: null,
       } as any);
 
-      const credentials = { token: createToken(mockUserId, mockUser.email) };
+      const credentials = { token: createToken(mockUserId) };
 
       const result = await tokenProvider.options.authorize(credentials, {});
       expect(result.email).toBe(mockUser.email);
@@ -303,7 +303,7 @@ describe("authOptions", () => {
           groupId: null,
         } as any);
 
-        const credentials = { token: createToken(mockUserId, mockUser.email) };
+        const credentials = { token: createToken(mockUserId) };
 
         await tokenProvider.options.authorize(credentials, {});
 
@@ -315,7 +315,7 @@ describe("authOptions", () => {
           new Error("Maximum number of requests reached. Please try again later.")
         );
 
-        const credentials = { token: createToken(mockUserId, mockUser.email) };
+        const credentials = { token: createToken(mockUserId) };
 
         await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
           "Maximum number of requests reached. Please try again later."
@@ -339,7 +339,7 @@ describe("authOptions", () => {
           groupId: null,
         } as any);
 
-        const credentials = { token: createToken(mockUserId, mockUser.email) };
+        const credentials = { token: createToken(mockUserId) };
 
         await tokenProvider.options.authorize(credentials, {});
 
