@@ -1,7 +1,10 @@
-import { ZContactLinkParams } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/types/survey";
-import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
+import {
+  ZContactLinkParams,
+  ZContactLinkQuery,
+} from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/types/survey";
+import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 
 export const getPersonalizedSurveyLink: ZodOpenApiOperationObject = {
   operationId: "getPersonalizedSurveyLink",
@@ -9,6 +12,7 @@ export const getPersonalizedSurveyLink: ZodOpenApiOperationObject = {
   description: "Retrieves a personalized link for a specific survey.",
   requestParams: {
     path: ZContactLinkParams,
+    query: ZContactLinkQuery,
   },
   tags: ["Management API - Surveys - Contact Links"],
   responses: {
@@ -20,6 +24,10 @@ export const getPersonalizedSurveyLink: ZodOpenApiOperationObject = {
             z.object({
               data: z.object({
                 surveyUrl: z.string().url(),
+                expiresAt: z
+                  .string()
+                  .nullable()
+                  .describe("The date and time the link expires, null if no expiration"),
               }),
             })
           ),
