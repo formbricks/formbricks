@@ -1,3 +1,12 @@
+import { render } from "@react-email/render";
+import { createTransport } from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import { logger } from "@formbricks/logger";
+import type { TLinkSurveyEmailData } from "@formbricks/types/email";
+import { InvalidInputError } from "@formbricks/types/errors";
+import type { TResponse } from "@formbricks/types/responses";
+import type { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import {
   DEBUG,
   MAIL_FROM,
@@ -17,15 +26,6 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import NewEmailVerification from "@/modules/email/emails/auth/new-email-verification";
 import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
 import { getTranslate } from "@/tolgee/server";
-import { render } from "@react-email/render";
-import { createTransport } from "nodemailer";
-import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import { logger } from "@formbricks/logger";
-import type { TLinkSurveyEmailData } from "@formbricks/types/email";
-import { InvalidInputError } from "@formbricks/types/errors";
-import type { TResponse } from "@formbricks/types/responses";
-import type { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
 import { VerificationEmail } from "./emails/auth/verification-email";
@@ -111,7 +111,7 @@ export const sendVerificationEmail = async ({
 }): Promise<boolean> => {
   try {
     const t = await getTranslate();
-    const token = createToken(id, email, {
+    const token = createToken(id, {
       expiresIn: "1d",
     });
     const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
@@ -136,7 +136,7 @@ export const sendForgotPasswordEmail = async (user: {
   locale: TUserLocale;
 }): Promise<boolean> => {
   const t = await getTranslate();
-  const token = createToken(user.id, user.email, {
+  const token = createToken(user.id, {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
