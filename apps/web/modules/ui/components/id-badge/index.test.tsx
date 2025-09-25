@@ -96,7 +96,7 @@ describe("IdBadge", () => {
   test("removes interactive elements when copy is disabled", () => {
     const { container } = render(<IdBadge id="1734" copyDisabled={true} />);
 
-    const badge = container.querySelector("button");
+    const badge = container.querySelector("div");
 
     // Should not have cursor-pointer class
     expect(badge).not.toHaveClass("cursor-pointer");
