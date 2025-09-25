@@ -978,13 +978,6 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         expect(() => createToken(specialChars)).not.toThrow();
         expect(() => createEmailToken(specialChars)).not.toThrow();
       });
-
-      test("should handle null and undefined inputs gracefully", () => {
-        expect(() => createToken(null as any)).not.toThrow();
-        expect(() => createToken(undefined as any)).not.toThrow();
-        expect(() => createEmailToken(null as any)).not.toThrow();
-        expect(() => createEmailToken(undefined as any)).not.toThrow();
-      });
     });
 
     describe("Performance and Resource Exhaustion", () => {

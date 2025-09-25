@@ -186,24 +186,39 @@ const getUserEmailForLegacyVerification = async (
   userId?: string
 ): Promise<{ userId: string; userEmail: string }> => {
   if (!userId) {
-    const decoded = jwt.decode(token) as JwtPayload & {
-      id: string;
-    };
+    const decoded = jwt.decode(token);
+
+    // Validate decoded token structure before using it
+    if (
+      !decoded ||
+      typeof decoded !== "object" ||
+      !decoded.id ||
+      typeof decoded.id !== "string" ||
+      decoded.id.trim() === ""
+    ) {
+      logger.error("Invalid token: missing or invalid user ID");
+      throw new Error("Invalid token");
+    }
+
     userId = decoded.id;
   }
 
-  if (!userId) {
+  const decryptedId = decryptWithFallback(userId, ENCRYPTION_KEY);
+
+  // Validate decrypted ID before database query
+  if (!decryptedId || typeof decryptedId !== "string" || decryptedId.trim() === "") {
+    logger.error("Invalid token: missing or invalid user ID");
     throw new Error("Invalid token");
   }
-
-  const decryptedId = decryptWithFallback(userId, ENCRYPTION_KEY);
 
   const foundUser = await prisma.user.findUnique({
     where: { id: decryptedId },
   });
 
   if (!foundUser) {
-    throw new Error("User not found");
+    const errorMessage = "User not found";
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 
   return { userId: decryptedId, userEmail: foundUser.email };
