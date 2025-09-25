@@ -241,4 +241,40 @@ describe("ConditionalLogic", () => {
 
     expect(screen.getAllByTestId("logic-editor").length).toBe(2);
   });
+
+  test("should clear logicFallback when logic array is empty and logicFallback exists (useEffect)", () => {
+    const mockUpdateQuestion = vi.fn();
+    const mockQuestion: TSurveyQuestion = {
+      id: "testQuestionId",
+      type: TSurveyQuestionTypeEnum.OpenText,
+      headline: { default: "Test Question" },
+      required: false,
+      inputType: "text",
+      charLimit: { enabled: false },
+      logic: [], // Empty logic array
+      logicFallback: "someTarget", // Has logicFallback but no logic
+    };
+    const mockSurvey = {
+      id: "testSurveyId",
+      name: "Test Survey",
+      type: "link",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      environmentId: "testEnvId",
+      status: "inProgress",
+      questions: [mockQuestion],
+      endings: [],
+    } as unknown as TSurvey;
+
+    render(
+      <ConditionalLogic
+        localSurvey={mockSurvey}
+        question={mockQuestion}
+        questionIdx={0}
+        updateQuestion={mockUpdateQuestion}
+      />
+    );
+
+    expect(mockUpdateQuestion).toHaveBeenCalledWith(0, { logicFallback: undefined });
+  });
 });
