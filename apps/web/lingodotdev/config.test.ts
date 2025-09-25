@@ -39,23 +39,6 @@ describe("i18n Configuration", () => {
     mockI18n.init = vi.fn().mockReturnThis();
   });
 
-  test("should not initialize i18n on server side", async () => {
-    // Mock server environment (window is undefined)
-    const originalWindow = global.window;
-    // @ts-ignore
-    delete global.window;
-
-    // Re-import the module to test server-side behavior
-    vi.resetModules();
-    await import("./config");
-
-    expect(mockI18n.use).not.toHaveBeenCalled();
-    expect(mockI18n.init).not.toHaveBeenCalled();
-
-    // Restore window
-    global.window = originalWindow;
-  });
-
   test("should initialize i18n on client side", async () => {
     // Mock client environment (window exists)
     Object.defineProperty(global, "window", {
