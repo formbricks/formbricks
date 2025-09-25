@@ -262,8 +262,7 @@
     "membership_not_found": "Mitgliedschaft nicht gefunden",
     "metadata": "Metadaten",
     "minimum": "Minimum",
-    "mobile_overlay_app_works_best_on_desktop": "Formbricks funktioniert am besten auf einem größeren Bildschirm. Um Umfragen zu verwalten oder zu erstellen, wechsle zu einem anderen Gerät.",
-    "mobile_overlay_surveys_look_good": "Keine Sorge – deine Umfragen sehen auf jedem Gerät und jeder Bildschirmgröße großartig aus!",
+    "mobile_overlay_text": "Formbricks ist für Geräte mit kleineren Auflösungen nicht verfügbar.",
     "mobile_overlay_title": "Oops, Bildschirm zu klein erkannt!",
     "move_down": "Nach unten bewegen",
     "move_up": "Nach oben bewegen",
@@ -752,6 +751,7 @@
     },
     "project": {
       "api_keys": {
+        "access_control": "Zugriffskontrolle",
         "add_api_key": "API-Schlüssel hinzufügen",
         "api_key": "API-Schlüssel",
         "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
