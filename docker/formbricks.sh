@@ -554,7 +554,7 @@ EOF
   # Ensure required volumes exist without removing user-defined volumes
   if grep -q '^volumes:' docker-compose.yml; then
     # Ensure postgres
-    if ! awk '/^volumes:/{invol=1; next} invol && NF==0{invol=0} invol{ if($1=="postgres:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+    if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="postgres:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
       awk '
         /^volumes:/ { print; invol=1; next }
         invol && /^[^[:space:]]/ { if(!added){ print "  postgres:"; print "    driver: local"; added=1 } ; invol=0 }
@@ -563,7 +563,7 @@ EOF
       ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
     fi
     # Ensure redis
-    if ! awk '/^volumes:/{invol=1; next} invol && NF==0{invol=0} invol{ if($1=="redis:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+    if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="redis:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
       awk '
         /^volumes:/ { print; invol=1; next }
         invol && /^[^[:space:]]/ { if(!added){ print "  redis:"; print "    driver: local"; added=1 } ; invol=0 }
@@ -573,7 +573,7 @@ EOF
     fi
     # Ensure minio-data if needed
     if [[ $minio_storage == "y" ]]; then
-      if ! awk '/^volumes:/{invol=1; next} invol && NF==0{invol=0} invol{ if($1=="minio-data:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+      if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="minio-data:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
         awk '
           /^volumes:/ { print; invol=1; next }
           invol && /^[^[:space:]]/ { if(!added){ print "  minio-data:"; print "    driver: local"; added=1 } ; invol=0 }
