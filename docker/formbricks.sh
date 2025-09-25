@@ -424,12 +424,20 @@ EOT
     ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
   fi
 
-  # Step 3: Build service snippets and inject them BEFORE the volumes section (robust, no sed -i multiline)
+  # Step 3: Build service snippets and inject them BEFORE the volumes section (non-destructive: skip if service exists)
   services_snippet_file="services_snippet.yml"
   : > "$services_snippet_file"
 
+  insert_traefik="y"
+  if grep -q "^  traefik:" docker-compose.yml; then insert_traefik="n"; fi
+
   if [[ $minio_storage == "y" ]]; then
-    cat > "$services_snippet_file" << EOF
+    insert_minio="y"; insert_minio_init="y"
+    if grep -q "^  minio:" docker-compose.yml; then insert_minio="n"; fi
+    if grep -q "^  minio-init:" docker-compose.yml; then insert_minio_init="n"; fi
+
+    if [[ $insert_minio == "y" ]]; then
+      cat >> "$services_snippet_file" << EOF
 
   minio:
     restart: always
@@ -458,6 +466,11 @@ EOT
       - "traefik.http.middlewares.minio-cors.headers.addvaryheader=true"
       - "traefik.http.middlewares.minio-ratelimit.ratelimit.average=100"
       - "traefik.http.middlewares.minio-ratelimit.ratelimit.burst=200"
+EOF
+    fi
+
+    if [[ $insert_minio_init == "y" ]]; then
+      cat >> "$services_snippet_file" << EOF
   minio-init:
     image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
     depends_on:
@@ -471,7 +484,11 @@ EOT
     entrypoint: ["/bin/sh", "/tmp/minio-init.sh"]
     volumes:
       - ./minio-init.sh:/tmp/minio-init.sh:ro
+EOF
+    fi
 
+    if [[ $insert_traefik == "y" ]]; then
+      cat >> "$services_snippet_file" << EOF
   traefik:
     image: "traefik:v2.7"
     restart: always
@@ -488,6 +505,7 @@ EOT
       - ./acme.json:/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
 EOF
+    fi
 
     # Downgrade MinIO router to plain HTTP when HTTPS is not configured
     if [[ $https_setup != "y" ]]; then
@@ -497,7 +515,8 @@ EOF
       sed -i "s|accesscontrolalloworiginlist=https://$domain_name|accesscontrolalloworiginlist=http://$domain_name|" "$services_snippet_file"
     fi
   else
-    cat > "$services_snippet_file" << EOF
+    if [[ $insert_traefik == "y" ]]; then
+      cat > "$services_snippet_file" << EOF
 
   traefik:
     image: "traefik:v2.7"
@@ -514,6 +533,9 @@ EOF
       - ./acme.json:/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
 EOF
+    else
+      : > "$services_snippet_file"
+    fi
   fi
 
   awk '
@@ -529,24 +551,51 @@ EOF
 
   rm -f "$services_snippet_file"
 
-  # Deterministically rewrite the volumes section to include required volumes
-  awk -v add_minio="$minio_storage" '
-  BEGIN { in_vol=0 }
-  /^volumes:/ {
-    print "volumes:";
-    print "  postgres:";
-    print "    driver: local";
-    print "  uploads:";
-    print "    driver: local";
-    if (add_minio == "y") {
-      print "  minio-data:";
-      print "    driver: local";
-    }
-    in_vol=1; skip=1; next
-  }
-  # Skip original volumes block lines until EOF (we already printed ours)
-  { if (!skip) print }
-  ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+  # Ensure required volumes exist without removing user-defined volumes
+  if grep -q '^volumes:' docker-compose.yml; then
+    # Ensure postgres
+    if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="postgres:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+      awk '
+        /^volumes:/ { print; invol=1; next }
+        invol && /^[^[:space:]]/ { if(!added){ print "  postgres:"; print "    driver: local"; added=1 } ; invol=0 }
+        { print }
+        END { if (invol && !added) { print "  postgres:"; print "    driver: local" } }
+      ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+    fi
+    # Ensure redis
+    if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="redis:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+      awk '
+        /^volumes:/ { print; invol=1; next }
+        invol && /^[^[:space:]]/ { if(!added){ print "  redis:"; print "    driver: local"; added=1 } ; invol=0 }
+        { print }
+        END { if (invol && !added) { print "  redis:"; print "    driver: local" } }
+      ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+    fi
+    # Ensure minio-data if needed
+    if [[ $minio_storage == "y" ]]; then
+      if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="minio-data:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+        awk '
+          /^volumes:/ { print; invol=1; next }
+          invol && /^[^[:space:]]/ { if(!added){ print "  minio-data:"; print "    driver: local"; added=1 } ; invol=0 }
+          { print }
+          END { if (invol && !added) { print "  minio-data:"; print "    driver: local" } }
+        ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+      fi
+    fi
+  else
+    {
+      echo ""
+      echo "volumes:"
+      echo "  postgres:"
+      echo "    driver: local"
+      echo "  redis:"
+      echo "    driver: local"
+      if [[ $minio_storage == "y" ]]; then
+        echo "  minio-data:"
+        echo "    driver: local"
+      fi
+    } >> docker-compose.yml
+  fi
 
   # Create minio-init script outside heredoc to avoid variable expansion issues
   if [[ $minio_storage == "y" ]]; then
@@ -618,105 +667,6 @@ MINIO_SCRIPT_EOF
 
 docker compose up -d
 
-
-if [[ $minio_storage == "y" ]]; then
-  echo "ℹ️  Waiting for MinIO to be ready..."
-  attempts=0
-  max_attempts=30
-  until docker run --rm --network $(basename "$PWD")_default --entrypoint /bin/sh \
-    minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc \
-    "mc alias set minio http://minio:9000 '$minio_root_user' '$minio_root_password' >/dev/null 2>&1 && mc admin info minio >/dev/null 2>&1"; do
-    attempts=$((attempts+1))
-    if [ $attempts -ge $max_attempts ]; then
-      echo "❌ MinIO did not become ready in time. Proceeding, but subsequent steps may fail."
-      break
-    fi
-    echo "...attempt $attempts/$max_attempts"
-    sleep 5
-  done
-
-  echo "ℹ️  Ensuring bucket exists..."
-  docker run --rm --network $(basename "$PWD")_default \
-    -e MINIO_ROOT_USER="$minio_root_user" \
-    -e MINIO_ROOT_PASSWORD="$minio_root_password" \
-    -e MINIO_BUCKET_NAME="$minio_bucket_name" \
-    --entrypoint /bin/sh \
-    minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
-      mc alias set minio http://minio:9000 "$minio_root_user" "$minio_root_password" >/dev/null 2>&1;
-      mc mb minio/"$minio_bucket_name" --ignore-existing
-    '
-
-  echo "ℹ️  Ensuring service user and policy exist (idempotent)..."
-  docker run --rm --network $(basename "$PWD")_default \
-    -e MINIO_ROOT_USER="$minio_root_user" \
-    -e MINIO_ROOT_PASSWORD="$minio_root_password" \
-    -e MINIO_SERVICE_USER="$minio_service_user" \
-    -e MINIO_SERVICE_PASSWORD="$minio_service_password" \
-    -e MINIO_BUCKET_NAME="$minio_bucket_name" \
-    --entrypoint /bin/sh \
-    minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 -lc '
-      mc alias set minio http://minio:9000 "$minio_root_user" "$minio_root_password" >/dev/null 2>&1;
-      if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
-        cat > /tmp/formbricks-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    { "Effect": "Allow", "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"], "Resource": ["arn:aws:s3:::$minio_bucket_name/*"] },
-    { "Effect": "Allow", "Action": ["s3:ListBucket"], "Resource": ["arn:aws:s3:::$minio_bucket_name"] }
-  ]
-}
-EOF
-        mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json >/dev/null 2>&1 || true
-      fi;
-      if ! mc admin user info minio "$minio_service_user" >/dev/null 2>&1; then
-        mc admin user add minio "$minio_service_user" "$minio_service_password" >/dev/null 2>&1 || true
-      fi;
-      mc admin policy attach minio formbricks-policy --user "$minio_service_user" >/dev/null 2>&1 || true
-    '
-fi
-
-if [[ $minio_storage == "y" ]]; then
-  echo "⏳ Finalizing MinIO setup..."
-  attempts=0; max_attempts=60
-  while cid=$(docker compose ps -q minio-init 2>/dev/null); do
-    status=$(docker inspect -f '{{.State.Status}}' "$cid" 2>/dev/null || echo "")
-    if [ "$status" = "exited" ] || [ -z "$status" ]; then
-      break
-    fi
-    attempts=$((attempts+1))
-    if [ $attempts -ge $max_attempts ]; then
-      echo "⚠️  minio-init still running after wait; proceeding with cleanup anyway."
-      break
-    fi
-    sleep 2
-  done
-
-  echo "🧹 Cleaning up minio-init service and references..."
-
-  awk '
-    BEGIN{skip=0}
-    /^services:[[:space:]]*$/ { print; next }
-    /^  minio-init:/          { skip=1; next }
-    /^  [A-Za-z0-9_-]+:/      { if (skip) skip=0 }
-    { if (!skip) print }
-  ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
-
-  # Remove list-style "- minio-init" lines under depends_on (if any)
-  sed -E -i '/^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/d' docker-compose.yml
-
-  # Remove the minio-init mapping and its condition line
-  sed -i '/^[[:space:]]*minio-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
-
-  # Remove any stopped minio-init container and restart without orphans
-  docker compose rm -f -s minio-init >/dev/null 2>&1 || true
-  docker compose up -d --remove-orphans
-  
-  # Clean up the temporary minio-init script
-  rm -f minio-init.sh
-
-  echo "✅ MinIO one-time init cleaned up."
-fi
-
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
@@ -780,6 +730,40 @@ get_logs() {
   sudo docker compose logs
 }
 
+cleanup_minio_init() {
+  echo "🧹 Cleaning up MinIO init service and references..."
+  cd formbricks
+
+  # Remove minio-init service block from docker-compose.yml
+  awk '
+    BEGIN{skip=0}
+    /^services:[[:space:]]*$/ { print; next }
+    /^  minio-init:/          { skip=1; next }
+    /^  [A-Za-z0-9_-]+:/      { if (skip) skip=0 }
+    { if (!skip) print }
+  ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+
+  # Remove list-style "- minio-init" lines under depends_on (if any)
+  if sed --version >/dev/null 2>&1; then
+    sed -E -i '/^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/d' docker-compose.yml
+  else
+    sed -E -i '' '/^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/d' docker-compose.yml
+  fi
+
+  # Remove the minio-init mapping and its condition line (mapping style depends_on)
+  if sed --version >/dev/null 2>&1; then
+    sed -i '/^[[:space:]]*minio-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
+  else
+    sed -i '' '/^[[:space:]]*minio-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
+  fi
+
+  # Remove any stopped minio-init container and restart without orphans
+  docker compose rm -f -s minio-init >/dev/null 2>&1 || true
+  docker compose up -d --remove-orphans
+
+  echo "✅ MinIO init cleanup complete."
+}
+
 case "$1" in
 install)
   install_formbricks
@@ -796,6 +780,9 @@ restart)
 logs)
   get_logs
   ;;
+  cleanup-minio-init)
+    cleanup_minio_init
+    ;;
 uninstall)
   uninstall_formbricks
   ;;
