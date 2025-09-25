@@ -59,7 +59,7 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
   };
 
   const content = (
-    //NOSONAR - Cannot use button here because of hydration issues
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/prefer-tag-over-role, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       role={isCopyEnabled ? "button" : undefined}
       className={getButtonClasses()}
