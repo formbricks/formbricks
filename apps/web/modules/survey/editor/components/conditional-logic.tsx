@@ -27,7 +27,7 @@ import {
   SplitIcon,
   TrashIcon,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface ConditionalLogicProps {
@@ -116,6 +116,12 @@ export function ConditionalLogic({
     });
   };
   const [parent] = useAutoAnimate();
+
+  useEffect(() => {
+    if (question.logic?.length === 0 && question.logicFallback) {
+      updateQuestion(questionIdx, { logicFallback: undefined });
+    }
+  }, [question.logic, questionIdx, question.logicFallback, updateQuestion]);
 
   return (
     <div className="mt-4" ref={parent}>
