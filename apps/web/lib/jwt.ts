@@ -110,7 +110,9 @@ export const getEmailFromEmailToken = (token: string): string => {
     throw new Error("ENCRYPTION_KEY is not set");
   }
 
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload;
+  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+    email: string;
+  };
   return decryptWithFallback(payload.email, ENCRYPTION_KEY);
 };
 
@@ -134,17 +136,22 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
   }
 
   try {
-    let payload: JwtPayload;
+    let payload: JwtPayload & { email: string; surveyId?: string };
 
     // Try primary method first (consistent secret)
     try {
-      payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload;
+      payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+        email: string;
+        surveyId: string;
+      };
     } catch (primaryError) {
       logger.error(primaryError, "Token verification failed with primary method");
 
       // Fallback to legacy method (surveyId-based secret)
       try {
-        payload = jwt.verify(token, NEXTAUTH_SECRET + surveyId, { algorithms: ["HS256"] }) as JwtPayload;
+        payload = jwt.verify(token, NEXTAUTH_SECRET + surveyId, { algorithms: ["HS256"] }) as JwtPayload & {
+          email: string;
+        };
       } catch (legacyError) {
         logger.error(legacyError, "Token verification failed with legacy method");
         throw new Error("Invalid token");
@@ -179,7 +186,9 @@ const getUserEmailForLegacyVerification = async (
   userId?: string
 ): Promise<{ userId: string; userEmail: string }> => {
   if (!userId) {
-    const decoded = jwt.decode(token) as JwtPayload;
+    const decoded = jwt.decode(token) as JwtPayload & {
+      id: string;
+    };
     userId = decoded.id;
   }
 
@@ -205,12 +214,14 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
 
-  let payload: JwtPayload;
+  let payload: JwtPayload & { id: string };
   let userData: { userId: string; userEmail: string } | null = null;
 
   // Try new method first, with smart fallback to legacy
   try {
-    payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload;
+    payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+      id: string;
+    };
   } catch (newMethodError) {
     logger.error(newMethodError, "Token verification failed with new method");
 
@@ -221,7 +232,9 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
     try {
       payload = jwt.verify(token, NEXTAUTH_SECRET + userData.userEmail, {
         algorithms: ["HS256"],
-      }) as JwtPayload;
+      }) as JwtPayload & {
+        id: string;
+      };
     } catch (legacyMethodError) {
       logger.error(legacyMethodError, "Token verification failed with legacy method");
       throw new Error("Invalid token");
@@ -248,17 +261,20 @@ export const verifyInviteToken = (token: string): { inviteId: string; email: str
   }
 
   try {
-    const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload;
+    const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+      inviteId: string;
+      email: string;
+    };
 
-    const { inviteId, email } = payload;
+    const { inviteId: encryptedInviteId, email: encryptedEmail } = payload;
 
-    if (!inviteId || !email) {
+    if (!encryptedInviteId || !encryptedEmail) {
       throw new Error("Invalid token");
     }
 
     // Decrypt both fields with fallback to original values
-    const decryptedInviteId = decryptWithFallback(inviteId, ENCRYPTION_KEY);
-    const decryptedEmail = decryptWithFallback(email, ENCRYPTION_KEY);
+    const decryptedInviteId = decryptWithFallback(encryptedInviteId, ENCRYPTION_KEY);
+    const decryptedEmail = decryptWithFallback(encryptedEmail, ENCRYPTION_KEY);
 
     return {
       inviteId: decryptedInviteId,

@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import * as crypto from "@/lib/crypto";
 import {
   createEmailChangeToken,
   createEmailToken,
@@ -18,6 +19,53 @@ const TEST_ENCRYPTION_KEY = "0".repeat(32); // 32-byte key for AES-256-GCM
 const TEST_NEXTAUTH_SECRET = "test-nextauth-secret";
 const DIFFERENT_SECRET = "different-secret";
 
+// Error message constants
+const NEXTAUTH_SECRET_ERROR = "NEXTAUTH_SECRET is not set";
+const ENCRYPTION_KEY_ERROR = "ENCRYPTION_KEY is not set";
+
+// Helper function to test error cases for missing secrets/keys
+const testMissingSecretsError = async (
+  testFn: (...args: any[]) => any,
+  args: any[],
+  options: {
+    testNextAuthSecret?: boolean;
+    testEncryptionKey?: boolean;
+    isAsync?: boolean;
+  } = {}
+) => {
+  const { testNextAuthSecret = true, testEncryptionKey = true, isAsync = false } = options;
+
+  if (testNextAuthSecret) {
+    const constants = await import("@/lib/constants");
+    const originalSecret = (constants as any).NEXTAUTH_SECRET;
+    (constants as any).NEXTAUTH_SECRET = undefined;
+
+    if (isAsync) {
+      await expect(testFn(...args)).rejects.toThrow(NEXTAUTH_SECRET_ERROR);
+    } else {
+      expect(() => testFn(...args)).toThrow(NEXTAUTH_SECRET_ERROR);
+    }
+
+    // Restore
+    (constants as any).NEXTAUTH_SECRET = originalSecret;
+  }
+
+  if (testEncryptionKey) {
+    const constants = await import("@/lib/constants");
+    const originalKey = (constants as any).ENCRYPTION_KEY;
+    (constants as any).ENCRYPTION_KEY = undefined;
+
+    if (isAsync) {
+      await expect(testFn(...args)).rejects.toThrow(ENCRYPTION_KEY_ERROR);
+    } else {
+      expect(() => testFn(...args)).toThrow(ENCRYPTION_KEY_ERROR);
+    }
+
+    // Restore
+    (constants as any).ENCRYPTION_KEY = originalKey;
+  }
+};
+
 // Mock environment variables
 vi.mock("@/lib/env", () => ({
   env: {
@@ -30,12 +78,6 @@ vi.mock("@/lib/env", () => ({
 vi.mock("@/lib/constants", () => ({
   NEXTAUTH_SECRET: "test-nextauth-secret",
   ENCRYPTION_KEY: "0".repeat(32),
-}));
-
-// Mock crypto functions
-vi.mock("@/lib/crypto", () => ({
-  symmetricEncrypt: vi.fn(),
-  symmetricDecrypt: vi.fn(),
 }));
 
 // Mock prisma
@@ -65,18 +107,17 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
   let mockSymmetricEncrypt: any;
   let mockSymmetricDecrypt: any;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
 
     // Setup default crypto mocks
-    const { symmetricEncrypt, symmetricDecrypt } = await import("@/lib/crypto");
-    mockSymmetricEncrypt = symmetricEncrypt as any;
-    mockSymmetricDecrypt = symmetricDecrypt as any;
+    mockSymmetricEncrypt = vi
+      .spyOn(crypto, "symmetricEncrypt")
+      .mockImplementation((text: string) => `encrypted_${text}`);
 
-    mockSymmetricEncrypt.mockImplementation((text: string) => `encrypted_${text}`);
-    mockSymmetricDecrypt.mockImplementation((encryptedText: string) =>
-      encryptedText.replace("encrypted_", "")
-    );
+    mockSymmetricDecrypt = vi
+      .spyOn(crypto, "symmetricDecrypt")
+      .mockImplementation((encryptedText: string) => encryptedText.replace("encrypted_", ""));
 
     (prisma.user.findUnique as any).mockResolvedValue(mockUser);
   });
@@ -97,17 +138,16 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       // Verify the token contains the expected expiration
       const decoded = jwt.decode(token) as any;
       expect(decoded.exp).toBeDefined();
+      expect(decoded.iat).toBeDefined();
+      // Should expire in approximately 1 hour (3600 seconds)
+      expect(decoded.exp - decoded.iat).toBe(3600);
     });
 
     test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
-      expect(() => createToken(mockUser.id)).toThrow("NEXTAUTH_SECRET is not set");
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
+      await testMissingSecretsError(createToken, [mockUser.id], {
+        testNextAuthSecret: true,
+        testEncryptionKey: false,
+      });
     });
   });
 
@@ -127,30 +167,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(decoded.surveyId).toBe(surveyId);
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
-      expect(() => createTokenForLinkSurvey("survey-id", mockUser.email)).toThrow(
-        "NEXTAUTH_SECRET is not set"
-      );
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalKey = (constants as any).ENCRYPTION_KEY;
-      (constants as any).ENCRYPTION_KEY = undefined;
-
-      expect(() => createTokenForLinkSurvey("survey-id", mockUser.email)).toThrow(
-        "ENCRYPTION_KEY is not set"
-      );
-
-      // Restore
-      (constants as any).ENCRYPTION_KEY = originalKey;
+    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+      await testMissingSecretsError(createTokenForLinkSurvey, ["survey-id", mockUser.email]);
     });
   });
 
@@ -162,26 +180,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.email, TEST_ENCRYPTION_KEY);
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
-      expect(() => createEmailToken(mockUser.email)).toThrow("NEXTAUTH_SECRET is not set");
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalKey = (constants as any).ENCRYPTION_KEY;
-      (constants as any).ENCRYPTION_KEY = undefined;
-
-      expect(() => createEmailToken(mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
-
-      // Restore
-      (constants as any).ENCRYPTION_KEY = originalKey;
+    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+      await testMissingSecretsError(createEmailToken, [mockUser.email]);
     });
   });
 
@@ -199,26 +199,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(decoded.exp - decoded.iat).toBe(86400);
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
-      expect(() => createEmailChangeToken(mockUser.id, mockUser.email)).toThrow("NEXTAUTH_SECRET is not set");
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalKey = (constants as any).ENCRYPTION_KEY;
-      (constants as any).ENCRYPTION_KEY = undefined;
-
-      expect(() => createEmailChangeToken(mockUser.id, mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
-
-      // Restore
-      (constants as any).ENCRYPTION_KEY = originalKey;
+    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+      await testMissingSecretsError(createEmailChangeToken, [mockUser.id, mockUser.email]);
     });
   });
 
@@ -240,28 +222,13 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
       const decoded = jwt.decode(token) as any;
       expect(decoded.exp).toBeDefined();
+      expect(decoded.iat).toBeDefined();
+      // Should expire in approximately 24 hours (86400 seconds)
+      expect(decoded.exp - decoded.iat).toBe(86400);
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
-      expect(() => createInviteToken("invite-id", mockUser.email)).toThrow("NEXTAUTH_SECRET is not set");
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalKey = (constants as any).ENCRYPTION_KEY;
-      (constants as any).ENCRYPTION_KEY = undefined;
-
-      expect(() => createInviteToken("invite-id", mockUser.email)).toThrow("ENCRYPTION_KEY is not set");
-
-      // Restore
-      (constants as any).ENCRYPTION_KEY = originalKey;
+    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+      await testMissingSecretsError(createInviteToken, ["invite-id", mockUser.email]);
     });
   });
 
@@ -284,28 +251,9 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(extractedEmail).toBe(mockUser.email);
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
+    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
       const token = jwt.sign({ email: "test@example.com" }, TEST_NEXTAUTH_SECRET);
-      expect(() => getEmailFromEmailToken(token)).toThrow("NEXTAUTH_SECRET is not set");
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalKey = (constants as any).ENCRYPTION_KEY;
-      (constants as any).ENCRYPTION_KEY = undefined;
-
-      const token = jwt.sign({ email: "test@example.com" }, TEST_NEXTAUTH_SECRET);
-      expect(() => getEmailFromEmailToken(token)).toThrow("ENCRYPTION_KEY is not set");
-
-      // Restore
-      (constants as any).ENCRYPTION_KEY = originalKey;
+      await testMissingSecretsError(getEmailFromEmailToken, [token]);
     });
   });
 
@@ -397,21 +345,6 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(result).toBe(mockUser.email);
     });
 
-    test("should prioritize new survey tokens over legacy tokens", () => {
-      const surveyId = "test-survey-id";
-
-      // Create both new and legacy tokens
-      const newToken = createTokenForLinkSurvey(surveyId, mockUser.email);
-      const legacyToken = jwt.sign({ email: `encrypted_${mockUser.email}` }, TEST_NEXTAUTH_SECRET + surveyId);
-
-      // Both should work, but new token should be processed first
-      const resultNew = verifyTokenForLinkSurvey(newToken, surveyId);
-      expect(resultNew).toBe(mockUser.email);
-
-      const resultLegacy = verifyTokenForLinkSurvey(legacyToken, surveyId);
-      expect(resultLegacy).toBe(mockUser.email);
-    });
-
     test("should reject survey tokens that fail both new and legacy verification", async () => {
       const surveyId = "test-survey-id";
       const invalidToken = jwt.sign({ email: "encrypted_test@example.com" }, "wrong-secret");
@@ -457,14 +390,11 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
-      await expect(verifyToken("any-token")).rejects.toThrow("NEXTAUTH_SECRET is not set");
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
+      await testMissingSecretsError(verifyToken, ["any-token"], {
+        testNextAuthSecret: true,
+        testEncryptionKey: false,
+        isAsync: true,
+      });
     });
 
     test("should throw error for invalid token signature", async () => {
@@ -544,26 +474,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(() => verifyInviteToken("invalid-token")).toThrow("Invalid or expired invite token");
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
-      expect(() => verifyInviteToken("any-token")).toThrow("NEXTAUTH_SECRET is not set");
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalKey = (constants as any).ENCRYPTION_KEY;
-      (constants as any).ENCRYPTION_KEY = undefined;
-
-      expect(() => verifyInviteToken("any-token")).toThrow("ENCRYPTION_KEY is not set");
-
-      // Restore
-      (constants as any).ENCRYPTION_KEY = originalKey;
+    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+      await testMissingSecretsError(verifyInviteToken, ["any-token"]);
     });
 
     test("should throw error if inviteId is missing", () => {
@@ -619,26 +531,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(result).toEqual({ id: userId, email });
     });
 
-    test("should throw error if NEXTAUTH_SECRET is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).NEXTAUTH_SECRET;
-      (constants as any).NEXTAUTH_SECRET = undefined;
-
-      await expect(verifyEmailChangeToken("any-token")).rejects.toThrow("NEXTAUTH_SECRET is not set");
-
-      // Restore
-      (constants as any).NEXTAUTH_SECRET = originalSecret;
-    });
-
-    test("should throw error if ENCRYPTION_KEY is not set", async () => {
-      const constants = await import("@/lib/constants");
-      const originalKey = (constants as any).ENCRYPTION_KEY;
-      (constants as any).ENCRYPTION_KEY = undefined;
-
-      await expect(verifyEmailChangeToken("any-token")).rejects.toThrow("ENCRYPTION_KEY is not set");
-
-      // Restore
-      (constants as any).ENCRYPTION_KEY = originalKey;
+    test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
+      await testMissingSecretsError(verifyEmailChangeToken, ["any-token"], { isAsync: true });
     });
 
     test("should throw error if token is invalid or missing fields", async () => {
