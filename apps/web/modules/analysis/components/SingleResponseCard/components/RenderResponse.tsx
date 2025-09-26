@@ -103,9 +103,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
               const rowValueInSelectedLanguage = getLocalizedValue(row.label, languagCode);
               if (!responseData[rowValueInSelectedLanguage]) return null;
               return (
-                <p
-                  key={rowValueInSelectedLanguage}
-                  className="ph-no-capture my-1 font-normal capitalize text-slate-700">
+                <p key={rowValueInSelectedLanguage} className="ph-no-capture my-1 font-normal text-slate-700">
                   {rowValueInSelectedLanguage}:{processResponseData(responseData[rowValueInSelectedLanguage])}
                 </p>
               );
