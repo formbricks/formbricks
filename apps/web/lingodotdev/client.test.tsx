@@ -44,7 +44,7 @@ describe("I18nProvider", () => {
 
   test("should render children wrapped in I18nextProvider", () => {
     render(
-      <I18nProvider language="en-US">
+      <I18nProvider language="en-US" defaultLocale="en-US">
         <div data-testid="child">Test Child</div>
       </I18nProvider>
     );
@@ -57,7 +57,7 @@ describe("I18nProvider", () => {
   test("should use DEFAULT_LANGUAGE when no language provided", async () => {
     mockI18n.language = "de-DE";
     render(
-      <I18nProvider language="">
+      <I18nProvider language="" defaultLocale="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -74,7 +74,7 @@ describe("I18nProvider", () => {
     mockI18n.language = "en-US";
 
     render(
-      <I18nProvider language="de-DE">
+      <I18nProvider language="de-DE" defaultLocale="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -86,7 +86,7 @@ describe("I18nProvider", () => {
     mockI18n.language = "en-US";
 
     const { rerender } = render(
-      <I18nProvider language="en-US">
+      <I18nProvider language="en-US" defaultLocale="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -94,7 +94,7 @@ describe("I18nProvider", () => {
     expect(mockI18n.changeLanguage).not.toHaveBeenCalled();
 
     rerender(
-      <I18nProvider language="fr-FR">
+      <I18nProvider language="fr-FR" defaultLocale="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -104,7 +104,7 @@ describe("I18nProvider", () => {
 
   test("should pass i18n instance to I18nextProvider", () => {
     render(
-      <I18nProvider language="en-US">
+      <I18nProvider language="en-US" defaultLocale="en-US">
         <div>Test</div>
       </I18nProvider>
     );

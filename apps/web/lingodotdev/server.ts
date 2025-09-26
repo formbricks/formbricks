@@ -4,7 +4,6 @@ import resourcesToBackend from "i18next-resources-to-backend";
 import { initReactI18next } from "react-i18next/initReactI18next";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getLocale } from "@/lingodotdev/language";
-import { DEFAULT_LANGUAGE } from "@/lingodotdev/shared";
 
 const initI18next = async (lng: string) => {
   const i18nInstance = createInstance();
@@ -14,7 +13,7 @@ const initI18next = async (lng: string) => {
     .use(resourcesToBackend((language: string) => import(`../locales/${language}.json`)))
     .init({
       lng,
-      fallbackLng: DEFAULT_LANGUAGE,
+      fallbackLng: DEFAULT_LOCALE,
       interpolation: {
         escapeValue: false,
       },
@@ -24,8 +23,7 @@ const initI18next = async (lng: string) => {
 
 export async function getTranslate() {
   const locale = await getLocale();
-  const lng = locale || DEFAULT_LOCALE;
 
-  const i18nextInstance = await initI18next(lng);
-  return i18nextInstance.getFixedT(lng);
+  const i18nextInstance = await initI18next(locale);
+  return i18nextInstance.getFixedT(locale);
 }
