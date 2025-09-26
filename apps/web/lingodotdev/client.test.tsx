@@ -1,20 +1,29 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import i18n from "i18next";
 import { I18nextProvider } from "react-i18next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { I18nProvider } from "./client";
-import mockedConfig from "./config";
 
-vi.mock("react-i18next");
-vi.mock("./config", () => ({
+vi.mock("i18next", () => ({
   default: {
     language: "en-US",
     changeLanguage: vi.fn(),
+    use: vi.fn().mockReturnThis(),
+    init: vi.fn().mockReturnThis(),
   },
 }));
 
-const mockI18n = vi.mocked(mockedConfig);
+vi.mock("react-i18next", () => ({
+  initReactI18next: vi.fn(),
+  I18nextProvider: vi.fn(({ children }) => children),
+}));
 
+vi.mock("i18next-resources-to-backend", () => ({
+  default: vi.fn(() => vi.fn()),
+}));
+
+const mockI18n = vi.mocked(i18n);
 const mockI18nextProvider = vi.mocked(I18nextProvider);
 
 // Mock I18nextProvider to render children
@@ -26,6 +35,8 @@ describe("I18nProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockI18n.language = "en-US";
+    mockI18n.use = vi.fn().mockReturnThis();
+    mockI18n.init = vi.fn().mockReturnThis();
 
     // Re-setup the mock implementation after clearing mocks
     mockI18nextProvider.mockImplementation(({ children }) => {
@@ -39,7 +50,7 @@ describe("I18nProvider", () => {
 
   test("should render children wrapped in I18nextProvider", () => {
     render(
-      <I18nProvider language="en-US">
+      <I18nProvider language="en-US" defaultLanguage="en-US">
         <div data-testid="child">Test Child</div>
       </I18nProvider>
     );
@@ -52,7 +63,7 @@ describe("I18nProvider", () => {
   test("should use DEFAULT_LANGUAGE when no language provided", async () => {
     mockI18n.language = "de-DE";
     render(
-      <I18nProvider language="">
+      <I18nProvider language="" defaultLanguage="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -69,7 +80,7 @@ describe("I18nProvider", () => {
     mockI18n.language = "en-US";
 
     render(
-      <I18nProvider language="de-DE">
+      <I18nProvider language="de-DE" defaultLanguage="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -81,7 +92,7 @@ describe("I18nProvider", () => {
     mockI18n.language = "en-US";
 
     const { rerender } = render(
-      <I18nProvider language="en-US">
+      <I18nProvider language="en-US" defaultLanguage="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -89,7 +100,7 @@ describe("I18nProvider", () => {
     expect(mockI18n.changeLanguage).not.toHaveBeenCalled();
 
     rerender(
-      <I18nProvider language="fr-FR">
+      <I18nProvider language="fr-FR" defaultLanguage="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -99,7 +110,7 @@ describe("I18nProvider", () => {
 
   test("should pass i18n instance to I18nextProvider", () => {
     render(
-      <I18nProvider language="en-US">
+      <I18nProvider language="en-US" defaultLanguage="en-US">
         <div>Test</div>
       </I18nProvider>
     );
