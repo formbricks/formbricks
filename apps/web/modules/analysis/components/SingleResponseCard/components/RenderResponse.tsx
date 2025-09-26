@@ -1,16 +1,3 @@
-import { cn } from "@/lib/cn";
-import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
-import { getChoiceIdByValue } from "@/lib/response/utils";
-import { processResponseData } from "@/lib/responses";
-import { formatDateWithOrdinal } from "@/lib/utils/datetime";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
-import { renderHyperlinkedContent } from "@/modules/analysis/utils";
-import { ArrayResponse } from "@/modules/ui/components/array-response";
-import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
-import { PictureSelectionResponse } from "@/modules/ui/components/picture-selection-response";
-import { RankingResponse } from "@/modules/ui/components/ranking-response";
-import { RatingResponse } from "@/modules/ui/components/rating-response";
-import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
 import { TResponseDataValue } from "@formbricks/types/responses";
@@ -22,6 +9,18 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
+import { getChoiceIdByValue } from "@/lib/response/utils";
+import { processResponseData } from "@/lib/responses";
+import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { renderHyperlinkedContent } from "@/modules/analysis/utils";
+import { ArrayResponse } from "@/modules/ui/components/array-response";
+import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
+import { PictureSelectionResponse } from "@/modules/ui/components/picture-selection-response";
+import { RankingResponse } from "@/modules/ui/components/ranking-response";
+import { RatingResponse } from "@/modules/ui/components/rating-response";
+import { ResponseBadges } from "@/modules/ui/components/response-badges";
 
 interface RenderResponseProps {
   responseData: TResponseDataValue;
@@ -126,7 +125,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
-            items={[{ value: capitalizeFirstLetter(responseData.toString()) }]}
+            items={[{ value: responseData.toString() }]}
             isExpanded={isExpanded}
             icon={<PhoneIcon className="h-4 w-4 text-slate-500" />}
             showId={showId}
@@ -138,7 +137,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
-            items={[{ value: capitalizeFirstLetter(responseData.toString()) }]}
+            items={[{ value: responseData.toString() }]}
             isExpanded={isExpanded}
             icon={<CheckCheckIcon className="h-4 w-4 text-slate-500" />}
             showId={showId}
@@ -150,7 +149,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
-            items={[{ value: capitalizeFirstLetter(responseData.toString()) }]}
+            items={[{ value: responseData.toString() }]}
             isExpanded={isExpanded}
             icon={<MousePointerClickIcon className="h-4 w-4 text-slate-500" />}
             showId={showId}
