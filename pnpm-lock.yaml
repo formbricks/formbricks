@@ -327,6 +327,15 @@ importers:
       https-proxy-agent:
         specifier: 7.0.6
         version: 7.0.6
+      i18next:
+        specifier: 25.5.2
+        version: 25.5.2(typescript@5.8.3)
+      i18next-icu:
+        specifier: 2.4.0
+        version: 2.4.0(intl-messageformat@10.7.16)
+      i18next-resources-to-backend:
+        specifier: 1.2.1
+        version: 1.2.1
       jiti:
         specifier: 2.4.2
         version: 2.4.2
@@ -402,6 +411,9 @@ importers:
       react-hot-toast:
         specifier: 2.5.2
         version: 2.5.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react-i18next:
+        specifier: 15.7.3
+        version: 15.7.3(i18next@25.5.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
       react-turnstile:
         specifier: 1.1.4
         version: 1.1.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -6799,6 +6811,9 @@ packages:
     resolution: {integrity: sha512-LnoZOVS/lp2l4jOMVq2vN/LPf1oGi7sMovdcnKiVjcs7Ysek61rkXMOVEbPZ/3N990uToZpKe6kNE1t2wxcsfA==}
     peerDependencies:
       intl-messageformat: ^10.3.3
+
+  i18next-resources-to-backend@1.2.1:
+    resolution: {integrity: sha512-okHbVA+HZ7n1/76MsfhPqDou0fptl2dAlhRDu2ideXloRRduzHsqDOznJBef+R3DFZnbvWoBW+KxJ7fnFjd6Yw==}
 
   i18next@25.5.2:
     resolution: {integrity: sha512-lW8Zeh37i/o0zVr+NoCHfNnfvVw+M6FQbRp36ZZ/NyHDJ3NJVpp2HhAUyU9WafL5AssymNoOjMRB48mmx2P6Hw==}
@@ -17590,6 +17605,10 @@ snapshots:
   i18next-icu@2.4.0(intl-messageformat@10.7.16):
     dependencies:
       intl-messageformat: 10.7.16
+
+  i18next-resources-to-backend@1.2.1:
+    dependencies:
+      '@babel/runtime': 7.28.2
 
   i18next@25.5.2(typescript@5.8.3):
     dependencies:
