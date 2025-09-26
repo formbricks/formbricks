@@ -3,19 +3,14 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { I18nProvider } from "./client";
-// Import the mocked config to get access to the mock functions
 import mockedConfig from "./config";
 
-// Mock dependencies
 vi.mock("react-i18next");
 vi.mock("./config", () => ({
   default: {
     language: "en-US",
     changeLanguage: vi.fn(),
   },
-}));
-vi.mock("./shared", () => ({
-  DEFAULT_LANGUAGE: "en-US",
 }));
 
 const mockI18n = vi.mocked(mockedConfig);
@@ -44,7 +39,7 @@ describe("I18nProvider", () => {
 
   test("should render children wrapped in I18nextProvider", () => {
     render(
-      <I18nProvider language="en-US" defaultLocale="en-US">
+      <I18nProvider language="en-US">
         <div data-testid="child">Test Child</div>
       </I18nProvider>
     );
@@ -57,7 +52,7 @@ describe("I18nProvider", () => {
   test("should use DEFAULT_LANGUAGE when no language provided", async () => {
     mockI18n.language = "de-DE";
     render(
-      <I18nProvider language="" defaultLocale="en-US">
+      <I18nProvider language="">
         <div>Test</div>
       </I18nProvider>
     );
@@ -74,7 +69,7 @@ describe("I18nProvider", () => {
     mockI18n.language = "en-US";
 
     render(
-      <I18nProvider language="de-DE" defaultLocale="en-US">
+      <I18nProvider language="de-DE">
         <div>Test</div>
       </I18nProvider>
     );
@@ -86,7 +81,7 @@ describe("I18nProvider", () => {
     mockI18n.language = "en-US";
 
     const { rerender } = render(
-      <I18nProvider language="en-US" defaultLocale="en-US">
+      <I18nProvider language="en-US">
         <div>Test</div>
       </I18nProvider>
     );
@@ -94,7 +89,7 @@ describe("I18nProvider", () => {
     expect(mockI18n.changeLanguage).not.toHaveBeenCalled();
 
     rerender(
-      <I18nProvider language="fr-FR" defaultLocale="en-US">
+      <I18nProvider language="fr-FR">
         <div>Test</div>
       </I18nProvider>
     );
@@ -104,7 +99,7 @@ describe("I18nProvider", () => {
 
   test("should pass i18n instance to I18nextProvider", () => {
     render(
-      <I18nProvider language="en-US" defaultLocale="en-US">
+      <I18nProvider language="en-US">
         <div>Test</div>
       </I18nProvider>
     );
