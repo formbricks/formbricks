@@ -2340,6 +2340,37 @@
                   "name": "My Action from Postman",
                   "type": "code"
                 },
+                "properties": {
+                  "description": {
+                    "description": "Optional description of the action class",
+                    "type": "string"
+                  },
+                  "environmentId": {
+                    "description": "The environment ID where the action class will be created",
+                    "type": "string"
+                  },
+                  "key": {
+                    "description": "Required when type is 'code'. A unique identifier for the action. Not needed for 'noCode' type.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Name of the action class",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "noCodeConfig": {
+                    "description": "Configuration object required when type is 'noCode'. Defines the conditions for triggering the action. Not needed for 'code' type.",
+                    "nullable": true,
+                    "type": "object"
+                  },
+                  "type": {
+                    "description": "Type of action class",
+                    "enum": ["code", "noCode"],
+                    "type": "string"
+                  }
+                },
+                "required": ["environmentId", "name", "type"],
                 "type": "object"
               }
             }
@@ -2417,8 +2448,11 @@
               "application/json": {
                 "example": {
                   "code": "bad_request",
-                  "details": {},
-                  "message": "Database error when creating an action for environment clurwouax000azffxt7n5unn3"
+                  "details": {
+                    "environmentId": "Required",
+                    "key": "Required"
+                  },
+                  "message": "Fields are missing or incorrectly formatted"
                 },
                 "schema": {
                   "type": "object"
