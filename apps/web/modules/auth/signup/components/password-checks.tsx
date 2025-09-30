@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 interface PasswordChecksProps {
   password: string | null;
@@ -23,7 +23,7 @@ const ValidationIcon = ({ state }: { state: boolean }) =>
   );
 
 export const PasswordChecks = ({ password }: PasswordChecksProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const DEFAULT_VALIDATIONS = [
     { label: t("auth.signup.password_validation_uppercase_and_lowercase"), state: false },

@@ -1,15 +1,9 @@
 "use client";
 
-import { getChoiceIdByValue } from "@/lib/response/utils";
-import { getContactIdentifier } from "@/lib/utils/contact";
-import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { Button } from "@/modules/ui/components/button";
-import { IdBadge } from "@/modules/ui/components/id-badge";
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -18,6 +12,12 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
+import { getChoiceIdByValue } from "@/lib/response/utils";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import { IdBadge } from "@/modules/ui/components/id-badge";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -42,7 +42,7 @@ export const MultipleChoiceSummary = ({
   survey,
   setFilter,
 }: MultipleChoiceSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
   const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array

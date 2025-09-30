@@ -1,5 +1,7 @@
 "use client";
 
+import { MousePointerClickIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import {
   Dialog,
@@ -9,8 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
-import { MousePointerClickIcon } from "lucide-react";
 import SurveyCopyOptions from "./survey-copy-options";
 
 interface CopySurveyModalProps {
@@ -20,7 +20,7 @@ interface CopySurveyModalProps {
 }
 
 export const CopySurveyModal = ({ open, setOpen, survey }: CopySurveyModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-h-[600px]">

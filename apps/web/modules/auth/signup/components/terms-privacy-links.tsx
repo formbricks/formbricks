@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 interface TermsPrivacyLinksProps {
   termsUrl?: string;
@@ -9,7 +9,7 @@ interface TermsPrivacyLinksProps {
 }
 
 export const TermsPrivacyLinks = ({ termsUrl, privacyUrl }: TermsPrivacyLinksProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   if (!termsUrl && !privacyUrl) return null;
 

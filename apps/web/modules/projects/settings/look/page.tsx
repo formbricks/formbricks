@@ -1,6 +1,7 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { IS_STORAGE_CONFIGURED, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -10,7 +11,6 @@ import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 import { EditPlacementForm } from "./components/edit-placement-form";
 import { ThemeStyling } from "./components/theme-styling";
 

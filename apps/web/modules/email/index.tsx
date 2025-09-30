@@ -1,3 +1,12 @@
+import { render } from "@react-email/render";
+import { createTransport } from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import { logger } from "@formbricks/logger";
+import type { TLinkSurveyEmailData } from "@formbricks/types/email";
+import { InvalidInputError } from "@formbricks/types/errors";
+import type { TResponse } from "@formbricks/types/responses";
+import type { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import {
   DEBUG,
   MAIL_FROM,
@@ -14,18 +23,9 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getTranslate } from "@/lingodotdev/server";
 import NewEmailVerification from "@/modules/email/emails/auth/new-email-verification";
 import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
-import { getTranslate } from "@/tolgee/server";
-import { render } from "@react-email/render";
-import { createTransport } from "nodemailer";
-import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import { logger } from "@formbricks/logger";
-import type { TLinkSurveyEmailData } from "@formbricks/types/email";
-import { InvalidInputError } from "@formbricks/types/errors";
-import type { TResponse } from "@formbricks/types/responses";
-import type { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
 import { VerificationEmail } from "./emails/auth/verification-email";

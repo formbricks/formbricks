@@ -1,8 +1,8 @@
+import { UsersIcon } from "lucide-react";
+import { getTranslate } from "@/lingodotdev/server";
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
-import { UsersIcon } from "lucide-react";
 
 const Loading = async () => {
   const t = await getTranslate();

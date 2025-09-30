@@ -1,10 +1,10 @@
 "use client";
 
+import { Terminal } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { Terminal } from "lucide-react";
 
 interface CodeActionFormProps {
   form: any;
@@ -13,7 +13,7 @@ interface CodeActionFormProps {
 
 export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
   const { control, watch } = form;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div data-testid="code-action-form" className="space-y-4">
       <div className="col-span-1">

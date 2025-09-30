@@ -1,14 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { createI18nString } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -18,6 +13,11 @@ import {
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
+import { createI18nString } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
@@ -60,7 +60,7 @@ export const QuestionOptionChoice = ({
   locale,
   isStorageConfigured,
 }: ChoiceProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,

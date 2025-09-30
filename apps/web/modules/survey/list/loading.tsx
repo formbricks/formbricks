@@ -1,12 +1,12 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { SurveyLoading } from "@/modules/survey/list/components/survey-loading";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
 
 export const SurveyListLoading = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <PageContentWrapper>

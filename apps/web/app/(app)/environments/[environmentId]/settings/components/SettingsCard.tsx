@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { H4, Small } from "@/modules/ui/components/typography";
-import { useTranslate } from "@tolgee/react";
 
 interface ButtonInfo {
   text: string;
@@ -31,7 +31,7 @@ export const SettingsCard = ({
   className?: string;
   buttonInfo?: ButtonInfo;
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div
       className={cn(

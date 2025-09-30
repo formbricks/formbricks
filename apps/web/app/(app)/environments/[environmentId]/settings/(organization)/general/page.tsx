@@ -1,6 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -8,7 +9,6 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";

@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { useTranslate } from "@tolgee/react";
-import Link from "next/link";
 
 interface DynamicPopupTabProps {
   environmentId: string;
@@ -11,7 +11,7 @@ interface DynamicPopupTabProps {
 }
 
 export const DynamicPopupTab = ({ environmentId, surveyId }: DynamicPopupTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="flex h-full flex-col justify-between space-y-4" data-testid="dynamic-popup-container">

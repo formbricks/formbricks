@@ -1,12 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
+import { cn } from "@/lib/cn";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {
@@ -33,7 +34,7 @@ export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => 
   }
 };
 
-const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFnType): string | undefined => {
+const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFunction): string | undefined => {
   if (!channels) return undefined;
   const getLabel = (channelValue: NonNullabeChannel) =>
     getChannelMapping(t).find((channel) => channel.value === channelValue)?.label;
@@ -65,7 +66,7 @@ const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFnType): s
 };
 
 export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const roleBasedStyling = useMemo(() => getRoleBasedStyling(template.role), [template.role]);
 
   const roleTag = useMemo(

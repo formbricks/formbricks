@@ -1,14 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
 
 interface DeleteTeamProps {
   teamId: TTeam["id"];
@@ -17,7 +17,7 @@ interface DeleteTeamProps {
 }
 
 export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 

@@ -1,13 +1,13 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { AuthorizationError } from "@formbricks/types/errors";
 
 const ConfigLayout = async (props) => {
   const params = await props.params;

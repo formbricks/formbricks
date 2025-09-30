@@ -1,11 +1,11 @@
 "use client";
 
+import { UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { TActionClassInput } from "@formbricks/types/action-classes";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { UseFormReturn } from "react-hook-form";
-import { TActionClassInput } from "@formbricks/types/action-classes";
 
 interface InnerHtmlSelectorProps {
   form: UseFormReturn<TActionClassInput>;
@@ -14,7 +14,7 @@ interface InnerHtmlSelectorProps {
 
 export const InnerHtmlSelector = ({ form, disabled }: InnerHtmlSelectorProps) => {
   const { watch, control } = form;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <FormField
       control={control}

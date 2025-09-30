@@ -1,5 +1,27 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
+import {
+  differenceInDays,
+  endOfMonth,
+  endOfQuarter,
+  endOfYear,
+  format,
+  startOfDay,
+  startOfMonth,
+  startOfQuarter,
+  startOfYear,
+  subDays,
+  subMonths,
+  subQuarters,
+  subYears,
+} from "date-fns";
+import { TFunction } from "i18next";
+import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon, Loader2Icon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DateRange,
   useResponseFilter,
@@ -16,27 +38,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { cn } from "@/modules/ui/lib/utils";
-import * as Sentry from "@sentry/nextjs";
-import { TFnType, useTranslate } from "@tolgee/react";
-import {
-  differenceInDays,
-  endOfMonth,
-  endOfQuarter,
-  endOfYear,
-  format,
-  startOfDay,
-  startOfMonth,
-  startOfQuarter,
-  startOfYear,
-  subDays,
-  subMonths,
-  subQuarters,
-  subYears,
-} from "date-fns";
-import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon, Loader2Icon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {
@@ -49,7 +50,7 @@ enum FilterDownload {
   FILTER = "common.filter",
 }
 
-const getFilterDropDownLabels = (t: TFnType) => ({
+const getFilterDropDownLabels = (t: TFunction) => ({
   ALL_TIME: t("environments.surveys.summary.all_time"),
   LAST_7_DAYS: t("environments.surveys.summary.last_7_days"),
   LAST_30_DAYS: t("environments.surveys.summary.last_30_days"),
@@ -67,7 +68,7 @@ interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getDateRangeLabel = (from: Date, to: Date, t: TFnType) => {
+const getDateRangeLabel = (from: Date, to: Date, t: TFunction) => {
   const dateRanges = [
     {
       label: getFilterDropDownLabels(t).LAST_7_DAYS,
@@ -126,7 +127,7 @@ const getDateRangeLabel = (from: Date, to: Date, t: TFnType) => {
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
     dateRange.from && dateRange.to

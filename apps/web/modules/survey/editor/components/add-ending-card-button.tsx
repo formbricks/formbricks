@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AddEndingCardButtonProps {
@@ -10,7 +10,7 @@ interface AddEndingCardButtonProps {
 }
 
 export const AddEndingCardButton = ({ localSurvey, addEndingCard }: AddEndingCardButtonProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <button
       className="group inline-flex items-stretch rounded-lg border border-slate-300 bg-slate-50 hover:cursor-pointer hover:bg-white"

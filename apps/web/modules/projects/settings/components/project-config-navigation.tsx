@@ -1,9 +1,9 @@
 "use client";
 
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
-import { useTranslate } from "@tolgee/react";
 import { BlocksIcon, BrushIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "react-i18next";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface ProjectConfigNavigationProps {
   activeId: string;
@@ -16,7 +16,7 @@ export const ProjectConfigNavigation = ({
   environmentId,
   loading,
 }: ProjectConfigNavigationProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const pathname = usePathname();
 
   let navigation = [

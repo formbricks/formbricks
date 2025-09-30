@@ -1,5 +1,14 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signIn } from "next-auth/react";
+import Link from "next/dist/client/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -10,15 +19,6 @@ import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-fac
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { signIn } from "next-auth/react";
-import Link from "next/dist/client/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
-import { z } from "zod";
 
 const ZLoginForm = z.object({
   email: z.string().email(),
@@ -64,7 +64,7 @@ export const LoginForm = ({
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
   const callbackUrl = searchParams?.get("callbackUrl") ?? "";
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const form = useForm<TLoginForm>({
     defaultValues: {

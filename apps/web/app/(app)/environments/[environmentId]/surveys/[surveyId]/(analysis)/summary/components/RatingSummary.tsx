@@ -1,11 +1,8 @@
 "use client";
 
-import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { RatingResponse } from "@/modules/ui/components/rating-response";
-import { useTranslate } from "@tolgee/react";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -13,6 +10,9 @@ import {
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {
@@ -28,7 +28,7 @@ interface RatingSummaryProps {
 }
 
 export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;

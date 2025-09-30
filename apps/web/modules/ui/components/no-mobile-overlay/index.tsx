@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { SmartphoneIcon, XIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const NoMobileOverlay = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <>
       <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:hidden">

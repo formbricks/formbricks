@@ -1,12 +1,12 @@
-import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@/lib/constants";
-import { verifyUserRoleAccess } from "@/lib/organization/auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
-import { InviteMembers } from "@/modules/setup/organization/[organizationId]/invite/components/invite-members";
-import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
+import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@/lib/constants";
+import { verifyUserRoleAccess } from "@/lib/organization/auth";
+import { getTranslate } from "@/lingodotdev/server";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { InviteMembers } from "@/modules/setup/organization/[organizationId]/invite/components/invite-members";
 
 export const metadata: Metadata = {
   title: "Invite",

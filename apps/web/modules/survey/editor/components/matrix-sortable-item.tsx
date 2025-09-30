@@ -1,13 +1,10 @@
 "use client";
 
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, TrashIcon } from "lucide-react";
 import type { JSX } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -15,6 +12,9 @@ import {
   TSurveyMatrixQuestionChoice,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface MatrixSortableItemProps {
   choice: TSurveyMatrixQuestionChoice;
@@ -50,7 +50,7 @@ export const MatrixSortableItem = ({
   locale,
   isStorageConfigured,
 }: MatrixSortableItemProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,

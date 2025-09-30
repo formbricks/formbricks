@@ -1,8 +1,8 @@
+import { Control } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { TActionClassInput } from "@formbricks/types/action-classes";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { Control } from "react-hook-form";
-import { TActionClassInput } from "@formbricks/types/action-classes";
 
 interface ActionNameDescriptionFieldsProps {
   control: Control<TActionClassInput>;
@@ -17,7 +17,7 @@ export const ActionNameDescriptionFields = ({
   nameInputId = "actionNameInput",
   descriptionInputId = "actionDescriptionInput",
 }: ActionNameDescriptionFieldsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <>

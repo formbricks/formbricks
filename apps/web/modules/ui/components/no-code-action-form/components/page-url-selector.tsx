@@ -1,5 +1,23 @@
 "use client";
 
+import { TFunction } from "i18next";
+import { PlusIcon, TrashIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Control,
+  FieldArrayWithId,
+  UseFieldArrayRemove,
+  UseFormReturn,
+  useFieldArray,
+  useWatch,
+} from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import {
+  ACTION_CLASS_PAGE_URL_RULES,
+  TActionClassInput,
+  TActionClassPageUrlRule,
+} from "@formbricks/types/action-classes";
 import { cn } from "@/lib/cn";
 import { testURLmatch } from "@/lib/utils/url";
 import { Button } from "@/modules/ui/components/button";
@@ -14,25 +32,8 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
-import { TFnType, useTranslate } from "@tolgee/react";
-import { PlusIcon, TrashIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import {
-  Control,
-  FieldArrayWithId,
-  UseFieldArrayRemove,
-  UseFormReturn,
-  useFieldArray,
-  useWatch,
-} from "react-hook-form";
-import toast from "react-hot-toast";
-import {
-  ACTION_CLASS_PAGE_URL_RULES,
-  TActionClassInput,
-  TActionClassPageUrlRule,
-} from "@formbricks/types/action-classes";
 
-const getRuleLabel = (rule: TActionClassPageUrlRule, t: TFnType): string => {
+const getRuleLabel = (rule: TActionClassPageUrlRule, t: TFunction): string => {
   switch (rule) {
     case "exactMatch":
       return t("environments.actions.exactly_matches");
@@ -61,7 +62,7 @@ interface PageUrlSelectorProps {
 export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState<boolean | null>(null);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const urlFilters = form.watch("noCodeConfig.urlFilters");
   const filterType = urlFilters?.length ? "specific" : "all";
 
@@ -190,7 +191,7 @@ const UrlInput = ({
   removeUrlRule: UseFieldArrayRemove;
   disabled: boolean;
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   // Watch all rule values to determine placeholders
   const ruleValues = useWatch({

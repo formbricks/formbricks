@@ -1,18 +1,18 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { wrapThrows } from "@formbricks/types/error-handlers";
+import { TProjectConfigChannel } from "@formbricks/types/project";
+import { TSurveyFilters } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getSurveysAction } from "@/modules/survey/list/actions";
 import { getFormattedFilters } from "@/modules/survey/list/lib/utils";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { Button } from "@/modules/ui/components/button";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { wrapThrows } from "@formbricks/types/error-handlers";
-import { TProjectConfigChannel } from "@formbricks/types/project";
-import { TSurveyFilters } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { SurveyCard } from "./survey-card";
 import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
@@ -49,7 +49,7 @@ export const SurveysList = ({
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 

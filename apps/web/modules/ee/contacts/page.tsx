@@ -1,4 +1,5 @@
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContacts } from "@/modules/ee/contacts/lib/contacts";
@@ -7,7 +8,6 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getTranslate } from "@/tolgee/server";
 import { ContactDataView } from "./components/contact-data-view";
 import { ContactsSecondaryNavigation } from "./components/contacts-secondary-navigation";
 

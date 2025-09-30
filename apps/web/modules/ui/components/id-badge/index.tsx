@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { BadgeContent } from "./components/badge-content";
 
@@ -23,7 +23,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
   label,
   variant = "row",
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 

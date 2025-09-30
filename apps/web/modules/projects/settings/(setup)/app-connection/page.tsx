@@ -1,10 +1,12 @@
 "use server";
 
+import Link from "next/link";
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getEnvironments } from "@/lib/environment/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -12,8 +14,6 @@ import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
-import Link from "next/link";
 import { ActionSettingsCard } from "../components/action-settings-card";
 
 export const AppConnectionPage = async ({ params }: { params: Promise<{ environmentId: string }> }) => {

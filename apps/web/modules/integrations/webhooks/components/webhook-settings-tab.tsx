@@ -1,5 +1,15 @@
 "use client";
 
+import { PipelineTriggers, Webhook } from "@prisma/client";
+import clsx from "clsx";
+import { TrashIcon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
@@ -8,16 +18,6 @@ import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { PipelineTriggers, Webhook } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import clsx from "clsx";
-import { TrashIcon } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
 import { TWebhookInput } from "../types/webhooks";
 
@@ -29,7 +29,7 @@ interface WebhookSettingsTabProps {
 }
 
 export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: WebhookSettingsTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: {

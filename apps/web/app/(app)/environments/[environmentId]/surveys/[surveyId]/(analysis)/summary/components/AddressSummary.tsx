@@ -1,13 +1,13 @@
 "use client";
 
+import Link from "next/link";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { useTranslate } from "@tolgee/react";
-import Link from "next/link";
-import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface AddressSummaryProps {
@@ -18,7 +18,7 @@ interface AddressSummaryProps {
 }
 
 export const AddressSummary = ({ questionSummary, environmentId, survey, locale }: AddressSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />

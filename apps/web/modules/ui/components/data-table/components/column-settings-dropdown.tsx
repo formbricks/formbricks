@@ -1,14 +1,14 @@
 "use client";
 
+import { Column } from "@tanstack/react-table";
+import { EllipsisVerticalIcon, EyeOffIcon, SettingsIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { Column } from "@tanstack/react-table";
-import { useTranslate } from "@tolgee/react";
-import { EllipsisVerticalIcon, EyeOffIcon, SettingsIcon } from "lucide-react";
 
 interface ColumnSettingsDropdownProps<T> {
   column: Column<T>;
@@ -19,7 +19,7 @@ export const ColumnSettingsDropdown = <T,>({
   column,
   setIsTableSettingsModalOpen,
 }: ColumnSettingsDropdownProps<T>) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -1,10 +1,3 @@
-import { cn } from "@/lib/cn";
-import { WEBAPP_URL } from "@/lib/constants";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { isLight, mixColor } from "@/lib/utils/colors";
-import { parseRecallInfo } from "@/lib/utils/recall";
-import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import {
   Column,
   Container,
@@ -17,10 +10,17 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { WEBAPP_URL } from "@/lib/constants";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { isLight, mixColor } from "@/lib/utils/colors";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 import { QuestionHeader } from "./email-question-header";
 
@@ -29,7 +29,7 @@ interface PreviewEmailTemplateProps {
   surveyUrl: string;
   styling: TSurveyStyling;
   locale: string;
-  t: TFnType;
+  t: TFunction;
 }
 
 export const getPreviewEmailTemplateHtml = async (
@@ -37,7 +37,7 @@ export const getPreviewEmailTemplateHtml = async (
   surveyUrl: string,
   styling: TSurveyStyling,
   locale: string,
-  t: TFnType
+  t: TFunction
 ): Promise<string> => {
   return render(
     <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} t={t} />,

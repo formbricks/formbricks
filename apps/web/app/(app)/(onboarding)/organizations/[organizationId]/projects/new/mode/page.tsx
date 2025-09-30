@@ -1,12 +1,12 @@
-import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { getUserProjects } from "@/lib/project/service";
-import { getOrganizationAuth } from "@/modules/organization/lib/utils";
-import { Button } from "@/modules/ui/components/button";
-import { Header } from "@/modules/ui/components/header";
-import { getTranslate } from "@/tolgee/server";
 import { HeartIcon, ListTodoIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { getUserProjects } from "@/lib/project/service";
+import { getTranslate } from "@/lingodotdev/server";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { Header } from "@/modules/ui/components/header";
 
 interface ModePageProps {
   params: Promise<{

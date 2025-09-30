@@ -1,12 +1,12 @@
 "use client";
 
+import { type JSX, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { type JSX, useState } from "react";
-import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
@@ -32,7 +32,7 @@ export const ConsentQuestionForm = ({
   isStorageConfigured = true,
 }: ConsentQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <form>
       <QuestionFormInput

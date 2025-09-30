@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
 
 interface EditPublicSurveyAlertDialogProps {
   open: boolean;
@@ -29,7 +29,7 @@ export const EditPublicSurveyAlertDialog = ({
   primaryButtonText,
   secondaryButtonText,
 }: EditPublicSurveyAlertDialogProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const actions = [] as Array<{
     label?: string;
     onClick: () => void | Promise<void>;

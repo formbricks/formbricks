@@ -1,15 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { PlusIcon } from "lucide-react";
+import type { JSX } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import type { JSX } from "react";
-import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;
@@ -36,7 +36,7 @@ export const NPSQuestionForm = ({
   locale,
   isStorageConfigured = true,
 }: NPSQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   // Auto animate
   const [parent] = useAutoAnimate();

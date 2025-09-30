@@ -1,5 +1,11 @@
 "use client";
 
+import { Table } from "@tanstack/react-table";
+import { ArrowDownToLineIcon, Loader2Icon, Trash2Icon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Button } from "@/modules/ui/components/button";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
@@ -11,12 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { cn } from "@/modules/ui/lib/utils";
-import { Table } from "@tanstack/react-table";
-import { useTranslate } from "@tolgee/react";
-import { ArrowDownToLineIcon, Loader2Icon, Trash2Icon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
-import { TResponseWithQuotas } from "@formbricks/types/responses";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
@@ -38,7 +38,7 @@ export const SelectedRowSettings = <T,>({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
 
   const hasQuotas =

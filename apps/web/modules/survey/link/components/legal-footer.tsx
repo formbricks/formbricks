@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 interface LegalFooterProps {
   IMPRINT_URL?: string;
@@ -16,7 +16,7 @@ export const LegalFooter = ({
   IS_FORMBRICKS_CLOUD,
   surveyUrl,
 }: LegalFooterProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   if (!IMPRINT_URL && !PRIVACY_URL && !IS_FORMBRICKS_CLOUD) return null;
 
   return (

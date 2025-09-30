@@ -1,8 +1,8 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent } from "@/modules/ui/components/dialog";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { useTranslate } from "@tolgee/react";
 
 interface ProjectLimitModalProps {
   open: boolean;
@@ -12,7 +12,7 @@ interface ProjectLimitModalProps {
 }
 
 export const ProjectLimitModal = ({ open, setOpen, projectLimit, buttons }: ProjectLimitModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

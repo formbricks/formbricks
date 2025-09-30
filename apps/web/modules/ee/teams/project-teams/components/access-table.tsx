@@ -1,17 +1,17 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { useTranslate } from "@tolgee/react";
 
 interface AccessTableProps {
   teams: TProjectTeam[];
 }
 
 export const AccessTable = ({ teams }: AccessTableProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="overflow-hidden rounded-lg">

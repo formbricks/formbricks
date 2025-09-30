@@ -2,11 +2,11 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectsByOrganizationId } from "@/modules/organization/settings/api-keys/lib/projects";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 import { ApiKeyList } from "./components/api-key-list";
 
 export const APIKeysPage = async (props) => {

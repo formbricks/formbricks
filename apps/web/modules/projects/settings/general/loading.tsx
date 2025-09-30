@@ -1,13 +1,13 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
 
 export const GeneralSettingsLoading = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const cards = [
     {
       title: t("common.project_name"),

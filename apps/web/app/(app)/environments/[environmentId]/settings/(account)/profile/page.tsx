@@ -3,13 +3,13 @@ import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settin
 import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getTranslate } from "@/tolgee/server";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";

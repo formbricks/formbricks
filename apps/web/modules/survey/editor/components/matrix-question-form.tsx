@@ -1,5 +1,15 @@
 "use client";
 
+import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import { PlusIcon } from "lucide-react";
+import { type JSX, useCallback } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
@@ -7,16 +17,6 @@ import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
-import { DndContext, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { type JSX, useCallback } from "react";
-import toast from "react-hot-toast";
-import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
@@ -43,7 +43,7 @@ export const MatrixQuestionForm = ({
   isStorageConfigured = true,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {

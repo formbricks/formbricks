@@ -1,10 +1,10 @@
 "use client";
 
+import { Project } from "@prisma/client";
+import { useTranslation } from "react-i18next";
+import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
 import { TemplateTags } from "./template-tags";
 
@@ -31,7 +31,7 @@ export const Template = ({
   selectedFilter,
   noPreview,
 }: TemplateProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const showCreateSurveyButton = activeTemplate?.name === template.name;
 

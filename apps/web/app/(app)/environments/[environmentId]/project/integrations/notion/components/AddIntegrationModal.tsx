@@ -1,5 +1,18 @@
 "use client";
 
+import { PlusIcon, TrashIcon } from "lucide-react";
+import Image from "next/image";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TIntegrationInput } from "@formbricks/types/integration";
+import {
+  TIntegrationNotion,
+  TIntegrationNotionConfigData,
+  TIntegrationNotionDatabase,
+} from "@formbricks/types/integration/notion";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import {
   ERRORS,
@@ -23,19 +36,6 @@ import {
 } from "@/modules/ui/components/dialog";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon, TrashIcon } from "lucide-react";
-import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TIntegrationInput } from "@formbricks/types/integration";
-import {
-  TIntegrationNotion,
-  TIntegrationNotionConfigData,
-  TIntegrationNotionDatabase,
-} from "@formbricks/types/integration/notion";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -56,7 +56,7 @@ export const AddIntegrationModal = ({
   databases,
   selectedIntegration,
 }: AddIntegrationModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { handleSubmit } = useForm();
   const [selectedDatabase, setSelectedDatabase] = useState<TIntegrationNotionDatabase | null>();
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);

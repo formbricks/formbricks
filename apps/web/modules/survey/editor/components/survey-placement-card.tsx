@@ -1,16 +1,16 @@
 "use client";
 
-import { Placement } from "@/modules/survey/editor/components/placement";
-import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyProjectOverwrites } from "@formbricks/types/surveys/types";
+import { Placement } from "@/modules/survey/editor/components/placement";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface SurveyPlacementCardProps {
   localSurvey: TSurvey;
@@ -23,7 +23,7 @@ export const SurveyPlacementCard = ({
   setLocalSurvey,
   environmentId,
 }: SurveyPlacementCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const { projectOverwrites } = localSurvey ?? {};

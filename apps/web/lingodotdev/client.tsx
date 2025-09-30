@@ -3,7 +3,7 @@
 import i18n from "i18next";
 import ICU from "i18next-icu";
 import resourcesToBackend from "i18next-resources-to-backend";
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 
 let isInit = false;
@@ -16,26 +16,45 @@ interface I18nProviderProps {
 
 export const I18nProvider = ({ children, language, defaultLanguage }: I18nProviderProps) => {
   const locale = language || defaultLanguage;
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (!isInit) {
-      i18n
-        .use(ICU)
-        .use(initReactI18next)
-        .use(
-          resourcesToBackend((language: string) => {
-            return import(`../locales/${language}.json`);
-          })
-        )
-        .init({
-          fallbackLng: defaultLanguage,
-          interpolation: { escapeValue: false },
-        });
-      isInit = true;
-    } else if (i18n.language !== locale) {
-      i18n.changeLanguage(locale);
-    }
+    const initializeI18n = async () => {
+      if (!isInit) {
+        try {
+          await i18n
+            .use(ICU)
+            .use(initReactI18next)
+            .use(
+              resourcesToBackend((language: string) => {
+                return import(`../locales/${language}.json`);
+              })
+            )
+            .init({
+              lng: locale,
+              fallbackLng: defaultLanguage,
+              interpolation: { escapeValue: false },
+            });
+          isInit = true;
+          setIsReady(true);
+        } catch (error) {
+          setIsReady(true);
+        }
+      } else {
+        if (i18n.language !== locale) {
+          await i18n.changeLanguage(locale);
+        }
+        setIsReady(true);
+      }
+    };
+
+    initializeI18n();
   }, [locale, defaultLanguage]);
+
+  // Don't render children until i18n is ready to prevent hydration issues
+  if (!isReady) {
+    return <div style={{ visibility: "hidden" }}>{children}</div>;
+  }
 
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 };

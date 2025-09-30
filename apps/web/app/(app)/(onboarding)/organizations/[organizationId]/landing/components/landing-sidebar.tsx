@@ -1,5 +1,12 @@
 "use client";
 
+import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TUser } from "@formbricks/types/user";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
@@ -12,13 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useTranslate } from "@tolgee/react";
-import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TUser } from "@formbricks/types/user";
 
 interface LandingSidebarProps {
   user: TUser;
@@ -28,7 +28,7 @@ interface LandingSidebarProps {
 export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState<boolean>(false);
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const dropdownNavigation = [

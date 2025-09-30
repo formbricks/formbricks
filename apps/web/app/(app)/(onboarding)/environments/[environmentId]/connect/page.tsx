@@ -1,12 +1,12 @@
+import { XIcon } from "lucide-react";
+import Link from "next/link";
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
 import { getEnvironment } from "@/lib/environment/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
-import { getTranslate } from "@/tolgee/server";
-import { XIcon } from "lucide-react";
-import Link from "next/link";
 
 interface ConnectPageProps {
   params: Promise<{

@@ -1,10 +1,10 @@
+import { getServerSession } from "next-auth";
+import { cache as reactCache } from "react";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
-import { cache as reactCache } from "react";
 import { TOrganizationAuth } from "../types/organization-auth";
 
 /**

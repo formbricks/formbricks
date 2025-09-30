@@ -1,13 +1,13 @@
 "use client";
 
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { enableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
 import { OTPInput } from "@/modules/ui/components/otp-input";
-import { useTranslate } from "@tolgee/react";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 interface EnterCodeProps {
@@ -23,7 +23,7 @@ const ZEnterCodeFormState = z.object({
 type TEnterCodeFormState = z.infer<typeof ZEnterCodeFormState>;
 
 export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodeProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { control, handleSubmit, formState } = useForm<TEnterCodeFormState>({
     defaultValues: {
       code: "",

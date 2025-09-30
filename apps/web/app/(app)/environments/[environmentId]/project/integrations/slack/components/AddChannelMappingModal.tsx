@@ -1,5 +1,19 @@
 "use client";
 
+import { CircleHelpIcon } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import {
+  TIntegrationSlack,
+  TIntegrationSlackConfigData,
+  TIntegrationSlackInput,
+} from "@formbricks/types/integration/slack";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -18,20 +32,6 @@ import {
 } from "@/modules/ui/components/dialog";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { CircleHelpIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TIntegrationItem } from "@formbricks/types/integration";
-import {
-  TIntegrationSlack,
-  TIntegrationSlackConfigData,
-  TIntegrationSlackInput,
-} from "@formbricks/types/integration/slack";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface AddChannelMappingModalProps {
   environmentId: string;
@@ -53,7 +53,7 @@ export const AddChannelMappingModal = ({
   selectedIntegration,
 }: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);

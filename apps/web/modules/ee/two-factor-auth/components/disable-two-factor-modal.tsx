@@ -1,5 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { disableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -16,14 +24,6 @@ import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/compon
 import { Input } from "@/modules/ui/components/input";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import { ZUserPassword } from "@formbricks/types/user";
 
 const ZDisableTwoFactorFormState = z
   .object({
@@ -53,7 +53,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
     },
     resolver: zodResolver(ZDisableTwoFactorFormState),
   });
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [backupCodeInputVisible, setBackupCodeInputVisible] = useState(false);
 
   const onSubmit: SubmitHandler<TDisableTwoFactorFormState> = async (data) => {

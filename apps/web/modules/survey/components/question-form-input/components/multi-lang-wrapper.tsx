@@ -1,12 +1,12 @@
 "use client";
 
+import { ReactNode, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { TI18nString, TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { getEnabledLanguages } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
-import { useTranslate } from "@tolgee/react";
-import { ReactNode, useMemo } from "react";
-import { TI18nString, TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface MultiLangWrapperRenderProps {
   value: TI18nString;
@@ -35,7 +35,7 @@ export const MultiLangWrapper = ({
   render,
   onChange,
 }: MultiLangWrapperProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";

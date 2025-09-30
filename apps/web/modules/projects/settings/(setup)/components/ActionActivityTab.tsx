@@ -1,5 +1,10 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
+import { TEnvironment } from "@formbricks/types/environment";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { capitalizeFirstLetter } from "@/lib/utils/strings";
@@ -10,11 +15,6 @@ import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { Label } from "@/modules/ui/components/label";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import { useTranslate } from "@tolgee/react";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
-import { TEnvironment } from "@formbricks/types/environment";
 
 interface ActivityTabProps {
   actionClass: TActionClass;
@@ -33,7 +33,7 @@ export const ActionActivityTab = ({
   environment,
   isReadOnly,
 }: ActivityTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
