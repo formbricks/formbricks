@@ -45,7 +45,7 @@ packages/surveys/
 
 ### Prerequisites
 
-- [Lingo.dev](http://Lingo.dev) API key
+- [Lingo.dev](https://Lingo.dev) API key
 - Access to the Formbricks team on Lingo.dev
 
 ### Step-by-Step Setup
