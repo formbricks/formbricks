@@ -1,5 +1,15 @@
 "use client";
 
+import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
+import { PlusIcon } from "lucide-react";
+import { type JSX, useCallback, useState } from "react";
+import toast from "react-hot-toast";
+import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
@@ -7,16 +17,6 @@ import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
-import { DndContext, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { type JSX, useCallback } from "react";
-import toast from "react-hot-toast";
-import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
@@ -44,18 +44,21 @@ export const MatrixQuestionForm = ({
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
+  const [focusRowId, setFocusRowId] = useState<string | null>(null);
+  const [focusColumnId, setFocusColumnId] = useState<string | null>(null);
 
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
-      const updatedRows = [...question.rows, { id: createId(), label: createI18nString("", languageCodes) }];
+      const newRow = { id: createId(), label: createI18nString("", languageCodes) };
+      const updatedRows = [...question.rows, newRow];
       updateQuestion(questionIdx, { rows: updatedRows });
+      setFocusRowId(newRow.id);
     } else {
-      const updatedColumns = [
-        ...question.columns,
-        { id: createId(), label: createI18nString("", languageCodes) },
-      ];
+      const newCol = { id: createId(), label: createI18nString("", languageCodes) };
+      const updatedColumns = [...question.columns, newCol];
       updateQuestion(questionIdx, { columns: updatedColumns });
+      setFocusColumnId(newCol.id);
     }
   };
 
@@ -115,7 +118,27 @@ export const MatrixQuestionForm = ({
   const handleKeyDown = (e: React.KeyboardEvent, type: "row" | "column") => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleAddLabel(type);
+      if (type === "row") {
+        const emptyRow = question.rows.find((r) => {
+          const text = r.label?.[selectedLanguageCode] ?? r.label?.["default"] ?? "";
+          return text.trim() === "";
+        });
+        if (emptyRow) {
+          setFocusRowId(emptyRow.id);
+        } else {
+          handleAddLabel("row");
+        }
+      } else {
+        const emptyCol = question.columns.find((c) => {
+          const text = c.label?.[selectedLanguageCode] ?? c.label?.["default"] ?? "";
+          return text.trim() === "";
+        });
+        if (emptyCol) {
+          setFocusColumnId(emptyCol.id);
+        } else {
+          handleAddLabel("column");
+        }
+      }
     }
   };
 
@@ -240,6 +263,9 @@ export const MatrixQuestionForm = ({
                       }
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
+                      shouldFocus={row.id === focusRowId}
+                      onFocused={() => setFocusRowId(null)}
+                      onRequestFocus={(id) => setFocusRowId(id)}
                     />
                   ))}
                 </div>
@@ -286,6 +312,9 @@ export const MatrixQuestionForm = ({
                       }
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
+                      shouldFocus={column.id === focusColumnId}
+                      onFocused={() => setFocusColumnId(null)}
+                      onRequestFocus={(id) => setFocusColumnId(id)}
                     />
                   ))}
                 </div>

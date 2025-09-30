@@ -29,7 +29,6 @@ interface MultipleChoiceQuestionFormProps {
   question: TSurveyMultipleChoiceQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
-  lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -250,30 +249,30 @@ export const MultipleChoiceQuestionForm = ({
             }}>
             <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
               <div className="flex flex-col gap-2" ref={parent}>
-                {question.choices &&
-                  question.choices.map((choice, choiceIdx) => (
-                    <QuestionOptionChoice
-                      key={choice.id}
-                      choice={choice}
-                      choiceIdx={choiceIdx}
-                      questionIdx={questionIdx}
-                      updateChoice={updateChoice}
-                      deleteChoice={deleteChoice}
-                      addChoice={addChoice}
-                      isInvalid={isInvalid}
-                      localSurvey={localSurvey}
-                      selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
-                      surveyLanguages={surveyLanguages}
-                      question={question}
-                      updateQuestion={updateQuestion}
-                      surveyLanguageCodes={surveyLanguageCodes}
-                      locale={locale}
-                      isStorageConfigured={isStorageConfigured}
-                      shouldFocus={choice.id === focusChoiceId}
-                      onFocused={() => setFocusChoiceId(null)}
-                    />
-                  ))}
+                {question.choices?.map((choice, choiceIdx) => (
+                  <QuestionOptionChoice
+                    key={choice.id}
+                    choice={choice}
+                    choiceIdx={choiceIdx}
+                    questionIdx={questionIdx}
+                    updateChoice={updateChoice}
+                    deleteChoice={deleteChoice}
+                    addChoice={addChoice}
+                    isInvalid={isInvalid}
+                    localSurvey={localSurvey}
+                    selectedLanguageCode={selectedLanguageCode}
+                    setSelectedLanguageCode={setSelectedLanguageCode}
+                    surveyLanguages={surveyLanguages}
+                    question={question}
+                    updateQuestion={updateQuestion}
+                    surveyLanguageCodes={surveyLanguageCodes}
+                    locale={locale}
+                    isStorageConfigured={isStorageConfigured}
+                    shouldFocus={choice.id === focusChoiceId}
+                    onFocused={() => setFocusChoiceId(null)}
+                    onRequestFocus={(id) => setFocusChoiceId(id)}
+                  />
+                ))}
               </div>
             </SortableContext>
           </DndContext>

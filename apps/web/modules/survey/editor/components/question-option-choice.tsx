@@ -43,6 +43,7 @@ interface ChoiceProps {
   isStorageConfigured: boolean;
   shouldFocus?: boolean;
   onFocused?: () => void;
+  onRequestFocus?: (choiceId: string) => void;
 }
 
 export const QuestionOptionChoice = ({
@@ -64,6 +65,7 @@ export const QuestionOptionChoice = ({
   isStorageConfigured,
   shouldFocus,
   onFocused,
+  onRequestFocus,
 }: ChoiceProps) => {
   const { t } = useTranslate();
   const isDragDisabled = choice.id === "other";
@@ -77,7 +79,7 @@ export const QuestionOptionChoice = ({
   useEffect(() => {
     if (shouldFocus && inputRef.current) {
       inputRef.current.focus();
-      onFocused && onFocused();
+      onFocused?.();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldFocus]);
@@ -120,7 +122,18 @@ export const QuestionOptionChoice = ({
           onKeyDown={(e) => {
             if (e.key === "Enter" && choice.id !== "other") {
               e.preventDefault();
-              addChoice(choiceIdx);
+              const emptyIdx = question.choices.findIndex((c, idx) => {
+                if (c.id === "other") return false;
+                const labelForLang = c.label?.[selectedLanguageCode] ?? c.label?.["default"] ?? "";
+                return labelForLang.trim() === "" && idx !== choiceIdx;
+              });
+
+              if (emptyIdx !== -1) {
+                const emptyChoiceId = question.choices[emptyIdx].id;
+                onRequestFocus?.(emptyChoiceId);
+              } else {
+                addChoice(choiceIdx);
+              }
             }
           }}
         />
@@ -148,7 +161,7 @@ export const QuestionOptionChoice = ({
         )}
       </div>
       <div className="flex gap-2">
-        {question.choices && question.choices.length > 2 && (
+        {question.choices?.length > 2 && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
             <Button
               variant="secondary"
