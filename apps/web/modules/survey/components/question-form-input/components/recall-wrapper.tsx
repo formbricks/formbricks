@@ -1,5 +1,10 @@
 "use client";
 
+import { PencilIcon } from "lucide-react";
+import React, { JSX, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   extractId,
@@ -14,11 +19,6 @@ import {
 import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
 import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
-import { PencilIcon } from "lucide-react";
-import React, { JSX, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
-import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
 interface RecallWrapperRenderProps {
   value: string;
@@ -49,7 +49,7 @@ export const RecallWrapper = ({
   isRecallAllowed,
   onAddFallback,
 }: RecallWrapperProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(

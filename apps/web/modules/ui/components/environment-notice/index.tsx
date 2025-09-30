@@ -1,8 +1,8 @@
+import Link from "next/link";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
-import { getTranslate } from "@/tolgee/server";
-import Link from "next/link";
 
 interface EnvironmentNoticeProps {
   environmentId: string;

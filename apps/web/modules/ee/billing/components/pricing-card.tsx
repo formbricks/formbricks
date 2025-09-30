@@ -1,13 +1,13 @@
 "use client";
 
+import { CheckIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { TPricingPlan } from "../api/lib/constants";
 
 interface PricingCardProps {
@@ -31,7 +31,7 @@ export const PricingCard = ({
   organization,
   projectFeatureKeys,
 }: PricingCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 

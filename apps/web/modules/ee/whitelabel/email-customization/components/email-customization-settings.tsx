@@ -1,5 +1,14 @@
 "use client";
 
+import { RepeatIcon, Trash2Icon } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import React, { useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
+import { TUser } from "@formbricks/types/user";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -15,15 +24,6 @@ import { Uploader } from "@/modules/ui/components/file-input/components/uploader
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 import { Muted, P, Small } from "@/modules/ui/components/typography";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { useTranslate } from "@tolgee/react";
-import { RepeatIcon, Trash2Icon } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import React, { useRef, useState } from "react";
-import { toast } from "react-hot-toast";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TAllowedFileExtension } from "@formbricks/types/storage";
-import { TUser } from "@formbricks/types/user";
 
 const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "webp"];
 
@@ -48,7 +48,7 @@ export const EmailCustomizationSettings = ({
   fbLogoUrl,
   isStorageConfigured,
 }: EmailCustomizationSettingsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || fbLogoUrl);

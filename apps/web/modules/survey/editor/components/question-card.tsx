@@ -1,5 +1,21 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Project } from "@prisma/client";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestion,
+  TSurveyQuestionId,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -24,22 +40,6 @@ import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/su
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
-import { useState } from "react";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyQuestion,
-  TSurveyQuestionId,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -91,7 +91,7 @@ export const QuestionCard = ({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
   });
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);

@@ -1,10 +1,10 @@
+import { TOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { MembersInfo } from "@/modules/organization/settings/teams/components/edit-memberships/members-info";
 import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
-import { getTranslate } from "@/tolgee/server";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 
 interface EditMembershipsProps {
   organization: TOrganization;

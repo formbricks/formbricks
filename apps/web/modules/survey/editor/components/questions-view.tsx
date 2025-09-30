@@ -1,5 +1,32 @@
 "use client";
 
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import { Language, Project } from "@prisma/client";
+import React, { SetStateAction, useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import {
+  TConditionGroup,
+  TSingleCondition,
+  TSurveyLogic,
+  TSurveyLogicAction,
+  TSurveyQuestionId,
+} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -14,33 +41,6 @@ import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fiel
 import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
 import { findQuestionUsedInLogic, isUsedInQuota } from "@/modules/survey/editor/lib/utils";
-import {
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  closestCorners,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createId } from "@paralleldrive/cuid2";
-import { Language, Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import React, { SetStateAction, useEffect, useMemo } from "react";
-import toast from "react-hot-toast";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurveyQuota } from "@formbricks/types/quota";
-import {
-  TConditionGroup,
-  TSingleCondition,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestionId,
-} from "@formbricks/types/surveys/types";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
-import { TUserLocale } from "@formbricks/types/user";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -91,7 +91,7 @@ export const QuestionsView = ({
   isStorageConfigured = true,
   quotas,
 }: QuestionsViewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();

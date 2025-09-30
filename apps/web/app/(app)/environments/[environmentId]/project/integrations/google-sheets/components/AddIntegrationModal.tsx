@@ -1,5 +1,16 @@
 "use client";
 
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import {
+  TIntegrationGoogleSheets,
+  TIntegrationGoogleSheetsConfigData,
+  TIntegrationGoogleSheetsInput,
+} from "@formbricks/types/integration/google-sheet";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { getSpreadsheetNameByIdAction } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/actions";
 import {
@@ -26,17 +37,6 @@ import {
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import {
-  TIntegrationGoogleSheets,
-  TIntegrationGoogleSheetsConfigData,
-  TIntegrationGoogleSheetsInput,
-} from "@formbricks/types/integration/google-sheet";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -55,7 +55,7 @@ export const AddIntegrationModal = ({
   googleSheetIntegration,
   selectedIntegration,
 }: AddIntegrationModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",

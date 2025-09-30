@@ -1,15 +1,15 @@
+import { XIcon } from "lucide-react";
+import { getServerSession } from "next-auth";
+import Link from "next/link";
 import { XMTemplateList } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/components/XMTemplateList";
 import { getEnvironment } from "@/lib/environment/service";
 import { getProjectByEnvironmentId, getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
-import { getTranslate } from "@/tolgee/server";
-import { XIcon } from "lucide-react";
-import { getServerSession } from "next-auth";
-import Link from "next/link";
 
 interface XMTemplatePageProps {
   params: Promise<{

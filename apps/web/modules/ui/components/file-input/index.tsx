@@ -1,16 +1,16 @@
 "use client";
 
+import { FileIcon, XIcon } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { cn } from "@/lib/cn";
 import { FileUploadError, handleFileUpload } from "@/modules/storage/file-upload";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
-import { useTranslate } from "@tolgee/react";
-import { FileIcon, XIcon } from "lucide-react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { Uploader } from "./components/uploader";
 import { VideoSettings } from "./components/video-settings";
 import { getAllowedFiles } from "./lib/utils";
@@ -55,7 +55,7 @@ export const FileInput = ({
   disabled = false,
   isStorageConfigured = true,
 }: FileInputProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const options = [
     { value: "image", label: t("common.image") },
     { value: "video", label: t("common.video") },

@@ -1,14 +1,14 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { IS_POSTHOG_CONFIGURED } from "@/lib/constants";
 import { canUserAccessOrganization } from "@/lib/organization/auth";
 import { getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
-import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { AuthorizationError } from "@formbricks/types/errors";
 
 const ProjectOnboardingLayout = async (props) => {
   const params = await props.params;

@@ -1,15 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { type JSX, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { type JSX, useState } from "react";
-import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface CTAQuestionFormProps {
   localSurvey: TSurvey;
@@ -36,7 +36,7 @@ export const CTAQuestionForm = ({
   locale,
   isStorageConfigured = true,
 }: CTAQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const options = [
     {
       value: "internal",

@@ -1,19 +1,5 @@
 "use client";
 
-import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
-import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
-import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
-import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
-import { Button } from "@/modules/ui/components/button";
-import {
-  DataTableHeader,
-  DataTableSettingsModal,
-  DataTableToolbar,
-} from "@/modules/ui/components/data-table";
-import { Skeleton } from "@/modules/ui/components/skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 import {
   DndContext,
   type DragEndEvent,
@@ -29,15 +15,29 @@ import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Sentry from "@sentry/nextjs";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
+import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
+import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
+import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DataTableHeader,
+  DataTableSettingsModal,
+  DataTableToolbar,
+} from "@/modules/ui/components/data-table";
+import { Skeleton } from "@/modules/ui/components/skeleton";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 
 interface ResponseTableProps {
   data: TResponseTableData[];
@@ -74,7 +74,7 @@ export const ResponseTable = ({
   isQuotasAllowed,
   quotas,
 }: ResponseTableProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);

@@ -1,13 +1,13 @@
 "use client";
 
+import { InfoIcon } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { TActionClassInput } from "@formbricks/types/action-classes";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
-import { useTranslate } from "@tolgee/react";
-import { InfoIcon } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
-import { TActionClassInput } from "@formbricks/types/action-classes";
 import { CssSelector } from "./components/css-selector";
 import { InnerHtmlSelector } from "./components/inner-html-selector";
 import { PageUrlSelector } from "./components/page-url-selector";
@@ -19,7 +19,7 @@ interface NoCodeActionFormProps {
 
 export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) => {
   const { control, watch } = form;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div data-testid="no-code-action-form">
       <FormField

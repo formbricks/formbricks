@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TTemplateFilter } from "@formbricks/types/templates";
+import { cn } from "@/lib/cn";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateFiltersProps {
@@ -16,7 +16,7 @@ export const TemplateFilters = ({
   setSelectedFilter,
   templateSearch,
 }: TemplateFiltersProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleFilterSelect = (filterValue: TTemplateFilter, index: number) => {
     // If the filter value at a particular index is null, it indicates that no filter has been chosen, therefore all results are displayed
     const newFilter = [...selectedFilter];

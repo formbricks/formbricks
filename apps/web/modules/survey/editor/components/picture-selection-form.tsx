@@ -1,5 +1,12 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import { PlusIcon } from "lucide-react";
+import type { JSX } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -7,13 +14,6 @@ import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import type { JSX } from "react";
-import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
@@ -40,7 +40,7 @@ export const PictureSelectionForm = ({
 }: PictureSelectionFormProps): JSX.Element => {
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleChoiceDeletion = (choiceValue: string) => {
     // Filter out the deleted choice from the choices array
     const newChoices = question.choices?.filter((choice) => choice.id !== choiceValue) || [];

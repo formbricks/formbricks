@@ -1,5 +1,14 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, MailIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { Toaster, toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -8,15 +17,6 @@ import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { StackedCardsContainer } from "@/modules/ui/components/stacked-cards-container";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { ArrowLeft, MailIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { Toaster, toast } from "react-hot-toast";
-import { z } from "zod";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface VerifyEmailProps {
   survey: TSurvey;
@@ -40,7 +40,7 @@ export const VerifyEmail = ({
   styling,
   locale,
 }: VerifyEmailProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
       email: "",

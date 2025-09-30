@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
 import { Check, Copy } from "lucide-react";
 import React from "react";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface BadgeContentProps {
   id: string | number;
@@ -29,7 +29,7 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
   isCopied,
   label,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const getAriaLabel = () => {
     const prefix = "Copy";
     const labelPart = label ? ` ${label}` : "";

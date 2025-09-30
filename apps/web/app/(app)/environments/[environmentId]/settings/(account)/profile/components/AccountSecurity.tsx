@@ -1,18 +1,18 @@
 "use client";
 
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TUser } from "@formbricks/types/user";
 import { DisableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/disable-two-factor-modal";
 import { EnableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/enable-two-factor-modal";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslate } from "@tolgee/react";
-import { useState } from "react";
-import { TUser } from "@formbricks/types/user";
 
 interface AccountSecurityProps {
   user: TUser;
 }
 
 export const AccountSecurity = ({ user }: AccountSecurityProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [disableTwoFactorModalOpen, setDisableTwoFactorModalOpen] = useState(false);
 

@@ -1,6 +1,5 @@
-import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { useMemo } from "react";
 import { z } from "zod";
 import {
@@ -9,6 +8,7 @@ import {
   TActionClassInputCode,
   ZActionClassInput,
 } from "@formbricks/types/action-classes";
+import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 
 /**
  * Extract action class keys from code-type action classes
@@ -32,7 +32,7 @@ export const validateActionNameUniqueness = (
   data: TActionClassInput,
   actionClassNames: string[],
   ctx: z.RefinementCtx,
-  t: TFnType
+  t: TFunction
 ) => {
   if (data.name && actionClassNames.includes(data.name)) {
     ctx.addIssue({
@@ -50,7 +50,7 @@ export const validateActionKeyUniqueness = (
   data: TActionClassInput,
   actionClassKeys: string[],
   ctx: z.RefinementCtx,
-  t: TFnType
+  t: TFunction
 ) => {
   if (data.type === "code" && data.key && actionClassKeys.includes(data.key)) {
     ctx.addIssue({
@@ -64,7 +64,7 @@ export const validateActionKeyUniqueness = (
 /**
  * Validate CSS selector for noCode click actions
  */
-export const validateCssSelector = (data: TActionClassInput, ctx: z.RefinementCtx, t: TFnType) => {
+export const validateCssSelector = (data: TActionClassInput, ctx: z.RefinementCtx, t: TFunction) => {
   if (
     data.type === "noCode" &&
     data.noCodeConfig?.type === "click" &&
@@ -82,7 +82,7 @@ export const validateCssSelector = (data: TActionClassInput, ctx: z.RefinementCt
 /**
  * Validate regex patterns in URL filters
  */
-export const validateUrlFilterRegex = (data: TActionClassInput, ctx: z.RefinementCtx, t: TFnType) => {
+export const validateUrlFilterRegex = (data: TActionClassInput, ctx: z.RefinementCtx, t: TFunction) => {
   if (data.type === "noCode" && data.noCodeConfig?.urlFilters) {
     for (let i = 0; i < data.noCodeConfig.urlFilters.length; i++) {
       const urlFilter = data.noCodeConfig.urlFilters[i];
@@ -107,7 +107,7 @@ export const validateUrlFilterRegex = (data: TActionClassInput, ctx: z.Refinemen
 export const createActionClassZodResolver = (
   actionClassNames: string[],
   actionClassKeys: string[],
-  t: TFnType
+  t: TFunction
 ) => {
   return zodResolver(
     ZActionClassInput.superRefine((data, ctx) => {
@@ -122,7 +122,7 @@ export const createActionClassZodResolver = (
 /**
  * Validate permissions for action class forms
  */
-export const validatePermissions = (isReadOnly: boolean, t: TFnType) => {
+export const validatePermissions = (isReadOnly: boolean, t: TFunction) => {
   if (isReadOnly) {
     throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
   }

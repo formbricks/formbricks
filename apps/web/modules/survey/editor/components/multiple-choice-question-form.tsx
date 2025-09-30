@@ -1,20 +1,13 @@
 "use client";
 
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
-import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TShuffleOption,
@@ -23,6 +16,13 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
+import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 
 interface MultipleChoiceQuestionFormProps {
   localSurvey: TSurvey;
@@ -48,7 +48,7 @@ export const MultipleChoiceQuestionForm = ({
   locale,
   isStorageConfigured = true,
 }: MultipleChoiceQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);

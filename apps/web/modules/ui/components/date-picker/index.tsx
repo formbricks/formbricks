@@ -1,13 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Button } from "@/modules/ui/components/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useTranslate } from "@tolgee/react";
 import { format } from "date-fns";
 import { CalendarCheckIcon, CalendarIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import Calendar from "react-calendar";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
+import { Button } from "@/modules/ui/components/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import "./styles.css";
 
 const getOrdinalSuffix = (day: number) => {
@@ -32,7 +32,7 @@ interface DatePickerProps {
 }
 
 export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: DatePickerProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
   const [formattedDate, setFormattedDate] = useState<string | undefined>(
     date ? format(new Date(date), "do MMM, yyyy") : undefined

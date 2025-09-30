@@ -1,21 +1,5 @@
 "use client";
 
-import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
-import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
-import FBLogo from "@/images/formbricks-wordmark.svg";
-import { cn } from "@/lib/cn";
-import { getAccessFlags } from "@/lib/membership/utils";
-import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
-import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
-import { ProfileAvatar } from "@/modules/ui/components/avatars";
-import { Button } from "@/modules/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-import { useTranslate } from "@tolgee/react";
 import {
   ArrowUpRightIcon,
   ChevronRightIcon,
@@ -32,10 +16,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
+import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
+import FBLogo from "@/images/formbricks-wordmark.svg";
+import { cn } from "@/lib/cn";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
+import { ProfileAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
@@ -59,7 +59,7 @@ export const MainNavigation = ({
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");

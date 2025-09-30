@@ -1,5 +1,10 @@
 "use client";
 
+import { Project } from "@prisma/client";
+import Image from "next/image";
+import { ChangeEvent, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { handleFileUpload } from "@/modules/storage/file-upload";
@@ -11,11 +16,6 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { ChangeEvent, useRef, useState } from "react";
-import toast from "react-hot-toast";
 
 interface EditLogoProps {
   project: Project;
@@ -25,7 +25,7 @@ interface EditLogoProps {
 }
 
 export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigured }: EditLogoProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(project.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(project.logo?.bgColor || undefined);
   const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!project.logo?.bgColor);

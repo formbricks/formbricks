@@ -1,17 +1,17 @@
 "use client";
 
 // Error components must be Client components
+import * as Sentry from "@sentry/nextjs";
+import { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
+import { type ClientErrorType, getClientErrorData } from "@formbricks/types/errors";
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
-import * as Sentry from "@sentry/nextjs";
-import { TFnType, useTranslate } from "@tolgee/react";
-import { type ClientErrorType, getClientErrorData } from "@formbricks/types/errors";
 
 /**
  * Get translated error messages based on error type
- * All translation keys are directly visible to Tolgee's static analysis
  */
-const getErrorMessages = (type: ClientErrorType, t: TFnType) => {
+const getErrorMessages = (type: ClientErrorType, t: TFunction) => {
   if (type === "rate_limit") {
     return {
       title: t("common.error_rate_limit_title"),
@@ -26,7 +26,7 @@ const getErrorMessages = (type: ClientErrorType, t: TFnType) => {
 };
 
 const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const errorData = getClientErrorData(error);
   const { title, description } = getErrorMessages(errorData.type, t);
 

@@ -1,14 +1,14 @@
 "use client";
 
+import { Project, Response } from "@prisma/client";
+import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import { LinkSurvey } from "@/modules/survey/link/components/link-survey";
 import { OTPInput } from "@/modules/ui/components/otp-input";
-import { Project, Response } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { useCallback, useEffect, useState } from "react";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface PinScreenProps {
   surveyId: string;
@@ -53,7 +53,7 @@ export const PinScreen = (props: PinScreenProps) => {
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
 

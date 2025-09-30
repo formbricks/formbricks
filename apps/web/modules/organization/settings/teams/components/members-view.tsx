@@ -1,15 +1,15 @@
+import { Suspense } from "react";
+import { TOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { EditMemberships } from "@/modules/organization/settings/teams/components/edit-memberships";
 import { OrganizationActions } from "@/modules/organization/settings/teams/components/edit-memberships/organization-actions";
 import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
-import { getTranslate } from "@/tolgee/server";
-import { Suspense } from "react";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 
 interface MembersViewProps {
   membershipRole?: TOrganizationRole;

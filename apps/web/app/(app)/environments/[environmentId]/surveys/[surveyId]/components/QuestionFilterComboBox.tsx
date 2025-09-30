@@ -1,5 +1,10 @@
 "use client";
 
+import clsx from "clsx";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
@@ -17,11 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import clsx from "clsx";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
-import * as React from "react";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 type QuestionFilterComboBoxProps = {
   filterOptions: string[] | undefined;
@@ -54,7 +54,7 @@ export const QuestionFilterComboBox = ({
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   // multiple when question type is multi selection
   const isMultiple =
     type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||

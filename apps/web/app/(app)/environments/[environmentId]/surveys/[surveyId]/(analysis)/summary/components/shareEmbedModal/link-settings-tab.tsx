@@ -1,5 +1,11 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { TI18nString, TSurvey, TSurveyMetadata } from "@formbricks/types/surveys/types";
 import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import { createI18nString, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
@@ -22,12 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslate } from "@tolgee/react";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
-import { TI18nString, TSurvey, TSurveyMetadata } from "@formbricks/types/surveys/types";
 
 interface LinkSettingsTabProps {
   isReadOnly: boolean;
@@ -42,7 +42,7 @@ interface LinkSettingsFormData {
 }
 
 export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: LinkSettingsTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { survey } = useSurvey();
   const enabledLanguages = getEnabledLanguages(survey.languages);
   const hasMultipleLanguages = enabledLanguages.length > 1;

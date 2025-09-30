@@ -1,21 +1,21 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Project } from "@prisma/client";
+import { PlusIcon, XCircleIcon } from "lucide-react";
+import Link from "next/link";
+import { type JSX, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
+import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon, XCircleIcon } from "lucide-react";
-import Link from "next/link";
-import { type JSX, useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
-import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
-import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -45,7 +45,7 @@ export const FileUploadQuestionForm = ({
   isStorageConfigured = true,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isMaxSizeError, setMaxSizeError] = useState(false);
   const {
     billingInfo,

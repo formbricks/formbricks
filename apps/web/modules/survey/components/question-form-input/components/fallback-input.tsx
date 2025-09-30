@@ -1,10 +1,10 @@
+import { RefObject } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useTranslate } from "@tolgee/react";
-import { RefObject } from "react";
-import { toast } from "react-hot-toast";
-import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
 interface FallbackInputProps {
   filteredRecallItems: (TSurveyRecallItem | undefined)[];
@@ -25,7 +25,7 @@ export const FallbackInput = ({
   open,
   setOpen,
 }: FallbackInputProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const containsEmptyFallback = () => {
     const fallBacksList = Object.values(fallbacks);
     return fallBacksList.length === 0 || fallBacksList.map((value) => value.trim()).includes("");

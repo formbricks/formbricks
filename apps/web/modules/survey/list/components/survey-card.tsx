@@ -1,15 +1,15 @@
 "use client";
 
+import Link from "next/link";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { convertDateString, timeSince } from "@/lib/time";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { SurveyTypeIndicator } from "@/modules/survey/list/components/survey-type-indicator";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
-import { useTranslate } from "@tolgee/react";
-import Link from "next/link";
-import { useMemo } from "react";
-import { TUserLocale } from "@formbricks/types/user";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
@@ -30,7 +30,7 @@ export const SurveyCard = ({
   locale,
   onSurveysCopied,
 }: SurveyCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyStatusLabel = (() => {
     switch (survey.status) {
       case "inProgress":

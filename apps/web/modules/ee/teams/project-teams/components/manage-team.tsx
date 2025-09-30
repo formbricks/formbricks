@@ -1,9 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
 
 interface ManageTeamProps {
   environmentId: string;
@@ -11,7 +11,7 @@ interface ManageTeamProps {
 }
 
 export const ManageTeam = ({ environmentId, isOwnerOrManager }: ManageTeamProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const router = useRouter();
 

@@ -1,5 +1,14 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { EyeOff } from "lucide-react";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { validateId } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
 import { findHiddenFieldUsedInLogic, isUsedInQuota } from "@/modules/survey/editor/lib/utils";
@@ -8,15 +17,6 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { Tag } from "@/modules/ui/components/tag";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { EyeOff } from "lucide-react";
-import { useState } from "react";
-import { toast } from "react-hot-toast";
-import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { validateId } from "@formbricks/types/surveys/validation";
 
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;
@@ -35,7 +35,7 @@ export const HiddenFieldsCard = ({
 }: HiddenFieldsCardProps) => {
   const open = activeQuestionId == "hidden";
   const [hiddenField, setHiddenField] = useState<string>("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const setOpen = (open: boolean) => {
     if (open) {
       // NOSONAR typescript:S2301 // the function usage is clear
