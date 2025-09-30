@@ -1,7 +1,7 @@
-import { cn } from "@/modules/ui/lib/utils";
 import { Slot } from "@radix-ui/react-slot";
 import { ChevronRightIcon, EllipsisIcon } from "lucide-react";
 import * as React from "react";
+import { cn } from "@/modules/ui/lib/utils";
 
 const Breadcrumb = React.forwardRef<
   HTMLElement,
@@ -15,7 +15,10 @@ const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWi
   ({ className, ...props }, ref) => (
     <ol
       ref={ref}
-      className={cn("flex flex-wrap items-center gap-1.5 break-words text-sm text-slate-500", className)}
+      className={cn(
+        "flex flex-wrap items-center gap-1.5 break-words text-sm text-slate-500 hover:text-slate-700",
+        className
+      )}
       {...props}
     />
   )
@@ -32,7 +35,7 @@ const BreadcrumbItem = React.forwardRef<
   <li
     ref={ref}
     className={cn(
-      "inline-flex items-center gap-1.5 space-x-1 rounded-md px-1.5 py-1 hover:outline hover:outline-slate-300",
+      "inline-flex items-center gap-1.5 space-x-1 rounded-md px-1.5 py-1 hover:bg-white hover:outline hover:outline-slate-300",
       isActive && "bg-slate-100 outline outline-slate-300",
       isHighlighted && "bg-red-800 text-white outline hover:outline-red-800",
       className
@@ -84,10 +87,10 @@ BreadcrumbEllipsis.displayName = "BreadcrumbElipssis";
 
 export {
   Breadcrumb,
-  BreadcrumbList,
+  BreadcrumbEllipsis,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  BreadcrumbEllipsis,
 };
