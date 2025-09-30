@@ -7,7 +7,13 @@ import { QuestionOptionChoice } from "./question-option-choice";
 
 vi.mock("@/modules/survey/components/question-form-input", () => ({
   QuestionFormInput: (props: any) => (
-    <div data-testid="question-form-input" className={props.className}></div>
+    <input
+      data-testid="question-form-input"
+      className={props.className}
+      onKeyDown={props.onKeyDown}
+      value={props.value?.default || props.value?.en || props.value?.de || ""}
+      onChange={() => {}}
+    />
   ),
 }));
 
@@ -68,6 +74,87 @@ describe("QuestionOptionChoice", () => {
     expect(screen.getByTestId("question-form-input")).toBeDefined();
     const addButton = screen.getByTestId("button");
     expect(addButton).toBeDefined();
+  });
+
+  test("pressing Enter focuses existing empty option instead of adding", async () => {
+    const addChoice = vi.fn();
+    const onRequestFocus = vi.fn();
+    const choice = { id: "choice1", label: { default: "Choice 1" } };
+    const question = {
+      id: "question1",
+      headline: { default: "Question 1" },
+      type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+      choices: [
+        choice,
+        { id: "choice2", label: { default: "" } },
+        { id: "other", label: { default: "Other" } },
+      ],
+    } as any;
+
+    render(
+      <QuestionOptionChoice
+        choice={choice}
+        choiceIdx={0}
+        questionIdx={0}
+        updateChoice={vi.fn()}
+        deleteChoice={vi.fn()}
+        addChoice={addChoice}
+        isInvalid={false}
+        localSurvey={{ languages: [{ language: { code: "default" }, default: true }] } as any}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        surveyLanguages={[{ language: { code: "default" } as any, enabled: true, default: true } as any]}
+        question={question}
+        updateQuestion={vi.fn()}
+        surveyLanguageCodes={["default"]}
+        locale="en-US"
+        isStorageConfigured={true}
+        onRequestFocus={onRequestFocus}
+      />
+    );
+
+    const input = screen.getByTestId("question-form-input");
+    await userEvent.type(input, "{enter}");
+
+    expect(onRequestFocus).toHaveBeenCalledWith("choice2");
+    expect(addChoice).not.toHaveBeenCalled();
+  });
+
+  test("pressing Enter adds a new option when none are empty", async () => {
+    const addChoice = vi.fn();
+    const choice = { id: "choice1", label: { default: "Choice 1" } };
+    const question = {
+      id: "question1",
+      headline: { default: "Question 1" },
+      type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+      choices: [choice, { id: "choice2", label: { default: "Filled" } }],
+    } as any;
+
+    render(
+      <QuestionOptionChoice
+        choice={choice}
+        choiceIdx={0}
+        questionIdx={0}
+        updateChoice={vi.fn()}
+        deleteChoice={vi.fn()}
+        addChoice={addChoice}
+        isInvalid={false}
+        localSurvey={{ languages: [{ language: { code: "default" }, default: true }] } as any}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        surveyLanguages={[{ language: { code: "default" } as any, enabled: true, default: true } as any]}
+        question={question}
+        updateQuestion={vi.fn()}
+        surveyLanguageCodes={["default"]}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
+
+    const input = screen.getByTestId("question-form-input");
+    await userEvent.type(input, "{enter}");
+
+    expect(addChoice).toHaveBeenCalledWith(0);
   });
 
   test("should call deleteChoice when the 'Delete choice' button is clicked for a standard choice", async () => {
