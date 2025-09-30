@@ -111,7 +111,7 @@ export const sendVerificationEmail = async ({
 }): Promise<boolean> => {
   try {
     const t = await getTranslate();
-    const token = createToken(id, email, {
+    const token = createToken(id, {
       expiresIn: "1d",
     });
     const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
@@ -136,7 +136,7 @@ export const sendForgotPasswordEmail = async (user: {
   locale: TUserLocale;
 }): Promise<boolean> => {
   const t = await getTranslate();
-  const token = createToken(user.id, user.email, {
+  const token = createToken(user.id, {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
