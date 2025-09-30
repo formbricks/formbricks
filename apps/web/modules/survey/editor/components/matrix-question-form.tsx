@@ -265,7 +265,6 @@ export const MatrixQuestionForm = ({
                       isStorageConfigured={isStorageConfigured}
                       shouldFocus={row.id === focusRowId}
                       onFocused={() => setFocusRowId(null)}
-                      onRequestFocus={(id) => setFocusRowId(id)}
                     />
                   ))}
                 </div>
@@ -314,7 +313,6 @@ export const MatrixQuestionForm = ({
                       isStorageConfigured={isStorageConfigured}
                       shouldFocus={column.id === focusColumnId}
                       onFocused={() => setFocusColumnId(null)}
-                      onRequestFocus={(id) => setFocusColumnId(id)}
                     />
                   ))}
                 </div>
