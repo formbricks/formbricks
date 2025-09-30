@@ -31,7 +31,6 @@ Use cloud storage services for production deployments:
 
 - **AWS S3** (Amazon Web Services)
 - **DigitalOcean Spaces**
-- **Backblaze B2**
 - **Wasabi**
 - **StorJ**
 - Any S3-compatible storage service
@@ -121,6 +120,13 @@ S3_ENDPOINT_URL=https://your-endpoint.com
 S3_FORCE_PATH_STYLE=1
 ```
 
+<Note>
+  <strong>AWS S3 vs. third‑party S3:</strong> When using AWS S3 directly, leave `S3_ENDPOINT_URL` unset and
+  set `S3_FORCE_PATH_STYLE=0` (or omit). For most third‑party S3‑compatible providers (e.g., MinIO,
+  DigitalOcean Spaces, Wasabi, Storj), you typically must set `S3_ENDPOINT_URL` to the provider's endpoint and
+  set `S3_FORCE_PATH_STYLE=1`.
+</Note>
+
 ## Provider-Specific Examples
 
 ### AWS S3
@@ -156,16 +162,13 @@ S3_ENDPOINT_URL=https://files.yourdomain.com
 S3_FORCE_PATH_STYLE=1
 ```
 
-### Backblaze B2
+### Compatibility requirement: S3 POST Object support
 
-```bash
-S3_ACCESS_KEY=your_b2_key_id
-S3_SECRET_KEY=your_b2_application_key
-S3_REGION=us-west-000
-S3_BUCKET_NAME=my-formbricks-bucket
-S3_ENDPOINT_URL=https://s3.us-west-000.backblazeb2.com
-S3_FORCE_PATH_STYLE=1
-```
+Formbricks uses the S3 [POST Object](https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html)
+operation (presigned POST) for uploads. Your object storage provider must support this operation. Providers
+that do not implement POST Object are not compatible with Formbricks uploads. For example, Backblaze B2's
+S3‑compatible API currently does not support POST Object and therefore will not work with Formbricks file
+uploads.
 
 ## Bundled MinIO Setup
 
