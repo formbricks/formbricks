@@ -1,15 +1,5 @@
 "use client";
 
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
-import { recallToHeadline } from "@/lib/utils/recall";
-import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
-import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
-import { Button } from "@/modules/ui/components/button";
-import { FileInput } from "@/modules/ui/components/file-input";
-import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { debounce } from "lodash";
@@ -24,6 +14,16 @@ import {
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
+import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
+import { Button } from "@/modules/ui/components/button";
+import { FileInput } from "@/modules/ui/components/file-input";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import {
   determineImageUploaderVisibility,
   getChoiceLabel,
@@ -50,7 +50,7 @@ interface QuestionFormInputProps {
   label: string;
   maxLength?: number;
   placeholder?: string;
-  ref?: RefObject<HTMLInputElement | null>;
+  externalInputRef?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   locale: TUserLocale;
@@ -78,6 +78,7 @@ export const QuestionFormInput = ({
   locale,
   onKeyDown,
   isStorageConfigured = true,
+  externalInputRef,
 }: QuestionFormInputProps) => {
   const { t } = useTranslate();
   const defaultLanguageCode =
@@ -385,7 +386,7 @@ export const QuestionFormInput = ({
                           placeholder={placeholder ?? getPlaceHolderById(id, t)}
                           aria-label={label}
                           maxLength={maxLength}
-                          ref={inputRef}
+                          ref={externalInputRef ?? inputRef}
                           onBlur={onBlur}
                           className={`absolute top-0 text-black caret-black ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""

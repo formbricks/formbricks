@@ -1,12 +1,5 @@
 "use client";
 
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
-import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -23,6 +16,13 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
+import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 
 interface MultipleChoiceQuestionFormProps {
   localSurvey: TSurvey;
@@ -52,6 +52,7 @@ export const MultipleChoiceQuestionForm = ({
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
+  const [focusChoiceId, setFocusChoiceId] = useState<string | null>(null);
 
   const questionRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -108,6 +109,7 @@ export const MultipleChoiceQuestionForm = ({
       newChoices.push(otherChoice);
     }
     updateQuestion(questionIdx, { choices: newChoices });
+    setFocusChoiceId(newChoice.id);
   };
 
   const addOther = () => {
@@ -268,6 +270,8 @@ export const MultipleChoiceQuestionForm = ({
                       surveyLanguageCodes={surveyLanguageCodes}
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
+                      shouldFocus={choice.id === focusChoiceId}
+                      onFocused={() => setFocusChoiceId(null)}
                     />
                   ))}
               </div>

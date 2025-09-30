@@ -1,14 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { createI18nString } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
 import {
   TI18nString,
   TSurvey,
@@ -18,6 +14,11 @@ import {
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
+import { createI18nString } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
@@ -40,6 +41,8 @@ interface ChoiceProps {
   surveyLanguageCodes: string[];
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  shouldFocus?: boolean;
+  onFocused?: () => void;
 }
 
 export const QuestionOptionChoice = ({
@@ -59,6 +62,8 @@ export const QuestionOptionChoice = ({
   updateQuestion,
   locale,
   isStorageConfigured,
+  shouldFocus,
+  onFocused,
 }: ChoiceProps) => {
   const { t } = useTranslate();
   const isDragDisabled = choice.id === "other";
@@ -66,6 +71,16 @@ export const QuestionOptionChoice = ({
     id: choice.id,
     disabled: isDragDisabled,
   });
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (shouldFocus && inputRef.current) {
+      inputRef.current.focus();
+      onFocused && onFocused();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldFocus]);
 
   const style = {
     transition: transition ?? "transform 100ms ease",
@@ -101,6 +116,13 @@ export const QuestionOptionChoice = ({
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
+          externalInputRef={inputRef}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && choice.id !== "other") {
+              e.preventDefault();
+              addChoice(choiceIdx);
+            }
+          }}
         />
         {choice.id === "other" && (
           <QuestionFormInput
@@ -110,9 +132,8 @@ export const QuestionOptionChoice = ({
             label={""}
             questionIdx={questionIdx}
             value={
-              question.otherOptionPlaceholder
-                ? question.otherOptionPlaceholder
-                : createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
+              question.otherOptionPlaceholder ??
+              createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
             }
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
