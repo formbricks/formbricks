@@ -15,7 +15,7 @@ The `@formbricks/surveys` package provides a complete survey rendering system bu
 
 ### File Structure
 
-```
+```text
 packages/surveys/
 ├── locales/                 # Translation files
 │   ├── en.json             # Source translations (English)
