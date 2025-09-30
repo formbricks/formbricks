@@ -1,0 +1,192 @@
+name: Resolve Docker Version
+description: |
+  Resolves and validates Docker-compatible SemVer versions for container builds with comprehensive security.
+
+  Security Features:
+  - Command injection protection
+  - Input sanitization and validation
+  - Docker tag character restrictions
+  - Length limits and boundary checks
+  - Safe branch name handling
+
+  Supports multiple modes: release, manual override, branch auto-detection, and experimental timestamped versions.
+
+inputs:
+  version:
+    description: "Explicit version (SemVer only, e.g., 1.2.3-beta). If provided, this version is used directly. If empty, version is auto-generated from branch name."
+    required: false
+  current_branch:
+    description: "Current branch name for auto-detection"
+    required: true
+  experimental_mode:
+    description: "Enable experimental mode with timestamp-based versions"
+    required: false
+    default: "false"
+
+outputs:
+  version:
+    description: "Resolved Docker-compatible SemVer version"
+    value: ${{ steps.resolve.outputs.version }}
+  source:
+    description: "Source of version (release|override|branch)"
+    value: ${{ steps.resolve.outputs.source }}
+  normalized:
+    description: "Whether the version was normalized (true/false)"
+    value: ${{ steps.resolve.outputs.normalized }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve and validate Docker version
+      id: resolve
+      shell: bash
+      env:
+        EXPLICIT_VERSION: ${{ inputs.version }}
+        CURRENT_BRANCH: ${{ inputs.current_branch }}
+        EXPERIMENTAL_MODE: ${{ inputs.experimental_mode }}
+      run: |
+        set -euo pipefail
+
+        # Function to validate SemVer format (Docker-compatible, no '+' build metadata)
+        validate_semver() {
+          local version="$1"
+          local context="$2"
+          
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "ERROR: Invalid $context format. Must be semver without build metadata (e.g., 1.2.3, 1.2.3-alpha)"
+            echo "Provided: $version"
+            echo "Note: Docker tags cannot contain '+' characters. Use prerelease identifiers instead."
+            exit 1
+          fi
+        }
+
+        # Function to generate branch-based version
+        generate_branch_version() {
+          local branch="$1"
+          local use_timestamp="${2:-true}"
+          local timestamp
+          
+          if [[ "$use_timestamp" == "true" ]]; then
+            timestamp=$(date +%s)
+          else
+            timestamp=""
+          fi
+          
+          # Sanitize branch name for Docker compatibility
+          local sanitized_branch=$(echo "$branch" | sed 's/[^a-zA-Z0-9.-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
+          
+          # Additional safety: truncate if too long (reserve space for prefix and timestamp)
+          if (( ${#sanitized_branch} > 80 )); then
+            sanitized_branch="${sanitized_branch:0:80}"
+            echo "INFO: Branch name truncated for Docker compatibility" >&2
+          fi
+          local version
+          
+          # Generate version based on branch name (unified approach)
+          # All branches get alpha versions with sanitized branch name
+          if [[ -n "$timestamp" ]]; then
+            version="0.0.0-alpha-$sanitized_branch-$timestamp"
+            echo "INFO: Branch '$branch' detected - alpha version: $version" >&2
+          else
+            version="0.0.0-alpha-$sanitized_branch"
+            echo "INFO: Branch '$branch' detected - alpha version: $version" >&2
+          fi
+          
+          echo "$version"
+        }
+
+
+        # Input validation and sanitization
+        if [[ -z "$CURRENT_BRANCH" ]]; then
+          echo "ERROR: current_branch input is required"
+          exit 1
+        fi
+
+        # Security: Validate inputs to prevent command injection
+        # Use grep to check for dangerous characters (more reliable than bash regex)
+        validate_input() {
+          local input="$1"
+          local name="$2"
+          
+          # Check for dangerous characters using grep
+          if echo "$input" | grep -q '[;|&`$(){}\\[:space:]]'; then
+            echo "ERROR: $name contains potentially dangerous characters: $input"
+            echo "Input should only contain letters, numbers, hyphens, underscores, dots, and forward slashes"
+            return 1
+          fi
+          
+          return 0
+        }
+
+        # Validate current branch
+        if ! validate_input "$CURRENT_BRANCH" "Branch name"; then
+          exit 1
+        fi
+
+        # Validate explicit version if provided
+        if [[ -n "$EXPLICIT_VERSION" ]] && ! validate_input "$EXPLICIT_VERSION" "Explicit version"; then
+          exit 1
+        fi
+
+        # Main resolution logic (ultra-simplified)
+        NORMALIZED="false"
+
+        if [[ -n "$EXPLICIT_VERSION" ]]; then
+          # Use provided explicit version (from either workflow_call or manual input)
+          validate_semver "$EXPLICIT_VERSION" "explicit version"
+          
+          # Normalize to lowercase for Docker/ECR compatibility
+          RESOLVED_VERSION="${EXPLICIT_VERSION,,}"
+          if [[ "$EXPLICIT_VERSION" != "$RESOLVED_VERSION" ]]; then
+            NORMALIZED="true"
+            echo "INFO: Original version contained uppercase characters, normalized: $EXPLICIT_VERSION -> $RESOLVED_VERSION"
+          fi
+          
+          SOURCE="explicit"
+          echo "INFO: Using explicit version: $RESOLVED_VERSION"
+          
+        else
+          # Auto-generate version from branch name
+          if [[ "$EXPERIMENTAL_MODE" == "true" ]]; then
+            # Use timestamped version generation
+            echo "INFO: Experimental mode: generating timestamped version from branch: $CURRENT_BRANCH"
+            RESOLVED_VERSION=$(generate_branch_version "$CURRENT_BRANCH" "true")
+            SOURCE="experimental"
+          else
+            # Standard branch version (no timestamp)
+            echo "INFO: Auto-detecting version from branch: $CURRENT_BRANCH"
+            RESOLVED_VERSION=$(generate_branch_version "$CURRENT_BRANCH" "false")
+            SOURCE="branch"
+          fi
+          echo "Generated version: $RESOLVED_VERSION"
+        fi
+
+        # Final validation - ensure result is valid Docker tag
+        if [[ -z "$RESOLVED_VERSION" ]]; then
+          echo "ERROR: Failed to resolve version"
+          exit 1
+        fi
+
+        if (( ${#RESOLVED_VERSION} > 128 )); then
+          echo "ERROR: Version must be at most 128 characters (Docker limitation)"
+          echo "Generated version: $RESOLVED_VERSION (${#RESOLVED_VERSION} chars)"
+          exit 1
+        fi
+
+        if [[ ! "$RESOLVED_VERSION" =~ ^[a-z0-9._-]+$ ]]; then
+          echo "ERROR: Version contains invalid characters for Docker tags"
+          echo "Version: $RESOLVED_VERSION"
+          exit 1
+        fi
+
+        if [[ "$RESOLVED_VERSION" =~ ^[.-] || "$RESOLVED_VERSION" =~ [.-]$ ]]; then
+          echo "ERROR: Version must not start or end with '.' or '-'"
+          echo "Version: $RESOLVED_VERSION"
+          exit 1
+        fi
+
+        # Output results
+        echo "SUCCESS: Resolved Docker version: $RESOLVED_VERSION (source: $SOURCE)"
+        echo "version=$RESOLVED_VERSION" >> $GITHUB_OUTPUT
+        echo "source=$SOURCE" >> $GITHUB_OUTPUT
+        echo "normalized=$NORMALIZED" >> $GITHUB_OUTPUT
