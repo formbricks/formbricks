@@ -1,9 +1,3 @@
-import { cache } from "@/lib/cache";
-import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
-import {
-  capturePosthogEnvironmentEvent,
-  sendPlanLimitsReachedEventToPosthogWeekly,
-} from "@/lib/posthogServer";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -12,6 +6,12 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsEnvironmentState, TJsEnvironmentStateProject } from "@formbricks/types/js";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { cache } from "@/lib/cache";
+import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
+import {
+  capturePosthogEnvironmentEvent,
+  sendPlanLimitsReachedEventToPosthogWeekly,
+} from "@/lib/posthogServer";
 import { EnvironmentStateData, getEnvironmentStateData } from "./data";
 import { getEnvironmentState } from "./environmentState";
 
@@ -285,7 +285,7 @@ describe("getEnvironmentState", () => {
     expect(cache.withCache).toHaveBeenCalledWith(
       expect.any(Function),
       "fb:env:test-environment-id:state",
-      5 * 60 * 1000 // 5 minutes in milliseconds
+      60 * 1000 // 1 minutes in milliseconds
     );
   });
 
