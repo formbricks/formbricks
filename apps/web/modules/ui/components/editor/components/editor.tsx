@@ -1,6 +1,3 @@
-import { cn } from "@/lib/cn";
-import "@/modules/ui/components/editor/styles-editor-frontend.css";
-import "@/modules/ui/components/editor/styles-editor.css";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
@@ -14,12 +11,21 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { type Dispatch, type SetStateAction, useRef } from "react";
+import { useTranslate } from "@tolgee/react";
+import { PencilIcon } from "lucide-react";
+import { type Dispatch, type SetStateAction, useRef, useState } from "react";
+import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { Button } from "@/modules/ui/components/button";
+import "@/modules/ui/components/editor/styles-editor-frontend.css";
+import "@/modules/ui/components/editor/styles-editor.css";
 import { exampleTheme } from "../lib/example-theme";
 import "../styles-editor-frontend.css";
 import "../styles-editor.css";
 import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "./auto-link-plugin";
 import { EditorContentChecker } from "./editor-content-checker";
+import { RecallNode } from "./recall-node";
+import { RecallPlugin } from "./recall-plugin";
 import { ToolbarPlugin } from "./toolbar-plugin";
 
 /*
@@ -44,6 +50,9 @@ export type TextEditorProps = {
   editable?: boolean;
   onEmptyChange?: (isEmpty: boolean) => void;
   isInvalid?: boolean;
+  localSurvey: TSurvey;
+  questionId: string;
+  selectedLanguageCode: string;
 };
 
 const editorConfig = {
@@ -64,56 +73,92 @@ const editorConfig = {
     TableRowNode,
     AutoLinkNode,
     LinkNode,
+    RecallNode,
   ],
 };
 
 export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
   const editorContainerRef = useRef<HTMLDivElement>(null);
-
+  const [showFallbackInput, setShowFallbackInput] = useState(false);
+  const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>([]);
+  const { t } = useTranslate();
   return (
-    <div className="editor cursor-text rounded-md">
-      <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
-        <div
-          ref={editorContainerRef}
-          className={cn("editor-container rounded-md p-0", props.isInvalid && "!border !border-red-500")}>
-          <ToolbarPlugin
-            getText={props.getText}
-            setText={props.setText}
-            editable={editable}
-            excludedToolbarItems={props.excludedToolbarItems}
-            variables={props.variables}
-            updateTemplate={props.updateTemplate}
-            firstRender={props.firstRender}
-            setFirstRender={props.setFirstRender}
-            container={editorContainerRef.current}
-          />
-          {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
+    <>
+      <div className="editor cursor-text rounded-md">
+        <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
           <div
-            className={cn("editor-inner scroll-bar", !editable && "bg-muted")}
-            style={{ height: props.height }}>
-            <RichTextPlugin
-              contentEditable={<ContentEditable style={{ height: props.height }} className="editor-input" />}
-              placeholder={
-                <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">{props.placeholder ?? ""}</div>
-              }
-              ErrorBoundary={LexicalErrorBoundary}
+            ref={editorContainerRef}
+            className={cn("editor-container rounded-md p-0", props.isInvalid && "!border !border-red-500")}>
+            <ToolbarPlugin
+              getText={props.getText}
+              setText={props.setText}
+              editable={editable}
+              excludedToolbarItems={props.excludedToolbarItems}
+              variables={props.variables}
+              updateTemplate={props.updateTemplate}
+              firstRender={props.firstRender}
+              setFirstRender={props.setFirstRender}
+              container={editorContainerRef.current}
+              localSurvey={props.localSurvey}
+              questionId={props.questionId}
+              selectedLanguageCode={props.selectedLanguageCode}
             />
-            <ListPlugin />
-            <LinkPlugin />
-            <AutoLinkPlugin />
-            <MarkdownShortcutPlugin
-              transformers={
-                props.disableLists
-                  ? TRANSFORMERS.filter((value, index) => {
-                      if (index !== 3 && index !== 4) return value;
-                    })
-                  : TRANSFORMERS
-              }
-            />
+            {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
+            <div
+              className={cn("editor-inner scroll-bar", !editable && "bg-muted")}
+              style={{ height: props.height }}>
+              <RichTextPlugin
+                contentEditable={
+                  <ContentEditable style={{ height: props.height }} className="editor-input" />
+                }
+                placeholder={
+                  <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">
+                    {props.placeholder ?? ""}
+                  </div>
+                }
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              <ListPlugin />
+              <LinkPlugin />
+              <AutoLinkPlugin />
+              <RecallPlugin
+                localSurvey={props.localSurvey}
+                questionId={props.questionId}
+                selectedLanguageCode={props.selectedLanguageCode}
+                container={editorContainerRef.current || undefined}
+                recallItems={recallItems}
+                setRecallItems={setRecallItems}
+                showFallbackInput={showFallbackInput}
+                setShowFallbackInput={setShowFallbackInput}
+              />
+              <MarkdownShortcutPlugin
+                transformers={
+                  props.disableLists
+                    ? TRANSFORMERS.filter((value, index) => {
+                        if (index !== 3 && index !== 4) return value;
+                      })
+                    : TRANSFORMERS
+                }
+              />
+            </div>
           </div>
-        </div>
-      </LexicalComposer>
-    </div>
+        </LexicalComposer>
+      </div>
+      {recallItems.length > 0 && (
+        <Button
+          variant="ghost"
+          type="button"
+          size="sm"
+          className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
+          onClick={(e) => {
+            e.preventDefault();
+            setShowFallbackInput(!showFallbackInput);
+          }}>
+          {t("environments.surveys.edit.edit_recall")}
+          <PencilIcon className="ml-1 h-3 w-3" />
+        </Button>
+      )}
+    </>
   );
 };

@@ -1,10 +1,20 @@
+import { mockSurvey } from "@/lib/response/tests/__mocks__/data.mock";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { Editor } from "./editor";
 
 // Mock sub-components used in Editor
 vi.mock("@lexical/react/LexicalComposerContext", () => ({
-  useLexicalComposerContext: vi.fn(() => [{ registerUpdateListener: vi.fn() }]),
+  useLexicalComposerContext: vi.fn(() => [
+    {
+      registerUpdateListener: vi.fn(),
+      registerCommand: vi.fn(),
+      getEditorState: vi.fn(() => ({
+        read: vi.fn((callback) => callback()),
+      })),
+      update: vi.fn((callback) => callback()),
+    },
+  ]),
 }));
 
 vi.mock("@lexical/react/LexicalRichTextPlugin", () => ({
@@ -50,9 +60,11 @@ vi.mock("./auto-link-plugin", () => ({
 }));
 
 vi.mock("./editor-content-checker", () => ({
-  EditorContentChecker: ({ onEmptyChange }: { onEmptyChange: (isEmpty: boolean) => void }) => (
-    <div data-testid="editor-content-checker" />
-  ),
+  EditorContentChecker: () => <div data-testid="editor-content-checker" />,
+}));
+
+vi.mock("./recall-plugin", () => ({
+  RecallPlugin: () => <div data-testid="recall-plugin" />,
 }));
 
 // Fix the mock to correctly set the className for isInvalid
@@ -80,7 +92,15 @@ describe("Editor", () => {
   });
 
   test("renders the editor with default props", () => {
-    render(<Editor getText={() => "Sample text"} setText={() => {}} />);
+    render(
+      <Editor
+        getText={() => "Sample text"}
+        setText={() => {}}
+        localSurvey={mockSurvey}
+        questionId="1"
+        selectedLanguageCode="en"
+      />
+    );
 
     // Check if the main components are rendered
     expect(screen.getByTestId("lexical-composer")).toBeInTheDocument();
@@ -90,13 +110,23 @@ describe("Editor", () => {
     expect(screen.getByTestId("link-plugin")).toBeInTheDocument();
     expect(screen.getByTestId("auto-link-plugin")).toBeInTheDocument();
     expect(screen.getByTestId("markdown-plugin")).toBeInTheDocument();
+    expect(screen.getByTestId("recall-plugin")).toBeInTheDocument();
 
     // Editor should be editable by default
     expect(screen.getByTestId("lexical-composer")).toHaveAttribute("data-editable", "true");
   });
 
   test("renders the editor with custom height", () => {
-    render(<Editor getText={() => "Sample text"} setText={() => {}} height="200px" />);
+    render(
+      <Editor
+        getText={() => "Sample text"}
+        setText={() => {}}
+        height="200px"
+        localSurvey={mockSurvey}
+        questionId="1"
+        selectedLanguageCode="en"
+      />
+    );
 
     // Content editable should have the style height set
     expect(screen.getByTestId("content-editable")).toHaveStyle({ height: "200px" });
@@ -104,7 +134,16 @@ describe("Editor", () => {
 
   test("passes variables to toolbar plugin", () => {
     const variables = ["name", "email"];
-    render(<Editor getText={() => "Sample text"} setText={() => {}} variables={variables} />);
+    render(
+      <Editor
+        getText={() => "Sample text"}
+        setText={() => {}}
+        variables={variables}
+        localSurvey={mockSurvey}
+        questionId="1"
+        selectedLanguageCode="en"
+      />
+    );
 
     const toolbarPlugin = screen.getByTestId("toolbar-plugin");
     const props = JSON.parse(toolbarPlugin.getAttribute("data-props") || "{}");
@@ -112,20 +151,47 @@ describe("Editor", () => {
   });
 
   test("renders not editable when editable is false", () => {
-    render(<Editor getText={() => "Sample text"} setText={() => {}} editable={false} />);
+    render(
+      <Editor
+        getText={() => "Sample text"}
+        setText={() => {}}
+        editable={false}
+        localSurvey={mockSurvey}
+        questionId="1"
+        selectedLanguageCode="en"
+      />
+    );
 
     expect(screen.getByTestId("lexical-composer")).toHaveAttribute("data-editable", "false");
   });
 
   test("includes editor content checker when onEmptyChange is provided", () => {
     const onEmptyChange = vi.fn();
-    render(<Editor getText={() => "Sample text"} setText={() => {}} onEmptyChange={onEmptyChange} />);
+    render(
+      <Editor
+        getText={() => "Sample text"}
+        setText={() => {}}
+        onEmptyChange={onEmptyChange}
+        localSurvey={mockSurvey}
+        questionId="1"
+        selectedLanguageCode="en"
+      />
+    );
 
     expect(screen.getByTestId("editor-content-checker")).toBeInTheDocument();
   });
 
   test("disables list properly when disableLists is true", () => {
-    render(<Editor getText={() => "Sample text"} setText={() => {}} disableLists={true} />);
+    render(
+      <Editor
+        getText={() => "Sample text"}
+        setText={() => {}}
+        disableLists={true}
+        localSurvey={mockSurvey}
+        questionId="1"
+        selectedLanguageCode="en"
+      />
+    );
 
     const markdownPlugin = screen.getByTestId("markdown-plugin");
     // Should have filtered out two list transformers
