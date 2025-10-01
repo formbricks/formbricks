@@ -170,7 +170,6 @@ export const PricingCard = ({
 
           {plan.id !== projectFeatureKeys.FREE && isCurrentPlan && (
             <Button
-              variant="secondary"
               loading={loading}
               onClick={async () => {
                 setLoading(true);
