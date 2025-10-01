@@ -50,9 +50,9 @@ export type TextEditorProps = {
   editable?: boolean;
   onEmptyChange?: (isEmpty: boolean) => void;
   isInvalid?: boolean;
-  localSurvey: TSurvey;
-  questionId: string;
-  selectedLanguageCode: string;
+  localSurvey?: TSurvey;
+  questionId?: string;
+  selectedLanguageCode?: string;
 };
 
 const editorConfig = {
@@ -122,16 +122,18 @@ export const Editor = (props: TextEditorProps) => {
               <ListPlugin />
               <LinkPlugin />
               <AutoLinkPlugin />
-              <RecallPlugin
-                localSurvey={props.localSurvey}
-                questionId={props.questionId}
-                selectedLanguageCode={props.selectedLanguageCode}
-                container={editorContainerRef.current || undefined}
-                recallItems={recallItems}
-                setRecallItems={setRecallItems}
-                showFallbackInput={showFallbackInput}
-                setShowFallbackInput={setShowFallbackInput}
-              />
+              {props.localSurvey && props.questionId && props.selectedLanguageCode && (
+                <RecallPlugin
+                  localSurvey={props.localSurvey}
+                  questionId={props.questionId}
+                  selectedLanguageCode={props.selectedLanguageCode}
+                  container={editorContainerRef.current || undefined}
+                  recallItems={recallItems}
+                  setRecallItems={setRecallItems}
+                  showFallbackInput={showFallbackInput}
+                  setShowFallbackInput={setShowFallbackInput}
+                />
+              )}
               <MarkdownShortcutPlugin
                 transformers={
                   props.disableLists
