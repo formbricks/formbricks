@@ -1,7 +1,7 @@
-import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   createAuditIdentifier,
   hashPassword,
@@ -40,6 +40,7 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "test-sentry-dsn",
   IS_PRODUCTION: true,
   REDIS_URL: "redis://localhost:6379",
+  ENCRYPTION_KEY: "0".repeat(32),
 }));
 
 // Mock cache module
