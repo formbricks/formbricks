@@ -1,54 +1,88 @@
-import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
-import { responses } from "@/app/lib/api/response";
-import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
-import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
+import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
+import { responses } from "@/app/lib/api/response";
+import { hashSha256, verifySecret } from "@/lib/crypto";
+import { parseApiKeyV2 } from "@/lib/crypto";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
 const ALLOWED_PERMISSIONS = ["manage", "read", "write"] as const;
+
+const apiKeySelect = {
+  id: true,
+  apiKeyEnvironments: {
+    select: {
+      environment: {
+        select: {
+          id: true,
+          type: true,
+          createdAt: true,
+          updatedAt: true,
+          projectId: true,
+          appSetupCompleted: true,
+          project: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      permission: true,
+    },
+  },
+  hashedKey: true,
+};
 
 export const GET = async () => {
   const headersList = await headers();
   const apiKey = headersList.get("x-api-key");
   if (apiKey) {
-    const hashedApiKey = hashApiKey(apiKey);
+    // Try v2 format first (fbk_{id}_{secret})
+    const v2Parsed = parseApiKeyV2(apiKey);
 
-    const apiKeyData = await prisma.apiKey.findUnique({
-      where: {
-        hashedKey: hashedApiKey,
-      },
-      select: {
-        apiKeyEnvironments: {
-          select: {
-            environment: {
-              select: {
-                id: true,
-                type: true,
-                createdAt: true,
-                updatedAt: true,
-                projectId: true,
-                appSetupCompleted: true,
-                project: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-            permission: true,
-          },
-        },
-      },
-    });
+    let apiKeyData;
+
+    if (v2Parsed) {
+      // New v2 format: lookup by id and verify with bcrypt
+      apiKeyData = await prisma.apiKey.findUnique({
+        where: { id: v2Parsed.id },
+        select: apiKeySelect,
+      });
+
+      if (apiKeyData) {
+        // Verify the secret against the bcrypt hash
+        const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
+        if (!isValid) {
+          apiKeyData = null;
+        }
+      }
+    } else {
+      // Legacy format: compute SHA-256 and lookup by hashedKey
+      const hashedKey = hashSha256(apiKey);
+      apiKeyData = await prisma.apiKey.findUnique({
+        where: { hashedKey },
+        select: apiKeySelect,
+      });
+    }
 
     if (!apiKeyData) {
       return responses.notAuthenticatedResponse();
     }
 
+    // Update the last used timestamp
+    await prisma.apiKey.update({
+      where: {
+        id: apiKeyData.id,
+      },
+      data: {
+        lastUsedAt: new Date(),
+      },
+    });
+
     try {
-      await applyRateLimit(rateLimitConfigs.api.v1, hashedApiKey);
+      await applyRateLimit(rateLimitConfigs.api.v1, apiKeyData.id);
     } catch (error) {
       return responses.tooManyRequestsResponse(error.message);
     }

@@ -104,8 +104,7 @@ function createMockRequest({ method = "GET", url = "https://api.test/endpoint", 
 }
 
 const mockApiAuthentication = {
-  hashedApiKey: "test-api-key",
-  apiKeyId: "api-key-1",
+  apiKeyId: "test-api-key",
   organizationId: "org-1",
 } as TAuthenticationApiKey;
 

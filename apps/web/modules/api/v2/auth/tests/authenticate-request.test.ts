@@ -1,6 +1,6 @@
-import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
 import { authenticateRequest } from "../authenticate-request";
 
 vi.mock("@formbricks/database", () => ({
@@ -80,7 +80,7 @@ describe("authenticateRequest", () => {
             projectName: "Project 2",
           },
         ],
-        hashedApiKey: "hashed-api-key",
+        apiKeyId: "hashed-api-key",
         apiKeyId: "api-key-id",
         organizationId: "org-id",
       });
