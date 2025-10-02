@@ -1,3 +1,6 @@
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -7,9 +10,6 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceQuestion;
@@ -164,9 +164,17 @@ export function MultipleChoiceSingleQuestion({
                         dir={dir}
                         className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                         aria-labelledby={`${choice.id}-label`}
+                        onClick={() => {
+                          const choiceValue = getLocalizedValue(choice.label, languageCode);
+                          if (!question.required && value === choiceValue) {
+                            onChange({ [question.id]: undefined });
+                          } else {
+                            setOtherSelected(false);
+                            onChange({ [question.id]: choiceValue });
+                          }
+                        }}
                         onChange={() => {
-                          setOtherSelected(false);
-                          onChange({ [question.id]: getLocalizedValue(choice.label, languageCode) });
+                          // Handled by onClick for deselect functionality
                         }}
                         checked={value === getLocalizedValue(choice.label, languageCode)}
                         required={question.required ? idx === 0 : undefined}
@@ -209,10 +217,10 @@ export function MultipleChoiceSingleQuestion({
                       className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${otherOption.id}-label`}
                       onClick={() => {
-                        if (otherSelected) {
+                        if (otherSelected && !question.required) {
                           onChange({ [question.id]: undefined });
-                        } else {
-                          setOtherSelected(!otherSelected);
+                        } else if (!otherSelected) {
+                          setOtherSelected(true);
                           onChange({ [question.id]: "" });
                         }
                       }}
