@@ -148,7 +148,8 @@ export const parseApiKeyV2 = (key: string): { id: string; secret: string } | nul
   const secret = key.slice(lastUnderscoreIndex + 1);
 
   // Validate that id and secret contain only allowed characters and are not empty
-  if (!id || !secret || !/^[a-zA-Z0-9_-]+$/.test(id) || !/^[a-zA-Z0-9_-]+$/.test(secret)) {
+  // Note: IDs (CUIDs) don't contain underscores, only alphanumeric and hyphens
+  if (!id || !secret || !/^[a-zA-Z0-9-]+$/.test(id) || !/^[a-zA-Z0-9_-]+$/.test(secret)) {
     return null;
   }
 

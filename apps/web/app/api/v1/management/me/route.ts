@@ -2,8 +2,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
-import { hashSha256, verifySecret } from "@/lib/crypto";
-import { parseApiKeyV2 } from "@/lib/crypto";
+import { hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 

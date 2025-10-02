@@ -26,6 +26,10 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   await page.getByTestId("organization-access-accessControl-read").click();
   await page.getByTestId("organization-access-accessControl-write").click();
   await page.getByRole("button", { name: "Add API Key" }).click();
+
+  // Wait for the modal to close and the API key to be visible in the list
+  await page.waitForSelector(".copyApiKeyIcon", { state: "visible", timeout: 5000 });
+
   await page.locator(".copyApiKeyIcon").click();
 
   const apiKey = await page.evaluate("navigator.clipboard.readText()");

@@ -1,13 +1,12 @@
 import "server-only";
 import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { parseApiKeyV2 } from "@/lib/crypto";
-import { hashSecret, hashSha256, verifySecret } from "@/lib/crypto";
+import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TApiKeyCreateInput,
