@@ -219,6 +219,7 @@ export function MultipleChoiceSingleQuestion({
                       onClick={() => {
                         if (otherSelected && !question.required) {
                           onChange({ [question.id]: undefined });
+                          setOtherSelected(false);
                         } else if (!otherSelected) {
                           setOtherSelected(true);
                           onChange({ [question.id]: "" });
