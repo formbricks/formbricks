@@ -28,9 +28,10 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   await page.getByRole("button", { name: "Add API Key" }).click();
 
   // Wait for the modal to close and the API key to be visible in the list
-  await page.waitForSelector(".copyApiKeyIcon", { state: "visible", timeout: 5000 });
+  // Use a longer timeout for cloud environments with high concurrency
+  await page.waitForSelector(".copyApiKeyIcon", { state: "visible", timeout: 15000 });
 
-  await page.locator(".copyApiKeyIcon").click();
+  await page.locator(".copyApiKeyIcon").first().click();
 
   const apiKey = await page.evaluate("navigator.clipboard.readText()");
 

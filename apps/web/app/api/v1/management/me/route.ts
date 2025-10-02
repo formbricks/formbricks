@@ -10,6 +10,7 @@ const ALLOWED_PERMISSIONS = ["manage", "read", "write"] as const;
 
 const apiKeySelect = {
   id: true,
+  organizationId: true,
   apiKeyEnvironments: {
     select: {
       environment: {
@@ -34,94 +35,141 @@ const apiKeySelect = {
   hashedKey: true,
 };
 
+type ApiKeyData = {
+  id: string;
+  hashedKey: string;
+  organizationId: string;
+  apiKeyEnvironments: Array<{
+    permission: string;
+    environment: {
+      id: string;
+      type: string;
+      createdAt: Date;
+      updatedAt: Date;
+      projectId: string;
+      appSetupCompleted: boolean;
+      project: {
+        id: string;
+        name: string;
+      };
+    };
+  }>;
+};
+
+const validateApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
+  const v2Parsed = parseApiKeyV2(apiKey);
+
+  if (v2Parsed) {
+    return validateV2ApiKey(v2Parsed);
+  }
+
+  return validateLegacyApiKey(apiKey);
+};
+
+const validateV2ApiKey = async (v2Parsed: { id: string; secret: string }): Promise<ApiKeyData | null> => {
+  const apiKeyData = await prisma.apiKey.findUnique({
+    where: { id: v2Parsed.id },
+    select: apiKeySelect,
+  });
+
+  if (!apiKeyData) return null;
+
+  const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
+  return isValid ? (apiKeyData as ApiKeyData) : null;
+};
+
+const validateLegacyApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
+  const hashedKey = hashSha256(apiKey);
+  const result = await prisma.apiKey.findUnique({
+    where: { hashedKey },
+    select: apiKeySelect,
+  });
+  return result as ApiKeyData | null;
+};
+
+const checkRateLimit = async (userId: string) => {
+  try {
+    await applyRateLimit(rateLimitConfigs.api.v1, userId);
+  } catch (error) {
+    return responses.tooManyRequestsResponse(error.message);
+  }
+  return null;
+};
+
+const updateApiKeyUsage = async (apiKeyId: string) => {
+  await prisma.apiKey.update({
+    where: { id: apiKeyId },
+    data: { lastUsedAt: new Date() },
+  });
+};
+
+const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
+  const env = apiKeyData.apiKeyEnvironments[0].environment;
+  return Response.json({
+    id: env.id,
+    type: env.type,
+    createdAt: env.createdAt,
+    updatedAt: env.updatedAt,
+    appSetupCompleted: env.appSetupCompleted,
+    project: {
+      id: env.projectId,
+      name: env.project.name,
+    },
+  });
+};
+
+const isValidApiKeyEnvironment = (apiKeyData: ApiKeyData): boolean => {
+  return (
+    apiKeyData.apiKeyEnvironments.length === 1 &&
+    ALLOWED_PERMISSIONS.includes(
+      apiKeyData.apiKeyEnvironments[0].permission as (typeof ALLOWED_PERMISSIONS)[number]
+    )
+  );
+};
+
+const handleApiKeyAuthentication = async (apiKey: string) => {
+  const apiKeyData = await validateApiKey(apiKey);
+
+  if (!apiKeyData) {
+    return responses.notAuthenticatedResponse();
+  }
+
+  await updateApiKeyUsage(apiKeyData.id);
+
+  const rateLimitError = await checkRateLimit(apiKeyData.id);
+  if (rateLimitError) return rateLimitError;
+
+  if (!isValidApiKeyEnvironment(apiKeyData)) {
+    return responses.badRequestResponse("You can't use this method with this API key");
+  }
+
+  return buildEnvironmentResponse(apiKeyData);
+};
+
+const handleSessionAuthentication = async () => {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return responses.notAuthenticatedResponse();
+  }
+
+  const rateLimitError = await checkRateLimit(sessionUser.id);
+  if (rateLimitError) return rateLimitError;
+
+  const user = await prisma.user.findUnique({
+    where: { id: sessionUser.id },
+  });
+
+  return Response.json(user);
+};
+
 export const GET = async () => {
   const headersList = await headers();
   const apiKey = headersList.get("x-api-key");
+
   if (apiKey) {
-    // Try v2 format first (fbk_{id}_{secret})
-    const v2Parsed = parseApiKeyV2(apiKey);
-
-    let apiKeyData;
-
-    if (v2Parsed) {
-      // New v2 format: lookup by id and verify with bcrypt
-      apiKeyData = await prisma.apiKey.findUnique({
-        where: { id: v2Parsed.id },
-        select: apiKeySelect,
-      });
-
-      if (apiKeyData) {
-        // Verify the secret against the bcrypt hash
-        const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
-        if (!isValid) {
-          apiKeyData = null;
-        }
-      }
-    } else {
-      // Legacy format: compute SHA-256 and lookup by hashedKey
-      const hashedKey = hashSha256(apiKey);
-      apiKeyData = await prisma.apiKey.findUnique({
-        where: { hashedKey },
-        select: apiKeySelect,
-      });
-    }
-
-    if (!apiKeyData) {
-      return responses.notAuthenticatedResponse();
-    }
-
-    // Update the last used timestamp
-    await prisma.apiKey.update({
-      where: {
-        id: apiKeyData.id,
-      },
-      data: {
-        lastUsedAt: new Date(),
-      },
-    });
-
-    try {
-      await applyRateLimit(rateLimitConfigs.api.v1, apiKeyData.id);
-    } catch (error) {
-      return responses.tooManyRequestsResponse(error.message);
-    }
-
-    if (
-      apiKeyData.apiKeyEnvironments.length === 1 &&
-      ALLOWED_PERMISSIONS.includes(apiKeyData.apiKeyEnvironments[0].permission)
-    ) {
-      return Response.json({
-        id: apiKeyData.apiKeyEnvironments[0].environment.id,
-        type: apiKeyData.apiKeyEnvironments[0].environment.type,
-        createdAt: apiKeyData.apiKeyEnvironments[0].environment.createdAt,
-        updatedAt: apiKeyData.apiKeyEnvironments[0].environment.updatedAt,
-        appSetupCompleted: apiKeyData.apiKeyEnvironments[0].environment.appSetupCompleted,
-        project: {
-          id: apiKeyData.apiKeyEnvironments[0].environment.projectId,
-          name: apiKeyData.apiKeyEnvironments[0].environment.project.name,
-        },
-      });
-    } else {
-      return responses.badRequestResponse("You can't use this method with this API key");
-    }
-  } else {
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) {
-      return responses.notAuthenticatedResponse();
-    }
-
-    try {
-      await applyRateLimit(rateLimitConfigs.api.v1, sessionUser.id);
-    } catch (error) {
-      return responses.tooManyRequestsResponse(error.message);
-    }
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: sessionUser.id,
-      },
-    });
-
-    return Response.json(user);
+    return handleApiKeyAuthentication(apiKey);
   }
+
+  return handleSessionAuthentication();
 };
