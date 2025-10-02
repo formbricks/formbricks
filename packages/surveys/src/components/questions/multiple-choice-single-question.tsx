@@ -173,9 +173,6 @@ export function MultipleChoiceSingleQuestion({
                             onChange({ [question.id]: choiceValue });
                           }
                         }}
-                        onChange={() => {
-                          // Handled by onClick for deselect functionality
-                        }}
                         checked={value === getLocalizedValue(choice.label, languageCode)}
                         required={question.required ? idx === 0 : undefined}
                       />
