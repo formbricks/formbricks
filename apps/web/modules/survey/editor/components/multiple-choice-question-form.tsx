@@ -1,12 +1,5 @@
 "use client";
 
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
-import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -23,6 +16,13 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
+import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 
 interface MultipleChoiceQuestionFormProps {
   localSurvey: TSurvey;
@@ -88,48 +88,81 @@ export const MultipleChoiceQuestionForm = ({
     });
   };
 
+  const ensureSpecialChoicesOrder = (choices: TSurveyMultipleChoiceQuestion["choices"]) => {
+    const regularChoices = choices.filter((c) => c.id !== "other" && c.id !== "none");
+    const otherChoice = choices.find((c) => c.id === "other");
+    const noneChoice = choices.find((c) => c.id === "none");
+
+    return [...regularChoices, ...(otherChoice ? [otherChoice] : []), ...(noneChoice ? [noneChoice] : [])];
+  };
+
   const addChoice = (choiceIdx?: number) => {
-    setIsNew(false); // This question is no longer new.
-    let newChoices = !question.choices ? [] : question.choices;
-    const otherChoice = newChoices.find((choice) => choice.id === "other");
-    if (otherChoice) {
-      newChoices = newChoices.filter((choice) => choice.id !== "other");
-    }
+    setIsNew(false);
+    const currentChoices = question.choices ?? [];
+
     const newChoice = {
       id: createId(),
       label: createI18nString("", surveyLanguageCodes),
     };
+
+    const regularChoices = currentChoices.filter((c) => c.id !== "other" && c.id !== "none");
+
     if (choiceIdx !== undefined) {
-      newChoices.splice(choiceIdx + 1, 0, newChoice);
+      regularChoices.splice(choiceIdx + 1, 0, newChoice);
     } else {
-      newChoices.push(newChoice);
+      regularChoices.push(newChoice);
     }
-    if (otherChoice) {
-      newChoices.push(otherChoice);
-    }
+
+    const newChoices = ensureSpecialChoicesOrder([
+      ...regularChoices,
+      ...currentChoices.filter((c) => c.id === "other" || c.id === "none"),
+    ]);
+
     updateQuestion(questionIdx, { choices: newChoices });
   };
 
   const addOther = () => {
-    if (question.choices.filter((c) => c.id === "other").length === 0) {
-      const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
-      newChoices.push({
-        id: "other",
-        label: createI18nString("Other", surveyLanguageCodes),
-      });
-      updateQuestion(questionIdx, {
-        choices: newChoices,
-        ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
-          shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
-        }),
-      });
-    }
+    if (question.choices.some((c) => c.id === "other")) return;
+
+    const currentChoices = question.choices ?? [];
+    const newOtherChoice = {
+      id: "other" as const,
+      label: createI18nString("Other", surveyLanguageCodes),
+    };
+
+    const newChoices = ensureSpecialChoicesOrder([...currentChoices, newOtherChoice]);
+
+    updateQuestion(questionIdx, {
+      choices: newChoices,
+      ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
+        shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
+      }),
+    });
+  };
+
+  const addNone = () => {
+    if (question.choices.some((c) => c.id === "none")) return;
+
+    const currentChoices = question.choices ?? [];
+    const newNoneChoice = {
+      id: "none" as const,
+      label: createI18nString("None of the above", surveyLanguageCodes),
+    };
+
+    const newChoices = ensureSpecialChoicesOrder([...currentChoices, newNoneChoice]);
+
+    updateQuestion(questionIdx, {
+      choices: newChoices,
+      ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
+        shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
+      }),
+    });
   };
 
   const deleteChoice = (choiceIdx: number) => {
     const choiceToDelete = question.choices[choiceIdx].id;
 
-    if (choiceToDelete !== "other") {
+    if (choiceToDelete !== "other" && choiceToDelete !== "none") {
       const questionIdx = findOptionUsedInLogic(localSurvey, question.id, choiceToDelete);
       if (questionIdx !== -1) {
         toast.error(
@@ -228,7 +261,12 @@ export const MultipleChoiceQuestionForm = ({
             onDragEnd={(event) => {
               const { active, over } = event;
 
-              if (active.id === "other" || over?.id === "other") {
+              if (
+                active.id === "other" ||
+                over?.id === "other" ||
+                active.id === "none" ||
+                over?.id === "none"
+              ) {
                 return;
               }
 
@@ -274,11 +312,18 @@ export const MultipleChoiceQuestionForm = ({
             </SortableContext>
           </DndContext>
           <div className="mt-2 flex items-center justify-between space-x-2">
-            {question.choices.filter((c) => c.id === "other").length === 0 && (
-              <Button size="sm" variant="secondary" type="button" onClick={() => addOther()}>
-                {t("environments.surveys.edit.add_other")}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {question.choices.filter((c) => c.id === "other").length === 0 && (
+                <Button size="sm" variant="secondary" type="button" onClick={() => addOther()}>
+                  {t("environments.surveys.edit.add_other")}
+                </Button>
+              )}
+              {question.choices.filter((c) => c.id === "none").length === 0 && (
+                <Button size="sm" variant="secondary" type="button" onClick={() => addNone()}>
+                  Add &quot;None of the above&quot;
+                </Button>
+              )}
+            </div>
             <Button
               size="sm"
               variant="secondary"

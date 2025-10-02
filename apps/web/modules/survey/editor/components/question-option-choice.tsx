@@ -1,10 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { createI18nString } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslate } from "@tolgee/react";
@@ -18,6 +13,11 @@ import {
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
+import { createI18nString } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
@@ -61,7 +61,8 @@ export const QuestionOptionChoice = ({
   isStorageConfigured,
 }: ChoiceProps) => {
   const { t } = useTranslate();
-  const isDragDisabled = choice.id === "other";
+  const isSpecialChoice = choice.id === "other" || choice.id === "none";
+  const isDragDisabled = isSpecialChoice;
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
     disabled: isDragDisabled,
@@ -72,10 +73,16 @@ export const QuestionOptionChoice = ({
     transform: CSS.Translate.toString(transform),
   };
 
+  const getPlaceholder = () => {
+    if (choice.id === "other") return t("common.other");
+    if (choice.id === "none") return "None of the above";
+    return t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
+  };
+
   return (
     <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
-      <div className={cn(choice.id === "other" && "invisible")} {...listeners} {...attributes}>
+      <div className={cn(isSpecialChoice && "invisible")} {...listeners} {...attributes}>
         <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
       </div>
 
@@ -83,11 +90,7 @@ export const QuestionOptionChoice = ({
         <QuestionFormInput
           key={choice.id}
           id={`choice-${choiceIdx}`}
-          placeholder={
-            choice.id === "other"
-              ? t("common.other")
-              : t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 })
-          }
+          placeholder={getPlaceholder()}
           label={""}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
@@ -98,7 +101,7 @@ export const QuestionOptionChoice = ({
           isInvalid={
             isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
           }
-          className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
+          className={`${isSpecialChoice ? "border border-dashed" : ""} mt-0`}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
         />
@@ -141,7 +144,7 @@ export const QuestionOptionChoice = ({
             </Button>
           </TooltipRenderer>
         )}
-        {choice.id !== "other" && (
+        {!isSpecialChoice && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_choice_below")}>
             <Button
               variant="secondary"
