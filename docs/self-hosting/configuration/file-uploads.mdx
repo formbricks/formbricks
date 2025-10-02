@@ -284,6 +284,9 @@ When using bundled MinIO:
 2. Verify bucket exists and is accessible
 3. Ensure bucket permissions allow uploads from your server
 4. Check network connectivity to S3 endpoint
+5. We use S3 presigned URLs for uploads. Make sure your CORS policy allows presigned URL uploads; otherwise, uploads will fail.
+Some providers (e.g., Hetzner’s object storage) [require a specific CORS configuration](https://github.com/formbricks/formbricks/discussions/6641#discussioncomment-14574048).
+If you’re using the bundled MinIO setup, this is already configured for you.
 
 **Images not displaying in surveys:**
 
