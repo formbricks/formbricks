@@ -131,25 +131,22 @@ export const parseApiKeyV2 = (key: string): { id: string; secret: string } | nul
     return null;
   }
 
-  // Count total underscores - should be exactly 2 (fbk_id_secret)
-  const underscoreCount = (key.match(/_/g) || []).length;
-  if (underscoreCount !== 2) {
+  // Find the first underscore after 'fbk_' to separate id and secret
+  // Since IDs (CUIDs) don't contain underscores, the first underscore after the prefix
+  // is always the separator between id and secret
+  const firstUnderscoreIndex = key.indexOf("_", 4);
+  if (firstUnderscoreIndex === -1) {
+    // No underscore found after fbk_ prefix
     return null;
   }
 
-  // Find the last underscore to separate id and secret
-  const lastUnderscoreIndex = key.lastIndexOf("_");
-  if (lastUnderscoreIndex === 3) {
-    // Only fbk_ with no id
-    return null;
-  }
-
-  const id = key.slice(4, lastUnderscoreIndex); // Skip 'fbk_' prefix
-  const secret = key.slice(lastUnderscoreIndex + 1);
+  const id = key.slice(4, firstUnderscoreIndex); // Skip 'fbk_' prefix
+  const secret = key.slice(firstUnderscoreIndex + 1);
 
   // Validate that id and secret contain only allowed characters and are not empty
   // Note: IDs (CUIDs) don't contain underscores, only alphanumeric and hyphens
-  if (!id || !secret || !/^[a-zA-Z0-9-]+$/.test(id) || !/^[a-zA-Z0-9_-]+$/.test(secret)) {
+  // Secrets are base64url-encoded and can contain underscores, hyphens, and alphanumeric chars
+  if (!id || !secret || !/^[a-zA-Z0-9-]+$/.test(id) || !/^[A-Za-z0-9_-]+$/.test(secret)) {
     return null;
   }
 

@@ -100,8 +100,8 @@ describe("Crypto Utils", () => {
       });
     });
 
-    test("should handle keys with exactly 2 underscores", () => {
-      // Valid key with exactly 2 underscores
+    test("should handle keys with underscores in secrets", () => {
+      // Valid key with 2 underscores (1 separator + 0 in secret)
       const key1 = "fbk_simple-id_simple-secret";
       const parsed1 = parseApiKeyV2(key1);
       expect(parsed1).toEqual({
@@ -109,15 +109,30 @@ describe("Crypto Utils", () => {
         secret: "simple-secret",
       });
 
-      // Invalid - too many underscores (4 total)
-      const key2 = "fbk_id_with_underscores_secret";
+      // Valid - secrets can contain underscores (base64url-encoded)
+      const key2 = "fbk_cuid123_secret_with_underscores";
       const parsed2 = parseApiKeyV2(key2);
-      expect(parsed2).toBeNull();
+      expect(parsed2).toEqual({
+        id: "cuid123",
+        secret: "secret_with_underscores",
+      });
 
-      // Invalid - too many underscores (6 total)
-      const key3 = "fbk_id_with_underscores_secret_with_underscores";
+      // Valid - multiple underscores in secret
+      const key3 = "fbk_id123_secret_with_many_underscores_allowed";
       const parsed3 = parseApiKeyV2(key3);
-      expect(parsed3).toBeNull();
+      expect(parsed3).toEqual({
+        id: "id123",
+        secret: "secret_with_many_underscores_allowed",
+      });
+
+      // This is actually valid! id="id", secret="with_underscore_secret"
+      // The first underscore after "fbk_" separates id from secret
+      const key4 = "fbk_id_with_underscore_secret";
+      const parsed4 = parseApiKeyV2(key4);
+      expect(parsed4).toEqual({
+        id: "id",
+        secret: "with_underscore_secret",
+      });
     });
 
     test("should handle keys with hyphens in id and secret", () => {
@@ -130,17 +145,49 @@ describe("Crypto Utils", () => {
       });
     });
 
+    test("should handle base64url-encoded secrets with all valid characters", () => {
+      // Base64url alphabet includes: A-Z, a-z, 0-9, - (hyphen), _ (underscore)
+      const key1 = "fbk_cuid123_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+      const parsed1 = parseApiKeyV2(key1);
+      expect(parsed1).toEqual({
+        id: "cuid123",
+        secret: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_",
+      });
+
+      // Realistic base64url secret with underscores and hyphens
+      const key2 = "fbk_clx123abc_a1B2c3D4e5F6g7H8i9J0-_K1L2M3N4O5P6";
+      const parsed2 = parseApiKeyV2(key2);
+      expect(parsed2).toEqual({
+        id: "clx123abc",
+        secret: "a1B2c3D4e5F6g7H8i9J0-_K1L2M3N4O5P6",
+      });
+    });
+
     test("should return null for invalid formats", () => {
       const invalidKeys = [
-        "invalid-key",
-        "fbk_",
-        "fbk_id",
-        "fbk_id_",
-        "not_fbk_id_secret",
-        "fbk__id_secret",
-        "fbk_id__secret",
-        "",
-        "fbk_id_secret_extra",
+        "invalid-key", // No fbk_ prefix
+        "fbk_", // No id or secret
+        "fbk_id", // No separator or secret
+        "fbk_id_", // Empty secret
+        "not_fbk_id_secret", // Wrong prefix
+        "fbk__secret", // Empty id (double underscore after prefix)
+        "", // Empty string
+      ];
+
+      invalidKeys.forEach((key) => {
+        expect(parseApiKeyV2(key)).toBeNull();
+      });
+    });
+
+    test("should reject secrets with invalid characters", () => {
+      // Secrets should only contain base64url characters: [A-Za-z0-9_-]
+      const invalidKeys = [
+        "fbk_cuid123_secret+with+plus", // + is not base64url (it's base64)
+        "fbk_cuid123_secret/with/slash", // / is not base64url (it's base64)
+        "fbk_cuid123_secret=with=equals", // = is padding, not in base64url alphabet
+        "fbk_cuid123_secret with space", // spaces not allowed
+        "fbk_cuid123_secret!special", // special chars not allowed
+        "fbk_cuid123_secret@email", // @ not allowed
       ];
 
       invalidKeys.forEach((key) => {

@@ -1,6 +1,6 @@
+import { ApiKey } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
 import { authenticateRequest } from "../authenticate-request";
 
 vi.mock("@formbricks/database", () => ({
@@ -10,10 +10,6 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
     },
   },
-}));
-
-vi.mock("@/modules/api/v2/management/lib/utils", () => ({
-  hashApiKey: vi.fn(),
 }));
 
 describe("authenticateRequest", () => {
@@ -29,7 +25,6 @@ describe("authenticateRequest", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
-      hashedKey: "hashed-api-key",
       apiKeyEnvironments: [
         {
           environmentId: "env-id-1",
@@ -52,9 +47,8 @@ describe("authenticateRequest", () => {
           },
         },
       ],
-    };
+    } as unknown as ApiKey;
 
-    vi.mocked(hashApiKey).mockReturnValue("hashed-api-key");
     vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(mockApiKeyData);
     vi.mocked(prisma.apiKey.update).mockResolvedValue(mockApiKeyData);
 
@@ -80,7 +74,6 @@ describe("authenticateRequest", () => {
             projectName: "Project 2",
           },
         ],
-        apiKeyId: "hashed-api-key",
         apiKeyId: "api-key-id",
         organizationId: "org-id",
       });
