@@ -120,7 +120,7 @@ describe("PasswordConfirmationModal", () => {
     const confirmButton = screen.getByText("common.confirm");
     await user.click(confirmButton);
 
-    expect(screen.getByText("String must contain at least 8 character(s)")).toBeInTheDocument();
+    expect(screen.getByText("Password must be at least 8 characters long")).toBeInTheDocument();
   });
 
   test("handles cancel button click and resets form", async () => {
