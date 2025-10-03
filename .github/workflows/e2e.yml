@@ -224,7 +224,7 @@ jobs:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
           CI: true
         run: |
-          pnpm test-e2e:azure -- --workers=10
+          pnpm test-e2e:azure
 
       - name: Run E2E Tests (Local)
         if: env.AZURE_ENABLED == 'false'
