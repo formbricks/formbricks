@@ -40,8 +40,13 @@ export class RecallNode extends DecoratorNode<ReactNode> {
   __recallItem: TSurveyRecallItem;
   __fallbackValue: string;
 
+  static readonly $config = {
+    type: "recall",
+    inline: true,
+  } as const;
+
   static getType(): string {
-    return "recall";
+    return RecallNode.$config.type;
   }
 
   static clone(node: RecallNode): RecallNode {
@@ -94,35 +99,35 @@ export class RecallNode extends DecoratorNode<ReactNode> {
     this.__fallbackValue = payload.fallbackValue || "";
   }
 
-  createDOM = (): HTMLElement => {
+  createDOM(): HTMLElement {
     const dom = document.createElement("span");
     dom.className =
       "recall-node z-30 inline-flex h-fit cursor-pointer justify-center whitespace-pre rounded-md bg-slate-100 text-sm px-1";
     return dom;
-  };
+  }
 
-  updateDOM = (): false => {
+  updateDOM(): false {
     return false;
-  };
+  }
 
-  getRecallItem = (): TSurveyRecallItem => {
+  getRecallItem(): TSurveyRecallItem {
     return this.__recallItem;
-  };
+  }
 
-  getFallbackValue = (): string => {
+  getFallbackValue(): string {
     return this.__fallbackValue;
-  };
+  }
 
-  setFallbackValue = (fallbackValue: string): void => {
+  setFallbackValue(fallbackValue: string): void {
     const writable = this.getWritable();
     writable.__fallbackValue = fallbackValue;
-  };
+  }
 
-  getTextContent = (): string => {
+  getTextContent(): string {
     return `#recall:${this.__recallItem.id}/fallback:${this.__fallbackValue}#`;
-  };
+  }
 
-  decorate = (): ReactNode => {
+  decorate(): ReactNode {
     const displayLabel = replaceRecallInfoWithUnderline(this.__recallItem.label);
 
     return (
@@ -130,11 +135,11 @@ export class RecallNode extends DecoratorNode<ReactNode> {
         @{displayLabel}
       </span>
     );
-  };
+  }
 
-  isInline = (): boolean => {
-    return true;
-  };
+  isInline(): boolean {
+    return RecallNode.$config.inline;
+  }
 }
 
 export const $createRecallNode = (payload: RecallPayload): RecallNode => {
