@@ -320,7 +320,7 @@ export const MultipleChoiceQuestionForm = ({
               )}
               {question.choices.filter((c) => c.id === "none").length === 0 && (
                 <Button size="sm" variant="secondary" type="button" onClick={() => addNone()}>
-                  Add &quot;None of the above&quot;
+                  {t("environments.surveys.edit.add_none_of_the_above")}
                 </Button>
               )}
             </div>

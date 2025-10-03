@@ -75,7 +75,7 @@ export const QuestionOptionChoice = ({
 
   const getPlaceholder = () => {
     if (choice.id === "other") return t("common.other");
-    if (choice.id === "none") return "None of the above";
+    if (choice.id === "none") return t("common.none_of_the_above");
     return t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
   };
 
@@ -113,9 +113,8 @@ export const QuestionOptionChoice = ({
             label={""}
             questionIdx={questionIdx}
             value={
-              question.otherOptionPlaceholder
-                ? question.otherOptionPlaceholder
-                : createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
+              question.otherOptionPlaceholder ??
+              createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
             }
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
