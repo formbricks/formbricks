@@ -72,6 +72,17 @@ export const QuestionOptionChoice = ({
     transform: CSS.Translate.toString(transform),
   };
 
+  const focusChoiceInput = (targetIdx: number) => {
+    const input = document.querySelector(`input[id="choice-${targetIdx}"]`) as HTMLInputElement;
+    input?.focus();
+  };
+
+  const addChoiceAndFocus = (idx: number) => {
+    addChoice(idx);
+    // Wait for DOM update before focusing the new input
+    setTimeout(() => focusChoiceInput(idx + 1), 0);
+  };
+
   return (
     <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
@@ -102,18 +113,6 @@ export const QuestionOptionChoice = ({
           locale={locale}
           isStorageConfigured={isStorageConfigured}
           onKeyDown={(e) => {
-            const focusChoiceInput = (targetIdx: number) => {
-              // Use native DOM to focus sibling inputs without prop drilling
-              const input = document.querySelector(`input[id="choice-${targetIdx}"]`) as HTMLInputElement;
-              input?.focus();
-            };
-
-            const addChoiceAndFocus = (idx: number) => {
-              addChoice(idx);
-              // Wait for DOM update before focusing the new input
-              setTimeout(() => focusChoiceInput(idx + 1), 0);
-            };
-
             if (e.key === "Enter" && choice.id !== "other") {
               e.preventDefault();
               const lastChoiceIdx = question.choices.findLastIndex((c) => c.id !== "other");
@@ -186,14 +185,7 @@ export const QuestionOptionChoice = ({
               aria-label="Add choice below"
               onClick={(e) => {
                 e.preventDefault();
-                addChoice(choiceIdx);
-                // Wait for DOM update before focusing the new input
-                setTimeout(() => {
-                  const input = document.querySelector(
-                    `input[id="choice-${choiceIdx + 1}"]`
-                  ) as HTMLInputElement;
-                  input?.focus();
-                }, 0);
+                addChoiceAndFocus(choiceIdx);
               }}>
               <PlusIcon />
             </Button>
