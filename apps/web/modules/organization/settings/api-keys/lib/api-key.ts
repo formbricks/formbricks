@@ -9,9 +9,9 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import {
-  TApiKey,
   TApiKeyCreateInput,
   TApiKeyUpdateInput,
+  TApiKeyWithEnvironmentAndProject,
   TApiKeyWithEnvironmentPermission,
   ZApiKeyCreateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
@@ -49,68 +49,70 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
 );
 
 // Get API key with its permissions from a raw API key
-export const getApiKeyWithPermissions = reactCache(async (apiKey: string): Promise<TApiKey | null> => {
-  try {
-    const includeQuery = {
-      apiKeyEnvironments: {
-        include: {
-          environment: {
-            include: {
-              project: {
-                select: {
-                  id: true,
-                  name: true,
+export const getApiKeyWithPermissions = reactCache(
+  async (apiKey: string): Promise<TApiKeyWithEnvironmentAndProject | null> => {
+    try {
+      const includeQuery = {
+        apiKeyEnvironments: {
+          include: {
+            environment: {
+              include: {
+                project: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
                 },
               },
             },
           },
         },
-      },
-    };
+      };
 
-    // Try v2 format first (fbk_{id}_{secret})
-    const v2Parsed = parseApiKeyV2(apiKey);
+      // Try v2 format first (fbk_{id}_{secret})
+      const v2Parsed = parseApiKeyV2(apiKey);
 
-    let apiKeyData;
+      let apiKeyData;
 
-    if (v2Parsed) {
-      // New v2 format: lookup by id and verify with bcrypt
-      apiKeyData = await prisma.apiKey.findUnique({
-        where: { id: v2Parsed.id },
-        include: includeQuery,
+      if (v2Parsed) {
+        // New v2 format: lookup by id and verify with bcrypt
+        apiKeyData = await prisma.apiKey.findUnique({
+          where: { id: v2Parsed.id },
+          include: includeQuery,
+        });
+
+        if (!apiKeyData) return null;
+
+        // Verify the secret against the bcrypt hash
+        const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
+        if (!isValid) return null;
+      } else {
+        // Legacy format: compute SHA-256 and lookup by hashedKey
+        const hashedKey = hashSha256(apiKey);
+        apiKeyData = await prisma.apiKey.findUnique({
+          where: { hashedKey },
+          include: includeQuery,
+        });
+
+        if (!apiKeyData) return null;
+      }
+
+      // Update the last used timestamp
+      await prisma.apiKey.update({
+        where: { id: apiKeyData.id },
+        data: { lastUsedAt: new Date() },
       });
 
-      if (!apiKeyData) return null;
+      return apiKeyData;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
 
-      // Verify the secret against the bcrypt hash
-      const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
-      if (!isValid) return null;
-    } else {
-      // Legacy format: compute SHA-256 and lookup by hashedKey
-      const hashedKey = hashSha256(apiKey);
-      apiKeyData = await prisma.apiKey.findUnique({
-        where: { hashedKey },
-        include: includeQuery,
-      });
-
-      if (!apiKeyData) return null;
+      throw error;
     }
-
-    // Update the last used timestamp
-    await prisma.apiKey.update({
-      where: { id: apiKeyData.id },
-      data: { lastUsedAt: new Date() },
-    });
-
-    return apiKeyData;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
   }
-});
+);
 
 export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
   validateInputs([id, ZId]);
