@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { RefObject, useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   TI18nString,
   TSurvey,
@@ -50,7 +50,6 @@ interface QuestionFormInputProps {
   label: string;
   maxLength?: number;
   placeholder?: string;
-  externalInputRef?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   locale: TUserLocale;
@@ -78,7 +77,6 @@ export const QuestionFormInput = ({
   locale,
   onKeyDown,
   isStorageConfigured = true,
-  externalInputRef,
 }: QuestionFormInputProps) => {
   const { t } = useTranslate();
   const defaultLanguageCode =
@@ -165,6 +163,25 @@ export const QuestionFormInput = ({
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
   useSyncScroll(highlightContainerRef, inputRef);
+
+  useEffect(() => {
+    if (!question) return;
+
+    const isListItem = isChoice || isMatrixLabelRow || isMatrixLabelColumn;
+    if (!isListItem) return;
+
+    const isEmpty = !value || Object.values(value).every((val) => !val || val.trim() === "");
+    if (!isEmpty) return;
+
+    const headlineHasContent =
+      question.headline &&
+      Object.values(question.headline).some((val) => typeof val === "string" && val.trim() !== "");
+
+    if (headlineHasContent && inputRef.current) {
+      inputRef.current.focus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const createUpdatedText = useCallback(
     (updatedText: string): TI18nString => {
@@ -386,7 +403,7 @@ export const QuestionFormInput = ({
                           placeholder={placeholder ?? getPlaceHolderById(id, t)}
                           aria-label={label}
                           maxLength={maxLength}
-                          ref={externalInputRef ?? inputRef}
+                          ref={inputRef}
                           onBlur={onBlur}
                           className={`absolute top-0 text-black caret-black ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""

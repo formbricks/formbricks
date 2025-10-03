@@ -4,7 +4,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
 import {
   TI18nString,
   TSurvey,
@@ -41,9 +40,6 @@ interface ChoiceProps {
   surveyLanguageCodes: string[];
   locale: TUserLocale;
   isStorageConfigured: boolean;
-  shouldFocus?: boolean;
-  onFocused?: () => void;
-  onRequestFocus?: (choiceId: string) => void;
 }
 
 export const QuestionOptionChoice = ({
@@ -63,9 +59,6 @@ export const QuestionOptionChoice = ({
   updateQuestion,
   locale,
   isStorageConfigured,
-  shouldFocus,
-  onFocused,
-  onRequestFocus,
 }: ChoiceProps) => {
   const { t } = useTranslate();
   const isDragDisabled = choice.id === "other";
@@ -73,16 +66,6 @@ export const QuestionOptionChoice = ({
     id: choice.id,
     disabled: isDragDisabled,
   });
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (shouldFocus && inputRef.current) {
-      inputRef.current.focus();
-      onFocused?.();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldFocus]);
 
   const style = {
     transition: transition ?? "transform 100ms ease",
@@ -118,21 +101,38 @@ export const QuestionOptionChoice = ({
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
-          externalInputRef={inputRef}
           onKeyDown={(e) => {
+            const focusChoiceInput = (targetIdx: number) => {
+              // Use native DOM to focus sibling inputs without prop drilling
+              const input = document.querySelector(`input[id="choice-${targetIdx}"]`) as HTMLInputElement;
+              input?.focus();
+            };
+
+            // Handle Enter key
             if (e.key === "Enter" && choice.id !== "other") {
               e.preventDefault();
-              const emptyIdx = question.choices.findIndex((c, idx) => {
-                if (c.id === "other") return false;
-                const labelForLang = c.label?.[selectedLanguageCode] ?? c.label?.["default"] ?? "";
-                return labelForLang.trim() === "" && idx !== choiceIdx;
-              });
+              const lastChoiceIdx = question.choices.findLastIndex((c) => c.id !== "other");
 
-              if (emptyIdx !== -1) {
-                const emptyChoiceId = question.choices[emptyIdx].id;
-                onRequestFocus?.(emptyChoiceId);
-              } else {
+              if (choiceIdx === lastChoiceIdx) {
                 addChoice(choiceIdx);
+              } else {
+                focusChoiceInput(choiceIdx + 1);
+              }
+            }
+
+            // Handle Arrow Down key
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              if (choiceIdx + 1 < question.choices.length) {
+                focusChoiceInput(choiceIdx + 1);
+              }
+            }
+
+            // Handle Arrow Up key
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              if (choiceIdx > 0) {
+                focusChoiceInput(choiceIdx - 1);
               }
             }
           }}

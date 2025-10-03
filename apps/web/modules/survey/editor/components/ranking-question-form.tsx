@@ -42,7 +42,6 @@ export const RankingQuestionForm = ({
   const { t } = useTranslate();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
-  const [focusChoiceId, setFocusChoiceId] = useState<string | null>(null);
 
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
@@ -69,7 +68,6 @@ export const RankingQuestionForm = ({
     updateQuestion(questionIdx, {
       choices: [...newChoices.slice(0, choiceIdx + 1), newChoice, ...newChoices.slice(choiceIdx + 1)],
     });
-    setFocusChoiceId(newChoice.id);
   };
 
   const addOption = () => {
@@ -85,7 +83,6 @@ export const RankingQuestionForm = ({
     };
 
     updateQuestion(questionIdx, { choices: [...choices, newChoice] });
-    setFocusChoiceId(newChoice.id);
   };
 
   const deleteChoice = (choiceIdx: number) => {
@@ -216,9 +213,6 @@ export const RankingQuestionForm = ({
                     surveyLanguageCodes={surveyLanguageCodes}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
-                    shouldFocus={choice.id === focusChoiceId}
-                    onFocused={() => setFocusChoiceId(null)}
-                    onRequestFocus={(id) => setFocusChoiceId(id)}
                   />
                 ))}
               </div>

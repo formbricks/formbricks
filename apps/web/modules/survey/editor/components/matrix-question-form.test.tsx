@@ -84,6 +84,7 @@ describe("MatrixQuestionForm - handleKeyDown", () => {
     id: "q1",
     type: TSurveyQuestionTypeEnum.Matrix,
     headline: { default: "Matrix" },
+    required: false,
     rows: [
       { id: "r1", label: { default: "Row 1" } },
       { id: "r2", label: { default: "" } },
@@ -95,42 +96,8 @@ describe("MatrixQuestionForm - handleKeyDown", () => {
     shuffleOption: "none",
   });
 
-  test("Enter focuses first empty row if present", async () => {
+  test("Enter on last row adds a new row", async () => {
     const question = baseQuestion();
-    const localSurvey = makeSurvey([langDefault]);
-    // localSurvey.questions must include current question at questionIdx
-    (localSurvey as any).questions = [question];
-
-    const updateQuestion = vi.fn();
-
-    render(
-      <MatrixQuestionForm
-        localSurvey={localSurvey}
-        question={question}
-        questionIdx={0}
-        updateQuestion={updateQuestion}
-        isInvalid={false}
-        selectedLanguageCode="default"
-        setSelectedLanguageCode={vi.fn()}
-        locale="en-US"
-        isStorageConfigured={true}
-      />
-    );
-
-    const rowInput = screen.getByTestId("qfi-row-0");
-    await userEvent.type(rowInput, "{enter}");
-
-    // When an empty row exists, it should NOT add a new row (no updateQuestion call)
-    expect(updateQuestion).not.toHaveBeenCalled();
-  });
-
-  test("Enter adds a new row if none empty", async () => {
-    const question = baseQuestion();
-    // Make all rows non-empty
-    question.rows = [
-      { id: "r1", label: { default: "Row 1" } },
-      { id: "r2", label: { default: "Row 2" } },
-    ];
     const localSurvey = makeSurvey([langDefault]);
     (localSurvey as any).questions = [question];
 
@@ -150,8 +117,8 @@ describe("MatrixQuestionForm - handleKeyDown", () => {
       />
     );
 
-    const rowInput = screen.getByTestId("qfi-row-0");
-    await userEvent.type(rowInput, "{enter}");
+    const lastRowInput = screen.getByTestId("qfi-row-1");
+    await userEvent.type(lastRowInput, "{enter}");
 
     expect(updateQuestion).toHaveBeenCalledTimes(1);
     const [, payload] = updateQuestion.mock.calls[0];
@@ -161,7 +128,7 @@ describe("MatrixQuestionForm - handleKeyDown", () => {
     );
   });
 
-  test("Enter focuses first empty column if present", async () => {
+  test("Enter on non-last row focuses next row", async () => {
     const question = baseQuestion();
     const localSurvey = makeSurvey([langDefault]);
     (localSurvey as any).questions = [question];
@@ -182,19 +149,14 @@ describe("MatrixQuestionForm - handleKeyDown", () => {
       />
     );
 
-    const colInput = screen.getByTestId("qfi-column-0");
-    await userEvent.type(colInput, "{enter}");
+    const firstRowInput = screen.getByTestId("qfi-row-0");
+    await userEvent.type(firstRowInput, "{enter}");
 
-    // When an empty column exists, it should NOT add a new column
     expect(updateQuestion).not.toHaveBeenCalled();
   });
 
-  test("Enter adds a new column if none empty", async () => {
+  test("Enter on last column adds a new column", async () => {
     const question = baseQuestion();
-    question.columns = [
-      { id: "c1", label: { default: "Col 1" } },
-      { id: "c2", label: { default: "Col 2" } },
-    ];
     const localSurvey = makeSurvey([langDefault]);
     (localSurvey as any).questions = [question];
 
@@ -214,8 +176,8 @@ describe("MatrixQuestionForm - handleKeyDown", () => {
       />
     );
 
-    const colInput = screen.getByTestId("qfi-column-0");
-    await userEvent.type(colInput, "{enter}");
+    const lastColInput = screen.getByTestId("qfi-column-1");
+    await userEvent.type(lastColInput, "{enter}");
 
     expect(updateQuestion).toHaveBeenCalledTimes(1);
     const [, payload] = updateQuestion.mock.calls[0];
@@ -223,5 +185,86 @@ describe("MatrixQuestionForm - handleKeyDown", () => {
     expect(payload.columns[2]).toEqual(
       expect.objectContaining({ id: expect.any(String), label: expect.objectContaining({ default: "" }) })
     );
+  });
+
+  test("Enter on non-last column focuses next column", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
+
+    const updateQuestion = vi.fn();
+
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
+
+    const firstColInput = screen.getByTestId("qfi-column-0");
+    await userEvent.type(firstColInput, "{enter}");
+
+    expect(updateQuestion).not.toHaveBeenCalled();
+  });
+
+  test("Arrow Down on row focuses next row", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
+
+    const updateQuestion = vi.fn();
+
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
+
+    const firstRowInput = screen.getByTestId("qfi-row-0");
+    await userEvent.type(firstRowInput, "{arrowdown}");
+
+    expect(updateQuestion).not.toHaveBeenCalled();
+  });
+
+  test("Arrow Up on row focuses previous row", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
+
+    const updateQuestion = vi.fn();
+
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
+
+    const secondRowInput = screen.getByTestId("qfi-row-1");
+    await userEvent.type(secondRowInput, "{arrowup}");
+
+    expect(updateQuestion).not.toHaveBeenCalled();
   });
 });

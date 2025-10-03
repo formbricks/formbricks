@@ -76,25 +76,20 @@ describe("QuestionOptionChoice", () => {
     expect(addButton).toBeDefined();
   });
 
-  test("pressing Enter focuses existing empty option instead of adding", async () => {
+  test("pressing Enter on last choice adds a new choice", async () => {
     const addChoice = vi.fn();
-    const onRequestFocus = vi.fn();
-    const choice = { id: "choice1", label: { default: "Choice 1" } };
+    const choice = { id: "choice2", label: { default: "Choice 2" } };
     const question = {
       id: "question1",
       headline: { default: "Question 1" },
       type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-      choices: [
-        choice,
-        { id: "choice2", label: { default: "" } },
-        { id: "other", label: { default: "Other" } },
-      ],
+      choices: [{ id: "choice1", label: { default: "Choice 1" } }, choice],
     } as any;
 
     render(
       <QuestionOptionChoice
         choice={choice}
-        choiceIdx={0}
+        choiceIdx={1}
         questionIdx={0}
         updateChoice={vi.fn()}
         deleteChoice={vi.fn()}
@@ -109,25 +104,23 @@ describe("QuestionOptionChoice", () => {
         surveyLanguageCodes={["default"]}
         locale="en-US"
         isStorageConfigured={true}
-        onRequestFocus={onRequestFocus}
       />
     );
 
     const input = screen.getByTestId("question-form-input");
     await userEvent.type(input, "{enter}");
 
-    expect(onRequestFocus).toHaveBeenCalledWith("choice2");
-    expect(addChoice).not.toHaveBeenCalled();
+    expect(addChoice).toHaveBeenCalledWith(1);
   });
 
-  test("pressing Enter adds a new option when none are empty", async () => {
+  test("pressing Enter on non-last choice focuses next choice", async () => {
     const addChoice = vi.fn();
     const choice = { id: "choice1", label: { default: "Choice 1" } };
     const question = {
       id: "question1",
       headline: { default: "Question 1" },
       type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-      choices: [choice, { id: "choice2", label: { default: "Filled" } }],
+      choices: [choice, { id: "choice2", label: { default: "Choice 2" } }],
     } as any;
 
     render(
@@ -154,7 +147,8 @@ describe("QuestionOptionChoice", () => {
     const input = screen.getByTestId("question-form-input");
     await userEvent.type(input, "{enter}");
 
-    expect(addChoice).toHaveBeenCalledWith(0);
+    // Should not add a new choice (not the last one)
+    expect(addChoice).not.toHaveBeenCalled();
   });
 
   test("should call deleteChoice when the 'Delete choice' button is clicked for a standard choice", async () => {

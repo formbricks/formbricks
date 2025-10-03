@@ -51,7 +51,6 @@ export const MultipleChoiceQuestionForm = ({
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
-  const [focusChoiceId, setFocusChoiceId] = useState<string | null>(null);
 
   const questionRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -108,7 +107,6 @@ export const MultipleChoiceQuestionForm = ({
       newChoices.push(otherChoice);
     }
     updateQuestion(questionIdx, { choices: newChoices });
-    setFocusChoiceId(newChoice.id);
   };
 
   const addOther = () => {
@@ -268,9 +266,6 @@ export const MultipleChoiceQuestionForm = ({
                     surveyLanguageCodes={surveyLanguageCodes}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
-                    shouldFocus={choice.id === focusChoiceId}
-                    onFocused={() => setFocusChoiceId(null)}
-                    onRequestFocus={(id) => setFocusChoiceId(id)}
                   />
                 ))}
               </div>

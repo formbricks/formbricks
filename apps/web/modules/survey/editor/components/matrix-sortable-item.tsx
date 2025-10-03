@@ -5,7 +5,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, TrashIcon } from "lucide-react";
 import type { JSX } from "react";
-import { useEffect, useRef } from "react";
 import {
   TI18nString,
   TSurvey,
@@ -33,8 +32,6 @@ interface MatrixSortableItemProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
-  shouldFocus?: boolean;
-  onFocused?: () => void;
 }
 
 export const MatrixSortableItem = ({
@@ -52,24 +49,12 @@ export const MatrixSortableItem = ({
   isInvalid,
   locale,
   isStorageConfigured,
-  shouldFocus,
-  onFocused,
 }: MatrixSortableItemProps): JSX.Element => {
   const { t } = useTranslate();
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
   });
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (shouldFocus && inputRef.current) {
-      inputRef.current.focus();
-      onFocused?.();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldFocus]);
 
   const style = {
     transition: transition ?? "transform 100ms ease",
@@ -97,7 +82,6 @@ export const MatrixSortableItem = ({
           locale={locale}
           onKeyDown={onKeyDown}
           isStorageConfigured={isStorageConfigured}
-          externalInputRef={inputRef}
         />
         {canDelete && (
           <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
