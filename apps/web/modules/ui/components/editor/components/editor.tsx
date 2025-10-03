@@ -127,7 +127,6 @@ export const Editor = (props: TextEditorProps) => {
                   localSurvey={props.localSurvey}
                   questionId={props.questionId}
                   selectedLanguageCode={props.selectedLanguageCode}
-                  container={editorContainerRef.current || undefined}
                   recallItems={recallItems}
                   setRecallItems={setRecallItems}
                   showFallbackInput={showFallbackInput}

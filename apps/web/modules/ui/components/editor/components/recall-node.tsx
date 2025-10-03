@@ -59,20 +59,6 @@ export class RecallNode extends DecoratorNode<ReactNode> {
     );
   }
 
-  static importJSON(serializedNode: SerializedRecallNode): RecallNode {
-    const { recallItem, fallbackValue } = serializedNode;
-    return $createRecallNode({ recallItem, fallbackValue });
-  }
-
-  exportJSON(): SerializedRecallNode {
-    return {
-      type: "recall",
-      version: 1,
-      recallItem: this.__recallItem,
-      fallbackValue: this.__fallbackValue,
-    };
-  }
-
   static importDOM(): DOMConversionMap | null {
     return {
       span: () => ({

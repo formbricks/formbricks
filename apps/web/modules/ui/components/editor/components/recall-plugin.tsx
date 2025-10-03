@@ -15,7 +15,6 @@ import {
   TextNode,
 } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getFallbackValues, getRecallItems } from "@/lib/utils/recall";
 import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
@@ -26,7 +25,6 @@ interface RecallPluginProps {
   localSurvey: TSurvey;
   questionId: string;
   selectedLanguageCode: string;
-  container?: HTMLElement;
   recallItems: TSurveyRecallItem[];
   setRecallItems: (recallItems: TSurveyRecallItem[]) => void;
   showFallbackInput: boolean;
@@ -37,7 +35,6 @@ export const RecallPlugin = ({
   localSurvey,
   questionId,
   selectedLanguageCode,
-  container,
   recallItems,
   setRecallItems,
   showFallbackInput,
@@ -128,10 +125,10 @@ export const RecallPlugin = ({
       const textContent = node.getTextContent();
 
       if (recallPattern.test(textContent)) {
-        const matches = textContent.match(/#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/g) || [];
+        const matches = textContent.match(recallPattern) || [];
 
         if (matches.length > 0) {
-          const parts = textContent.split(/#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/);
+          const parts = textContent.split(recallPattern);
           const newNodes = createNodesFromText(parts, matches);
           replaceTextNode(node, newNodes);
         }
@@ -158,7 +155,8 @@ export const RecallPlugin = ({
         try {
           const children = node.getChildren();
           children.forEach((child: LexicalNode) => {
-            recallNodes.push(...findRecallNodes(child));
+            const childRecallNodes = findRecallNodes(child);
+            recallNodes.push(...childRecallNodes);
           });
         } catch (error) {
           console.error("Error getting children from node during sync:", error);
@@ -300,13 +298,13 @@ export const RecallPlugin = ({
   const replaceAtSymbolWithStoredPosition = useCallback(
     (recallNode: RecallNode) => {
       const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return false;
+      if (!$isRangeSelection(selection) || !atSymbolPosition) return false;
 
       selection.setTextNodeRange(
-        atSymbolPosition!.node as TextNode,
-        atSymbolPosition!.offset,
-        atSymbolPosition!.node as TextNode,
-        atSymbolPosition!.offset + 1
+        atSymbolPosition.node as TextNode,
+        atSymbolPosition.offset,
+        atSymbolPosition.node as TextNode,
+        atSymbolPosition.offset + 1
       );
       selection.insertNodes([recallNode]);
       return true;
@@ -391,7 +389,8 @@ export const RecallPlugin = ({
       try {
         const children = node.getChildren();
         children.forEach((child: LexicalNode) => {
-          recallNodes.push(...findAllRecallNodes(child));
+          const childRecallNodes = findAllRecallNodes(child);
+          recallNodes.push(...childRecallNodes);
         });
       } catch (error) {
         console.error("Error getting children from node:", error);
@@ -409,7 +408,7 @@ export const RecallPlugin = ({
 
       allRecallNodes.forEach((recallNode) => {
         const recallItem = recallNode.getRecallItem();
-        const newFallbackValue = fallbacks[recallItem.id] || "";
+        const newFallbackValue = (fallbacks[recallItem.id]?.trim() || "").replace(/ /g, "nbsp");
 
         // Update the fallback value in the node
         recallNode.setFallbackValue(newFallbackValue);
@@ -443,20 +442,17 @@ export const RecallPlugin = ({
       )}
 
       {/* Fallback Input Modal */}
-      {showFallbackInput &&
-        recallItems.length > 0 &&
-        createPortal(
-          <FallbackInput
-            filteredRecallItems={recallItems}
-            fallbacks={fallbacks}
-            setFallbacks={setFallbacks}
-            fallbackInputRef={fallbackInputRef as React.RefObject<HTMLInputElement>}
-            addFallback={addFallback}
-            open={showFallbackInput}
-            setOpen={setShowFallbackInput}
-          />,
-          container || document.body
-        )}
+      {showFallbackInput && recallItems.length > 0 && (
+        <FallbackInput
+          filteredRecallItems={recallItems}
+          fallbacks={fallbacks}
+          setFallbacks={setFallbacks}
+          fallbackInputRef={fallbackInputRef as React.RefObject<HTMLInputElement>}
+          addFallback={addFallback}
+          open={showFallbackInput}
+          setOpen={setShowFallbackInput}
+        />
+      )}
     </>
   );
 };
