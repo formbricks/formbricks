@@ -136,7 +136,6 @@ export const MatrixQuestionForm = ({
       }
     }
 
-    // Handle Arrow Up key
     if (e.key === "ArrowUp") {
       e.preventDefault();
       if (currentIndex > 0) {
