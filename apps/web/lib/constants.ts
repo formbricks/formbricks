@@ -151,7 +151,7 @@ export const DEBUG = env.DEBUG === "1";
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const REDIS_URL = env.REDIS_URL;
-export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1" || env.NODE_ENV === "test";
 
 export const BREVO_API_KEY = env.BREVO_API_KEY;
 export const BREVO_LIST_ID = env.BREVO_LIST_ID;
