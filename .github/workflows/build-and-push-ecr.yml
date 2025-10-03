@@ -32,6 +32,11 @@ on:
         required: false
         type: boolean
         default: false
+      MAKE_LATEST:
+        description: "Whether to tag for production (from GitHub release 'Set as the latest release' option)"
+        required: false
+        type: boolean
+        default: false
     outputs:
       IMAGE_TAG:
         description: "Normalized image tag used for the build"
@@ -80,6 +85,7 @@ jobs:
           deploy_production: ${{ inputs.deploy_production }}
           deploy_staging: ${{ inputs.deploy_staging }}
           is_prerelease: ${{ inputs.IS_PRERELEASE }}
+          make_latest: ${{ inputs.MAKE_LATEST }}
         env:
           DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
