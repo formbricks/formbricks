@@ -1,8 +1,5 @@
 "use client";
 
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslate } from "@tolgee/react";
@@ -15,6 +12,9 @@ import {
   TSurveyMatrixQuestionChoice,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface MatrixSortableItemProps {
   choice: TSurveyMatrixQuestionChoice;

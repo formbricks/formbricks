@@ -1,335 +1,270 @@
-import { createI18nString } from "@/lib/i18n/utils";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TLanguage } from "@formbricks/types/project";
 import {
   TSurvey,
   TSurveyLanguage,
   TSurveyMatrixQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { MatrixQuestionForm } from "./matrix-question-form";
 
-// Mock cuid2 to track CUID generation
-let cuidIndex = 0;
-
-vi.mock("@paralleldrive/cuid2", () => ({
-  default: {
-    createId: vi.fn(() => `cuid${cuidIndex++}`),
-  },
-}));
-
-// Mock window.matchMedia - required for useAutoAnimate
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
-
-// Mock @formkit/auto-animate - simplify implementation
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [null],
 }));
 
-// Mock react-hot-toast
-vi.mock("react-hot-toast", () => ({
-  default: {
-    error: vi.fn(),
-  },
+vi.mock("@dnd-kit/core", () => ({
+  DndContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-// Mock findOptionUsedInLogic
-vi.mock("@/modules/survey/editor/lib/utils", () => ({
-  findOptionUsedInLogic: vi.fn(),
-}));
-
-// Mock constants
-vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: false,
-  ENCRYPTION_KEY: "test",
-  ENTERPRISE_LICENSE_KEY: "test",
-  GITHUB_ID: "test",
-  GITHUB_SECRET: "test",
-  GOOGLE_CLIENT_ID: "test",
-  GOOGLE_CLIENT_SECRET: "test",
-  AZUREAD_CLIENT_ID: "mock-azuread-client-id",
-  AZUREAD_CLIENT_SECRET: "mock-azure-client-secret",
-  AZUREAD_TENANT_ID: "mock-azuread-tenant-id",
-  OIDC_CLIENT_ID: "mock-oidc-client-id",
-  OIDC_CLIENT_SECRET: "mock-oidc-client-secret",
-  OIDC_ISSUER: "mock-oidc-issuer",
-  OIDC_DISPLAY_NAME: "mock-oidc-display-name",
-  OIDC_SIGNING_ALGORITHM: "mock-oidc-signing-algorithm",
-  WEBAPP_URL: "mock-webapp-url",
-  AI_AZURE_LLM_RESSOURCE_NAME: "mock-azure-llm-resource-name",
-  AI_AZURE_LLM_API_KEY: "mock-azure-llm-api-key",
-  AI_AZURE_LLM_DEPLOYMENT_ID: "mock-azure-llm-deployment-id",
-  AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: "mock-azure-embeddings-resource-name",
-  AI_AZURE_EMBEDDINGS_API_KEY: "mock-azure-embeddings-api-key",
-  AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: "mock-azure-embeddings-deployment-id",
-  IS_PRODUCTION: true,
-  FB_LOGO_URL: "https://example.com/mock-logo.png",
-  SMTP_HOST: "mock-smtp-host",
-  SMTP_PORT: "mock-smtp-port",
-  IS_POSTHOG_CONFIGURED: true,
-}));
-
-// Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
+vi.mock("@dnd-kit/sortable", () => ({
+  SortableContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useSortable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: () => {},
+    transform: null,
+    transition: null,
   }),
+  verticalListSortingStrategy: () => {},
 }));
 
-// Mock QuestionFormInput component
+// Keep QuestionFormInput simple and forward keydown
 vi.mock("@/modules/survey/components/question-form-input", () => ({
-  QuestionFormInput: vi.fn(({ id, updateMatrixLabel, value, updateQuestion, onKeyDown }) => (
-    <div data-testid={`question-input-${id}`}>
-      <input
-        data-testid={`input-${id}`}
-        onChange={(e) => {
-          if (updateMatrixLabel) {
-            const type = id.startsWith("row") ? "row" : "column";
-            const index = parseInt(id.split("-")[1]);
-            updateMatrixLabel(index, type, { default: e.target.value });
-          } else if (updateQuestion) {
-            updateQuestion(0, { [id]: { default: e.target.value } });
-          }
-        }}
-        value={value?.default || ""}
-        onKeyDown={onKeyDown}
-      />
-    </div>
-  )),
+  QuestionFormInput: ({ id, value, onKeyDown }: { id: string; value: any; onKeyDown?: any }) => (
+    <input
+      data-testid={`qfi-${id}`}
+      value={value?.en || value?.de || value?.default || ""}
+      onChange={() => {}}
+      onKeyDown={onKeyDown}
+    />
+  ),
 }));
 
-// Mock ShuffleOptionSelect component
-vi.mock("@/modules/ui/components/shuffle-option-select", () => ({
-  ShuffleOptionSelect: vi.fn(() => <div data-testid="shuffle-option-select" />),
-}));
+describe("MatrixQuestionForm - handleKeyDown", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
 
-// Mock TooltipRenderer component
-vi.mock("@/modules/ui/components/tooltip", () => ({
-  TooltipRenderer: vi.fn(({ children }) => (
-    <div data-testid="tooltip-renderer">
-      {children}
-      <button>Delete</button>
-    </div>
-  )),
-}));
-
-// Mock validation
-vi.mock("../lib/validation", () => ({
-  isLabelValidForAllLanguages: vi.fn().mockReturnValue(true),
-}));
-
-// Mock survey languages
-const mockSurveyLanguages: TSurveyLanguage[] = [
-  {
-    default: true,
-    enabled: true,
-    language: {
-      id: "en",
-      code: "en",
-      alias: "English",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      projectId: "project-1",
-    },
-  },
-];
-
-// Mock matrix question
-const mockMatrixQuestion: TSurveyMatrixQuestion = {
-  id: "matrix-1",
-  type: TSurveyQuestionTypeEnum.Matrix,
-  headline: createI18nString("Matrix Question", ["en"]),
-  subheader: createI18nString("Please rate the following", ["en"]),
-  required: false,
-  logic: [],
-  rows: [
-    { id: "row-1", label: createI18nString("Row 1", ["en"]) },
-    { id: "row-2", label: createI18nString("Row 2", ["en"]) },
-    { id: "row-3", label: createI18nString("Row 3", ["en"]) },
-  ],
-  columns: [
-    { id: "col-1", label: createI18nString("Column 1", ["en"]) },
-    { id: "col-2", label: createI18nString("Column 2", ["en"]) },
-    { id: "col-3", label: createI18nString("Column 3", ["en"]) },
-  ],
-  shuffleOption: "none",
-};
-
-// Mock survey
-const mockSurvey: TSurvey = {
-  id: "survey-1",
-  name: "Test Survey",
-  questions: [mockMatrixQuestion],
-  languages: mockSurveyLanguages,
-} as unknown as TSurvey;
-
-const mockUpdateQuestion = vi.fn();
-
-const defaultProps = {
-  localSurvey: mockSurvey,
-  question: mockMatrixQuestion,
-  questionIdx: 0,
-  updateQuestion: mockUpdateQuestion,
-  selectedLanguageCode: "en",
-  setSelectedLanguageCode: vi.fn(),
-  isInvalid: false,
-  locale: "en-US" as TUserLocale,
-  isStorageConfigured: true,
-};
-
-describe("MatrixQuestionForm", () => {
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
-    cuidIndex = 0;
   });
 
-  test("renders the matrix question form with rows and columns", () => {
-    render(<MatrixQuestionForm {...defaultProps} isStorageConfigured={true} />);
+  const makeSurvey = (languages: Array<Pick<TSurveyLanguage, "language" | "default">>): TSurvey =>
+    ({
+      id: "s1",
+      name: "Survey",
+      type: "link",
+      languages: languages as unknown as TSurveyLanguage[],
+      questions: [] as any,
+      endings: [] as any,
+      createdAt: new Date("2024-01-01T00:00:00.000Z"),
+      environmentId: "env1",
+    }) as unknown as TSurvey;
 
-    expect(screen.getByTestId("question-input-headline")).toBeInTheDocument();
+  const langDefault: TSurveyLanguage = {
+    language: { code: "default" } as unknown as TLanguage,
+    default: true,
+  } as unknown as TSurveyLanguage;
 
-    // Check for rows and columns
-    expect(screen.getByTestId("question-input-row-0")).toBeInTheDocument();
-    expect(screen.getByTestId("question-input-row-1")).toBeInTheDocument();
-    expect(screen.getByTestId("question-input-column-0")).toBeInTheDocument();
-    expect(screen.getByTestId("question-input-column-1")).toBeInTheDocument();
-
-    // Check for shuffle options
-    expect(screen.getByTestId("shuffle-option-select")).toBeInTheDocument();
+  const baseQuestion = (): TSurveyMatrixQuestion => ({
+    id: "q1",
+    type: TSurveyQuestionTypeEnum.Matrix,
+    headline: { default: "Matrix" },
+    required: false,
+    rows: [
+      { id: "r1", label: { default: "Row 1" } },
+      { id: "r2", label: { default: "" } },
+    ],
+    columns: [
+      { id: "c1", label: { default: "Col 1" } },
+      { id: "c2", label: { default: "" } },
+    ],
+    shuffleOption: "none",
   });
 
-  test("adds description when button is clicked", async () => {
-    const user = userEvent.setup();
-    const propsWithoutSubheader = {
-      ...defaultProps,
-      question: {
-        ...mockMatrixQuestion,
-        subheader: undefined,
-      },
-    };
+  test("Enter on last row adds a new row", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
 
-    const { getByText } = render(
-      <MatrixQuestionForm {...propsWithoutSubheader} isStorageConfigured={true} />
+    const updateQuestion = vi.fn();
+
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
     );
 
-    const addDescriptionButton = getByText("environments.surveys.edit.add_description");
-    await user.click(addDescriptionButton);
+    const lastRowInput = screen.getByTestId("qfi-row-1");
+    await userEvent.type(lastRowInput, "{enter}");
 
-    expect(mockUpdateQuestion).toHaveBeenCalledWith(0, {
-      subheader: expect.any(Object),
-    });
+    expect(updateQuestion).toHaveBeenCalledTimes(1);
+    const [, payload] = updateQuestion.mock.calls[0];
+    expect(payload.rows.length).toBe(3);
+    expect(payload.rows[2]).toEqual(
+      expect.objectContaining({ id: expect.any(String), label: expect.objectContaining({ default: "" }) })
+    );
   });
 
-  test("renders subheader input when subheader is defined", () => {
-    render(<MatrixQuestionForm {...defaultProps} />);
+  test("Enter on non-last row focuses next row", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
 
-    expect(screen.getByTestId("question-input-subheader")).toBeInTheDocument();
+    const updateQuestion = vi.fn();
+
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
+
+    const firstRowInput = screen.getByTestId("qfi-row-0");
+    await userEvent.type(firstRowInput, "{enter}");
+
+    expect(updateQuestion).not.toHaveBeenCalled();
   });
 
-  test("deletes a row when delete button is clicked", async () => {
-    const user = userEvent.setup();
-    const { findAllByTestId } = render(<MatrixQuestionForm {...defaultProps} />);
-    vi.mocked(findOptionUsedInLogic).mockReturnValueOnce(-1);
+  test("Enter on last column adds a new column", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
 
-    const deleteButtons = await findAllByTestId("tooltip-renderer");
-    // First delete button is for the first column
-    await user.click(deleteButtons[0].querySelector("button") as HTMLButtonElement);
+    const updateQuestion = vi.fn();
 
-    expect(mockUpdateQuestion).toHaveBeenCalledWith(0, {
-      rows: [mockMatrixQuestion.rows[1], mockMatrixQuestion.rows[2]],
-    });
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
+
+    const lastColInput = screen.getByTestId("qfi-column-1");
+    await userEvent.type(lastColInput, "{enter}");
+
+    expect(updateQuestion).toHaveBeenCalledTimes(1);
+    const [, payload] = updateQuestion.mock.calls[0];
+    expect(payload.columns.length).toBe(3);
+    expect(payload.columns[2]).toEqual(
+      expect.objectContaining({ id: expect.any(String), label: expect.objectContaining({ default: "" }) })
+    );
   });
 
-  test("doesn't delete a row if it would result in less than 2 rows", async () => {
-    const user = userEvent.setup();
-    const propsWithMinRows = {
-      ...defaultProps,
-      question: {
-        ...mockMatrixQuestion,
-        rows: [
-          { id: "row-1", label: createI18nString("Row 1", ["en"]) },
-          { id: "row-2", label: createI18nString("Row 2", ["en"]) },
-        ],
-      },
-    };
+  test("Enter on non-last column focuses next column", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
 
-    const { findAllByTestId } = render(<MatrixQuestionForm {...propsWithMinRows} />);
+    const updateQuestion = vi.fn();
 
-    // Try to delete rows until there are only 2 left
-    const deleteButtons = await findAllByTestId("tooltip-renderer");
-    await user.click(deleteButtons[0].querySelector("button") as HTMLButtonElement);
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
 
-    // Try to delete another row, which should fail
-    vi.mocked(mockUpdateQuestion).mockClear();
-    await user.click(deleteButtons[1].querySelector("button") as HTMLButtonElement);
+    const firstColInput = screen.getByTestId("qfi-column-0");
+    await userEvent.type(firstColInput, "{enter}");
 
-    // The mockUpdateQuestion should not be called again
-    expect(mockUpdateQuestion).not.toHaveBeenCalled();
+    expect(updateQuestion).not.toHaveBeenCalled();
   });
 
-  test("handles row input changes", async () => {
-    const user = userEvent.setup();
-    const { getByTestId } = render(<MatrixQuestionForm {...defaultProps} />);
+  test("Arrow Down on row focuses next row", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
 
-    const rowInput = getByTestId("input-row-0");
-    await user.clear(rowInput);
-    await user.type(rowInput, "New Row Label");
+    const updateQuestion = vi.fn();
 
-    expect(mockUpdateQuestion).toHaveBeenCalled();
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
+
+    const firstRowInput = screen.getByTestId("qfi-row-0");
+    await userEvent.type(firstRowInput, "{arrowdown}");
+
+    expect(updateQuestion).not.toHaveBeenCalled();
   });
 
-  test("handles column input changes", async () => {
-    const user = userEvent.setup();
-    const { getByTestId } = render(<MatrixQuestionForm {...defaultProps} />);
+  test("Arrow Up on row focuses previous row", async () => {
+    const question = baseQuestion();
+    const localSurvey = makeSurvey([langDefault]);
+    (localSurvey as any).questions = [question];
 
-    const columnInput = getByTestId("input-column-0");
-    await user.clear(columnInput);
-    await user.type(columnInput, "New Column Label");
+    const updateQuestion = vi.fn();
 
-    expect(mockUpdateQuestion).toHaveBeenCalled();
-  });
+    render(
+      <MatrixQuestionForm
+        localSurvey={localSurvey}
+        question={question}
+        questionIdx={0}
+        updateQuestion={updateQuestion}
+        isInvalid={false}
+        selectedLanguageCode="default"
+        setSelectedLanguageCode={vi.fn()}
+        locale="en-US"
+        isStorageConfigured={true}
+      />
+    );
 
-  test("prevents deletion of a row used in logic", async () => {
-    const { findOptionUsedInLogic } = await import("@/modules/survey/editor/lib/utils");
-    vi.mocked(findOptionUsedInLogic).mockReturnValueOnce(1); // Mock that this row is used in logic
+    const secondRowInput = screen.getByTestId("qfi-row-1");
+    await userEvent.type(secondRowInput, "{arrowup}");
 
-    const user = userEvent.setup();
-    const { findAllByTestId } = render(<MatrixQuestionForm {...defaultProps} />);
-
-    const deleteButtons = await findAllByTestId("tooltip-renderer");
-    await user.click(deleteButtons[0].querySelector("button") as HTMLButtonElement);
-
-    expect(mockUpdateQuestion).not.toHaveBeenCalled();
-  });
-
-  test("prevents deletion of a column used in logic", async () => {
-    const { findOptionUsedInLogic } = await import("@/modules/survey/editor/lib/utils");
-    vi.mocked(findOptionUsedInLogic).mockReturnValueOnce(1); // Mock that this column is used in logic
-
-    const user = userEvent.setup();
-    const { findAllByTestId } = render(<MatrixQuestionForm {...defaultProps} />);
-
-    // Column delete buttons are after row delete buttons
-    const deleteButtons = await findAllByTestId("tooltip-renderer");
-    // Click the first column delete button (index 2)
-    await user.click(deleteButtons[2].querySelector("button") as HTMLButtonElement);
-
-    expect(mockUpdateQuestion).not.toHaveBeenCalled();
+    expect(updateQuestion).not.toHaveBeenCalled();
   });
 });

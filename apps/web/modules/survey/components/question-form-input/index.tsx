@@ -1,5 +1,19 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
+import { debounce } from "lodash";
+import { ImagePlusIcon, TrashIcon } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyQuestion,
+  TSurveyQuestionChoice,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -10,20 +24,6 @@ import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { debounce } from "lodash";
-import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { RefObject, useCallback, useMemo, useRef, useState } from "react";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
-  TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import {
   determineImageUploaderVisibility,
   getChoiceLabel,
@@ -50,7 +50,6 @@ interface QuestionFormInputProps {
   label: string;
   maxLength?: number;
   placeholder?: string;
-  ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   locale: TUserLocale;
