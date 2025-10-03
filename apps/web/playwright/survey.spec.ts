@@ -28,10 +28,13 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
       await page.locator("#howToSendCardOption-link").click();
 
+      // Wait for any auto-save to complete before publishing
+      await page.waitForTimeout(2000);
+
       await page.getByRole("button", { name: "Publish" }).click();
 
-      // Get URL
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+      // Get URL - increase timeout for slower local environments
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
@@ -291,7 +294,7 @@ test.describe("Multi Language Survey Create", async () => {
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
-    await page.getByRole("button", { name: "Multi-Select", exact: true }).click();
+    await page.getByRole("button", { name: "Multi-Select Ask respondents" }).click();
     await page.getByLabel("Question*").fill(surveys.createAndSubmit.multiSelectQuestion.question);
     await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.multiSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.multiSelectQuestion.options[1]);
@@ -446,7 +449,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Multi select question in german
-    await page.getByRole("main").getByText("Multi-Select").click();
+    await page.getByRole("main").getByRole("heading", { name: "Multi-Select" }).click();
 
     await page.getByPlaceholder("Your question here. Recall").click();
     await page
@@ -625,10 +628,13 @@ test.describe("Multi Language Survey Create", async () => {
     await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
     await page.locator("#howToSendCardOption-link").click();
 
+    // Wait for any auto-save to complete before publishing
+    await page.waitForTimeout(2000);
+
     await page.getByRole("button", { name: "Publish" }).click();
 
-    await page.waitForTimeout(5000);
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+    await page.waitForTimeout(2000);
+    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
     await page.getByLabel("Copy survey link to clipboard").click();
