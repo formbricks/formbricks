@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   TI18nString,
   TSurvey,
@@ -163,25 +163,6 @@ export const QuestionFormInput = ({
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
   useSyncScroll(highlightContainerRef, inputRef);
-
-  useEffect(() => {
-    if (!question) return;
-
-    const isListItem = isChoice || isMatrixLabelRow || isMatrixLabelColumn;
-    if (!isListItem) return;
-
-    const isEmpty = !value || Object.values(value).every((val) => !val || val.trim() === "");
-    if (!isEmpty) return;
-
-    const headlineHasContent =
-      question.headline &&
-      Object.values(question.headline).some((val) => typeof val === "string" && val.trim() !== "");
-
-    if (headlineHasContent && inputRef.current) {
-      inputRef.current.focus();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const createUpdatedText = useCallback(
     (updatedText: string): TI18nString => {

@@ -108,19 +108,23 @@ export const QuestionOptionChoice = ({
               input?.focus();
             };
 
-            // Handle Enter key
+            const addChoiceAndFocus = (idx: number) => {
+              addChoice(idx);
+              // Wait for DOM update before focusing the new input
+              setTimeout(() => focusChoiceInput(idx + 1), 0);
+            };
+
             if (e.key === "Enter" && choice.id !== "other") {
               e.preventDefault();
               const lastChoiceIdx = question.choices.findLastIndex((c) => c.id !== "other");
 
               if (choiceIdx === lastChoiceIdx) {
-                addChoice(choiceIdx);
+                addChoiceAndFocus(choiceIdx);
               } else {
                 focusChoiceInput(choiceIdx + 1);
               }
             }
 
-            // Handle Arrow Down key
             if (e.key === "ArrowDown") {
               e.preventDefault();
               if (choiceIdx + 1 < question.choices.length) {
@@ -128,7 +132,6 @@ export const QuestionOptionChoice = ({
               }
             }
 
-            // Handle Arrow Up key
             if (e.key === "ArrowUp") {
               e.preventDefault();
               if (choiceIdx > 0) {
@@ -184,6 +187,13 @@ export const QuestionOptionChoice = ({
               onClick={(e) => {
                 e.preventDefault();
                 addChoice(choiceIdx);
+                // Wait for DOM update before focusing the new input
+                setTimeout(() => {
+                  const input = document.querySelector(
+                    `input[id="choice-${choiceIdx + 1}"]`
+                  ) as HTMLInputElement;
+                  input?.focus();
+                }, 0);
               }}>
               <PlusIcon />
             </Button>
