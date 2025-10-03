@@ -1,5 +1,5 @@
-import { surveys } from "@/playwright/utils/mock";
 import { expect } from "@playwright/test";
+import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
 import { createSurvey, createSurveyWithLogic, uploadFileForFileUploadQuestion } from "./utils/helper";
 
@@ -291,7 +291,7 @@ test.describe("Multi Language Survey Create", async () => {
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
-    await page.getByRole("button", { name: "Multi-Select" }).click();
+    await page.getByRole("button", { name: "Multi-Select", exact: true }).click();
     await page.getByLabel("Question*").fill(surveys.createAndSubmit.multiSelectQuestion.question);
     await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.multiSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.multiSelectQuestion.options[1]);
