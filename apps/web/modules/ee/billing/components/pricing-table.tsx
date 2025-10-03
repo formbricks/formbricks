@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { cn } from "@/lib/cn";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
@@ -141,7 +140,7 @@ export const PricingTable = ({
           <div className="flex w-full">
             <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
               {t("environments.settings.billing.current_plan")}:{" "}
-              {capitalizeFirstLetter(organization.billing.plan)}
+              <span className="capitalize">{organization.billing.plan}</span>
               {cancellingOn && (
                 <Badge
                   className="mx-2"
