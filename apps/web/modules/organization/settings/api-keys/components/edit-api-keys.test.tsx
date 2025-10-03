@@ -336,30 +336,6 @@ describe("EditAPIKeys", () => {
     expect(screen.getAllByText("environments.project.api_keys.secret")).toHaveLength(2);
   });
 
-  test("formats API key with line breaks when it has multiple parts", () => {
-    // Mock the clipboard writeText method
-    const writeText = vi.fn();
-    Object.assign(navigator, {
-      clipboard: {
-        writeText,
-      },
-    });
-
-    // Provide an API key with multiple underscore-separated parts
-    const apiKeyWithMultipleParts = {
-      ...mockApiKeys[0],
-      actualKey: "fb_prod_1234567890abcdef",
-    } as TApiKeyWithEnvironmentPermission & { actualKey: string };
-
-    render(<EditAPIKeys {...defaultProps} apiKeys={[apiKeyWithMultipleParts]} />);
-
-    // The key should be formatted with a line break after the second underscore
-    // fb_prod_
-    // 1234567890abcdef
-    const apiKeyDisplay = screen.getByText(/fb_prod_/);
-    expect(apiKeyDisplay).toBeInTheDocument();
-  });
-
   test("stops propagation when clicking copy button", async () => {
     const writeText = vi.fn();
     Object.assign(navigator, {

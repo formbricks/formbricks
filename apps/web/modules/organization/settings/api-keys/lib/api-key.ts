@@ -9,6 +9,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import {
+  TApiKey,
   TApiKeyCreateInput,
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
@@ -48,7 +49,7 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
 );
 
 // Get API key with its permissions from a raw API key
-export const getApiKeyWithPermissions = reactCache(async (apiKey: string) => {
+export const getApiKeyWithPermissions = reactCache(async (apiKey: string): Promise<TApiKey | null> => {
   try {
     const includeQuery = {
       apiKeyEnvironments: {

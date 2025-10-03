@@ -132,13 +132,9 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
       return <span className="italic">{t("environments.project.api_keys.secret")}</span>;
     }
 
-    // Split the API key at the second underscore for better display
-    const parts = apiKey.split("_");
-    const formattedKey = parts.length >= 3 ? `${parts[0]}_${parts[1]}_\n${parts.slice(2).join("_")}` : apiKey;
-
     return (
       <div className="flex items-center justify-between gap-2">
-        <span className="whitespace-pre-line break-all">{formattedKey}</span>
+        <span className="whitespace-pre-line break-all">{apiKey}</span>
         <div className="copyApiKeyIcon flex-shrink-0">
           <FilesIcon
             className="h-4 w-4 cursor-pointer"
