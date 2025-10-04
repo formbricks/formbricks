@@ -145,7 +145,7 @@ install_formbricks() {
     acme:
       email: $email_address
       storage: acme.json
-      caServer: "https://acme-v01.api.letsencrypt.org/directory"
+      caServer: "https://acme-v02.api.letsencrypt.org/directory"
       tlsChallenge: {}"
   else
     certResolver=""
@@ -157,8 +157,14 @@ entryPoints:
   web:
     address: ":80"
     $http_redirection
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
   websecure:
     address: ":443"
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
     http:
       tls:
         $certResolver
@@ -490,7 +496,7 @@ EOF
     if [[ $insert_traefik == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
   traefik:
-    image: "traefik:v2.7"
+    image: "traefik:v2.11.29"
     restart: always
     container_name: "traefik"
     depends_on:
@@ -519,7 +525,7 @@ EOF
       cat > "$services_snippet_file" << EOF
 
   traefik:
-    image: "traefik:v2.7"
+    image: "traefik:v2.11.29"
     restart: always
     container_name: "traefik"
     depends_on:
