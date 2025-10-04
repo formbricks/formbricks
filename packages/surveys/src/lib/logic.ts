@@ -1,4 +1,3 @@
-import { getLocalizedValue } from "@/lib/i18n";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
@@ -10,6 +9,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "@/lib/i18n";
 
 const getVariableValue = (
   variables: TSurveyVariable[],
@@ -107,7 +107,7 @@ const getLeftOperandValue = (
       }
 
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
-        const isOthersEnabled = currentQuestion.choices.at(-1)?.id === "other";
+        const isOthersEnabled = currentQuestion.choices.some((c) => c.id === "other");
 
         if (typeof responseValue === "string") {
           const choice = currentQuestion.choices.find((choice) => {
