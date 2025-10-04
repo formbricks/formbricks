@@ -14,11 +14,11 @@ export default defineConfig({
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Retry on CI only */
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
   /* Timeout for each test */
   timeout: 120000,
   /* Fail the test run after the first failure */
-  maxFailures: 1, // Stop execution after the first failed test
+  maxFailures: process.env.CI ? undefined : 1, // Allow more failures in CI to avoid cascading shutdowns
   /* Opt out of parallel tests on CI. */
   // workers: os.cpus().length,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */

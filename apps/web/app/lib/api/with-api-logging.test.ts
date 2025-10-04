@@ -104,10 +104,12 @@ function createMockRequest({ method = "GET", url = "https://api.test/endpoint", 
 }
 
 const mockApiAuthentication = {
-  hashedApiKey: "test-api-key",
+  type: "apiKey" as const,
+  environmentPermissions: [],
   apiKeyId: "api-key-1",
   organizationId: "org-1",
-} as TAuthenticationApiKey;
+  organizationAccess: "all" as const,
+} as unknown as TAuthenticationApiKey;
 
 describe("withV1ApiWrapper", () => {
   beforeEach(() => {

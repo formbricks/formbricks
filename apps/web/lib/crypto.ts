@@ -1,6 +1,7 @@
+import { compare, hash } from "bcryptjs";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
 import { logger } from "@formbricks/logger";
-import { ENCRYPTION_KEY } from "./constants";
+import { ENCRYPTION_KEY } from "@/lib/constants";
 
 const ALGORITHM_V1 = "aes256";
 const ALGORITHM_V2 = "aes-256-gcm";
@@ -91,4 +92,63 @@ export function symmetricDecrypt(payload: string, key: string): string {
   }
 }
 
-export const getHash = (key: string): string => createHash("sha256").update(key).digest("hex");
+/**
+ * General bcrypt hashing utility for secrets (passwords, API keys, etc.)
+ */
+export const hashSecret = async (secret: string, cost: number = 12): Promise<string> => {
+  return await hash(secret, cost);
+};
+
+/**
+ * General bcrypt verification utility for secrets (passwords, API keys, etc.)
+ */
+export const verifySecret = async (secret: string, hashedSecret: string): Promise<boolean> => {
+  try {
+    const isValid = await compare(secret, hashedSecret);
+    return isValid;
+  } catch (error) {
+    // Log warning for debugging purposes, but don't throw to maintain security
+    logger.warn("Secret verification failed due to invalid hash format", { error });
+    // Return false for invalid hashes or other bcrypt errors
+    return false;
+  }
+};
+
+/**
+ * SHA-256 hashing utility (deterministic, for legacy support)
+ */
+export const hashSha256 = (input: string): string => {
+  return createHash("sha256").update(input).digest("hex");
+};
+
+/**
+ * Parse a v2 API key format: fbk_{id}_{secret}
+ * Returns null if the key doesn't match the expected format
+ */
+export const parseApiKeyV2 = (key: string): { id: string; secret: string } | null => {
+  // Check if it starts with fbk_
+  if (!key.startsWith("fbk_")) {
+    return null;
+  }
+
+  // Find the first underscore after 'fbk_' to separate id and secret
+  // Since IDs (CUIDs) don't contain underscores, the first underscore after the prefix
+  // is always the separator between id and secret
+  const firstUnderscoreIndex = key.indexOf("_", 4);
+  if (firstUnderscoreIndex === -1) {
+    // No underscore found after fbk_ prefix
+    return null;
+  }
+
+  const id = key.slice(4, firstUnderscoreIndex); // Skip 'fbk_' prefix
+  const secret = key.slice(firstUnderscoreIndex + 1);
+
+  // Validate that id and secret contain only allowed characters and are not empty
+  // Note: IDs (CUIDs) don't contain underscores, only alphanumeric and hyphens
+  // Secrets are base64url-encoded and can contain underscores, hyphens, and alphanumeric chars
+  if (!id || !secret || !/^[a-zA-Z0-9-]+$/.test(id) || !/^[A-Za-z0-9_-]+$/.test(secret)) {
+    return null;
+  }
+
+  return { id, secret };
+};

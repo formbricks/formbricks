@@ -14,7 +14,7 @@ import {
 const mockApiKey: ApiKey = {
   id: "apikey123",
   label: "Test API Key",
-  hashedKey: "hashed_key_value",
+  hashedKey: "$2a$12$hashedBcryptValue",
   createdAt: new Date(),
   createdBy: "user123",
   organizationId: "org123",
@@ -51,13 +51,25 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("crypto", () => ({
-  randomBytes: () => ({
-    toString: () => "generated_key",
-  }),
-  createHash: () => ({
-    update: vi.fn().mockReturnThis(),
-    digest: vi.fn().mockReturnValue("hashed_key_value"),
+vi.mock("crypto", async () => {
+  const actual = await vi.importActual<typeof import("crypto")>("crypto");
+  return {
+    ...actual,
+    randomBytes: vi.fn((_size: number) => ({
+      toString: (_encoding: string) => "testSecret123",
+    })),
+  };
+});
+
+vi.mock("@/lib/crypto", () => ({
+  hashSecret: vi.fn(async () => "$2a$12$hashedBcryptValue"),
+  verifySecret: vi.fn(async () => true),
+  hashSha256: vi.fn(() => "sha256HashValue"),
+  parseApiKeyV2: vi.fn((key: string) => {
+    if (key.startsWith("fbk_")) {
+      return { id: "apikey123", secret: "testSecret123" };
+    }
+    return null;
   }),
 }));
 
@@ -68,7 +80,7 @@ describe("API Key Management", () => {
 
   describe("getApiKeysWithEnvironmentPermissions", () => {
     test("retrieves API keys successfully", async () => {
-      vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKeyWithEnvironments]);
+      vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKeyWithEnvironments] as any);
 
       const result = await getApiKeysWithEnvironmentPermissions("clj28r6va000409j3ep7h8xzk");
 
@@ -115,36 +127,62 @@ describe("API Key Management", () => {
       vi.clearAllMocks();
     });
 
-    test("returns api key with permissions if found", async () => {
-      vi.mocked(prisma.apiKey.findUnique).mockResolvedValue({ ...mockApiKey });
-      const result = await getApiKeyWithPermissions("apikey123");
+    test("returns api key with permissions for v2 format (fbk_id_secret)", async () => {
+      vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ ...mockApiKey } as any);
+      vi.mocked(prisma.apiKey.update).mockResolvedValueOnce({ ...mockApiKey } as any);
+
+      const result = await getApiKeyWithPermissions("fbk_apikey123_testSecret123");
+
       expect(result).toMatchObject({
         ...mockApiKey,
       });
       expect(prisma.apiKey.findUnique).toHaveBeenCalledWith({
-        where: { hashedKey: "hashed_key_value" },
-        include: {
-          apiKeyEnvironments: {
-            include: {
-              environment: {
-                include: {
-                  project: {
-                    select: {
-                      id: true,
-                      name: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        where: { id: "apikey123" },
+        include: expect.any(Object),
+      });
+      expect(prisma.apiKey.update).toHaveBeenCalledWith({
+        where: { id: "apikey123" },
+        data: { lastUsedAt: expect.any(Date) },
       });
     });
 
-    test("returns null if api key not found", async () => {
+    test("returns api key with permissions for v1 legacy format", async () => {
+      vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ ...mockApiKey } as any);
+      vi.mocked(prisma.apiKey.update).mockResolvedValueOnce({ ...mockApiKey } as any);
+
+      const result = await getApiKeyWithPermissions("legacy-api-key");
+
+      expect(result).toMatchObject({
+        ...mockApiKey,
+      });
+      expect(prisma.apiKey.findUnique).toHaveBeenCalledWith({
+        where: { hashedKey: "sha256HashValue" },
+        include: expect.any(Object),
+      });
+      expect(prisma.apiKey.update).toHaveBeenCalledWith({
+        where: { id: "apikey123" },
+        data: { lastUsedAt: expect.any(Date) },
+      });
+    });
+
+    test("returns null if v2 api key not found", async () => {
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null);
-      const result = await getApiKeyWithPermissions("invalid-key");
+      const result = await getApiKeyWithPermissions("fbk_invalid_secret");
+      expect(result).toBeNull();
+    });
+
+    test("returns null if v2 secret verification fails", async () => {
+      const crypto = await import("@/lib/crypto");
+      vi.mocked(crypto.verifySecret).mockResolvedValueOnce(false);
+      vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ ...mockApiKey } as any);
+
+      const result = await getApiKeyWithPermissions("fbk_apikey123_wrongSecret");
+      expect(result).toBeNull();
+    });
+
+    test("returns null if v1 api key not found", async () => {
+      vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null);
+      const result = await getApiKeyWithPermissions("invalid-legacy-key");
       expect(result).toBeNull();
     });
 
@@ -221,13 +259,22 @@ describe("API Key Management", () => {
       ],
     };
 
-    test("creates an API key successfully", async () => {
+    test("creates an API key successfully with v2 format", async () => {
       vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
 
       const result = await createApiKey("org123", "user123", mockApiKeyData);
 
-      expect(result).toEqual({ ...mockApiKey, actualKey: "generated_key" });
-      expect(prisma.apiKey.create).toHaveBeenCalled();
+      expect(result).toEqual({ ...mockApiKey, actualKey: "fbk_apikey123_testSecret123" });
+      expect(prisma.apiKey.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          label: "Test API Key",
+          hashedKey: "$2a$12$hashedBcryptValue",
+          createdBy: "user123",
+        }),
+        include: {
+          apiKeyEnvironments: true,
+        },
+      });
     });
 
     test("creates an API key with environment permissions successfully", async () => {
@@ -238,7 +285,7 @@ describe("API Key Management", () => {
         environmentPermissions: [{ environmentId: "env123", permission: ApiKeyPermission.manage }],
       });
 
-      expect(result).toEqual({ ...mockApiKeyWithEnvironments, actualKey: "generated_key" });
+      expect(result).toEqual({ ...mockApiKeyWithEnvironments, actualKey: "fbk_apikey123_testSecret123" });
       expect(prisma.apiKey.create).toHaveBeenCalled();
     });
 

@@ -1,8 +1,5 @@
-import { TGetFilter } from "@/modules/api/v2/types/api-filter";
 import { Prisma } from "@prisma/client";
-import { createHash } from "crypto";
-
-export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
+import { TGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export function pickCommonFilter<T extends TGetFilter>(params: T) {
   const { limit, skip, sortBy, order, startDate, endDate } = params;

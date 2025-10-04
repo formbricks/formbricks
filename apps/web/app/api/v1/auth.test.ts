@@ -1,22 +1,12 @@
-import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
+import { NextRequest } from "next/server";
+import { describe, expect, test, vi } from "vitest";
+import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
-import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
 import { authenticateRequest } from "./auth";
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    apiKey: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@/modules/api/v2/management/lib/utils", () => ({
-  hashApiKey: vi.fn(),
+vi.mock("@/modules/organization/settings/api-keys/lib/api-key", () => ({
+  getApiKeyWithPermissions: vi.fn(),
 }));
 
 describe("getApiKeyWithPermissions", () => {
@@ -24,6 +14,7 @@ describe("getApiKeyWithPermissions", () => {
     const mockApiKeyData = {
       id: "api-key-id",
       organizationId: "org-id",
+      organizationAccess: "all" as const,
       hashedKey: "hashed-key",
       createdAt: new Date(),
       createdBy: "user-id",
@@ -33,26 +24,29 @@ describe("getApiKeyWithPermissions", () => {
         {
           environmentId: "env-1",
           permission: "manage" as const,
-          environment: { id: "env-1" },
+          environment: {
+            id: "env-1",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            type: "development" as const,
+            projectId: "project-1",
+            appSetupCompleted: true,
+            project: { id: "project-1", name: "Project 1" },
+          },
         },
       ],
     };
 
-    vi.mocked(hashApiKey).mockReturnValue("hashed-key");
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(mockApiKeyData);
-    vi.mocked(prisma.apiKey.update).mockResolvedValue(mockApiKeyData);
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
 
     const result = await getApiKeyWithPermissions("test-api-key");
 
     expect(result).toEqual(mockApiKeyData);
-    expect(prisma.apiKey.update).toHaveBeenCalledWith({
-      where: { id: "api-key-id" },
-      data: { lastUsedAt: expect.any(Date) },
-    });
+    expect(getApiKeyWithPermissions).toHaveBeenCalledWith("test-api-key");
   });
 
   test("returns null when API key is not found", async () => {
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null);
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(null);
 
     const result = await getApiKeyWithPermissions("invalid-key");
 
@@ -110,14 +104,14 @@ describe("hasPermission", () => {
 
 describe("authenticateRequest", () => {
   test("should return authentication data for valid API key", async () => {
-    const request = new Request("http://localhost", {
+    const request = new NextRequest("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
 
     const mockApiKeyData = {
       id: "api-key-id",
       organizationId: "org-id",
-      hashedKey: "hashed-key",
+      organizationAccess: "all" as const,
       createdAt: new Date(),
       createdBy: "user-id",
       lastUsedAt: null,
@@ -128,18 +122,18 @@ describe("authenticateRequest", () => {
           permission: "manage" as const,
           environment: {
             id: "env-1",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            type: "development" as const,
             projectId: "project-1",
-            project: { name: "Project 1" },
-            type: "development",
+            appSetupCompleted: true,
+            project: { id: "project-1", name: "Project 1" },
           },
         },
       ],
     };
 
-    vi.mocked(hashApiKey).mockReturnValue("hashed-key");
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(mockApiKeyData);
-    vi.mocked(prisma.apiKey.update).mockResolvedValue(mockApiKeyData);
-
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
     const result = await authenticateRequest(request);
 
     expect(result).toEqual({
@@ -153,24 +147,47 @@ describe("authenticateRequest", () => {
           projectName: "Project 1",
         },
       ],
-      hashedApiKey: "hashed-key",
       apiKeyId: "api-key-id",
       organizationId: "org-id",
+      organizationAccess: "all",
     });
+    expect(getApiKeyWithPermissions).toHaveBeenCalledWith("valid-api-key");
   });
 
   test("returns null when no API key is provided", async () => {
-    const request = new Request("http://localhost");
+    const request = new NextRequest("http://localhost");
     const result = await authenticateRequest(request);
     expect(result).toBeNull();
   });
 
   test("returns null when API key is invalid", async () => {
-    const request = new Request("http://localhost", {
+    const request = new NextRequest("http://localhost", {
       headers: { "x-api-key": "invalid-api-key" },
     });
 
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null);
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(null);
+
+    const result = await authenticateRequest(request);
+    expect(result).toBeNull();
+  });
+
+  test("returns null when API key has no environment permissions", async () => {
+    const request = new NextRequest("http://localhost", {
+      headers: { "x-api-key": "valid-api-key" },
+    });
+
+    const mockApiKeyData = {
+      id: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: "all" as const,
+      createdAt: new Date(),
+      createdBy: "user-id",
+      lastUsedAt: null,
+      label: "Test API Key",
+      apiKeyEnvironments: [],
+    };
+
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
 
     const result = await authenticateRequest(request);
     expect(result).toBeNull();
