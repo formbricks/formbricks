@@ -4,7 +4,16 @@ import { Editor } from "./editor";
 
 // Mock sub-components used in Editor
 vi.mock("@lexical/react/LexicalComposerContext", () => ({
-  useLexicalComposerContext: vi.fn(() => [{ registerUpdateListener: vi.fn() }]),
+  useLexicalComposerContext: vi.fn(() => [
+    {
+      registerUpdateListener: vi.fn(),
+      registerCommand: vi.fn(),
+      getEditorState: vi.fn(() => ({
+        read: vi.fn((callback) => callback()),
+      })),
+      update: vi.fn((callback) => callback()),
+    },
+  ]),
 }));
 
 vi.mock("@lexical/react/LexicalRichTextPlugin", () => ({
@@ -50,9 +59,11 @@ vi.mock("./auto-link-plugin", () => ({
 }));
 
 vi.mock("./editor-content-checker", () => ({
-  EditorContentChecker: ({ onEmptyChange }: { onEmptyChange: (isEmpty: boolean) => void }) => (
-    <div data-testid="editor-content-checker" />
-  ),
+  EditorContentChecker: () => <div data-testid="editor-content-checker" />,
+}));
+
+vi.mock("./recall-plugin", () => ({
+  RecallPlugin: () => <div data-testid="recall-plugin" />,
 }));
 
 // Fix the mock to correctly set the className for isInvalid

@@ -1,15 +1,15 @@
 "use client";
 
-import { extractLanguageCodes, isLabelValidForAllLanguages } from "@/lib/i18n/utils";
-import { md } from "@/lib/markdownIt";
-import { recallToHeadline } from "@/lib/utils/recall";
-import { Editor } from "@/modules/ui/components/editor";
 import { useTranslate } from "@tolgee/react";
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { extractLanguageCodes, isLabelValidForAllLanguages } from "@/lib/i18n/utils";
+import { md } from "@/lib/markdownIt";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { Editor } from "@/modules/ui/components/editor";
 import { LanguageIndicator } from "./language-indicator";
 
 interface LocalizedEditorProps {
@@ -24,6 +24,7 @@ interface LocalizedEditorProps {
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   locale: TUserLocale;
+  questionId: string;
 }
 
 const checkIfValueIsIncomplete = (
@@ -50,7 +51,8 @@ export function LocalizedEditor({
   firstRender,
   setFirstRender,
   locale,
-}: LocalizedEditorProps) {
+  questionId,
+}: Readonly<LocalizedEditorProps>) {
   const { t } = useTranslate();
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
@@ -84,6 +86,9 @@ export function LocalizedEditor({
             updateQuestion(questionIdx, { html: translatedHtml });
           }
         }}
+        localSurvey={localSurvey}
+        questionId={questionId}
+        selectedLanguageCode={selectedLanguageCode}
       />
       {localSurvey.languages.length > 1 && (
         <div>

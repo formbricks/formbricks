@@ -1,11 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { FileInput } from "@/modules/ui/components/file-input";
-import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { Hand } from "lucide-react";
@@ -13,6 +7,12 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
+import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { FileInput } from "@/modules/ui/components/file-input";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;
@@ -156,6 +156,7 @@ export const EditWelcomeCard = ({
                   setFirstRender={setFirstRender}
                   questionIdx={-1}
                   locale={locale}
+                  questionId="start"
                 />
               </div>
             </div>

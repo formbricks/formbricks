@@ -197,6 +197,6 @@ describe("RecallItemSelect", () => {
     const searchInput = screen.getByPlaceholderText("Search options");
     await user.type(searchInput, "nonexistent");
 
-    expect(screen.getByText("No recall items found 🤷")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.no_recall_items_found")).toBeInTheDocument();
   });
 });

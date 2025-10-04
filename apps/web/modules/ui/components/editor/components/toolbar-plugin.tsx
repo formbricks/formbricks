@@ -1,14 +1,5 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-import { Input } from "@/modules/ui/components/input";
-import { cn } from "@/modules/ui/lib/utils";
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import {
@@ -20,7 +11,7 @@ import {
 } from "@lexical/list";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
-import { $isAtNodeEnd, $wrapNodes } from "@lexical/selection";
+import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
 import type { BaseSelection, EditorState, LexicalEditor, NodeSelection, RangeSelection } from "lexical";
 import {
@@ -37,6 +28,15 @@ import {
 import { Bold, ChevronDownIcon, Italic, Link, Underline } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
+import { cn } from "@/modules/ui/lib/utils";
 import { AddVariablesDropdown } from "./add-variables-dropdown";
 import type { TextEditorProps } from "./editor";
 
@@ -251,7 +251,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         const selection = $getSelection();
 
         if ($isRangeSelection(selection)) {
-          $wrapNodes(selection, () => $createParagraphNode());
+          $setBlocksType(selection, () => $createParagraphNode());
         }
       });
     }
@@ -263,7 +263,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         const selection = $getSelection();
 
         if ($isRangeSelection(selection)) {
-          $wrapNodes(selection, () => $createHeadingNode("h1"));
+          $setBlocksType(selection, () => $createHeadingNode("h1"));
         }
       });
     }
@@ -275,7 +275,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         const selection = $getSelection();
 
         if ($isRangeSelection(selection)) {
-          $wrapNodes(selection, () => $createHeadingNode("h2"));
+          $setBlocksType(selection, () => $createHeadingNode("h2"));
         }
       });
     }
