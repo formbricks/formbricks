@@ -230,9 +230,38 @@ services:
 
 ## Security Considerations
 
-### S3 Bucket Permissions
+### IAM User Permissions
 
-Configure your S3 bucket with a least-privileged policy:
+When using AWS S3 or S3-compatible storage providers, ensure that the IAM user associated with your `S3_ACCESS_KEY` and `S3_SECRET_KEY` credentials has the necessary permissions to interact with your bucket. Without proper permissions, file uploads and retrievals will fail.
+
+The following IAM policy grants the minimum required permissions for Formbricks to function correctly. This policy is also used in the bundled MinIO integration:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+      "Resource": ["arn:aws:s3:::your-bucket-name/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::your-bucket-name"]
+    }
+  ]
+}
+```
+
+<Note>
+  Replace `your-bucket-name` with your actual S3 bucket name. The first statement grants object-level
+  operations (upload, retrieve, and delete files), while the second statement allows listing bucket contents.
+</Note>
+
+### S3 Bucket Policy
+
+In addition to IAM user permissions, configure your S3 bucket with a least-privileged bucket policy to ensure security:
 
 1. **Scoped Public Read Access**: Only allow public read access to specific prefixes where needed
 2. **Restricted Write Access**: Only your Formbricks instance should be able to upload files
@@ -264,6 +293,10 @@ Example least-privileged S3 bucket policy:
 }
 ```
 
+<Note>
+  Replace `your-bucket-name` with your actual bucket name and `arn:aws:iam::123456789012:user/formbricks-service` with the ARN of your IAM user. This policy allows public read access only to specific paths while restricting write access to your Formbricks service user.
+</Note>
+
 ### MinIO Security
 
 When using bundled MinIO:
@@ -284,6 +317,9 @@ When using bundled MinIO:
 2. Verify bucket exists and is accessible
 3. Ensure bucket permissions allow uploads from your server
 4. Check network connectivity to S3 endpoint
+5. We use S3 presigned URLs for uploads. Make sure your CORS policy allows presigned URL uploads; otherwise, uploads will fail.
+Some providers (e.g., Hetzner’s object storage) [require a specific CORS configuration](https://github.com/formbricks/formbricks/discussions/6641#discussioncomment-14574048).
+If you’re using the bundled MinIO setup, this is already configured for you.
 
 **Images not displaying in surveys:**
 
