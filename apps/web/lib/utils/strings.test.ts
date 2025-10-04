@@ -1,36 +1,7 @@
 import { describe, expect, test } from "vitest";
-import {
-  capitalizeFirstLetter,
-  isCapitalized,
-  sanitizeString,
-  startsWithVowel,
-  truncate,
-  truncateText,
-} from "./strings";
+import { isCapitalized, sanitizeString, startsWithVowel, truncate, truncateText } from "./strings";
 
 describe("String Utilities", () => {
-  describe("capitalizeFirstLetter", () => {
-    test("capitalizes the first letter of a string", () => {
-      expect(capitalizeFirstLetter("hello")).toBe("Hello");
-    });
-
-    test("returns empty string if input is null", () => {
-      expect(capitalizeFirstLetter(null)).toBe("");
-    });
-
-    test("returns empty string if input is empty string", () => {
-      expect(capitalizeFirstLetter("")).toBe("");
-    });
-
-    test("doesn't change already capitalized string", () => {
-      expect(capitalizeFirstLetter("Hello")).toBe("Hello");
-    });
-
-    test("handles single character string", () => {
-      expect(capitalizeFirstLetter("a")).toBe("A");
-    });
-  });
-
   describe("truncate", () => {
     test("returns the string as is if length is less than the specified length", () => {
       expect(truncate("hello", 10)).toBe("hello");

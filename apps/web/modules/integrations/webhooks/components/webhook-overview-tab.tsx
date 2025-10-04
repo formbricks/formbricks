@@ -1,11 +1,10 @@
 "use client";
 
-import { convertDateTimeStringShort } from "@/lib/time";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
-import { Label } from "@/modules/ui/components/label";
 import { Webhook } from "@prisma/client";
 import { TFnType, useTranslate } from "@tolgee/react";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { convertDateTimeStringShort } from "@/lib/time";
+import { Label } from "@/modules/ui/components/label";
 
 interface ActivityTabProps {
   webhook: Webhook;
@@ -50,8 +49,8 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
           <Label className="text-slate-500">
             {t("environments.integrations.webhooks.created_by_third_party")}
           </Label>
-          <p className="text-sm text-slate-900">
-            {webhook.source === "user" ? "No" : capitalizeFirstLetter(webhook.source)}
+          <p className="text-sm capitalize text-slate-900">
+            {webhook.source === "user" ? "No" : webhook.source}
           </p>
         </div>
 

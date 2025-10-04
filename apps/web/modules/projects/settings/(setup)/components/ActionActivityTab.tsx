@@ -1,8 +1,12 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
+import { TEnvironment } from "@formbricks/types/environment";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { getActiveInactiveSurveysAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
 import { createActionClassAction } from "@/modules/survey/editor/actions";
@@ -10,11 +14,6 @@ import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { Label } from "@/modules/ui/components/label";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import { useTranslate } from "@tolgee/react";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
-import { TEnvironment } from "@formbricks/types/environment";
 
 interface ActivityTabProps {
   actionClass: TActionClass;
@@ -152,7 +151,7 @@ export const ActionActivityTab = ({
           <Label className="block text-xs font-normal text-slate-500">Type</Label>
           <div className="mt-1 flex items-center">
             <div className="mr-1.5 h-4 w-4 text-slate-600">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
-            <p className="text-sm text-slate-700">{capitalizeFirstLetter(actionClass.type)}</p>
+            <p className="text-sm capitalize text-slate-700">{actionClass.type}</p>
           </div>
         </div>
         <div className="">

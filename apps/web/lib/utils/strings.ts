@@ -1,10 +1,3 @@
-export const capitalizeFirstLetter = (string: string | null = "") => {
-  if (string === null) {
-    return "";
-  }
-  return string.charAt(0).toUpperCase() + string.slice(1);
-};
-
 // write a function that takes a string and truncates it to the specified length
 export const truncate = (str: string, length: number) => {
   if (!str) return "";

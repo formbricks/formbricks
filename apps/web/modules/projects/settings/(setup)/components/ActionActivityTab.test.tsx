@@ -1,11 +1,11 @@
-import { getActiveInactiveSurveysAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
-import { createActionClassAction } from "@/modules/survey/editor/actions";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
+import { getActiveInactiveSurveysAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
+import { createActionClassAction } from "@/modules/survey/editor/actions";
 import { ActionActivityTab } from "./ActionActivityTab";
 
 // Mock dependencies
@@ -49,10 +49,6 @@ vi.mock("@/lib/time", () => ({
 
 vi.mock("@/lib/utils/helper", () => ({
   getFormattedErrorMessage: (error: any) => `Formatted error: ${error?.message || "Unknown error"}`,
-}));
-
-vi.mock("@/lib/utils/strings", () => ({
-  capitalizeFirstLetter: (str: string) => str.charAt(0).toUpperCase() + str.slice(1),
 }));
 
 vi.mock("@/modules/survey/editor/actions", () => ({
@@ -209,7 +205,7 @@ describe("ActionActivityTab", () => {
     expect(screen.getByText(`formatted-${mockActionClass.createdAt.toString()}`)).toBeInTheDocument(); // Created on
     expect(screen.getByText(`formatted-${mockActionClass.updatedAt.toString()}`)).toBeInTheDocument(); // Last updated
     expect(screen.getByText("NoCodeIcon")).toBeInTheDocument(); // Type icon
-    expect(screen.getByText("NoCode")).toBeInTheDocument(); // Type text
+    expect(screen.getByText("noCode")).toBeInTheDocument(); // Type text (now lowercase, capitalized via CSS)
     expect(screen.getByText("Development")).toBeInTheDocument(); // Environment
     expect(screen.getByText("Copy to Production")).toBeInTheDocument(); // Copy button text
   });

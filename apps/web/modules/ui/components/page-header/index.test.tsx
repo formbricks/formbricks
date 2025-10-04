@@ -11,7 +11,7 @@ describe("PageHeader", () => {
   test("renders page title correctly", () => {
     render(<PageHeader pageTitle="Dashboard" />);
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Dashboard")).toHaveClass("text-3xl font-bold text-slate-800 capitalize");
+    expect(screen.getByText("Dashboard")).toHaveClass("text-3xl font-bold text-slate-800");
   });
 
   test("renders with CTA", () => {

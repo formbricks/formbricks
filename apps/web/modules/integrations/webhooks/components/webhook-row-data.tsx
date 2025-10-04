@@ -1,12 +1,11 @@
 "use client";
 
-import { timeSince } from "@/lib/time";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
-import { Badge } from "@/modules/ui/components/badge";
 import { Webhook } from "@prisma/client";
 import { TFnType, useTranslate } from "@tolgee/react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { timeSince } from "@/lib/time";
+import { Badge } from "@/modules/ui/components/badge";
 
 const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
   if (webhook.surveyIds.length === 0) {
@@ -82,7 +81,7 @@ export const WebhookRowData = ({
         </div>
       </div>
       <div className="col-span-1 my-auto text-center text-sm text-slate-800">
-        <Badge type="gray" size="tiny" text={capitalizeFirstLetter(webhook.source) || t("common.user")} />
+        <Badge type="gray" size="tiny" text={webhook.source || t("common.user")} className="capitalize" />
       </div>
       <div className="col-span-4 my-auto text-center text-sm text-slate-800">
         {renderSelectedSurveysText(webhook, surveys)}

@@ -64,6 +64,7 @@ describe("SelectedRowSettings", () => {
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="contact"
+        isQuotasAllowed={false}
       />
     );
     expect(screen.getByText("2 common.contacts common.selected")).toBeInTheDocument();
@@ -82,6 +83,7 @@ describe("SelectedRowSettings", () => {
         updateRowList={updateRowList}
         deleteAction={deleteAction}
         type="response"
+        isQuotasAllowed={false}
       />
     );
     expect(screen.queryByText("common.download")).toBeNull();
@@ -95,6 +97,7 @@ describe("SelectedRowSettings", () => {
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="response"
+        isQuotasAllowed={false}
       />
     );
     fireEvent.click(screen.getByText("common.download"));
@@ -115,6 +118,7 @@ describe("SelectedRowSettings", () => {
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="contact"
+        isQuotasAllowed={false}
       />
     );
     // open delete dialog
@@ -136,6 +140,7 @@ describe("SelectedRowSettings", () => {
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="response"
+        isQuotasAllowed={false}
       />
     );
     // open delete menu (trigger button)
@@ -156,6 +161,7 @@ describe("SelectedRowSettings", () => {
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="response"
+        isQuotasAllowed={false}
       />
     );
     // open delete dialog
@@ -177,6 +183,7 @@ describe("SelectedRowSettings", () => {
         deleteAction={deleteAction}
         downloadRowsAction={downloadRowsAction}
         type="contact"
+        isQuotasAllowed={false}
       />
     );
     // open delete menu (trigger button)

@@ -230,7 +230,7 @@ describe("RenderResponse", () => {
         showId={false}
       />
     );
-    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("Value");
+    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("value");
   });
 
   test("renders ResponseBadges for 'Consent' question (number)", () => {
@@ -258,7 +258,7 @@ describe("RenderResponse", () => {
         showId={false}
       />
     );
-    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("Click");
+    expect(screen.getByTestId("ResponseBadges")).toHaveTextContent("click");
   });
 
   test("renders ResponseBadges for 'MultipleChoiceSingle' question (string)", () => {

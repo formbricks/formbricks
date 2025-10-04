@@ -1,6 +1,11 @@
 "use client";
 
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
+import { Table } from "@tanstack/react-table";
+import { useTranslate } from "@tolgee/react";
+import { ArrowDownToLineIcon, Loader2Icon, Trash2Icon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { Button } from "@/modules/ui/components/button";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -11,12 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { cn } from "@/modules/ui/lib/utils";
-import { Table } from "@tanstack/react-table";
-import { useTranslate } from "@tolgee/react";
-import { ArrowDownToLineIcon, Loader2Icon, Trash2Icon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
-import { TResponseWithQuotas } from "@formbricks/types/responses";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
@@ -75,14 +74,16 @@ export const SelectedRowSettings = <T,>({
 
       // Update the row list UI
       updateRowList(rowsToBeDeleted);
-      toast.success(t("common.table_items_deleted_successfully", { type: capitalizeFirstLetter(type) }));
+      const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+      toast.success(t("common.table_items_deleted_successfully", { type: capitalizedType }));
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
+        const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
         toast.error(
           t("common.an_unknown_error_occurred_while_deleting_table_items", {
-            type: capitalizeFirstLetter(type),
+            type: capitalizedType,
           })
         );
       }

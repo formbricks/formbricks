@@ -1,5 +1,4 @@
 import { getResponsesByContactId } from "@/lib/response/service";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -59,7 +58,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
         .map(([key, attributeData]) => {
           return (
             <div key={key}>
-              <dt className="text-sm font-medium text-slate-500">{capitalizeFirstLetter(key.toString())}</dt>
+              <dt className="text-sm font-medium text-slate-500">{key.toString()}</dt>
               <dd className="mt-1 text-sm text-slate-900">{attributeData}</dd>
             </div>
           );
