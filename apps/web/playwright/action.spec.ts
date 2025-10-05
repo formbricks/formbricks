@@ -170,14 +170,11 @@ const createCodeAction = async ({
 
   await page.getByRole("button", { name: "Create action", exact: true }).click();
 
-  const successToast = await page.waitForSelector(".formbricks__toast__success", { timeout: 15000 });
+  const successToast = await page.waitForSelector(".formbricks__toast__success");
   expect(successToast).toBeTruthy();
 
-  // Wait for the action to be fully created and committed to the database
-  await page.waitForLoadState("networkidle", { timeout: 15000 });
-
   const actionButton = page.getByTitle(name);
-  await expect(actionButton).toBeVisible({ timeout: 10000 });
+  await expect(actionButton).toBeVisible();
 };
 
 const getActionButtonLocator = (page: Page, actionName: string) => {

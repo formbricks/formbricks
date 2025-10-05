@@ -203,7 +203,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .filter({ hasText: new RegExp(`^${addQuestion}$`) })
     .nth(1)
     .click();
-  await page.getByRole("button", { name: "Multi-Select Ask respondents" }).click();
+  await page.getByRole("button", { name: "Multi-Select" }).click();
   await page.getByLabel("Question*").fill(params.multiSelectQuestion.question);
   await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.locator('input[name="subheader"]').fill(params.multiSelectQuestion.description);
@@ -416,7 +416,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .filter({ hasText: new RegExp(`^${addQuestion}$`) })
     .nth(1)
     .click();
-  await page.getByRole("button", { name: "Multi-Select Ask respondents" }).click();
+  await page.getByRole("button", { name: "Multi-Select" }).click();
   await page.getByLabel("Question*").fill(params.multiSelectQuestion.question);
   await page.getByRole("button", { name: "Add description" }).click();
   await page.locator('input[name="subheader"]').fill(params.multiSelectQuestion.description);

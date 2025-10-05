@@ -181,12 +181,6 @@ jobs:
           fi
           echo "License key length: ${#LICENSE_KEY}"
 
-      - name: Disable rate limiting for E2E tests
-        run: |
-          echo "RATE_LIMITING_DISABLED=1" >> .env
-          echo "Rate limiting disabled for E2E tests"
-        shell: bash
-
       - name: Run App
         run: |
           echo "Starting app with enterprise license..."
@@ -228,14 +222,11 @@ jobs:
         if: env.AZURE_ENABLED == 'true'
         env:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
-          CI: true
         run: |
           pnpm test-e2e:azure
 
       - name: Run E2E Tests (Local)
         if: env.AZURE_ENABLED == 'false'
-        env:
-          CI: true
         run: |
           pnpm test:e2e
 
