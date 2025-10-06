@@ -16,11 +16,11 @@ export interface SerializedRecallNode extends Spread<RecallPayload, { type: "rec
 
 const convertRecallElement = (domNode: Node): null | DOMConversionOutput => {
   const node = domNode as HTMLElement;
-  if (node.getAttribute("data-recall-id")) {
-    const recallId = node.getAttribute("data-recall-id");
-    const recallLabel = node.getAttribute("data-recall-label");
-    const recallType = node.getAttribute("data-recall-type");
-    const fallbackValue = node.getAttribute("data-fallback-value") || "";
+  if (node.dataset.recallId) {
+    const recallId = node.dataset.recallId;
+    const recallLabel = node.dataset.recallLabel;
+    const recallType = node.dataset.recallType;
+    const fallbackValue = node.dataset.fallbackValue || "";
 
     if (recallId && recallLabel && recallType) {
       const recallItem: TSurveyRecallItem = {
@@ -84,22 +84,24 @@ export class RecallNode extends DecoratorNode<ReactNode> {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement("span");
-    element.setAttribute("data-recall-id", this.__recallItem.id);
-    element.setAttribute("data-recall-label", this.__recallItem.label);
-    element.setAttribute("data-recall-type", this.__recallItem.type);
-    element.setAttribute("data-fallback-value", this.__fallbackValue);
+    element.dataset.recallId = this.__recallItem.id;
+    element.dataset.recallLabel = this.__recallItem.label;
+    element.dataset.recallType = this.__recallItem.type;
+    element.dataset.fallbackValue = this.__fallbackValue;
     element.className = "recall-node";
     element.textContent = `#recall:${this.__recallItem.id}/fallback:${this.__fallbackValue}#`;
     return { element };
   }
 
-  constructor(
-    payload: RecallPayload = { recallItem: { id: "", label: "", type: "question" }, fallbackValue: "" },
-    key?: NodeKey
-  ) {
+  constructor(payload?: RecallPayload, key?: NodeKey) {
     super(key);
-    this.__recallItem = payload.recallItem;
-    this.__fallbackValue = payload.fallbackValue || "";
+    const defaultPayload: RecallPayload = {
+      recallItem: { id: "", label: "", type: "question" },
+      fallbackValue: "",
+    };
+    const actualPayload = payload || defaultPayload;
+    this.__recallItem = actualPayload.recallItem;
+    this.__fallbackValue = actualPayload.fallbackValue || "";
   }
 
   createDOM(): HTMLElement {

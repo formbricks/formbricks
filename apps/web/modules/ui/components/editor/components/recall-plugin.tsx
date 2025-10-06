@@ -58,7 +58,9 @@ export const RecallPlugin = ({
           allTextNodes.push(node);
         } else if ($isElementNode(node)) {
           const children = node.getChildren();
-          children.forEach(traverse);
+          for (const child of children) {
+            traverse(child);
+          }
         }
       } catch (error) {
         console.error("Error traversing node:", error);
@@ -102,13 +104,14 @@ export const RecallPlugin = ({
     if (newNodes.length === 0) return;
 
     try {
-      newNodes.forEach((newNode, index) => {
+      for (let index = 0; index < newNodes.length; index++) {
+        const newNode = newNodes[index];
         if (index === 0) {
           node.insertBefore(newNode);
         } else {
           newNodes[index - 1].insertAfter(newNode);
         }
-      });
+      }
       node.remove();
     } catch (error) {
       console.error("Error replacing text node:", error);
@@ -121,7 +124,7 @@ export const RecallPlugin = ({
     const allTextNodes = collectTextNodes(root);
     const recallPattern = /#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/g;
 
-    allTextNodes.forEach((node) => {
+    for (const node of allTextNodes) {
       const textContent = node.getTextContent();
 
       if (recallPattern.test(textContent)) {
@@ -133,7 +136,7 @@ export const RecallPlugin = ({
           replaceTextNode(node, newNodes);
         }
       }
-    });
+    }
   }, [collectTextNodes, createNodesFromText, replaceTextNode]);
 
   // Sync plugin state with actual RecallNodes in the editor
@@ -154,10 +157,10 @@ export const RecallPlugin = ({
       if ($isElementNode(node)) {
         try {
           const children = node.getChildren();
-          children.forEach((child: LexicalNode) => {
+          for (const child of children) {
             const childRecallNodes = findRecallNodes(child);
             recallNodes.push(...childRecallNodes);
-          });
+          }
         } catch (error) {
           console.error("Error getting children from node during sync:", error);
         }
@@ -169,13 +172,13 @@ export const RecallPlugin = ({
     const allRecallNodes = findRecallNodes(root);
 
     // Build current state from actual nodes in editor
-    allRecallNodes.forEach((recallNode) => {
+    for (const recallNode of allRecallNodes) {
       const recallItem = recallNode.getRecallItem();
       const fallbackValue = recallNode.getFallbackValue();
 
       currentRecallItems.push(recallItem);
       currentFallbacks[recallItem.id] = fallbackValue;
-    });
+    }
 
     // Update plugin state to match editor content
     setRecallItems(currentRecallItems);
@@ -388,10 +391,10 @@ export const RecallPlugin = ({
     if ($isElementNode(node)) {
       try {
         const children = node.getChildren();
-        children.forEach((child: LexicalNode) => {
+        for (const child of children) {
           const childRecallNodes = findAllRecallNodes(child);
           recallNodes.push(...childRecallNodes);
-        });
+        }
       } catch (error) {
         console.error("Error getting children from node:", error);
       }
@@ -406,13 +409,13 @@ export const RecallPlugin = ({
       const root = $getRoot();
       const allRecallNodes = findAllRecallNodes(root);
 
-      allRecallNodes.forEach((recallNode) => {
+      for (const recallNode of allRecallNodes) {
         const recallItem = recallNode.getRecallItem();
         const newFallbackValue = (fallbacks[recallItem.id]?.trim() || "").replace(/ /g, "nbsp");
 
         // Update the fallback value in the node
         recallNode.setFallbackValue(newFallbackValue);
-      });
+      }
     };
 
     editor.update(handleFallbackUpdate);

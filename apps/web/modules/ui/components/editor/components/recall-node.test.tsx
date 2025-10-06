@@ -126,10 +126,10 @@ describe("RecallNode", () => {
 
       if (domMap?.span) {
         const spanElement = document.createElement("span");
-        spanElement.setAttribute("data-recall-id", "q1");
-        spanElement.setAttribute("data-recall-label", "Question One");
-        spanElement.setAttribute("data-recall-type", "question");
-        spanElement.setAttribute("data-fallback-value", "fallback text");
+        spanElement.dataset.recallId = "q1";
+        spanElement.dataset.recallLabel = "Question One";
+        spanElement.dataset.recallType = "question";
+        spanElement.dataset.fallbackValue = "fallback text";
 
         const spanConfig = domMap.span(spanElement);
         if (spanConfig) {
@@ -155,8 +155,8 @@ describe("RecallNode", () => {
 
       if (domMap?.span) {
         const spanElement = document.createElement("span");
-        spanElement.setAttribute("data-recall-label", "Question One");
-        spanElement.setAttribute("data-recall-type", "question");
+        spanElement.dataset.recallLabel = "Question One";
+        spanElement.dataset.recallType = "question";
 
         const spanConfig = domMap.span(spanElement);
         if (spanConfig) {
@@ -173,9 +173,9 @@ describe("RecallNode", () => {
 
       if (domMap?.span) {
         const spanElement = document.createElement("span");
-        spanElement.setAttribute("data-recall-id", "q1");
-        spanElement.setAttribute("data-recall-label", "Question One");
-        spanElement.setAttribute("data-recall-type", "question");
+        spanElement.dataset.recallId = "q1";
+        spanElement.dataset.recallLabel = "Question One";
+        spanElement.dataset.recallType = "question";
 
         const spanConfig = domMap.span(spanElement);
         if (spanConfig) {
@@ -195,7 +195,7 @@ describe("RecallNode", () => {
 
       if (domMap?.span) {
         const spanElement = document.createElement("span");
-        spanElement.setAttribute("data-recall-id", "q1");
+        spanElement.dataset.recallId = "q1";
 
         const spanConfig = domMap.span(spanElement);
         if (spanConfig) {
@@ -215,10 +215,10 @@ describe("RecallNode", () => {
 
       if (element && element instanceof HTMLElement) {
         expect(element.tagName).toBe("SPAN");
-        expect(element.getAttribute("data-recall-id")).toBe("question123");
-        expect(element.getAttribute("data-recall-label")).toBe("What is your name?");
-        expect(element.getAttribute("data-recall-type")).toBe("question");
-        expect(element.getAttribute("data-fallback-value")).toBe("default value");
+        expect(element.dataset.recallId).toBe("question123");
+        expect(element.dataset.recallLabel).toBe("What is your name?");
+        expect(element.dataset.recallType).toBe("question");
+        expect(element.dataset.fallbackValue).toBe("default value");
         expect(element.className).toBe("recall-node");
         expect(element.textContent).toBe("#recall:question123/fallback:default value#");
       }
@@ -233,7 +233,7 @@ describe("RecallNode", () => {
       const { element } = node.exportDOM();
 
       if (element && element instanceof HTMLElement) {
-        expect(element.getAttribute("data-fallback-value")).toBe("");
+        expect(element.dataset.fallbackValue).toBe("");
         expect(element.textContent).toBe("#recall:question123/fallback:#");
       }
     });
@@ -462,7 +462,7 @@ describe("RecallNode", () => {
       const { element } = node.exportDOM();
 
       if (element && element instanceof HTMLElement) {
-        expect(element.getAttribute("data-recall-label")).toBe("What's your <name> & (email)?");
+        expect(element.dataset.recallLabel).toBe("What's your <name> & (email)?");
       }
     });
 
@@ -476,7 +476,7 @@ describe("RecallNode", () => {
       const { element } = node.exportDOM();
 
       if (element && element instanceof HTMLElement) {
-        expect(element.getAttribute("data-fallback-value")).toBe("default & special <value>");
+        expect(element.dataset.fallbackValue).toBe("default & special <value>");
       }
     });
 

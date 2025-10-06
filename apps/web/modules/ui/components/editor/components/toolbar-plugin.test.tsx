@@ -96,9 +96,9 @@ vi.mock("@lexical/utils", () => ({
   mergeRegister: vi.fn((...args) => {
     // Return a function that can be called during cleanup
     return () => {
-      args.forEach((fn) => {
+      for (const fn of args) {
         if (typeof fn === "function") fn();
-      });
+      }
     };
   }),
 }));

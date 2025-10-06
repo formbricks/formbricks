@@ -118,7 +118,7 @@ describe("Editor", () => {
     render(<Editor getText={() => "Sample text"} setText={() => {}} variables={variables} />);
 
     const toolbarPlugin = screen.getByTestId("toolbar-plugin");
-    const props = JSON.parse(toolbarPlugin.getAttribute("data-props") || "{}");
+    const props = JSON.parse(toolbarPlugin.dataset.props || "{}");
     expect(props.variables).toEqual(variables);
   });
 

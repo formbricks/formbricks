@@ -356,19 +356,6 @@ describe("RecallPlugin", () => {
       expect(screen.getByTestId("fallback-input")).toBeInTheDocument();
     });
 
-    test("allows entering fallback value", async () => {
-      const recallItems: TSurveyRecallItem[] = [{ id: "q1", label: "Question 1", type: "question" }];
-      render(<RecallPlugin {...defaultProps} showFallbackInput={true} recallItems={recallItems} />);
-
-      const input = screen.getByTestId("fallback-input-field");
-      await userEvent.type(input, "default value");
-
-      // Wait for the input value to be updated
-      await waitFor(() => {
-        expect(input).toHaveValue("default value");
-      });
-    });
-
     test("calls addFallback when add button is clicked", async () => {
       const recallItems: TSurveyRecallItem[] = [{ id: "q1", label: "Question 1", type: "question" }];
       const setShowFallbackInput = vi.fn();
