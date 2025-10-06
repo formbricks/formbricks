@@ -10,6 +10,7 @@ import {
   ZContactLinkParams,
   ZContactLinkQuery,
 } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/types/survey";
+import { calculateExpirationDate } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -97,9 +98,7 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
       // Calculate expiration date based on expirationDays
       let expiresAt: string | null = null;
       if (query?.expirationDays) {
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + query.expirationDays);
-        expiresAt = expirationDate.toISOString();
+        expiresAt = calculateExpirationDate(query.expirationDays);
       }
 
       const surveyUrlResult = await getContactSurveyLink(
