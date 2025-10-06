@@ -1,8 +1,14 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TUser } from "@formbricks/types/user";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
@@ -12,13 +18,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useTranslate } from "@tolgee/react";
-import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TUser } from "@formbricks/types/user";
 
 interface LandingSidebarProps {
   user: TUser;
@@ -66,10 +65,8 @@ export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
                   )}>
                   {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
                 </p>
-                <p
-                  title={capitalizeFirstLetter(organization?.name)}
-                  className="truncate text-sm text-slate-500">
-                  {capitalizeFirstLetter(organization?.name)}
+                <p title={organization?.name} className="truncate text-sm text-slate-500">
+                  {organization?.name}
                 </p>
               </div>
               <ChevronRightIcon className={cn("h-5 w-5 shrink-0 text-slate-700 hover:text-slate-500")} />

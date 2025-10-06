@@ -73,6 +73,17 @@ export const QuestionOptionChoice = ({
     transform: CSS.Translate.toString(transform),
   };
 
+  const focusChoiceInput = (targetIdx: number) => {
+    const input = document.querySelector(`input[id="choice-${targetIdx}"]`) as HTMLInputElement;
+    input?.focus();
+  };
+
+  const addChoiceAndFocus = (idx: number) => {
+    addChoice(idx);
+    // Wait for DOM update before focusing the new input
+    setTimeout(() => focusChoiceInput(idx + 1), 0);
+  };
+
   const getPlaceholder = () => {
     if (choice.id === "other") return t("common.other");
     if (choice.id === "none") return t("common.none_of_the_above");
@@ -104,6 +115,32 @@ export const QuestionOptionChoice = ({
           className={`${isSpecialChoice ? "border border-dashed" : ""} mt-0`}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && choice.id !== "other") {
+              e.preventDefault();
+              const lastChoiceIdx = question.choices.findLastIndex((c) => c.id !== "other");
+
+              if (choiceIdx === lastChoiceIdx) {
+                addChoiceAndFocus(choiceIdx);
+              } else {
+                focusChoiceInput(choiceIdx + 1);
+              }
+            }
+
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              if (choiceIdx + 1 < question.choices.length) {
+                focusChoiceInput(choiceIdx + 1);
+              }
+            }
+
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              if (choiceIdx > 0) {
+                focusChoiceInput(choiceIdx - 1);
+              }
+            }
+          }}
         />
         {choice.id === "other" && (
           <QuestionFormInput
@@ -129,7 +166,7 @@ export const QuestionOptionChoice = ({
         )}
       </div>
       <div className="flex gap-2">
-        {question.choices && question.choices.length > 2 && (
+        {question.choices?.length > 2 && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
             <Button
               variant="secondary"
@@ -151,7 +188,7 @@ export const QuestionOptionChoice = ({
               aria-label="Add choice below"
               onClick={(e) => {
                 e.preventDefault();
-                addChoice(choiceIdx);
+                addChoiceAndFocus(choiceIdx);
               }}>
               <PlusIcon />
             </Button>

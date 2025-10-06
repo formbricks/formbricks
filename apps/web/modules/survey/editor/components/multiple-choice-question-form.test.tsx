@@ -142,7 +142,6 @@ describe("MultipleChoiceQuestionForm", () => {
         selectedLanguageCode="default"
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale="en-US"
-        lastQuestion={false}
         isStorageConfigured={true}
       />
     );
