@@ -7,7 +7,7 @@ export default defineConfig(
   config,
   getServiceConfig(config, {
     exposeNetwork: "<loopback>",
-    timeout: 33000,
+    timeout: 120000, // Increased timeout for cloud environment with network latency
     os: ServiceOS.LINUX,
     useCloudHostedBrowsers: true, // Set to false if you want to only use reporting and not cloud hosted browsers
   }),
@@ -18,5 +18,7 @@ export default defineConfig(
     If you are using more reporters, please update your configuration accordingly.
     */
     reporter: [["list"], ["@azure/microsoft-playwright-testing/reporter"]],
+    retries: 2, // Always retry in cloud environment due to potential network/timing issues
+    maxFailures: undefined, // Don't stop on first failure to avoid cascading shutdowns with high parallelism
   }
 );

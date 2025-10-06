@@ -1,7 +1,9 @@
+import { logger } from "@formbricks/logger";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
+import { calculateExpirationDate } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/lib/utils";
 import { getContactsInSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact";
 import {
   ZContactLinksBySegmentParams,
@@ -11,7 +13,6 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { logger } from "@formbricks/logger";
 
 export const GET = async (
   request: Request,
@@ -76,9 +77,7 @@ export const GET = async (
       // Calculate expiration date based on expirationDays
       let expiresAt: string | null = null;
       if (query?.expirationDays) {
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + query.expirationDays);
-        expiresAt = expirationDate.toISOString();
+        expiresAt = calculateExpirationDate(query.expirationDays);
       }
 
       // Generate survey links for each contact

@@ -1,0 +1,179 @@
+---
+description: Apply these quality standards before finalizing code changes to ensure DRY principles, React best practices, TypeScript conventions, and maintainable code.
+globs:
+alwaysApply: false
+---
+
+# Review & Refine
+
+Before finalizing any code changes, review your implementation against these quality standards:
+
+## Core Principles
+
+### DRY (Don't Repeat Yourself)
+
+- Extract duplicated logic into reusable functions or hooks
+- If the same code appears in multiple places, consolidate it
+- Create helper functions at appropriate scope (component-level, module-level, or utility files)
+- Avoid copy-pasting code blocks
+
+### Code Reduction
+
+- Remove unnecessary code, comments, and abstractions
+- Prefer built-in solutions over custom implementations
+- Consolidate similar logic
+- Remove dead code and unused imports
+- Question if every line of code is truly needed
+
+## React Best Practices
+
+### Component Design
+
+- Keep components focused on a single responsibility
+- Extract complex logic into custom hooks
+- Prefer composition over prop drilling
+- Use children props and render props when appropriate
+- Keep component files under 300 lines when possible
+
+### Hooks Usage
+
+- Follow Rules of Hooks (only call at top level, only in React functions)
+- Extract complex `useEffect` logic into custom hooks
+- Use `useMemo` and `useCallback` only when you have a measured performance issue
+- Declare dependencies arrays correctly - don't ignore exhaustive-deps warnings
+- Keep `useEffect` focused on a single concern
+
+### State Management
+
+- Colocate state as close as possible to where it's used
+- Lift state only when necessary
+- Use `useReducer` for complex state logic with multiple sub-values
+- Avoid derived state - compute values during render instead
+- Don't store values in state that can be computed from props
+
+### Event Handlers
+
+- Name event handlers with `handle` prefix (e.g., `handleClick`, `handleSubmit`)
+- Extract complex event handler logic into separate functions
+- Avoid inline arrow functions in JSX when they contain complex logic
+
+## TypeScript Best Practices
+
+### Type Safety
+
+- Prefer type inference over explicit types when possible
+- Use `const` assertions for literal types
+- Avoid `any` - use `unknown` if type is truly unknown
+- Use discriminated unions for complex conditional logic
+- Leverage type guards and narrowing
+
+### Interface & Type Usage
+
+- Use existing types from `@formbricks/types` - don't recreate them
+- Prefer `interface` for object shapes that might be extended
+- Prefer `type` for unions, intersections, and mapped types
+- Define types close to where they're used unless they're shared
+- Export types from index files for shared types
+
+### Type Assertions
+
+- Avoid type assertions (`as`) when possible
+- Use type guards instead of assertions
+- Only assert when you have more information than TypeScript
+
+## Code Organization
+
+### Separation of Concerns
+
+- Separate business logic from UI rendering
+- Extract API calls into separate functions or modules
+- Keep data transformation separate from component logic
+- Use custom hooks for stateful logic that doesn't render UI
+
+### Function Clarity
+
+- Functions should do one thing well
+- Name functions clearly and descriptively
+- Keep functions small (aim for under 20 lines)
+- Extract complex conditionals into named boolean variables or functions
+- Avoid deep nesting (max 3 levels)
+
+### File Structure
+
+- Group related functions together
+- Order declarations logically (types → hooks → helpers → component)
+- Keep imports organized (external → internal → relative)
+- Consider splitting large files by concern
+
+## Additional Quality Checks
+
+### Performance
+
+- Don't optimize prematurely - measure first
+- Avoid creating new objects/arrays/functions in render unnecessarily
+- Use keys properly in lists (stable, unique identifiers)
+- Lazy load heavy components when appropriate
+
+### Accessibility
+
+- Use semantic HTML elements
+- Include ARIA labels where needed
+- Ensure keyboard navigation works
+- Check color contrast and focus states
+
+### Error Handling
+
+- Handle error states in components
+- Provide user feedback for failed operations
+- Use error boundaries for component errors
+- Log errors appropriately (avoid swallowing errors silently)
+
+### Naming Conventions
+
+- Use descriptive names (avoid abbreviations unless very common)
+- Boolean variables/props should sound like yes/no questions (`isLoading`, `hasError`, `canEdit`)
+- Arrays should be plural (`users`, `choices`, `items`)
+- Event handlers: `handleX` in components, `onX` for props
+- Constants in UPPER_SNAKE_CASE only for true constants
+
+### Code Readability
+
+- Prefer early returns to reduce nesting
+- Use destructuring to make code clearer
+- Break complex expressions into named variables
+- Add comments only when code can't be made self-explanatory
+- Use whitespace to group related code
+
+### Testing Considerations
+
+- Write code that's easy to test (pure functions, clear inputs/outputs)
+- Avoid hard-to-mock dependencies when possible
+- Keep side effects at the edges of your code
+
+## Review Checklist
+
+Before submitting your changes, ask yourself:
+
+1. **DRY**: Is there any duplicated logic I can extract?
+2. **Clarity**: Would another developer understand this code easily?
+3. **Simplicity**: Is this the simplest solution that works?
+4. **Types**: Am I using TypeScript effectively?
+5. **React**: Am I following React idioms and best practices?
+6. **Performance**: Are there obvious performance issues?
+7. **Separation**: Are concerns properly separated?
+8. **Testing**: Is this code testable?
+9. **Maintenance**: Will this be easy to change in 6 months?
+10. **Deletion**: Can I remove any code and still accomplish the goal?
+
+## When to Apply This Rule
+
+Apply this rule:
+
+- After implementing a feature but before marking it complete
+- When you notice your code feels "messy" or complex
+- Before requesting code review
+- When you see yourself copy-pasting code
+- After receiving feedback about code quality
+
+Don't let perfect be the enemy of good, but always strive for:
+**Simple, readable, maintainable code that does one thing well.**
