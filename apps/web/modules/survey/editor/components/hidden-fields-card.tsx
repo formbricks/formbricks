@@ -202,7 +202,7 @@ export const HiddenFieldsCard = ({
                 onChange={(e) => setHiddenField(e.target.value.trim())}
                 placeholder={t("environments.surveys.edit.type_field_id") + "..."}
               />
-              <Button variant="secondary" type="submit" size="sm" className="whitespace-nowrap">
+              <Button variant="secondary" type="submit" className="h-10 whitespace-nowrap">
                 {t("environments.surveys.edit.add_hidden_field_id")}
               </Button>
             </div>
