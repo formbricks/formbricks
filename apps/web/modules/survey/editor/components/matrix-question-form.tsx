@@ -45,17 +45,24 @@ export const MatrixQuestionForm = ({
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
 
+  const focusItem = (targetIdx: number, type: "row" | "column") => {
+    const input = document.querySelector(`input[id="${type}-${targetIdx}"]`) as HTMLInputElement;
+    if (input) input.focus();
+  };
+
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
       const updatedRows = [...question.rows, { id: createId(), label: createI18nString("", languageCodes) }];
       updateQuestion(questionIdx, { rows: updatedRows });
+      setTimeout(() => focusItem(updatedRows.length - 1, type), 0);
     } else {
       const updatedColumns = [
         ...question.columns,
         { id: createId(), label: createI18nString("", languageCodes) },
       ];
       updateQuestion(questionIdx, { columns: updatedColumns });
+      setTimeout(() => focusItem(updatedColumns.length - 1, type), 0);
     }
   };
 
@@ -115,31 +122,26 @@ export const MatrixQuestionForm = ({
   const handleKeyDown = (e: React.KeyboardEvent, type: "row" | "column", currentIndex: number) => {
     const items = type === "row" ? question.rows : question.columns;
 
-    const focusItem = (targetIdx: number) => {
-      const input = document.querySelector(`input[id="${type}-${targetIdx}"]`) as HTMLInputElement;
-      if (input) input.focus();
-    };
-
     if (e.key === "Enter") {
       e.preventDefault();
       if (currentIndex === items.length - 1) {
         handleAddLabel(type);
       } else {
-        focusItem(currentIndex + 1);
+        focusItem(currentIndex + 1, type);
       }
     }
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (currentIndex + 1 < items.length) {
-        focusItem(currentIndex + 1);
+        focusItem(currentIndex + 1, type);
       }
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
       if (currentIndex > 0) {
-        focusItem(currentIndex - 1);
+        focusItem(currentIndex - 1, type);
       }
     }
   };
