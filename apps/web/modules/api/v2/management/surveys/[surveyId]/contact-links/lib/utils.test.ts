@@ -1,9 +1,13 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { calculateExpirationDate } from "./utils";
 
 describe("calculateExpirationDate", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test("calculates expiration date for positive days", () => {
