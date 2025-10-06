@@ -153,13 +153,19 @@ vi.mock("@/modules/survey/components/question-form-input/components/recall-item-
 }));
 
 vi.mock("@/modules/survey/components/question-form-input/components/fallback-input", () => ({
-  FallbackInput: ({ addFallback, setOpen, fallbacks, setFallbacks }: any) => (
+  FallbackInput: ({ addFallback, setOpen, fallbacks, setFallbacks, filteredRecallItems }: any) => (
     <div data-testid="fallback-input">
-      <input
-        data-testid="fallback-input-field"
-        value={fallbacks.q1 || ""}
-        onChange={(e) => setFallbacks({ ...fallbacks, q1: e.target.value })}
-      />
+      {filteredRecallItems?.map((recallItem: any) => {
+        if (!recallItem) return null;
+        return (
+          <input
+            key={recallItem.id}
+            data-testid="fallback-input-field"
+            value={fallbacks[recallItem.id] || ""}
+            onChange={(e) => setFallbacks({ ...fallbacks, [recallItem.id]: e.target.value })}
+          />
+        );
+      })}
       <button data-testid="add-fallback" onClick={addFallback}>
         Add Fallback
       </button>
