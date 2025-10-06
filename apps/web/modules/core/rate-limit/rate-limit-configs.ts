@@ -1,7 +1,7 @@
 export const rateLimitConfigs = {
   // Authentication endpoints - stricter limits for security
   auth: {
-    login: { interval: 900, allowedPerInterval: 30, namespace: "auth:login" }, // 30 per 15 minutes
+    login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour

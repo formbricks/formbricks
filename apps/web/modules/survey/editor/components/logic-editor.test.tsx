@@ -1,5 +1,3 @@
-import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
-import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
@@ -8,6 +6,8 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
+import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import { LogicEditor } from "./logic-editor";
 
 // Mock the subcomponents to isolate the LogicEditor component
