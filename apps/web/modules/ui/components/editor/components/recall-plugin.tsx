@@ -411,7 +411,7 @@ export const RecallPlugin = ({
 
       for (const recallNode of allRecallNodes) {
         const recallItem = recallNode.getRecallItem();
-        const newFallbackValue = (fallbacks[recallItem.id]?.trim() || "").replace(/ /g, "nbsp");
+        const newFallbackValue = (fallbacks[recallItem.id]?.trim() || "").replaceAll(" ", "nbsp");
 
         // Update the fallback value in the node
         recallNode.setFallbackValue(newFallbackValue);
