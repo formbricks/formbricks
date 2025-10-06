@@ -76,6 +76,9 @@
   "pnpm": {
     "patchedDependencies": {
       "next-auth@4.24.11": "patches/next-auth@4.24.11.patch"
+    },
+    "overrides": {
+      "tar-fs": "2.1.4"
     }
   }
 }
