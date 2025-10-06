@@ -59,6 +59,20 @@ export class RecallNode extends DecoratorNode<ReactNode> {
     );
   }
 
+  static importJSON(serializedNode: SerializedRecallNode): RecallNode {
+    const { recallItem, fallbackValue } = serializedNode;
+    return $createRecallNode({ recallItem, fallbackValue });
+  }
+
+  exportJSON(): SerializedRecallNode {
+    return {
+      recallItem: this.__recallItem,
+      fallbackValue: this.__fallbackValue,
+      type: "recall",
+      version: 1,
+    };
+  }
+
   static importDOM(): DOMConversionMap | null {
     return {
       span: () => ({
@@ -79,7 +93,10 @@ export class RecallNode extends DecoratorNode<ReactNode> {
     return { element };
   }
 
-  constructor(payload: RecallPayload, key?: NodeKey) {
+  constructor(
+    payload: RecallPayload = { recallItem: { id: "", label: "", type: "question" }, fallbackValue: "" },
+    key?: NodeKey
+  ) {
     super(key);
     this.__recallItem = payload.recallItem;
     this.__fallbackValue = payload.fallbackValue || "";
