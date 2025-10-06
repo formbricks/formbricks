@@ -1,4 +1,8 @@
 import "server-only";
+import { createCacheKey } from "@formbricks/cache";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import { TJsEnvironmentState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
@@ -6,10 +10,6 @@ import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@/lib/posthogServer";
-import { createCacheKey } from "@formbricks/cache";
-import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
-import { TJsEnvironmentState } from "@formbricks/types/js";
 import { getEnvironmentStateData } from "./data";
 
 /**
@@ -80,6 +80,6 @@ export const getEnvironmentState = async (
       return { data };
     },
     createCacheKey.environment.state(environmentId),
-    5 * 60 * 1000 // 5 minutes in milliseconds
+    60 * 1000 // 1 minutes in milliseconds
   );
 };
