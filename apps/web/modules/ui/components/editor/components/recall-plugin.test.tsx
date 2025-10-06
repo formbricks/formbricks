@@ -363,7 +363,10 @@ describe("RecallPlugin", () => {
       const input = screen.getByTestId("fallback-input-field");
       await userEvent.type(input, "default value");
 
-      expect(input).toHaveValue("default value");
+      // Wait for the input value to be updated
+      await waitFor(() => {
+        expect(input).toHaveValue("default value");
+      });
     });
 
     test("calls addFallback when add button is clicked", async () => {
