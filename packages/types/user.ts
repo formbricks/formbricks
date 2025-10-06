@@ -31,7 +31,7 @@ export type TUserEmail = z.infer<typeof ZUserEmail>;
 
 export const ZUserPassword = z
   .string()
-  .min(8)
+  .min(8, { message: "Password must be at least 8 characters long" })
   .max(128, { message: "Password must be 128 characters or less" })
   .regex(/^(?=.*[A-Z])(?=.*\d).*$/);
 

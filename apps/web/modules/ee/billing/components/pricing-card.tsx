@@ -1,13 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Badge } from "@/modules/ui/components/badge";
-import { Button } from "@/modules/ui/components/button";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
+import { cn } from "@/lib/cn";
+import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { TPricingPlan } from "../api/lib/constants";
 
 interface PricingCardProps {
@@ -170,14 +170,13 @@ export const PricingCard = ({
 
           {plan.id !== projectFeatureKeys.FREE && isCurrentPlan && (
             <Button
-              variant="secondary"
               loading={loading}
               onClick={async () => {
                 setLoading(true);
                 await onManageSubscription();
                 setLoading(false);
               }}
-              className="flex justify-center">
+              className="flex justify-center bg-[#635bff]">
               {t("environments.settings.billing.manage_subscription")}
             </Button>
           )}
