@@ -287,9 +287,14 @@ export function MultipleChoiceSingleQuestion({
                       value={getLocalizedValue(noneOption.label, languageCode)}
                       className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${noneOption.id}-label`}
-                      onChange={() => {
-                        setOtherSelected(false);
-                        onChange({ [question.id]: getLocalizedValue(noneOption.label, languageCode) });
+                      onClick={() => {
+                        const noneValue = getLocalizedValue(noneOption.label, languageCode);
+                        if (!question.required && value === noneValue) {
+                          onChange({ [question.id]: undefined });
+                        } else {
+                          setOtherSelected(false);
+                          onChange({ [question.id]: noneValue });
+                        }
                       }}
                       checked={value === getLocalizedValue(noneOption.label, languageCode)}
                     />
