@@ -76,6 +76,9 @@
   "pnpm": {
     "patchedDependencies": {
       "next-auth@4.24.11": "patches/next-auth@4.24.11.patch"
+    },
+    "overrides": {
+      "axios": ">=1.12.2"
     }
   }
 }
