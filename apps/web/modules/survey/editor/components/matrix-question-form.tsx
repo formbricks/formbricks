@@ -1,12 +1,5 @@
 "use client";
 
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
-import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -17,6 +10,13 @@ import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
+import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
@@ -45,17 +45,24 @@ export const MatrixQuestionForm = ({
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
 
+  const focusItem = (targetIdx: number, type: "row" | "column") => {
+    const input = document.querySelector(`input[id="${type}-${targetIdx}"]`) as HTMLInputElement;
+    if (input) input.focus();
+  };
+
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
       const updatedRows = [...question.rows, { id: createId(), label: createI18nString("", languageCodes) }];
       updateQuestion(questionIdx, { rows: updatedRows });
+      setTimeout(() => focusItem(updatedRows.length - 1, type), 0);
     } else {
       const updatedColumns = [
         ...question.columns,
         { id: createId(), label: createI18nString("", languageCodes) },
       ];
       updateQuestion(questionIdx, { columns: updatedColumns });
+      setTimeout(() => focusItem(updatedColumns.length - 1, type), 0);
     }
   };
 
@@ -112,10 +119,30 @@ export const MatrixQuestionForm = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, type: "row" | "column") => {
+  const handleKeyDown = (e: React.KeyboardEvent, type: "row" | "column", currentIndex: number) => {
+    const items = type === "row" ? question.rows : question.columns;
+
     if (e.key === "Enter") {
       e.preventDefault();
-      handleAddLabel(type);
+      if (currentIndex === items.length - 1) {
+        handleAddLabel(type);
+      } else {
+        focusItem(currentIndex + 1, type);
+      }
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (currentIndex + 1 < items.length) {
+        focusItem(currentIndex + 1, type);
+      }
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (currentIndex > 0) {
+        focusItem(currentIndex - 1, type);
+      }
     }
   };
 
@@ -230,7 +257,7 @@ export const MatrixQuestionForm = ({
                       questionIdx={questionIdx}
                       updateMatrixLabel={updateMatrixLabel}
                       onDelete={(index) => handleDeleteLabel("row", index)}
-                      onKeyDown={(e) => handleKeyDown(e, "row")}
+                      onKeyDown={(e) => handleKeyDown(e, "row", index)}
                       canDelete={question.rows.length > 2}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
@@ -276,7 +303,7 @@ export const MatrixQuestionForm = ({
                       questionIdx={questionIdx}
                       updateMatrixLabel={updateMatrixLabel}
                       onDelete={(index) => handleDeleteLabel("column", index)}
-                      onKeyDown={(e) => handleKeyDown(e, "column")}
+                      onKeyDown={(e) => handleKeyDown(e, "column", index)}
                       canDelete={question.columns.length > 2}
                       selectedLanguageCode={selectedLanguageCode}
                       setSelectedLanguageCode={setSelectedLanguageCode}
