@@ -1,21 +1,5 @@
 "use client";
 
-import {
-  DateRange,
-  useResponseFilter,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
-import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
-import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
-import { Calendar } from "@/modules/ui/components/calendar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-import { cn } from "@/modules/ui/lib/utils";
 import * as Sentry from "@sentry/nextjs";
 import { TFnType, useTranslate } from "@tolgee/react";
 import {
@@ -37,6 +21,22 @@ import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon, Loader2Icon 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  DateRange,
+  useResponseFilter,
+} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
+import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import { Calendar } from "@/modules/ui/components/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { cn } from "@/modules/ui/lib/utils";
 import { ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {
@@ -239,32 +239,33 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     setSelectingDate(DateSelected.FROM);
   };
 
-  const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
-    try {
-      const responseFilters = filter === FilterDownload.ALL ? {} : filters;
-      setIsDownloading(true);
+  const handleDownloadResponses = (filter: FilterDownload, fileType: "csv" | "xlsx") => {
+    const responseFilters = filter === FilterDownload.ALL ? {} : filters;
+    setIsDownloading(true);
 
-      const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
-        surveyId: survey.id,
-        format: fileType,
-        filterCriteria: responseFilters,
-      });
-
-      if (responsesDownloadUrlResponse?.data) {
-        downloadResponsesFile(
-          responsesDownloadUrlResponse.data.fileName,
-          responsesDownloadUrlResponse.data.fileContents,
-          fileType
-        );
-      } else {
+    getResponsesDownloadUrlAction({
+      surveyId: survey.id,
+      format: fileType,
+      filterCriteria: responseFilters,
+    })
+      .then((responsesDownloadUrlResponse) => {
+        if (responsesDownloadUrlResponse?.data) {
+          downloadResponsesFile(
+            responsesDownloadUrlResponse.data.fileName,
+            responsesDownloadUrlResponse.data.fileContents,
+            fileType
+          );
+        } else {
+          toast.error(t("environments.surveys.responses.error_downloading_responses"));
+        }
+      })
+      .catch((err) => {
+        Sentry.captureException(err);
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
-      }
-    } catch (err) {
-      Sentry.captureException(err);
-      toast.error(t("environments.surveys.responses.error_downloading_responses"));
-    } finally {
-      setIsDownloading(false);
-    }
+      })
+      .finally(() => {
+        setIsDownloading(false);
+      });
   };
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());
@@ -417,29 +418,29 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
             <DropdownMenuContent align="start">
               <DropdownMenuItem
                 data-testid="fb__custom-filter-download-all-csv"
-                onClick={async () => {
-                  await handleDownloadResponses(FilterDownload.ALL, "csv");
+                onClick={() => {
+                  handleDownloadResponses(FilterDownload.ALL, "csv");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 data-testid="fb__custom-filter-download-all-xlsx"
-                onClick={async () => {
-                  await handleDownloadResponses(FilterDownload.ALL, "xlsx");
+                onClick={() => {
+                  handleDownloadResponses(FilterDownload.ALL, "xlsx");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 data-testid="fb__custom-filter-download-filtered-csv"
-                onClick={async () => {
-                  await handleDownloadResponses(FilterDownload.FILTER, "csv");
+                onClick={() => {
+                  handleDownloadResponses(FilterDownload.FILTER, "csv");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 data-testid="fb__custom-filter-download-filtered-xlsx"
-                onClick={async () => {
-                  await handleDownloadResponses(FilterDownload.FILTER, "xlsx");
+                onClick={() => {
+                  handleDownloadResponses(FilterDownload.FILTER, "xlsx");
                 }}>
                 <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_excel")}</p>
               </DropdownMenuItem>
