@@ -36,7 +36,6 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
 import { cn } from "@/modules/ui/lib/utils";
-import { AddVariablesDropdown } from "./add-variables-dropdown";
 import type { TextEditorProps } from "./editor";
 
 const LowPriority = 1;
@@ -72,7 +71,7 @@ const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
   const mouseDownRef = useRef(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
-  const [isEditMode, setEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [lastSelection, setLastSelection] = useState<RangeSelection | NodeSelection | BaseSelection | null>(
     null
   );
@@ -124,7 +123,7 @@ const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
     } else if (!activeElement || activeElement.className !== "link-input") {
       positionEditorElement(editorElem, null);
       setLastSelection(null);
-      setEditMode(false);
+      setIsEditMode(false);
       setLinkUrl("");
     }
 
@@ -163,7 +162,7 @@ const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
   }, [isEditMode]);
 
   useEffect(() => {
-    setEditMode(true);
+    setIsEditMode(true);
   }, []);
 
   const linkAttributes = {
@@ -178,7 +177,7 @@ const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
         ...linkAttributes,
       });
     }
-    setEditMode(false);
+    setIsEditMode(false);
   };
 
   return (
@@ -198,7 +197,7 @@ const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
                 handleSubmit();
               } else if (event.key === "Escape") {
                 event.preventDefault();
-                setEditMode(false);
+                setIsEditMode(false);
               }
             }}
           />
@@ -227,7 +226,9 @@ const getSelectedNode = (selection: RangeSelection) => {
   }
 };
 
-export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement | null }) => {
+export const ToolbarPlugin = (
+  props: TextEditorProps & { container: HTMLElement | null; setShowRecallItemSelect: (show: boolean) => void }
+) => {
   const [editor] = useLexicalComposerContext();
 
   const toolbarRef = useRef(null);
@@ -345,18 +346,6 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
       }
     }
   }, [editor]);
-
-  const addVariable = (variable: string) => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        editor.update(() => {
-          const formatedVariable = `{${variable.toUpperCase().replace(/ /g, "_")}}`;
-          selection?.insertRawText(formatedVariable);
-        });
-      }
-    });
-  };
 
   useEffect(() => {
     if (!props.firstRender) {
@@ -533,15 +522,15 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         !props.excludedToolbarItems?.includes("link") &&
         createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)}
 
-      {props.variables && (
-        <div className="ml-auto">
-          <AddVariablesDropdown
-            addVariable={addVariable}
-            isTextEditor={true}
-            variables={props.variables || []}
-          />
-        </div>
-      )}
+      <div className="ml-auto">
+        <Button
+          variant="ghost"
+          type="button"
+          className="text-xs"
+          onClick={() => props.setShowRecallItemSelect(true)}>
+          Recall data
+        </Button>
+      </div>
     </div>
   );
 };

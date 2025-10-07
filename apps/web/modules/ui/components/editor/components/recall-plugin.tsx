@@ -30,6 +30,8 @@ interface RecallPluginProps {
   setFallbacks: (fallbacks: { [id: string]: string }) => void;
   onShowFallbackInput: () => void;
   setAddFallbackFunction: (fn: (() => void) | null) => void;
+  setShowRecallItemSelect: (show: boolean) => void;
+  showRecallItemSelect: boolean;
 }
 
 export const RecallPlugin = ({
@@ -42,9 +44,10 @@ export const RecallPlugin = ({
   setFallbacks,
   onShowFallbackInput,
   setAddFallbackFunction,
+  setShowRecallItemSelect,
+  showRecallItemSelect,
 }: RecallPluginProps) => {
   const [editor] = useLexicalComposerContext();
-  const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [atSymbolPosition, setAtSymbolPosition] = useState<{ node: LexicalNode; offset: number } | null>(
     null
   );

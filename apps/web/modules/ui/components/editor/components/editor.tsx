@@ -87,6 +87,7 @@ export const Editor = (props: TextEditorProps) => {
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>([]);
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(props.fallbacks || {});
   const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
+  const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const { t } = useTranslate();
 
   return (
@@ -109,6 +110,7 @@ export const Editor = (props: TextEditorProps) => {
               localSurvey={props.localSurvey}
               questionId={props.questionId}
               selectedLanguageCode={props.selectedLanguageCode}
+              setShowRecallItemSelect={setShowRecallItemSelect}
             />
             {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
             <div
@@ -139,6 +141,8 @@ export const Editor = (props: TextEditorProps) => {
                   setFallbacks={setFallbacks}
                   onShowFallbackInput={() => setShowFallbackInput(true)}
                   setAddFallbackFunction={setAddFallbackFunction}
+                  setShowRecallItemSelect={setShowRecallItemSelect}
+                  showRecallItemSelect={showRecallItemSelect}
                 />
               )}
               <MarkdownShortcutPlugin
