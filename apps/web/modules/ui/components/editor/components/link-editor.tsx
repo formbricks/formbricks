@@ -38,8 +38,12 @@ const validateUrl = (url: string): boolean => {
     if (urlObj.protocol !== "http:" && urlObj.protocol !== "https:") {
       return false;
     }
-    // Ensure proper domain structure (has a dot) or is localhost
-    return urlObj.hostname.includes(".") || urlObj.hostname === "localhost";
+    // Check for IPv6 address
+    const isIPv6 = urlObj.hostname.startsWith("[") && urlObj.hostname.endsWith("]");
+    // Check for IPv4 address
+    const isIPv4 = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(urlObj.hostname);
+    // Ensure proper domain structure (has a dot), is localhost, or is an IP address
+    return urlObj.hostname.includes(".") || urlObj.hostname === "localhost" || isIPv6 || isIPv4;
   } catch {
     return false;
   }

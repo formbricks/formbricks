@@ -39,7 +39,7 @@
   overflow: auto;
   resize: vertical;
   height: auto;
-  min-height: 40px;
+  min-height: var(--editor-min-height, 40px);
   max-height: 150px;
 }
 
