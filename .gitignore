@@ -75,4 +75,3 @@ infra/terraform/.terraform/
 packages/ios/FormbricksSDK/FormbricksSDK.xcodeproj/project.xcworkspace/xcuserdata
 .cursorrules
 i18n.cache
-formbricks-quickstart/docker-compose.yml
