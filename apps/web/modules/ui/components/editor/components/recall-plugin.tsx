@@ -97,7 +97,6 @@ export const RecallPlugin = ({
               $createRecallNode({
                 recallItem,
                 fallbackValue,
-                onRecallClick: () => onShowFallbackInput(),
               })
             );
           }
@@ -106,7 +105,7 @@ export const RecallPlugin = ({
 
       return newNodes;
     },
-    [localSurvey, selectedLanguageCode, onShowFallbackInput]
+    [localSurvey, selectedLanguageCode]
   );
 
   // Helper function to replace text node with new nodes
@@ -354,7 +353,6 @@ export const RecallPlugin = ({
         const recallNode = $createRecallNode({
           recallItem,
           fallbackValue: "",
-          onRecallClick: () => onShowFallbackInput(),
         });
 
         const success =
@@ -393,6 +391,7 @@ export const RecallPlugin = ({
       replaceAtSymbolWithStoredPosition,
       replaceAtSymbolWithCurrentSelection,
       onShowFallbackInput,
+      recallItems,
     ]
   );
 

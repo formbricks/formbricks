@@ -10,7 +10,6 @@ export interface RecallPayload {
   recallItem: TSurveyRecallItem;
   fallbackValue?: string;
   key?: NodeKey;
-  onRecallClick?: () => void;
 }
 
 export interface SerializedRecallNode extends Spread<RecallPayload, { type: "recall"; version: 1 }> {}
@@ -40,7 +39,6 @@ const convertRecallElement = (domNode: Node): null | DOMConversionOutput => {
 export class RecallNode extends DecoratorNode<ReactNode> {
   __recallItem: TSurveyRecallItem;
   __fallbackValue: string;
-  __onRecallClick?: () => void;
 
   static readonly $config = {
     type: "recall",
@@ -56,7 +54,6 @@ export class RecallNode extends DecoratorNode<ReactNode> {
       {
         recallItem: node.__recallItem,
         fallbackValue: node.__fallbackValue,
-        onRecallClick: node.__onRecallClick,
       },
       node.__key
     );
@@ -105,7 +102,6 @@ export class RecallNode extends DecoratorNode<ReactNode> {
     const actualPayload = payload || defaultPayload;
     this.__recallItem = actualPayload.recallItem;
     this.__fallbackValue = actualPayload.fallbackValue || "";
-    this.__onRecallClick = actualPayload.onRecallClick;
   }
 
   createDOM(): HTMLElement {
@@ -141,17 +137,11 @@ export class RecallNode extends DecoratorNode<ReactNode> {
     const displayLabel = replaceRecallInfoWithUnderline(this.__recallItem.label);
 
     return (
-      <button
-        className="recall-node z-30 inline-flex h-fit cursor-pointer justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-slate-700"
-        tabIndex={0}
-        aria-label={`Edit recall: ${displayLabel}`}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          this.__onRecallClick?.();
-        }}>
+      <span
+        className="recall-node z-30 inline-flex h-fit justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-slate-700"
+        aria-label={`Recall: ${displayLabel}`}>
         @{displayLabel}
-      </button>
+      </span>
     );
   }
 
