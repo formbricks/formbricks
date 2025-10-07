@@ -169,15 +169,15 @@ export const RecallItemSelect = ({
         <div className="flex w-full items-center justify-between overflow-hidden" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-96 bg-slate-50 text-slate-700"
+        className="w-96 bg-slate-50 p-3 text-xs text-slate-700"
         align="start"
         side="bottom"
         data-recall-dropdown>
-        <p className="m-2 text-sm font-medium">{t("environments.surveys.edit.recall_information_from")}</p>
+        <p className="mb-2 font-medium">{t("environments.surveys.edit.recall_information_from")}</p>
         <Input
           id="recallItemSearchInput"
           placeholder="Search options"
-          className="mb-1 w-full bg-white"
+          className="w-full bg-white"
           onChange={(e) => setSearchValue(e.target.value)}
           autoFocus={true}
           value={searchValue}

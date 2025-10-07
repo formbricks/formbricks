@@ -14,7 +14,7 @@ import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
 import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
 import { useTranslate } from "@tolgee/react";
-import type { BaseSelection, EditorState, LexicalEditor, NodeSelection, RangeSelection } from "lexical";
+import type { RangeSelection } from "lexical";
 import {
   $createParagraphNode,
   $getRoot,
@@ -25,9 +25,8 @@ import {
   PASTE_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
-import { Bold, ChevronDownIcon, Italic, Link, Underline } from "lucide-react";
+import { AtSign, Bold, ChevronDownIcon, Italic, Link, PencilIcon, Underline } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -35,7 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { Input } from "@/modules/ui/components/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
 import type { TextEditorProps } from "./editor";
 
@@ -55,162 +54,6 @@ const blockTypeToBlockName: BlockType = {
   h2: "Small Heading",
 };
 
-const positionEditorElement = (editor: HTMLInputElement, rect: DOMRect | null) => {
-  if (rect === null) {
-    editor.style.opacity = "0";
-    editor.style.top = "-1000px";
-    editor.style.left = "-1000px";
-  } else {
-    editor.style.opacity = "1";
-    editor.style.top = `${rect.top + rect.height + window.pageYOffset + 10}px`;
-    editor.style.left = `${rect.left + window.pageXOffset - editor.offsetWidth / 2 + rect.width / 2}px`;
-  }
-};
-
-const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
-  const editorRef = useRef<HTMLInputElement>(null);
-  const mouseDownRef = useRef(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [linkUrl, setLinkUrl] = useState("");
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [lastSelection, setLastSelection] = useState<RangeSelection | NodeSelection | BaseSelection | null>(
-    null
-  );
-
-  const updateLinkEditor = useCallback(() => {
-    const selection = $getSelection();
-    if ($isRangeSelection(selection)) {
-      const node = getSelectedNode(selection);
-      const parent = node.getParent();
-      if ($isLinkNode(parent)) {
-        setLinkUrl(parent.getURL());
-      } else if ($isLinkNode(node)) {
-        setLinkUrl(node.getURL());
-      } else {
-        setLinkUrl("");
-      }
-    }
-    const editorElem = editorRef.current;
-    const nativeSelection = window.getSelection();
-    const activeElement = document.activeElement;
-
-    if (editorElem === null) {
-      return;
-    }
-
-    const rootElement = editor.getRootElement();
-    if (
-      selection !== null &&
-      !nativeSelection?.isCollapsed &&
-      rootElement !== null &&
-      rootElement.contains(nativeSelection?.anchorNode || null)
-    ) {
-      const domRange = nativeSelection?.getRangeAt(0);
-      let rect: DOMRect | undefined;
-      if (nativeSelection?.anchorNode === rootElement) {
-        let inner: Element = rootElement;
-        while (inner.firstElementChild != null) {
-          inner = inner.firstElementChild;
-        }
-        rect = inner.getBoundingClientRect();
-      } else {
-        rect = domRange?.getBoundingClientRect();
-      }
-      if (!mouseDownRef.current) {
-        positionEditorElement(editorElem, rect || null);
-      }
-
-      setLastSelection(selection);
-    } else if (!activeElement || activeElement.className !== "link-input") {
-      positionEditorElement(editorElem, null);
-      setLastSelection(null);
-      setIsEditMode(false);
-      setLinkUrl("");
-    }
-
-    return true;
-  }, [editor]);
-
-  useEffect(() => {
-    return mergeRegister(
-      editor.registerUpdateListener(({ editorState }: { editorState: EditorState }) => {
-        editorState.read(() => {
-          updateLinkEditor();
-        });
-      }),
-
-      editor.registerCommand(
-        SELECTION_CHANGE_COMMAND,
-        () => {
-          updateLinkEditor();
-          return true;
-        },
-        LowPriority
-      )
-    );
-  }, [editor, updateLinkEditor]);
-
-  useEffect(() => {
-    editor.getEditorState().read(() => {
-      updateLinkEditor();
-    });
-  }, [editor, updateLinkEditor]);
-
-  useEffect(() => {
-    if (isEditMode && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isEditMode]);
-
-  useEffect(() => {
-    setIsEditMode(true);
-  }, []);
-
-  const linkAttributes = {
-    target: "_blank",
-    rel: "noopener noreferrer",
-  };
-
-  const handleSubmit = () => {
-    if (lastSelection && linkUrl) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
-        url: linkUrl,
-        ...linkAttributes,
-      });
-    }
-    setIsEditMode(false);
-  };
-
-  return (
-    <div ref={editorRef} className="link-editor">
-      {isEditMode && (
-        <div className="flex">
-          <Input
-            className="bg-white"
-            ref={inputRef}
-            value={linkUrl}
-            onChange={(event) => {
-              setLinkUrl(event.target.value);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                handleSubmit();
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                setIsEditMode(false);
-              }
-            }}
-          />
-          <Button className="py-2" onClick={handleSubmit}>
-            Add
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const getSelectedNode = (selection: RangeSelection) => {
   const anchor = selection.anchor;
   const focus = selection.focus;
@@ -227,8 +70,45 @@ const getSelectedNode = (selection: RangeSelection) => {
   }
 };
 
+const getButtonClassName = (active: boolean): string =>
+  active
+    ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
+    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900";
+
+interface ToolbarButtonProps {
+  icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
+  onClick: () => void;
+  tooltipText: string;
+}
+
+const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText }: ToolbarButtonProps) => (
+  <TooltipProvider delayDuration={0}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          type="button"
+          onClick={onClick}
+          className={getButtonClassName(active)}>
+          <Icon />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{tooltipText}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
 export const ToolbarPlugin = (
-  props: TextEditorProps & { container: HTMLElement | null; setShowRecallItemSelect: (show: boolean) => void }
+  props: TextEditorProps & {
+    setShowRecallItemSelect: (show: boolean) => void;
+    recallItemsCount?: number;
+    setShowFallbackInput?: (show: boolean) => void;
+    setShowLinkEditor: (show: boolean) => void;
+  }
 ) => {
   const [editor] = useLexicalComposerContext();
 
@@ -389,7 +269,7 @@ export const ToolbarPlugin = (
               .replace(/white-space:\s*pre-wrap;?/g, "");
             setText.current(textInHtml);
           });
-          if (!prevEditorState._selection) editor.blur();
+          if (!prevEditorState._selection && !editorState._selection) editor.blur();
         });
       });
     }
@@ -415,13 +295,12 @@ export const ToolbarPlugin = (
 
   const insertLink = useCallback(() => {
     if (!isLink) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
-        url: "https://",
-      });
+      props.setShowLinkEditor(true);
     } else {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+      setIsLink(false);
     }
-  }, [editor, isLink]);
+  }, [editor, isLink, props]);
 
   useEffect(() => {
     return editor.registerCommand(
@@ -451,25 +330,47 @@ export const ToolbarPlugin = (
       icon: Bold,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"),
       active: isBold,
+      tooltipText: "Bold",
     },
     {
       key: "italic",
       icon: Italic,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"),
       active: isItalic,
+      tooltipText: "Italic",
     },
     {
       key: "underline",
       icon: Underline,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
       active: isUnderline,
+      tooltipText: "Underline",
     },
     {
       key: "link",
       icon: Link,
       onClick: insertLink,
       active: isLink,
+      tooltipText: "Insert link",
     },
+    {
+      key: "recall",
+      icon: AtSign,
+      onClick: () => props.setShowRecallItemSelect(true),
+      active: false,
+      tooltipText: t("environments.surveys.edit.recall_data"),
+    },
+    ...(props.recallItemsCount && props.recallItemsCount > 0 && props.setShowFallbackInput
+      ? [
+          {
+            key: "editRecall",
+            icon: PencilIcon,
+            onClick: () => props.setShowFallbackInput!(true),
+            active: false,
+            tooltipText: t("environments.surveys.edit.edit_recall"),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -508,31 +409,11 @@ export const ToolbarPlugin = (
         </DropdownMenu>
       )}
 
-      {items.map(({ key, icon: Icon, onClick, active }) =>
+      {items.map(({ key, icon, onClick, active, tooltipText }) =>
         !props.excludedToolbarItems?.includes(key) ? (
-          <Button
-            key={key}
-            variant="ghost"
-            type="button"
-            onClick={onClick}
-            className={active ? "bg-subtle active-button" : "inactive-button"}>
-            <Icon />
-          </Button>
+          <ToolbarButton key={key} icon={icon} active={active} onClick={onClick} tooltipText={tooltipText} />
         ) : null
       )}
-      {isLink &&
-        !props.excludedToolbarItems?.includes("link") &&
-        createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)}
-
-      <div className="ml-auto">
-        <Button
-          variant="ghost"
-          type="button"
-          className="text-xs"
-          onClick={() => props.setShowRecallItemSelect(true)}>
-          {t("environments.surveys.edit.recall_data")}
-        </Button>
-      </div>
     </div>
   );
 };

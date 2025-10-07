@@ -57,8 +57,8 @@ describe("FallbackInput", () => {
     render(<FallbackInput {...defaultProps} />);
 
     expect(screen.getByText("Add a placeholder to show if the question gets skipped:")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Fallback for Item 1")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Fallback for Item 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("Item 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("Item 2")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "common.save" })).toBeDisabled();
   });
 
@@ -73,7 +73,7 @@ describe("FallbackInput", () => {
 
     render(<FallbackInput {...defaultProps} />);
 
-    const input1 = screen.getByPlaceholderText("Fallback for Item 1");
+    const input1 = screen.getByLabelText("Item 1");
     await user.type(input1, "test");
 
     // Check that setFallbacks was called (at least once)
@@ -85,7 +85,7 @@ describe("FallbackInput", () => {
 
     render(<FallbackInput {...defaultProps} fallbacks={{ item1: "fallback1", item2: "fallback2" }} />);
 
-    const input = screen.getByPlaceholderText("Fallback for Item 1");
+    const input = screen.getByLabelText("Item 1");
     await user.type(input, "{Enter}");
 
     expect(mockAddFallback).toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe("FallbackInput", () => {
 
     render(<FallbackInput {...defaultProps} fallbacks={{ item1: "" }} />);
 
-    const input = screen.getByPlaceholderText("Fallback for Item 1");
+    const input = screen.getByLabelText("Item 1");
     await user.type(input, "{Enter}");
 
     expect(toast.error).toHaveBeenCalledWith("Fallback missing");
@@ -125,14 +125,14 @@ describe("FallbackInput", () => {
 
     render(<FallbackInput {...defaultProps} filteredRecallItems={mixedRecallItems} />);
 
-    expect(screen.getByPlaceholderText("Fallback for Item 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("Item 1")).toBeInTheDocument();
     expect(screen.queryByText("undefined")).not.toBeInTheDocument();
   });
 
   test("replaces 'nbsp' with space in fallback value", () => {
     render(<FallbackInput {...defaultProps} fallbacks={{ item1: "fallbacknbsptext" }} />);
 
-    const input = screen.getByPlaceholderText("Fallback for Item 1");
+    const input = screen.getByLabelText("Item 1");
     expect(input).toHaveValue("fallback text");
   });
 

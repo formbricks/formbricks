@@ -11,13 +11,10 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { useTranslate } from "@tolgee/react";
-import { PencilIcon } from "lucide-react";
 import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
-import { Button } from "@/modules/ui/components/button";
 import "@/modules/ui/components/editor/styles-editor-frontend.css";
 import "@/modules/ui/components/editor/styles-editor.css";
 import { exampleTheme } from "../lib/example-theme";
@@ -25,6 +22,7 @@ import "../styles-editor-frontend.css";
 import "../styles-editor.css";
 import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "./auto-link-plugin";
 import { EditorContentChecker } from "./editor-content-checker";
+import { LinkEditor } from "./link-editor";
 import { RecallNode } from "./recall-node";
 import { RecallPlugin } from "./recall-plugin";
 import { ToolbarPlugin } from "./toolbar-plugin";
@@ -88,7 +86,7 @@ export const Editor = (props: TextEditorProps) => {
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(props.fallbacks || {});
   const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
-  const { t } = useTranslate();
+  const [showLinkEditor, setShowLinkEditor] = useState(false);
 
   return (
     <>
@@ -106,11 +104,13 @@ export const Editor = (props: TextEditorProps) => {
               updateTemplate={props.updateTemplate}
               firstRender={props.firstRender}
               setFirstRender={props.setFirstRender}
-              container={editorContainerRef.current}
               localSurvey={props.localSurvey}
               questionId={props.questionId}
               selectedLanguageCode={props.selectedLanguageCode}
               setShowRecallItemSelect={setShowRecallItemSelect}
+              recallItemsCount={recallItems.length}
+              setShowFallbackInput={setShowFallbackInput}
+              setShowLinkEditor={setShowLinkEditor}
             />
             {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
             <div
@@ -145,6 +145,7 @@ export const Editor = (props: TextEditorProps) => {
                   showRecallItemSelect={showRecallItemSelect}
                 />
               )}
+              <LinkEditor open={showLinkEditor} setOpen={setShowLinkEditor} />
               <MarkdownShortcutPlugin
                 transformers={
                   props.disableLists
@@ -166,16 +167,6 @@ export const Editor = (props: TextEditorProps) => {
           addFallback={addFallbackFunction || props.addFallback || (() => {})}
           open={showFallbackInput}
           setOpen={setShowFallbackInput}
-          triggerButton={
-            <Button
-              variant="ghost"
-              type="button"
-              size="sm"
-              className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200">
-              {t("environments.surveys.edit.edit_recall")}
-              <PencilIcon className="ml-1 h-3 w-3" />
-            </Button>
-          }
         />
       )}
     </>

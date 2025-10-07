@@ -27,6 +27,10 @@
   padding: 1px;
 }
 
+.editor-container:focus-within {
+  @apply border-brand-dark;
+}
+
 .editor-inner {
   background: var(--cal-bg);
   position: relative;
