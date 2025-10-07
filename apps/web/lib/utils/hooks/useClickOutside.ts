@@ -1,8 +1,8 @@
 import { RefObject, useEffect } from "react";
 
 // Helper function to check if a value is a DOM element with contains method
-const isDOMElement = (element: any): element is HTMLElement => {
-  return element && typeof element.contains === "function" && element.nodeType === Node.ELEMENT_NODE;
+const isDOMElement = (element: unknown): element is HTMLElement => {
+  return element instanceof HTMLElement;
 };
 
 // Improved version of https://usehooks.com/useOnClickOutside/
