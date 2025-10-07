@@ -1531,6 +1531,7 @@
         "randomize_all": "すべてをランダム化",
         "randomize_all_except_last": "最後を除くすべてをランダム化",
         "range": "範囲",
+        "recall_data": "データを呼び出す",
         "recall_information_from": "... からの情報を呼び戻す",
         "recontact_options": "再接触オプション",
         "redirect_thank_you_card": "サンクスクカードをリダイレクト",

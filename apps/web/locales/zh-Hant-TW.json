@@ -1531,6 +1531,7 @@
         "randomize_all": "全部隨機排序",
         "randomize_all_except_last": "全部隨機排序（最後一項除外）",
         "range": "範圍",
+        "recall_data": "回憶數據",
         "recall_information_from": "從 ... 獲取 信息",
         "recontact_options": "重新聯絡選項",
         "redirect_thank_you_card": "重新導向感謝卡片",
