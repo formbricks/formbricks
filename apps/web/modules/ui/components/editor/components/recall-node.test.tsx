@@ -274,11 +274,7 @@ describe("RecallNode", () => {
       const dom = node.createDOM();
 
       expect(dom.tagName).toBe("SPAN");
-      expect(dom.className).toContain("recall-node");
-      expect(dom.className).toContain("z-30");
-      expect(dom.className).toContain("inline-flex");
-      expect(dom.className).toContain("cursor-pointer");
-      expect(dom.className).toContain("bg-slate-100");
+      expect(dom.className).toBe("recall-node-placeholder");
     });
   });
 

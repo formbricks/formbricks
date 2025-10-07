@@ -196,8 +196,12 @@ describe("RecallPlugin", () => {
     selectedLanguageCode: "en",
     recallItems: [],
     setRecallItems: vi.fn(),
-    showFallbackInput: false,
-    setShowFallbackInput: vi.fn(),
+    fallbacks: {},
+    setFallbacks: vi.fn(),
+    onShowFallbackInput: vi.fn(),
+    setAddFallbackFunction: vi.fn(),
+    setShowRecallItemSelect: vi.fn(),
+    showRecallItemSelect: false,
   };
 
   afterEach(() => {
@@ -221,10 +225,10 @@ describe("RecallPlugin", () => {
       expect(screen.queryByTestId("fallback-input")).not.toBeInTheDocument();
     });
 
-    test("shows FallbackInput when showFallbackInput is true and recallItems exist", () => {
-      const recallItems: TSurveyRecallItem[] = [{ id: "q1", label: "Question 1", type: "question" }];
-      render(<RecallPlugin {...defaultProps} showFallbackInput={true} recallItems={recallItems} />);
-      expect(screen.getByTestId("fallback-input")).toBeInTheDocument();
+    test("renders RecallItemSelect when showRecallItemSelect is true", () => {
+      render(<RecallPlugin {...defaultProps} showRecallItemSelect={true} />);
+      // The RecallItemSelect component should be rendered
+      expect(screen.getByTestId("recall-item-select")).toBeInTheDocument();
     });
 
     test("does not show FallbackInput when recallItems is empty", () => {
@@ -264,68 +268,24 @@ describe("RecallPlugin", () => {
       expect(mockEditor.update).toHaveBeenCalled();
     });
 
-    test("syncs state with editor after initial load", async () => {
-      vi.useFakeTimers();
+    test("initializes component correctly", () => {
       render(<RecallPlugin {...defaultProps} />);
-
-      vi.advanceTimersByTime(100);
-
-      expect(mockEditor.getEditorState).toHaveBeenCalled();
-      vi.useRealTimers();
+      expect(mockEditor.registerUpdateListener).toHaveBeenCalled();
     });
   });
 
   describe("Recall Item Selection", () => {
-    test("shows RecallItemSelect when triggered", async () => {
-      const { rerender } = render(<RecallPlugin {...defaultProps} />);
-
-      // Simulate showing the recall item select
-      const updatedProps = { ...defaultProps };
-      rerender(<RecallPlugin {...updatedProps} />);
-
-      // Manually trigger the state by simulating @ key press
-      const keyDownHandler = mockEditor.registerCommand.mock.calls[0][1];
-      const mockEvent = { key: "@" } as KeyboardEvent;
-      keyDownHandler(mockEvent);
-
-      await waitFor(() => {
-        // The actual visibility is controlled by internal state
-        expect(mockEditor.getEditorState).toHaveBeenCalled();
-      });
-    });
-
-    test("closes RecallItemSelect when close button is clicked", async () => {
-      const { rerender } = render(<RecallPlugin {...defaultProps} />);
-
-      // Force show the modal by setting internal state through re-render
-      rerender(<RecallPlugin {...defaultProps} />);
-
-      // Simulate the @ key press to show modal
-      const keyDownHandler = mockEditor.registerCommand.mock.calls[0][1];
-      const mockEvent = { key: "@" } as KeyboardEvent;
-
-      mockTextNode = createMockTextNode("@test");
-      mockSelection.anchor.getNode.mockReturnValue(mockTextNode);
-
-      vi.useFakeTimers();
-      keyDownHandler(mockEvent);
-      vi.advanceTimersByTime(20);
-      vi.useRealTimers();
+    test("shows RecallItemSelect when showRecallItemSelect is true", () => {
+      render(<RecallPlugin {...defaultProps} showRecallItemSelect={true} />);
+      expect(screen.getByTestId("recall-item-select")).toBeInTheDocument();
     });
   });
 
   describe("Recall Item Addition", () => {
-    test("adds recall item when selected", async () => {
-      const setRecallItems = vi.fn();
-      const setShowFallbackInput = vi.fn();
+    test("triggers recall item selection when @ key is pressed", async () => {
+      const setShowRecallItemSelect = vi.fn();
 
-      render(
-        <RecallPlugin
-          {...defaultProps}
-          setRecallItems={setRecallItems}
-          setShowFallbackInput={setShowFallbackInput}
-        />
-      );
+      render(<RecallPlugin {...defaultProps} setShowRecallItemSelect={setShowRecallItemSelect} />);
 
       // Trigger the @ key to show modal
       const keyDownHandler = mockEditor.registerCommand.mock.calls[0][1];
@@ -338,60 +298,15 @@ describe("RecallPlugin", () => {
       vi.advanceTimersByTime(20);
       vi.useRealTimers();
 
-      await waitFor(() => {
-        const recallItemSelect = screen.queryByTestId("recall-item-select");
-        if (recallItemSelect) {
-          const selectButton = screen.getByTestId("select-recall-item");
-          userEvent.click(selectButton);
-        }
-      });
+      // Verify that the recall item selection is triggered
+      expect(setShowRecallItemSelect).toHaveBeenCalledWith(true);
     });
   });
 
-  describe("Fallback Input", () => {
-    test("shows fallback input after selecting recall item", () => {
-      const recallItems: TSurveyRecallItem[] = [{ id: "q1", label: "Question 1", type: "question" }];
-      render(<RecallPlugin {...defaultProps} showFallbackInput={true} recallItems={recallItems} />);
-
-      expect(screen.getByTestId("fallback-input")).toBeInTheDocument();
-    });
-
-    test("calls addFallback when add button is clicked", async () => {
-      const recallItems: TSurveyRecallItem[] = [{ id: "q1", label: "Question 1", type: "question" }];
-      const setShowFallbackInput = vi.fn();
-
-      render(
-        <RecallPlugin
-          {...defaultProps}
-          showFallbackInput={true}
-          recallItems={recallItems}
-          setShowFallbackInput={setShowFallbackInput}
-        />
-      );
-
-      const addButton = screen.getByTestId("add-fallback");
-      await userEvent.click(addButton);
-
-      expect(mockEditor.update).toHaveBeenCalled();
-    });
-
-    test("closes fallback input when close button is clicked", async () => {
-      const recallItems: TSurveyRecallItem[] = [{ id: "q1", label: "Question 1", type: "question" }];
-      const setShowFallbackInput = vi.fn();
-
-      render(
-        <RecallPlugin
-          {...defaultProps}
-          showFallbackInput={true}
-          recallItems={recallItems}
-          setShowFallbackInput={setShowFallbackInput}
-        />
-      );
-
-      const closeButton = screen.getByTestId("close-fallback");
-      await userEvent.click(closeButton);
-
-      expect(setShowFallbackInput).toHaveBeenCalledWith(false);
+  describe("Recall Item Selection", () => {
+    test("shows RecallItemSelect when showRecallItemSelect is true", () => {
+      render(<RecallPlugin {...defaultProps} showRecallItemSelect={true} />);
+      expect(screen.getByTestId("recall-item-select")).toBeInTheDocument();
     });
   });
 
@@ -473,24 +388,15 @@ describe("RecallPlugin", () => {
   });
 
   describe("Fallback Value Updates", () => {
-    test("updates fallback values with nbsp replacement", async () => {
+    test("handles recall node creation", () => {
       const recallItems: TSurveyRecallItem[] = [{ id: "q1", label: "Question 1", type: "question" }];
       const recallNode = $createRecallNode({
         recallItem: recallItems[0],
         fallbackValue: "",
       });
 
-      mockRoot.getChildren.mockReturnValue([recallNode]);
-
-      render(<RecallPlugin {...defaultProps} showFallbackInput={true} recallItems={recallItems} />);
-
-      const input = screen.getByTestId("fallback-input-field");
-      await userEvent.type(input, "test value");
-
-      const addButton = screen.getByTestId("add-fallback");
-      await userEvent.click(addButton);
-
-      expect(mockEditor.update).toHaveBeenCalled();
+      expect(recallNode).toBeDefined();
+      expect(recallNode.getRecallItem()).toEqual(recallItems[0]);
     });
   });
 

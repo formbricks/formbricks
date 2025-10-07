@@ -66,6 +66,14 @@ export const RecallWrapper = ({
     setInternalValue(headlineToRecall(value, recallItems, fallbacks));
   }, [value, recallItems, fallbacks]);
 
+  // Update recall items when value changes
+  useEffect(() => {
+    if (value?.includes("#recall:")) {
+      const newRecallItems = getRecallItems(value, localSurvey, usedLanguageCode);
+      setRecallItems(newRecallItems);
+    }
+  }, [value, localSurvey, usedLanguageCode]);
+
   const checkForRecallSymbol = useCallback((str: string) => {
     // Get cursor position by finding last character
     // Only trigger when @ is the last character typed

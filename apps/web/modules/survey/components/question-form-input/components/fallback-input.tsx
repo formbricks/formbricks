@@ -68,11 +68,7 @@ export const FallbackInput = ({
                   }}
                   onChange={(e) => {
                     const newFallbacks = { ...fallbacks };
-                    console.log("FallbackInput onChange - newFallbacks before:", newFallbacks);
-                    console.log("FallbackInput onChange - recallItem.id:", recallItem.id);
-                    console.log("FallbackInput onChange - e.target.value:", e.target.value);
                     newFallbacks[recallItem.id] = e.target.value;
-                    console.log("FallbackInput onChange - newFallbacks after:", newFallbacks);
                     setFallbacks(newFallbacks);
                   }}
                 />

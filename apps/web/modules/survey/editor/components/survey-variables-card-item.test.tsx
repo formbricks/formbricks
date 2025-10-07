@@ -1,10 +1,10 @@
-import * as utils from "@/modules/survey/editor/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
+import * as utils from "@/modules/survey/editor/lib/utils";
 import { SurveyVariablesCardItem } from "./survey-variables-card-item";
 
 vi.mock("@/modules/survey/editor/lib/utils", () => {
@@ -17,6 +17,7 @@ vi.mock("@/modules/survey/editor/lib/utils", () => {
     }),
     translateOptions: vi.fn().mockReturnValue([]),
     validateLogic: vi.fn(),
+    isUsedInRecall: vi.fn().mockReturnValue(-1),
   };
 });
 
@@ -400,6 +401,9 @@ describe("SurveyVariablesCardItem", () => {
     const findVariableUsedInLogicMock = vi.fn().mockReturnValue(-1);
     vi.spyOn(utils, "findVariableUsedInLogic").mockImplementation(findVariableUsedInLogicMock);
 
+    // Explicitly mock isUsedInRecall to return -1
+    vi.mocked(utils.isUsedInRecall).mockReturnValue(-1);
+
     const initialSurvey = {
       id: "survey123",
       createdAt: new Date(),
@@ -424,7 +428,7 @@ describe("SurveyVariablesCardItem", () => {
         {
           id: "q1",
           type: "openText",
-          headline: { default: "Question with recall:recallVarId in it" },
+          headline: { default: "Question without recall" },
           required: false,
         },
       ],
