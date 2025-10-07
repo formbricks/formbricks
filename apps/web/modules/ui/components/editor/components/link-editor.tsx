@@ -146,7 +146,7 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
             }}
           />
           <Button type="submit" className="h-9">
-            {t("common.add")}
+            Add
           </Button>
         </form>
       </PopoverContent>

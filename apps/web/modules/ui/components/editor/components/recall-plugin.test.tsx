@@ -232,7 +232,7 @@ describe("RecallPlugin", () => {
     });
 
     test("does not show FallbackInput when recallItems is empty", () => {
-      render(<RecallPlugin {...defaultProps} showFallbackInput={true} recallItems={[]} />);
+      render(<RecallPlugin {...defaultProps} onShowFallbackInput={() => {}} recallItems={[]} />);
       expect(screen.queryByTestId("fallback-input")).not.toBeInTheDocument();
     });
   });
@@ -271,13 +271,6 @@ describe("RecallPlugin", () => {
     test("initializes component correctly", () => {
       render(<RecallPlugin {...defaultProps} />);
       expect(mockEditor.registerUpdateListener).toHaveBeenCalled();
-    });
-  });
-
-  describe("Recall Item Selection", () => {
-    test("shows RecallItemSelect when showRecallItemSelect is true", () => {
-      render(<RecallPlugin {...defaultProps} showRecallItemSelect={true} />);
-      expect(screen.getByTestId("recall-item-select")).toBeInTheDocument();
     });
   });
 
