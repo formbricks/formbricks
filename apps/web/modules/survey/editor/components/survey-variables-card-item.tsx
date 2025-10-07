@@ -1,7 +1,15 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
+import { TrashIcon } from "lucide-react";
+import React, { useCallback } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { extractRecallInfo } from "@/lib/utils/recall";
-import { findVariableUsedInLogic, isUsedInQuota } from "@/modules/survey/editor/lib/utils";
+import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -13,14 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { TrashIcon } from "lucide-react";
-import React, { useCallback } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 
 interface SurveyVariablesCardItemProps {
   variable?: TSurveyVariable;
@@ -90,6 +90,21 @@ export const SurveyVariablesCardItem = ({
             questionIndex: quesIdx + 1,
           }
         )
+      );
+      return;
+    }
+    const recallQuestionIdx = isUsedInRecall(localSurvey, variableToDelete.id);
+    if (recallQuestionIdx === -2) {
+      toast.error(
+        t("environments.surveys.edit.variable_used_in_recall_welcome", { variable: variableToDelete.name })
+      );
+      return;
+    } else if (recallQuestionIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.variable_used_in_recall", {
+          variable: variableToDelete.name,
+          questionIndex: recallQuestionIdx + 1,
+        })
       );
       return;
     }

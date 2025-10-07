@@ -1,19 +1,5 @@
 "use client";
 
-import { getDefaultEndingCard } from "@/app/lib/survey-builder";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { isConditionGroup } from "@/lib/surveyLogic/utils";
-import { checkForEmptyFallBackValue, extractRecallInfo } from "@/lib/utils/recall";
-import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
-import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
-import { AddQuestionButton } from "@/modules/survey/editor/components/add-question-button";
-import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
-import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
-import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
-import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
-import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
-import { findQuestionUsedInLogic, isUsedInQuota } from "@/modules/survey/editor/lib/utils";
 import {
   DndContext,
   DragEndEvent,
@@ -41,6 +27,20 @@ import {
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
+import { getDefaultEndingCard } from "@/app/lib/survey-builder";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { isConditionGroup } from "@/lib/surveyLogic/utils";
+import { checkForEmptyFallBackValue, extractRecallInfo } from "@/lib/utils/recall";
+import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
+import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
+import { AddQuestionButton } from "@/modules/survey/editor/components/add-question-button";
+import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
+import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
+import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
+import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
+import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
+import { findQuestionUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -274,6 +274,14 @@ export const QuestionsView = ({
     const quesIdx = findQuestionUsedInLogic(localSurvey, questionId);
     if (quesIdx !== -1) {
       toast.error(t("environments.surveys.edit.question_used_in_logic", { questionIndex: quesIdx + 1 }));
+      return;
+    }
+
+    const recallQuestionIdx = isUsedInRecall(localSurvey, questionId);
+    if (recallQuestionIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.question_used_in_recall", { questionIndex: recallQuestionIdx + 1 })
+      );
       return;
     }
 

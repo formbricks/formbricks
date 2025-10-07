@@ -1,18 +1,15 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { isConditionGroup } from "@/lib/surveyLogic/utils";
-import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
-import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TConditionGroup,
+  TI18nString,
   TLeftOperand,
   TRightOperand,
   TSingleCondition,
   TSurvey,
+  TSurveyEndings,
   TSurveyLogic,
   TSurveyLogicAction,
   TSurveyLogicActions,
@@ -21,7 +18,13 @@ import {
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
+  TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { isConditionGroup } from "@/lib/surveyLogic/utils";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
 export const MAX_STRING_LENGTH = 2000;
@@ -1251,6 +1254,76 @@ export const isUsedInQuota = (
   }
 
   return false;
+};
+
+const checkTextForRecallPattern = (textObject: TI18nString | undefined, recallPattern: string): boolean => {
+  return textObject ? Object.values(textObject).some((text: string) => text.includes(recallPattern)) : false;
+};
+
+const checkWelcomeCardForRecall = (welcomeCard: TSurveyWelcomeCard, recallPattern: string): boolean => {
+  if (!welcomeCard.enabled) return false;
+
+  return (
+    checkTextForRecallPattern(welcomeCard.headline, recallPattern) ||
+    checkTextForRecallPattern(welcomeCard.html, recallPattern)
+  );
+};
+
+const checkQuestionForRecall = (question: TSurveyQuestion, recallPattern: string): boolean => {
+  // Check headline
+  if (Object.values(question.headline).some((text) => text.includes(recallPattern))) {
+    return true;
+  }
+
+  // Check subheader
+  if (checkTextForRecallPattern(question.subheader, recallPattern)) {
+    return true;
+  }
+
+  // Check html field (for consent and CTA questions)
+  if ("html" in question && checkTextForRecallPattern(question.html, recallPattern)) {
+    return true;
+  }
+
+  return false;
+};
+
+const checkEndingCardsForRecall = (endings: TSurveyEndings | undefined, recallPattern: string): boolean => {
+  if (!endings) return false;
+
+  return endings.some((ending) => {
+    if (ending.type === "endScreen") {
+      return (
+        checkTextForRecallPattern(ending.headline, recallPattern) ||
+        checkTextForRecallPattern(ending.subheader, recallPattern)
+      );
+    }
+    return false;
+  });
+};
+
+export const isUsedInRecall = (survey: TSurvey, id: string): number => {
+  const recallPattern = `#recall:${id}/fallback:`;
+
+  // Check welcome card
+  if (checkWelcomeCardForRecall(survey.welcomeCard, recallPattern)) {
+    return -2; // Special index for welcome card
+  }
+
+  // Check questions
+  const questionIndex = survey.questions.findIndex((question) =>
+    checkQuestionForRecall(question, recallPattern)
+  );
+  if (questionIndex !== -1) {
+    return questionIndex;
+  }
+
+  // Check ending cards
+  if (checkEndingCardsForRecall(survey.endings, recallPattern)) {
+    return survey.questions.length; // Special index for ending cards
+  }
+
+  return -1; // Not found
 };
 
 export const findOptionUsedInLogic = (
