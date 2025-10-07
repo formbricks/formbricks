@@ -272,4 +272,117 @@ describe("MultipleChoiceSingleQuestion", () => {
     const backButton = screen.getByTestId("back-button");
     expect(backButton).toHaveAttribute("tabIndex", "0");
   });
+
+  test("allows deselecting a choice when question is not required", async () => {
+    const user = userEvent.setup();
+    const optionalQuestion = { ...mockQuestion, required: false };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={optionalQuestion} value="Choice 1" />);
+
+    const choice1Radio = screen.getByLabelText("Choice 1");
+    await user.click(choice1Radio);
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: undefined });
+  });
+
+  test("does not deselect a choice when question is required", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="Choice 1" />);
+
+    const choice1Radio = screen.getByLabelText("Choice 1");
+    await user.click(choice1Radio);
+
+    expect(mockOnChange).not.toHaveBeenCalledWith({ q1: undefined });
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "Choice 1" });
+  });
+
+  test("allows deselecting 'Other' option when question is not required", async () => {
+    const user = userEvent.setup();
+    const optionalQuestion = { ...mockQuestion, required: false };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={optionalQuestion} value="Some text" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: undefined });
+  });
+
+  test("does not deselect 'Other' option when question is required", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="Some text" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(mockOnChange).not.toHaveBeenCalledWith({ q1: undefined });
+  });
+
+  test("clears otherSelected when selecting a regular choice after 'Other' was selected", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(screen.getByPlaceholderText("Please specify")).toBeInTheDocument();
+
+    mockOnChange.mockClear();
+
+    const choice1Radio = screen.getByLabelText("Choice 1");
+    await user.click(choice1Radio);
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "Choice 1" });
+  });
+
+  test("handles spacebar key press on 'Other' option label when not selected", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} />);
+
+    const otherLabel = screen.getByLabelText("Other").closest("label");
+
+    if (otherLabel) {
+      await user.type(otherLabel, " ");
+    }
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "" });
+  });
+
+  test("does not trigger click when spacebar is pressed on 'Other' option label and otherSelected is true", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    mockOnChange.mockClear();
+
+    const otherLabel = screen.getByRole("radio", { name: "Other" }).closest("label");
+
+    if (otherLabel) {
+      await user.type(otherLabel, " ");
+    }
+
+    expect(mockOnChange).not.toHaveBeenCalled();
+  });
+
+  test("displays custom other option placeholder when provided", async () => {
+    const user = userEvent.setup();
+    const questionWithCustomPlaceholder = {
+      ...mockQuestion,
+      otherOptionPlaceholder: { default: "Custom placeholder text" },
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithCustomPlaceholder} />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(screen.getByPlaceholderText("Custom placeholder text")).toBeInTheDocument();
+  });
 });

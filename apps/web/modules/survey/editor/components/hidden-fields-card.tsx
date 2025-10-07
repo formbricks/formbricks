@@ -15,7 +15,6 @@ import { findHiddenFieldUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/mod
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 import { Tag } from "@/modules/ui/components/tag";
 
 interface HiddenFieldsCardProps {
@@ -160,21 +159,6 @@ export const HiddenFieldsCard = ({
                 <p className="text-sm font-semibold">{t("common.hidden_fields")}</p>
               </div>
             </div>
-
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="hidden-fields-toggle">
-                {localSurvey?.hiddenFields?.enabled ? t("common.on") : t("common.off")}
-              </Label>
-
-              <Switch
-                id="hidden-fields-toggle"
-                checked={localSurvey?.hiddenFields?.enabled}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateSurvey({ enabled: !localSurvey.hiddenFields?.enabled });
-                }}
-              />
-            </div>
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
@@ -233,7 +217,7 @@ export const HiddenFieldsCard = ({
                 onChange={(e) => setHiddenField(e.target.value.trim())}
                 placeholder={t("environments.surveys.edit.type_field_id") + "..."}
               />
-              <Button variant="secondary" type="submit" size="sm" className="whitespace-nowrap">
+              <Button variant="secondary" type="submit" className="h-10 whitespace-nowrap">
                 {t("environments.surveys.edit.add_hidden_field_id")}
               </Button>
             </div>
