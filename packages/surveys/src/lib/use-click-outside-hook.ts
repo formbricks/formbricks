@@ -1,9 +1,5 @@
 import { MutableRef, useEffect } from "preact/hooks";
-
-// Helper function to check if a value is a DOM element with contains method
-const isDOMElement = (element: any): element is HTMLElement => {
-  return element && typeof element.contains === "function" && element.nodeType === Node.ELEMENT_NODE;
-};
+import { isDOMElement } from "@/lib/utils";
 
 // Improved version of https://usehooks.com/useOnClickOutside/
 export const useClickOutside = (
