@@ -13,6 +13,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
 import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
+import { useTranslate } from "@tolgee/react";
 import type { BaseSelection, EditorState, LexicalEditor, NodeSelection, RangeSelection } from "lexical";
 import {
   $createParagraphNode,
@@ -231,6 +232,7 @@ export const ToolbarPlugin = (
 ) => {
   const [editor] = useLexicalComposerContext();
 
+  const { t } = useTranslate();
   const toolbarRef = useRef(null);
   const [blockType, setBlockType] = useState("paragraph");
   const [isLink, setIsLink] = useState(false);
@@ -528,7 +530,7 @@ export const ToolbarPlugin = (
           type="button"
           className="text-xs"
           onClick={() => props.setShowRecallItemSelect(true)}>
-          Recall data
+          {t("environments.surveys.edit.recall_data")}
         </Button>
       </div>
     </div>
