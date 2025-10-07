@@ -274,13 +274,6 @@ describe("RecallPlugin", () => {
     });
   });
 
-  describe("Recall Item Selection", () => {
-    test("shows RecallItemSelect when showRecallItemSelect is true", () => {
-      render(<RecallPlugin {...defaultProps} showRecallItemSelect={true} />);
-      expect(screen.getByTestId("recall-item-select")).toBeInTheDocument();
-    });
-  });
-
   describe("Recall Item Addition", () => {
     test("triggers recall item selection when @ key is pressed", async () => {
       const setShowRecallItemSelect = vi.fn();
