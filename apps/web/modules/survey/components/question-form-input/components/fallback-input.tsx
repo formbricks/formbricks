@@ -1,5 +1,5 @@
 import { useTranslate } from "@tolgee/react";
-import { RefObject } from "react";
+import { ReactNode } from "react";
 import { toast } from "react-hot-toast";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { Button } from "@/modules/ui/components/button";
@@ -10,20 +10,20 @@ interface FallbackInputProps {
   filteredRecallItems: (TSurveyRecallItem | undefined)[];
   fallbacks: { [type: string]: string };
   setFallbacks: (fallbacks: { [type: string]: string }) => void;
-  fallbackInputRef: RefObject<HTMLInputElement>;
   addFallback: () => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  triggerButton: ReactNode;
 }
 
 export const FallbackInput = ({
   filteredRecallItems,
   fallbacks,
   setFallbacks,
-  fallbackInputRef,
   addFallback,
   open,
   setOpen,
+  triggerButton,
 }: FallbackInputProps) => {
   const { t } = useTranslate();
   const containsEmptyFallback = () => {
@@ -32,14 +32,14 @@ export const FallbackInput = ({
   };
 
   return (
-    <Popover open={open}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="z-10 h-0 w-full cursor-pointer" />
+        {open ? <div className="z-10 h-0 w-full cursor-pointer" /> : triggerButton}
       </PopoverTrigger>
 
       <PopoverContent
         className="w-auto border border-slate-300 bg-slate-50 p-3 text-xs shadow-lg"
-        align="start"
+        align="end"
         side="bottom"
         sideOffset={4}>
         <p className="font-medium">{t("environments.surveys.edit.add_fallback_placeholder")}</p>
@@ -51,10 +51,9 @@ export const FallbackInput = ({
               <div key={recallItem.id} className="flex flex-col">
                 <Input
                   className="placeholder:text-md h-full bg-white"
-                  ref={idx === 0 ? fallbackInputRef : undefined}
                   id="fallback"
                   autoFocus={idx === filteredRecallItems.length - 1}
-                  value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ")}
+                  value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ") || ""}
                   placeholder={`${t("environments.surveys.edit.fallback_for")} ${recallItem.label}`}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -69,7 +68,11 @@ export const FallbackInput = ({
                   }}
                   onChange={(e) => {
                     const newFallbacks = { ...fallbacks };
+                    console.log("FallbackInput onChange - newFallbacks before:", newFallbacks);
+                    console.log("FallbackInput onChange - recallItem.id:", recallItem.id);
+                    console.log("FallbackInput onChange - e.target.value:", e.target.value);
                     newFallbacks[recallItem.id] = e.target.value;
+                    console.log("FallbackInput onChange - newFallbacks after:", newFallbacks);
                     setFallbacks(newFallbacks);
                   }}
                 />

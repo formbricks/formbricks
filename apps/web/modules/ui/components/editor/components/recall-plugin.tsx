@@ -14,10 +14,9 @@ import {
   LexicalNode,
   TextNode,
 } from "lexical";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getFallbackValues, getRecallItems } from "@/lib/utils/recall";
-import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
 import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
 import { $createRecallNode, RecallNode } from "./recall-node";
 
@@ -27,8 +26,10 @@ interface RecallPluginProps {
   selectedLanguageCode: string;
   recallItems: TSurveyRecallItem[];
   setRecallItems: (recallItems: TSurveyRecallItem[]) => void;
-  showFallbackInput: boolean;
-  setShowFallbackInput: (showFallbackInput: boolean) => void;
+  fallbacks: { [id: string]: string };
+  setFallbacks: (fallbacks: { [id: string]: string }) => void;
+  onShowFallbackInput: () => void;
+  setAddFallbackFunction: (fn: (() => void) | null) => void;
 }
 
 export const RecallPlugin = ({
@@ -37,16 +38,16 @@ export const RecallPlugin = ({
   selectedLanguageCode,
   recallItems,
   setRecallItems,
-  showFallbackInput,
-  setShowFallbackInput,
+  fallbacks,
+  setFallbacks,
+  onShowFallbackInput,
+  setAddFallbackFunction,
 }: RecallPluginProps) => {
   const [editor] = useLexicalComposerContext();
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
-  const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>({});
   const [atSymbolPosition, setAtSymbolPosition] = useState<{ node: LexicalNode; offset: number } | null>(
     null
   );
-  const fallbackInputRef = useRef<HTMLInputElement | null>(null);
 
   // Helper function to collect all text nodes
   const collectTextNodes = useCallback((root: LexicalNode): TextNode[] => {
@@ -93,7 +94,7 @@ export const RecallPlugin = ({
               $createRecallNode({
                 recallItem,
                 fallbackValue,
-                onRecallClick: () => setShowFallbackInput(true),
+                onRecallClick: () => onShowFallbackInput(),
               })
             );
           }
@@ -102,7 +103,7 @@ export const RecallPlugin = ({
 
       return newNodes;
     },
-    [localSurvey, selectedLanguageCode, setShowFallbackInput]
+    [localSurvey, selectedLanguageCode, onShowFallbackInput]
   );
 
   // Helper function to replace text node with new nodes
@@ -122,6 +123,30 @@ export const RecallPlugin = ({
     } catch (error) {
       console.error("Error replacing text node:", error);
     }
+  }, []);
+
+  // Helper function to find all RecallNodes recursively
+  const findAllRecallNodes = useCallback((node: LexicalNode): RecallNode[] => {
+    const recallNodes: RecallNode[] = [];
+
+    if (node instanceof RecallNode) {
+      recallNodes.push(node);
+    }
+
+    // Only get children if this is an ElementNode
+    if ($isElementNode(node)) {
+      try {
+        const children = node.getChildren();
+        for (const child of children) {
+          const childRecallNodes = findAllRecallNodes(child);
+          recallNodes.push(...childRecallNodes);
+        }
+      } catch (error) {
+        console.error("Error getting children from node:", error);
+      }
+    }
+
+    return recallNodes;
   }, []);
 
   // Convert raw recall text to RecallNodes
@@ -145,76 +170,60 @@ export const RecallPlugin = ({
     }
   }, [collectTextNodes, createNodesFromText, replaceTextNode]);
 
-  // Sync plugin state with actual RecallNodes in the editor
-  const syncStateWithEditor = useCallback(() => {
-    const root = $getRoot();
-    const currentRecallItems: TSurveyRecallItem[] = [];
-    const currentFallbacks: { [id: string]: string } = {};
-
-    // Function to recursively find all RecallNodes
-    const findRecallNodes = (node: LexicalNode): RecallNode[] => {
-      const recallNodes: RecallNode[] = [];
-
-      if (node instanceof RecallNode) {
-        recallNodes.push(node);
-      }
-
-      // Only get children if this is an ElementNode
-      if ($isElementNode(node)) {
-        try {
-          const children = node.getChildren();
-          for (const child of children) {
-            const childRecallNodes = findRecallNodes(child);
-            recallNodes.push(...childRecallNodes);
-          }
-        } catch (error) {
-          console.error("Error getting children from node during sync:", error);
-        }
-      }
-
-      return recallNodes;
-    };
-
-    const allRecallNodes = findRecallNodes(root);
-
-    // Build current state from actual nodes in editor
-    for (const recallNode of allRecallNodes) {
-      const recallItem = recallNode.getRecallItem();
-      const fallbackValue = recallNode.getFallbackValue();
-
-      currentRecallItems.push(recallItem);
-      currentFallbacks[recallItem.id] = fallbackValue;
-    }
-
-    // Update plugin state to match editor content
-    setRecallItems(currentRecallItems);
-    setFallbacks(currentFallbacks);
-  }, []);
-
   // Monitor editor content for recall patterns
   const handleEditorUpdate = useCallback(
     ({ editorState }: { editorState: EditorState }) => {
       editorState.read(() => {
-        const fullText = $getRoot().getTextContent();
+        const root = $getRoot();
+        const fullText = root.getTextContent();
 
-        // Check for recall patterns in full text
+        // Find all RecallNodes in the editor
+        const allRecallNodes = findAllRecallNodes(root);
+        const currentRecallItems: TSurveyRecallItem[] = [];
+        const currentFallbacks: { [id: string]: string } = {};
+
+        // Extract recall items and fallbacks from existing RecallNodes
+        for (const recallNode of allRecallNodes) {
+          const recallItem = recallNode.getRecallItem();
+          const fallbackValue = recallNode.getFallbackValue();
+
+          currentRecallItems.push(recallItem);
+          currentFallbacks[recallItem.id] = fallbackValue;
+        }
+
+        // Check for recall patterns in full text (for raw text that needs conversion)
         if (fullText.includes("#recall:")) {
           const items = getRecallItems(fullText, localSurvey, selectedLanguageCode);
           const fallbackValues = getFallbackValues(fullText);
-          setRecallItems(items);
-          setFallbacks(fallbackValues);
+
+          // Merge with existing RecallNodes
+          const mergedItems = [...currentRecallItems];
+          const mergedFallbacks = { ...currentFallbacks };
+
+          for (const item of items) {
+            if (!mergedItems.find((existing) => existing.id === item.id)) {
+              mergedItems.push(item);
+            }
+            if (fallbackValues[item.id]) {
+              mergedFallbacks[item.id] = fallbackValues[item.id];
+            }
+          }
+
+          setRecallItems(mergedItems);
+          setFallbacks(mergedFallbacks);
 
           // Convert any raw recall text to visual nodes
           editor.update(() => {
             convertTextToRecallNodes();
           });
         } else {
-          // No raw recall patterns, but sync state with existing RecallNodes
-          syncStateWithEditor();
+          // No raw recall patterns, sync state with existing RecallNodes only
+          setRecallItems(currentRecallItems);
+          setFallbacks(currentFallbacks);
         }
       });
     },
-    [localSurvey, selectedLanguageCode, editor, convertTextToRecallNodes, syncStateWithEditor]
+    [localSurvey, selectedLanguageCode, editor, convertTextToRecallNodes, findAllRecallNodes]
   );
 
   // Handle @ key press for recall trigger
@@ -284,14 +293,7 @@ export const RecallPlugin = ({
     editor.update(() => {
       convertTextToRecallNodes();
     });
-
-    // Also sync state with any existing RecallNodes
-    setTimeout(() => {
-      editor.getEditorState().read(() => {
-        syncStateWithEditor();
-      });
-    }, 100);
-  }, [editor, convertTextToRecallNodes, syncStateWithEditor]);
+  }, [editor, convertTextToRecallNodes]);
 
   useEffect(() => {
     const removeUpdateListener = editor.registerUpdateListener(handleEditorUpdate);
@@ -349,7 +351,7 @@ export const RecallPlugin = ({
         const recallNode = $createRecallNode({
           recallItem,
           fallbackValue: "",
-          onRecallClick: () => setShowFallbackInput(true),
+          onRecallClick: () => onShowFallbackInput(),
         });
 
         const success =
@@ -369,47 +371,27 @@ export const RecallPlugin = ({
       editor.update(handleRecallInsert);
       setAtSymbolPosition(null);
       setShowRecallItemSelect(false);
-      setShowFallbackInput(true);
 
+      // Immediately update recallItems state to include the new item
+      const newItems = [...recallItems];
+      if (!newItems.find((item) => item.id === recallItem.id)) {
+        newItems.push(recallItem);
+      }
+      setRecallItems(newItems);
+
+      // Show fallback input after state is updated
       setTimeout(() => {
-        editor.getEditorState().read(() => {
-          syncStateWithEditor();
-        });
+        onShowFallbackInput();
       }, 0);
     },
     [
       editor,
-      syncStateWithEditor,
       atSymbolPosition,
       replaceAtSymbolWithStoredPosition,
       replaceAtSymbolWithCurrentSelection,
-      setShowFallbackInput,
+      onShowFallbackInput,
     ]
   );
-
-  // Helper function to find all RecallNodes recursively
-  const findAllRecallNodes = useCallback((node: LexicalNode): RecallNode[] => {
-    const recallNodes: RecallNode[] = [];
-
-    if (node instanceof RecallNode) {
-      recallNodes.push(node);
-    }
-
-    // Only get children if this is an ElementNode
-    if ($isElementNode(node)) {
-      try {
-        const children = node.getChildren();
-        for (const child of children) {
-          const childRecallNodes = findAllRecallNodes(child);
-          recallNodes.push(...childRecallNodes);
-        }
-      } catch (error) {
-        console.error("Error getting children from node:", error);
-      }
-    }
-
-    return recallNodes;
-  }, []);
 
   const addFallback = useCallback(() => {
     const handleFallbackUpdate = () => {
@@ -427,15 +409,13 @@ export const RecallPlugin = ({
     };
 
     editor.update(handleFallbackUpdate);
-    setShowFallbackInput(false);
+  }, [editor, fallbacks, findAllRecallNodes]);
 
-    // Sync state with editor after fallback update
-    setTimeout(() => {
-      editor.getEditorState().read(() => {
-        syncStateWithEditor();
-      });
-    }, 0);
-  }, [editor, fallbacks, syncStateWithEditor, findAllRecallNodes]);
+  // Expose addFallback function to parent
+  useEffect(() => {
+    setAddFallbackFunction(() => addFallback);
+    return () => setAddFallbackFunction(null);
+  }, [addFallback, setAddFallbackFunction]);
 
   return (
     <>
@@ -449,19 +429,6 @@ export const RecallPlugin = ({
           recallItems={recallItems}
           selectedLanguageCode={selectedLanguageCode}
           hiddenFields={localSurvey.hiddenFields}
-        />
-      )}
-
-      {/* Fallback Input Modal */}
-      {showFallbackInput && recallItems.length > 0 && (
-        <FallbackInput
-          filteredRecallItems={recallItems}
-          fallbacks={fallbacks}
-          setFallbacks={setFallbacks}
-          fallbackInputRef={fallbackInputRef as React.RefObject<HTMLInputElement>}
-          addFallback={addFallback}
-          open={showFallbackInput}
-          setOpen={setShowFallbackInput}
         />
       )}
     </>

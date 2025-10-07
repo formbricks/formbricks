@@ -16,6 +16,7 @@ import { PencilIcon } from "lucide-react";
 import { type Dispatch, type SetStateAction, useRef, useState } from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
+import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
 import { Button } from "@/modules/ui/components/button";
 import "@/modules/ui/components/editor/styles-editor-frontend.css";
 import "@/modules/ui/components/editor/styles-editor.css";
@@ -53,6 +54,8 @@ export type TextEditorProps = {
   localSurvey?: TSurvey;
   questionId?: string;
   selectedLanguageCode?: string;
+  fallbacks?: { [id: string]: string };
+  addFallback?: () => void;
 };
 
 const editorConfig = {
@@ -82,7 +85,10 @@ export const Editor = (props: TextEditorProps) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>([]);
+  const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(props.fallbacks || {});
+  const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
   const { t } = useTranslate();
+
   return (
     <>
       <div className="editor cursor-text rounded-md">
@@ -129,8 +135,10 @@ export const Editor = (props: TextEditorProps) => {
                   selectedLanguageCode={props.selectedLanguageCode}
                   recallItems={recallItems}
                   setRecallItems={setRecallItems}
-                  showFallbackInput={showFallbackInput}
-                  setShowFallbackInput={setShowFallbackInput}
+                  fallbacks={fallbacks}
+                  setFallbacks={setFallbacks}
+                  onShowFallbackInput={() => setShowFallbackInput(true)}
+                  setAddFallbackFunction={setAddFallbackFunction}
                 />
               )}
               <MarkdownShortcutPlugin
@@ -147,18 +155,24 @@ export const Editor = (props: TextEditorProps) => {
         </LexicalComposer>
       </div>
       {recallItems.length > 0 && (
-        <Button
-          variant="ghost"
-          type="button"
-          size="sm"
-          className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
-          onClick={(e) => {
-            e.preventDefault();
-            setShowFallbackInput(!showFallbackInput);
-          }}>
-          {t("environments.surveys.edit.edit_recall")}
-          <PencilIcon className="ml-1 h-3 w-3" />
-        </Button>
+        <FallbackInput
+          filteredRecallItems={recallItems}
+          fallbacks={fallbacks}
+          setFallbacks={setFallbacks}
+          addFallback={addFallbackFunction || props.addFallback || (() => {})}
+          open={showFallbackInput}
+          setOpen={setShowFallbackInput}
+          triggerButton={
+            <Button
+              variant="ghost"
+              type="button"
+              size="sm"
+              className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200">
+              {t("environments.surveys.edit.edit_recall")}
+              <PencilIcon className="ml-1 h-3 w-3" />
+            </Button>
+          }
+        />
       )}
     </>
   );
