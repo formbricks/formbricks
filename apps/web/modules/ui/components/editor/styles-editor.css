@@ -35,7 +35,7 @@
   overflow: auto;
   resize: vertical;
   height: auto;
-  min-height: 100px;
+  min-height: 40px;
   max-height: 150px;
 }
 

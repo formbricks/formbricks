@@ -194,7 +194,7 @@ export const RecallItemSelect = ({
               <DropdownMenuItem
                 id={"recallItem-" + index}
                 key={recallItem.id}
-                title={recallItem.label}
+                title={recallItem.type}
                 onSelect={() => {
                   addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
                   setShowRecallItemSelect(false);

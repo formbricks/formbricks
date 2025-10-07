@@ -1,10 +1,10 @@
-import { Button } from "@/modules/ui/components/button";
-import { Input } from "@/modules/ui/components/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useTranslate } from "@tolgee/react";
 import { RefObject } from "react";
 import { toast } from "react-hot-toast";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface FallbackInputProps {
   filteredRecallItems: (TSurveyRecallItem | undefined)[];
@@ -87,7 +87,7 @@ export const FallbackInput = ({
               addFallback();
               setOpen(false);
             }}>
-            {t("environments.surveys.edit.add_fallback")}
+            {t("common.save")}
           </Button>
         </div>
       </PopoverContent>

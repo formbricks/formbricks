@@ -18,7 +18,6 @@ import {
   $createParagraphNode,
   $getRoot,
   $getSelection,
-  $insertNodes,
   $isRangeSelection,
   COMMAND_PRIORITY_CRITICAL,
   FORMAT_TEXT_COMMAND,
@@ -370,10 +369,8 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
             const dom = parser.parseFromString(props.getText(), "text/html");
 
             const nodes = $generateNodesFromDOM(editor, dom);
-            const paragraph = $createParagraphNode();
-            root.clear().append(paragraph);
-            paragraph.select();
-            $insertNodes(nodes);
+            root.clear();
+            root.append(...nodes);
           });
         }
       });
@@ -389,13 +386,9 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         const dom = parser.parseFromString(props.getText(), "text/html");
 
         const nodes = $generateNodesFromDOM(editor, dom);
-        const paragraph = $createParagraphNode();
-        $getRoot().clear().append(paragraph);
-
-        paragraph.select();
-
-        $getRoot().select();
-        $insertNodes(nodes);
+        const root = $getRoot();
+        root.clear();
+        root.append(...nodes);
 
         editor.registerUpdateListener(({ editorState, prevEditorState }) => {
           editorState.read(() => {

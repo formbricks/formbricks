@@ -89,14 +89,20 @@ export const RecallPlugin = ({
           if (items.length > 0) {
             const recallItem = items[0];
             const fallbackValue = fallbackValues[recallItem.id] || "";
-            newNodes.push($createRecallNode({ recallItem, fallbackValue }));
+            newNodes.push(
+              $createRecallNode({
+                recallItem,
+                fallbackValue,
+                onRecallClick: () => setShowFallbackInput(true),
+              })
+            );
           }
         }
       }
 
       return newNodes;
     },
-    [localSurvey, selectedLanguageCode]
+    [localSurvey, selectedLanguageCode, setShowFallbackInput]
   );
 
   // Helper function to replace text node with new nodes
@@ -343,6 +349,7 @@ export const RecallPlugin = ({
         const recallNode = $createRecallNode({
           recallItem,
           fallbackValue: "",
+          onRecallClick: () => setShowFallbackInput(true),
         });
 
         const success =
@@ -376,6 +383,7 @@ export const RecallPlugin = ({
       atSymbolPosition,
       replaceAtSymbolWithStoredPosition,
       replaceAtSymbolWithCurrentSelection,
+      setShowFallbackInput,
     ]
   );
 
