@@ -216,7 +216,7 @@ describe("ToolbarPlugin", () => {
     );
 
     // Just verify the toolbar renders without crashing
-    expect(screen.getByText("Recall data")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.recall_data")).toBeInTheDocument();
   });
 
   test("excludes toolbar items when specified", () => {

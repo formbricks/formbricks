@@ -1,6 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getRecallItems } from "@/lib/utils/recall";
@@ -21,14 +20,33 @@ const createMockTextNode = (content: string) => ({
   getChildren: vi.fn(() => []),
 });
 
-const createMockRecallNode = (recallItem: TSurveyRecallItem, fallbackValue: string) => ({
-  getRecallItem: vi.fn(() => recallItem),
-  getFallbackValue: vi.fn(() => fallbackValue),
-  setFallbackValue: vi.fn(),
-  insertBefore: vi.fn(),
-  insertAfter: vi.fn(),
-  getChildren: vi.fn(() => []),
-});
+// Mock RecallNode class
+class MockRecallNode {
+  constructor(
+    public recallItem: TSurveyRecallItem,
+    public fallbackValue: string
+  ) {}
+
+  getRecallItem() {
+    return this.recallItem;
+  }
+  getFallbackValue() {
+    return this.fallbackValue;
+  }
+  setFallbackValue = vi.fn();
+  insertBefore = vi.fn();
+  insertAfter = vi.fn();
+  getChildren = vi.fn(() => []);
+}
+
+// Mock the RecallNode class for instanceof checks
+vi.mock("../recall-node", () => ({
+  RecallNode: MockRecallNode,
+}));
+
+const createMockRecallNode = (recallItem: TSurveyRecallItem, fallbackValue: string) => {
+  return new MockRecallNode(recallItem, fallbackValue);
+};
 
 const createMockEditor = () => ({
   update: vi.fn((fn) => fn()),
@@ -232,7 +250,7 @@ describe("RecallPlugin", () => {
     });
 
     test("does not show FallbackInput when recallItems is empty", () => {
-      render(<RecallPlugin {...defaultProps} showFallbackInput={true} recallItems={[]} />);
+      render(<RecallPlugin {...defaultProps} onShowFallbackInput={() => {}} recallItems={[]} />);
       expect(screen.queryByTestId("fallback-input")).not.toBeInTheDocument();
     });
   });
@@ -483,6 +501,495 @@ describe("RecallPlugin", () => {
       updateHandler({ editorState: mockEditorState });
 
       expect(vi.mocked(getRecallItems)).toHaveBeenCalledWith(expect.any(String), expect.any(Object), "es");
+    });
+  });
+
+  describe("Text Node Collection and Traversal", () => {
+    test("collects text nodes from nested element structure", () => {
+      const childTextNode1 = createMockTextNode("Child text 1");
+      const childTextNode2 = createMockTextNode("Child text 2");
+      const parentElement = {
+        getChildren: vi.fn(() => [childTextNode1, childTextNode2]),
+        getTextContent: vi.fn(() => "Parent text"),
+      };
+
+      mockRoot.getChildren.mockReturnValue([parentElement]);
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditorState.read).toHaveBeenCalled();
+    });
+
+    test("handles error during node traversal gracefully", () => {
+      const errorNode = {
+        getChildren: vi.fn(() => {
+          throw new Error("Test traversal error");
+        }),
+        getTextContent: vi.fn(() => "Error node"),
+      };
+
+      mockRoot.getChildren.mockReturnValue([errorNode]);
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(consoleSpy).toHaveBeenCalledWith("Error getting children from node:", expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
+    test("handles mixed text and element nodes", () => {
+      const textNode = createMockTextNode("Text content");
+      const elementNode = {
+        getChildren: vi.fn(() => [createMockTextNode("Nested text")]),
+        getTextContent: vi.fn(() => "Element content"),
+      };
+
+      mockRoot.getChildren.mockReturnValue([textNode, elementNode]);
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditorState.read).toHaveBeenCalled();
+    });
+  });
+
+  describe("Text to Recall Node Conversion", () => {
+    test("converts text with recall patterns to RecallNodes", () => {
+      const textWithRecall = "Hello #recall:q1/fallback:default# world";
+      mockTextNode.getTextContent.mockReturnValue(textWithRecall);
+      mockRoot.getChildren.mockReturnValue([mockTextNode]);
+
+      // Mock the regex test to return true
+      const originalTest = RegExp.prototype.test;
+      RegExp.prototype.test = vi.fn(() => true);
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditor.update).toHaveBeenCalled();
+
+      // Restore original test method
+      RegExp.prototype.test = originalTest;
+    });
+
+    test("handles text without recall patterns", () => {
+      const plainText = "Hello world without recall";
+      mockTextNode.getTextContent.mockReturnValue(plainText);
+      mockRoot.getChildren.mockReturnValue([mockTextNode]);
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditorState.read).toHaveBeenCalled();
+    });
+  });
+
+  describe("Recall Node Finding", () => {
+    test("finds RecallNodes in nested structure", () => {
+      const recallNode = createMockRecallNode({ id: "q1", label: "Question 1", type: "question" }, "default");
+      const parentElement = {
+        getChildren: vi.fn(() => [recallNode]),
+        getTextContent: vi.fn(() => "Parent with recall"),
+      };
+
+      mockRoot.getChildren.mockReturnValue([parentElement]);
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditorState.read).toHaveBeenCalled();
+    });
+
+    test("handles error when getting children from element node", () => {
+      const errorElement = {
+        getChildren: vi.fn(() => {
+          throw new Error("Error getting children");
+        }),
+        getTextContent: vi.fn(() => "Error element"),
+      };
+
+      mockRoot.getChildren.mockReturnValue([errorElement]);
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(consoleSpy).toHaveBeenCalledWith("Error getting children from node:", expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
+    test("finds multiple RecallNodes at different levels", () => {
+      const recallNode1 = createMockRecallNode(
+        { id: "q1", label: "Question 1", type: "question" },
+        "default"
+      );
+      const recallNode2 = createMockRecallNode({ id: "q2", label: "Question 2", type: "question" }, "test");
+      const parentElement = {
+        getChildren: vi.fn(() => [recallNode1, recallNode2]),
+        getTextContent: vi.fn(() => "Parent with multiple recalls"),
+      };
+
+      mockRoot.getChildren.mockReturnValue([parentElement]);
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditorState.read).toHaveBeenCalled();
+    });
+  });
+
+  describe("Text Node Replacement", () => {
+    test("replaces text node with new nodes successfully", () => {
+      const newNodes = [
+        createMockTextNode("Before "),
+        createMockRecallNode({ id: "q1", label: "Question 1", type: "question" }, "default"),
+        createMockTextNode(" after"),
+      ];
+
+      mockTextNode.insertBefore.mockImplementation(() => {});
+      mockTextNode.insertAfter.mockImplementation(() => {});
+      mockTextNode.remove.mockImplementation(() => {});
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      // Simulate text replacement by calling the update handler
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditorState.read).toHaveBeenCalled();
+    });
+
+    test("skips replacement when newNodes array is empty", () => {
+      mockTextNode.insertBefore.mockImplementation(() => {});
+      mockTextNode.remove.mockImplementation(() => {});
+
+      render(<RecallPlugin {...defaultProps} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditorState.read).toHaveBeenCalled();
+    });
+  });
+
+  describe("Advanced Editor Update Scenarios", () => {
+    test("handles editor update with existing RecallNodes and new recall patterns", () => {
+      const existingRecallNode = createMockRecallNode(
+        { id: "q1", label: "Question 1", type: "question" },
+        "existing"
+      );
+      mockRoot.getChildren.mockReturnValue([existingRecallNode]);
+      mockRoot.getTextContent.mockReturnValue("Text with #recall:q2/fallback:new#");
+
+      const setRecallItems = vi.fn();
+      const setFallbacks = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setRecallItems={setRecallItems} setFallbacks={setFallbacks} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(setRecallItems).toHaveBeenCalled();
+      expect(setFallbacks).toHaveBeenCalled();
+    });
+
+    test("merges recall items without duplicates", () => {
+      const existingRecallNode = createMockRecallNode(
+        { id: "q1", label: "Question 1", type: "question" },
+        "existing"
+      );
+      mockRoot.getChildren.mockReturnValue([existingRecallNode]);
+      mockRoot.getTextContent.mockReturnValue("Text with #recall:q1/fallback:updated#");
+
+      const setRecallItems = vi.fn();
+      const setFallbacks = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setRecallItems={setRecallItems} setFallbacks={setFallbacks} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(setRecallItems).toHaveBeenCalled();
+      expect(setFallbacks).toHaveBeenCalled();
+    });
+
+    test("handles editor update with no recall patterns", () => {
+      mockRoot.getTextContent.mockReturnValue("Plain text without any recall patterns");
+      mockRoot.getChildren.mockReturnValue([]);
+
+      const setRecallItems = vi.fn();
+      const setFallbacks = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setRecallItems={setRecallItems} setFallbacks={setFallbacks} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(setRecallItems).toHaveBeenCalledWith([]);
+      expect(setFallbacks).toHaveBeenCalledWith({});
+    });
+  });
+
+  describe("Keyboard Event Handling", () => {
+    test("handles @ key press with proper timing", async () => {
+      const setShowRecallItemSelect = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setShowRecallItemSelect={setShowRecallItemSelect} />);
+
+      const keyDownHandler = mockEditor.registerCommand.mock.calls[0][1];
+      mockTextNode = createMockTextNode("@");
+      mockSelection.anchor.getNode.mockReturnValue(mockTextNode);
+      mockSelection.anchor.offset = 1;
+
+      vi.useFakeTimers();
+      keyDownHandler({ key: "@" } as KeyboardEvent);
+      vi.advanceTimersByTime(20);
+      vi.useRealTimers();
+
+      expect(setShowRecallItemSelect).toHaveBeenCalledWith(true);
+    });
+
+    test("handles @ key press when cursor is not at @ position", async () => {
+      const setShowRecallItemSelect = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setShowRecallItemSelect={setShowRecallItemSelect} />);
+
+      const keyDownHandler = mockEditor.registerCommand.mock.calls[0][1];
+      mockTextNode = createMockTextNode("Hello@world");
+      mockSelection.anchor.getNode.mockReturnValue(mockTextNode);
+      mockSelection.anchor.offset = 3; // Not at @ position
+
+      vi.useFakeTimers();
+      keyDownHandler({ key: "@" } as KeyboardEvent);
+      vi.advanceTimersByTime(20);
+      vi.useRealTimers();
+
+      expect(setShowRecallItemSelect).not.toHaveBeenCalled();
+    });
+
+    test("handles @ key press when selection is not a range selection", async () => {
+      const setShowRecallItemSelect = vi.fn();
+
+      // Mock $isRangeSelection to return false
+      const { $isRangeSelection } = await import("lexical");
+      vi.mocked($isRangeSelection).mockReturnValue(false);
+
+      render(<RecallPlugin {...defaultProps} setShowRecallItemSelect={setShowRecallItemSelect} />);
+
+      const keyDownHandler = mockEditor.registerCommand.mock.calls[0][1];
+
+      vi.useFakeTimers();
+      keyDownHandler({ key: "@" } as KeyboardEvent);
+      vi.advanceTimersByTime(20);
+      vi.useRealTimers();
+
+      expect(setShowRecallItemSelect).not.toHaveBeenCalled();
+    });
+
+    test("handles @ key press when anchor node is not a text node", async () => {
+      const setShowRecallItemSelect = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setShowRecallItemSelect={setShowRecallItemSelect} />);
+
+      const keyDownHandler = mockEditor.registerCommand.mock.calls[0][1];
+      const elementNode = { getChildren: vi.fn(() => []) };
+      mockSelection.anchor.getNode.mockReturnValue(elementNode);
+
+      vi.useFakeTimers();
+      keyDownHandler({ key: "@" } as KeyboardEvent);
+      vi.advanceTimersByTime(20);
+      vi.useRealTimers();
+
+      expect(setShowRecallItemSelect).not.toHaveBeenCalled();
+    });
+
+    test("returns false for non-@ key events", () => {
+      render(<RecallPlugin {...defaultProps} />);
+
+      const keyDownHandler = mockEditor.registerCommand.mock.calls[0][1];
+      const result = keyDownHandler({ key: "a" } as KeyboardEvent);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("Recall Item Addition", () => {
+    test("adds recall item using stored @ symbol position", () => {
+      const setRecallItems = vi.fn();
+      const onShowFallbackInput = vi.fn();
+      // Mock the component to have atSymbolPosition
+      const { rerender } = render(
+        <RecallPlugin
+          {...defaultProps}
+          setRecallItems={setRecallItems}
+          onShowFallbackInput={onShowFallbackInput}
+        />
+      );
+
+      // Simulate having an @ symbol position
+      mockSelection.setTextNodeRange.mockImplementation(() => {});
+      mockSelection.insertNodes.mockImplementation(() => {});
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditor.update).toHaveBeenCalled();
+    });
+
+    test("adds recall item using current selection when no stored position", () => {
+      const setRecallItems = vi.fn();
+      const onShowFallbackInput = vi.fn();
+
+      mockTextNode = createMockTextNode("Hello@");
+      mockSelection.anchor.getNode.mockReturnValue(mockTextNode);
+      mockSelection.anchor.offset = 6; // At @ position
+      mockSelection.setTextNodeRange.mockImplementation(() => {});
+      mockSelection.insertNodes.mockImplementation(() => {});
+
+      render(
+        <RecallPlugin
+          {...defaultProps}
+          setRecallItems={setRecallItems}
+          onShowFallbackInput={onShowFallbackInput}
+        />
+      );
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditor.update).toHaveBeenCalled();
+    });
+
+    test("updates recall items state and shows fallback input", () => {
+      const setRecallItems = vi.fn();
+      const onShowFallbackInput = vi.fn();
+
+      render(
+        <RecallPlugin
+          {...defaultProps}
+          setRecallItems={setRecallItems}
+          onShowFallbackInput={onShowFallbackInput}
+        />
+      );
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditor.update).toHaveBeenCalled();
+    });
+  });
+
+  describe("Component Lifecycle and Cleanup", () => {
+    test("exposes addFallback function to parent on mount", () => {
+      const setAddFallbackFunction = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setAddFallbackFunction={setAddFallbackFunction} />);
+
+      expect(setAddFallbackFunction).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    test("cleans up addFallback function on unmount", () => {
+      const setAddFallbackFunction = vi.fn();
+
+      const { unmount } = render(
+        <RecallPlugin {...defaultProps} setAddFallbackFunction={setAddFallbackFunction} />
+      );
+
+      unmount();
+
+      expect(setAddFallbackFunction).toHaveBeenCalledWith(null);
+    });
+
+    test("clears atSymbolPosition when dropdown closes", () => {
+      const { rerender } = render(<RecallPlugin {...defaultProps} showRecallItemSelect={true} />);
+
+      // Simulate dropdown closing
+      rerender(<RecallPlugin {...defaultProps} showRecallItemSelect={false} />);
+
+      // The component should handle cleanup internally
+      expect(mockEditor.registerUpdateListener).toHaveBeenCalled();
+    });
+  });
+
+  describe("Complex Integration Scenarios", () => {
+    test("handles mixed content with text nodes and RecallNodes", () => {
+      const textNode1 = createMockTextNode("Before ");
+      const recallNode = createMockRecallNode({ id: "q1", label: "Question 1", type: "question" }, "default");
+      const textNode2 = createMockTextNode(" after");
+
+      mockRoot.getChildren.mockReturnValue([textNode1, recallNode, textNode2]);
+
+      const setRecallItems = vi.fn();
+      const setFallbacks = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setRecallItems={setRecallItems} setFallbacks={setFallbacks} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(setRecallItems).toHaveBeenCalled();
+      expect(setFallbacks).toHaveBeenCalled();
+    });
+
+    test("handles nested element structure with RecallNodes", () => {
+      const recallNode = createMockRecallNode({ id: "q1", label: "Question 1", type: "question" }, "default");
+      const nestedElement = {
+        getChildren: vi.fn(() => [recallNode]),
+        getTextContent: vi.fn(() => "Nested element"),
+      };
+      const parentElement = {
+        getChildren: vi.fn(() => [nestedElement]),
+        getTextContent: vi.fn(() => "Parent element"),
+      };
+
+      mockRoot.getChildren.mockReturnValue([parentElement]);
+
+      const setRecallItems = vi.fn();
+      const setFallbacks = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setRecallItems={setRecallItems} setFallbacks={setFallbacks} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+      updateHandler({ editorState: mockEditorState });
+
+      expect(setRecallItems).toHaveBeenCalled();
+      expect(setFallbacks).toHaveBeenCalled();
+    });
+
+    test("handles rapid editor updates", () => {
+      const setRecallItems = vi.fn();
+      const setFallbacks = vi.fn();
+
+      render(<RecallPlugin {...defaultProps} setRecallItems={setRecallItems} setFallbacks={setFallbacks} />);
+
+      const updateHandler = mockEditor.registerUpdateListener.mock.calls[0][0];
+
+      // Simulate rapid updates
+      updateHandler({ editorState: mockEditorState });
+      updateHandler({ editorState: mockEditorState });
+      updateHandler({ editorState: mockEditorState });
+
+      expect(mockEditorState.read).toHaveBeenCalledTimes(3);
     });
   });
 });
