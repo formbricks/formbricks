@@ -1,7 +1,7 @@
-import { hashString } from "@/lib/hash-string";
-import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { hashString } from "@/lib/hash-string";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { checkRateLimit } from "./rate-limit";
 import { type TRateLimitConfig } from "./types/rate-limit";
 
@@ -19,7 +19,7 @@ export const getClientIdentifier = async (): Promise<string> => {
     return hashString(ip);
   } catch (error) {
     const errorMessage = "Failed to hash IP";
-    logger.error(errorMessage, { error });
+    logger.error({ error }, errorMessage);
     throw new Error(errorMessage);
   }
 };
