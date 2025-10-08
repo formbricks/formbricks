@@ -64,7 +64,7 @@ export const MultipleChoiceQuestionForm = ({
     all: {
       id: "all",
       label: t("environments.surveys.edit.randomize_all"),
-      show: question.choices.filter((c) => c.id === "other").length === 0,
+      show: question.choices.every((c) => c.id !== "other" && c.id !== "none"),
     },
     exceptLast: {
       id: "exceptLast",
@@ -120,16 +120,16 @@ export const MultipleChoiceQuestionForm = ({
     updateQuestion(questionIdx, { choices: newChoices });
   };
 
-  const addOther = () => {
-    if (question.choices.some((c) => c.id === "other")) return;
+  const addSpecialChoice = (choiceId: "other" | "none", labelText: string) => {
+    if (question.choices.some((c) => c.id === choiceId)) return;
 
     const currentChoices = question.choices ?? [];
-    const newOtherChoice = {
-      id: "other" as const,
-      label: createI18nString("Other", surveyLanguageCodes),
+    const newChoice = {
+      id: choiceId,
+      label: createI18nString(labelText, surveyLanguageCodes),
     };
 
-    const newChoices = ensureSpecialChoicesOrder([...currentChoices, newOtherChoice]);
+    const newChoices = ensureSpecialChoicesOrder([...currentChoices, newChoice]);
 
     updateQuestion(questionIdx, {
       choices: newChoices,
@@ -139,24 +139,8 @@ export const MultipleChoiceQuestionForm = ({
     });
   };
 
-  const addNone = () => {
-    if (question.choices.some((c) => c.id === "none")) return;
-
-    const currentChoices = question.choices ?? [];
-    const newNoneChoice = {
-      id: "none" as const,
-      label: createI18nString("None of the above", surveyLanguageCodes),
-    };
-
-    const newChoices = ensureSpecialChoicesOrder([...currentChoices, newNoneChoice]);
-
-    updateQuestion(questionIdx, {
-      choices: newChoices,
-      ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
-        shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
-      }),
-    });
-  };
+  const addOther = () => addSpecialChoice("other", t("common.other"));
+  const addNone = () => addSpecialChoice("none", t("common.none_of_the_above"));
 
   const deleteChoice = (choiceIdx: number) => {
     const choiceToDelete = question.choices[choiceIdx].id;

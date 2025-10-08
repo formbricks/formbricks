@@ -106,9 +106,14 @@ export function MultipleChoiceMultiQuestion({
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Check if "none" option is selected
-  const isNoneSelected = Boolean(
-    noneOption && value.includes(getLocalizedValue(noneOption.label, languageCode))
+  const isNoneSelected = useMemo(
+    () => Boolean(noneOption && value.includes(getLocalizedValue(noneOption.label, languageCode))),
+    [noneOption, value, languageCode]
   );
+
+  // Common label className for all choice types
+  const baseLabelClassName =
+    "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none";
 
   useEffect(() => {
     // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
@@ -120,12 +125,6 @@ export function MultipleChoiceMultiQuestion({
 
   const addItem = (item: string) => {
     const isOtherValue = !questionChoiceLabels.includes(item);
-
-    // If "none" is currently selected and user selects something else, clear "none" first
-    if (isNoneSelected && noneOption) {
-      onChange({ [question.id]: [item] });
-      return;
-    }
 
     if (Array.isArray(value)) {
       if (isOtherValue) {
@@ -202,14 +201,13 @@ export function MultipleChoiceMultiQuestion({
                         ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
                         : "fb-border-border fb-bg-input-bg",
                       isNoneSelected ? "fb-opacity-50" : "",
-                      "fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                      baseLabelClassName
                     )}
                     onKeyDown={(e) => {
                       // Accessibility: if spacebar was pressed pass this down to the input
                       if (e.key === " ") {
                         e.preventDefault();
                         document.getElementById(choice.id)?.click();
-                        document.getElementById(choice.id)?.focus();
                       }
                     }}
                     autoFocus={idx === 0 && autoFocusEnabled}>
@@ -223,7 +221,7 @@ export function MultipleChoiceMultiQuestion({
                         value={getLocalizedValue(choice.label, languageCode)}
                         className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                         aria-labelledby={`${choice.id}-label`}
-                        disabled={!!isNoneSelected}
+                        disabled={isNoneSelected}
                         onChange={(e) => {
                           if ((e.target as HTMLInputElement).checked) {
                             addItem(getLocalizedValue(choice.label, languageCode));
@@ -248,16 +246,18 @@ export function MultipleChoiceMultiQuestion({
                 <label
                   tabIndex={isCurrent ? 0 : -1}
                   className={cn(
-                    otherSelected ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
+                    otherSelected
+                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                      : "fb-border-border fb-bg-input-bg",
                     isNoneSelected ? "fb-opacity-50" : "",
-                    "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                    baseLabelClassName
                   )}
                   onKeyDown={(e) => {
                     // Accessibility: if spacebar was pressed pass this down to the input
                     if (e.key === " ") {
                       if (otherSelected) return;
+                      e.preventDefault();
                       document.getElementById(otherOption.id)?.click();
-                      document.getElementById(otherOption.id)?.focus();
                     }
                   }}>
                   <span className="fb-flex fb-items-center fb-text-sm">
@@ -270,7 +270,7 @@ export function MultipleChoiceMultiQuestion({
                       value={getLocalizedValue(otherOption.label, languageCode)}
                       className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${otherOption.id}-label`}
-                      disabled={!!isNoneSelected}
+                      disabled={isNoneSelected}
                       onChange={() => {
                         if (otherSelected) {
                           setOtherValue("");
@@ -329,14 +329,15 @@ export function MultipleChoiceMultiQuestion({
                 <label
                   tabIndex={isCurrent ? 0 : -1}
                   className={cn(
-                    isNoneSelected ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
-                    "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                    isNoneSelected
+                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                      : "fb-border-border fb-bg-input-bg",
+                    baseLabelClassName
                   )}
                   onKeyDown={(e) => {
                     if (e.key === " ") {
                       e.preventDefault();
                       document.getElementById(noneOption.id)?.click();
-                      document.getElementById(noneOption.id)?.focus();
                     }
                   }}>
                   <span className="fb-flex fb-items-center fb-text-sm">
@@ -358,7 +359,7 @@ export function MultipleChoiceMultiQuestion({
                           removeItem(getLocalizedValue(noneOption.label, languageCode));
                         }
                       }}
-                      checked={!!isNoneSelected}
+                      checked={isNoneSelected}
                     />
                     <span
                       id={`${noneOption.id}-label`}
