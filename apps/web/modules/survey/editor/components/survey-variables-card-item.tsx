@@ -99,14 +99,18 @@ export const SurveyVariablesCardItem = ({
         t("environments.surveys.edit.variable_used_in_recall_welcome", { variable: variableToDelete.name })
       );
       return;
-    } else if (recallQuestionIdx === localSurvey.questions.length) {
+    }
+
+    if (recallQuestionIdx === localSurvey.questions.length) {
       toast.error(
         t("environments.surveys.edit.variable_used_in_recall_ending_card", {
           variable: variableToDelete.name,
         })
       );
       return;
-    } else if (recallQuestionIdx !== -1) {
+    }
+
+    if (recallQuestionIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.variable_used_in_recall", {
           variable: variableToDelete.name,

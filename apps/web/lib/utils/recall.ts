@@ -118,16 +118,16 @@ export const replaceRecallInfoWithUnderline = (label: string): string => {
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
 export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): TSurveyQuestion | null => {
-  const findRecalls = (text: string) => {
+  const doesTextHaveRecall = (text: string) => {
     const recalls = text.match(/#recall:[^ ]+/g);
     return recalls?.some((recall) => !extractFallbackValue(recall));
   };
 
   for (const question of survey.questions) {
     if (
-      findRecalls(getLocalizedValue(question.headline, language)) ||
-      (question.subheader && findRecalls(getLocalizedValue(question.subheader, language))) ||
-      ("html" in question && findRecalls(getLocalizedValue(question.html, language)))
+      doesTextHaveRecall(getLocalizedValue(question.headline, language)) ||
+      (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language))) ||
+      ("html" in question && doesTextHaveRecall(getLocalizedValue(question.html, language)))
     ) {
       return question;
     }

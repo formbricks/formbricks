@@ -169,11 +169,11 @@ export const RecallItemSelect = ({
         <div className="flex w-full items-center justify-between overflow-hidden" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-96 bg-slate-50 p-3 text-xs text-slate-700"
+        className="flex w-96 flex-col gap-2 bg-slate-50 p-3 text-xs text-slate-700"
         align="start"
         side="bottom"
         data-recall-dropdown>
-        <p className="mb-2 font-medium">{t("environments.surveys.edit.recall_information_from")}</p>
+        <p className="font-medium">{t("environments.surveys.edit.recall_information_from")}</p>
         <Input
           id="recallItemSearchInput"
           placeholder="Search options"
