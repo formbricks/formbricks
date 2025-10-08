@@ -457,4 +457,244 @@ describe("SurveyVariablesCardItem", () => {
     expect(mockSetLocalSurvey).toHaveBeenCalledTimes(1);
     expect(mockSetLocalSurvey).toHaveBeenCalledWith(expect.any(Function));
   });
+
+  test("should show error toast if trying to delete a variable used in recall and not call setLocalSurvey", async () => {
+    const variableUsedInRecall = {
+      id: "recallVarId",
+      name: "recall_variable",
+      type: "text",
+      value: "recall_value",
+    } as TSurveyVariable;
+
+    const mockSetLocalSurvey = vi.fn();
+
+    // Mock findVariableUsedInLogic to return -1, indicating the variable is not used in logic
+    const findVariableUsedInLogicMock = vi.fn().mockReturnValue(-1);
+    vi.spyOn(utils, "findVariableUsedInLogic").mockImplementation(findVariableUsedInLogicMock);
+
+    // Mock isUsedInRecall to return 2, indicating the variable is used in recall at question index 2
+    const isUsedInRecallMock = vi.fn().mockReturnValue(2);
+    vi.spyOn(utils, "isUsedInRecall").mockImplementation(isUsedInRecallMock);
+
+    const initialSurvey = {
+      id: "survey123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      status: "draft",
+      environmentId: "env123",
+      type: "app",
+      welcomeCard: {
+        enabled: true,
+        timeToFinish: false,
+        headline: { default: "Welcome" },
+        buttonLabel: { default: "Start" },
+        showResponseCount: false,
+      },
+      autoClose: null,
+      delay: 0,
+      displayOption: "displayOnce",
+      recontactDays: null,
+      displayLimit: null,
+      questions: [
+        {
+          id: "q1",
+          type: "openText",
+          headline: { default: "Question 1" },
+          required: false,
+        },
+        {
+          id: "q2",
+          type: "openText",
+          headline: { default: "Question 2" },
+          required: false,
+        },
+        {
+          id: "q3",
+          type: "openText",
+          headline: { default: "Question with recall #recall:recallVarId/fallback:default" },
+          required: false,
+        },
+      ],
+      endings: [],
+      hiddenFields: {
+        enabled: true,
+        fieldIds: ["field1", "field2"],
+      },
+      variables: [variableUsedInRecall],
+    } as unknown as TSurvey;
+
+    render(
+      <SurveyVariablesCardItem
+        mode="edit"
+        localSurvey={initialSurvey}
+        setLocalSurvey={mockSetLocalSurvey}
+        variable={variableUsedInRecall}
+        quotas={[]}
+      />
+    );
+
+    const deleteButton = screen.getByRole("button");
+    await userEvent.click(deleteButton);
+
+    expect(utils.findVariableUsedInLogic).toHaveBeenCalledWith(initialSurvey, variableUsedInRecall.id);
+    expect(utils.isUsedInRecall).toHaveBeenCalledWith(initialSurvey, variableUsedInRecall.id);
+    expect(mockSetLocalSurvey).not.toHaveBeenCalled();
+  });
+
+  test("should show error toast if trying to delete a variable used in recall in welcome card", async () => {
+    const variableUsedInRecall = {
+      id: "recallVarId",
+      name: "recall_variable",
+      type: "text",
+      value: "recall_value",
+    } as TSurveyVariable;
+
+    const mockSetLocalSurvey = vi.fn();
+
+    // Mock findVariableUsedInLogic to return -1, indicating the variable is not used in logic
+    const findVariableUsedInLogicMock = vi.fn().mockReturnValue(-1);
+    vi.spyOn(utils, "findVariableUsedInLogic").mockImplementation(findVariableUsedInLogicMock);
+
+    // Mock isUsedInRecall to return -2, indicating the variable is used in recall in welcome card
+    const isUsedInRecallMock = vi.fn().mockReturnValue(-2);
+    vi.spyOn(utils, "isUsedInRecall").mockImplementation(isUsedInRecallMock);
+
+    const initialSurvey = {
+      id: "survey123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      status: "draft",
+      environmentId: "env123",
+      type: "app",
+      welcomeCard: {
+        enabled: true,
+        timeToFinish: false,
+        headline: { default: "Welcome #recall:recallVarId/fallback:default" },
+        buttonLabel: { default: "Start" },
+        showResponseCount: false,
+      },
+      autoClose: null,
+      delay: 0,
+      displayOption: "displayOnce",
+      recontactDays: null,
+      displayLimit: null,
+      questions: [],
+      endings: [],
+      hiddenFields: {
+        enabled: true,
+        fieldIds: ["field1", "field2"],
+      },
+      variables: [variableUsedInRecall],
+    } as unknown as TSurvey;
+
+    render(
+      <SurveyVariablesCardItem
+        mode="edit"
+        localSurvey={initialSurvey}
+        setLocalSurvey={mockSetLocalSurvey}
+        variable={variableUsedInRecall}
+        quotas={[]}
+      />
+    );
+
+    const deleteButton = screen.getByRole("button");
+    await userEvent.click(deleteButton);
+
+    expect(utils.findVariableUsedInLogic).toHaveBeenCalledWith(initialSurvey, variableUsedInRecall.id);
+    expect(utils.isUsedInRecall).toHaveBeenCalledWith(initialSurvey, variableUsedInRecall.id);
+    expect(mockSetLocalSurvey).not.toHaveBeenCalled();
+  });
+
+  test("should show error toast if trying to delete a variable used in recall in ending card", async () => {
+    const variableUsedInRecall = {
+      id: "recallVarId",
+      name: "recall_variable",
+      type: "text",
+      value: "recall_value",
+    } as TSurveyVariable;
+
+    const mockSetLocalSurvey = vi.fn();
+
+    // Mock findVariableUsedInLogic to return -1, indicating the variable is not used in logic
+    const findVariableUsedInLogicMock = vi.fn().mockReturnValue(-1);
+    vi.spyOn(utils, "findVariableUsedInLogic").mockImplementation(findVariableUsedInLogicMock);
+
+    // Mock isUsedInRecall to return questions.length, indicating the variable is used in recall in ending card
+    const isUsedInRecallMock = vi.fn().mockReturnValue(3); // 3 questions, so ending card index is 3
+    vi.spyOn(utils, "isUsedInRecall").mockImplementation(isUsedInRecallMock);
+
+    const initialSurvey = {
+      id: "survey123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: "Test Survey",
+      status: "draft",
+      environmentId: "env123",
+      type: "app",
+      welcomeCard: {
+        enabled: true,
+        timeToFinish: false,
+        headline: { default: "Welcome" },
+        buttonLabel: { default: "Start" },
+        showResponseCount: false,
+      },
+      autoClose: null,
+      delay: 0,
+      displayOption: "displayOnce",
+      recontactDays: null,
+      displayLimit: null,
+      questions: [
+        {
+          id: "q1",
+          type: "openText",
+          headline: { default: "Question 1" },
+          required: false,
+        },
+        {
+          id: "q2",
+          type: "openText",
+          headline: { default: "Question 2" },
+          required: false,
+        },
+        {
+          id: "q3",
+          type: "openText",
+          headline: { default: "Question 3" },
+          required: false,
+        },
+      ],
+      endings: [
+        {
+          id: "end1",
+          type: "endScreen" as const,
+          headline: { default: "Thank you #recall:recallVarId/fallback:default" },
+          subheader: { default: "End message" },
+        },
+      ],
+      hiddenFields: {
+        enabled: true,
+        fieldIds: ["field1", "field2"],
+      },
+      variables: [variableUsedInRecall],
+    } as unknown as TSurvey;
+
+    render(
+      <SurveyVariablesCardItem
+        mode="edit"
+        localSurvey={initialSurvey}
+        setLocalSurvey={mockSetLocalSurvey}
+        variable={variableUsedInRecall}
+        quotas={[]}
+      />
+    );
+
+    const deleteButton = screen.getByRole("button");
+    await userEvent.click(deleteButton);
+
+    expect(utils.findVariableUsedInLogic).toHaveBeenCalledWith(initialSurvey, variableUsedInRecall.id);
+    expect(utils.isUsedInRecall).toHaveBeenCalledWith(initialSurvey, variableUsedInRecall.id);
+    expect(mockSetLocalSurvey).not.toHaveBeenCalled();
+  });
 });
