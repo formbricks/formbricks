@@ -1204,7 +1204,7 @@
         "add_ending": "添加结尾",
         "add_ending_below": "在下方 添加 结尾",
         "add_fallback": "添加",
-        "add_fallback_placeholder": "添加 一个 占位符，以显示该问题是否被跳过:",
+        "add_fallback_placeholder": "添加 占位符 显示 如果 没有 值以 回忆",
         "add_hidden_field_id": "添加 隐藏 字段 ID",
         "add_highlight_border": "添加 高亮 边框",
         "add_highlight_border_description": "在 你的 调查 卡片 添加 外 边框。",

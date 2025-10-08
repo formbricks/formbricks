@@ -1204,7 +1204,7 @@
         "add_ending": "Abschluss hinzufügen",
         "add_ending_below": "Abschluss unten hinzufügen",
         "add_fallback": "Hinzufügen",
-        "add_fallback_placeholder": "Hinzufügen eines Platzhalters, der angezeigt wird, wenn die Frage übersprungen wird:",
+        "add_fallback_placeholder": "Platzhalter hinzufügen, falls kein Wert zur Verfügung steht.",
         "add_hidden_field_id": "Verstecktes Feld ID hinzufügen",
         "add_highlight_border": "Rahmen hinzufügen",
         "add_highlight_border_description": "Füge deiner Umfragekarte einen äußeren Rahmen hinzu.",
