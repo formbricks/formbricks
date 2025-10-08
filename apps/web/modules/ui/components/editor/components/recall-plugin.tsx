@@ -203,7 +203,7 @@ export const RecallPlugin = ({
           const mergedFallbacks = { ...currentFallbacks };
 
           for (const item of items) {
-            if (!mergedItems.find((existing) => existing.id === item.id)) {
+            if (!mergedItems.some((existing) => existing.id === item.id)) {
               mergedItems.push(item);
             }
             if (fallbackValues[item.id]) {
@@ -375,7 +375,7 @@ export const RecallPlugin = ({
 
       // Immediately update recallItems state to include the new item
       const newItems = [...recallItems];
-      if (!newItems.find((item) => item.id === recallItem.id)) {
+      if (!newItems.some((item) => item.id === recallItem.id)) {
         newItems.push(recallItem);
       }
       setRecallItems(newItems);
