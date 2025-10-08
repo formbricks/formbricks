@@ -213,7 +213,7 @@ describe("MainNavigation", () => {
     // Wait for the dropdown content to appear - using getAllByText to handle multiple instances
     await waitFor(() => {
       const accountElements = screen.getAllByText("common.account");
-      expect(accountElements.length).toHaveLength(2);
+      expect(accountElements).toHaveLength(2);
     });
 
     expect(screen.getByText("common.documentation")).toBeInTheDocument();
