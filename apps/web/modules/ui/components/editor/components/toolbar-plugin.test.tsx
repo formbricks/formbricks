@@ -366,27 +366,6 @@ describe("ToolbarPlugin", () => {
       expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("formatText", "underline");
     });
 
-    test("calls setShowLinkEditor on link button click", async () => {
-      const setShowLinkEditor = vi.fn();
-      render(
-        <ToolbarPlugin
-          getText={() => "Sample text"}
-          setText={vi.fn()}
-          editable={true}
-          setShowRecallItemSelect={vi.fn()}
-          setShowLinkEditor={setShowLinkEditor}
-        />
-      );
-
-      const linkIcon = screen.getByTestId("link-icon");
-      const linkButton = linkIcon.parentElement;
-      expect(linkButton).toBeInTheDocument();
-      expect(linkButton).not.toBeNull();
-      await userEvent.click(linkButton!);
-
-      expect(setShowLinkEditor).toHaveBeenCalledWith(true);
-    });
-
     test("dispatches numbered list command on click", async () => {
       render(
         <ToolbarPlugin

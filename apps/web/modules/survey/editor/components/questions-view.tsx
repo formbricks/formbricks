@@ -281,7 +281,8 @@ export const QuestionsView = ({
     if (recallQuestionIdx === localSurvey.questions.length) {
       toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
       return;
-    } else if (recallQuestionIdx !== -1) {
+    }
+    if (recallQuestionIdx !== -1) {
       toast.error(
         t("environments.surveys.edit.question_used_in_recall", { questionIndex: recallQuestionIdx + 1 })
       );

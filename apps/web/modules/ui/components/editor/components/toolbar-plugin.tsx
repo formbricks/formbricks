@@ -80,9 +80,10 @@ interface ToolbarButtonProps {
   active: boolean;
   onClick: () => void;
   tooltipText: string;
+  disabled: boolean;
 }
 
-const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText }: ToolbarButtonProps) => (
+const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText, disabled }: ToolbarButtonProps) => (
   <TooltipProvider delayDuration={0}>
     <Tooltip>
       <TooltipTrigger asChild>
@@ -91,6 +92,7 @@ const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText }: ToolbarButt
           size="icon"
           type="button"
           onClick={onClick}
+          disabled={disabled}
           className={getButtonClassName(active)}>
           <Icon />
         </Button>
@@ -295,10 +297,17 @@ export const ToolbarPlugin = (
 
   const insertLink = useCallback(() => {
     if (!isLink) {
-      props.setShowLinkEditor(true);
+      // Check if there's text selected before opening link editor
+      editor.read(() => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+          return; // Don't open link editor if no text is selected
+        }
+        props.setShowLinkEditor(true);
+      });
     } else {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-      setIsLink(false);
+      // If we're already in a link, open the editor to edit it
+      props.setShowLinkEditor(true);
     }
   }, [editor, isLink, props]);
 
@@ -331,6 +340,7 @@ export const ToolbarPlugin = (
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"),
       active: isBold,
       tooltipText: "Bold",
+      disabled: false,
     },
     {
       key: "italic",
@@ -338,6 +348,7 @@ export const ToolbarPlugin = (
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"),
       active: isItalic,
       tooltipText: "Italic",
+      disabled: false,
     },
     {
       key: "underline",
@@ -345,13 +356,20 @@ export const ToolbarPlugin = (
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
       active: isUnderline,
       tooltipText: "Underline",
+      disabled: false,
     },
     {
       key: "link",
       icon: Link,
       onClick: insertLink,
       active: isLink,
-      tooltipText: "Insert link",
+      tooltipText: isLink
+        ? t("environments.surveys.edit.edit_link")
+        : t("environments.surveys.edit.insert_link"),
+      disabled: !editor.getEditorState().read(() => {
+        const selection = $getSelection();
+        return Boolean(selection);
+      }),
     },
     {
       key: "recall",
@@ -359,18 +377,16 @@ export const ToolbarPlugin = (
       onClick: () => props.setShowRecallItemSelect(true),
       active: false,
       tooltipText: t("environments.surveys.edit.recall_data"),
+      disabled: false,
     },
-    ...(props.recallItemsCount && props.recallItemsCount > 0 && props.setShowFallbackInput
-      ? [
-          {
-            key: "editRecall",
-            icon: PencilIcon,
-            onClick: () => props.setShowFallbackInput!(true),
-            active: false,
-            tooltipText: t("environments.surveys.edit.edit_recall"),
-          },
-        ]
-      : []),
+    {
+      key: "editRecall",
+      icon: PencilIcon,
+      onClick: () => props.setShowFallbackInput!(true),
+      active: false,
+      tooltipText: t("environments.surveys.edit.edit_recall"),
+      disabled: !props.recallItemsCount || props.recallItemsCount === 0,
+    },
   ];
 
   return (
@@ -409,9 +425,16 @@ export const ToolbarPlugin = (
         </DropdownMenu>
       )}
 
-      {items.map(({ key, icon, onClick, active, tooltipText }) =>
+      {items.map(({ key, icon, onClick, active, tooltipText, disabled }) =>
         !props.excludedToolbarItems?.includes(key) ? (
-          <ToolbarButton key={key} icon={icon} active={active} onClick={onClick} tooltipText={tooltipText} />
+          <ToolbarButton
+            key={key}
+            icon={icon}
+            active={active}
+            disabled={disabled}
+            onClick={onClick}
+            tooltipText={tooltipText}
+          />
         ) : null
       )}
     </div>

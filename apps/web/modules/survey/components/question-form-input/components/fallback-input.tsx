@@ -60,7 +60,7 @@ export const FallbackInput = ({
                   id={inputId}
                   autoFocus={idx === filteredRecallItems.length - 1}
                   value={fallbacks[recallItem.id]?.replaceAll(/(&nbsp;|\u00A0|nbsp)/g, " ") || ""}
-                  placeholder="Enter fallback value"
+                  placeholder={t("environments.surveys.edit.enter_fallback_value")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();

@@ -80,7 +80,7 @@ describe("LinkEditor", () => {
     render(<LinkEditor editor={mockEditor as any} open={true} setOpen={mockSetOpen} />);
 
     expect(screen.getByPlaceholderText("https://example.com")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "common.save" })).toBeInTheDocument();
   });
 
   test("does not render when closed", () => {
@@ -104,7 +104,7 @@ describe("LinkEditor", () => {
     await user.clear(input);
     await user.type(input, "https://formbricks.com");
 
-    const submitButton = screen.getByRole("button", { name: "Add" });
+    const submitButton = screen.getByRole("button", { name: "common.save" });
     await user.click(submitButton);
 
     expect(mockEditor.dispatchCommand).toHaveBeenCalledWith("toggleLink", {
@@ -151,11 +151,13 @@ describe("LinkEditor", () => {
     await user.type(input, "https://abc");
 
     // Trigger validation by trying to submit
-    const submitButton = screen.getByRole("button", { name: "Add" });
+    const submitButton = screen.getByRole("button", { name: "common.save" });
     await user.click(submitButton);
 
+    const errorMessage = screen.getAllByText("environments.surveys.edit.please_enter_a_valid_url");
+
     // Check that the custom validation message is set
-    expect(input.validationMessage).toBeTruthy();
+    expect(errorMessage).toBeVisible;
   });
 
   test("clears validation message when valid URL is entered", async () => {

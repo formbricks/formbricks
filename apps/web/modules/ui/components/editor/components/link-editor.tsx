@@ -2,6 +2,7 @@
 
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useTranslate } from "@tolgee/react";
 import type { LexicalEditor, RangeSelection } from "lexical";
 import { $getSelection, $isRangeSelection } from "lexical";
 import { useEffect, useRef, useState } from "react";
@@ -58,7 +59,8 @@ interface LinkEditorProps {
 const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
-
+  const [error, setError] = useState("");
+  const { t } = useTranslate();
   useEffect(() => {
     if (open) {
       editor.getEditorState().read(() => {
@@ -84,6 +86,10 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
   };
 
   const handleSubmit = () => {
+    if (!validateUrl(linkUrl)) {
+      setError(t("environments.surveys.edit.please_enter_a_valid_url"));
+      return;
+    }
     if (linkUrl) {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
         url: linkUrl,
@@ -124,12 +130,8 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
             onInput={(event) => {
               const value = event.currentTarget.value;
               setLinkUrl(value);
-
-              // Update custom validity message on input
-              if (value && !validateUrl(value)) {
-                event.currentTarget.setCustomValidity("Please enter a valid URL (e.g., https://example.com)");
-              } else {
-                event.currentTarget.setCustomValidity("");
+              if (error && validateUrl(value)) {
+                setError("");
               }
             }}
             onKeyDown={(event) => {
@@ -148,9 +150,10 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
             }}
           />
           <Button type="submit" className="h-9">
-            Add
+            {t("common.save")}
           </Button>
         </form>
+        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
       </PopoverContent>
     </Popover>
   );
