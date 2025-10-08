@@ -170,12 +170,16 @@ describe("API Key Management", () => {
       expect(prisma.apiKey.update).not.toHaveBeenCalled();
     });
 
-    test("returns api key with permissions for v2 format but does NOT update lastUsedAt when null", async () => {
+    test("returns api key with permissions for v2 format and DOES update lastUsedAt when null (first use)", async () => {
       const { verifySecret } = await import("@/lib/crypto");
+      const mockUpdatePromise = {
+        catch: vi.fn().mockReturnThis(),
+      };
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: null,
       } as any);
+      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(mockUpdatePromise as any);
 
       const result = await getApiKeyWithPermissions("fbk_testSecret123");
 
@@ -189,7 +193,11 @@ describe("API Key Management", () => {
       });
       // Verify hybrid approach: bcrypt verification is called
       expect(verifySecret).toHaveBeenCalledWith("testSecret123", mockApiKey.hashedKey);
-      expect(prisma.apiKey.update).not.toHaveBeenCalled();
+      // SHOULD update because lastUsedAt is null (first use)
+      expect(prisma.apiKey.update).toHaveBeenCalledWith({
+        where: { id: "apikey123" },
+        data: { lastUsedAt: expect.any(Date) },
+      });
     });
 
     test("returns api key with permissions for v2 format and DOES update lastUsedAt when older than 30s", async () => {

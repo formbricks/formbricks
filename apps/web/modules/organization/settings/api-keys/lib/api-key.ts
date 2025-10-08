@@ -108,8 +108,9 @@ export const getApiKeyWithPermissions = reactCache(
         if (!apiKeyData) return null;
       }
 
-      if (apiKeyData.lastUsedAt && apiKeyData.lastUsedAt <= new Date(Date.now() - 1000 * 30)) {
+      if (!apiKeyData.lastUsedAt || apiKeyData.lastUsedAt <= new Date(Date.now() - 1000 * 30)) {
         // Fire-and-forget: update lastUsedAt in the background without blocking the response
+        // Update on first use (null) or if last used more than 30 seconds ago
         prisma.apiKey
           .update({
             where: { id: apiKeyData.id },

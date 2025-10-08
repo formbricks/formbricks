@@ -145,7 +145,7 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
     return responses.notAuthenticatedResponse();
   }
 
-  if (apiKeyData.lastUsedAt && apiKeyData.lastUsedAt <= new Date(Date.now() - 1000 * 30)) {
+  if (!apiKeyData.lastUsedAt || apiKeyData.lastUsedAt <= new Date(Date.now() - 1000 * 30)) {
     // Fire-and-forget: update lastUsedAt in the background without blocking the response
     updateApiKeyUsage(apiKeyData.id).catch((error) => {
       console.error("Failed to update API key usage:", error);
