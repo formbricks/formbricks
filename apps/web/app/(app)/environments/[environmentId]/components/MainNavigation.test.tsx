@@ -1,5 +1,3 @@
-import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
-import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { usePathname, useRouter } from "next/navigation";
@@ -8,6 +6,8 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { MainNavigation } from "./MainNavigation";
 
 // Mock constants that this test needs
@@ -210,9 +210,10 @@ describe("MainNavigation", () => {
     expect(userTrigger).toBeInTheDocument(); // Ensure the trigger element is found
     await userEvent.click(userTrigger);
 
-    // Wait for the dropdown content to appear
+    // Wait for the dropdown content to appear - using getAllByText to handle multiple instances
     await waitFor(() => {
-      expect(screen.getByText("common.account")).toBeInTheDocument();
+      const accountElements = screen.getAllByText("common.account");
+      expect(accountElements.length).toBeGreaterThan(0);
     });
 
     expect(screen.getByText("common.documentation")).toBeInTheDocument();
