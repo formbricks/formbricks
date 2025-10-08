@@ -28,7 +28,7 @@ export const UploadImageSurveyBg = ({
             }
           }}
           fileUrl={background}
-          maxSizeInMB={2}
+          maxSizeInMB={5}
           isStorageConfigured={isStorageConfigured}
         />
       </div>
