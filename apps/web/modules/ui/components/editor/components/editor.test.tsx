@@ -308,24 +308,7 @@ describe("Editor", () => {
       expect(screen.queryByTestId("fallback-input")).not.toBeInTheDocument();
     });
 
-    test("renders FallbackInput when recallItems are present", () => {
-      const localSurvey = createMockSurvey();
-
-      render(
-        <Editor
-          getText={() => "Sample text"}
-          setText={() => {}}
-          localSurvey={localSurvey}
-          questionId="question1"
-          selectedLanguageCode="en"
-        />
-      );
-
-      // The FallbackInput should not be rendered initially since recallItems is empty
-      expect(screen.queryByTestId("fallback-input")).not.toBeInTheDocument();
-    });
-
-    test("passes correct props to FallbackInput", () => {
+    test("does not render FallbackInput when recallItems are empty even with fallbacks prop", () => {
       const localSurvey = createMockSurvey();
       const fallbacks = { q1: "default" };
       const addFallback = vi.fn();
@@ -346,7 +329,7 @@ describe("Editor", () => {
       expect(screen.queryByTestId("fallback-input")).not.toBeInTheDocument();
     });
 
-    test("renders trigger button with correct text and icon", () => {
+    test("does not render trigger button when recallItems are empty", () => {
       const localSurvey = createMockSurvey();
 
       render(
@@ -384,7 +367,7 @@ describe("Editor", () => {
       expect(props.fallbacks).toEqual(fallbacks);
     });
 
-    test("handles addFallback prop correctly", () => {
+    test("does not render FallbackInput when recallItems are empty even with addFallback prop", () => {
       const localSurvey = createMockSurvey();
       const addFallback = vi.fn();
 

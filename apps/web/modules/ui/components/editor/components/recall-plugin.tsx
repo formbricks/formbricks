@@ -15,6 +15,7 @@ import {
   TextNode,
 } from "lexical";
 import { useCallback, useEffect, useState } from "react";
+import { logger } from "@formbricks/logger";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getFallbackValues, getRecallItems } from "@/lib/utils/recall";
 import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
@@ -67,7 +68,7 @@ export const RecallPlugin = ({
           }
         }
       } catch (error) {
-        console.error("Error traversing node:", error);
+        logger.error("Error traversing node:", error);
       }
     };
 
@@ -123,7 +124,7 @@ export const RecallPlugin = ({
       }
       node.remove();
     } catch (error) {
-      console.error("Error replacing text node:", error);
+      logger.error("Error replacing text node:", error);
     }
   }, []);
 
@@ -144,7 +145,7 @@ export const RecallPlugin = ({
           recallNodes.push(...childRecallNodes);
         }
       } catch (error) {
-        console.error("Error getting children from node:", error);
+        logger.error("Error getting children from node:", error);
       }
     }
 
@@ -159,15 +160,12 @@ export const RecallPlugin = ({
 
     for (const node of allTextNodes) {
       const textContent = node.getTextContent();
+      const matches = textContent.match(recallPattern);
 
-      if (recallPattern.test(textContent)) {
-        const matches = textContent.match(recallPattern) || [];
-
-        if (matches.length > 0) {
-          const parts = textContent.split(recallPattern);
-          const newNodes = createNodesFromText(parts, matches);
-          replaceTextNode(node, newNodes);
-        }
+      if (matches && matches.length > 0) {
+        const parts = textContent.split(recallPattern);
+        const newNodes = createNodesFromText(parts, matches);
+        replaceTextNode(node, newNodes);
       }
     }
   }, [collectTextNodes, createNodesFromText, replaceTextNode]);
