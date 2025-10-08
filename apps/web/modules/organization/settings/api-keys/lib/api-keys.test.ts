@@ -14,7 +14,7 @@ import {
 const mockApiKey: ApiKey = {
   id: "apikey123",
   label: "Test API Key",
-  hashedKey: "sha256HashValue",
+  hashedKey: "$2a$12$mockBcryptHashFortestSecret123", // bcrypt hash for hybrid approach
   lookupHash: "sha256LookupHashValue",
   createdAt: new Date(),
   createdBy: "user123",
@@ -77,6 +77,14 @@ vi.mock("@/lib/crypto", () => ({
     }
     return null;
   }),
+  hashSecret: vi.fn(async (secret: string, _cost: number) => {
+    // Return a mock bcrypt hash
+    return `$2a$12$mockBcryptHashFor${secret}`;
+  }),
+  verifySecret: vi.fn(async (secret: string, hash: string) => {
+    // Simple mock verification - just check if hash contains the secret
+    return hash.includes(secret) || hash === "sha256HashValue";
+  }),
 }));
 
 describe("API Key Management", () => {
@@ -133,14 +141,12 @@ describe("API Key Management", () => {
       vi.clearAllMocks();
     });
 
-    test("returns api key with permissions for v2 format (fbk_secret) and updates lastUsedAt when within 30s", async () => {
-      const recentDate = new Date(Date.now() - 1000 * 10); // 10 seconds ago
-      const mockUpdatePromise = Promise.resolve({ ...mockApiKey } as any);
+    test("returns api key with permissions for v2 format (fbk_secret) but does NOT update lastUsedAt when within 30s", async () => {
+      const recentDate = new Date(Date.now() - 1000 * 10); // 10 seconds ago (too recent)
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: recentDate,
       } as any);
-      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(mockUpdatePromise as any);
 
       const result = await getApiKeyWithPermissions("fbk_testSecret123");
 
@@ -152,10 +158,8 @@ describe("API Key Management", () => {
         where: { lookupHash: "sha256LookupHashValue" },
         include: expect.any(Object),
       });
-      expect(prisma.apiKey.update).toHaveBeenCalledWith({
-        where: { id: "apikey123" },
-        data: { lastUsedAt: expect.any(Date) },
-      });
+      // Should NOT update because lastUsedAt is too recent (< 30s)
+      expect(prisma.apiKey.update).not.toHaveBeenCalled();
     });
 
     test("returns api key with permissions for v2 format but does NOT update lastUsedAt when null", async () => {
@@ -177,12 +181,16 @@ describe("API Key Management", () => {
       expect(prisma.apiKey.update).not.toHaveBeenCalled();
     });
 
-    test("returns api key with permissions for v2 format but does NOT update lastUsedAt when older than 30s", async () => {
-      const oldDate = new Date(Date.now() - 1000 * 60); // 60 seconds ago
+    test("returns api key with permissions for v2 format and DOES update lastUsedAt when older than 30s", async () => {
+      const oldDate = new Date(Date.now() - 1000 * 60); // 60 seconds ago (old enough)
+      const mockUpdatePromise = {
+        catch: vi.fn().mockReturnThis(),
+      };
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: oldDate,
       } as any);
+      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(mockUpdatePromise as any);
 
       const result = await getApiKeyWithPermissions("fbk_testSecret123");
 
@@ -194,15 +202,42 @@ describe("API Key Management", () => {
         where: { lookupHash: "sha256LookupHashValue" },
         include: expect.any(Object),
       });
-      expect(prisma.apiKey.update).not.toHaveBeenCalled();
+      // SHOULD update because lastUsedAt is old enough (> 30s)
+      expect(prisma.apiKey.update).toHaveBeenCalledWith({
+        where: { id: "apikey123" },
+        data: { lastUsedAt: expect.any(Date) },
+      });
     });
 
-    test("returns api key with permissions for v1 legacy format and updates lastUsedAt when within 30s", async () => {
-      const recentDate = new Date(Date.now() - 1000 * 20); // 20 seconds ago
-      const mockUpdatePromise = Promise.resolve({ ...mockApiKey } as any);
+    test("returns api key with permissions for v1 legacy format but does NOT update lastUsedAt when within 30s", async () => {
+      const recentDate = new Date(Date.now() - 1000 * 20); // 20 seconds ago (too recent)
       vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: recentDate,
+      } as any);
+
+      const result = await getApiKeyWithPermissions("legacy-api-key");
+
+      expect(result).toMatchObject({
+        ...mockApiKey,
+        lastUsedAt: recentDate,
+      });
+      expect(prisma.apiKey.findFirst).toHaveBeenCalledWith({
+        where: { hashedKey: "sha256HashValue" },
+        include: expect.any(Object),
+      });
+      // Should NOT update because lastUsedAt is too recent (< 30s)
+      expect(prisma.apiKey.update).not.toHaveBeenCalled();
+    });
+
+    test("returns api key and DOES update lastUsedAt for legacy format when older than 30s", async () => {
+      const oldDate = new Date(Date.now() - 1000 * 45); // 45 seconds ago (old enough)
+      const mockUpdatePromise = {
+        catch: vi.fn().mockReturnThis(),
+      };
+      vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({
+        ...mockApiKey,
+        lastUsedAt: oldDate,
       } as any);
       vi.mocked(prisma.apiKey.update).mockReturnValueOnce(mockUpdatePromise as any);
 
@@ -210,36 +245,17 @@ describe("API Key Management", () => {
 
       expect(result).toMatchObject({
         ...mockApiKey,
-        lastUsedAt: recentDate,
+        lastUsedAt: oldDate,
       });
       expect(prisma.apiKey.findFirst).toHaveBeenCalledWith({
         where: { hashedKey: "sha256HashValue" },
         include: expect.any(Object),
       });
+      // SHOULD update because lastUsedAt is old enough (> 30s)
       expect(prisma.apiKey.update).toHaveBeenCalledWith({
         where: { id: "apikey123" },
         data: { lastUsedAt: expect.any(Date) },
       });
-    });
-
-    test("returns api key but does NOT update lastUsedAt for legacy format when older than 30s", async () => {
-      const oldDate = new Date(Date.now() - 1000 * 45); // 45 seconds ago
-      vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({
-        ...mockApiKey,
-        lastUsedAt: oldDate,
-      } as any);
-
-      const result = await getApiKeyWithPermissions("legacy-api-key");
-
-      expect(result).toMatchObject({
-        ...mockApiKey,
-        lastUsedAt: oldDate,
-      });
-      expect(prisma.apiKey.findFirst).toHaveBeenCalledWith({
-        where: { hashedKey: "sha256HashValue" },
-        include: expect.any(Object),
-      });
-      expect(prisma.apiKey.update).not.toHaveBeenCalled();
     });
 
     test("returns null if v2 api key not found", async () => {
@@ -336,8 +352,8 @@ describe("API Key Management", () => {
       expect(prisma.apiKey.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           label: "Test API Key",
-          hashedKey: "sha256LookupHashValue",
-          lookupHash: "sha256LookupHashValue",
+          hashedKey: "$2a$12$mockBcryptHashFortestSecret123", // bcrypt hash
+          lookupHash: "sha256LookupHashValue", // SHA-256 lookup hash
           createdBy: "user123",
         }),
         include: {

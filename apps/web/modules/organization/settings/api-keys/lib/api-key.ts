@@ -7,7 +7,7 @@ import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { hashSha256, parseApiKeyV2 } from "@/lib/crypto";
+import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TApiKeyCreateInput,
@@ -76,7 +76,8 @@ export const getApiKeyWithPermissions = reactCache(
       let apiKeyData;
 
       if (v2Parsed) {
-        // New v2 format: hash the secret and lookup by lookupHash
+        // New v2 format (fbk_{secret}): Hybrid approach
+        // Step 1: Fast SHA-256 lookup by indexed lookupHash
         const lookupHash = hashSha256(v2Parsed.secret);
         apiKeyData = await prisma.apiKey.findUnique({
           where: { lookupHash },
@@ -84,6 +85,13 @@ export const getApiKeyWithPermissions = reactCache(
         });
 
         if (!apiKeyData) return null;
+
+        // Step 2: Security verification with bcrypt
+        const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
+        if (!isValid) {
+          logger.warn("API key bcrypt verification failed", { apiKeyId: apiKeyData.id });
+          return null;
+        }
       } else {
         // Legacy format: compute SHA-256 and lookup by hashedKey
         const hashedKey = hashSha256(apiKey);
@@ -95,7 +103,7 @@ export const getApiKeyWithPermissions = reactCache(
         if (!apiKeyData) return null;
       }
 
-      if (apiKeyData.lastUsedAt && apiKeyData.lastUsedAt > new Date(Date.now() - 1000 * 30)) {
+      if (apiKeyData.lastUsedAt && apiKeyData.lastUsedAt <= new Date(Date.now() - 1000 * 30)) {
         // Fire-and-forget: update lastUsedAt in the background without blocking the response
         prisma.apiKey
           .update({
@@ -148,15 +156,15 @@ export const createApiKey = async (
 ): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {
   validateInputs([organizationId, ZId], [apiKeyData, ZApiKeyCreateInput]);
   try {
-    // Generate a secure random secret
+    // Generate a secure random secret (32 bytes base64url)
     const secret = randomBytes(32).toString("base64url");
 
-    // Create a SHA-256 lookup hash from the secret
+    // Hybrid approach for security + performance:
+    // 1. SHA-256 lookup hash
     const lookupHash = hashSha256(secret);
 
-    // For new v2 keys, store the lookupHash in both fields for backward compatibility
-    // hashedKey is kept for legacy key support
-    const hashedKey = lookupHash;
+    // 2. bcrypt hash
+    const hashedKey = await hashSecret(secret, 12);
 
     // Extract environmentPermissions from apiKeyData
     const { environmentPermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;

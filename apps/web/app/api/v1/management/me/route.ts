@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
-import { hashSha256, parseApiKeyV2 } from "@/lib/crypto";
+import { hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
@@ -11,6 +11,7 @@ const ALLOWED_PERMISSIONS = ["manage", "read", "write"] as const;
 const apiKeySelect = {
   id: true,
   organizationId: true,
+  lastUsedAt: true,
   apiKeyEnvironments: {
     select: {
       environment: {
@@ -68,7 +69,7 @@ const validateApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
 };
 
 const validateV2ApiKey = async (v2Parsed: { secret: string }): Promise<ApiKeyData | null> => {
-  // Hash the secret to create the lookup hash
+  // Step 1: Fast SHA-256 lookup by indexed lookupHash
   const lookupHash = hashSha256(v2Parsed.secret);
 
   const apiKeyData = await prisma.apiKey.findUnique({
@@ -77,6 +78,10 @@ const validateV2ApiKey = async (v2Parsed: { secret: string }): Promise<ApiKeyDat
   });
 
   if (!apiKeyData) return null;
+
+  // Step 2: Security verification with bcrypt
+  const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
+  if (!isValid) return null;
 
   return apiKeyData as ApiKeyData;
 };
@@ -137,7 +142,7 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
     return responses.notAuthenticatedResponse();
   }
 
-  if (apiKeyData.lastUsedAt && apiKeyData.lastUsedAt > new Date(Date.now() - 1000 * 30)) {
+  if (apiKeyData.lastUsedAt && apiKeyData.lastUsedAt <= new Date(Date.now() - 1000 * 30)) {
     // Fire-and-forget: update lastUsedAt in the background without blocking the response
     updateApiKeyUsage(apiKeyData.id).catch((error) => {
       console.error("Failed to update API key usage:", error);
