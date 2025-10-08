@@ -84,12 +84,17 @@ export const getApiKeyWithPermissions = reactCache(
           include: includeQuery,
         });
 
-        if (!apiKeyData) return null;
-
         // Step 2: Security verification with bcrypt
-        const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
-        if (!isValid) {
-          logger.warn("API key bcrypt verification failed", { apiKeyId: apiKeyData.id });
+        // Always perform bcrypt verification to prevent timing attacks
+        // Use a control hash when API key doesn't exist to maintain constant timing
+        const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
+        const hashToVerify = apiKeyData?.hashedKey || controlHash;
+        const isValid = await verifySecret(v2Parsed.secret, hashToVerify);
+
+        if (!apiKeyData || !isValid) {
+          if (apiKeyData && !isValid) {
+            logger.warn({ apiKeyId: apiKeyData.id }, "API key bcrypt verification failed");
+          }
           return null;
         }
       } else {
