@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
-import { hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
+import { hashSha256, parseApiKeyV2 } from "@/lib/crypto";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
@@ -39,6 +39,7 @@ type ApiKeyData = {
   id: string;
   hashedKey: string;
   organizationId: string;
+  lastUsedAt: Date;
   apiKeyEnvironments: Array<{
     permission: string;
     environment: {
@@ -66,21 +67,23 @@ const validateApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
   return validateLegacyApiKey(apiKey);
 };
 
-const validateV2ApiKey = async (v2Parsed: { id: string; secret: string }): Promise<ApiKeyData | null> => {
+const validateV2ApiKey = async (v2Parsed: { secret: string }): Promise<ApiKeyData | null> => {
+  // Hash the secret to create the lookup hash
+  const lookupHash = hashSha256(v2Parsed.secret);
+
   const apiKeyData = await prisma.apiKey.findUnique({
-    where: { id: v2Parsed.id },
+    where: { lookupHash },
     select: apiKeySelect,
   });
 
   if (!apiKeyData) return null;
 
-  const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
-  return isValid ? (apiKeyData as ApiKeyData) : null;
+  return apiKeyData as ApiKeyData;
 };
 
 const validateLegacyApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
   const hashedKey = hashSha256(apiKey);
-  const result = await prisma.apiKey.findUnique({
+  const result = await prisma.apiKey.findFirst({
     where: { hashedKey },
     select: apiKeySelect,
   });
@@ -134,7 +137,12 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
     return responses.notAuthenticatedResponse();
   }
 
-  await updateApiKeyUsage(apiKeyData.id);
+  if (apiKeyData.lastUsedAt && apiKeyData.lastUsedAt > new Date(Date.now() - 1000 * 30)) {
+    // Fire-and-forget: update lastUsedAt in the background without blocking the response
+    updateApiKeyUsage(apiKeyData.id).catch((error) => {
+      console.error("Failed to update API key usage:", error);
+    });
+  }
 
   const rateLimitError = await checkRateLimit(apiKeyData.id);
   if (rateLimitError) return rateLimitError;

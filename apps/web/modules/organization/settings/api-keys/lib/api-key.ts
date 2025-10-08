@@ -3,10 +3,11 @@ import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { randomBytes } from "node:crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
+import { hashSha256, parseApiKeyV2 } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TApiKeyCreateInput,
@@ -69,39 +70,42 @@ export const getApiKeyWithPermissions = reactCache(
         },
       };
 
-      // Try v2 format first (fbk_{id}_{secret})
+      // Try v2 format first (fbk_{secret})
       const v2Parsed = parseApiKeyV2(apiKey);
 
       let apiKeyData;
 
       if (v2Parsed) {
-        // New v2 format: lookup by id and verify with bcrypt
+        // New v2 format: hash the secret and lookup by lookupHash
+        const lookupHash = hashSha256(v2Parsed.secret);
         apiKeyData = await prisma.apiKey.findUnique({
-          where: { id: v2Parsed.id },
+          where: { lookupHash },
           include: includeQuery,
         });
 
         if (!apiKeyData) return null;
-
-        // Verify the secret against the bcrypt hash
-        const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
-        if (!isValid) return null;
       } else {
         // Legacy format: compute SHA-256 and lookup by hashedKey
         const hashedKey = hashSha256(apiKey);
-        apiKeyData = await prisma.apiKey.findUnique({
-          where: { hashedKey },
+        apiKeyData = await prisma.apiKey.findFirst({
+          where: { hashedKey: hashedKey },
           include: includeQuery,
         });
 
         if (!apiKeyData) return null;
       }
 
-      // Update the last used timestamp
-      await prisma.apiKey.update({
-        where: { id: apiKeyData.id },
-        data: { lastUsedAt: new Date() },
-      });
+      if (apiKeyData.lastUsedAt && apiKeyData.lastUsedAt > new Date(Date.now() - 1000 * 30)) {
+        // Fire-and-forget: update lastUsedAt in the background without blocking the response
+        prisma.apiKey
+          .update({
+            where: { id: apiKeyData.id },
+            data: { lastUsedAt: new Date() },
+          })
+          .catch((error) => {
+            logger.error({ error }, "Failed to update API key usage");
+          });
+      }
 
       return apiKeyData;
     } catch (error) {
@@ -144,9 +148,15 @@ export const createApiKey = async (
 ): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {
   validateInputs([organizationId, ZId], [apiKeyData, ZApiKeyCreateInput]);
   try {
-    // Generate a secure random secret (24 bytes base64url)
-    const secret = randomBytes(24).toString("base64url");
-    const hashedKey = await hashSecret(secret, 12);
+    // Generate a secure random secret
+    const secret = randomBytes(32).toString("base64url");
+
+    // Create a SHA-256 lookup hash from the secret
+    const lookupHash = hashSha256(secret);
+
+    // For new v2 keys, store the lookupHash in both fields for backward compatibility
+    // hashedKey is kept for legacy key support
+    const hashedKey = lookupHash;
 
     // Extract environmentPermissions from apiKeyData
     const { environmentPermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
@@ -156,6 +166,7 @@ export const createApiKey = async (
       data: {
         ...apiKeyDataWithoutPermissions,
         hashedKey,
+        lookupHash,
         createdBy: userId,
         organization: { connect: { id: organizationId } },
         organizationAccess,
@@ -175,8 +186,8 @@ export const createApiKey = async (
       },
     });
 
-    // Return the new v2 format: fbk_{id}_{secret}
-    return { ...result, actualKey: `fbk_${result.id}_${secret}` };
+    // Return the new v2 format: fbk_{secret}
+    return { ...result, actualKey: `fbk_${secret}` };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
