@@ -8,6 +8,75 @@ permissions:
   contents: read
 
 jobs:
+  check-latest-release:
+    name: Check if this is the latest release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      is_latest: ${{ steps.compare_tags.outputs.is_latest }}
+    # This job determines if the current release was marked as "Set as the latest release"
+    # by comparing it with the latest release from GitHub API
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Get latest release tag from API
+        id: get_latest_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          
+          # Get the latest release tag from GitHub API with error handling
+          echo "Fetching latest release from GitHub API..."
+          
+          # Use curl with error handling - API returns 404 if no releases exist
+          http_code=$(curl -s -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/${REPO}/releases/latest" -o /tmp/latest_release.json)
+          
+          if [[ "$http_code" == "404" ]]; then
+            echo "⚠️  No previous releases found (404). This appears to be the first release."
+            echo "latest_release=" >> $GITHUB_OUTPUT
+          elif [[ "$http_code" == "200" ]]; then
+            latest_release=$(jq -r .tag_name /tmp/latest_release.json)
+            if [[ "$latest_release" == "null" || -z "$latest_release" ]]; then
+              echo "⚠️  API returned null/empty tag_name. Treating as first release."
+              echo "latest_release=" >> $GITHUB_OUTPUT
+            else
+              echo "Latest release from API: ${latest_release}"
+              echo "latest_release=${latest_release}" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "❌ GitHub API error (HTTP ${http_code}). Treating as first release."
+            echo "latest_release=" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Current release tag: ${{ github.event.release.tag_name }}"
+
+      - name: Compare release tags
+        id: compare_tags
+        env:
+          CURRENT_TAG: ${{ github.event.release.tag_name }}
+          LATEST_TAG: ${{ steps.get_latest_release.outputs.latest_release }}
+        run: |
+          set -euo pipefail
+          
+          # Handle first release case (no previous releases)
+          if [[ -z "${LATEST_TAG}" ]]; then
+            echo "🎉 This is the first release (${CURRENT_TAG}) - treating as latest"
+            echo "is_latest=true" >> $GITHUB_OUTPUT
+          elif [[ "${CURRENT_TAG}" == "${LATEST_TAG}" ]]; then
+            echo "✅ This release (${CURRENT_TAG}) is marked as the latest release"
+            echo "is_latest=true" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️  This release (${CURRENT_TAG}) is not the latest release (latest: ${LATEST_TAG})"
+            echo "is_latest=false" >> $GITHUB_OUTPUT
+          fi
   docker-build-community:
     name: Build & release community docker image
     permissions:
@@ -16,8 +85,11 @@ jobs:
       id-token: write
     uses: ./.github/workflows/release-docker-github.yml
     secrets: inherit
+    needs:
+      - check-latest-release
     with:
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
+      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest }}
 
   docker-build-cloud:
     name: Build & push Formbricks Cloud to ECR
@@ -29,7 +101,9 @@ jobs:
     with:
       image_tag: ${{ needs.docker-build-community.outputs.VERSION }}
       IS_PRERELEASE: ${{ github.event.release.prerelease }}
+      MAKE_LATEST: ${{ needs.check-latest-release.outputs.is_latest }}
     needs:
+      - check-latest-release
       - docker-build-community
 
   helm-chart-release:
@@ -74,8 +148,10 @@ jobs:
       contents: write # Required for tag push operations in called workflow
     uses: ./.github/workflows/move-stable-tag.yml
     needs:
+      - check-latest-release
       - docker-build-community # Ensure release is successful first
     with:
       release_tag: ${{ github.event.release.tag_name }}
       commit_sha: ${{ github.sha }}
       is_prerelease: ${{ github.event.release.prerelease }}
+      make_latest: ${{ needs.check-latest-release.outputs.is_latest }}
