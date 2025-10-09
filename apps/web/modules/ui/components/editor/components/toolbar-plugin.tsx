@@ -121,6 +121,7 @@ export const ToolbarPlugin = (
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
+  const [hasTextSelection, setHasTextSelection] = useState(false);
 
   // save ref to setText to use it in event listeners safely
   const setText = useRef<any>(props.setText);
@@ -204,6 +205,7 @@ export const ToolbarPlugin = (
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
+      setHasTextSelection(!selection.isCollapsed());
       const anchorNode = selection.anchor.getNode();
       const element = anchorNode.getKey() === "root" ? anchorNode : anchorNode.getTopLevelElementOrThrow();
       const elementKey = element.getKey();
@@ -251,12 +253,6 @@ export const ToolbarPlugin = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.updateTemplate, props.firstRender]);
 
-  const hasSelection = () =>
-    editor.getEditorState().read(() => {
-      const selection = $getSelection();
-      return $isRangeSelection(selection) && !selection.isCollapsed();
-    });
-
   useEffect(() => {
     if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
@@ -277,9 +273,6 @@ export const ToolbarPlugin = (
               .replace(/white-space:\s*pre-wrap;?/g, "");
             setText.current(textInHtml);
           });
-          if (!hasSelection()) {
-            editor.blur();
-          }
         });
       });
     }
@@ -347,7 +340,7 @@ export const ToolbarPlugin = (
       icon: Bold,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"),
       active: isBold,
-      tooltipText: "Bold",
+      tooltipText: t("environments.surveys.edit.bold"),
       disabled: false,
     },
     {
@@ -355,7 +348,7 @@ export const ToolbarPlugin = (
       icon: Italic,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"),
       active: isItalic,
-      tooltipText: "Italic",
+      tooltipText: t("environments.surveys.edit.italic"),
       disabled: false,
     },
     {
@@ -363,7 +356,7 @@ export const ToolbarPlugin = (
       icon: Underline,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
       active: isUnderline,
-      tooltipText: "Underline",
+      tooltipText: t("environments.surveys.edit.underline"),
       disabled: false,
     },
     {
@@ -374,7 +367,7 @@ export const ToolbarPlugin = (
       tooltipText: isLink
         ? t("environments.surveys.edit.edit_link")
         : t("environments.surveys.edit.insert_link"),
-      disabled: !hasSelection(),
+      disabled: !hasTextSelection,
     },
     {
       key: "recall",
