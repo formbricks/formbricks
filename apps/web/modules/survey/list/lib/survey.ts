@@ -1,13 +1,4 @@
 import "server-only";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
-import { validateInputs } from "@/lib/utils/validate";
-import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
-import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
-import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
-import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -16,6 +7,16 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { validateInputs } from "@/lib/utils/validate";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
+import { copyResponsesForSurvey } from "@/modules/survey/list/lib/copy-survey-responses";
+import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
+import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
+import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
 
 export const surveySelect: Prisma.SurveySelect = {
   id: true,
@@ -281,7 +282,8 @@ export const copySurveyToOtherEnvironment = async (
   environmentId: string,
   surveyId: string,
   targetEnvironmentId: string,
-  userId: string
+  userId: string,
+  copyResponses: boolean = false
 ) => {
   try {
     const isSameEnvironment = environmentId === targetEnvironmentId;
@@ -582,6 +584,27 @@ export const copySurveyToOtherEnvironment = async (
         },
       },
     });
+
+    if (copyResponses) {
+      try {
+        const copyResult = await copyResponsesForSurvey({
+          sourceSurveyId: surveyId,
+          targetSurveyId: newSurvey.id,
+          sourceEnvironmentId: environmentId,
+          targetEnvironmentId: targetEnvironmentId,
+        });
+
+        logger.info(
+          `Copied ${copyResult.copiedCount} responses from survey ${surveyId} to ${newSurvey.id}. ${copyResult.errors.length} errors occurred.`
+        );
+
+        if (copyResult.errors.length > 0) {
+          logger.warn(`Errors during response copy: ${copyResult.errors.slice(0, 10).join("; ")}`);
+        }
+      } catch (error) {
+        logger.error(error, "Error copying responses");
+      }
+    }
 
     return newSurvey;
   } catch (error) {

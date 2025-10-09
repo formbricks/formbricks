@@ -1,5 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
+import { AlertCircleIcon, CopyIcon, DatabaseIcon } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { TUserProject } from "@/modules/survey/list/types/projects";
@@ -8,11 +13,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { AlertCircleIcon } from "lucide-react";
-import { useFieldArray, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 
 interface CopySurveyFormProps {
   readonly defaultProjects: TUserProject[];
@@ -107,6 +108,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
         project: project.id,
         environments: [],
       })),
+      copyMode: "survey_only",
     },
   });
 
@@ -132,6 +134,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
               environmentId: survey.environmentId,
               surveyId: survey.id,
               targetEnvironmentId: environmentId,
+              copyResponses: data.copyMode === "survey_with_responses",
             }),
             projectName: project?.name ?? "Unknown Project",
             environmentType: environment?.type ?? "unknown",
@@ -183,6 +186,7 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
         });
       }
     } catch (error) {
+      console.error("Error copying survey:", error);
       toast.error(t("environments.surveys.copy_survey_error"));
     } finally {
       setOpen(false);
@@ -193,6 +197,42 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full w-full flex-col bg-white">
         <div className="flex-1 space-y-8 overflow-y-auto">
+          <div className="mb-6">
+            <Label htmlFor="copyMode">{t("common.copy_options")}</Label>
+            <div className="mt-2">
+              <FormField
+                control={form.control}
+                name="copyMode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <OptionsSwitch
+                        options={[
+                          {
+                            value: "survey_only",
+                            label: t("environments.surveys.survey_only"),
+                            icon: <CopyIcon className="h-4 w-4" />,
+                          },
+                          {
+                            value: "survey_with_responses",
+                            label: t("environments.surveys.survey_with_responses"),
+                            icon: <DatabaseIcon className="h-4 w-4" />,
+                          },
+                        ]}
+                        currentOption={field.value}
+                        handleOptionChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <p className="mt-2 text-sm text-slate-500">
+              {form.watch("copyMode") === "survey_with_responses"
+                ? t("environments.surveys.copy_with_responses_description")
+                : t("environments.surveys.copy_survey_only_description")}
+            </p>
+          </div>
           {formFields.fields.map((field, projectIndex) => {
             const project = filteredProjects.find((project) => project.id === field.project);
             if (!project) return null;
