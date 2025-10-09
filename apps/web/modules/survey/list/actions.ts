@@ -1,5 +1,8 @@
 "use server";
 
+import { z } from "zod";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -19,9 +22,6 @@ import {
   getSurvey,
   getSurveys,
 } from "@/modules/survey/list/lib/survey";
-import { z } from "zod";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
 const ZGetSurveyAction = z.object({
   surveyId: z.string().cuid2(),
@@ -53,6 +53,7 @@ const ZCopySurveyToOtherEnvironmentAction = z.object({
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   targetEnvironmentId: z.string().cuid2(),
+  copyResponses: z.boolean().default(false),
 });
 
 export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
@@ -120,7 +121,8 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           parsedInput.environmentId,
           parsedInput.surveyId,
           parsedInput.targetEnvironmentId,
-          ctx.user.id
+          ctx.user.id,
+          parsedInput.copyResponses
         );
         ctx.auditLoggingCtx.newObject = result;
         return result;

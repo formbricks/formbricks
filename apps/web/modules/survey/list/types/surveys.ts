@@ -33,6 +33,7 @@ export const ZSurveyCopyFormValidation = z.object({
       environments: z.array(z.string()),
     })
   ),
+  copyMode: z.enum(["survey_only", "survey_with_responses"]).default("survey_only"),
 });
 
 export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;
