@@ -1,5 +1,10 @@
 "use client";
 
+import { Project } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
+import Image from "next/image";
+import { ChangeEvent, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { handleFileUpload } from "@/modules/storage/file-upload";
@@ -11,11 +16,6 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { ChangeEvent, useRef, useState } from "react";
-import toast from "react-hot-toast";
 
 interface EditLogoProps {
   project: Project;
@@ -151,6 +151,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
               setIsEditing(true);
             }}
             disabled={isReadOnly}
+            maxSizeInMB={5}
             isStorageConfigured={isStorageConfigured}
           />
         )}

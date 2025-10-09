@@ -346,6 +346,7 @@ export const QuestionFormInput = ({
                         fileUrl={getFileUrl()}
                         videoUrl={getVideoUrl()}
                         isVideoAllowed={true}
+                        maxSizeInMB={5}
                         isStorageConfigured={isStorageConfigured}
                       />
                     )}
