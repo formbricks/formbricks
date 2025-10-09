@@ -62,10 +62,9 @@ export const QuestionOptionChoice = ({
 }: ChoiceProps) => {
   const { t } = useTranslate();
   const isSpecialChoice = choice.id === "other" || choice.id === "none";
-  const isDragDisabled = isSpecialChoice;
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
-    disabled: isDragDisabled,
+    disabled: isSpecialChoice,
   });
 
   const style = {
@@ -90,6 +89,8 @@ export const QuestionOptionChoice = ({
     return t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
   };
 
+  const normalChoice = question.choices?.filter((c) => c.id !== "other" && c.id !== "none") || [];
+
   return (
     <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
@@ -110,7 +111,7 @@ export const QuestionOptionChoice = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           isInvalid={
-            isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
+            isInvalid && !isLabelValidForAllLanguages(question.choices?.[choiceIdx]?.label, surveyLanguages)
           }
           className={`${isSpecialChoice ? "border border-dashed" : ""} mt-0`}
           locale={locale}
@@ -118,7 +119,7 @@ export const QuestionOptionChoice = ({
           onKeyDown={(e) => {
             if (e.key === "Enter" && choice.id !== "other") {
               e.preventDefault();
-              const lastChoiceIdx = question.choices.findLastIndex((c) => c.id !== "other");
+              const lastChoiceIdx = question.choices?.findLastIndex((c) => c.id !== "other") ?? -1;
 
               if (choiceIdx === lastChoiceIdx) {
                 addChoiceAndFocus(choiceIdx);
@@ -129,7 +130,7 @@ export const QuestionOptionChoice = ({
 
             if (e.key === "ArrowDown") {
               e.preventDefault();
-              if (choiceIdx + 1 < question.choices.length) {
+              if (choiceIdx + 1 < (question.choices?.length ?? 0)) {
                 focusChoiceInput(choiceIdx + 1);
               }
             }
@@ -157,7 +158,7 @@ export const QuestionOptionChoice = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             isInvalid={
-              isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
+              isInvalid && !isLabelValidForAllLanguages(question.choices?.[choiceIdx]?.label, surveyLanguages)
             }
             className="border border-dashed"
             locale={locale}
@@ -166,7 +167,7 @@ export const QuestionOptionChoice = ({
         )}
       </div>
       <div className="flex gap-2">
-        {question.choices?.length > 2 && (
+        {normalChoice.length > 2 && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
             <Button
               variant="secondary"

@@ -348,7 +348,6 @@ export const getQuestionSummary = async (
 
         const otherOption = question.choices.find((choice) => choice.id === "other");
         const noneOption = question.choices.find((choice) => choice.id === "none");
-        const isOthersEnabled = !!otherOption;
 
         const questionChoices = question.choices
           .filter((choice) => choice.id !== "other" && choice.id !== "none")
@@ -384,7 +383,7 @@ export const getQuestionSummary = async (
                   choiceCountMap[value]++;
                 } else if (noneLabel && value === noneLabel) {
                   noneCount++;
-                } else if (isOthersEnabled) {
+                } else if (otherOption) {
                   otherValues.push({
                     value,
                     contact: response.contact,
@@ -404,7 +403,7 @@ export const getQuestionSummary = async (
                 choiceCountMap[answer]++;
               } else if (noneLabel && answer === noneLabel) {
                 noneCount++;
-              } else if (isOthersEnabled) {
+              } else if (otherOption) {
                 otherValues.push({
                   value: answer,
                   contact: response.contact,
@@ -429,7 +428,7 @@ export const getQuestionSummary = async (
           });
         });
 
-        if (isOthersEnabled && otherOption) {
+        if (otherOption) {
           values.push({
             value: getLocalizedValue(otherOption.label, "default") || "Other",
             count: otherValues.length,

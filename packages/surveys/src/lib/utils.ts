@@ -55,7 +55,7 @@ export const getShuffledChoicesIds = (
     return choice.id === "none";
   });
 
-  const shuffledChoices = [...choices.filter((choice) => choice.id !== "other" && choice.id !== "none")];
+  const shuffledChoices = choices.filter((choice) => choice.id !== "other" && choice.id !== "none");
 
   if (shuffleOption === "all") {
     shuffle(shuffledChoices);

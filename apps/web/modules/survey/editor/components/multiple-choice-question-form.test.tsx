@@ -327,7 +327,7 @@ describe("MultipleChoiceQuestionForm", () => {
       choices: [
         { id: "c1", label: { default: "Choice 1" } },
         { id: "c2", label: { default: "Choice 2" } },
-        { id: "other", label: { default: "Other" } },
+        { id: "other", label: { default: "common.other" } },
       ],
     });
   });
@@ -409,7 +409,7 @@ describe("MultipleChoiceQuestionForm", () => {
       choices: [
         { id: "c1", label: { default: "Choice 1" } },
         { id: "c2", label: { default: "Choice 2" } },
-        { id: "none", label: { default: "None of the above" } },
+        { id: "none", label: { default: "common.none_of_the_above" } },
       ],
     });
   });
