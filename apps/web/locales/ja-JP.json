@@ -279,6 +279,7 @@
     "no_result_found": "結果が見つかりません",
     "no_results": "結果なし",
     "no_surveys_found": "フォームが見つかりません。",
+    "none_of_the_above": "いずれも該当しません",
     "not_authenticated": "このアクションを実行するための認証がされていません。",
     "not_authorized": "権限がありません",
     "not_connected": "未接続",
