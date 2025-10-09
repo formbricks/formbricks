@@ -59,7 +59,7 @@ export const FallbackInput = ({
                   className="h-9 bg-white"
                   id={inputId}
                   autoFocus={idx === filteredRecallItems.length - 1}
-                  value={fallbacks[recallItem.id]?.replaceAll(/nbsp/g, " ") || ""}
+                  value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ") || ""}
                   placeholder={t("environments.surveys.edit.enter_fallback_value")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {

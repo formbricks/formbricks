@@ -251,6 +251,12 @@ export const ToolbarPlugin = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.updateTemplate, props.firstRender]);
 
+  const hasSelection = () =>
+    editor.getEditorState().read(() => {
+      const selection = $getSelection();
+      return $isRangeSelection(selection) && !selection.isCollapsed();
+    });
+
   useEffect(() => {
     if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
@@ -263,7 +269,7 @@ export const ToolbarPlugin = (
         root.clear();
         root.append(...nodes);
 
-        editor.registerUpdateListener(({ editorState, prevEditorState }) => {
+        editor.registerUpdateListener(({ editorState }) => {
           editorState.read(() => {
             const textInHtml = $generateHtmlFromNodes(editor)
               .replace(/&lt;/g, "<")
@@ -271,7 +277,9 @@ export const ToolbarPlugin = (
               .replace(/white-space:\s*pre-wrap;?/g, "");
             setText.current(textInHtml);
           });
-          if (!prevEditorState._selection && !editorState._selection) editor.blur();
+          if (!hasSelection()) {
+            editor.blur();
+          }
         });
       });
     }
@@ -366,10 +374,7 @@ export const ToolbarPlugin = (
       tooltipText: isLink
         ? t("environments.surveys.edit.edit_link")
         : t("environments.surveys.edit.insert_link"),
-      disabled: !editor.getEditorState().read(() => {
-        const selection = $getSelection();
-        return Boolean(selection);
-      }),
+      disabled: !hasSelection(),
     },
     {
       key: "recall",
