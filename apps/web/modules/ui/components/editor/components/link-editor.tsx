@@ -63,6 +63,7 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
   const { t } = useTranslate();
   useEffect(() => {
     if (open) {
+      setError("");
       editor.getEditorState().read(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {

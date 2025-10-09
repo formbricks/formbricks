@@ -108,7 +108,7 @@ export const ToolbarPlugin = (
   props: TextEditorProps & {
     setShowRecallItemSelect: (show: boolean) => void;
     recallItemsCount?: number;
-    setShowFallbackInput?: (show: boolean) => void;
+    setShowFallbackInput: (show: boolean) => void;
     setShowLinkEditor: (show: boolean) => void;
   }
 ) => {
@@ -382,7 +382,7 @@ export const ToolbarPlugin = (
     {
       key: "editRecall",
       icon: PencilIcon,
-      onClick: () => props.setShowFallbackInput!(true),
+      onClick: () => props.setShowFallbackInput(true),
       active: false,
       tooltipText: t("environments.surveys.edit.edit_recall"),
       disabled: !props.recallItemsCount || props.recallItemsCount === 0,

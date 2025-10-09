@@ -36,7 +36,7 @@ export const FallbackInput = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        {triggerButton || <div className="z-10 h-0 w-full cursor-pointer" />}
+        {open ? <div className="z-10 h-0 w-full cursor-pointer" /> : triggerButton}
       </PopoverTrigger>
 
       <PopoverContent
@@ -59,7 +59,7 @@ export const FallbackInput = ({
                   className="h-9 bg-white"
                   id={inputId}
                   autoFocus={idx === filteredRecallItems.length - 1}
-                  value={fallbacks[recallItem.id]?.replaceAll(/(&nbsp;|\u00A0|nbsp)/g, " ") || ""}
+                  value={fallbacks[recallItem.id]?.replaceAll(/nbsp/g, " ") || ""}
                   placeholder={t("environments.surveys.edit.enter_fallback_value")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {

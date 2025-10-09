@@ -184,6 +184,7 @@ describe("ToolbarPlugin", () => {
         editable={true}
         setShowRecallItemSelect={vi.fn()}
         setShowLinkEditor={vi.fn()}
+        setShowFallbackInput={vi.fn()}
       />
     );
 
@@ -204,6 +205,7 @@ describe("ToolbarPlugin", () => {
         editable={false}
         setShowRecallItemSelect={vi.fn()}
         setShowLinkEditor={vi.fn()}
+        setShowFallbackInput={vi.fn()}
       />
     );
 
@@ -219,6 +221,7 @@ describe("ToolbarPlugin", () => {
         variables={["name", "email"]}
         setShowRecallItemSelect={vi.fn()}
         setShowLinkEditor={vi.fn()}
+        setShowFallbackInput={vi.fn()}
       />
     );
 
@@ -234,6 +237,7 @@ describe("ToolbarPlugin", () => {
         editable={true}
         setShowRecallItemSelect={vi.fn()}
         setShowLinkEditor={vi.fn()}
+        setShowFallbackInput={vi.fn()}
         excludedToolbarItems={["bold", "italic", "underline"]}
       />
     );
@@ -253,6 +257,7 @@ describe("ToolbarPlugin", () => {
         editable={true}
         setShowRecallItemSelect={vi.fn()}
         setShowLinkEditor={vi.fn()}
+        setShowFallbackInput={vi.fn()}
         excludedToolbarItems={["blockType", "link"]}
       />
     );
@@ -272,6 +277,7 @@ describe("ToolbarPlugin", () => {
         editable={true}
         setShowRecallItemSelect={vi.fn()}
         setShowLinkEditor={vi.fn()}
+        setShowFallbackInput={vi.fn()}
         excludedToolbarItems={["blockType", "bold", "italic", "underline", "link", "recall"]}
       />
     );
@@ -294,6 +300,7 @@ describe("ToolbarPlugin", () => {
         editable={true}
         setShowRecallItemSelect={vi.fn()}
         setShowLinkEditor={vi.fn()}
+        setShowFallbackInput={vi.fn()}
         firstRender={false}
         setFirstRender={vi.fn()}
         updateTemplate={true}
@@ -314,6 +321,7 @@ describe("ToolbarPlugin", () => {
           editable={true}
           setShowRecallItemSelect={vi.fn()}
           setShowLinkEditor={vi.fn()}
+          setShowFallbackInput={vi.fn()}
         />
       );
 
@@ -334,6 +342,7 @@ describe("ToolbarPlugin", () => {
           editable={true}
           setShowRecallItemSelect={vi.fn()}
           setShowLinkEditor={vi.fn()}
+          setShowFallbackInput={vi.fn()}
         />
       );
 
@@ -354,6 +363,7 @@ describe("ToolbarPlugin", () => {
           editable={true}
           setShowRecallItemSelect={vi.fn()}
           setShowLinkEditor={vi.fn()}
+          setShowFallbackInput={vi.fn()}
         />
       );
 
@@ -374,6 +384,7 @@ describe("ToolbarPlugin", () => {
           editable={true}
           setShowRecallItemSelect={vi.fn()}
           setShowLinkEditor={vi.fn()}
+          setShowFallbackInput={vi.fn()}
         />
       );
 
@@ -394,6 +405,7 @@ describe("ToolbarPlugin", () => {
           editable={true}
           setShowRecallItemSelect={vi.fn()}
           setShowLinkEditor={vi.fn()}
+          setShowFallbackInput={vi.fn()}
         />
       );
 
