@@ -1,12 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Button } from "@/modules/ui/components/button";
-import { FileInput } from "@/modules/ui/components/file-input";
-import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
@@ -14,6 +7,13 @@ import { PlusIcon } from "lucide-react";
 import type { JSX } from "react";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
+import { FileInput } from "@/modules/ui/components/file-input";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
@@ -141,6 +141,7 @@ export const PictureSelectionForm = ({
             onFileUpload={handleFileInputChanges}
             fileUrl={question?.choices?.map((choice) => choice.imageUrl)}
             multiple={true}
+            maxSizeInMB={5}
             isStorageConfigured={isStorageConfigured}
           />
         </div>
