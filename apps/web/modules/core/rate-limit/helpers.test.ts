@@ -1,9 +1,9 @@
-import { hashString } from "@/lib/hash-string";
-// Import modules after mocking
-import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
+import { hashString } from "@/lib/hash-string";
+// Import modules after mocking
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { applyIPRateLimit, applyRateLimit, getClientIdentifier } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 
@@ -67,8 +67,8 @@ describe("helpers", () => {
 
       await expect(getClientIdentifier()).rejects.toThrow("Failed to hash IP");
 
-      // Verify that the error was logged with proper context
-      expect(logger.error).toHaveBeenCalledWith("Failed to hash IP", { error: originalError });
+      // Verify that the error was logged with proper context (pino 10 format: object first, message second)
+      expect(logger.error).toHaveBeenCalledWith({ error: originalError }, "Failed to hash IP");
     });
   });
 
