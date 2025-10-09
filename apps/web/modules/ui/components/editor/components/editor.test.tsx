@@ -95,10 +95,6 @@ vi.mock("@/lib/cn", () => ({
 }));
 
 vi.mock("@tolgee/react", () => ({
-  useTranslate: () => (key: string) => key,
-}));
-
-vi.mock("@tolgee/react", () => ({
   useTranslate: () => ({
     t: (key: string) => key,
   }),

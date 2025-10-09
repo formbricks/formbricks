@@ -212,7 +212,7 @@ describe("ToolbarPlugin", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  test("renders without crashing when variables are provided", async () => {
+  test("renders recall button when variables are provided", () => {
     render(
       <ToolbarPlugin
         getText={() => "Sample text"}
@@ -225,8 +225,9 @@ describe("ToolbarPlugin", () => {
       />
     );
 
-    // Just verify the toolbar renders without crashing and shows the recall button
+    // Verify recall functionality is available
     expect(screen.getByTestId("at-sign-icon")).toBeInTheDocument();
+    // If variables should affect behavior, add assertions here
   });
 
   test("excludes toolbar items when specified", () => {
