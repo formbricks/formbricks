@@ -11,21 +11,29 @@ permissions:
 jobs:
   check-pr-size:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+      
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
       
       - name: Check PR size
         id: check-size
         run: |
+          set -euo pipefail
+          
           # Fetch the base branch
-          git fetch origin ${{ github.base_ref }}
+          git fetch origin "${{ github.base_ref }}"
           
           # Get diff stats
-          diff_output=$(git diff --numstat origin/${{ github.base_ref }}...HEAD)
+          diff_output=$(git diff --numstat "origin/${{ github.base_ref }}"...HEAD)
           
           # Count lines, excluding:
           # - Test files (*.test.ts, *.spec.tsx, etc.)
@@ -73,27 +81,27 @@ jobs:
             total_deletions=$((total_deletions + deletions))
             counted_files=$((counted_files + 1))
           done <<EOF
-          $diff_output
+          ${diff_output}
           EOF
           
           total_changes=$((total_additions + total_deletions))
           
-          echo "counted_files=$counted_files" >> $GITHUB_OUTPUT
-          echo "excluded_files=$excluded_files" >> $GITHUB_OUTPUT
-          echo "total_additions=$total_additions" >> $GITHUB_OUTPUT
-          echo "total_deletions=$total_deletions" >> $GITHUB_OUTPUT
-          echo "total_changes=$total_changes" >> $GITHUB_OUTPUT
+          echo "counted_files=${counted_files}" >> "${GITHUB_OUTPUT}"
+          echo "excluded_files=${excluded_files}" >> "${GITHUB_OUTPUT}"
+          echo "total_additions=${total_additions}" >> "${GITHUB_OUTPUT}"
+          echo "total_deletions=${total_deletions}" >> "${GITHUB_OUTPUT}"
+          echo "total_changes=${total_changes}" >> "${GITHUB_OUTPUT}"
           
           # Set flag if PR is too large (> 800 lines)
-          if [ $total_changes -gt 800 ]; then
-            echo "is_too_large=true" >> $GITHUB_OUTPUT
+          if [ ${total_changes} -gt 800 ]; then
+            echo "is_too_large=true" >> "${GITHUB_OUTPUT}"
           else
-            echo "is_too_large=false" >> $GITHUB_OUTPUT
+            echo "is_too_large=false" >> "${GITHUB_OUTPUT}"
           fi
       
       - name: Comment on PR if too large
         if: steps.check-size.outputs.is_too_large == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
