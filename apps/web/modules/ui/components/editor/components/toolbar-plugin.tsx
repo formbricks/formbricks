@@ -367,7 +367,7 @@ export const ToolbarPlugin = (
       tooltipText: isLink
         ? t("environments.surveys.edit.edit_link")
         : t("environments.surveys.edit.insert_link"),
-      disabled: !hasTextSelection,
+      disabled: !isLink && !hasTextSelection,
     },
     {
       key: "recall",
