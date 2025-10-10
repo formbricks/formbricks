@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { ResetProgressButton } from "./index";
 
-// Mock tolgee
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => (key === "common.restart" ? "Restart" : key),

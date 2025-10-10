@@ -55,7 +55,6 @@ vi.mock("@/modules/ui/components/popover", () => ({
   ),
 }));
 
-// Mock tolgee
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => {

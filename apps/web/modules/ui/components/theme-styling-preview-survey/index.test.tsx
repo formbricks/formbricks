@@ -72,7 +72,6 @@ vi.mock("framer-motion", async () => {
   };
 });
 
-// Mock tolgee
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => {

@@ -54,9 +54,9 @@ vi.mock("lucide-react", () => ({
   EllipsisVerticalIcon: () => <div data-testid="ellipsis-icon" />,
 }));
 
-vi.mock("@tolgee/react", async () => {
+vi.mock("react-i18next", async () => {
   return {
-    useTranslate: () => ({
+    useTranslation: () => ({
       t: (key) => key,
     }),
   };

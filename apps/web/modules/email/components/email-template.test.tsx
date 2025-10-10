@@ -1,11 +1,10 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { EmailTemplate } from "./email-template";
 
-const mockTranslate: TFnType = (key) => key;
-
+const mockTranslate: TFunction = (key) => key as unknown as TFunction;
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   FB_LOGO_URL: "https://example.com/mock-logo.png",

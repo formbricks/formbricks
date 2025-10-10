@@ -52,7 +52,7 @@ describe("TagsPage", () => {
     cleanup();
   });
 
-  test("renders all tolgee strings and main components", async () => {
+  test("renders all translated strings and main components", async () => {
     const props = { params: { environmentId: "env1" } };
     vi.mocked(getEnvironmentAuth).mockResolvedValue({
       isReadOnly: false,

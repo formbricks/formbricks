@@ -16,7 +16,6 @@ vi.mock("@/lib/constants", () => ({
 
 vi.mock("@/modules/survey/editor/actions", () => ({}));
 
-// Mock @tolgee/react
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, params?: any) => {

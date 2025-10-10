@@ -33,7 +33,7 @@ describe("AppConnectionLoading", () => {
     cleanup();
   });
 
-  test("renders wrapper, header, navigation, and all loading cards with correct tolgee keys", () => {
+  test("renders wrapper, header, navigation, and all loading cards with correct translated keys", () => {
     render(<AppConnectionLoading />);
     expect(screen.getByTestId("page-content-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("page-header")).toHaveTextContent("common.project_configuration");

@@ -103,7 +103,7 @@ describe("ProjectLookSettingsPage", () => {
     cleanup();
   });
 
-  test("renders all tolgee strings and main UI elements", async () => {
+  test("renders all translated strings and main UI elements", async () => {
     vi.mocked(getProjectByEnvironmentId).mockResolvedValueOnce({
       id: "project1",
       name: "Test Project",

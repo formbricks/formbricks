@@ -1,6 +1,5 @@
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
-import { TFnType } from "@tolgee/react";
 import { toast } from "react-hot-toast";
+import { TFunction } from "react-i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
@@ -15,6 +14,7 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import * as validation from "./validation";
 
 vi.mock("react-hot-toast", () => ({
@@ -455,7 +455,7 @@ describe("validation.validateSurveyQuestionsInBatch", () => {
 });
 
 describe("validation.isSurveyValid", () => {
-  const mockT: TFnType = ((key: string) => key) as TFnType;
+  const mockT: TFunction = ((key: string) => key) as TFunction;
   let baseSurvey: TSurvey;
 
   beforeEach(() => {

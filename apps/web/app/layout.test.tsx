@@ -2,7 +2,7 @@ import { cleanup } from "@testing-library/react";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getLocale } from "@/tolgee/language";
+import { getLocale } from "@/lingodotdev/language";
 import RootLayout, { metadata } from "./layout";
 
 // Mock dependencies for the layout
@@ -34,26 +34,23 @@ vi.mock("@/lib/constants", () => ({
   DEFAULT_LOCALE: "en-US",
 }));
 
-vi.mock("@/tolgee/language", () => ({
+vi.mock("@/lingodotdev/language", () => ({
   getLocale: vi.fn(),
 }));
 
-vi.mock("@/lingodotdev/server", () => ({
-  getTolgee: vi.fn(),
-}));
-
-vi.mock("@/tolgee/client", () => ({
-  TolgeeNextProvider: ({
+vi.mock("@/lingodotdev/client", () => ({
+  I18nProvider: ({
     children,
     language,
-    staticData,
+    defaultLanguage,
   }: {
     children: React.ReactNode;
     language: string;
-    staticData: any;
+    defaultLanguage: string;
   }) => (
-    <div data-testid="tolgee-next-provider">
-      TolgeeNextProvider: {language} {JSON.stringify(staticData)}
+    <div data-testid="i18n-provider">
+      I18nProvider: {language} {defaultLanguage}
+      {defaultLanguage}
       {children}
     </div>
   ),

@@ -65,22 +65,7 @@ vi.mock("react", async () => {
   };
 });
 
-// mock tolgee useTranslate on components
-
-vi.mock("@tolgee/react", async () => {
-  const actual = await vi.importActual<typeof import("@tolgee/react")>("@tolgee/react");
-
-  return {
-    ...actual,
-    useTranslate: () => ({
-      t: (key: string) => key,
-    }),
-    T: ({ keyName }: { keyName: string }) => keyName, // Simple functional mock
-  };
-});
-
 // mock next/router navigation
-
 vi.mock("next/navigation", async () => {
   const actual = await vi.importActual<typeof import("next/navigation")>("next/navigation");
 

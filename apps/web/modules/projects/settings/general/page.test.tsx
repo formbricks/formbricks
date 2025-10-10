@@ -88,7 +88,7 @@ describe("GeneralSettingsPage", () => {
     cleanup();
   });
 
-  test("renders all tolgee strings and main UI elements", async () => {
+  test("renders all translated strings and main UI elements", async () => {
     const props = { params: { environmentId: "env1" } } as any;
 
     vi.mocked(getProjects).mockResolvedValue([mockProject]);

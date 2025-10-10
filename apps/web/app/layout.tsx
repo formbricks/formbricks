@@ -9,7 +9,7 @@ import {
   SENTRY_RELEASE,
 } from "@/lib/constants";
 import { I18nProvider } from "@/lingodotdev/client";
-import { getLocale } from "@/tolgee/language";
+import { getLocale } from "@/lingodotdev/language";
 import "../modules/ui/globals.css";
 
 export const metadata: Metadata = {

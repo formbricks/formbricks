@@ -8,7 +8,6 @@ vi.mock("lucide-react", () => ({
   UsersIcon: () => <div data-testid="users-icon" />,
 }));
 
-// Mock tolgee
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) =>

@@ -128,7 +128,6 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 vi.mock("react-i18next", async () => {
-  const MockTolgeeProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
   const useTranslation = () => ({
     t: (key: string, _?: any) => {
       // NOSONAR
@@ -167,7 +166,7 @@ vi.mock("react-i18next", async () => {
       return key; // Return key if no translation is found
     },
   });
-  return { TolgeeProvider: MockTolgeeProvider, useTranslation };
+  return { useTranslation };
 });
 vi.mock("lucide-react", () => ({
   CircleHelpIcon: () => <div data-testid="circle-help-icon" />,

@@ -4,7 +4,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TargetingIndicator } from "./index";
 
-// Mock tolgee
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => {

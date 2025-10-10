@@ -28,7 +28,7 @@ describe("AccessTable", () => {
     expect(screen.getByText(TeamPermissionMapping["read"])).toBeInTheDocument();
   });
 
-  test("renders table headers with tolgee keys", () => {
+  test("renders table headers with translated keys", () => {
     render(<AccessTable teams={[]} />);
     expect(screen.getByText("environments.project.teams.team_name")).toBeInTheDocument();
     expect(screen.getByText("common.size")).toBeInTheDocument();

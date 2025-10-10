@@ -129,7 +129,6 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 vi.mock("react-i18next", async () => {
-  const MockTolgeeProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
   const useTranslation = () => ({
     t: (key: string, params?: any) => {
       // NOSONAR
@@ -179,7 +178,7 @@ vi.mock("react-i18next", async () => {
       return key; // Return key if no translation is found
     },
   });
-  return { TolgeeProvider: MockTolgeeProvider, useTranslation };
+  return { useTranslation };
 });
 
 // Mock dependencies

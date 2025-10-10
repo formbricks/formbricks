@@ -13,7 +13,7 @@ describe("CreateTeamButton", () => {
     cleanup();
   });
 
-  test("renders button with tolgee string", () => {
+  test("renders button with translated string", () => {
     render(<CreateTeamButton organizationId="org-1" />);
     expect(screen.getByRole("button")).toBeInTheDocument();
     expect(screen.getByText("environments.settings.teams.create_new_team")).toBeInTheDocument();

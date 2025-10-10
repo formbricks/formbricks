@@ -124,43 +124,6 @@ vi.mock("react-hot-toast", () => ({
     error: vi.fn(),
   },
 }));
-vi.mock("@tolgee/react", async () => {
-  const MockTolgeeProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-  const useTranslate = () => ({
-    t: (key: string, _?: any) => {
-      // NOSONAR
-      // Simple mock translation function
-      if (key === "common.all_questions") return "All questions";
-      if (key === "common.selected_questions") return "Selected questions";
-      if (key === "environments.integrations.google_sheets.link_google_sheet") return "Link Google Sheet";
-      if (key === "common.update") return "Update";
-      if (key === "common.delete") return "Delete";
-      if (key === "common.cancel") return "Cancel";
-      if (key === "environments.integrations.google_sheets.spreadsheet_url") return "Spreadsheet URL";
-      if (key === "common.select_survey") return "Select survey";
-      if (key === "common.questions") return "Questions";
-      if (key === "environments.integrations.google_sheets.enter_a_valid_spreadsheet_url_error")
-        return "Please enter a valid Google Sheet URL.";
-      if (key === "environments.integrations.please_select_a_survey_error") return "Please select a survey.";
-      if (key === "environments.integrations.select_at_least_one_question_error")
-        return "Please select at least one question.";
-      if (key === "environments.integrations.integration_updated_successfully")
-        return "Integration updated successfully.";
-      if (key === "environments.integrations.integration_added_successfully")
-        return "Integration added successfully.";
-      if (key === "environments.integrations.integration_removed_successfully")
-        return "Integration removed successfully.";
-      if (key === "environments.integrations.google_sheets.google_sheet_logo") return "Google Sheet logo";
-      if (key === "environments.integrations.google_sheets.google_sheets_integration_description")
-        return "Sync responses with Google Sheets.";
-      if (key === "environments.integrations.create_survey_warning")
-        return "You need to create a survey first.";
-      return key; // Return key if no translation is found
-    },
-  });
-  return { TolgeeProvider: MockTolgeeProvider, useTranslate };
-});
-
 // Mock dependencies
 const createOrUpdateIntegrationAction = vi.mocked(
   (await import("@/app/(app)/environments/[environmentId]/project/integrations/actions"))
