@@ -1,5 +1,11 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { PlusIcon } from "lucide-react";
+import { useState } from "react";
+import { useRef } from "react";
+import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -8,12 +14,6 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { useState } from "react";
-import { useRef } from "react";
-import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface EndScreenFormProps {
   localSurvey: TSurvey;
@@ -46,6 +46,7 @@ export const EndScreenForm = ({
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
   );
+
   return (
     <form>
       <QuestionFormInput

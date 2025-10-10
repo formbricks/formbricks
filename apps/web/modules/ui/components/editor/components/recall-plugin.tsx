@@ -223,6 +223,7 @@ export const RecallPlugin = ({
         }
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [localSurvey, selectedLanguageCode, editor, convertTextToRecallNodes, findAllRecallNodes]
   );
 
@@ -260,6 +261,7 @@ export const RecallPlugin = ({
       }
       return false;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [editor]
   );
 
@@ -277,6 +279,7 @@ export const RecallPlugin = ({
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showRecallItemSelect]);
 
   // Clean up when dropdown closes
@@ -385,11 +388,13 @@ export const RecallPlugin = ({
     },
     [
       editor,
+      setShowRecallItemSelect,
+      recallItems,
+      setRecallItems,
       atSymbolPosition,
       replaceAtSymbolWithStoredPosition,
       replaceAtSymbolWithCurrentSelection,
       onShowFallbackInput,
-      recallItems,
     ]
   );
 

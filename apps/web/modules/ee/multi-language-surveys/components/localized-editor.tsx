@@ -85,12 +85,14 @@ export function LocalizedEditor({
         setText={(v: string) => {
           // Check if the question still exists before updating
           const currentQuestion = localSurvey.questions[questionIdx];
-          if ((currentQuestion && currentQuestion[id] !== undefined) || questionIdx === -1) {
+          const isWelcomeCard = questionIdx === -1;
+          const isEndingCard = questionIdx >= localSurvey.questions.length;
+          if ((currentQuestion && currentQuestion[id] !== undefined) || isWelcomeCard || isEndingCard) {
             const translatedContent = {
               ...value,
               [selectedLanguageCode]: v,
             };
-            if (questionIdx === -1) {
+            if (isWelcomeCard || isEndingCard) {
               updateQuestion({ [id]: translatedContent });
               return;
             }

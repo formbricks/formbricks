@@ -288,11 +288,12 @@ export const QuestionFormInput = ({
 
   const useRichTextEditor = id === "headline" || id === "subheader" || id === "html";
 
-  if (!updateQuestion && !updateSurvey) {
+  // For rich text editor fields, we need either updateQuestion or updateSurvey
+  if (useRichTextEditor && !updateQuestion && !updateSurvey) {
     throw new Error("Either updateQuestion or updateSurvey must be provided");
   }
 
-  if (useRichTextEditor && !isEndingCard) {
+  if (useRichTextEditor) {
     return (
       <div className="w-full">
         {label && (
