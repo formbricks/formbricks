@@ -1,16 +1,10 @@
-import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
 
 vi.mock("@/lib/cn");
-
-vi.mock("@/modules/ee/multi-language-surveys/components/localized-editor", () => ({
-  LocalizedEditor: vi.fn(({ value, id }) => (
-    <textarea data-testid={`localized-editor-${id}`} defaultValue={value?.default}></textarea>
-  )),
-}));
 
 vi.mock("@/modules/survey/components/question-form-input", () => ({
   QuestionFormInput: vi.fn(({ value, id }) => (
@@ -109,7 +103,7 @@ describe("EditWelcomeCard", () => {
     expect(screen.getByLabelText("common.on")).toBeInTheDocument();
     expect(screen.getByTestId("file-input")).toBeInTheDocument();
     expect(screen.getByTestId("question-form-input-headline")).toHaveValue("Welcome!");
-    expect(screen.getByTestId("localized-editor-html")).toHaveValue("<p>Thank you for participating.</p>");
+    expect(screen.getByTestId("question-form-input-html")).toHaveValue("<p>Thank you for participating.</p>");
     expect(screen.getByTestId("question-form-input-buttonLabel")).toHaveValue("Start Survey");
     expect(screen.getByLabelText("common.time_to_finish")).toBeInTheDocument();
     const timeToFinishSwitch = screen.getAllByRole("switch")[1]; // Assuming the second switch is for timeToFinish

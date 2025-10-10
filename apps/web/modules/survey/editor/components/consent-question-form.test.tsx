@@ -5,15 +5,11 @@ import { TUserLocale } from "@formbricks/types/user";
 import { ConsentQuestionForm } from "./consent-question-form";
 
 vi.mock("@/modules/survey/components/question-form-input", () => ({
-  QuestionFormInput: ({ label }: { label: string }) => <div data-testid="question-form-input">{label}</div>,
-}));
-
-vi.mock("@/modules/ee/multi-language-surveys/components/localized-editor", () => ({
-  LocalizedEditor: ({ id }: { id: string }) => <div data-testid="localized-editor">{id}</div>,
-}));
-
-vi.mock("@/modules/ui/components/label", () => ({
-  Label: ({ children }: { children: string }) => <div data-testid="label">{children}</div>,
+  QuestionFormInput: ({ label, id }: { label: string; id: string }) => (
+    <div data-testid="question-form-input" data-field-id={id}>
+      {label}
+    </div>
+  ),
 }));
 
 describe("ConsentQuestionForm", () => {
@@ -61,9 +57,18 @@ describe("ConsentQuestionForm", () => {
     );
 
     const questionFormInputs = screen.getAllByTestId("question-form-input");
+    expect(questionFormInputs).toHaveLength(3);
+
+    // Check headline field
     expect(questionFormInputs[0]).toHaveTextContent("environments.surveys.edit.question*");
-    expect(screen.getByTestId("label")).toHaveTextContent("common.description");
-    expect(screen.getByTestId("localized-editor")).toHaveTextContent("subheader");
-    expect(questionFormInputs[1]).toHaveTextContent("environments.surveys.edit.checkbox_label*");
+    expect(questionFormInputs[0]).toHaveAttribute("data-field-id", "headline");
+
+    // Check html (description) field
+    expect(questionFormInputs[1]).toHaveTextContent("common.description");
+    expect(questionFormInputs[1]).toHaveAttribute("data-field-id", "html");
+
+    // Check label (checkbox label) field
+    expect(questionFormInputs[2]).toHaveTextContent("environments.surveys.edit.checkbox_label*");
+    expect(questionFormInputs[2]).toHaveAttribute("data-field-id", "label");
   });
 });
