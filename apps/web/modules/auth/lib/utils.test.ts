@@ -40,7 +40,6 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "test-sentry-dsn",
   IS_PRODUCTION: true,
   REDIS_URL: "redis://localhost:6379",
-  ENCRYPTION_KEY: "0".repeat(32),
 }));
 
 // Mock cache module
