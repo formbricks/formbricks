@@ -807,6 +807,9 @@ importers:
       isomorphic-dompurify:
         specifier: 2.24.0
         version: 2.24.0
+      node-html-parser:
+        specifier: ^6.1.13
+        version: 6.1.13
       preact:
         specifier: 10.26.6
         version: 10.26.6

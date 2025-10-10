@@ -74,7 +74,8 @@ export function LocalizedEditor({
           // For backwards compatibility: wrap plain text headlines in <strong> tags
           // This ensures old surveys maintain semibold styling when converted to HTML
           if (id === "headline" && text && !isValidHTML(text)) {
-            html = html.replace(/<p>(.*?)<\/p>/g, "<p><strong>$1</strong></p>");
+            // Use [\s\S]*? to match any character including newlines
+            html = html.replace(/<p>([\s\S]*?)<\/p>/g, "<p><strong>$1</strong></p>");
           }
 
           return html;

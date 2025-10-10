@@ -37,7 +37,8 @@ const config = ({ mode }) => {
       emptyOutDir: false,
       minify: "terser",
       rollupOptions: {
-        // We do this because node-html-parser is used in the types package and we don't want to bundle it with the surveys package
+        // Externalize node-html-parser to keep bundle size small (~53KB)
+        // It's pulled in via @formbricks/types but not used in browser runtime
         external: ["node-html-parser"],
         output: {
           inlineDynamicImports: true,

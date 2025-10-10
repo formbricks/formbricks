@@ -48,6 +48,9 @@
     "react-date-picker": "11.0.0",
     "react-i18next": "15.7.3"
   },
+  "peerDependencies": {
+    "node-html-parser": "^6.1.13"
+  },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",

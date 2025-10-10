@@ -1,5 +1,4 @@
 import DOMPurify from "isomorphic-dompurify";
-import { useEffect, useState } from "react";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { isValidHTML } from "@/lib/html-utils";
 
@@ -9,14 +8,8 @@ interface SubheaderProps {
 }
 
 export function Subheader({ subheader, questionId }: SubheaderProps) {
-  const [safeHtml, setSafeHtml] = useState("");
   const isHtml = subheader ? isValidHTML(subheader) : false;
-
-  useEffect(() => {
-    if (subheader && isHtml) {
-      setSafeHtml(DOMPurify.sanitize(subheader, { ADD_ATTR: ["target"] }));
-    }
-  }, [subheader, isHtml]);
+  const safeHtml = isHtml && subheader ? DOMPurify.sanitize(subheader, { ADD_ATTR: ["target"] }) : "";
 
   if (!subheader) return null;
 
