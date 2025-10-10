@@ -167,7 +167,7 @@ export const QuestionOptionChoice = ({
         )}
       </div>
       <div className="flex gap-2">
-        {normalChoice.length > 2 && (
+        {(normalChoice.length > 2 || isSpecialChoice) && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
             <Button
               variant="secondary"
