@@ -6,7 +6,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { type JSX, useEffect, useRef, useState } from "react";
+import { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
   TI18nString,
@@ -64,7 +64,7 @@ export const MultipleChoiceQuestionForm = ({
     all: {
       id: "all",
       label: t("environments.surveys.edit.randomize_all"),
-      show: question.choices.filter((c) => c.id === "other").length === 0,
+      show: question.choices.every((c) => c.id !== "other" && c.id !== "none"),
     },
     exceptLast: {
       id: "exceptLast",
@@ -87,48 +87,62 @@ export const MultipleChoiceQuestionForm = ({
     });
   };
 
+  const regularChoices = useMemo(
+    () => question.choices?.filter((c) => c.id !== "other" && c.id !== "none"),
+    [question.choices]
+  );
+
+  const ensureSpecialChoicesOrder = (choices: TSurveyMultipleChoiceQuestion["choices"]) => {
+    const otherChoice = choices.find((c) => c.id === "other");
+    const noneChoice = choices.find((c) => c.id === "none");
+    // [regularChoices, otherChoice, noneChoice]
+    return [...regularChoices, ...(otherChoice ? [otherChoice] : []), ...(noneChoice ? [noneChoice] : [])];
+  };
+
   const addChoice = (choiceIdx?: number) => {
-    setIsNew(false); // This question is no longer new.
-    let newChoices = !question.choices ? [] : question.choices;
-    const otherChoice = newChoices.find((choice) => choice.id === "other");
-    if (otherChoice) {
-      newChoices = newChoices.filter((choice) => choice.id !== "other");
-    }
+    setIsNew(false);
+
     const newChoice = {
       id: createId(),
       label: createI18nString("", surveyLanguageCodes),
     };
+
     if (choiceIdx !== undefined) {
-      newChoices.splice(choiceIdx + 1, 0, newChoice);
+      regularChoices.splice(choiceIdx + 1, 0, newChoice);
     } else {
-      newChoices.push(newChoice);
+      regularChoices.push(newChoice);
     }
-    if (otherChoice) {
-      newChoices.push(otherChoice);
-    }
+
+    const newChoices = ensureSpecialChoicesOrder([
+      ...regularChoices,
+      ...question.choices.filter((c) => c.id === "other" || c.id === "none"),
+    ]);
+
     updateQuestion(questionIdx, { choices: newChoices });
   };
 
-  const addOther = () => {
-    if (question.choices.filter((c) => c.id === "other").length === 0) {
-      const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
-      newChoices.push({
-        id: "other",
-        label: createI18nString("Other", surveyLanguageCodes),
-      });
-      updateQuestion(questionIdx, {
-        choices: newChoices,
-        ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
-          shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
-        }),
-      });
-    }
+  const addSpecialChoice = (choiceId: "other" | "none", labelText: string) => {
+    if (question.choices.some((c) => c.id === choiceId)) return;
+
+    const newChoice = {
+      id: choiceId,
+      label: createI18nString(labelText, surveyLanguageCodes),
+    };
+
+    const newChoices = ensureSpecialChoicesOrder([...question.choices, newChoice]);
+
+    updateQuestion(questionIdx, {
+      choices: newChoices,
+      ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
+        shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
+      }),
+    });
   };
 
   const deleteChoice = (choiceIdx: number) => {
     const choiceToDelete = question.choices[choiceIdx].id;
 
-    if (choiceToDelete !== "other") {
+    if (choiceToDelete !== "other" && choiceToDelete !== "none") {
       const questionIdx = findOptionUsedInLogic(localSurvey, question.id, choiceToDelete);
       if (questionIdx !== -1) {
         toast.error(
@@ -163,6 +177,21 @@ export const MultipleChoiceQuestionForm = ({
       questionRef.current.focus();
     }
   }, [isNew]);
+
+  const specialChoices = [
+    {
+      id: "other",
+      label: t("common.other"),
+      addChoice: () => addSpecialChoice("other", t("common.other")),
+      addButtonText: t("environments.surveys.edit.add_other"),
+    },
+    {
+      id: "none",
+      label: t("common.none_of_the_above"),
+      addChoice: () => addSpecialChoice("none", t("common.none_of_the_above")),
+      addButtonText: t("environments.surveys.edit.add_none_of_the_above"),
+    },
+  ];
 
   // Auto animate
   const [parent] = useAutoAnimate();
@@ -227,7 +256,12 @@ export const MultipleChoiceQuestionForm = ({
             onDragEnd={(event) => {
               const { active, over } = event;
 
-              if (active.id === "other" || over?.id === "other") {
+              if (
+                active.id === "other" ||
+                over?.id === "other" ||
+                active.id === "none" ||
+                over?.id === "none"
+              ) {
                 return;
               }
 
@@ -272,11 +306,21 @@ export const MultipleChoiceQuestionForm = ({
             </SortableContext>
           </DndContext>
           <div className="mt-2 flex items-center justify-between space-x-2">
-            {question.choices.filter((c) => c.id === "other").length === 0 && (
-              <Button size="sm" variant="secondary" type="button" onClick={() => addOther()}>
-                {t("environments.surveys.edit.add_other")}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {specialChoices.map((specialChoice) => {
+                if (question.choices.some((c) => c.id === specialChoice.id)) return null;
+                return (
+                  <Button
+                    size="sm"
+                    key={specialChoice.id}
+                    variant="secondary"
+                    type="button"
+                    onClick={() => specialChoice.addChoice()}>
+                    {specialChoice.addButtonText}
+                  </Button>
+                );
+              })}
+            </div>
             <Button
               size="sm"
               variant="secondary"

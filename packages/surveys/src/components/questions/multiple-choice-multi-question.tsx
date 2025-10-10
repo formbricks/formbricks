@@ -1,3 +1,6 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -7,9 +10,6 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceQuestion;
@@ -97,8 +97,23 @@ export function MultipleChoiceMultiQuestion({
     [question.choices]
   );
 
+  const noneOption = useMemo(
+    () => question.choices.find((choice) => choice.id === "none"),
+    [question.choices]
+  );
+
   const otherSpecify = useRef<HTMLInputElement | null>(null);
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Check if "none" option is selected
+  const isNoneSelected = useMemo(
+    () => Boolean(noneOption && value.includes(getLocalizedValue(noneOption.label, languageCode))),
+    [noneOption, value, languageCode]
+  );
+
+  // Common label className for all choice types
+  const baseLabelClassName =
+    "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none";
 
   useEffect(() => {
     // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
@@ -110,6 +125,7 @@ export function MultipleChoiceMultiQuestion({
 
   const addItem = (item: string) => {
     const isOtherValue = !questionChoiceLabels.includes(item);
+
     if (Array.isArray(value)) {
       if (isOtherValue) {
         const newValue = value.filter((v) => {
@@ -175,7 +191,7 @@ export function MultipleChoiceMultiQuestion({
             <legend className="fb-sr-only">Options</legend>
             <div className="fb-bg-survey-bg fb-relative fb-space-y-2" ref={choicesContainerRef}>
               {questionChoices.map((choice, idx) => {
-                if (!choice || choice.id === "other") return;
+                if (!choice || choice.id === "other" || choice.id === "none") return;
                 return (
                   <label
                     key={choice.id}
@@ -184,14 +200,14 @@ export function MultipleChoiceMultiQuestion({
                       value.includes(getLocalizedValue(choice.label, languageCode))
                         ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
                         : "fb-border-border fb-bg-input-bg",
-                      "fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                      isNoneSelected ? "fb-opacity-50" : "",
+                      baseLabelClassName
                     )}
                     onKeyDown={(e) => {
                       // Accessibility: if spacebar was pressed pass this down to the input
                       if (e.key === " ") {
                         e.preventDefault();
                         document.getElementById(choice.id)?.click();
-                        document.getElementById(choice.id)?.focus();
                       }
                     }}
                     autoFocus={idx === 0 && autoFocusEnabled}>
@@ -205,6 +221,7 @@ export function MultipleChoiceMultiQuestion({
                         value={getLocalizedValue(choice.label, languageCode)}
                         className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                         aria-labelledby={`${choice.id}-label`}
+                        disabled={isNoneSelected}
                         onChange={(e) => {
                           if ((e.target as HTMLInputElement).checked) {
                             addItem(getLocalizedValue(choice.label, languageCode));
@@ -229,15 +246,18 @@ export function MultipleChoiceMultiQuestion({
                 <label
                   tabIndex={isCurrent ? 0 : -1}
                   className={cn(
-                    otherSelected ? "fb-border-brand fb-bg-input-bg-selected fb-z-10" : "fb-border-border",
-                    "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                    otherSelected
+                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                      : "fb-border-border fb-bg-input-bg",
+                    isNoneSelected ? "fb-opacity-50" : "",
+                    baseLabelClassName
                   )}
                   onKeyDown={(e) => {
                     // Accessibility: if spacebar was pressed pass this down to the input
                     if (e.key === " ") {
                       if (otherSelected) return;
+                      e.preventDefault();
                       document.getElementById(otherOption.id)?.click();
-                      document.getElementById(otherOption.id)?.focus();
                     }
                   }}>
                   <span className="fb-flex fb-items-center fb-text-sm">
@@ -250,6 +270,7 @@ export function MultipleChoiceMultiQuestion({
                       value={getLocalizedValue(otherOption.label, languageCode)}
                       className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${otherOption.id}-label`}
+                      disabled={isNoneSelected}
                       onChange={() => {
                         if (otherSelected) {
                           setOtherValue("");
@@ -302,6 +323,51 @@ export function MultipleChoiceMultiQuestion({
                       }}
                     />
                   ) : null}
+                </label>
+              ) : null}
+              {noneOption ? (
+                <label
+                  tabIndex={isCurrent ? 0 : -1}
+                  className={cn(
+                    isNoneSelected
+                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                      : "fb-border-border fb-bg-input-bg",
+                    baseLabelClassName
+                  )}
+                  onKeyDown={(e) => {
+                    if (e.key === " ") {
+                      e.preventDefault();
+                      document.getElementById(noneOption.id)?.click();
+                    }
+                  }}>
+                  <span className="fb-flex fb-items-center fb-text-sm">
+                    <input
+                      type="checkbox"
+                      dir={dir}
+                      tabIndex={-1}
+                      id={noneOption.id}
+                      name={question.id}
+                      value={getLocalizedValue(noneOption.label, languageCode)}
+                      className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                      aria-labelledby={`${noneOption.id}-label`}
+                      onChange={(e) => {
+                        if ((e.target as HTMLInputElement).checked) {
+                          setOtherSelected(false);
+                          setOtherValue("");
+                          onChange({ [question.id]: [getLocalizedValue(noneOption.label, languageCode)] });
+                        } else {
+                          removeItem(getLocalizedValue(noneOption.label, languageCode));
+                        }
+                      }}
+                      checked={isNoneSelected}
+                    />
+                    <span
+                      id={`${noneOption.id}-label`}
+                      className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
+                      dir="auto">
+                      {getLocalizedValue(noneOption.label, languageCode)}
+                    </span>
+                  </span>
                 </label>
               ) : null}
             </div>
