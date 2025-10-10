@@ -1,12 +1,12 @@
 "use client";
 
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { parseRecallInfo } from "@/lib/utils/recall";
-import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon } from "lucide-react";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { isValidValue } from "../util";
 import { HiddenFields } from "./HiddenFields";
 import { QuestionSkip } from "./QuestionSkip";
@@ -118,7 +118,7 @@ export const SingleResponseCardBody = ({
       {survey.variables.length > 0 && (
         <ResponseVariables variables={survey.variables} variablesData={response.variables} />
       )}
-      {survey.hiddenFields.enabled && survey.hiddenFields.fieldIds && (
+      {survey.hiddenFields.fieldIds && (
         <HiddenFields hiddenFields={survey.hiddenFields} responseData={response.data} />
       )}
 

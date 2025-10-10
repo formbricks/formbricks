@@ -1,6 +1,6 @@
-import { UploadImageSurveyBg } from "@/modules/survey/editor/components/image-survey-bg";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { UploadImageSurveyBg } from "@/modules/survey/editor/components/image-survey-bg";
 
 // Create a ref to store the props passed to FileInput
 const mockFileInputProps: any = { current: null };
@@ -44,7 +44,7 @@ describe("UploadImageSurveyBg", () => {
       allowedFileExtensions: ["png", "jpeg", "jpg", "webp", "heic"],
       environmentId: mockEnvironmentId,
       fileUrl: mockBackground,
-      maxSizeInMB: 2,
+      maxSizeInMB: 5,
     });
   });
 
@@ -197,7 +197,7 @@ describe("UploadImageSurveyBg", () => {
     expect(mockHandleBgChange).not.toHaveBeenCalled();
   });
 
-  test("should not call handleBgChange when a file exceeding 2MB size limit is uploaded", () => {
+  test("should not call handleBgChange when a file exceeding 5MB size limit is uploaded", () => {
     render(
       <UploadImageSurveyBg
         environmentId={mockEnvironmentId}
@@ -209,7 +209,7 @@ describe("UploadImageSurveyBg", () => {
 
     // Verify FileInput was rendered with correct maxSizeInMB prop
     expect(screen.getByTestId("file-input-mock")).toBeInTheDocument();
-    expect(mockFileInputProps.current?.maxSizeInMB).toBe(2);
+    expect(mockFileInputProps.current?.maxSizeInMB).toBe(5);
 
     // Get the onFileUpload function from the props passed to FileInput
     const onFileUpload = mockFileInputProps.current?.onFileUpload;

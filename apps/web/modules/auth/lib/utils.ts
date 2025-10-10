@@ -270,7 +270,7 @@ export const shouldLogAuthFailure = async (
 
     return currentCount % 10 === 0 || timeSinceLastLog > 60000;
   } catch (error) {
-    logger.warn("Redis rate limiting failed, not logging due to Redis requirement", { error });
+    logger.warn({ error }, "Redis rate limiting failed, not logging due to Redis requirement");
     // If Redis fails, do not log as Redis is required for audit logs
     return false;
   }

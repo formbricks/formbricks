@@ -1,6 +1,4 @@
-import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
-import { Button } from "@/modules/ui/components/button";
-import { Dialog, DialogBody, DialogContent, DialogFooter } from "@/modules/ui/components/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -8,6 +6,9 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
+import { Button } from "@/modules/ui/components/button";
+import { Dialog, DialogBody, DialogContent, DialogFooter, DialogTitle } from "@/modules/ui/components/dialog";
 
 interface ResponseCardModalProps {
   responses: TResponse[];
@@ -77,6 +78,9 @@ export const ResponseCardModal = ({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent width="wide">
+        <VisuallyHidden asChild>
+          <DialogTitle>Survey Response Details</DialogTitle>
+        </VisuallyHidden>
         <DialogBody>
           <SingleResponseCard
             survey={survey}

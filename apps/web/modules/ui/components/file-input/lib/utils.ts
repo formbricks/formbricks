@@ -63,10 +63,21 @@ export const getAllowedFiles = async (
 
   let toastMessage = "";
   if (sizeExceedFiles.length > 0) {
-    toastMessage += `Files exceeding size limit (${maxSizeInMB} MB): ${sizeExceedFiles.join(", ")}. `;
+    if (sizeExceedFiles.length === 1) {
+      toastMessage += `File exceeds ${maxSizeInMB} MB size limit.`;
+    } else {
+      toastMessage += `${sizeExceedFiles.length} files exceed ${maxSizeInMB} MB size limit.`;
+    }
   }
   if (unsupportedExtensionFiles.length > 0) {
-    toastMessage += `Unsupported file types: ${unsupportedExtensionFiles.join(", ")}.`;
+    if (toastMessage) {
+      toastMessage += " ";
+    }
+    if (unsupportedExtensionFiles.length === 1) {
+      toastMessage += `Unsupported file type.`;
+    } else {
+      toastMessage += `${unsupportedExtensionFiles.length} files have unsupported types.`;
+    }
   }
   if (toastMessage) {
     toast.error(toastMessage);

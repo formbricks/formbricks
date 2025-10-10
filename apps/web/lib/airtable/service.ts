@@ -100,10 +100,13 @@ export const getAirtableToken = async (environmentId: string) => {
       });
 
       if (!newToken) {
-        logger.error("Failed to fetch new Airtable token", {
-          environmentId,
-          airtableIntegration,
-        });
+        logger.error(
+          {
+            environmentId,
+            airtableIntegration,
+          },
+          "Failed to fetch new Airtable token"
+        );
         throw new Error("Failed to fetch new Airtable token");
       }
 
@@ -121,10 +124,13 @@ export const getAirtableToken = async (environmentId: string) => {
 
     return access_token;
   } catch (error) {
-    logger.error("Failed to get Airtable token", {
-      environmentId,
-      error,
-    });
+    logger.error(
+      {
+        environmentId,
+        error,
+      },
+      "Failed to get Airtable token"
+    );
     throw new Error("Failed to get Airtable token");
   }
 };

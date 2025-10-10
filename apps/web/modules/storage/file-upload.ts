@@ -1,7 +1,7 @@
 export enum FileUploadError {
   NO_FILE = "No file provided or invalid file type. Expected a File or Blob.",
   INVALID_FILE_TYPE = "Please upload an image file.",
-  FILE_SIZE_EXCEEDED = "File size must be less than 10 MB.",
+  FILE_SIZE_EXCEEDED = "File size must be less than 5 MB.",
   UPLOAD_FAILED = "Upload failed. Please try again.",
   INVALID_FILE_NAME = "Invalid file name. Please rename your file and try again.",
 }
@@ -36,7 +36,9 @@ export const handleFileUpload = async (
     const bufferBytes = fileBuffer.byteLength;
     const bufferKB = bufferBytes / 1024;
 
-    if (bufferKB > 10240) {
+    const MAX_FILE_SIZE_MB = 5;
+    const maxSizeInKB = MAX_FILE_SIZE_MB * 1024;
+    if (bufferKB > maxSizeInKB) {
       return {
         error: FileUploadError.FILE_SIZE_EXCEEDED,
         url: "",
