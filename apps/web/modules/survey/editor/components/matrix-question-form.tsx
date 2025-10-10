@@ -184,7 +184,6 @@ export const MatrixQuestionForm = ({
       show: true,
     },
   };
-  /// Auto animate
   const [parent] = useAutoAnimate();
 
   return (

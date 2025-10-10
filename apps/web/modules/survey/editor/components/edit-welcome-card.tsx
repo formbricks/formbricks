@@ -4,11 +4,9 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
@@ -39,7 +37,6 @@ export const EditWelcomeCard = ({
 }: EditWelcomeCardProps) => {
   const { t } = useTranslate();
 
-  const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
 
@@ -48,7 +45,6 @@ export const EditWelcomeCard = ({
   const setOpen = (e) => {
     if (e) {
       setActiveQuestionId("start");
-      setFirstRender(true);
     } else {
       setActiveQuestionId(null);
     }
@@ -142,23 +138,19 @@ export const EditWelcomeCard = ({
               />
             </div>
             <div className="mt-3">
-              <Label htmlFor="subheader">{t("environments.surveys.edit.welcome_message")}</Label>
-              <div className="mt-2">
-                <LocalizedEditor
-                  id="html"
-                  value={localSurvey.welcomeCard.html}
-                  localSurvey={localSurvey}
-                  isInvalid={isInvalid}
-                  updateQuestion={updateSurvey}
-                  selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  firstRender={firstRender}
-                  setFirstRender={setFirstRender}
-                  questionIdx={-1}
-                  locale={locale}
-                  questionId="start"
-                />
-              </div>
+              <QuestionFormInput
+                id="html"
+                value={localSurvey.welcomeCard.html}
+                label={t("environments.surveys.edit.welcome_message")}
+                localSurvey={localSurvey}
+                questionIdx={-1}
+                isInvalid={isInvalid}
+                updateSurvey={updateSurvey}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                locale={locale}
+                isStorageConfigured={isStorageConfigured}
+              />
             </div>
 
             <div className="mt-3 flex justify-between gap-8">

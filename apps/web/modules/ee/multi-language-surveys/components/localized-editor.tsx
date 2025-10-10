@@ -4,11 +4,12 @@ import { useTranslate } from "@tolgee/react";
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
-import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
+import type { TI18nString, TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
+import { isValidHTML } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
-import { extractLanguageCodes, isLabelValidForAllLanguages } from "@/lib/i18n/utils";
 import { md } from "@/lib/markdownIt";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { isLabelValidForAllLanguages } from "@/modules/survey/editor/lib/validation";
 import { Editor } from "@/modules/ui/components/editor";
 import { LanguageIndicator } from "./language-indicator";
 
@@ -30,10 +31,10 @@ interface LocalizedEditorProps {
 const checkIfValueIsIncomplete = (
   id: string,
   isInvalid: boolean,
-  surveyLanguageCodes: string[],
+  surveyLanguageCodes: TSurveyLanguage[],
   value?: TI18nString
 ) => {
-  const labelIds = ["subheader"];
+  const labelIds = ["subheader", "headline", "html"];
   if (value === undefined) return false;
   const isDefaultIncomplete = labelIds.includes(id) ? value.default.trim() !== "" : false;
   return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
@@ -54,13 +55,10 @@ export function LocalizedEditor({
   questionId,
 }: Readonly<LocalizedEditorProps>) {
   const { t } = useTranslate();
-  const surveyLanguageCodes = useMemo(
-    () => extractLanguageCodes(localSurvey.languages),
-    [localSurvey.languages]
-  );
+
   const isInComplete = useMemo(
-    () => checkIfValueIsIncomplete(id, isInvalid, surveyLanguageCodes, value),
-    [id, isInvalid, surveyLanguageCodes, value]
+    () => checkIfValueIsIncomplete(id, isInvalid, localSurvey.languages, value),
+    [id, isInvalid, localSurvey.languages, value]
   );
 
   return (
@@ -69,21 +67,33 @@ export function LocalizedEditor({
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
-        getText={() => md.render(value ? (value[selectedLanguageCode] ?? "") : "")}
-        key={`${questionIdx}-${selectedLanguageCode}`}
+        getText={() => {
+          const text = value ? (value[selectedLanguageCode] ?? "") : "";
+          let html = md.render(text);
+
+          // For backwards compatibility: wrap plain text headlines in <strong> tags
+          // This ensures old surveys maintain semibold styling when converted to HTML
+          if (id === "headline" && text && !isValidHTML(text)) {
+            html = html.replace(/<p>(.*?)<\/p>/g, "<p><strong>$1</strong></p>");
+          }
+
+          return html;
+        }}
+        key={`${questionId}-${id}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
-          if (localSurvey.questions[questionIdx] || questionIdx === -1) {
-            const translatedHtml = {
+          // Check if the question still exists before updating
+          const currentQuestion = localSurvey.questions[questionIdx];
+          if ((currentQuestion && currentQuestion[id] !== undefined) || questionIdx === -1) {
+            const translatedContent = {
               ...value,
               [selectedLanguageCode]: v,
             };
             if (questionIdx === -1) {
-              // welcome card
-              updateQuestion({ html: translatedHtml });
+              updateQuestion({ [id]: translatedContent });
               return;
             }
-            updateQuestion(questionIdx, { html: translatedHtml });
+            updateQuestion(questionIdx, { [id]: translatedContent });
           }
         }}
         localSurvey={localSurvey}

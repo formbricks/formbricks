@@ -164,8 +164,8 @@ export const MultipleChoiceQuestionForm = ({
     }
   }, [isNew]);
 
-  // Auto animate
   const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput

@@ -423,18 +423,20 @@ export const ToolbarPlugin = (
         </DropdownMenu>
       )}
 
-      {items.map(({ key, icon, onClick, active, tooltipText, disabled }) =>
-        !props.excludedToolbarItems?.includes(key) ? (
-          <ToolbarButton
-            key={key}
-            icon={icon}
-            active={active}
-            disabled={disabled}
-            onClick={onClick}
-            tooltipText={tooltipText}
-          />
-        ) : null
-      )}
+      <div className="flex items-center gap-1">
+        {items.map(({ key, icon, onClick, active, tooltipText, disabled }) =>
+          !props.excludedToolbarItems?.includes(key) ? (
+            <ToolbarButton
+              key={key}
+              icon={icon}
+              active={active}
+              disabled={disabled}
+              onClick={onClick}
+              tooltipText={tooltipText}
+            />
+          ) : null
+        )}
+      </div>
     </div>
   );
 };

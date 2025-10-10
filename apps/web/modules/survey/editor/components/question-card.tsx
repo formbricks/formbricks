@@ -97,6 +97,10 @@ export const QuestionCard = ({
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   const [parent] = useAutoAnimate();
 
+  const stripHtmlTags = (text: string): string => {
+    return text.replace(/<[^>]*>/g, "");
+  };
+
   const updateEmptyButtonLabels = (
     labelKey: "buttonLabel" | "backButtonLabel",
     labelValue: TI18nString,
@@ -232,9 +236,11 @@ export const QuestionCard = ({
                     selectedLanguageCode
                   ]
                     ? formatTextWithSlashes(
-                        recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
-                          selectedLanguageCode
-                        ] ?? ""
+                        stripHtmlTags(
+                          recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
+                            selectedLanguageCode
+                          ] ?? ""
+                        )
                       )
                     : getTSurveyQuestionTypeEnumName(question.type, t)}
                 </h3>

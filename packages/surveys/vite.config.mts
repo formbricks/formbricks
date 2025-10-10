@@ -37,6 +37,8 @@ const config = ({ mode }) => {
       emptyOutDir: false,
       minify: "terser",
       rollupOptions: {
+        // We do this because node-html-parser is used in the types package and we don't want to bundle it with the surveys package
+        external: ["node-html-parser"],
         output: {
           inlineDynamicImports: true,
         },
