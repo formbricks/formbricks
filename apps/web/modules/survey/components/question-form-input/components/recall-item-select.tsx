@@ -22,6 +22,7 @@ import {
   TSurveyQuestionId,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 import {
   DropdownMenu,
@@ -212,7 +213,7 @@ export const RecallItemSelect = ({
                 }}>
                 <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
                 <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                  {getRecallLabel(recallItem.label)}
+                  {getTextContent(getRecallLabel(recallItem.label))}
                 </p>
               </DropdownMenuItem>
             );
