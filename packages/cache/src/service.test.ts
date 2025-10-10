@@ -81,14 +81,14 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.CacheCorruptionError);
       }
       expect(logger.warn).toHaveBeenCalledWith(
-        "Corrupted cache data detected, treating as cache miss",
         expect.objectContaining({
           key,
           parseError: expect.objectContaining({
             name: "SyntaxError",
             message: expect.stringContaining("JSON") as string,
           }) as Error,
-        })
+        }),
+        "Corrupted cache data detected, treating as cache miss"
       );
     });
 

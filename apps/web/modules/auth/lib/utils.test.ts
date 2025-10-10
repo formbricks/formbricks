@@ -1,7 +1,7 @@
-import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import * as Sentry from "@sentry/nextjs";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   createAuditIdentifier,
   hashPassword,
@@ -43,14 +43,24 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 // Mock cache module
-const { mockCache } = vi.hoisted(() => ({
+const { mockCache, mockLogger } = vi.hoisted(() => ({
   mockCache: {
     getRedisClient: vi.fn(),
+  },
+  mockLogger: {
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
 vi.mock("@/lib/cache", () => ({
   cache: mockCache,
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: mockLogger,
 }));
 
 // Mock @formbricks/cache
@@ -124,6 +134,38 @@ describe("Auth Utils", () => {
       expect(hashedComplex.length).toBe(60);
       expect(await verifyPassword(complexPassword, hashedComplex)).toBe(true);
       expect(await verifyPassword("wrong", hashedComplex)).toBe(false);
+    });
+
+    test("should handle bcrypt errors gracefully and log warning", async () => {
+      // Save the original bcryptjs implementation
+      const originalModule = await import("bcryptjs");
+
+      // Mock bcryptjs to throw an error on compare
+      vi.doMock("bcryptjs", () => ({
+        ...originalModule,
+        compare: vi.fn().mockRejectedValue(new Error("Invalid salt version")),
+        hash: originalModule.hash, // Keep hash working
+      }));
+
+      // Re-import the utils module to use the mocked bcryptjs
+      const { verifyPassword: verifyPasswordMocked } = await import("./utils?t=" + Date.now());
+
+      const password = "testPassword";
+      const invalidHash = "invalid-hash-format";
+
+      const result = await verifyPasswordMocked(password, invalidHash);
+
+      // Should return false for security
+      expect(result).toBe(false);
+
+      // Should log warning
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        { error: expect.any(Error) },
+        "Password verification failed due to invalid hash format"
+      );
+
+      // Restore the module
+      vi.doUnmock("bcryptjs");
     });
   });
 
