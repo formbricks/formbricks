@@ -22,7 +22,10 @@ import { PasswordInput } from "@/modules/ui/components/password-input";
 
 const ZLoginForm = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters long" })
+    .max(128, { message: "Password must be 128 characters or less" }),
   totpCode: z.string().optional(),
   backupCode: z.string().optional(),
 });

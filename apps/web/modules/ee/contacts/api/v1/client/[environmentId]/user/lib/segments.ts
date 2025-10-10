@@ -1,6 +1,3 @@
-import { cache } from "@/lib/cache";
-import { validateInputs } from "@/lib/utils/validate";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { createCacheKey } from "@formbricks/cache";
@@ -9,6 +6,9 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
+import { cache } from "@/lib/cache";
+import { validateInputs } from "@/lib/utils/validate";
+import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
 export const getSegments = reactCache(
   async (environmentId: string) =>
@@ -34,7 +34,7 @@ export const getSegments = reactCache(
         }
       },
       createCacheKey.environment.segments(environmentId),
-      5 * 60 * 1000 // 5 minutes in milliseconds
+      60 * 1000 // 1 minutes in milliseconds
     )
 );
 

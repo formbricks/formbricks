@@ -64,6 +64,7 @@ export const ConsentQuestionForm = ({
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
             locale={locale}
+            questionId={question.id}
           />
         </div>
       </div>

@@ -118,10 +118,9 @@ export const FollowUpModal = ({
       return false;
     });
 
-    const hiddenFields =
-      localSurvey.hiddenFields.enabled && localSurvey.hiddenFields.fieldIds
-        ? { fieldIds: localSurvey.hiddenFields.fieldIds }
-        : { fieldIds: [] };
+    const hiddenFields = localSurvey.hiddenFields.fieldIds
+      ? { fieldIds: localSurvey.hiddenFields.fieldIds }
+      : { fieldIds: [] };
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
       if (teamMemberDetail.email === userEmail) {

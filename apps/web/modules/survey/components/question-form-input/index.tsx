@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { RefObject, useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   TI18nString,
@@ -50,7 +50,6 @@ interface QuestionFormInputProps {
   label: string;
   maxLength?: number;
   placeholder?: string;
-  ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   locale: TUserLocale;
@@ -347,6 +346,7 @@ export const QuestionFormInput = ({
                         fileUrl={getFileUrl()}
                         videoUrl={getVideoUrl()}
                         isVideoAllowed={true}
+                        maxSizeInMB={5}
                         isStorageConfigured={isStorageConfigured}
                       />
                     )}

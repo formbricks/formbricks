@@ -13,6 +13,11 @@ on:
         required: false
         type: boolean
         default: false
+      MAKE_LATEST:
+        description: "Whether to tag as latest (from GitHub release 'Set as the latest release' option)"
+        required: false
+        type: boolean
+        default: false
     outputs:
       VERSION:
         description: release version
@@ -93,6 +98,7 @@ jobs:
           ghcr_image_name: ${{ env.IMAGE_NAME }}
           version: ${{ steps.extract_release_tag.outputs.VERSION }}
           is_prerelease: ${{ inputs.IS_PRERELEASE }}
+          make_latest: ${{ inputs.MAKE_LATEST }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}

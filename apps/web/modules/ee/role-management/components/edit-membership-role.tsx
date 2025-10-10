@@ -7,7 +7,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -104,7 +103,7 @@ export function EditMembershipRole({
             size="sm"
             variant="secondary"
             role="button-role">
-            <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
+            <span className="ml-1 capitalize">{memberRole}</span>
             <ChevronDownIcon className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -128,5 +127,5 @@ export function EditMembershipRole({
     );
   }
 
-  return <Badge size="tiny" type="gray" role="badge-role" text={capitalizeFirstLetter(memberRole)} />;
+  return <Badge size="tiny" type="gray" role="badge-role" text={memberRole} className="capitalize" />;
 }

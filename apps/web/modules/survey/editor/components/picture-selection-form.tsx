@@ -141,6 +141,7 @@ export const PictureSelectionForm = ({
             onFileUpload={handleFileInputChanges}
             fileUrl={question?.choices?.map((choice) => choice.imageUrl)}
             multiple={true}
+            maxSizeInMB={5}
             isStorageConfigured={isStorageConfigured}
           />
         </div>

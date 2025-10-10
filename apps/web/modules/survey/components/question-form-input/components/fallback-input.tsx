@@ -1,29 +1,31 @@
-import { RefObject } from "react";
+import { ReactNode } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface FallbackInputProps {
   filteredRecallItems: (TSurveyRecallItem | undefined)[];
   fallbacks: { [type: string]: string };
   setFallbacks: (fallbacks: { [type: string]: string }) => void;
-  fallbackInputRef: RefObject<HTMLInputElement>;
   addFallback: () => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  triggerButton?: ReactNode;
 }
 
 export const FallbackInput = ({
   filteredRecallItems,
   fallbacks,
   setFallbacks,
-  fallbackInputRef,
   addFallback,
   open,
   setOpen,
+  triggerButton,
 }: FallbackInputProps) => {
   const { t } = useTranslation();
   const containsEmptyFallback = () => {
@@ -32,9 +34,9 @@ export const FallbackInput = ({
   };
 
   return (
-    <Popover open={open}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="z-10 h-0 w-full cursor-pointer" />
+        {open ? <div className="z-10 h-0 w-full cursor-pointer" /> : triggerButton}
       </PopoverTrigger>
 
       <PopoverContent
@@ -44,18 +46,21 @@ export const FallbackInput = ({
         sideOffset={4}>
         <p className="font-medium">{t("environments.surveys.edit.add_fallback_placeholder")}</p>
 
-        <div className="mt-2 space-y-2">
+        <div className="mt-2 space-y-3">
           {filteredRecallItems.map((recallItem, idx) => {
             if (!recallItem) return null;
+            const inputId = `fallback-${recallItem.id}`;
             return (
-              <div key={recallItem.id} className="flex flex-col">
+              <div key={recallItem.id} className="flex flex-col gap-1">
+                <Label htmlFor={inputId} className="text-xs font-medium text-slate-700">
+                  {replaceRecallInfoWithUnderline(recallItem.label)}
+                </Label>
                 <Input
-                  className="placeholder:text-md h-full bg-white"
-                  ref={idx === 0 ? fallbackInputRef : undefined}
-                  id="fallback"
+                  className="h-9 bg-white"
+                  id={inputId}
                   autoFocus={idx === filteredRecallItems.length - 1}
-                  value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ")}
-                  placeholder={`${t("environments.surveys.edit.fallback_for")} ${recallItem.label}`}
+                  value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ") || ""}
+                  placeholder={t("environments.surveys.edit.enter_fallback_value")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -80,14 +85,14 @@ export const FallbackInput = ({
 
         <div className="flex w-full justify-end">
           <Button
-            className="mt-2 h-full py-2"
+            className="mt-2 h-9"
             disabled={containsEmptyFallback()}
             onClick={(e) => {
               e.preventDefault();
               addFallback();
               setOpen(false);
             }}>
-            {t("environments.surveys.edit.add_fallback")}
+            {t("common.save")}
           </Button>
         </div>
       </PopoverContent>

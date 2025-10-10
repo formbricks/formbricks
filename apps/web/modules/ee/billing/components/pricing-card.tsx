@@ -170,14 +170,13 @@ export const PricingCard = ({
 
           {plan.id !== projectFeatureKeys.FREE && isCurrentPlan && (
             <Button
-              variant="secondary"
               loading={loading}
               onClick={async () => {
                 setLoading(true);
                 await onManageSubscription();
                 setLoading(false);
               }}
-              className="flex justify-center">
+              className="flex justify-center bg-[#635bff]">
               {t("environments.settings.billing.manage_subscription")}
             </Button>
           )}

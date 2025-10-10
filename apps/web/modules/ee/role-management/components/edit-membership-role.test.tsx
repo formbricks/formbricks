@@ -25,6 +25,15 @@ vi.mock("../actions", () => ({
   updateInviteAction: vi.fn(),
 }));
 
+vi.mock("@/lib/membership/utils", () => ({
+  getAccessFlags: (role: string) => ({
+    isOwner: role === "owner",
+    isManager: role === "manager",
+    isMember: role === "member",
+    isBilling: role === "billing",
+  }),
+}));
+
 describe("EditMembershipRole Component", () => {
   const mockRouter = {
     refresh: vi.fn(),
@@ -53,15 +62,21 @@ describe("EditMembershipRole Component", () => {
 
   describe("Rendering", () => {
     test("renders a dropdown when user is owner", () => {
-      render(<EditMembershipRole {...defaultProps} />);
+      render(<EditMembershipRole {...defaultProps} isUserManagementDisabledFromUi={false} />);
 
       const button = screen.queryByRole("button-role");
       expect(button).toBeInTheDocument();
-      expect(button).toHaveTextContent("Member");
+      expect(button).toHaveTextContent("member");
     });
 
     test("renders a badge when user is not owner or manager", () => {
-      render(<EditMembershipRole {...defaultProps} currentUserRole="member" />);
+      render(
+        <EditMembershipRole
+          {...defaultProps}
+          currentUserRole="member"
+          isUserManagementDisabledFromUi={false}
+        />
+      );
 
       const badge = screen.queryByRole("badge-role");
       expect(badge).toBeInTheDocument();
@@ -70,21 +85,42 @@ describe("EditMembershipRole Component", () => {
     });
 
     test("disables the dropdown when editing own role", () => {
-      render(<EditMembershipRole {...defaultProps} memberId="user-456" userId="user-456" />);
+      render(
+        <EditMembershipRole
+          {...defaultProps}
+          memberId="user-456"
+          userId="user-456"
+          isUserManagementDisabledFromUi={false}
+        />
+      );
 
       const button = screen.getByRole("button-role");
       expect(button).toBeDisabled();
     });
 
     test("disables the dropdown when the user is the only owner", () => {
-      render(<EditMembershipRole {...defaultProps} memberRole="owner" doesOrgHaveMoreThanOneOwner={false} />);
+      render(
+        <EditMembershipRole
+          {...defaultProps}
+          memberRole="owner"
+          doesOrgHaveMoreThanOneOwner={false}
+          isUserManagementDisabledFromUi={false}
+        />
+      );
 
       const button = screen.getByRole("button-role");
       expect(button).toBeDisabled();
     });
 
     test("disables the dropdown when a manager tries to edit an owner", () => {
-      render(<EditMembershipRole {...defaultProps} currentUserRole="manager" memberRole="owner" />);
+      render(
+        <EditMembershipRole
+          {...defaultProps}
+          currentUserRole="manager"
+          memberRole="owner"
+          isUserManagementDisabledFromUi={false}
+        />
+      );
 
       const button = screen.getByRole("button-role");
       expect(button).toBeDisabled();

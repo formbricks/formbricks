@@ -29,7 +29,6 @@ export const ColumnSettingsDropdown = <T,>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          className="capitalize"
           onClick={() => {
             column.toggleVisibility(false);
           }}
@@ -39,7 +38,6 @@ export const ColumnSettingsDropdown = <T,>({
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem
-          className="capitalize"
           onClick={() => setIsTableSettingsModalOpen(true)}
           icon={<SettingsIcon className="h-4 w-4" />}>
           <div className="flex items-center space-x-2">

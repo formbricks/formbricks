@@ -118,7 +118,7 @@ export const SingleResponseCardBody = ({
       {survey.variables.length > 0 && (
         <ResponseVariables variables={survey.variables} variablesData={response.variables} />
       )}
-      {survey.hiddenFields.enabled && survey.hiddenFields.fieldIds && (
+      {survey.hiddenFields.fieldIds && (
         <HiddenFields hiddenFields={survey.hiddenFields} responseData={response.data} />
       )}
 

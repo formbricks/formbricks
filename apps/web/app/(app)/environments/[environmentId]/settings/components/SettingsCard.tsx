@@ -41,7 +41,7 @@ export const SettingsCard = ({
       id={title}>
       <div className="flex justify-between border-b border-slate-200 px-4 pb-4">
         <div>
-          <H4 className="font-medium capitalize tracking-normal">{title}</H4>
+          <H4 className="font-medium tracking-normal">{title}</H4>
           <div className="ml-2">
             {beta && <Badge size="normal" type="warning" text="Beta" />}
             {soon && (

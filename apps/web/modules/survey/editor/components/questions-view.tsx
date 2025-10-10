@@ -40,7 +40,7 @@ import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome
 import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
 import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
-import { findQuestionUsedInLogic, isUsedInQuota } from "@/modules/survey/editor/lib/utils";
+import { findQuestionUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -274,6 +274,18 @@ export const QuestionsView = ({
     const quesIdx = findQuestionUsedInLogic(localSurvey, questionId);
     if (quesIdx !== -1) {
       toast.error(t("environments.surveys.edit.question_used_in_logic", { questionIndex: quesIdx + 1 }));
+      return;
+    }
+
+    const recallQuestionIdx = isUsedInRecall(localSurvey, questionId);
+    if (recallQuestionIdx === localSurvey.questions.length) {
+      toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
+      return;
+    }
+    if (recallQuestionIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.question_used_in_recall", { questionIndex: recallQuestionIdx + 1 })
+      );
       return;
     }
 

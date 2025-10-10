@@ -134,13 +134,12 @@ export const AddIntegrationModal = ({
         type: TSurveyQuestionTypeEnum.OpenText,
       })) || [];
 
-    const hiddenFields = selectedSurvey?.hiddenFields.enabled
-      ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
-          id: fId,
-          name: `${t("common.hidden_field")} : ${fId}`,
-          type: TSurveyQuestionTypeEnum.OpenText,
-        })) || []
-      : [];
+    const hiddenFields =
+      selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
+        id: fId,
+        name: `${t("common.hidden_field")} : ${fId}`,
+        type: TSurveyQuestionTypeEnum.OpenText,
+      })) || [];
     const Metadata = [
       {
         id: "metadata",

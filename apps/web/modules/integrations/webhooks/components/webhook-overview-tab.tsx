@@ -5,7 +5,6 @@ import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { convertDateTimeStringShort } from "@/lib/time";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Label } from "@/modules/ui/components/label";
 
 interface ActivityTabProps {
@@ -51,8 +50,8 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
           <Label className="text-slate-500">
             {t("environments.integrations.webhooks.created_by_third_party")}
           </Label>
-          <p className="text-sm text-slate-900">
-            {webhook.source === "user" ? "No" : capitalizeFirstLetter(webhook.source)}
+          <p className="text-sm capitalize text-slate-900">
+            {webhook.source === "user" ? "No" : webhook.source}
           </p>
         </div>
 

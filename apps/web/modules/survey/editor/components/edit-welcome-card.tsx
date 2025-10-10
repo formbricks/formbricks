@@ -156,6 +156,7 @@ export const EditWelcomeCard = ({
                   setFirstRender={setFirstRender}
                   questionIdx={-1}
                   locale={locale}
+                  questionId="start"
                 />
               </div>
             </div>

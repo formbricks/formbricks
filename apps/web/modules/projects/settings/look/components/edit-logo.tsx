@@ -151,6 +151,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
               setIsEditing(true);
             }}
             disabled={isReadOnly}
+            maxSizeInMB={5}
             isStorageConfigured={isStorageConfigured}
           />
         )}

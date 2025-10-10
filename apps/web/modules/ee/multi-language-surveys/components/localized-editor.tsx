@@ -24,6 +24,7 @@ interface LocalizedEditorProps {
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   locale: TUserLocale;
+  questionId: string;
 }
 
 const checkIfValueIsIncomplete = (
@@ -50,7 +51,8 @@ export function LocalizedEditor({
   firstRender,
   setFirstRender,
   locale,
-}: LocalizedEditorProps) {
+  questionId,
+}: Readonly<LocalizedEditorProps>) {
   const { t } = useTranslation();
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
@@ -84,6 +86,9 @@ export function LocalizedEditor({
             updateQuestion(questionIdx, { html: translatedHtml });
           }
         }}
+        localSurvey={localSurvey}
+        questionId={questionId}
+        selectedLanguageCode={selectedLanguageCode}
       />
       {localSurvey.languages.length > 1 && (
         <div>
