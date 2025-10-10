@@ -1,4 +1,6 @@
-import { describe, expect, test, vi } from "vitest";
+import * as crypto from "crypto";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 // Import after unmocking
 import {
   hashSecret,
@@ -11,6 +13,13 @@ import {
 
 // Unmock crypto for these tests since we want to test the actual crypto functions
 vi.unmock("crypto");
+
+// Mock the logger
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    warn: vi.fn(),
+  },
+}));
 
 describe("Crypto Utils", () => {
   describe("hashSecret and verifySecret", () => {
@@ -274,83 +283,94 @@ describe("Crypto Utils", () => {
     });
   });
 
-  test("logs warning and throws when GCM decryption fails with invalid auth tag", () => {
-    // Create a valid GCM payload but corrupt the auth tag
-    const iv = randomBytes(16);
-    const bufKey = Buffer.from(key, "utf8");
-    const cipher = createCipheriv("aes-256-gcm", bufKey, iv);
-    let enc = cipher.update(plain, "utf8", "hex");
-    enc += cipher.final("hex");
-    const validTag = cipher.getAuthTag().toString("hex");
+  describe("GCM decryption failure logging", () => {
+    // Test key - 32 bytes for AES-256
+    const testKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const plaintext = "test message";
 
-    // Corrupt the auth tag by flipping some bits
-    const corruptedTag = validTag
-      .split("")
-      .map((c, i) => (i < 4 ? (parseInt(c, 16) ^ 0xf).toString(16) : c))
-      .join("");
+    beforeEach(() => {
+      // Clear mock calls before each test
+      vi.clearAllMocks();
+    });
 
-    const corruptedPayload = `${iv.toString("hex")}:${enc}:${corruptedTag}`;
+    test("logs warning and throws when GCM decryption fails with invalid auth tag", () => {
+      // Create a valid GCM payload but corrupt the auth tag
+      const iv = crypto.randomBytes(16);
+      const bufKey = Buffer.from(testKey, "hex");
+      const cipher = crypto.createCipheriv("aes-256-gcm", bufKey, iv);
+      let enc = cipher.update(plaintext, "utf8", "hex");
+      enc += cipher.final("hex");
+      const validTag = cipher.getAuthTag().toString("hex");
 
-    // Should throw an error and log a warning
-    expect(() => symmetricDecrypt(corruptedPayload, key)).toThrow();
+      // Corrupt the auth tag by flipping some bits
+      const corruptedTag = validTag
+        .split("")
+        .map((c, i) => (i < 4 ? (parseInt(c, 16) ^ 0xf).toString(16) : c))
+        .join("");
 
-    // Verify logger.warn was called with the correct format (object first, message second)
-    expect(logger.warn).toHaveBeenCalledWith(
-      { err: expect.any(Error) },
-      "AES-GCM decryption failed; refusing to fall back to insecure CBC"
-    );
-    expect(logger.warn).toHaveBeenCalledTimes(1);
-  });
+      const corruptedPayload = `${iv.toString("hex")}:${enc}:${corruptedTag}`;
 
-  test("logs warning and throws when GCM decryption fails with corrupted encrypted data", () => {
-    // Create a payload with valid structure but corrupted encrypted data
-    const iv = randomBytes(16);
-    const bufKey = Buffer.from(key, "utf8");
-    const cipher = createCipheriv("aes-256-gcm", bufKey, iv);
-    let enc = cipher.update(plain, "utf8", "hex");
-    enc += cipher.final("hex");
-    const tag = cipher.getAuthTag().toString("hex");
+      // Should throw an error and log a warning
+      expect(() => symmetricDecrypt(corruptedPayload, testKey)).toThrow();
 
-    // Corrupt the encrypted data
-    const corruptedEnc = enc
-      .split("")
-      .map((c, i) => (i < 4 ? (parseInt(c, 16) ^ 0xa).toString(16) : c))
-      .join("");
+      // Verify logger.warn was called with the correct format (object first, message second)
+      expect(logger.warn).toHaveBeenCalledWith(
+        { err: expect.any(Error) },
+        "AES-GCM decryption failed; refusing to fall back to insecure CBC"
+      );
+      expect(logger.warn).toHaveBeenCalledTimes(1);
+    });
 
-    const corruptedPayload = `${iv.toString("hex")}:${corruptedEnc}:${tag}`;
+    test("logs warning and throws when GCM decryption fails with corrupted encrypted data", () => {
+      // Create a payload with valid structure but corrupted encrypted data
+      const iv = crypto.randomBytes(16);
+      const bufKey = Buffer.from(testKey, "hex");
+      const cipher = crypto.createCipheriv("aes-256-gcm", bufKey, iv);
+      let enc = cipher.update(plaintext, "utf8", "hex");
+      enc += cipher.final("hex");
+      const tag = cipher.getAuthTag().toString("hex");
 
-    // Should throw an error and log a warning
-    expect(() => symmetricDecrypt(corruptedPayload, key)).toThrow();
+      // Corrupt the encrypted data
+      const corruptedEnc = enc
+        .split("")
+        .map((c, i) => (i < 4 ? (parseInt(c, 16) ^ 0xa).toString(16) : c))
+        .join("");
 
-    // Verify logger.warn was called
-    expect(logger.warn).toHaveBeenCalledWith(
-      { err: expect.any(Error) },
-      "AES-GCM decryption failed; refusing to fall back to insecure CBC"
-    );
-    expect(logger.warn).toHaveBeenCalledTimes(1);
-  });
+      const corruptedPayload = `${iv.toString("hex")}:${corruptedEnc}:${tag}`;
 
-  test("logs warning and throws when GCM decryption fails with wrong key", () => {
-    // Create a valid GCM payload with one key
-    const iv = randomBytes(16);
-    const bufKey = Buffer.from(key, "utf8");
-    const cipher = createCipheriv("aes-256-gcm", bufKey, iv);
-    let enc = cipher.update(plain, "utf8", "hex");
-    enc += cipher.final("hex");
-    const tag = cipher.getAuthTag().toString("hex");
-    const payload = `${iv.toString("hex")}:${enc}:${tag}`;
+      // Should throw an error and log a warning
+      expect(() => symmetricDecrypt(corruptedPayload, testKey)).toThrow();
 
-    // Try to decrypt with a different key
-    const wrongKey = "1".repeat(32);
+      // Verify logger.warn was called
+      expect(logger.warn).toHaveBeenCalledWith(
+        { err: expect.any(Error) },
+        "AES-GCM decryption failed; refusing to fall back to insecure CBC"
+      );
+      expect(logger.warn).toHaveBeenCalledTimes(1);
+    });
 
-    // Should throw an error and log a warning
-    expect(() => symmetricDecrypt(payload, wrongKey)).toThrow();
+    test("logs warning and throws when GCM decryption fails with wrong key", () => {
+      // Create a valid GCM payload with one key
+      const iv = crypto.randomBytes(16);
+      const bufKey = Buffer.from(testKey, "hex");
+      const cipher = crypto.createCipheriv("aes-256-gcm", bufKey, iv);
+      let enc = cipher.update(plaintext, "utf8", "hex");
+      enc += cipher.final("hex");
+      const tag = cipher.getAuthTag().toString("hex");
+      const payload = `${iv.toString("hex")}:${enc}:${tag}`;
 
-    // Verify logger.warn was called
-    expect(logger.warn).toHaveBeenCalledWith(
-      { err: expect.any(Error) },
-      "AES-GCM decryption failed; refusing to fall back to insecure CBC"
-    );
-    expect(logger.warn).toHaveBeenCalledTimes(1);
+      // Try to decrypt with a different key (32 bytes)
+      const wrongKey = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+
+      // Should throw an error and log a warning
+      expect(() => symmetricDecrypt(payload, wrongKey)).toThrow();
+
+      // Verify logger.warn was called
+      expect(logger.warn).toHaveBeenCalledWith(
+        { err: expect.any(Error) },
+        "AES-GCM decryption failed; refusing to fall back to insecure CBC"
+      );
+      expect(logger.warn).toHaveBeenCalledTimes(1);
+    });
   });
 });

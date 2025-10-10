@@ -159,11 +159,10 @@ describe("Auth Utils", () => {
       // Should return false for security
       expect(result).toBe(false);
 
-      // Should log warning
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { error: expect.any(Error) },
-        "Password verification failed due to invalid hash format"
-      );
+      // Should log warning with correct signature (message first, then data)
+      expect(mockLogger.warn).toHaveBeenCalledWith("Secret verification failed due to invalid hash format", {
+        error: expect.any(Error),
+      });
 
       // Restore the module
       vi.doUnmock("bcryptjs");
