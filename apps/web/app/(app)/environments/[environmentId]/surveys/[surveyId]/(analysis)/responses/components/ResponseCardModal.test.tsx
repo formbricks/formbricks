@@ -1,5 +1,3 @@
-import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
-import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -8,6 +6,8 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
+import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 
 vi.mock("@/modules/analysis/components/SingleResponseCard", () => ({
   SingleResponseCard: vi.fn(() => <div data-testid="single-response-card">SingleResponseCard</div>),
@@ -46,6 +46,11 @@ vi.mock("@/modules/ui/components/dialog", () => ({
   )),
   DialogBody: vi.fn(({ children }) => <div data-testid="dialog-body">{children}</div>),
   DialogFooter: vi.fn(({ children }) => <div data-testid="dialog-footer">{children}</div>),
+  DialogTitle: vi.fn(({ children }) => <div data-testid="dialog-title">{children}</div>),
+}));
+
+vi.mock("@radix-ui/react-visually-hidden", () => ({
+  VisuallyHidden: vi.fn(({ children }) => <div data-testid="visually-hidden">{children}</div>),
 }));
 
 const mockResponses = [

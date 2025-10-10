@@ -66,8 +66,21 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
+        // Validate password length to prevent CPU DoS attacks
+        // bcrypt processes passwords up to 72 bytes, but we limit to 128 characters for security
+        if (credentials.password && credentials.password.length > 128) {
+          if (await shouldLogAuthFailure(identifier)) {
+            logAuthAttempt("password_too_long", "credentials", "password_validation", UNKNOWN_DATA, credentials?.email);
+          }
+          throw new Error("Invalid credentials");
+        }
+
+        // Use a control hash when user doesn't exist to maintain constant timing. 
+        const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
+        
         let user;
         try {
+          // Perform database lookup
           user = await prisma.user.findUnique({
             where: {
               email: credentials?.email,
@@ -79,6 +92,12 @@ export const authOptions: NextAuthOptions = {
           throw Error("Internal server error. Please try again later");
         }
 
+        // Always perform password verification to maintain constant timing. This is important to prevent timing attacks for user enumeration.
+        // Use actual hash if user exists, control hash if user doesn't exist
+        const hashToVerify = user?.password || controlHash;
+        const isValid = await verifyPassword(credentials.password, hashToVerify);
+
+        // Now check all conditions after constant-time operations are complete
         if (!user) {
           if (await shouldLogAuthFailure(identifier)) {
             logAuthAttempt("user_not_found", "credentials", "user_lookup", UNKNOWN_DATA, credentials?.email);
@@ -95,8 +114,6 @@ export const authOptions: NextAuthOptions = {
           logAuthAttempt("account_inactive", "credentials", "account_status", user.id, user.email);
           throw new Error("Your account is currently inactive. Please contact the organization admin.");
         }
-
-        const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
           if (await shouldLogAuthFailure(user.email)) {

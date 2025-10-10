@@ -1,15 +1,15 @@
-import {
-  removeOrganizationEmailLogoUrlAction,
-  sendTestEmailAction,
-  updateOrganizationEmailLogoUrlAction,
-} from "@/modules/ee/whitelabel/email-customization/actions";
-import { handleFileUpload } from "@/modules/storage/file-upload";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import {
+  removeOrganizationEmailLogoUrlAction,
+  sendTestEmailAction,
+  updateOrganizationEmailLogoUrlAction,
+} from "@/modules/ee/whitelabel/email-customization/actions";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { EmailCustomizationSettings } from "./email-customization-settings";
 
 vi.mock("@/lib/constants", () => ({
@@ -107,7 +107,6 @@ describe("EmailCustomizationSettings", () => {
     const saveButton = screen.getAllByRole("button", { name: /save/i });
     await user.click(saveButton[0]);
 
-    // The component calls `uploadFile` then `updateOrganizationEmailLogoUrlAction`
     expect(handleFileUpload).toHaveBeenCalledWith(testFile, "env-123", ["jpeg", "png", "jpg", "webp"]);
     expect(updateOrganizationEmailLogoUrlAction).toHaveBeenCalledWith({
       organizationId: "org-123",

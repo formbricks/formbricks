@@ -1,8 +1,8 @@
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import * as Sentry from "@sentry/nextjs";
 import { describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { logger } from "@formbricks/logger";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { formatZodError, handleApiError, logApiError, logApiRequest } from "../utils";
 
 const mockRequest = new Request("http://localhost");
@@ -12,6 +12,15 @@ mockRequest.headers.set("x-request-id", "123");
 
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
+  withScope: vi.fn((callback: (scope: any) => void) => {
+    const mockScope = {
+      setTag: vi.fn(),
+      setContext: vi.fn(),
+      setLevel: vi.fn(),
+      setExtra: vi.fn(),
+    };
+    callback(mockScope);
+  }),
 }));
 
 // Mock SENTRY_DSN constant
@@ -232,7 +241,7 @@ describe("utils", () => {
       });
 
       // Verify error was called on the child logger
-      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+      expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
 
       // Restore the original method
       logger.withContext = originalWithContext;
@@ -266,7 +275,7 @@ describe("utils", () => {
       });
 
       // Verify error was called on the child logger
-      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+      expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
 
       // Restore the original method
       logger.withContext = originalWithContext;
@@ -303,7 +312,7 @@ describe("utils", () => {
       });
 
       // Verify error was called on the child logger
-      expect(errorMock).toHaveBeenCalledWith("API Error Details");
+      expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
 
       // Verify Sentry.captureException was called
       expect(Sentry.captureException).toHaveBeenCalled();

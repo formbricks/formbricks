@@ -54,6 +54,10 @@ inputs:
     description: "Whether this is a prerelease (auto-tags for staging/production)"
     required: false
     default: "false"
+  make_latest:
+    description: "Whether to tag as latest/production (from GitHub release 'Set as the latest release' option)"
+    required: false
+    default: "false"
 
   # Build options
   dockerfile:
@@ -154,6 +158,7 @@ runs:
         DEPLOY_PRODUCTION: ${{ inputs.deploy_production }}
         DEPLOY_STAGING: ${{ inputs.deploy_staging }}
         IS_PRERELEASE: ${{ inputs.is_prerelease }}
+        MAKE_LATEST: ${{ inputs.make_latest }}
       run: |
         set -euo pipefail
 
@@ -164,9 +169,9 @@ runs:
         if [[ "${IS_PRERELEASE}" == "true" ]]; then
           TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
           echo "Adding staging tag for prerelease"
-        elif [[ "${IS_PRERELEASE}" == "false" ]]; then
+        elif [[ "${IS_PRERELEASE}" == "false" && "${MAKE_LATEST}" == "true" ]]; then
           TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:production"
-          echo "Adding production tag for stable release"
+          echo "Adding production tag for stable release marked as latest"
         fi
 
         # Handle manual deployment overrides
@@ -196,6 +201,7 @@ runs:
         VERSION: ${{ steps.version.outputs.version }}
         IMAGE_NAME: ${{ inputs.ghcr_image_name }}
         IS_PRERELEASE: ${{ inputs.is_prerelease }}
+        MAKE_LATEST: ${{ inputs.make_latest }}
       run: |
         set -euo pipefail
 
@@ -214,10 +220,10 @@ runs:
           echo "Added SemVer tags: ${MAJOR}.${MINOR}, ${MAJOR}"
         fi
 
-        # Add latest tag for stable releases
-        if [[ "${IS_PRERELEASE}" == "false" ]]; then
+        # Add latest tag for stable releases marked as latest
+        if [[ "${IS_PRERELEASE}" == "false" && "${MAKE_LATEST}" == "true" ]]; then
           TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:latest"
-          echo "Added latest tag for stable release"
+          echo "Added latest tag for stable release marked as latest"
         fi
 
         echo "Generated GHCR tags:"
@@ -251,6 +257,7 @@ runs:
         echo "Experimental Mode: ${{ inputs.experimental_mode }}"
         echo "Event Name: ${{ github.event_name }}"
         echo "Is Prerelease: ${{ inputs.is_prerelease }}"
+        echo "Make Latest: ${{ inputs.make_latest }}"
         echo "Version: ${{ steps.version.outputs.version }}"
 
         if [[ "${{ inputs.registry_type }}" == "ecr" ]]; then

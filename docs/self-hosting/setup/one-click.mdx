@@ -312,6 +312,18 @@ To restart Formbricks, simply run the following command:
 
 The script will automatically restart all the Formbricks related containers and brings the entire stack up with the previous configuration.
 
+## Cleanup MinIO init (optional)
+
+During the one-click setup, a temporary `minio-init` service configures MinIO (bucket, policy, service user). It is idempotent and safe to leave in place; it will do nothing on subsequent starts once configuration exists.
+
+If you prefer to remove the `minio-init` service and its references after a successful setup, run:
+
+```
+./formbricks.sh cleanup-minio-init
+```
+
+This only removes the init job and its Compose references; it does not delete any data or affect your MinIO configuration.
+
 ## Uninstall
 
 To uninstall Formbricks, simply run the following command, but keep in mind that this will delete all your data!

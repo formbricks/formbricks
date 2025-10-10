@@ -1,7 +1,7 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";
 
 export interface fallbacks {
@@ -118,15 +118,16 @@ export const replaceRecallInfoWithUnderline = (label: string): string => {
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
 export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): TSurveyQuestion | null => {
-  const findRecalls = (text: string) => {
+  const doesTextHaveRecall = (text: string) => {
     const recalls = text.match(/#recall:[^ ]+/g);
-    return recalls && recalls.some((recall) => !extractFallbackValue(recall));
+    return recalls?.some((recall) => !extractFallbackValue(recall));
   };
 
   for (const question of survey.questions) {
     if (
-      findRecalls(getLocalizedValue(question.headline, language)) ||
-      (question.subheader && findRecalls(getLocalizedValue(question.subheader, language)))
+      doesTextHaveRecall(getLocalizedValue(question.headline, language)) ||
+      (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language))) ||
+      ("html" in question && doesTextHaveRecall(getLocalizedValue(question.html, language)))
     ) {
       return question;
     }

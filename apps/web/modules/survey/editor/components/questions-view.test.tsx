@@ -1,5 +1,3 @@
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
-import { validateQuestion, validateSurveyQuestionsInBatch } from "@/modules/survey/editor/lib/validation";
 import { DndContext } from "@dnd-kit/core";
 import { createId } from "@paralleldrive/cuid2";
 import { Language, Project } from "@prisma/client";
@@ -15,6 +13,8 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
+import { validateQuestion, validateSurveyQuestionsInBatch } from "@/modules/survey/editor/lib/validation";
 import { QuestionsView } from "./questions-view";
 
 // Mock dependencies
@@ -53,6 +53,7 @@ vi.mock("@/lib/surveyLogic/utils", () => ({
 vi.mock("@/lib/utils/recall", () => ({
   checkForEmptyFallBackValue: vi.fn(),
   extractRecallInfo: vi.fn(),
+  isUsedInRecall: vi.fn().mockReturnValue(-1),
 }));
 
 vi.mock("@/modules/ee/multi-language-surveys/components/multi-language-card", () => ({
@@ -134,6 +135,7 @@ vi.mock("@/modules/survey/editor/components/survey-variables-card", () => ({
 vi.mock("@/modules/survey/editor/lib/utils", () => ({
   findQuestionUsedInLogic: vi.fn(() => -1),
   isUsedInQuota: vi.fn(() => false),
+  isUsedInRecall: vi.fn(() => -1),
 }));
 
 vi.mock("@dnd-kit/core", async (importOriginal) => {
