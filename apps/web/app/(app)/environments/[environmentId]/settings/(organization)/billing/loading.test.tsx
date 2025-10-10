@@ -2,13 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import Loading from "./loading";
 
-// Mock constants
-vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: true,
-}));
-
 // Mock server-side translation
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(),
 }));
 
@@ -42,7 +37,7 @@ vi.mock(
 describe("Billing Loading Page", () => {
   beforeEach(async () => {
     const mockTranslate = vi.fn((key) => key);
-    vi.mocked(await import("@/tolgee/server")).getTranslate.mockResolvedValue(mockTranslate);
+    vi.mocked(await import("@/lingodotdev/server")).getTranslate.mockResolvedValue(mockTranslate);
   });
 
   afterEach(() => {

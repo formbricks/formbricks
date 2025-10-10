@@ -15,10 +15,6 @@ vi.mock("papaparse", () => ({
   default: { parse: h.mockParse },
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (k: string) => k }),
-}));
-
 vi.mock("react-hot-toast", () => ({
   default: { error: h.mockToastError },
 }));

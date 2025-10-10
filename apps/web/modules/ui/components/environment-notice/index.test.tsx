@@ -43,7 +43,7 @@ vi.mock("@/lib/environment/service", () => ({
   }),
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(() => (key: string, params?: Record<string, string>) => {
     if (key === "common.environment_notice") {
       return `You are in the ${params?.environment} environment`;

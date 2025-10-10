@@ -55,8 +55,8 @@ vi.mock("@/modules/ui/components/button", () => ({
 }));
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations = {
         "environments.segments.delete_segment": "Delete Segment",

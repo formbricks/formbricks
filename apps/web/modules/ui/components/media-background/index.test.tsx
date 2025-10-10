@@ -19,12 +19,6 @@ vi.mock("next/link", () => ({
   default: ({ href, children }: any) => <a href={href}>{children}</a>,
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("MediaBackground", () => {
   const defaultProps = {
     styling: {

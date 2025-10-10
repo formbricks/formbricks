@@ -1,7 +1,6 @@
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getTeamsByProjectId } from "./lib/team";
 import { ProjectTeams } from "./page";
 
@@ -31,8 +30,8 @@ vi.mock("./lib/team", () => ({
   getTeamsByProjectId: vi.fn(),
 }));
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
 }));
 
 describe("ProjectTeams", () => {
@@ -43,7 +42,6 @@ describe("ProjectTeams", () => {
       { id: "team-1", name: "Team 1", memberCount: 2, permission: "readWrite" },
       { id: "team-2", name: "Team 2", memberCount: 1, permission: "read" },
     ]);
-    vi.mocked(getTranslate).mockResolvedValue((key) => key);
 
     vi.mocked(getEnvironmentAuth).mockResolvedValue({
       project: { id: "project-1" },

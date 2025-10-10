@@ -56,5 +56,9 @@ export const I18nProvider = ({ children, language, defaultLanguage }: I18nProvid
     return <div style={{ visibility: "hidden" }}>{children}</div>;
   }
 
-  return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
+  return (
+    <I18nextProvider data-testid="i18next-provider" i18n={i18n}>
+      {children}
+    </I18nextProvider>
+  );
 };

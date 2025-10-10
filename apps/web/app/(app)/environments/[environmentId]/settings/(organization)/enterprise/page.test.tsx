@@ -1,8 +1,3 @@
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getAccessFlags } from "@/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getUser } from "@/lib/user/service";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -10,6 +5,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization, TOrganizationBilling } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -77,7 +77,7 @@ vi.mock("@/modules/ui/components/settings-card", () => ({
   ),
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

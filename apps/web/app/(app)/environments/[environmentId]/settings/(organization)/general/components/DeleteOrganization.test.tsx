@@ -1,18 +1,18 @@
-import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization, TOrganizationBilling } from "@formbricks/types/organizations";
+import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { DeleteOrganization } from "./DeleteOrganization";
 
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

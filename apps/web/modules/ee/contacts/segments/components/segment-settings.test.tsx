@@ -1,22 +1,16 @@
-import * as helper from "@/lib/utils/helper";
-import * as actions from "@/modules/ee/contacts/segments/actions";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SafeParseReturnType } from "zod";
 import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
+import * as helper from "@/lib/utils/helper";
+import * as actions from "@/modules/ee/contacts/segments/actions";
 import { SegmentSettings } from "./segment-settings";
 
 // Mock dependencies
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: vi.fn(),
-  }),
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
   }),
 }));
 

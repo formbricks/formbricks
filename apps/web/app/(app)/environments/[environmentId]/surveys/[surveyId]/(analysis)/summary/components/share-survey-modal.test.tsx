@@ -27,8 +27,8 @@ vi.mock("@/lib/env", () => ({
 }));
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "environments.surveys.summary.single_use_links": "Single-use links",

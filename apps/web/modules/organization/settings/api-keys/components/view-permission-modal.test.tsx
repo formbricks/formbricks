@@ -6,13 +6,6 @@ import { TProject } from "@formbricks/types/project";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import { ViewPermissionModal } from "./view-permission-modal";
 
-// Mock the translate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Base project setup
 const baseProject = {};
 

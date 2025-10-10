@@ -1,4 +1,3 @@
-import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -9,6 +8,7 @@ import {
   TIntegrationSlackCredential,
 } from "@formbricks/types/integration/slack";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { AddChannelMappingModal } from "./AddChannelMappingModal";
 
 // Mock dependencies
@@ -127,9 +127,9 @@ vi.mock("react-hot-toast", () => ({
     error: vi.fn(),
   },
 }));
-vi.mock("@tolgee/react", async () => {
+vi.mock("react-i18next", async () => {
   const MockTolgeeProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-  const useTranslate = () => ({
+  const useTranslation = () => ({
     t: (key: string, _?: any) => {
       // NOSONAR
       // Simple mock translation function
@@ -167,7 +167,7 @@ vi.mock("@tolgee/react", async () => {
       return key; // Return key if no translation is found
     },
   });
-  return { TolgeeProvider: MockTolgeeProvider, useTranslate };
+  return { TolgeeProvider: MockTolgeeProvider, useTranslation };
 });
 vi.mock("lucide-react", () => ({
   CircleHelpIcon: () => <div data-testid="circle-help-icon" />,

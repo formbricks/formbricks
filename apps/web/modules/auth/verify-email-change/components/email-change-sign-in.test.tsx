@@ -1,16 +1,9 @@
-import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { signOut } from "next-auth/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 import { EmailChangeSignIn } from "./email-change-sign-in";
-
-// Mock dependencies
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 vi.mock("next-auth/react", () => ({
   signOut: vi.fn(),

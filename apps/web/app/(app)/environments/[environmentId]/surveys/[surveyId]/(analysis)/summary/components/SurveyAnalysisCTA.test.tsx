@@ -9,8 +9,8 @@ import { TUser } from "@formbricks/types/user";
 import { SurveyAnalysisCTA } from "./SurveyAnalysisCTA";
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       if (key === "environments.surveys.summary.configure_alerts") {
         return "Configure alerts";

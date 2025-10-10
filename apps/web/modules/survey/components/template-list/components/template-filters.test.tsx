@@ -19,12 +19,6 @@ vi.mock("../lib/utils", () => ({
   ]),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("TemplateFilters", () => {
   afterEach(() => {
     cleanup();

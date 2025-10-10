@@ -15,8 +15,8 @@ vi.mock("@/modules/ee/two-factor-auth/actions", () => ({
 }));
 
 // Mock the translation function
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "environments.settings.profile.two_factor_authentication": "Two-Factor Authentication",

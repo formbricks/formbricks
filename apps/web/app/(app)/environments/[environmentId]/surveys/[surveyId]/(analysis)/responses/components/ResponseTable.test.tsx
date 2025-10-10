@@ -1,6 +1,3 @@
-import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
@@ -10,6 +7,9 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
+import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
@@ -191,13 +191,6 @@ const mockLocalStorage = (() => {
   };
 })();
 Object.defineProperty(window, "localStorage", { value: mockLocalStorage });
-
-// Mock Tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 // Global mock anchor for tests
 let globalMockAnchor: any;

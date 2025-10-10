@@ -1,5 +1,3 @@
-import { SegmentFilter } from "@/modules/ee/contacts/segments/components/segment-filter";
-import * as segmentUtils from "@/modules/ee/contacts/segments/lib/utils";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -11,6 +9,8 @@ import {
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
 } from "@formbricks/types/segment";
+import { SegmentFilter } from "@/modules/ee/contacts/segments/components/segment-filter";
+import * as segmentUtils from "@/modules/ee/contacts/segments/lib/utils";
 
 // Mock ResizeObserver
 const ResizeObserverMock = vi.fn(() => ({
@@ -89,12 +89,6 @@ vi.mock("lucide-react", () => ({
   TagIcon: () => <div data-testid="tag-icon">Tag</div>,
   Trash2: () => <div data-testid="trash-icon">Trash</div>,
   Users2Icon: () => <div data-testid="users-icon">Users</div>,
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 const mockSetSegment = vi.fn();

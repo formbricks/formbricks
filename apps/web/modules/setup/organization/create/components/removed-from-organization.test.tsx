@@ -1,9 +1,9 @@
-import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
+import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { RemovedFromOrganization } from "./removed-from-organization";
 
 // Mock DeleteAccountModal
@@ -43,13 +43,6 @@ vi.mock("@/modules/ui/components/button", () => ({
       {children}
     </button>
   )),
-}));
-
-// Mock useTranslate from @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 const mockUser = {

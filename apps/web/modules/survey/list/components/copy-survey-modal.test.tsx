@@ -1,13 +1,8 @@
-import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { CopySurveyModal } from "./copy-survey-modal";
-
-// Mock dependencies
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
 
 vi.mock("@/modules/ui/components/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>

@@ -3,8 +3,10 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { ActionTableHeading } from "./ActionTableHeading";
 
 // Mock the server-side translation function
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: async () => (key: string) => key,
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
 }));
 
 describe("ActionTableHeading", () => {

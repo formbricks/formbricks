@@ -1,11 +1,11 @@
-import { getAccessFlags } from "@/lib/membership/utils";
-import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
-import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils";
+import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { MembersInfo } from "./members-info";
 
 vi.mock("@/modules/ee/role-management/components/edit-membership-role", () => ({
@@ -29,9 +29,6 @@ vi.mock("@/modules/organization/settings/teams/lib/utils", () => ({
 }));
 vi.mock("@/lib/membership/utils", () => ({
   getAccessFlags: vi.fn(() => ({ isOwner: false, isManager: false })),
-}));
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
 }));
 
 const org: TOrganization = {

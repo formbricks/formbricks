@@ -1,10 +1,10 @@
-import { deleteQuotaAction, getQuotaResponseCountAction } from "@/modules/ee/quotas/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { deleteQuotaAction, getQuotaResponseCountAction } from "@/modules/ee/quotas/actions";
 import { QuotasCard } from "./quotas-card";
 
 // Mock server actions
@@ -19,22 +19,6 @@ vi.mock("react-hot-toast", () => ({
     success: vi.fn(),
     error: vi.fn(),
   },
-}));
-
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string, params?: any) => {
-      if (params) {
-        let result = key;
-        Object.keys(params).forEach((param) => {
-          result = result.replace(`{{${param}}}`, params[param]);
-        });
-        return result;
-      }
-      return key;
-    },
-  }),
 }));
 
 // Mock next/navigation

@@ -1,6 +1,3 @@
-import { canUserAccessOrganization } from "@/lib/organization/auth";
-import { getOrganization } from "@/lib/organization/service";
-import { getUser } from "@/lib/user/service";
 import "@testing-library/jest-dom/vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
@@ -9,6 +6,9 @@ import React from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { canUserAccessOrganization } from "@/lib/organization/auth";
+import { getOrganization } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
 import ProjectOnboardingLayout from "./layout";
 
 // Mock all the modules and functions that this layout uses:
@@ -54,7 +54,7 @@ vi.mock("@/lib/organization/service", () => ({
 vi.mock("@/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(() => {
     // Return a mock translator that just returns the key
     return (key: string) => key;

@@ -62,8 +62,8 @@ vi.mock("@/app/(app)/environments/[environmentId]/actions/utils", () => ({
 }));
 
 // Mock useTranslate
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations = {
         "common.activity": "Activity",

@@ -20,9 +20,6 @@ vi.mock("@/modules/ui/components/page-header", () => ({
     </div>
   ),
 }));
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (k) => k }),
-}));
 
 describe("Loading (API Keys)", () => {
   afterEach(() => {

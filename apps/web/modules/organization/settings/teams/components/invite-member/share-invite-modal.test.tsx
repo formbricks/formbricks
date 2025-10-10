@@ -1,12 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { ShareInviteModal } from "./share-invite-modal";
-
-const t = (k: string) => k;
-vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t }) }));
 
 vi.mock("@/modules/ui/components/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>

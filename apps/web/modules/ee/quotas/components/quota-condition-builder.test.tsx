@@ -48,13 +48,6 @@ vi.mock("@/modules/survey/editor/lib/shared-conditions-factory", () => ({
   })),
 }));
 
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock @paralleldrive/cuid2
 vi.mock("@paralleldrive/cuid2", () => ({
   createId: () => "test-id-123",

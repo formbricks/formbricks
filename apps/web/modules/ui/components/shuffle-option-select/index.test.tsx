@@ -29,8 +29,8 @@ vi.mock("@/modules/ui/components/select", () => ({
 }));
 
 // Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => (key === "environments.surveys.edit.select_ordering" ? "Select ordering" : key),
   }),
 }));

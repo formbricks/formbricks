@@ -1,3 +1,9 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { notFound } from "next/navigation";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUser } from "@formbricks/types/user";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
@@ -13,12 +19,6 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
-import { cleanup, render, screen } from "@testing-library/react";
-import { notFound } from "next/navigation";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUser } from "@formbricks/types/user";
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
@@ -106,7 +106,7 @@ vi.mock("@/modules/ui/components/id-badge", () => ({
   IdBadge: vi.fn(() => <div data-testid="id-badge"></div>),
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

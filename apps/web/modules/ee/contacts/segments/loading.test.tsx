@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import Loading from "./loading";
 
 // Mock the getTranslate function
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

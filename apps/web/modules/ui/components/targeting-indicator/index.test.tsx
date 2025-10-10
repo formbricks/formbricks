@@ -5,8 +5,8 @@ import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TargetingIndicator } from "./index";
 
 // Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "environments.surveys.edit.audience": "Audience",

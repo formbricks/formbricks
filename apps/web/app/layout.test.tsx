@@ -1,10 +1,8 @@
-import { getLocale } from "@/tolgee/language";
-import { getTolgee } from "@/tolgee/server";
 import { cleanup } from "@testing-library/react";
-import { TolgeeInstance } from "@tolgee/react";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { getLocale } from "@/tolgee/language";
 import RootLayout, { metadata } from "./layout";
 
 // Mock dependencies for the layout
@@ -33,13 +31,14 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "mock-sentry-dsn",
   SENTRY_RELEASE: "mock-sentry-release",
   SENTRY_ENVIRONMENT: "mock-sentry-environment",
+  DEFAULT_LOCALE: "en-US",
 }));
 
 vi.mock("@/tolgee/language", () => ({
   getLocale: vi.fn(),
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTolgee: vi.fn(),
 }));
 
@@ -89,13 +88,6 @@ describe("RootLayout", () => {
     // Mock getLocale to resolve to a fake locale
     vi.mocked(getLocale).mockResolvedValue(fakeLocale);
 
-    const fakeStaticData = { key: "value" };
-    const fakeTolgee = {
-      loadRequired: vi.fn().mockResolvedValue(fakeStaticData),
-    };
-    // Mock getTolgee to return our fake tolgee object
-    vi.mocked(getTolgee).mockResolvedValue(fakeTolgee as unknown as TolgeeInstance);
-
     const children = <div data-testid="child">Child Content</div>;
     const element = await RootLayout({ children });
     const html = renderToString(element);
@@ -106,7 +98,6 @@ describe("RootLayout", () => {
     document.body.appendChild(container);
 
     // Now we can use screen queries on the rendered content
-    expect(container.querySelector('[data-testid="tolgee-next-provider"]')).toBeInTheDocument();
     expect(container.querySelector('[data-testid="sentry-provider"]')).toBeInTheDocument();
     expect(container.querySelector('[data-testid="child"]')).toHaveTextContent("Child Content");
 
@@ -118,12 +109,6 @@ describe("RootLayout", () => {
     const fakeLocale = "de-DE";
     vi.mocked(getLocale).mockResolvedValue(fakeLocale);
 
-    const fakeStaticData = { key: "value" };
-    const fakeTolgee = {
-      loadRequired: vi.fn().mockResolvedValue(fakeStaticData),
-    };
-    vi.mocked(getTolgee).mockResolvedValue(fakeTolgee as unknown as TolgeeInstance);
-
     const children = <div data-testid="child">Child Content</div>;
     const element = await RootLayout({ children });
     const html = renderToString(element);
@@ -131,9 +116,6 @@ describe("RootLayout", () => {
     const container = document.createElement("div");
     container.innerHTML = html;
     document.body.appendChild(container);
-
-    const tolgeeProvider = container.querySelector('[data-testid="tolgee-next-provider"]');
-    expect(tolgeeProvider).toHaveTextContent(fakeLocale);
 
     document.body.removeChild(container);
   });

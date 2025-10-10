@@ -1,10 +1,10 @@
-import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
+import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { SurveysPage } from "./page";
 
 // Mock all dependencies
@@ -85,8 +85,8 @@ vi.mock("@/modules/ui/components/page-header", () => ({
   )),
 }));
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
 }));
 
 vi.mock("next/link", () => ({
@@ -186,7 +186,6 @@ describe("SurveysPage", () => {
     const { getEnvironmentAuth } = await import("@/modules/environments/lib/utils");
     const { getProjectWithTeamIdsByEnvironmentId } = await import("@/modules/survey/lib/project");
     const { getSurveyCount } = await import("@/modules/survey/list/lib/survey");
-    const { getTranslate } = await import("@/tolgee/server");
 
     vi.mocked(getPublicDomain).mockImplementation(mockGetPublicDomain);
     vi.mocked(getUserLocale).mockImplementation(mockGetUserLocale);
@@ -195,19 +194,17 @@ describe("SurveysPage", () => {
       mockGetProjectWithTeamIdsByEnvironmentId
     );
     vi.mocked(getSurveyCount).mockImplementation(mockGetSurveyCount);
-    vi.mocked(getTranslate).mockImplementation(mockGetTranslate);
   });
 
   test("throws error when project is not found", async () => {
     mockGetProjectWithTeamIdsByEnvironmentId.mockResolvedValue(null);
-    mockTranslate.mockReturnValue("Project not found");
+    mockTranslate.mockReturnValue("common.project_not_found");
 
     const params = Promise.resolve({ environmentId: "env-123" });
 
-    await expect(SurveysPage({ params })).rejects.toThrow("Project not found");
+    await expect(SurveysPage({ params })).rejects.toThrow("common.project_not_found");
 
     expect(mockGetProjectWithTeamIdsByEnvironmentId).toHaveBeenCalledWith("env-123");
-    expect(mockTranslate).toHaveBeenCalledWith("common.project_not_found");
   });
 
   test("redirects to billing when isBilling is true", async () => {

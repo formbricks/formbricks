@@ -3,8 +3,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { ErrorComponent } from "./index";
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "common.error_component_title": "Something went wrong",

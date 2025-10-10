@@ -1,10 +1,3 @@
-import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getResponsesByContactId } from "@/lib/response/service";
-import { getSurveys } from "@/lib/survey/service";
-import { getUser } from "@/lib/user/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { TFnType } from "@tolgee/react";
@@ -12,6 +5,12 @@ import { getServerSession } from "next-auth";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag } from "@formbricks/types/tags";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getResponsesByContactId } from "@/lib/response/service";
+import { getSurveys } from "@/lib/survey/service";
+import { getUser } from "@/lib/user/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { ResponseSection } from "./response-section";
 
 vi.mock("@/lib/project/service", () => ({
@@ -42,8 +41,8 @@ vi.mock("@/modules/ee/teams/lib/roles", () => ({
   getProjectPermissionByUserId: vi.fn(),
 }));
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
 }));
 
 vi.mock("next-auth", () => ({
@@ -115,9 +114,6 @@ describe("ResponseSection", () => {
     vi.mocked(getProjectByEnvironmentId).mockResolvedValue(mockProject as any);
     vi.mocked(getProjectPermissionByUserId).mockResolvedValue(mockProjectPermission as any);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
-    vi.mocked(getTranslate).mockResolvedValue({
-      t: (key: string) => key,
-    } as any);
 
     const { container } = render(await ResponseSection(mockProps));
     expect(screen.getByTestId("response-timeline")).toBeInTheDocument();
@@ -125,7 +121,6 @@ describe("ResponseSection", () => {
 
   test("throws error when session is not found", async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
-    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as TFnType);
 
     await expect(ResponseSection(mockProps)).rejects.toThrow("common.session_not_found");
   });
@@ -137,7 +132,6 @@ describe("ResponseSection", () => {
 
     vi.mocked(getServerSession).mockResolvedValue(mockSession as any);
     vi.mocked(getUser).mockResolvedValue(null);
-    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as TFnType);
 
     await expect(ResponseSection(mockProps)).rejects.toThrow("common.user_not_found");
   });
@@ -156,7 +150,6 @@ describe("ResponseSection", () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession as any);
     vi.mocked(getUser).mockResolvedValue(mockUser as any);
     vi.mocked(getResponsesByContactId).mockResolvedValue(null);
-    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as TFnType);
 
     await expect(ResponseSection(mockProps)).rejects.toThrow("environments.contacts.no_responses_found");
   });
@@ -183,7 +176,6 @@ describe("ResponseSection", () => {
     vi.mocked(getUser).mockResolvedValue(mockUser as any);
     vi.mocked(getResponsesByContactId).mockResolvedValue(mockResponses as any);
     vi.mocked(getProjectByEnvironmentId).mockResolvedValue(null);
-    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as TFnType);
 
     await expect(ResponseSection(mockProps)).rejects.toThrow("common.project_not_found");
   });

@@ -6,13 +6,6 @@ vi.mock("@/modules/ui/components/icons", () => ({
   SlackIcon: () => <div data-testid="slack-icon" />,
 }));
 
-const mockT = vi.fn((key) => key);
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: mockT,
-  }),
-}));
-
 const environmentId = "test-env-id";
 
 describe("IntegrationsTip", () => {

@@ -1,4 +1,3 @@
-import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/AddIntegrationModal";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -7,6 +6,7 @@ import {
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/AddIntegrationModal";
 
 // Mock actions and utilities
 vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({
@@ -315,18 +315,24 @@ describe("AddIntegrationModal", () => {
     );
 
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Link Google Sheet");
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent("Sync responses with Google Sheets.");
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent(
+      "environments.integrations.google_sheets.link_google_sheet"
+    );
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent(
+      "environments.integrations.google_sheets.google_sheets_integration_description"
+    );
     // Use getByPlaceholderText for the input
     expect(
       screen.getByPlaceholderText("https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>")
     ).toBeInTheDocument();
     // Use getByTestId for the dropdown
     expect(screen.getByTestId("survey-dropdown")).toBeInTheDocument();
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Link Google Sheet" })).toBeInTheDocument();
-    expect(screen.queryByText("Delete")).not.toBeInTheDocument();
-    expect(screen.queryByText("Questions")).not.toBeInTheDocument();
+    expect(screen.getByText("common.cancel")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "environments.integrations.google_sheets.link_google_sheet" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("common.delete")).not.toBeInTheDocument();
+    expect(screen.queryByText("common.questions")).not.toBeInTheDocument();
   });
 
   test("renders correctly when open (update mode)", () => {
@@ -342,17 +348,21 @@ describe("AddIntegrationModal", () => {
     );
 
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Link Google Sheet");
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent("Sync responses with Google Sheets.");
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent(
+      "environments.integrations.google_sheets.link_google_sheet"
+    );
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent(
+      "environments.integrations.google_sheets.google_sheets_integration_description"
+    );
     // Use getByPlaceholderText for the input
     expect(
       screen.getByPlaceholderText("https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>")
     ).toHaveValue("https://docs.google.com/spreadsheets/d/existing-sheet-id");
     expect(screen.getByTestId("survey-dropdown")).toHaveValue(surveys[0].id);
-    expect(screen.getByText("Questions")).toBeInTheDocument();
-    expect(screen.getByText("Delete")).toBeInTheDocument();
-    expect(screen.getByText("Update")).toBeInTheDocument();
-    expect(screen.queryByText("Cancel")).not.toBeInTheDocument();
+    expect(screen.getByText("common.questions")).toBeInTheDocument();
+    expect(screen.getByText("common.delete")).toBeInTheDocument();
+    expect(screen.getByText("common.update")).toBeInTheDocument();
+    expect(screen.queryByText("common.cancel")).not.toBeInTheDocument();
     expect(screen.getByTestId("include-variables")).toBeChecked();
     expect(screen.getByTestId("include-hidden-fields")).not.toBeChecked();
     expect(screen.getByTestId("include-metadata")).toBeChecked();
@@ -374,7 +384,7 @@ describe("AddIntegrationModal", () => {
     const surveyDropdown = screen.getByTestId("survey-dropdown");
     await userEvent.selectOptions(surveyDropdown, surveys[1].id);
 
-    expect(screen.getByText("Questions")).toBeInTheDocument();
+    expect(screen.getByText("common.questions")).toBeInTheDocument();
     surveys[1].questions.forEach((q) => {
       expect(screen.getByLabelText(q.headline.default)).toBeInTheDocument();
       // Initially all questions should be checked when a survey is selected in create mode
@@ -430,7 +440,9 @@ describe("AddIntegrationModal", () => {
       "https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>"
     );
     const surveyDropdown = screen.getByTestId("survey-dropdown");
-    const submitButton = screen.getByRole("button", { name: "Link Google Sheet" });
+    const submitButton = screen.getByRole("button", {
+      name: "environments.integrations.google_sheets.link_google_sheet",
+    });
 
     await userEvent.type(urlInput, "https://docs.google.com/spreadsheets/d/new-sheet-id");
     await userEvent.selectOptions(surveyDropdown, surveys[0].id);
@@ -468,7 +480,7 @@ describe("AddIntegrationModal", () => {
                 surveyId: surveys[0].id,
                 surveyName: surveys[0].name,
                 questionIds: surveys[0].questions.slice(1).map((q) => q.id), // Excludes the first question
-                questions: "Selected questions",
+                questions: "common.selected_questions",
                 includeVariables: true,
                 includeHiddenFields: false,
                 includeMetadata: true,
@@ -481,7 +493,7 @@ describe("AddIntegrationModal", () => {
     });
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith("Integration added successfully.");
+      expect(toast.success).toHaveBeenCalledWith("environments.integrations.integration_added_successfully");
     });
     await waitFor(() => {
       expect(mockSetOpen).toHaveBeenCalledWith(false);
@@ -502,7 +514,7 @@ describe("AddIntegrationModal", () => {
       />
     );
 
-    const deleteButton = screen.getByText("Delete");
+    const deleteButton = screen.getByText("common.delete");
     await userEvent.click(deleteButton);
 
     await waitFor(() => {
@@ -517,7 +529,9 @@ describe("AddIntegrationModal", () => {
     });
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith("Integration removed successfully.");
+      expect(toast.success).toHaveBeenCalledWith(
+        "environments.integrations.integration_removed_successfully"
+      );
     });
     await waitFor(() => {
       expect(mockSetOpen).toHaveBeenCalledWith(false);
@@ -541,14 +555,18 @@ describe("AddIntegrationModal", () => {
       "https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>"
     );
     const surveyDropdown = screen.getByTestId("survey-dropdown");
-    const submitButton = screen.getByRole("button", { name: "Link Google Sheet" });
+    const submitButton = screen.getByRole("button", {
+      name: "environments.integrations.google_sheets.link_google_sheet",
+    });
 
     await userEvent.type(urlInput, "invalid-url");
     await userEvent.selectOptions(surveyDropdown, surveys[0].id);
     await userEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Please enter a valid Google Sheet URL.");
+      expect(toast.error).toHaveBeenCalledWith(
+        "environments.integrations.google_sheets.enter_a_valid_spreadsheet_url_error"
+      );
     });
     expect(createOrUpdateIntegrationAction).not.toHaveBeenCalled();
     expect(mockSetOpen).not.toHaveBeenCalled();
@@ -570,14 +588,16 @@ describe("AddIntegrationModal", () => {
     const urlInput = screen.getByPlaceholderText(
       "https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>"
     );
-    const submitButton = screen.getByRole("button", { name: "Link Google Sheet" });
+    const submitButton = screen.getByRole("button", {
+      name: "environments.integrations.google_sheets.link_google_sheet",
+    });
 
     await userEvent.type(urlInput, "https://docs.google.com/spreadsheets/d/some-id");
     // No survey selected
     await userEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Please select a survey.");
+      expect(toast.error).toHaveBeenCalledWith("environments.integrations.please_select_a_survey_error");
     });
     expect(createOrUpdateIntegrationAction).not.toHaveBeenCalled();
     expect(mockSetOpen).not.toHaveBeenCalled();
@@ -600,7 +620,9 @@ describe("AddIntegrationModal", () => {
       "https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>"
     );
     const surveyDropdown = screen.getByTestId("survey-dropdown");
-    const submitButton = screen.getByRole("button", { name: "Link Google Sheet" });
+    const submitButton = screen.getByRole("button", {
+      name: "environments.integrations.google_sheets.link_google_sheet",
+    });
 
     await userEvent.type(urlInput, "https://docs.google.com/spreadsheets/d/some-id");
     await userEvent.selectOptions(surveyDropdown, surveys[0].id);
@@ -614,7 +636,9 @@ describe("AddIntegrationModal", () => {
     await userEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Please select at least one question.");
+      expect(toast.error).toHaveBeenCalledWith(
+        "environments.integrations.select_at_least_one_question_error"
+      );
     });
     expect(createOrUpdateIntegrationAction).not.toHaveBeenCalled();
     expect(mockSetOpen).not.toHaveBeenCalled();
@@ -641,7 +665,9 @@ describe("AddIntegrationModal", () => {
       "https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>"
     );
     const surveyDropdown = screen.getByTestId("survey-dropdown");
-    const submitButton = screen.getByRole("button", { name: "Link Google Sheet" });
+    const submitButton = screen.getByRole("button", {
+      name: "environments.integrations.google_sheets.link_google_sheet",
+    });
 
     await userEvent.type(urlInput, "https://docs.google.com/spreadsheets/d/another-id");
     await userEvent.selectOptions(surveyDropdown, surveys[0].id);
@@ -675,7 +701,7 @@ describe("AddIntegrationModal", () => {
     const urlInput = screen.getByPlaceholderText(
       "https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>"
     );
-    const cancelButton = screen.getByText("Cancel");
+    const cancelButton = screen.getByText("common.cancel");
 
     // Simulate some interaction
     await userEvent.type(urlInput, "https://docs.google.com/spreadsheets/d/temp-id");
