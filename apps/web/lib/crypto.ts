@@ -108,7 +108,7 @@ export const verifySecret = async (secret: string, hashedSecret: string): Promis
     return isValid;
   } catch (error) {
     // Log warning for debugging purposes, but don't throw to maintain security
-    logger.warn("Secret verification failed due to invalid hash format", { error });
+    logger.warn({ error }, "Secret verification failed due to invalid hash format");
     // Return false for invalid hashes or other bcrypt errors
     return false;
   }
