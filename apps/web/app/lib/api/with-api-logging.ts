@@ -74,9 +74,9 @@ const handleRateLimiting = async (
       if ("user" in authentication) {
         // Session-based authentication for integration routes
         await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.v1, authentication.user.id);
-      } else if ("hashedApiKey" in authentication) {
+      } else if ("apiKeyId" in authentication) {
         // API key authentication for general routes
-        await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.v1, authentication.hashedApiKey);
+        await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.v1, authentication.apiKeyId);
       } else {
         logger.error({ authentication }, "Unknown authentication type");
         return responses.internalServerErrorResponse("Invalid authentication configuration");

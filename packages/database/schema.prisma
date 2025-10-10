@@ -725,7 +725,8 @@ model ApiKey {
   createdBy          String?
   lastUsedAt         DateTime?
   label              String
-  hashedKey          String              @unique
+  hashedKey          String
+  lookupHash         String?             @unique
   organizationId     String
   organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   apiKeyEnvironments ApiKeyEnvironment[]

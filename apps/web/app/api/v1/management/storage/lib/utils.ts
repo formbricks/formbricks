@@ -13,7 +13,7 @@ export const checkAuth = async (authentication: TApiV1Authentication, environmen
     if (!isUserAuthorized) {
       return responses.unauthorizedResponse();
     }
-  } else if ("hashedApiKey" in authentication) {
+  } else if ("apiKeyId" in authentication) {
     if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
       return responses.unauthorizedResponse();
     }

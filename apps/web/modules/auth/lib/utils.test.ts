@@ -158,10 +158,10 @@ describe("Auth Utils", () => {
       // Should return false for security
       expect(result).toBe(false);
 
-      // Should log warning
+      // Should log warning with correct signature (Pino format: object first, then message)
       expect(mockLogger.warn).toHaveBeenCalledWith(
         { error: expect.any(Error) },
-        "Password verification failed due to invalid hash format"
+        "Secret verification failed due to invalid hash format"
       );
 
       // Restore the module

@@ -23,6 +23,7 @@ export const ZApiKey = z.object({
   lastUsedAt: z.date().nullable(),
   label: z.string(),
   hashedKey: z.string(),
+  lookupHash: z.string().nullable(),
   organizationId: z.string().cuid2(),
   organizationAccess: ZOrganizationAccess,
 }) satisfies z.ZodType<ApiKey>;
