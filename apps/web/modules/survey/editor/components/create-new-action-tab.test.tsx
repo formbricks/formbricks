@@ -86,8 +86,8 @@ const mockT = vi.fn((key: string, params?: any) => {
   return translation;
 });
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: mockT }),
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: mockT }),
 }));
 
 describe("CreateNewActionTab", () => {

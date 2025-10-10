@@ -1,9 +1,9 @@
-import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpModal } from "./follow-up-modal";
 
 // Mock react-hook-form
@@ -37,13 +37,6 @@ vi.mock("isomorphic-dompurify", () => ({
   default: {
     sanitize: (input: string) => input,
   },
-}));
-
-// Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 // Mock the Editor component

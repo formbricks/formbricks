@@ -14,12 +14,6 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock("../actions", () => ({
   updateMembershipAction: vi.fn(),
   updateInviteAction: vi.fn(),

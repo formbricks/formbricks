@@ -1,9 +1,9 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslate } from "@tolgee/react";
-import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys/types";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface CalSummaryProps {
@@ -13,7 +13,7 @@ interface CalSummaryProps {
 }
 
 export const CalSummary = ({ questionSummary, survey }: CalSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

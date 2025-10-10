@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import {
   Dialog,
@@ -10,9 +13,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
-import { useTranslate } from "@tolgee/react";
-import { useState } from "react";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { BulkInviteTab } from "./bulk-invite-tab";
 import { IndividualInviteTab } from "./individual-invite-tab";
 
@@ -41,7 +41,7 @@ export const InviteMemberModal = ({
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const tabs = {
     individual: (

@@ -1,17 +1,17 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
-import { Confetti } from "@/modules/ui/components/confetti";
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/modules/ui/components/button";
+import { Confetti } from "@/modules/ui/components/confetti";
 
 interface ConfirmationPageProps {
   environmentId: string;
 }
 
 export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [showConfetti, setShowConfetti] = useState(false);
   useEffect(() => {
     setShowConfetti(true);

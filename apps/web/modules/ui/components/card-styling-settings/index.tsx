@@ -1,5 +1,14 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Project } from "@prisma/client";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
+import React from "react";
+import { UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { Badge } from "@/modules/ui/components/badge";
@@ -8,15 +17,6 @@ import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Slider } from "@/modules/ui/components/slider";
 import { Switch } from "@/modules/ui/components/switch";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon } from "lucide-react";
-import React from "react";
-import { UseFormReturn } from "react-hook-form";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 
 type CardStylingSettingsProps = {
   open: boolean;
@@ -37,7 +37,7 @@ export const CardStylingSettings = ({
   setOpen,
   form,
 }: CardStylingSettingsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const isAppSurvey = surveyType === "app";
   const surveyTypeDerived = isAppSurvey ? "App" : "Link";
   const isLogoVisible = !!project.logo?.url;

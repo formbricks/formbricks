@@ -1,14 +1,14 @@
 "use client";
 
+import type { Environment, Project } from "@prisma/client";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TTemplate } from "@formbricks/types/templates";
 import { customSurveyTemplate } from "@/app/lib/templates";
 import { TemplateList } from "@/modules/survey/components/template-list";
 import { MenuBar } from "@/modules/survey/templates/components/menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import type { Environment, Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { useState } from "react";
-import type { TTemplate } from "@formbricks/types/templates";
 import { getMinimalSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
@@ -24,7 +24,7 @@ export const TemplateContainerWithPreview = ({
   userId,
   isTemplatePage = true,
 }: TemplateContainerWithPreviewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const initialTemplate = customSurveyTemplate(t);
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
   const [activeQuestionId, setActiveQuestionId] = useState<string>(initialTemplate.preset.questions[0].id);

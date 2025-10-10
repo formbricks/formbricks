@@ -1,6 +1,6 @@
-import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { AccessView } from "./access-view";
 
 vi.mock("@/app/(app)/environments/[environmentId]/settings/components/SettingsCard", () => ({
@@ -43,7 +43,7 @@ describe("AccessView", () => {
     ],
   };
 
-  test("renders SettingsCard with tolgee strings and children", () => {
+  test("renders SettingsCard with translated strings and children", () => {
     render(<AccessView {...baseProps} />);
     expect(screen.getByTestId("SettingsCard")).toBeInTheDocument();
     expect(screen.getByText("common.team_access")).toBeInTheDocument();

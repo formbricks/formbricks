@@ -66,12 +66,6 @@ vi.mock("@/modules/ui/components/dialog", () => {
   };
 });
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock("lucide-react", () => ({
   MousePointerClickIcon: () => <div data-testid="mouse-pointer-icon" />,
   PlusIcon: () => <div data-testid="plus-icon" />,

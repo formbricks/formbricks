@@ -1,7 +1,8 @@
 "use client";
 
 import { Webhook } from "@prisma/client";
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -20,7 +21,7 @@ const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
   }
 };
 
-const renderSelectedTriggersText = (webhook: Webhook, t: TFnType) => {
+const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   if (webhook.triggers.length === 0) {
     return <p className="text-slate-400">No Triggers</p>;
   } else {
@@ -63,7 +64,7 @@ export const WebhookRowData = ({
   surveys: TSurvey[];
   locale: TUserLocale;
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg py-2 hover:bg-slate-100">
       <div className="col-span-3 flex items-center truncate pl-6 text-sm">

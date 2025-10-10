@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -26,7 +26,7 @@ export const SingleResponseCardBody = ({
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
   const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
     // Updated regex to match content between #/ and \#
     const regex = /#\/(.*?)\\#/g;

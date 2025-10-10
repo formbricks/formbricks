@@ -1,7 +1,5 @@
-import { createI18nString } from "@/lib/i18n/utils";
-import * as i18nUtils from "@/lib/i18n/utils";
 import "@testing-library/jest-dom/vitest";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "react-i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   TI18nString,
@@ -10,6 +8,8 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
+import * as i18nUtils from "@/lib/i18n/utils";
 import {
   determineImageUploaderVisibility,
   getChoiceLabel,
@@ -384,13 +384,13 @@ describe("utils", () => {
 
   describe("getPlaceHolderById", () => {
     test("returns placeholder for headline", () => {
-      const t = vi.fn((key) => `Translated: ${key}`) as TFnType;
+      const t = vi.fn((key) => `Translated: ${key}`) as TFunction;
       const result = getPlaceHolderById("headline", t);
       expect(result).toBe("Translated: environments.surveys.edit.your_question_here_recall_information_with");
     });
 
     test("returns placeholder for subheader", () => {
-      const t = vi.fn((key) => `Translated: ${key}`) as TFnType;
+      const t = vi.fn((key) => `Translated: ${key}`) as TFunction;
       const result = getPlaceHolderById("subheader", t);
       expect(result).toBe(
         "Translated: environments.surveys.edit.your_description_here_recall_information_with"
@@ -398,7 +398,7 @@ describe("utils", () => {
     });
 
     test("returns empty string for unknown id", () => {
-      const t = vi.fn((key) => `Translated: ${key}`) as TFnType;
+      const t = vi.fn((key) => `Translated: ${key}`) as TFunction;
       const result = getPlaceHolderById("unknown", t);
       expect(result).toBe("");
     });

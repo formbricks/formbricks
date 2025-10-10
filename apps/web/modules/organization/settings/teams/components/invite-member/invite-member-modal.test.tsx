@@ -4,9 +4,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { InviteMemberModal } from "./invite-member-modal";
 
-const t = (k: string) => k;
-vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t }) }));
-
 vi.mock("./bulk-invite-tab", () => ({
   BulkInviteTab: () => <div data-testid="bulk-invite-tab">BulkInviteTab</div>,
 }));

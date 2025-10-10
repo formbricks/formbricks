@@ -47,8 +47,8 @@ vi.mock("lucide-react", () => ({
 }));
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations = {
         "common.table_settings": "Table Settings",

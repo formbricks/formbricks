@@ -43,7 +43,7 @@ describe("AddEndingCardButton", () => {
   test("renders the button correctly", () => {
     render(<AddEndingCardButton localSurvey={mockSurvey} addEndingCard={mockAddEndingCard} />);
 
-    // Check for the Tolgee translated text
+    // Check for the translated text
     expect(screen.getByText("environments.surveys.edit.add_ending")).toBeInTheDocument();
   });
 

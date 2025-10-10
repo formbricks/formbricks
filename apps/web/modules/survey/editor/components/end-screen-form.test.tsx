@@ -1,9 +1,9 @@
-import { createI18nString } from "@/lib/i18n/utils";
 import { render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyEndScreenCard, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString } from "@/lib/i18n/utils";
 import { EndScreenForm } from "./end-screen-form";
 
 // Mock window.matchMedia - required for useAutoAnimate
@@ -52,12 +52,6 @@ vi.mock("@/lib/constants", () => ({
   SESSION_MAX_AGE: 1000,
   REDIS_URL: undefined,
   AUDIT_LOG_ENABLED: true,
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 vi.mock("@/lib/utils/recall", () => ({

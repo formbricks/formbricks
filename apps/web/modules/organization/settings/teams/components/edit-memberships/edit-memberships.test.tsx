@@ -38,7 +38,7 @@ vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: 0,
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

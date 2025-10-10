@@ -1,8 +1,8 @@
 import { getResponsesByContactId } from "@/lib/response/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { IdBadge } from "@/modules/ui/components/id-badge";
-import { getTranslate } from "@/tolgee/server";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
   const t = await getTranslate();

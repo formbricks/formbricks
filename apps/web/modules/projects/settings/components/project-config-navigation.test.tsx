@@ -1,14 +1,10 @@
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { ProjectConfigNavigation } from "./project-config-navigation";
 
 vi.mock("@/modules/ui/components/secondary-navigation", () => ({
   SecondaryNavigation: vi.fn(() => <div data-testid="secondary-navigation" />),
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
 }));
 
 let mockPathname = "/environments/env-1/project/look";

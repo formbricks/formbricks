@@ -1,12 +1,21 @@
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { TFnType } from "@tolgee/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { Testimonial } from "./testimonial";
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() =>
+    Promise.resolve((k: string) => {
+      const translations: Record<string, string> = {
+        "auth.testimonial_title": "Testimonial Title",
+        "auth.testimonial_all_features_included": "All features included",
+        "auth.testimonial_free_and_open_source": "Free and open source",
+        "auth.testimonial_no_credit_card_required": "No credit card required",
+        "auth.testimonial_1": "Test testimonial quote",
+      };
+      return translations[k] || k;
+    })
+  ),
 }));
 
 vi.mock("next/image", () => ({
@@ -21,19 +30,6 @@ describe("Testimonial", () => {
   });
 
   test("renders testimonial content with translations", async () => {
-    const mockTranslate = vi.mocked(getTranslate);
-    const mockT: TFnType = (key) => {
-      const translations: Record<string, string> = {
-        "auth.testimonial_title": "Testimonial Title",
-        "auth.testimonial_all_features_included": "All features included",
-        "auth.testimonial_free_and_open_source": "Free and open source",
-        "auth.testimonial_no_credit_card_required": "No credit card required",
-        "auth.testimonial_1": "Test testimonial quote",
-      };
-      return translations[key] || key;
-    };
-    mockTranslate.mockResolvedValue(mockT);
-
     render(await Testimonial());
 
     // Check title

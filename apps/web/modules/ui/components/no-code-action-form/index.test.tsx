@@ -81,13 +81,6 @@ vi.mock("./components/page-url-selector", () => ({
   ),
 }));
 
-// Mock the tolgee translation
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Helper component for the form
 const TestWrapper = ({
   noCodeConfig = { type: "click" },

@@ -3,9 +3,6 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { EditPublicSurveyAlertDialog } from "./index";
 
-// Mock translation to return keys as text
-vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t: (key: string) => key }) }));
-
 // Mock Dialog components
 vi.mock("@/modules/ui/components/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>

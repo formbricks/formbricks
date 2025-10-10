@@ -15,10 +15,6 @@ vi.mock("./template-tags", () => ({
   TemplateTags: () => <div data-testid="template-tags" />,
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
-
 describe("Template Component", () => {
   afterEach(() => {
     cleanup();

@@ -1,5 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { ZProject } from "@formbricks/types/project";
 import { TOrganizationTeam } from "@/app/(app)/(onboarding)/types/onboarding";
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -24,14 +32,6 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
-import { z } from "zod";
-import { ZProject } from "@formbricks/types/project";
 
 const ZCreateProjectForm = z.object({
   name: ZProject.shape.name,
@@ -53,7 +53,7 @@ export const CreateProjectModal = ({
   organizationId,
   isAccessControlAllowed,
 }: CreateProjectModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [organizationTeams, setOrganizationTeams] = useState<TOrganizationTeam[]>([]);

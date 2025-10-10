@@ -197,13 +197,6 @@ vi.mock("@/lib/cn", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
-// Mock i18n
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock component imports for tabs
 const MockEmailTab = ({ surveyId, email }: { surveyId: string; email: string }) => (
   <div data-testid="email-tab">

@@ -1,4 +1,4 @@
-import { getTranslate } from "@/tolgee/server";
+import { getTranslate } from "@/lingodotdev/server";
 
 export const WebhookTableHeading = async () => {
   const t = await getTranslate();

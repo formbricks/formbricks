@@ -1,5 +1,12 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { ActionClass, OrganizationRole } from "@prisma/client";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -9,13 +16,6 @@ import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { ActionClass, OrganizationRole } from "@prisma/client";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -34,7 +34,7 @@ export const WhenToSendCard = ({
   membershipRole,
   projectPermission,
 }: WhenToSendCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [actionClasses, setActionClasses] = useState<ActionClass[]>(propActionClasses);

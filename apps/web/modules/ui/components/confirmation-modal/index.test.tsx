@@ -3,12 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { ConfirmationModal } from "./index";
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock Dialog components
 vi.mock("@/modules/ui/components/dialog", () => ({
   Dialog: vi.fn(({ children, open, onOpenChange }) =>

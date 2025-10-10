@@ -24,13 +24,6 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-// Mock the translate hook from @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key, // simply return the key
-  }),
-}));
-
 // Mock the Dialog components
 vi.mock("@/modules/ui/components/dialog", () => ({
   Dialog: ({ children, open, onOpenChange }: any) =>

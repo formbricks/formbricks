@@ -1,5 +1,8 @@
 "use client";
 
+import { AlertCircleIcon } from "lucide-react";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FacebookIcon } from "@/modules/ui/components/icons/facebook-icon";
@@ -7,9 +10,6 @@ import { LinkedinIcon } from "@/modules/ui/components/icons/linkedin-icon";
 import { RedditIcon } from "@/modules/ui/components/icons/reddit-icon";
 import { ThreadsIcon } from "@/modules/ui/components/icons/threads-icon";
 import { XIcon } from "@/modules/ui/components/icons/x-icon";
-import { useTranslate } from "@tolgee/react";
-import { AlertCircleIcon } from "lucide-react";
-import { useMemo } from "react";
 
 interface SocialMediaTabProps {
   surveyUrl: string;
@@ -17,7 +17,7 @@ interface SocialMediaTabProps {
 }
 
 export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surveyTitle }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const socialMediaPlatforms = useMemo(() => {
     const shareText = surveyTitle;

@@ -6,7 +6,7 @@ import { SegmentTable } from "./segment-table";
 import { SegmentTableDataRowContainer } from "./segment-table-data-row-container";
 
 // Mock the getTranslate function
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

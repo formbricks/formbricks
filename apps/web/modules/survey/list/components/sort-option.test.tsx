@@ -13,10 +13,6 @@ vi.mock("@/modules/ui/components/dropdown-menu", () => ({
   ),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
-
 describe("SortOption", () => {
   const mockOption: TSortOption = {
     label: "test.sort.option",

@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { convertDateTimeStringShort } from "@/lib/time";
@@ -32,7 +32,7 @@ export const ActionActivityTab = ({
   environment,
   isReadOnly,
 }: ActivityTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);

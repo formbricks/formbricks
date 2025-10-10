@@ -4,9 +4,9 @@ import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TI18nString, TSurvey, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -39,7 +39,7 @@ export const RankingQuestionForm = ({
   locale,
   isStorageConfigured = true,
 }: RankingQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
 

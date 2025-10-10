@@ -3,12 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { BackgroundStylingCard } from "./index";
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [null],
 }));

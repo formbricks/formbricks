@@ -1,6 +1,6 @@
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TagsPage } from "./page";
 
 vi.mock("@/app/(app)/environments/[environmentId]/settings/components/SettingsCard", () => ({
@@ -36,7 +36,7 @@ vi.mock("./components/edit-tags-wrapper", () => ({
 
 const mockGetTranslate = vi.fn(async () => (key: string) => key);
 
-vi.mock("@/tolgee/server", () => ({ getTranslate: () => mockGetTranslate() }));
+vi.mock("@/lingodotdev/server", () => ({ getTranslate: () => mockGetTranslate() }));
 vi.mock("@/modules/environments/lib/utils", () => ({
   getEnvironmentAuth: vi.fn(),
 }));
@@ -52,7 +52,7 @@ describe("TagsPage", () => {
     cleanup();
   });
 
-  test("renders all tolgee strings and main components", async () => {
+  test("renders all translated strings and main components", async () => {
     const props = { params: { environmentId: "env1" } };
     vi.mocked(getEnvironmentAuth).mockResolvedValue({
       isReadOnly: false,

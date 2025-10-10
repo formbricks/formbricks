@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { EmailSentPage } from "./page";
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

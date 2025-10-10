@@ -1,5 +1,12 @@
 "use client";
 
+import { CirclePlayIcon, CopyIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { updateSingleUseLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { DisableLinkModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
@@ -9,13 +16,6 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { CirclePlayIcon, CopyIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface AnonymousLinksTabProps {
   survey: TSurvey;
@@ -36,7 +36,7 @@ export const AnonymousLinksTab = ({
 }: AnonymousLinksTabProps) => {
   const surveyUrlWithCustomSuid = `${surveyUrl}?suId=CUSTOM-ID`;
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const [isMultiUseLink, setIsMultiUseLink] = useState(!survey.singleUse?.enabled);
   const [isSingleUseLink, setIsSingleUseLink] = useState(survey.singleUse?.enabled ?? false);

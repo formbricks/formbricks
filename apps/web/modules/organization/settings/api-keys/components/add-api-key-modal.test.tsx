@@ -43,13 +43,6 @@ vi.mock("@/modules/ui/components/dialog", () => ({
   ),
 }));
 
-// Mock the translate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key, // Return the key as is for testing
-  }),
-}));
-
 // Base project definition (customize as needed)
 const baseProject = {
   id: "project1",

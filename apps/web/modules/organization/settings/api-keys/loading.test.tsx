@@ -20,16 +20,13 @@ vi.mock("@/modules/ui/components/page-header", () => ({
     </div>
   ),
 }));
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (k) => k }),
-}));
 
 describe("Loading (API Keys)", () => {
   afterEach(() => {
     cleanup();
   });
 
-  test("renders loading skeletons and tolgee strings", () => {
+  test("renders loading skeletons and translated strings", () => {
     render(<Loading isFormbricksCloud={true} />);
     expect(screen.getByTestId("content-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("page-header")).toBeInTheDocument();

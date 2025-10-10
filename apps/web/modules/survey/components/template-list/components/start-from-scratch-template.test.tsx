@@ -1,9 +1,9 @@
-import { customSurveyTemplate } from "@/app/lib/templates";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TTemplate } from "@formbricks/types/templates";
+import { customSurveyTemplate } from "@/app/lib/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
 import { StartFromScratchTemplate } from "./start-from-scratch-template";
 
@@ -13,12 +13,6 @@ vi.mock("@/app/lib/templates", () => ({
 
 vi.mock("../lib/utils", () => ({
   replacePresetPlaceholders: vi.fn(),
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 vi.mock("@/lib/cn", () => ({

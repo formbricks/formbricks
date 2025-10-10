@@ -1,9 +1,9 @@
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getOrganization } from "@/lib/organization/service";
 import { getServerSession } from "next-auth";
 import { describe, expect, test, vi } from "vitest";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getOrganization } from "@/lib/organization/service";
 import { getOrganizationAuth } from "./utils";
 
 vi.mock("@/lib/membership/service", () => ({
@@ -23,7 +23,7 @@ vi.mock("@/lib/organization/service", () => ({
 vi.mock("@/modules/auth/lib/authOptions", () => ({
   authOptions: {},
 }));
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(() => Promise.resolve((k: string) => k)),
 }));
 vi.mock("next-auth", () => ({

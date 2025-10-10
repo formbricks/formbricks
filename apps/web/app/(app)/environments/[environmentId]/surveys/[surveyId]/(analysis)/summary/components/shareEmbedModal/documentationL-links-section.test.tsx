@@ -4,8 +4,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { DocumentationLinksSection } from "./documentation-links-section";
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       if (key === "common.read_docs") {
         return "Read docs";

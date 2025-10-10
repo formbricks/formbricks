@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+import { TSurveySummary } from "@formbricks/types/surveys/types";
 import { InteractiveCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/interactive-card";
 import { StatCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/stat-card";
 import { cn } from "@/modules/ui/lib/utils";
-import { useTranslate } from "@tolgee/react";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
 
 interface SummaryMetadataProps {
   surveySummary: TSurveySummary["meta"];
@@ -48,7 +48,7 @@ export const SummaryMetadata = ({
     quotasCompleted,
     quotasCompletedPercentage,
   } = surveySummary;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const dropoffCountValue = dropOffCount === 0 ? <span>-</span> : dropOffCount;
 
   const handleTabChange = (val: "dropOffs" | "quotas") => {

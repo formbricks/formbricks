@@ -66,12 +66,6 @@ vi.mock("@/modules/ui/components/code-block", () => ({
   ),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock("lucide-react", () => ({
   CopyIcon: () => <div data-testid="copy-icon">CopyIcon</div>,
 }));

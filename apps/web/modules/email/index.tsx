@@ -23,9 +23,9 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getTranslate } from "@/lingodotdev/server";
 import NewEmailVerification from "@/modules/email/emails/auth/new-email-verification";
 import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
-import { getTranslate } from "@/tolgee/server";
 import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
 import { VerificationEmail } from "./emails/auth/verification-email";

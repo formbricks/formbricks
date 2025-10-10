@@ -1,29 +1,16 @@
 import type { Preview } from "@storybook/react-vite";
-import { TolgeeProvider } from "@tolgee/react";
 import React from "react";
-// Import translation data for Storybook
-import enUSTranslations from "../../web/locales/en-US.json";
+import { I18nProvider } from "../../web/lingodotdev/client";
 import "../../web/modules/ui/globals.css";
-import { TolgeeBase } from "../../web/tolgee/shared";
 
-// Create a Storybook-specific Tolgee decorator
-const withTolgee = (Story: any) => {
-  const tolgee = TolgeeBase().init({
-    tagNewKeys: [], // No branch tagging in Storybook
-  });
-
+// Create a Storybook-specific Lingodot Dev decorator
+const withLingodotDev = (Story: any) => {
   return React.createElement(
-    TolgeeProvider,
+    I18nProvider,
     {
-      tolgee,
-      fallback: "Loading",
-      ssr: {
-        language: "en-US",
-        staticData: {
-          "en-US": enUSTranslations,
-        },
-      },
-    },
+      language: "en-US",
+      defaultLanguage: "en-US",
+    } as any,
     React.createElement(Story)
   );
 };
@@ -37,7 +24,7 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [withTolgee],
+  decorators: [withLingodotDev],
 };
 
 export default preview;

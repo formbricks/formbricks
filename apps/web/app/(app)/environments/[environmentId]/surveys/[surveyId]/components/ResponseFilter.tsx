@@ -1,5 +1,10 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
   SelectedFilterValue,
   TResponseStatus,
@@ -17,11 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
@@ -36,7 +36,7 @@ interface ResponseFilterProps {
 }
 
 export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
   const { selectedFilter, setSelectedFilter, selectedOptions, setSelectedOptions } = useResponseFilter();

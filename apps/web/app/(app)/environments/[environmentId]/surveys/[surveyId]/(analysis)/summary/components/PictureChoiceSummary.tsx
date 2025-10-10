@@ -1,11 +1,8 @@
 "use client";
 
-import { getChoiceIdByValue } from "@/lib/response/utils";
-import { IdBadge } from "@/modules/ui/components/id-badge";
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -13,6 +10,9 @@ import {
   TSurveyQuestionSummaryPictureSelection,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { getChoiceIdByValue } from "@/lib/response/utils";
+import { IdBadge } from "@/modules/ui/components/id-badge";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -30,7 +30,7 @@ interface PictureChoiceSummaryProps {
 
 export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: PictureChoiceSummaryProps) => {
   const results = questionSummary.choices;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

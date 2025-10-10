@@ -1,3 +1,4 @@
+import { notFound, redirect } from "next/navigation";
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
 import { ProjectAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/components/project-and-org-switch";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -5,11 +6,10 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
-import { getTranslate } from "@/tolgee/server";
-import { notFound, redirect } from "next/navigation";
 
 const Page = async (props) => {
   const params = await props.params;

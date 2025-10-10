@@ -15,11 +15,6 @@ vi.mock("@/modules/auth/actions/sign-out", () => ({
   logSignOutAction: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Module mocks must be declared before importing the component
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key, isLoading: false }),
-}));
-
 // Mock our useSignOut hook
 const mockSignOut = vi.fn();
 vi.mock("@/modules/auth/hooks/use-sign-out", () => ({

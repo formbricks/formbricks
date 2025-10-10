@@ -1,11 +1,11 @@
 "use client";
 
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TUser } from "@formbricks/types/user";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
-import { useState } from "react";
-import { TUser } from "@formbricks/types/user";
 
 interface RemovedFromOrganizationProps {
   isFormbricksCloud: boolean;
@@ -13,7 +13,7 @@ interface RemovedFromOrganizationProps {
 }
 
 export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFromOrganizationProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="space-y-4">

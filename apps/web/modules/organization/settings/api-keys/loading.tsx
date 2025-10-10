@@ -1,12 +1,12 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
 
 const LoadingCard = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-sm">
       <div className="grid content-center border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
@@ -45,7 +45,7 @@ const LoadingCard = () => {
 };
 
 const Loading = ({ isFormbricksCloud }: { isFormbricksCloud: boolean }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>

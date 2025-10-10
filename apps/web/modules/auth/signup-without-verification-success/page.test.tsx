@@ -1,17 +1,11 @@
-import { getEmailFromEmailToken } from "@/lib/jwt";
-import { SignupWithoutVerificationSuccessPage } from "@/modules/auth/signup-without-verification-success/page";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getEmailFromEmailToken } from "@/lib/jwt";
+import { SignupWithoutVerificationSuccessPage } from "@/modules/auth/signup-without-verification-success/page";
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
-  T: ({ keyName, params }) => {
-    if (params && params.email) {
-      return `${keyName} ${params.email}`;
-    }
-    return keyName;
-  },
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -74,9 +68,7 @@ describe("SignupWithoutVerificationSuccessPage", () => {
       screen.getByText("auth.signup_without_verification_success.user_successfully_created")
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "auth.signup_without_verification_success.user_successfully_created_info test@example.com"
-      )
+      screen.getByText("auth.signup_without_verification_success.user_successfully_created_info")
     ).toBeInTheDocument();
     expect(screen.getByText("Mocked BackToLoginButton")).toBeInTheDocument();
   });

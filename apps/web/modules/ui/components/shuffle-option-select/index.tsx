@@ -1,5 +1,12 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+import {
+  TShuffleOption,
+  TSurveyMatrixQuestion,
+  TSurveyMultipleChoiceQuestion,
+  TSurveyRankingQuestion,
+} from "@formbricks/types/surveys/types";
 import {
   Select,
   SelectContent,
@@ -7,13 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslate } from "@tolgee/react";
-import {
-  TShuffleOption,
-  TSurveyMatrixQuestion,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyRankingQuestion,
-} from "@formbricks/types/surveys/types";
 
 interface ShuffleOptionType {
   id: string;
@@ -43,7 +43,7 @@ export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
   updateQuestion,
   shuffleOptionsTypes,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <Select
       defaultValue={shuffleOption}

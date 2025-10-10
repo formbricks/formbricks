@@ -1,4 +1,4 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { capitalize } from "lodash";
 import {
   AirplayIcon,
@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { TResponseMeta } from "@formbricks/types/responses";
 
-export const getAddressFieldLabel = (field: string, t: TFnType) => {
+export const getAddressFieldLabel = (field: string, t: TFunction) => {
   switch (field) {
     case "addressLine1":
       return t("environments.surveys.responses.address_line_1");
@@ -29,7 +29,7 @@ export const getAddressFieldLabel = (field: string, t: TFnType) => {
   }
 };
 
-export const getContactInfoFieldLabel = (field: string, t: TFnType) => {
+export const getContactInfoFieldLabel = (field: string, t: TFunction) => {
   switch (field) {
     case "firstName":
       return t("environments.surveys.responses.first_name");
@@ -46,7 +46,7 @@ export const getContactInfoFieldLabel = (field: string, t: TFnType) => {
   }
 };
 
-export const getMetadataFieldLabel = (label: string, t: TFnType) => {
+export const getMetadataFieldLabel = (label: string, t: TFunction) => {
   switch (label) {
     case "action":
       return t("common.action");

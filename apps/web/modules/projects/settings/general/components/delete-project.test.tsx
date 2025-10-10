@@ -1,10 +1,10 @@
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getUserProjects } from "@/lib/project/service";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getUserProjects } from "@/lib/project/service";
 import { DeleteProject } from "./delete-project";
 
 vi.mock("@/modules/projects/settings/general/components/delete-project-render", () => ({
@@ -37,7 +37,7 @@ const mockOrganization = {
   billing: { plan: "free" } as any,
 } as any;
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(() => {
     // Return a mock translator that just returns the key
     return (key: string) => key;

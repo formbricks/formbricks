@@ -15,13 +15,6 @@ const mockQuestion3Id = "lyz9v4dj1nta4yucklxepwms";
 const mockFollowUp1Id = "j4jyvddxbwswuw9nqdzicjn8";
 const mockFollowUp2Id = "c76dooqu448d49gtu6qv1vge";
 
-// Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock the FollowUpModal component to verify it's opened
 const mockFollowUpModal = vi.fn();
 vi.mock("./follow-up-modal", () => ({

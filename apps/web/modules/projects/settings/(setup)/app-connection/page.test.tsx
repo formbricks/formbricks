@@ -71,7 +71,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

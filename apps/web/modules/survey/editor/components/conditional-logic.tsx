@@ -2,7 +2,6 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -13,6 +12,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { duplicateLogicItem } from "@/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -43,7 +43,7 @@ export function ConditionalLogic({
   questionIdx,
   updateQuestion,
 }: ConditionalLogicProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const transformedSurvey = useMemo(() => {
     let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default");
     modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default");

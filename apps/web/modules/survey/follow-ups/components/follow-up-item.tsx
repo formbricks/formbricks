@@ -1,18 +1,18 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
+import { CopyIcon, Trash2Icon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { CopyIcon, Trash2Icon } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
-import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface FollowUpItemProps {
   followUp: TSurveyFollowUp;
@@ -35,7 +35,7 @@ export const FollowUpItem = ({
   setLocalSurvey,
   locale,
 }: FollowUpItemProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
 

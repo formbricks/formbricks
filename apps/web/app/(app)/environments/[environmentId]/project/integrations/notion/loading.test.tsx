@@ -12,13 +12,6 @@ vi.mock("@/modules/ui/components/go-back-button", () => ({
   GoBackButton: () => <div data-testid="go-back-button">Go Back</div>,
 }));
 
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key, // Simple mock translation
-  }),
-}));
-
 describe("Notion Integration Loading", () => {
   afterEach(() => {
     cleanup();

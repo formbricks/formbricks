@@ -1,11 +1,11 @@
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { getBasicSurveyMetadata } from "@/modules/survey/link/lib/metadata-utils";
-import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
 import { ContactSurveyPage, generateMetadata } from "./page";
 
 vi.mock("@/lib/constants", () => ({
@@ -67,7 +67,7 @@ vi.mock("@/modules/survey/link/components/survey-inactive", () => ({
 vi.mock("@/modules/survey/link/components/survey-renderer", () => ({
   renderSurvey: vi.fn(() => <div>Rendered Survey</div>),
 }));
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(() => Promise.resolve((key: string) => key)),
 }));
 vi.mock("@/modules/survey/link/lib/project", () => ({

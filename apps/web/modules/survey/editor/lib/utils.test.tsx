@@ -1,5 +1,5 @@
 import { cleanup } from "@testing-library/react";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "react-i18next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   TSingleCondition,
@@ -196,7 +196,7 @@ vi.mock("./logic-rule-engine", () => {
 });
 
 // Mock translation function
-const mockT: TFnType = (key) => key as string;
+const mockT: TFunction = (key) => key as string;
 
 // Create mock survey data
 const createMockSurvey = (): TSurvey =>

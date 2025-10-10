@@ -1,9 +1,8 @@
-import { findMatchingLocale } from "@/lib/utils/locale";
-import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { findMatchingLocale } from "@/lib/utils/locale";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { SignupPage } from "./page";
 
 // Mock dependencies
@@ -62,8 +61,8 @@ vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
 }));
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
 }));
 
 // Mock the SignupForm component to simplify our test assertions
@@ -80,7 +79,6 @@ describe("SignupPage", () => {
     vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
-    vi.mocked(getTranslate).mockResolvedValue((key) => key);
   });
 
   test("renders the signup page correctly", async () => {

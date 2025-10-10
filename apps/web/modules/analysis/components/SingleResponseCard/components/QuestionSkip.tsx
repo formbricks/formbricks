@@ -1,12 +1,12 @@
 "use client";
 
+import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { TResponseData } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
-import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface QuestionSkipProps {
   skippedQuestions: string[] | undefined;
@@ -23,7 +23,7 @@ export const QuestionSkip = ({
   isFirstQuestionAnswered,
   responseData,
 }: QuestionSkipProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div>
       {skippedQuestions && (

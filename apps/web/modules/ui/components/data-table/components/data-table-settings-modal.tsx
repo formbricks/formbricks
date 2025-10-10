@@ -1,14 +1,6 @@
 "use client";
 
 import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/modules/ui/components/dialog";
-import {
   DndContext,
   DragEndEvent,
   PointerSensor,
@@ -18,10 +10,18 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Table } from "@tanstack/react-table";
-import { useTranslate } from "@tolgee/react";
 import { SettingsIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { DataTableSettingsModalItem } from "./data-table-settings-modal-item";
 
 interface DataTableSettingsModalProps<T> {
@@ -41,7 +41,7 @@ export const DataTableSettingsModal = <T,>({
   handleDragEnd,
   survey,
 }: DataTableSettingsModalProps<T>) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

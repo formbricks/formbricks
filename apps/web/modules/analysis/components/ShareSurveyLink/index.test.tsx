@@ -1,9 +1,9 @@
-import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink/index";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { toast } from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink/index";
 import { getSurveyUrl } from "../../utils";
 
 vi.mock("react-hot-toast", () => ({
@@ -120,13 +120,6 @@ const setSurveyUrl = vi.fn((url: string) => {
   surveyUrl = url;
 });
 const locale: TUserLocale = "en-US";
-
-// Mocking dependencies
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 Object.assign(navigator, {
   clipboard: {

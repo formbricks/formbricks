@@ -1,5 +1,14 @@
 "use client";
 
+import { Project } from "@prisma/client";
+import { RotateCcwIcon } from "lucide-react";
+import Link from "next/link";
+import React, { useEffect, useMemo, useState } from "react";
+import { UseFormReturn, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { defaultStyling } from "@/lib/styling/constants";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -15,15 +24,6 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Switch } from "@/modules/ui/components/switch";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { RotateCcwIcon } from "lucide-react";
-import Link from "next/link";
-import React, { useEffect, useMemo, useState } from "react";
-import { UseFormReturn, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 
 interface StylingViewProps {
   environmentId: string;
@@ -54,7 +54,7 @@ export const StylingView = ({
   isCxMode,
   isStorageConfigured = true,
 }: StylingViewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const form = useForm<TSurveyStyling>({
     defaultValues: { ...defaultStyling, ...project.styling, ...localSurvey.styling },

@@ -1,11 +1,11 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "react-i18next";
 import { describe, expect, test, vi } from "vitest";
 import { TSurveyQuestionTypeEnum, ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/types";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
 // Mock the translation function
 const mockT = vi.fn((key: string) => `mockTranslate(${key})`);
-const logicRules = getLogicRules(mockT as unknown as TFnType);
+const logicRules = getLogicRules(mockT as unknown as TFunction);
 
 describe("getLogicRules", () => {
   test("should return correct structure for question rules", () => {

@@ -3,12 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DisableLinkModal } from "./disable-link-modal";
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 const onOpenChange = vi.fn();
 const onDisable = vi.fn();
 

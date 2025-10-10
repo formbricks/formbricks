@@ -107,13 +107,6 @@ vi.mock(
   })
 );
 
-// Mock translations
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock Next.js router
 const mockRefresh = vi.fn();
 vi.mock("next/navigation", () => ({

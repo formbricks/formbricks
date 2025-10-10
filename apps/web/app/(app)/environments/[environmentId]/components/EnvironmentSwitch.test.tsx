@@ -12,13 +12,6 @@ vi.mock("next/navigation", () => ({
   })),
 }));
 
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 const mockEnvironmentDev: TEnvironment = {
   id: "dev-env-id",
   createdAt: new Date(),

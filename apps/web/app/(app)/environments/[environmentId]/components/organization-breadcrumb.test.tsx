@@ -12,12 +12,6 @@ vi.mock("next/navigation", () => ({
   usePathname: vi.fn(),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock("@/modules/organization/components/CreateOrganizationModal", () => ({
   CreateOrganizationModal: ({ open, setOpen }: any) =>
     open ? (

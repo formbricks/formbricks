@@ -9,6 +9,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
@@ -17,7 +18,6 @@ import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organiz
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 
 const Page = async (props) => {
   const params = await props.params;

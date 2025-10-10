@@ -1,11 +1,11 @@
 "use client";
 
-import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 import { Language } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { TUserLocale } from "@formbricks/types/user";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface LanguageToggleProps {
   language: Language;
@@ -16,7 +16,7 @@ interface LanguageToggleProps {
 }
 
 export function LanguageToggle({ language, isChecked, onToggle, onEdit, locale }: LanguageToggleProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex items-center space-x-4">

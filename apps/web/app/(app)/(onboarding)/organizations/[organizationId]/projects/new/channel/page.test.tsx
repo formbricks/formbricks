@@ -1,10 +1,9 @@
-import { getUserProjects } from "@/lib/project/service";
-import { getOrganizationAuth } from "@/modules/organization/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getUserProjects } from "@/lib/project/service";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import Page from "./page";
 
 const mockTranslate = vi.fn((key) => key);
@@ -12,7 +11,7 @@ const mockTranslate = vi.fn((key) => key);
 // Module mocks must be declared before importing the component
 vi.mock("@/lib/project/service", () => ({ getUserProjects: vi.fn() }));
 vi.mock("@/modules/organization/lib/utils", () => ({ getOrganizationAuth: vi.fn() }));
-vi.mock("@/tolgee/server", () => ({ getTranslate: vi.fn() }));
+vi.mock("@/lingodotdev/server", () => ({ getTranslate: vi.fn(() => (key: string) => key) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn(() => "REDIRECT_STUB") }));
 vi.mock("@/modules/ui/components/header", () => ({
   Header: ({ title, subtitle }: { title: string; subtitle: string }) => (
@@ -50,7 +49,6 @@ describe("Page component", () => {
 
   test("renders header, options, and close button when projects exist", async () => {
     vi.mocked(getOrganizationAuth).mockResolvedValue({ session: { user: { id: "user1" } } } as any);
-    vi.mocked(getTranslate).mockResolvedValue(mockTranslate);
     vi.mocked(getUserProjects).mockResolvedValue([{ id: 1 }] as any);
 
     const element = await Page({ params });
@@ -77,7 +75,6 @@ describe("Page component", () => {
 
   test("does not render close button when no projects", async () => {
     vi.mocked(getOrganizationAuth).mockResolvedValue({ session: { user: { id: "user1" } } } as any);
-    vi.mocked(getTranslate).mockResolvedValue(mockTranslate);
     vi.mocked(getUserProjects).mockResolvedValue([]);
 
     const element = await Page({ params });

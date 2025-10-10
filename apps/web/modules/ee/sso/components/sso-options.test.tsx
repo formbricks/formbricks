@@ -9,13 +9,6 @@ vi.mock("@/lib/env", () => ({
   },
 }));
 
-// Mock the translation hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock the individual SSO buttons
 vi.mock("./google-button", () => ({
   GoogleButton: ({ lastUsed, source }: any) => (

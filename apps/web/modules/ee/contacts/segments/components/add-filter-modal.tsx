@@ -1,13 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
-import { Input } from "@/modules/ui/components/input";
-import { TabBar } from "@/modules/ui/components/tab-bar";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import React, { type JSX, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
@@ -15,6 +11,10 @@ import type {
   TSegmentAttributeFilter,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
+import { cn } from "@/lib/cn";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
+import { Input } from "@/modules/ui/components/input";
+import { TabBar } from "@/modules/ui/components/tab-bar";
 import AttributeTabContent from "./attribute-tab-content";
 import FilterButton from "./filter-button";
 
@@ -144,7 +144,7 @@ export function AddFilterModal({
 }: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const tabs: {
     id: string;
     label: string;

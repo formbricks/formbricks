@@ -1,7 +1,8 @@
 "use client";
 
 import { Webhook } from "@prisma/client";
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { Label } from "@/modules/ui/components/label";
@@ -22,7 +23,7 @@ const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): stri
   }
 };
 
-const convertTriggerIdToName = (triggerId: string, t: TFnType): string => {
+const convertTriggerIdToName = (triggerId: string, t: TFunction): string => {
   switch (triggerId) {
     case "responseCreated":
       return t("environments.integrations.webhooks.response_created");
@@ -36,7 +37,7 @@ const convertTriggerIdToName = (triggerId: string, t: TFnType): string => {
 };
 
 export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">

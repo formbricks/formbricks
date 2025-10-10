@@ -3,11 +3,6 @@ import { toast } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SelectedRowSettings } from "./selected-row-settings";
 
-// Mock translation
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
-
 // Mock DeleteDialog to reveal confirm button when open
 vi.mock("@/modules/ui/components/delete-dialog", () => ({
   DeleteDialog: ({ open, onDelete }: any) =>

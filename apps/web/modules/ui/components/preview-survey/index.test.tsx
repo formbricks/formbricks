@@ -107,13 +107,6 @@ vi.mock("lucide-react", () => ({
   SmartphoneIcon: () => <span data-testid="smartphone-icon">Smartphone</span>,
 }));
 
-// Mock the tolgee translation
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("PreviewSurvey", () => {
   afterEach(() => {
     cleanup();

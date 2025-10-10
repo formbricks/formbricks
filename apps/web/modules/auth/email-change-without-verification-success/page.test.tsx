@@ -28,7 +28,7 @@ vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
-vi.mock("@/tolgee/server", () => ({ getTranslate: () => Promise.resolve((key: string) => key) }));
+vi.mock("@/lingodotdev/server", () => ({ getTranslate: () => Promise.resolve((key: string) => key) }));
 
 describe("EmailChangeWithoutVerificationSuccessPage", () => {
   afterEach(() => {

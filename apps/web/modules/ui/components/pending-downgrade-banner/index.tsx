@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { TriangleAlertIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
 
 interface PendingDowngradeBannerProps {
@@ -22,7 +22,7 @@ export const PendingDowngradeBanner = ({
   locale,
 }: PendingDowngradeBannerProps) => {
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const isLastCheckedWithin72Hours = lastChecked
     ? new Date().getTime() - lastChecked.getTime() < threeDaysInMillis
     : false;

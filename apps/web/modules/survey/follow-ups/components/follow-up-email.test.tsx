@@ -1,8 +1,6 @@
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { DefaultParamType, TFnType, TranslationKey } from "@tolgee/react/server";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { FollowUpEmail } from "./follow-up-email";
@@ -15,8 +13,8 @@ vi.mock("@/lib/constants", () => ({
   IMPRINT_ADDRESS: "Imprint Address",
 }));
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
 }));
 
 vi.mock("@/modules/email/emails/lib/utils", () => ({
@@ -78,12 +76,6 @@ const defaultProps = {
 };
 
 describe("FollowUpEmail", () => {
-  beforeEach(() => {
-    vi.mocked(getTranslate).mockResolvedValue(
-      ((key: string) => key) as TFnType<DefaultParamType, string, TranslationKey>
-    );
-  });
-
   afterEach(() => {
     cleanup();
   });

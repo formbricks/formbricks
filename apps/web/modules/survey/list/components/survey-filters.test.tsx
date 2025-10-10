@@ -52,10 +52,6 @@ vi.mock("react-use", () => ({
   },
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
-
 // Mock the DropdownMenu components
 vi.mock("@/modules/ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: any) => <div data-testid="dropdown-menu">{children}</div>,

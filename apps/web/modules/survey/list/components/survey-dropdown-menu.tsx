@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  ArrowUpFromLineIcon,
+  CopyIcon,
+  EyeIcon,
+  LinkIcon,
+  MoreVertical,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
@@ -18,21 +33,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useTranslate } from "@tolgee/react";
-import {
-  ArrowUpFromLineIcon,
-  CopyIcon,
-  EyeIcon,
-  LinkIcon,
-  MoreVertical,
-  SquarePenIcon,
-  TrashIcon,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { logger } from "@formbricks/logger";
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {
@@ -56,7 +56,7 @@ export const SurveyDropDownMenu = ({
   deleteSurvey,
   onSurveysCopied,
 }: SurveyDropDownMenuProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);

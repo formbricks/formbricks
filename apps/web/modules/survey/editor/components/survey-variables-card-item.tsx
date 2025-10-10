@@ -1,11 +1,11 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { TrashIcon } from "lucide-react";
 import React, { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { extractRecallInfo } from "@/lib/utils/recall";
@@ -37,7 +37,7 @@ export const SurveyVariablesCardItem = ({
   mode,
   quotas,
 }: SurveyVariablesCardItemProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const form = useForm<TSurveyVariable>({
     defaultValues: variable ?? {
       id: createId(),

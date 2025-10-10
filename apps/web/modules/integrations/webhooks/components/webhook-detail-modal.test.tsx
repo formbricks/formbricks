@@ -1,9 +1,9 @@
-import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
 import { Webhook } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
 
 // Mock the Dialog components
 vi.mock("@/modules/ui/components/dialog", () => ({
@@ -66,8 +66,8 @@ vi.mock("@/modules/integrations/webhooks/components/webhook-settings-tab", () =>
 }));
 
 // Mock useTranslate
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations = {
         "common.overview": "Overview",

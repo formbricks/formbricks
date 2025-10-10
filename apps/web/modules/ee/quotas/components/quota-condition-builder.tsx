@@ -1,5 +1,10 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
+import { FieldErrors } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { TSurveyQuotaInput, TSurveyQuotaLogic } from "@formbricks/types/quota";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   TQuotaConditionGroup,
   createSharedConditionsFactory,
@@ -7,11 +12,6 @@ import {
   quotaConditionsToGeneric,
 } from "@/modules/survey/editor/lib/shared-conditions-factory";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
-import { useTranslate } from "@tolgee/react";
-import { useCallback, useMemo } from "react";
-import { FieldErrors } from "react-hook-form";
-import { TSurveyQuotaInput, TSurveyQuotaLogic } from "@formbricks/types/quota";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface QuotaConditionBuilderProps {
   survey: TSurvey;
@@ -26,7 +26,7 @@ export const QuotaConditionBuilder = ({
   onChange,
   quotaErrors,
 }: QuotaConditionBuilderProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   // Convert quota conditions to generic format
   const genericConditions = useMemo(() => quotaConditionsToGeneric(conditions), [conditions]);

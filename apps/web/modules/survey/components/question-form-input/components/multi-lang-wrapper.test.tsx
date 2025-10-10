@@ -1,11 +1,11 @@
-import { getEnabledLanguages } from "@/lib/i18n/utils";
-import { headlineToRecall } from "@/lib/utils/recall";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TLanguage } from "@formbricks/types/project";
 import { TI18nString, TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
+import { getEnabledLanguages } from "@/lib/i18n/utils";
+import { headlineToRecall } from "@/lib/utils/recall";
 import { MultiLangWrapper } from "./multi-lang-wrapper";
 
 vi.mock("@/lib/i18n/utils", () => ({
@@ -21,8 +21,8 @@ vi.mock("@/modules/ee/multi-language-surveys/components/language-indicator", () 
   LanguageIndicator: vi.fn(() => <div data-testid="language-indicator">Language Indicator</div>),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) =>
       key === "environments.project.languages.translate"
         ? "Translate from"

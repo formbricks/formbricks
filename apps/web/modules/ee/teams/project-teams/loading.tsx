@@ -1,12 +1,12 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
 
 export const TeamsLoading = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <PageContentWrapper>

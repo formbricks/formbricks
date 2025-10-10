@@ -15,8 +15,8 @@ vi.mock("@/lib/storage/utils", () => ({
   }),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => (key === "common.skipped" ? "Skipped" : key) }),
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (key: string) => (key === "common.skipped" ? "Skipped" : key) }),
 }));
 
 describe("FileUploadResponse", () => {

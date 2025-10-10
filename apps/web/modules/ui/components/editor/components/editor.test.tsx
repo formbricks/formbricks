@@ -94,12 +94,6 @@ vi.mock("@/lib/cn", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("Editor", () => {
   afterEach(() => {
     cleanup();

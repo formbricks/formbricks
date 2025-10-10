@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -7,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
 
 interface DisableLinkModalProps {
   open: boolean;
@@ -17,7 +17,7 @@ interface DisableLinkModalProps {
 }
 
 export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: DisableLinkModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

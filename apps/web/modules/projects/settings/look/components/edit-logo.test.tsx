@@ -40,10 +40,6 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (k: string) => k }),
-}));
-
 vi.mock("@/modules/ui/components/file-input", () => ({
   FileInput: vi.fn((props: any) => (
     <div data-testid="file-input">

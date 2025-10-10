@@ -46,17 +46,6 @@ vi.mock("@lexical/link", () => ({
   TOGGLE_LINK_COMMAND: "toggleLink",
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => {
-      const translations: { [key: string]: string } = {
-        "common.add": "Add",
-      };
-      return translations[key] || key;
-    },
-  }),
-}));
-
 vi.mock("@/lib/utils/url", () => ({
   isStringUrl: vi.fn((url: string) => {
     try {

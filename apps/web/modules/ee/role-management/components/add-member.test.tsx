@@ -3,13 +3,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AddMemberRole } from "./add-member-role";
 
-// Mock dependencies
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Create a wrapper component that provides the form context
 const FormWrapper = ({
   children,

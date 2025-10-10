@@ -1,7 +1,3 @@
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getOrganization } from "@/lib/organization/service";
-import { getOrganizationProjectsCount } from "@/lib/project/service";
-import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { getServerSession } from "next-auth";
@@ -9,6 +5,10 @@ import { notFound, redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getOrganization } from "@/lib/organization/service";
+import { getOrganizationProjectsCount } from "@/lib/project/service";
+import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import OnboardingLayout from "./layout";
 
 // Mock environment variables
@@ -59,7 +59,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getOrganizationProjectsLimit: vi.fn(),
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

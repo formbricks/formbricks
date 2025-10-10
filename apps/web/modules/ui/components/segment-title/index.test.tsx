@@ -8,9 +8,8 @@ vi.mock("lucide-react", () => ({
   UsersIcon: () => <div data-testid="users-icon" />,
 }));
 
-// Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) =>
       key === "environments.surveys.edit.send_survey_to_audience_who_match"
         ? "Send survey to audience who match the following attributes:"

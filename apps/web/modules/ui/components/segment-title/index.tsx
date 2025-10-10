@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SegmentTitleProps {
   title?: string;
@@ -10,7 +10,7 @@ interface SegmentTitleProps {
 }
 
 export const SegmentTitle = ({ title, description, isPrivate }: SegmentTitleProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   if (isPrivate) {
     return (

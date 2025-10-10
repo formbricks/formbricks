@@ -1,4 +1,4 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "react-i18next";
 import { describe, expect, test, vi } from "vitest";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { buildActionObject, buildCodeAction, buildNoCodeAction } from "./action-builder";
@@ -9,7 +9,7 @@ const mockT = vi.fn((key: string) => {
     "environments.actions.invalid_action_type_code": "Invalid action type for code action",
   };
   return translations[key] || key;
-}) as unknown as TFnType;
+}) as unknown as TFunction;
 
 describe("action-builder", () => {
   describe("buildActionObject", () => {

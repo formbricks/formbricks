@@ -1,11 +1,11 @@
-import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
-import { getUserProjects } from "@/lib/project/service";
-import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
-import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
+import { getUserProjects } from "@/lib/project/service";
+import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import Page from "./page";
 
 vi.mock("@/lib/constants", () => ({ DEFAULT_BRAND_COLOR: "#fff" }));
@@ -14,7 +14,7 @@ vi.mock("@/app/(app)/(onboarding)/lib/onboarding", () => ({ getTeamsByOrganizati
 vi.mock("@/lib/project/service", () => ({ getUserProjects: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getAccessControlPermission: vi.fn() }));
 vi.mock("@/modules/organization/lib/utils", () => ({ getOrganizationAuth: vi.fn() }));
-vi.mock("@/tolgee/server", () => ({ getTranslate: () => Promise.resolve((key: string) => key) }));
+vi.mock("@/lingodotdev/server", () => ({ getTranslate: () => Promise.resolve((key: string) => key) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("next/link", () => ({
   __esModule: true,

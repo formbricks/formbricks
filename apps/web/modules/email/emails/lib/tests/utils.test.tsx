@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { TFnType, TranslationKey } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { renderEmailResponseValue } from "../utils";
@@ -24,7 +24,7 @@ vi.mock("@/modules/storage/utils", () => ({
 }));
 
 // Mock translation function
-const mockTranslate = (key: TranslationKey) => key;
+const mockTranslate = (key: string) => key;
 
 describe("renderEmailResponseValue", () => {
   describe("FileUpload question type", () => {
@@ -39,7 +39,7 @@ describe("renderEmailResponseValue", () => {
       const result = await renderEmailResponseValue(
         fileUrls,
         TSurveyQuestionTypeEnum.FileUpload,
-        mockTranslate as unknown as TFnType,
+        mockTranslate as unknown as TFunction,
         false
       );
 
@@ -72,7 +72,7 @@ describe("renderEmailResponseValue", () => {
       const result = await renderEmailResponseValue(
         fileUrls,
         TSurveyQuestionTypeEnum.FileUpload,
-        mockTranslate as unknown as TFnType,
+        mockTranslate as unknown as TFunction,
         true
       );
 
@@ -104,7 +104,7 @@ describe("renderEmailResponseValue", () => {
       const result = await renderEmailResponseValue(
         imageUrls,
         TSurveyQuestionTypeEnum.PictureSelection,
-        mockTranslate as unknown as TFnType
+        mockTranslate as unknown as TFunction
       );
 
       render(result);
@@ -140,7 +140,7 @@ describe("renderEmailResponseValue", () => {
       const result = await renderEmailResponseValue(
         rankingItems,
         TSurveyQuestionTypeEnum.Ranking,
-        mockTranslate as unknown as TFnType
+        mockTranslate as unknown as TFunction
       );
 
       render(result);
@@ -181,7 +181,7 @@ ${"This is a very long sentence that should wrap properly within the email layou
       const result = await renderEmailResponseValue(
         longTextResponse,
         TSurveyQuestionTypeEnum.OpenText,
-        mockTranslate as unknown as TFnType
+        mockTranslate as unknown as TFunction
       );
 
       render(result);
@@ -214,7 +214,7 @@ ${"This is a very long sentence that should wrap properly within the email layou
       const result = await renderEmailResponseValue(
         response,
         questionType,
-        mockTranslate as unknown as TFnType
+        mockTranslate as unknown as TFunction
       );
 
       render(result);
@@ -237,7 +237,7 @@ ${"This is a very long sentence that should wrap properly within the email layou
       const result = await renderEmailResponseValue(
         response,
         questionType,
-        mockTranslate as unknown as TFnType
+        mockTranslate as unknown as TFunction
       );
 
       // Create a fresh container for this test to avoid conflicts with previous renders

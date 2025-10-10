@@ -1,5 +1,13 @@
 "use client";
 
+import { FilterIcon, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -7,14 +15,6 @@ import { deleteSegmentAction, updateSegmentAction } from "@/modules/ee/contacts/
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { FilterIcon, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
-import { ZSegmentFilters } from "@formbricks/types/segment";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 
@@ -36,7 +36,7 @@ export function SegmentSettings({
   isReadOnly,
 }: TSegmentSettingsTabProps) {
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegment);
 

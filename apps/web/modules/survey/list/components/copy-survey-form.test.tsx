@@ -1,9 +1,9 @@
-import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
-import { TUserProject } from "@/modules/survey/list/types/projects";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
+import { TUserProject } from "@/modules/survey/list/types/projects";
 import { CopySurveyForm } from "./copy-survey-form";
 
 // Mock dependencies
@@ -18,8 +18,8 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string, params?: any) => {
       if (key === "environments.surveys.copy_survey_partially_success") {
         return `Partially successful: ${params?.success} success, ${params?.error} error`;

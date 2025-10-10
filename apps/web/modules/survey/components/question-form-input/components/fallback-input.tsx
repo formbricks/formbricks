@@ -1,6 +1,6 @@
-import { useTranslate } from "@tolgee/react";
 import { ReactNode } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 import { Button } from "@/modules/ui/components/button";
@@ -27,7 +27,7 @@ export const FallbackInput = ({
   setOpen,
   triggerButton,
 }: FallbackInputProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const containsEmptyFallback = () => {
     const fallBacksList = Object.values(fallbacks);
     return fallBacksList.length === 0 || fallBacksList.map((value) => value.trim()).includes("");

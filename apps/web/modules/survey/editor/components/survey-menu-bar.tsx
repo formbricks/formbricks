@@ -1,18 +1,12 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
-import { Button } from "@/modules/ui/components/button";
-import { Input } from "@/modules/ui/components/input";
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { isEqual } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
 import {
@@ -23,6 +17,12 @@ import {
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 
@@ -60,7 +60,7 @@ export const SurveyMenuBar = ({
   setIsCautionDialogOpen,
   isStorageConfigured = true,
 }: SurveyMenuBarProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isLinkSurvey, setIsLinkSurvey] = useState(true);

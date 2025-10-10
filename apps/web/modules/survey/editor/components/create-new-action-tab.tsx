@@ -1,5 +1,13 @@
 "use client";
 
+import { ActionClass } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TActionClassInput } from "@formbricks/types/action-classes";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ActionNameDescriptionFields } from "@/modules/ui/components/action-name-description-fields";
 import { Button } from "@/modules/ui/components/button";
 import { CodeActionForm } from "@/modules/ui/components/code-action-form";
@@ -7,14 +15,6 @@ import { FormField } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
 import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
-import { ActionClass } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { useMemo } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TActionClassInput } from "@formbricks/types/action-classes";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { createActionClassAction } from "../actions";
 import { buildActionObject } from "../lib/action-builder";
 import { createActionClassZodResolver, useActionClassKeys, validatePermissions } from "../lib/action-utils";
@@ -36,7 +36,7 @@ export const CreateNewActionTab = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),

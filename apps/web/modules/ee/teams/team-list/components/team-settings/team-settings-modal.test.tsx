@@ -1,10 +1,10 @@
-import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
-import { TOrganizationMember, TTeamDetails, ZTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
+import { TOrganizationMember, TTeamDetails, ZTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { TeamSettingsModal } from "./team-settings-modal";
 
 // Mock the Dialog components
@@ -88,7 +88,7 @@ describe("TeamSettingsModal", () => {
   };
   const setOpen = vi.fn();
 
-  test("renders modal, form, and tolgee strings", () => {
+  test("renders modal, form, and translated strings", () => {
     render(
       <TeamSettingsModal
         open={true}

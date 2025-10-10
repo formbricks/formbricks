@@ -1,7 +1,7 @@
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 
 // Mock the Dialog components
 vi.mock("@/modules/ui/components/dialog", () => ({
@@ -61,18 +61,6 @@ vi.mock("@/modules/ui/components/button", () => ({
       {children}
     </button>
   ),
-}));
-
-// Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => {
-      const translations = {
-        "common.are_you_sure_this_action_cannot_be_undone": "Are you sure? This action cannot be undone.",
-      };
-      return translations[key] || key;
-    },
-  }),
 }));
 
 describe("AlertDialog Component", () => {

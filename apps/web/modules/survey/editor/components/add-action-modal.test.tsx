@@ -1,11 +1,11 @@
-import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
-import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
-import { SavedActionsTab } from "@/modules/survey/editor/components/saved-actions-tab";
 import { ActionClass } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
+import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
+import { SavedActionsTab } from "@/modules/survey/editor/components/saved-actions-tab";
 
 // Mock child components
 vi.mock("@/modules/survey/editor/components/create-new-action-tab", () => ({
@@ -61,8 +61,8 @@ vi.mock("@/modules/ui/components/dialog", () => ({
 }));
 
 // Mock useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations = {
         "environments.surveys.edit.select_saved_action": "Select Saved Action",

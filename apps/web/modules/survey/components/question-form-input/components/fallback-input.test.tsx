@@ -12,8 +12,8 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: { [key: string]: string } = {
         "environments.surveys.edit.add_fallback_placeholder":

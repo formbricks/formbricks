@@ -1,5 +1,12 @@
 "use client";
 
+import { TFunction } from "i18next";
+import { ChevronDownIcon, X } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useDebounce } from "react-use";
+import { TProjectConfigChannel } from "@formbricks/types/project";
+import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { SortOption } from "@/modules/survey/list/components/sort-option";
 import { initialFilters } from "@/modules/survey/list/components/survey-list";
 import { Button } from "@/modules/ui/components/button";
@@ -9,12 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import { TFnType, useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, X } from "lucide-react";
-import { useState } from "react";
-import { useDebounce } from "react-use";
-import { TProjectConfigChannel } from "@formbricks/types/project";
-import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { SurveyFilterDropdown } from "./survey-filter-dropdown";
 
 interface SurveyFilterProps {
@@ -23,18 +24,18 @@ interface SurveyFilterProps {
   currentProjectChannel: TProjectConfigChannel;
 }
 
-const getCreatorOptions = (t: TFnType): TFilterOption[] => [
+const getCreatorOptions = (t: TFunction): TFilterOption[] => [
   { label: t("common.you"), value: "you" },
   { label: t("common.others"), value: "others" },
 ];
 
-const getStatusOptions = (t: TFnType): TFilterOption[] => [
+const getStatusOptions = (t: TFunction): TFilterOption[] => [
   { label: t("common.paused"), value: "paused" },
   { label: t("common.completed"), value: "completed" },
   { label: t("common.draft"), value: "draft" },
 ];
 
-const getSortOptions = (t: TFnType): TSortOption[] => [
+const getSortOptions = (t: TFunction): TSortOption[] => [
   {
     label: t("common.updated_at"),
     value: "updatedAt",
@@ -60,7 +61,7 @@ export const SurveyFilters = ({
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name: name })), 800, [name]);
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());

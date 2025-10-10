@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { type JSX, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
@@ -32,7 +32,7 @@ export const ConsentQuestionForm = ({
   isStorageConfigured = true,
 }: ConsentQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <form>
       <QuestionFormInput

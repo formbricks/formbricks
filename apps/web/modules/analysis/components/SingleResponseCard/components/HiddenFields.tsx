@@ -1,10 +1,10 @@
 "use client";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
 import { EyeOffIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyHiddenFields } from "@formbricks/types/surveys/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface HiddenFieldsProps {
   hiddenFields: TSurveyHiddenFields;
@@ -12,7 +12,7 @@ interface HiddenFieldsProps {
 }
 
 export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const fieldIds = hiddenFields.fieldIds ?? [];
 
   let hiddenFieldsData: { field: string; value: string }[] = [];

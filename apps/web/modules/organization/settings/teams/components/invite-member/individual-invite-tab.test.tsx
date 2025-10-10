@@ -5,9 +5,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { IndividualInviteTab } from "./individual-invite-tab";
 
-const t = (k: string) => k;
-vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t }) }));
-
 vi.mock("@/modules/ee/role-management/components/add-member-role", () => ({
   AddMemberRole: () => <div data-testid="add-member-role">AddMemberRole</div>,
 }));

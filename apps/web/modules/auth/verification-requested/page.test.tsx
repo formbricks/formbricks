@@ -1,8 +1,8 @@
-import { getEmailFromEmailToken } from "@/lib/jwt";
-import { VerificationRequestedPage } from "@/modules/auth/verification-requested/page";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getEmailFromEmailToken } from "@/lib/jwt";
+import { VerificationRequestedPage } from "@/modules/auth/verification-requested/page";
 
 vi.mock("@/lib/jwt", () => ({
   getEmailFromEmailToken: vi.fn(),
@@ -14,14 +14,8 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
-  T: ({ keyName, params }) => {
-    if (params && params.email) {
-      return `${keyName} ${params.email}`;
-    }
-    return keyName;
-  },
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -84,12 +78,7 @@ describe("VerificationRequestedPage", () => {
     expect(
       screen.getByText("auth.verification-requested.please_confirm_your_email_address")
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/test@example\.com/)).toHaveLength(2);
-    expect(
-      screen.getByText(
-        "auth.verification-requested.verification_email_successfully_sent_info test@example.com"
-      )
-    ).toBeInTheDocument();
+    expect(screen.getAllByText(/test@example\.com/)).toHaveLength(1);
     expect(
       screen.getByText(`Mocked RequestVerificationEmail: ${mockEmail.toLowerCase()}`)
     ).toBeInTheDocument();

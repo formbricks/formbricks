@@ -1,11 +1,11 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { ExternalLinkIcon, Maximize2Icon, SmartphoneIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 
 export const NoMobileOverlay = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-[9999] sm:hidden">
       <div className="absolute inset-0 bg-slate-50"></div>

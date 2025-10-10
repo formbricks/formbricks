@@ -1,14 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { TFnType } from "@tolgee/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { EmptySpaceFiller } from "./index";
-
-// Mock the useTranslate hook
-const mockTranslate: TFnType = (key) => key;
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: mockTranslate }),
-}));
 
 // Mock Next.js Link component
 vi.mock("next/link", () => ({

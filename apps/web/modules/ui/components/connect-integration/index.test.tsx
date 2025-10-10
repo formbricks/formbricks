@@ -1,17 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useSearchParams } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TIntegrationType } from "@formbricks/types/integration";
 import { ConnectIntegration } from "./index";
-import { getIntegrationDetails } from "./lib/utils";
-
-// Mock modules
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 vi.mock("next/navigation", () => ({
   useSearchParams: vi.fn(() => ({

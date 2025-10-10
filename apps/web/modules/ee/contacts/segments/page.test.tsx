@@ -1,4 +1,8 @@
 // Import the actual constants module to get its type/shape for mocking
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TSegment } from "@formbricks/types/segment";
 import * as constants from "@/lib/constants";
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -9,11 +13,6 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getTranslate } from "@/tolgee/server";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment } from "@formbricks/types/segment";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 import { SegmentsPage } from "./page";
 
@@ -64,8 +63,8 @@ vi.mock("@/modules/ui/components/upgrade-prompt", () => ({
   UpgradePrompt: vi.fn(() => <div>UpgradePrompt</div>),
 }));
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
 }));
 
 vi.mock("./components/create-segment-modal", () => ({
@@ -90,7 +89,6 @@ describe("SegmentsPage", () => {
     // otherwise it defaults to the value in vi.mock
     vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
 
-    vi.mocked(getTranslate).mockResolvedValue(mockT);
     vi.mocked(getSegments).mockResolvedValue(mockSegments);
     vi.mocked(getContactAttributeKeys).mockResolvedValue(mockContactAttributeKeys);
   });

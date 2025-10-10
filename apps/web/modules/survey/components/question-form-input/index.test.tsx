@@ -1,11 +1,11 @@
-import { createI18nString } from "@/lib/i18n/utils";
-// Import FileInput to get the mocked version
-import { FileInput } from "@/modules/ui/components/file-input";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
+// Import FileInput to get the mocked version
+import { FileInput } from "@/modules/ui/components/file-input";
 import { QuestionFormInput } from "./index";
 
 // Mock all the modules that might cause server-side environment variable access issues
@@ -78,12 +78,6 @@ vi.mock("crypto", () => ({
     }),
   }),
   randomBytes: () => Buffer.from("random-bytes"),
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 vi.mock("@/lib/utils/hooks/useSyncScroll", () => ({

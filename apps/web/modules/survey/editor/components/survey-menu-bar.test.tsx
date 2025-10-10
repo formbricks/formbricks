@@ -1,12 +1,12 @@
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { updateSurveyAction } from "@/modules/survey/editor/actions";
-import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
-import { isSurveyValid } from "@/modules/survey/editor/lib/validation";
 import { Project } from "@prisma/client";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { updateSurveyAction } from "@/modules/survey/editor/actions";
+import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { isSurveyValid } from "@/modules/survey/editor/lib/validation";
 
 // Mock dependencies
 vi.mock("@/lib/utils/helper", () => ({
@@ -113,13 +113,6 @@ const mockRouter = {
 // Mock Next.js router
 vi.mock("next/navigation", () => ({
   useRouter: () => mockRouter,
-}));
-
-// Mock Tolgee translate
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key, // Return the key as translation for testing
-  }),
 }));
 
 const mockSetLocalSurvey = vi.fn();

@@ -53,13 +53,6 @@ vi.mock("@/modules/ui/components/form", () => ({
   FormItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-// Mock the tolgee translation
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Helper component for the form
 const TestWrapper = ({ cssSelector, disabled = false }: { cssSelector?: string; disabled?: boolean }) => {
   const form = useForm<TActionClassInput>({

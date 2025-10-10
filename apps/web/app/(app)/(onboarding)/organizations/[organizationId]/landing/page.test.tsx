@@ -1,12 +1,11 @@
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { getUser } from "@/lib/user/service";
-import { getOrganizationAuth } from "@/modules/organization/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { notFound, redirect } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getOrganizationsByUserId } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 
 vi.mock("@/modules/ee/license-check/lib/license", () => ({
   getEnterpriseLicense: vi.fn().mockResolvedValue({
@@ -117,7 +116,9 @@ vi.mock("@/modules/organization/lib/utils");
 vi.mock("@/lib/user/service");
 vi.mock("@/lib/organization/service");
 vi.mock("@/lib/membership/service");
-vi.mock("@/tolgee/server");
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
+}));
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(() => "REDIRECT_STUB"),
   notFound: vi.fn(() => "NOT_FOUND_STUB"),
@@ -203,9 +204,6 @@ describe("Page component", () => {
       accepted: true,
       role: "member",
     } as any);
-    vi.mocked(getTranslate).mockResolvedValue((props: any) =>
-      typeof props === "string" ? props : props.key || ""
-    );
     await vi.doMock("@/modules/ee/license-check/lib/license", () => ({
       getEnterpriseLicense: vi.fn().mockResolvedValue({
         active: true,

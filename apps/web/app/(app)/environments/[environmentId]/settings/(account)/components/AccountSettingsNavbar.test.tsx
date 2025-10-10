@@ -1,7 +1,7 @@
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { cleanup, render } from "@testing-library/react";
 import { usePathname } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { AccountSettingsNavbar } from "./AccountSettingsNavbar";
 
 vi.mock("next/navigation", () => ({
@@ -12,8 +12,8 @@ vi.mock("@/modules/ui/components/secondary-navigation", () => ({
   SecondaryNavigation: vi.fn(() => <div>SecondaryNavigationMock</div>),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       if (key === "common.profile") return "Profile";
       if (key === "common.notifications") return "Notifications";

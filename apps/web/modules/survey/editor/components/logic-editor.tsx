@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
 import { ReactElement, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
@@ -35,7 +35,7 @@ export function LogicEditor({
   logicIdx,
   isLast,
 }: LogicEditorProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const fallbackOptions = useMemo(() => {
     let options: {

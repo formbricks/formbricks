@@ -1,8 +1,8 @@
-import { verifyInviteToken } from "@/lib/jwt";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/preact";
 import { getServerSession } from "next-auth";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { verifyInviteToken } from "@/lib/jwt";
 import { getInvite } from "./lib/invite";
 import { InvitePage } from "./page";
 
@@ -27,6 +27,7 @@ vi.mock("@/lib/constants", () => ({
   SESSION_MAX_AGE: 1000,
   REDIS_URL: undefined,
   AUDIT_LOG_ENABLED: true,
+  DEFAULT_LOCALE: "en-US",
 }));
 
 vi.mock("@/lib/env", () => ({
@@ -50,17 +51,6 @@ vi.mock("./lib/invite", () => ({
 vi.mock("@/lib/jwt", () => ({
   verifyInviteToken: vi.fn(),
 }));
-
-vi.mock("@tolgee/react", async () => {
-  const actual = await vi.importActual<typeof import("@tolgee/react")>("@tolgee/react");
-  return {
-    ...actual,
-    useTranslate: () => ({
-      t: (key: string) => key,
-    }),
-    T: ({ keyName }: { keyName: string }) => keyName,
-  };
-});
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -93,7 +83,9 @@ describe("InvitePage", () => {
 
     const result = await InvitePage({ searchParams: Promise.resolve({ token: "test-token" }) });
 
-    expect(result.props.headline).toContain("auth.invite.invite_not_found");
-    expect(result.props.description).toContain("auth.invite.invite_not_found_description");
+    expect(result.props.headline).toContain("Invite not found 😥");
+    expect(result.props.description).toContain(
+      "The invitation code cannot be found or has already been used."
+    );
   });
 });

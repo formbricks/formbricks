@@ -1,4 +1,3 @@
-import { useTranslate } from "@tolgee/react";
 import {
   CalendarDaysIcon,
   ContactIcon,
@@ -15,6 +14,7 @@ import {
   StarIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TSurvey,
   TSurveyHiddenFields,
@@ -63,7 +63,7 @@ export const RecallItemSelect = ({
   selectedLanguageCode,
 }: RecallItemSelectProps) => {
   const [searchValue, setSearchValue] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
     return (
       question.type === "fileUpload" ||

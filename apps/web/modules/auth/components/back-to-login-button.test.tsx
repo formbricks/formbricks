@@ -1,12 +1,10 @@
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { TFnType } from "@tolgee/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { BackToLoginButton } from "./back-to-login-button";
 
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
 }));
 
 vi.mock("next/link", () => ({
@@ -19,16 +17,9 @@ describe("BackToLoginButton", () => {
   });
 
   test("renders login button with correct link and translation", async () => {
-    const mockTranslate = vi.mocked(getTranslate);
-    const mockT: TFnType = (key) => {
-      if (key === "auth.signup.log_in") return "Back to Login";
-      return key;
-    };
-    mockTranslate.mockResolvedValue(mockT);
-
     render(await BackToLoginButton());
 
-    const link = screen.getByRole("link", { name: "Back to Login" });
+    const link = screen.getByRole("link", { name: "auth.signup.log_in" });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/auth/login");
   });

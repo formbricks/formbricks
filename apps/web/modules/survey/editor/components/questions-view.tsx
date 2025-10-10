@@ -12,9 +12,9 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { Language, Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
@@ -91,7 +91,7 @@ export const QuestionsView = ({
   isStorageConfigured = true,
   quotas,
 }: QuestionsViewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();

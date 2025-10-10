@@ -1,8 +1,8 @@
-import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TeamsPage } from "./page";
 
 vi.mock(
@@ -48,7 +48,7 @@ vi.mock("@/modules/ui/components/page-header", () => ({
   ),
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 
