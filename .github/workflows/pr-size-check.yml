@@ -1,0 +1,165 @@
+name: PR Size Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-pr-size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+      
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      
+      - name: Check PR size
+        id: check-size
+        run: |
+          set -euo pipefail
+          
+          # Fetch the base branch
+          git fetch origin "${{ github.base_ref }}"
+          
+          # Get diff stats
+          diff_output=$(git diff --numstat "origin/${{ github.base_ref }}"...HEAD)
+          
+          # Count lines, excluding:
+          # - Test files (*.test.ts, *.spec.tsx, etc.)
+          # - Locale files (locales/*.json, i18n/*.json)
+          # - Lock files (pnpm-lock.yaml, package-lock.json, yarn.lock)
+          # - Generated files (dist/, coverage/, build/, .next/)
+          # - Storybook stories (*.stories.tsx)
+          
+          total_additions=0
+          total_deletions=0
+          counted_files=0
+          excluded_files=0
+          
+          while IFS=$'\t' read -r additions deletions file; do
+            # Skip if additions or deletions are "-" (binary files)
+            if [ "$additions" = "-" ] || [ "$deletions" = "-" ]; then
+              continue
+            fi
+            
+            # Check if file should be excluded
+            case "$file" in
+              *.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx|*.test.js|*.test.jsx|*.spec.js|*.spec.jsx)
+                excluded_files=$((excluded_files + 1))
+                continue
+                ;;
+              */locales/*.json|*/i18n/*.json)
+                excluded_files=$((excluded_files + 1))
+                continue
+                ;;
+              pnpm-lock.yaml|package-lock.json|yarn.lock)
+                excluded_files=$((excluded_files + 1))
+                continue
+                ;;
+              dist/*|coverage/*|build/*|node_modules/*|test-results/*|playwright-report/*|.next/*|*.tsbuildinfo)
+                excluded_files=$((excluded_files + 1))
+                continue
+                ;;
+              *.stories.ts|*.stories.tsx|*.stories.js|*.stories.jsx)
+                excluded_files=$((excluded_files + 1))
+                continue
+                ;;
+            esac
+            
+            total_additions=$((total_additions + additions))
+            total_deletions=$((total_deletions + deletions))
+            counted_files=$((counted_files + 1))
+          done <<EOF
+          ${diff_output}
+          EOF
+          
+          total_changes=$((total_additions + total_deletions))
+          
+          echo "counted_files=${counted_files}" >> "${GITHUB_OUTPUT}"
+          echo "excluded_files=${excluded_files}" >> "${GITHUB_OUTPUT}"
+          echo "total_additions=${total_additions}" >> "${GITHUB_OUTPUT}"
+          echo "total_deletions=${total_deletions}" >> "${GITHUB_OUTPUT}"
+          echo "total_changes=${total_changes}" >> "${GITHUB_OUTPUT}"
+          
+          # Set flag if PR is too large (> 800 lines)
+          if [ ${total_changes} -gt 800 ]; then
+            echo "is_too_large=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "is_too_large=false" >> "${GITHUB_OUTPUT}"
+          fi
+      
+      - name: Comment on PR if too large
+        if: steps.check-size.outputs.is_too_large == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const totalChanges = ${{ steps.check-size.outputs.total_changes }};
+            const countedFiles = ${{ steps.check-size.outputs.counted_files }};
+            const excludedFiles = ${{ steps.check-size.outputs.excluded_files }};
+            const additions = ${{ steps.check-size.outputs.total_additions }};
+            const deletions = ${{ steps.check-size.outputs.total_deletions }};
+            
+            const body = `## 🚨 PR Size Warning
+            
+This PR has approximately **${totalChanges} lines** of changes (${additions} additions, ${deletions} deletions across ${countedFiles} files).
+
+Large PRs (>800 lines) are significantly harder to review and increase the chance of merge conflicts. Consider splitting this into smaller, self-contained PRs.
+
+### 💡 Suggestions:
+- **Split by feature or module** - Break down into logical, independent pieces
+- **Create a sequence of PRs** - Each building on the previous one
+- **Branch off PR branches** - Don't wait for reviews to continue dependent work
+
+### 📊 What was counted:
+- ✅ Source files, stylesheets, configuration files
+- ❌ Excluded ${excludedFiles} files (tests, locales, locks, generated files)
+
+### 📚 Guidelines:
+- **Ideal:** 300-500 lines per PR
+- **Warning:** 500-800 lines
+- **Critical:** 800+ lines ⚠️
+
+If this large PR is unavoidable (e.g., migration, dependency update, major refactor), please explain in the PR description why it couldn't be split.`;
+            
+            // Check if we already commented
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🚨 PR Size Warning')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
