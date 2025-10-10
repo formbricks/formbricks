@@ -4,6 +4,7 @@ import type { DOMConversionMap, DOMConversionOutput, DOMExportOutput, NodeKey, S
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import { ReactNode } from "react";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 
 export interface RecallPayload {
@@ -134,7 +135,9 @@ export class RecallNode extends DecoratorNode<ReactNode> {
   }
 
   decorate(): ReactNode {
-    const displayLabel = replaceRecallInfoWithUnderline(this.__recallItem.label);
+    // Strip HTML tags from the label before displaying
+    const cleanLabel = getTextContent(this.__recallItem.label);
+    const displayLabel = replaceRecallInfoWithUnderline(cleanLabel);
 
     return (
       <span

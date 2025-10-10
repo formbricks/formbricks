@@ -1,18 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { recallToHeadline } from "@/lib/utils/recall";
-import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
-import { EndScreenForm } from "@/modules/survey/editor/components/end-screen-form";
-import { RedirectUrlForm } from "@/modules/survey/editor/components/redirect-url-form";
-import {
-  findEndingCardUsedInLogic,
-  formatTextWithSlashes,
-  isUsedInQuota,
-} from "@/modules/survey/editor/lib/utils";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
@@ -29,7 +16,21 @@ import {
   TSurveyQuestionId,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
+import { EndScreenForm } from "@/modules/survey/editor/components/end-screen-form";
+import { RedirectUrlForm } from "@/modules/survey/editor/components/redirect-url-form";
+import {
+  findEndingCardUsedInLogic,
+  formatTextWithSlashes,
+  isUsedInQuota,
+} from "@/modules/survey/editor/lib/utils";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { OptionsSwitch } from "@/modules/ui/components/options-switch";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface EditEndingCardProps {
   localSurvey: TSurvey;
@@ -216,9 +217,11 @@ export const EditEndingCard = ({
                       selectedLanguageCode
                     ]
                       ? formatTextWithSlashes(
-                          recallToHeadline(endingCard.headline, localSurvey, true, selectedLanguageCode)[
-                            selectedLanguageCode
-                          ]
+                          getTextContent(
+                            recallToHeadline(endingCard.headline, localSurvey, true, selectedLanguageCode)[
+                              selectedLanguageCode
+                            ]
+                          )
                         )
                       : t("environments.surveys.edit.ending_card"))}
                   {endingCard.type === "redirectToUrl" &&

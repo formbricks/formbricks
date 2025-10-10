@@ -1,6 +1,4 @@
 // extend this object in order to add more validation rules
-import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import { TFnType } from "@tolgee/react";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
@@ -24,6 +22,9 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { findLanguageCodesForDuplicateLabels } from "@formbricks/types/surveys/validation";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
 // Utility function to check if label is valid for all required languages
 export const isLabelValidForAllLanguages = (
@@ -35,7 +36,9 @@ export const isLabelValidForAllLanguages = (
   });
   const languageCodes = extractLanguageCodes(filteredLanguages);
   const languages = languageCodes.length === 0 ? ["default"] : languageCodes;
-  return languages.every((language) => label && label[language] && label[language].trim() !== "");
+  return languages.every(
+    (language) => label && label[language] && getTextContent(label[language]).length > 0
+  );
 };
 
 // Validation logic for multiple choice questions

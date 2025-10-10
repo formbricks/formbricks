@@ -1,16 +1,16 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { PlusIcon } from "lucide-react";
+import { type JSX, useEffect, useState } from "react";
+import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { type JSX, useEffect, useState } from "react";
-import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
@@ -95,7 +95,6 @@ export const CalQuestionForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             {t("environments.surveys.edit.add_description")}
           </Button>

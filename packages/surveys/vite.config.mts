@@ -37,6 +37,9 @@ const config = ({ mode }) => {
       emptyOutDir: false,
       minify: "terser",
       rollupOptions: {
+        // Externalize node-html-parser to keep bundle size small (~53KB)
+        // It's pulled in via @formbricks/types but not used in browser runtime
+        external: ["node-html-parser"],
         output: {
           inlineDynamicImports: true,
         },

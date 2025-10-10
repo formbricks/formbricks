@@ -2,6 +2,7 @@ import { useTranslate } from "@tolgee/react";
 import { ReactNode } from "react";
 import { toast } from "react-hot-toast";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -53,7 +54,7 @@ export const FallbackInput = ({
             return (
               <div key={recallItem.id} className="flex flex-col gap-1">
                 <Label htmlFor={inputId} className="text-xs font-medium text-slate-700">
-                  {replaceRecallInfoWithUnderline(recallItem.label)}
+                  {replaceRecallInfoWithUnderline(getTextContent(recallItem.label))}
                 </Label>
                 <Input
                   className="h-9 bg-white"
