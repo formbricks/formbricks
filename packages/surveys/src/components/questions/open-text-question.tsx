@@ -116,7 +116,6 @@ export function OpenTextQuestion({
                   const input = e.currentTarget;
                   handleInputChange(input.value);
                   if (question.inputType === "email") {
-                    input.setCustomValidity("");
                     if (input.validity.typeMismatch || input.validity.patternMismatch) {
                       input.setCustomValidity(t("errors.please_enter_a_valid_email_address"));
                     }
