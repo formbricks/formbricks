@@ -52,7 +52,6 @@ export function OpenTextQuestion({
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
-
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -113,11 +112,24 @@ export function OpenTextQuestion({
               required={question.required}
               value={value ? value : ""}
               type={question.inputType}
-              onInput={(e) => {
-                handleInputChange(e.currentTarget.value);
-              }}
+            onInput={(e) => {
+                  const input = e.currentTarget;
+                  handleInputChange(input.value);
+                  if (question.inputType === "email") {
+                    input.setCustomValidity("");
+                    if (input.validity.typeMismatch || input.validity.patternMismatch) {
+                      input.setCustomValidity(t("errors.please_enter_a_valid_email_address"));
+                    }
+                  }
+                }}
               className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
-              pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
+          pattern={
+                      question.inputType === "phone"
+                        ? "^[0-9+][0-9+\\- ]*[0-9]$"
+                        : question.inputType === "email"
+                          ? "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[A-Za-z]{2,}$"
+                          : ".*"
+                    }
               title={
                 question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined
               }
