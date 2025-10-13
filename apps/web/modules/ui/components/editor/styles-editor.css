@@ -19,12 +19,16 @@
 .editor-container {
   border-radius: 6px;
   position: relative;
-  line-height: 20px;
+  line-height: 24px;
   font-weight: 400;
   text-align: left;
   border-color: #cbd5e1;
   border-width: 1px;
   padding: 1px;
+}
+
+.editor-container:focus-within {
+  @apply border-brand-dark;
 }
 
 .editor-inner {
@@ -35,7 +39,7 @@
   overflow: auto;
   resize: vertical;
   height: auto;
-  min-height: 100px;
+  min-height: var(--editor-min-height, 40px);
   max-height: 150px;
 }
 

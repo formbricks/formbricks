@@ -181,6 +181,12 @@ jobs:
           fi
           echo "License key length: ${#LICENSE_KEY}"
 
+      - name: Disable rate limiting for E2E tests
+        run: |
+          echo "RATE_LIMITING_DISABLED=1" >> .env
+          echo "Rate limiting disabled for E2E tests"
+        shell: bash
+
       - name: Run App
         run: |
           echo "Starting app with enterprise license..."

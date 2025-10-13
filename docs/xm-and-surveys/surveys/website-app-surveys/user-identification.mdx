@@ -65,6 +65,20 @@ formbricks.setAttributes({
   to 150 attributes per environment.
 </Note>
 
+### Setting User Language
+
+Use the `setLanguage` function to set the user's preferred language for surveys. This allows you to display surveys in the user's language when multi-language surveys are enabled. You can pass either the ISO language code (e.g., "de", "fr", "es") or the language alias you configured in your project settings.
+
+```javascript Setting User Language
+formbricks.setLanguage("de"); // ISO identifier or Alias set when creating language
+```
+
+<Note>
+  If a user has a language assigned, a survey has multi-language activated and it is missing a translation in
+  the language of the user, the survey will not be displayed. Learn more about [Multi-language Surveys](/docs/xm-and-surveys/surveys/general-features/multi-language-surveys).
+</Note>
+
+
 ### Logging Out Users
 
 When a user logs out of your webpage, also log them out of Formbricks to prevent activity from being linked to the wrong user. Use the logout function:

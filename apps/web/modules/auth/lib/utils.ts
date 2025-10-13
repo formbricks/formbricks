@@ -1,10 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
+import { compare } from "bcryptjs";
 import { createHash, randomUUID } from "crypto";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
-import { hashSecret, verifySecret } from "@/lib/crypto";
+import { hashSecret } from "@/lib/crypto";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
@@ -13,7 +14,15 @@ export const hashPassword = async (password: string) => {
 };
 
 export const verifyPassword = async (password: string, hashedPassword: string) => {
-  return await verifySecret(password, hashedPassword);
+  try {
+    const isValid = await compare(password, hashedPassword);
+    return isValid;
+  } catch (error) {
+    // Log warning for debugging purposes, but don't throw to maintain security
+    logger.warn({ error }, "Password verification failed due to invalid hash format");
+    // Return false for invalid hashes or other bcrypt errors
+    return false;
+  }
 };
 
 /**
@@ -270,7 +279,7 @@ export const shouldLogAuthFailure = async (
 
     return currentCount % 10 === 0 || timeSinceLastLog > 60000;
   } catch (error) {
-    logger.warn("Redis rate limiting failed, not logging due to Redis requirement", { error });
+    logger.warn({ error }, "Redis rate limiting failed, not logging due to Redis requirement");
     // If Redis fails, do not log as Redis is required for audit logs
     return false;
   }
