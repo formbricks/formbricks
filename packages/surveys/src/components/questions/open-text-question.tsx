@@ -119,6 +119,7 @@ export function OpenTextQuestion({
                     if (input.validity.typeMismatch || input.validity.patternMismatch) {
                       input.setCustomValidity(t("errors.please_enter_a_valid_email_address"));
                     }
+                      input.reportValidity(); // triggers instant browser feedback
                   }
                 }}
               className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
