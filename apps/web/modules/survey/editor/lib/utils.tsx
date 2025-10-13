@@ -446,15 +446,27 @@ export const getMatchValueProps = (
       selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
       selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
     ) {
-      const choices = selectedQuestion.choices.map((choice) => {
-        return {
-          label: getLocalizedValue(choice.label, "default"),
-          value: choice.id,
-          meta: {
-            type: "static",
-          },
-        };
-      });
+      const operatorsToFilterNone = [
+        "includesOneOf",
+        "includesAllOf",
+        "doesNotIncludeOneOf",
+        "doesNotIncludeAllOf",
+      ];
+      const shouldFilterNone =
+        selectedQuestion.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
+        operatorsToFilterNone.includes(condition.operator);
+
+      const choices = selectedQuestion.choices
+        .filter((choice) => !shouldFilterNone || choice.id !== "none")
+        .map((choice) => {
+          return {
+            label: getLocalizedValue(choice.label, "default"),
+            value: choice.id,
+            meta: {
+              type: "static",
+            },
+          };
+        });
 
       return {
         show: true,

@@ -61,10 +61,10 @@ export const QuestionOptionChoice = ({
   isStorageConfigured,
 }: ChoiceProps) => {
   const { t } = useTranslation();
-  const isDragDisabled = choice.id === "other";
+  const isSpecialChoice = choice.id === "other" || choice.id === "none";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
-    disabled: isDragDisabled,
+    disabled: isSpecialChoice,
   });
 
   const style = {
@@ -83,10 +83,18 @@ export const QuestionOptionChoice = ({
     setTimeout(() => focusChoiceInput(idx + 1), 0);
   };
 
+  const getPlaceholder = () => {
+    if (choice.id === "other") return t("common.other");
+    if (choice.id === "none") return t("common.none_of_the_above");
+    return t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
+  };
+
+  const normalChoice = question.choices?.filter((c) => c.id !== "other" && c.id !== "none") || [];
+
   return (
     <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
-      <div className={cn(choice.id === "other" && "invisible")} {...listeners} {...attributes}>
+      <div className={cn(isSpecialChoice && "invisible")} {...listeners} {...attributes}>
         <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
       </div>
 
@@ -94,11 +102,7 @@ export const QuestionOptionChoice = ({
         <QuestionFormInput
           key={choice.id}
           id={`choice-${choiceIdx}`}
-          placeholder={
-            choice.id === "other"
-              ? t("common.other")
-              : t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 })
-          }
+          placeholder={getPlaceholder()}
           label={""}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
@@ -107,15 +111,15 @@ export const QuestionOptionChoice = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           isInvalid={
-            isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
+            isInvalid && !isLabelValidForAllLanguages(question.choices?.[choiceIdx]?.label, surveyLanguages)
           }
-          className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
+          className={`${isSpecialChoice ? "border border-dashed" : ""} mt-0`}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
           onKeyDown={(e) => {
             if (e.key === "Enter" && choice.id !== "other") {
               e.preventDefault();
-              const lastChoiceIdx = question.choices.findLastIndex((c) => c.id !== "other");
+              const lastChoiceIdx = question.choices?.findLastIndex((c) => c.id !== "other") ?? -1;
 
               if (choiceIdx === lastChoiceIdx) {
                 addChoiceAndFocus(choiceIdx);
@@ -126,7 +130,7 @@ export const QuestionOptionChoice = ({
 
             if (e.key === "ArrowDown") {
               e.preventDefault();
-              if (choiceIdx + 1 < question.choices.length) {
+              if (choiceIdx + 1 < (question.choices?.length ?? 0)) {
                 focusChoiceInput(choiceIdx + 1);
               }
             }
@@ -154,7 +158,7 @@ export const QuestionOptionChoice = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             isInvalid={
-              isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
+              isInvalid && !isLabelValidForAllLanguages(question.choices?.[choiceIdx]?.label, surveyLanguages)
             }
             className="border border-dashed"
             locale={locale}
@@ -163,7 +167,7 @@ export const QuestionOptionChoice = ({
         )}
       </div>
       <div className="flex gap-2">
-        {question.choices?.length > 2 && (
+        {(normalChoice.length > 2 || isSpecialChoice) && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
             <Button
               variant="secondary"
@@ -177,7 +181,7 @@ export const QuestionOptionChoice = ({
             </Button>
           </TooltipRenderer>
         )}
-        {choice.id !== "other" && (
+        {!isSpecialChoice && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_choice_below")}>
             <Button
               variant="secondary"
