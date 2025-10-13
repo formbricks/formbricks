@@ -135,14 +135,24 @@ export class RecallNode extends DecoratorNode<ReactNode> {
   }
 
   decorate(): ReactNode {
-    // Strip HTML tags from the label before displaying
-    const cleanLabel = getTextContent(this.__recallItem.label);
-    const displayLabel = replaceRecallInfoWithUnderline(cleanLabel);
+    const cleanLabel = getTextContent(this.__recallItem.label).replace(/\s+/g, " ").trim();
+
+    const truncateLabel = (text: string, maxLength: number = 25): string => {
+      if (text.length <= maxLength) {
+        return text;
+      }
+      const start = text.slice(0, 10);
+      const end = text.slice(-10);
+      return `${start}...${end}`;
+    };
+
+    const displayLabel = truncateLabel(replaceRecallInfoWithUnderline(cleanLabel));
 
     return (
       <span
-        className="recall-node z-30 inline-flex h-fit justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-slate-700"
-        aria-label={`Recall: ${displayLabel}`}>
+        className="recall-node z-30 inline-flex h-fit justify-center whitespace-nowrap rounded-md bg-slate-100 text-sm text-slate-700"
+        aria-label={`Recall: ${cleanLabel}`}
+        title={cleanLabel}>
         @{displayLabel}
       </span>
     );
