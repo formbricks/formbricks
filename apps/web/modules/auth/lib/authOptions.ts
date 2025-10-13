@@ -1,3 +1,9 @@
+import type { Account, NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { cookies } from "next/headers";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import { TUser } from "@formbricks/types/user";
 import {
   EMAIL_VERIFICATION_DISABLED,
   ENCRYPTION_KEY,
@@ -21,12 +27,6 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
-import type { Account, NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { cookies } from "next/headers";
-import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
-import { TUser } from "@formbricks/types/user";
 import { createBrevoCustomer } from "./brevo";
 
 export const authOptions: NextAuthOptions = {
@@ -70,14 +70,20 @@ export const authOptions: NextAuthOptions = {
         // bcrypt processes passwords up to 72 bytes, but we limit to 128 characters for security
         if (credentials.password && credentials.password.length > 128) {
           if (await shouldLogAuthFailure(identifier)) {
-            logAuthAttempt("password_too_long", "credentials", "password_validation", UNKNOWN_DATA, credentials?.email);
+            logAuthAttempt(
+              "password_too_long",
+              "credentials",
+              "password_validation",
+              UNKNOWN_DATA,
+              credentials?.email
+            );
           }
           throw new Error("Invalid credentials");
         }
 
-        // Use a control hash when user doesn't exist to maintain constant timing. 
+        // Use a control hash when user doesn't exist to maintain constant timing.
         const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
-        
+
         let user;
         try {
           // Perform database lookup
