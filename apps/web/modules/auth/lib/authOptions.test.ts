@@ -47,6 +47,7 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: undefined,
   BREVO_API_KEY: undefined,
   RATE_LIMITING_DISABLED: false,
+  CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
 }));
 
 // Mock next/headers
