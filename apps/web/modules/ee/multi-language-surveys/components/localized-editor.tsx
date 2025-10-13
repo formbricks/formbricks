@@ -26,6 +26,7 @@ interface LocalizedEditorProps {
   locale: TUserLocale;
   questionId: string;
   isCard?: boolean; // Flag to indicate if this is a welcome/ending card
+  autoFocus?: boolean;
 }
 
 const checkIfValueIsIncomplete = (
@@ -56,6 +57,7 @@ export function LocalizedEditor({
   locale,
   questionId,
   isCard,
+  autoFocus,
 }: Readonly<LocalizedEditorProps>) {
   const { t } = useTranslate();
 
@@ -70,6 +72,7 @@ export function LocalizedEditor({
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
+        autoFocus={autoFocus}
         getText={() => {
           const text = value ? (value[selectedLanguageCode] ?? "") : "";
           let html = md.render(text);

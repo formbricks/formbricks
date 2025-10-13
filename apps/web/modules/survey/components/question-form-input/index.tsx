@@ -56,6 +56,7 @@ interface QuestionFormInputProps {
   locale: TUserLocale;
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
   isStorageConfigured: boolean;
+  autoFocus?: boolean;
 }
 
 export const QuestionFormInput = ({
@@ -78,6 +79,7 @@ export const QuestionFormInput = ({
   locale,
   onKeyDown,
   isStorageConfigured = true,
+  autoFocus,
 }: QuestionFormInputProps) => {
   const { t } = useTranslate();
   const defaultLanguageCode =
@@ -344,6 +346,7 @@ export const QuestionFormInput = ({
                 locale={locale}
                 questionId={questionId}
                 isCard={isWelcomeCard || isEndingCard}
+                autoFocus={autoFocus}
               />
             </div>
 
