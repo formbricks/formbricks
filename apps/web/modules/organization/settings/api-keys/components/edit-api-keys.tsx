@@ -2,9 +2,9 @@
 
 import { ApiKeyPermission } from "@prisma/client";
 import { FilesIcon, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -133,11 +133,11 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
     }
 
     return (
-      <div className="flex items-center">
-        <span>{apiKey}</span>
-        <div className="copyApiKeyIcon">
+      <div className="flex items-center justify-between gap-2">
+        <span className="whitespace-pre-line break-all">{apiKey}</span>
+        <div className="copyApiKeyIcon flex-shrink-0">
           <FilesIcon
-            className="mx-2 h-4 w-4 cursor-pointer"
+            className="h-4 w-4 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               copyToClipboard();
@@ -185,7 +185,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
                 data-testid="api-key-row"
                 key={apiKey.id}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
-                <div className="col-span-4 hidden sm:col-span-5 sm:block">
+                <div className="col-span-4 hidden pr-4 sm:col-span-5 sm:block">
                   <ApiKeyDisplay apiKey={apiKey.actualKey} />
                 </div>
                 <div className="col-span-4 sm:col-span-2">
