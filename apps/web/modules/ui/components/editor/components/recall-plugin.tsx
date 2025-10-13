@@ -223,8 +223,15 @@ export const RecallPlugin = ({
         }
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [localSurvey, selectedLanguageCode, editor, convertTextToRecallNodes, findAllRecallNodes]
+    [
+      findAllRecallNodes,
+      localSurvey,
+      selectedLanguageCode,
+      setRecallItems,
+      setFallbacks,
+      editor,
+      convertTextToRecallNodes,
+    ]
   );
 
   // Handle @ key press for recall trigger
@@ -261,8 +268,7 @@ export const RecallPlugin = ({
       }
       return false;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [editor]
+    [editor, setShowRecallItemSelect]
   );
 
   // Close dropdown when clicking outside
@@ -279,8 +285,7 @@ export const RecallPlugin = ({
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showRecallItemSelect]);
+  }, [setShowRecallItemSelect, showRecallItemSelect]);
 
   // Clean up when dropdown closes
   useEffect(() => {

@@ -313,7 +313,7 @@ export const QuestionFormInput = ({
                     fileType === "video"
                       ? { videoUrl: url[0], imageUrl: "" }
                       : { imageUrl: url[0], videoUrl: "" };
-                  if (isWelcomeCard && updateSurvey) {
+                  if ((isWelcomeCard || isEndingCard) && updateSurvey) {
                     updateSurvey(update);
                   } else if (updateQuestion) {
                     updateQuestion(questionIdx, update);
@@ -344,6 +344,7 @@ export const QuestionFormInput = ({
                 setFirstRender={setFirstRender}
                 locale={locale}
                 questionId={questionId}
+                isCard={isWelcomeCard || isEndingCard}
               />
             </div>
 
@@ -537,11 +538,12 @@ export const QuestionFormInput = ({
                               className="ml-2"
                               onClick={(e) => {
                                 e.preventDefault();
-                                if (updateQuestion) {
+                                if (isWelcomeCard || isEndingCard) {
+                                  if (updateSurvey) {
+                                    updateSurvey({ subheader: undefined });
+                                  }
+                                } else if (updateQuestion) {
                                   updateQuestion(questionIdx, { subheader: undefined });
-                                }
-                                if (updateSurvey) {
-                                  updateSurvey({ subheader: undefined });
                                 }
                               }}>
                               <TrashIcon />

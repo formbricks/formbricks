@@ -26,6 +26,7 @@ interface LocalizedEditorProps {
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   locale: TUserLocale;
   questionId: string;
+  isCard?: boolean; // Flag to indicate if this is a welcome/ending card
 }
 
 const checkIfValueIsIncomplete = (
@@ -53,6 +54,7 @@ export function LocalizedEditor({
   setFirstRender,
   locale,
   questionId,
+  isCard,
 }: Readonly<LocalizedEditorProps>) {
   const { t } = useTranslate();
 
@@ -85,14 +87,12 @@ export function LocalizedEditor({
         setText={(v: string) => {
           // Check if the question still exists before updating
           const currentQuestion = localSurvey.questions[questionIdx];
-          const isWelcomeCard = questionIdx === -1;
-          const isEndingCard = questionIdx >= localSurvey.questions.length;
-          if ((currentQuestion && currentQuestion[id] !== undefined) || isWelcomeCard || isEndingCard) {
+          if (isCard || (currentQuestion && currentQuestion[id] !== undefined)) {
             const translatedContent = {
               ...value,
               [selectedLanguageCode]: v,
             };
-            if (isWelcomeCard || isEndingCard) {
+            if (isCard) {
               updateQuestion({ [id]: translatedContent });
               return;
             }
