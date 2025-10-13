@@ -4,6 +4,7 @@ import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon } from "lucide-react";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
@@ -79,11 +80,13 @@ export const SingleResponseCardBody = ({
                 <div>
                   <p className="mb-1 text-sm text-slate-500">
                     {formatTextWithSlashes(
-                      parseRecallInfo(
-                        getLocalizedValue(question.headline, "default"),
-                        response.data,
-                        response.variables,
-                        true
+                      getTextContent(
+                        parseRecallInfo(
+                          getLocalizedValue(question.headline, "default"),
+                          response.data,
+                          response.variables,
+                          true
+                        )
                       )
                     )}
                   </p>

@@ -5,7 +5,7 @@ import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import type { TI18nString, TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
-import { isValidHTML } from "@formbricks/types/surveys/validation";
+import { getTextContent, isValidHTML } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { md } from "@/lib/markdownIt";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -37,7 +37,9 @@ const checkIfValueIsIncomplete = (
 ) => {
   const labelIds = ["subheader", "headline", "html"];
   if (value === undefined) return false;
-  const isDefaultIncomplete = labelIds.includes(id) ? value.default?.trim() !== "" : false;
+  const isDefaultIncomplete = labelIds.includes(id)
+    ? getTextContent(value.default ?? "").trim() !== ""
+    : false;
   return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
 };
 

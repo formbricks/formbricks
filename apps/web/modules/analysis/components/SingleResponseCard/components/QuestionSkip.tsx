@@ -1,12 +1,13 @@
 "use client";
 
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { parseRecallInfo } from "@/lib/utils/recall";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface QuestionSkipProps {
   skippedQuestions: string[] | undefined;
@@ -72,12 +73,14 @@ export const QuestionSkip = ({
                 {skippedQuestions?.map((questionId) => {
                   return (
                     <p className="my-2" key={questionId}>
-                      {parseRecallInfo(
-                        getLocalizedValue(
-                          questions.find((question) => question.id === questionId)!.headline,
-                          "default"
-                        ),
-                        responseData
+                      {getTextContent(
+                        parseRecallInfo(
+                          getLocalizedValue(
+                            questions.find((question) => question.id === questionId)!.headline,
+                            "default"
+                          ),
+                          responseData
+                        )
                       )}
                     </p>
                   );
@@ -107,12 +110,14 @@ export const QuestionSkip = ({
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {parseRecallInfo(
-                          getLocalizedValue(
-                            questions.find((question) => question.id === questionId)!.headline,
-                            "default"
-                          ),
-                          responseData
+                        {getTextContent(
+                          parseRecallInfo(
+                            getLocalizedValue(
+                              questions.find((question) => question.id === questionId)!.headline,
+                              "default"
+                            ),
+                            responseData
+                          )
                         )}
                       </p>
                     );
