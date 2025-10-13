@@ -126,7 +126,7 @@ export function OpenTextQuestion({
                     question.inputType === "phone"
                       ? "^[+]?\\d(?:[\\d\\-\\s]{7,}\\d)?$"
                       : question.inputType === "email"
-                        ? "^(?![.])[A-Za-z0-9._%+-]+(?<![.])@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z0-9]{2,}$"
+                        ? "^(?!.*[.]{2})(?![.])[A-Za-z0-9._%+-]+(?<![.])@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z0-9]{2,}$"
                         : ".*"
                  }
               title={  question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number")
