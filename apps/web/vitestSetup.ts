@@ -231,7 +231,7 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PORT: "587",
   SMTP_SECURE_ENABLED: false,
   SMTP_USER: "mock-smtp-user",
-  SMTP_PASSWORD: "mock-smtp-password",
+  SMTP_PASSWORD: "mock-smtp-password", //NOSONAR ignore rule for test setup
   SMTP_AUTHENTICATED: true,
   SMTP_REJECT_UNAUTHORIZED_TLS: true,
   MAIL_FROM: "mock@mail.com",
