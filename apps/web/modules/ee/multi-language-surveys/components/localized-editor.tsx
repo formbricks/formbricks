@@ -37,7 +37,7 @@ const checkIfValueIsIncomplete = (
 ) => {
   const labelIds = ["subheader", "headline", "html"];
   if (value === undefined) return false;
-  const isDefaultIncomplete = labelIds.includes(id) ? value.default.trim() !== "" : false;
+  const isDefaultIncomplete = labelIds.includes(id) ? value.default?.trim() !== "" : false;
   return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
 };
 
@@ -87,15 +87,39 @@ export function LocalizedEditor({
         setText={(v: string) => {
           // Check if the question still exists before updating
           const currentQuestion = localSurvey.questions[questionIdx];
-          if (isCard || (currentQuestion && currentQuestion[id] !== undefined)) {
+
+          // if this is a card, we wanna check if the card exists in the localSurvey
+          if (isCard) {
+            const isWelcomeCard = questionIdx === -1;
+            const isEndingCard = questionIdx >= localSurvey.questions.length;
+
+            // For ending cards, check if the field exists before updating
+            if (isEndingCard) {
+              const ending = localSurvey.endings.find((ending) => ending.id === questionId);
+              // If the field doesn't exist on the ending card, don't create it
+              if (!ending || ending[id] === undefined) {
+                return;
+              }
+            }
+
+            // For welcome cards, check if it exists
+            if (isWelcomeCard && !localSurvey.welcomeCard) {
+              return;
+            }
+
             const translatedContent = {
               ...value,
               [selectedLanguageCode]: v,
             };
-            if (isCard) {
-              updateQuestion({ [id]: translatedContent });
-              return;
-            }
+            updateQuestion({ [id]: translatedContent });
+            return;
+          }
+
+          if (currentQuestion && currentQuestion[id] !== undefined) {
+            const translatedContent = {
+              ...value,
+              [selectedLanguageCode]: v,
+            };
             updateQuestion(questionIdx, { [id]: translatedContent });
           }
         }}

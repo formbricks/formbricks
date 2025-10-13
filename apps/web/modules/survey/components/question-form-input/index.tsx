@@ -277,14 +277,13 @@ export const QuestionFormInput = ({
   const [animationParent] = useAutoAnimate();
   const [firstRender, setFirstRender] = useState(true);
 
-  const renderRemoveDescriptionButton = useMemo(() => {
+  const renderRemoveDescriptionButton = () => {
     if (id === "subheader") {
       return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
     }
-    return false;
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endingCard?.type, id, question?.subheader]);
+    return false;
+  };
 
   const useRichTextEditor = id === "headline" || id === "subheader" || id === "html";
 
@@ -364,7 +363,7 @@ export const QuestionFormInput = ({
               </TooltipRenderer>
             )}
 
-            {id === "subheader" && renderRemoveDescriptionButton && (
+            {id === "subheader" && renderRemoveDescriptionButton() && (
               <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
                 <Button
                   variant="secondary"
@@ -372,12 +371,12 @@ export const QuestionFormInput = ({
                   aria-label="Remove description"
                   onClick={(e) => {
                     e.preventDefault();
-                    e.stopPropagation();
-                    if (isWelcomeCard || isEndingCard) {
-                      if (updateSurvey) {
-                        updateSurvey({ subheader: undefined });
-                      }
-                    } else if (updateQuestion) {
+
+                    if (updateSurvey) {
+                      updateSurvey({ subheader: undefined });
+                    }
+
+                    if (updateQuestion) {
                       updateQuestion(questionIdx, { subheader: undefined });
                     }
                   }}>
@@ -529,7 +528,7 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                        {renderRemoveDescriptionButton ? (
+                        {renderRemoveDescriptionButton() ? (
                           <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
                             <Button
                               variant="secondary"
@@ -538,11 +537,12 @@ export const QuestionFormInput = ({
                               className="ml-2"
                               onClick={(e) => {
                                 e.preventDefault();
-                                if (isWelcomeCard || isEndingCard) {
-                                  if (updateSurvey) {
-                                    updateSurvey({ subheader: undefined });
-                                  }
-                                } else if (updateQuestion) {
+
+                                if (updateSurvey) {
+                                  updateSurvey({ subheader: undefined });
+                                }
+
+                                if (updateQuestion) {
                                   updateQuestion(questionIdx, { subheader: undefined });
                                 }
                               }}>
