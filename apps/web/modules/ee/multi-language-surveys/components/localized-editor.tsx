@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslate } from "@tolgee/react";
-import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import type { TI18nString, TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -142,14 +141,9 @@ export function LocalizedEditor({
           {value && selectedLanguageCode !== "default" && value.default ? (
             <div className="mt-1 flex text-xs text-gray-500">
               <strong>{t("environments.project.languages.translate")}:</strong>
-              <span
-                className="fb-htmlbody ml-1" // styles are in global.css
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(
-                    recallToHeadline(value, localSurvey, false, "default").default ?? ""
-                  ),
-                }}
-              />
+              <span className="ml-1">
+                {getTextContent(recallToHeadline(value, localSurvey, false, "default").default ?? "")}
+              </span>
             </div>
           ) : null}
         </div>
