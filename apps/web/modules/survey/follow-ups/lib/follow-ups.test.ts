@@ -1,11 +1,12 @@
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getResponse } from "@/lib/response/service";
-import { getSurvey } from "@/lib/survey/service";
-import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getResponse } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { sendFollowUpEmail } from "./email";
 import { sendFollowUpsForResponse } from "./follow-ups";
 import { getSurveyFollowUpsPermission } from "./utils";
@@ -29,6 +30,10 @@ vi.mock("./email", () => ({
 
 vi.mock("./utils", () => ({
   getSurveyFollowUpsPermission: vi.fn(),
+}));
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyRateLimit: vi.fn(),
 }));
 
 describe("Follow-ups", () => {
@@ -90,6 +95,7 @@ describe("Follow-ups", () => {
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
     vi.mocked(getSurveyFollowUpsPermission).mockResolvedValue(true);
     vi.mocked(sendFollowUpEmail).mockResolvedValue(undefined);
+    vi.mocked(applyRateLimit).mockResolvedValue(undefined);
   });
 
   afterEach(() => {
