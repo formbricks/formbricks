@@ -20,7 +20,6 @@ export type TAPIKeyEnvironmentPermission = z.infer<typeof ZAPIKeyEnvironmentPerm
 export const ZAuthenticationApiKey = z.object({
   type: z.literal("apiKey"),
   environmentPermissions: z.array(ZAPIKeyEnvironmentPermission),
-  hashedApiKey: z.string(),
   apiKeyId: z.string(),
   organizationId: z.string(),
   organizationAccess: ZOrganizationAccess,

@@ -5,6 +5,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TUser } from "@formbricks/types/user";
 import {
+  CONTROL_HASH,
   EMAIL_VERIFICATION_DISABLED,
   ENCRYPTION_KEY,
   ENTERPRISE_LICENSE_KEY,
@@ -81,9 +82,6 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        // Use a control hash when user doesn't exist to maintain constant timing.
-        const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
-
         let user;
         try {
           // Perform database lookup
@@ -100,7 +98,7 @@ export const authOptions: NextAuthOptions = {
 
         // Always perform password verification to maintain constant timing. This is important to prevent timing attacks for user enumeration.
         // Use actual hash if user exists, control hash if user doesn't exist
-        const hashToVerify = user?.password || controlHash;
+        const hashToVerify = user?.password || CONTROL_HASH;
         const isValid = await verifyPassword(credentials.password, hashToVerify);
 
         // Now check all conditions after constant-time operations are complete
