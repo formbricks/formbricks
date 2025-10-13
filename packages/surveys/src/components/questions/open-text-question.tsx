@@ -124,11 +124,8 @@ export function OpenTextQuestion({
                 }}
               className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
               pattern={
-                    question.inputType === "phone"
-                      ? "^[+]?\\d(?:[\\d\\-\\s]{7,}\\d)?$"
-                      : question.inputType === "email"
-                        ? "^(?!.*[.]{2})(?![.])[A-Za-z0-9._%+-]+(?<![.])@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z0-9]{2,}$"
-                        : ".*"
+                    question.inputType === "phone"? "^[+]?\\d(?:[\\d\\-\\s]{7,}\\d)?$"
+                      : question.inputType === "email"?"^(?![^@]*\\.\\.)(?!\\.)[A-Za-z0-9_%+-](?:[A-Za-z0-9._%+-]*[A-Za-z0-9_%+-])?@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z0-9]{2,}$": ".*"
                  }
               title={  question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number")
                       : question.inputType === "email"? t("errors.please_enter_a_valid_email_address")
