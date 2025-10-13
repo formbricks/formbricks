@@ -236,4 +236,5 @@ vi.mock("@/lib/constants", () => ({
   SMTP_REJECT_UNAUTHORIZED_TLS: true,
   MAIL_FROM: "mock@mail.com",
   MAIL_FROM_NAME: "Mock Mail",
+  RATE_LIMITING_DISABLED: false,
 }));
