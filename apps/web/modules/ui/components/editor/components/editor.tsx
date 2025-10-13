@@ -2,6 +2,7 @@ import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { TRANSFORMERS } from "@lexical/markdown";
+import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -54,6 +55,7 @@ export type TextEditorProps = {
   selectedLanguageCode?: string;
   fallbacks?: { [id: string]: string };
   addFallback?: () => void;
+  autoFocus?: boolean;
 };
 
 const editorConfig = {
@@ -130,6 +132,7 @@ export const Editor = (props: TextEditorProps) => {
               <ListPlugin />
               <LinkPlugin />
               <AutoLinkPlugin />
+              {props.autoFocus && <AutoFocusPlugin />}
               {props.localSurvey && props.questionId && props.selectedLanguageCode && (
                 <RecallPlugin
                   localSurvey={props.localSurvey}

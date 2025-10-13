@@ -78,7 +78,7 @@ export const SingleResponseCardBody = ({
             <div key={`${question.id}`}>
               {isValidValue(response.data[question.id]) ? (
                 <div>
-                  <p className="mb-1 text-sm text-slate-500">
+                  <p className="mb-1 text-sm font-semibold text-slate-600">
                     {formatTextWithSlashes(
                       getTextContent(
                         parseRecallInfo(

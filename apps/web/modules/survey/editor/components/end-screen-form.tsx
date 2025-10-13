@@ -2,8 +2,7 @@
 
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useState } from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
@@ -61,6 +60,7 @@ export const EndScreenForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
       />
       <div>
         {endingCard.subheader !== undefined && (
@@ -78,6 +78,7 @@ export const EndScreenForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
               />
             </div>
           </div>

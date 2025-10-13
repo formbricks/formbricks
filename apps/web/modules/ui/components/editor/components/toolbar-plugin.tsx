@@ -20,9 +20,7 @@ import {
   $getRoot,
   $getSelection,
   $isRangeSelection,
-  COMMAND_PRIORITY_CRITICAL,
   FORMAT_TEXT_COMMAND,
-  PASTE_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
 import { AtSign, Bold, ChevronDownIcon, Italic, Link, PencilIcon, Underline } from "lucide-react";
@@ -312,25 +310,8 @@ export const ToolbarPlugin = (
     }
   }, [editor, isLink, props]);
 
-  useEffect(() => {
-    return editor.registerCommand(
-      PASTE_COMMAND,
-      (e: ClipboardEvent) => {
-        const text = e.clipboardData?.getData("text/plain");
-
-        editor.update(() => {
-          const selection = $getSelection();
-          if ($isRangeSelection(selection)) {
-            selection.insertRawText(text ?? "");
-          }
-        });
-
-        e.preventDefault();
-        return true; // Prevent the default paste handler
-      },
-      COMMAND_PRIORITY_CRITICAL
-    );
-  }, [editor]);
+  // Removed custom PASTE_COMMAND handler to allow Lexical's default paste handler
+  // to properly preserve rich text formatting (bold, italic, links, etc.)
 
   if (!props.editable) return <></>;
 
