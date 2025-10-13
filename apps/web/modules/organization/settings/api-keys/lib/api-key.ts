@@ -7,6 +7,7 @@ import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
+import { CONTROL_HASH } from "@/lib/constants";
 import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import {
@@ -87,8 +88,7 @@ export const getApiKeyWithPermissions = reactCache(
         // Step 2: Security verification with bcrypt
         // Always perform bcrypt verification to prevent timing attacks
         // Use a control hash when API key doesn't exist to maintain constant timing
-        const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
-        const hashToVerify = apiKeyData?.hashedKey || controlHash;
+        const hashToVerify = apiKeyData?.hashedKey || CONTROL_HASH;
         const isValid = await verifySecret(v2Parsed.secret, hashToVerify);
 
         if (!apiKeyData || !isValid) {

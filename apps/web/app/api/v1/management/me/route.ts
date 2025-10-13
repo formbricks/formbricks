@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
+import { CONTROL_HASH } from "@/lib/constants";
 import { hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -40,7 +41,7 @@ type ApiKeyData = {
   id: string;
   hashedKey: string;
   organizationId: string;
-  lastUsedAt: Date;
+  lastUsedAt: Date | null;
   apiKeyEnvironments: Array<{
     permission: string;
     environment: {
@@ -80,13 +81,12 @@ const validateV2ApiKey = async (v2Parsed: { secret: string }): Promise<ApiKeyDat
   // Step 2: Security verification with bcrypt
   // Always perform bcrypt verification to prevent timing attacks
   // Use a control hash when API key doesn't exist to maintain constant timing
-  const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
-  const hashToVerify = apiKeyData?.hashedKey || controlHash;
+  const hashToVerify = apiKeyData?.hashedKey || CONTROL_HASH;
   const isValid = await verifySecret(v2Parsed.secret, hashToVerify);
 
   if (!apiKeyData || !isValid) return null;
 
-  return apiKeyData as ApiKeyData;
+  return apiKeyData;
 };
 
 const validateLegacyApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
@@ -95,7 +95,7 @@ const validateLegacyApiKey = async (apiKey: string): Promise<ApiKeyData | null> 
     where: { hashedKey },
     select: apiKeySelect,
   });
-  return result as ApiKeyData | null;
+  return result;
 };
 
 const checkRateLimit = async (userId: string) => {
