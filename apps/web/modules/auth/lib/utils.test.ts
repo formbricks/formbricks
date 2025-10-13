@@ -40,7 +40,7 @@ vi.mock("@/lib/constants", () => ({
   SENTRY_DSN: "test-sentry-dsn",
   IS_PRODUCTION: true,
   REDIS_URL: "redis://localhost:6379",
-  ENCRYPTION_KEY: "0".repeat(32),
+  ENCRYPTION_KEY: "test-encryption-key",
 }));
 
 // Mock cache module
@@ -159,10 +159,10 @@ describe("Auth Utils", () => {
       // Should return false for security
       expect(result).toBe(false);
 
-      // Should log warning
+      // Should log warning with correct signature (Pino format: object first, then message)
       expect(mockLogger.warn).toHaveBeenCalledWith(
         { error: expect.any(Error) },
-        "Password verification failed due to invalid hash format"
+        "Secret verification failed due to invalid hash format"
       );
 
       // Restore the module

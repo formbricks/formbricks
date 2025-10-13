@@ -3,6 +3,7 @@ import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { randomBytes } from "node:crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -69,39 +70,56 @@ export const getApiKeyWithPermissions = reactCache(
         },
       };
 
-      // Try v2 format first (fbk_{id}_{secret})
+      // Try v2 format first (fbk_{secret})
       const v2Parsed = parseApiKeyV2(apiKey);
 
       let apiKeyData;
 
       if (v2Parsed) {
-        // New v2 format: lookup by id and verify with bcrypt
+        // New v2 format (fbk_{secret}): Hybrid approach
+        // Step 1: Fast SHA-256 lookup by indexed lookupHash
+        const lookupHash = hashSha256(v2Parsed.secret);
         apiKeyData = await prisma.apiKey.findUnique({
-          where: { id: v2Parsed.id },
+          where: { lookupHash },
           include: includeQuery,
         });
 
-        if (!apiKeyData) return null;
+        // Step 2: Security verification with bcrypt
+        // Always perform bcrypt verification to prevent timing attacks
+        // Use a control hash when API key doesn't exist to maintain constant timing
+        const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
+        const hashToVerify = apiKeyData?.hashedKey || controlHash;
+        const isValid = await verifySecret(v2Parsed.secret, hashToVerify);
 
-        // Verify the secret against the bcrypt hash
-        const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
-        if (!isValid) return null;
+        if (!apiKeyData || !isValid) {
+          if (apiKeyData && !isValid) {
+            logger.warn({ apiKeyId: apiKeyData.id }, "API key bcrypt verification failed");
+          }
+          return null;
+        }
       } else {
         // Legacy format: compute SHA-256 and lookup by hashedKey
         const hashedKey = hashSha256(apiKey);
-        apiKeyData = await prisma.apiKey.findUnique({
-          where: { hashedKey },
+        apiKeyData = await prisma.apiKey.findFirst({
+          where: { hashedKey: hashedKey },
           include: includeQuery,
         });
 
         if (!apiKeyData) return null;
       }
 
-      // Update the last used timestamp
-      await prisma.apiKey.update({
-        where: { id: apiKeyData.id },
-        data: { lastUsedAt: new Date() },
-      });
+      if (!apiKeyData.lastUsedAt || apiKeyData.lastUsedAt <= new Date(Date.now() - 1000 * 30)) {
+        // Fire-and-forget: update lastUsedAt in the background without blocking the response
+        // Update on first use (null) or if last used more than 30 seconds ago
+        prisma.apiKey
+          .update({
+            where: { id: apiKeyData.id },
+            data: { lastUsedAt: new Date() },
+          })
+          .catch((error) => {
+            logger.error({ error }, "Failed to update API key usage");
+          });
+      }
 
       return apiKeyData;
     } catch (error) {
@@ -144,8 +162,14 @@ export const createApiKey = async (
 ): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {
   validateInputs([organizationId, ZId], [apiKeyData, ZApiKeyCreateInput]);
   try {
-    // Generate a secure random secret (24 bytes base64url)
-    const secret = randomBytes(24).toString("base64url");
+    // Generate a secure random secret (32 bytes base64url)
+    const secret = randomBytes(32).toString("base64url");
+
+    // Hybrid approach for security + performance:
+    // 1. SHA-256 lookup hash
+    const lookupHash = hashSha256(secret);
+
+    // 2. bcrypt hash
     const hashedKey = await hashSecret(secret, 12);
 
     // Extract environmentPermissions from apiKeyData
@@ -156,6 +180,7 @@ export const createApiKey = async (
       data: {
         ...apiKeyDataWithoutPermissions,
         hashedKey,
+        lookupHash,
         createdBy: userId,
         organization: { connect: { id: organizationId } },
         organizationAccess,
@@ -175,8 +200,8 @@ export const createApiKey = async (
       },
     });
 
-    // Return the new v2 format: fbk_{id}_{secret}
-    return { ...result, actualKey: `fbk_${result.id}_${secret}` };
+    // Return the new v2 format: fbk_{secret}
+    return { ...result, actualKey: `fbk_${secret}` };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

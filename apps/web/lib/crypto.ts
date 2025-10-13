@@ -108,7 +108,7 @@ export const verifySecret = async (secret: string, hashedSecret: string): Promis
     return isValid;
   } catch (error) {
     // Log warning for debugging purposes, but don't throw to maintain security
-    logger.warn("Secret verification failed due to invalid hash format", { error });
+    logger.warn({ error }, "Secret verification failed due to invalid hash format");
     // Return false for invalid hashes or other bcrypt errors
     return false;
   }
@@ -122,33 +122,22 @@ export const hashSha256 = (input: string): string => {
 };
 
 /**
- * Parse a v2 API key format: fbk_{id}_{secret}
+ * Parse a v2 API key format: fbk_{secret}
  * Returns null if the key doesn't match the expected format
  */
-export const parseApiKeyV2 = (key: string): { id: string; secret: string } | null => {
+export const parseApiKeyV2 = (key: string): { secret: string } | null => {
   // Check if it starts with fbk_
   if (!key.startsWith("fbk_")) {
     return null;
   }
 
-  // Find the first underscore after 'fbk_' to separate id and secret
-  // Since IDs (CUIDs) don't contain underscores, the first underscore after the prefix
-  // is always the separator between id and secret
-  const firstUnderscoreIndex = key.indexOf("_", 4);
-  if (firstUnderscoreIndex === -1) {
-    // No underscore found after fbk_ prefix
-    return null;
-  }
+  const secret = key.slice(4); // Skip 'fbk_' prefix
 
-  const id = key.slice(4, firstUnderscoreIndex); // Skip 'fbk_' prefix
-  const secret = key.slice(firstUnderscoreIndex + 1);
-
-  // Validate that id and secret contain only allowed characters and are not empty
-  // Note: IDs (CUIDs) don't contain underscores, only alphanumeric and hyphens
+  // Validate that secret contains only allowed characters and is not empty
   // Secrets are base64url-encoded and can contain underscores, hyphens, and alphanumeric chars
-  if (!id || !secret || !/^[a-zA-Z0-9-]+$/.test(id) || !/^[A-Za-z0-9_-]+$/.test(secret)) {
+  if (!secret || !/^[A-Za-z0-9_-]+$/.test(secret)) {
     return null;
   }
 
-  return { id, secret };
+  return { secret };
 };

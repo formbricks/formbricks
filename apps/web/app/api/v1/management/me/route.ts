@@ -11,6 +11,7 @@ const ALLOWED_PERMISSIONS = ["manage", "read", "write"] as const;
 const apiKeySelect = {
   id: true,
   organizationId: true,
+  lastUsedAt: true,
   apiKeyEnvironments: {
     select: {
       environment: {
@@ -39,6 +40,7 @@ type ApiKeyData = {
   id: string;
   hashedKey: string;
   organizationId: string;
+  lastUsedAt: Date;
   apiKeyEnvironments: Array<{
     permission: string;
     environment: {
@@ -66,21 +68,30 @@ const validateApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
   return validateLegacyApiKey(apiKey);
 };
 
-const validateV2ApiKey = async (v2Parsed: { id: string; secret: string }): Promise<ApiKeyData | null> => {
+const validateV2ApiKey = async (v2Parsed: { secret: string }): Promise<ApiKeyData | null> => {
+  // Step 1: Fast SHA-256 lookup by indexed lookupHash
+  const lookupHash = hashSha256(v2Parsed.secret);
+
   const apiKeyData = await prisma.apiKey.findUnique({
-    where: { id: v2Parsed.id },
+    where: { lookupHash },
     select: apiKeySelect,
   });
 
-  if (!apiKeyData) return null;
+  // Step 2: Security verification with bcrypt
+  // Always perform bcrypt verification to prevent timing attacks
+  // Use a control hash when API key doesn't exist to maintain constant timing
+  const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
+  const hashToVerify = apiKeyData?.hashedKey || controlHash;
+  const isValid = await verifySecret(v2Parsed.secret, hashToVerify);
 
-  const isValid = await verifySecret(v2Parsed.secret, apiKeyData.hashedKey);
-  return isValid ? (apiKeyData as ApiKeyData) : null;
+  if (!apiKeyData || !isValid) return null;
+
+  return apiKeyData as ApiKeyData;
 };
 
 const validateLegacyApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
   const hashedKey = hashSha256(apiKey);
-  const result = await prisma.apiKey.findUnique({
+  const result = await prisma.apiKey.findFirst({
     where: { hashedKey },
     select: apiKeySelect,
   });
@@ -134,7 +145,12 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
     return responses.notAuthenticatedResponse();
   }
 
-  await updateApiKeyUsage(apiKeyData.id);
+  if (!apiKeyData.lastUsedAt || apiKeyData.lastUsedAt <= new Date(Date.now() - 1000 * 30)) {
+    // Fire-and-forget: update lastUsedAt in the background without blocking the response
+    updateApiKeyUsage(apiKeyData.id).catch((error) => {
+      console.error("Failed to update API key usage:", error);
+    });
+  }
 
   const rateLimitError = await checkRateLimit(apiKeyData.id);
   if (rateLimitError) return rateLimitError;
