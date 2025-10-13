@@ -261,7 +261,9 @@ describe("authOptions", () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue(); // Rate limiting passes
       const credentials = { token: "badtoken" };
 
-      await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow();
+      await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
+        "Either a user does not match the provided token or the token is invalid"
+      );
     });
 
     describe("Rate Limiting", () => {
