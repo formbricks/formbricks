@@ -8,10 +8,6 @@ const mockUseTranslate = vi.fn(() => ({
   t: (key: string) => key,
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => mockUseTranslate(),
-}));
-
 type FormValues = {
   email: string;
   password: string;

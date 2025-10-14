@@ -1,10 +1,10 @@
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectsByOrganizationId } from "@/modules/organization/settings/api-keys/lib/projects";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
-import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
 import { APIKeysPage } from "./page";
 
 vi.mock("@/modules/ui/components/page-content-wrapper", () => ({
@@ -54,7 +54,7 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 // Mock the server-side translation function
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 

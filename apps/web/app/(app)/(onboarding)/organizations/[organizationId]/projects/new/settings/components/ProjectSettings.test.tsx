@@ -1,15 +1,14 @@
-import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { ProjectSettings } from "./ProjectSettings";
 
 // Mocks before imports
 const pushMock = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: pushMock }) }));
-vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t: (key: string) => key }) }));
 vi.mock("react-hot-toast", () => ({ toast: { error: vi.fn() } }));
 vi.mock("@/app/(app)/environments/[environmentId]/actions", () => ({ createProjectAction: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({ getFormattedErrorMessage: () => "formatted-error" }));

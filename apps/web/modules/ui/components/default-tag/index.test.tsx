@@ -23,10 +23,9 @@ describe("DefaultTag", () => {
     expect(tagElement).toHaveClass("text-xs");
   });
 
-  test("uses tolgee translate function for text", () => {
+  test("uses translate function for text", () => {
     render(<DefaultTag />);
 
-    // The @tolgee/react useTranslate hook is already mocked in vitestSetup.ts to return the key
     expect(screen.getByText("common.default")).toBeInTheDocument();
   });
 });

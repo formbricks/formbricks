@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 
 interface ClientLogoProps {
   environmentId?: string;
@@ -14,7 +14,7 @@ interface ClientLogoProps {
 }
 
 export const ClientLogo = ({ environmentId, projectLogo, previewSurvey = false }: ClientLogoProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div
       className={cn(previewSurvey ? "" : "left-3 top-3 md:left-7 md:top-7", "group absolute z-0 rounded-lg")}

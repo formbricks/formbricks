@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/modules/ui/components/button";
 
 interface BackButtonProps {
   path?: string;
@@ -11,7 +11,7 @@ interface BackButtonProps {
 
 export const BackButton = ({ path }: BackButtonProps) => {
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <Button
       variant="secondary"

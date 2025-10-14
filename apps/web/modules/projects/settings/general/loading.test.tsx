@@ -30,7 +30,7 @@ describe("GeneralSettingsLoading", () => {
     cleanup();
   });
 
-  test("renders all tolgee strings and main UI elements", () => {
+  test("renders all translated strings and main UI elements", () => {
     render(<GeneralSettingsLoading />);
     expect(screen.getByTestId("page-content-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("page-header")).toBeInTheDocument();

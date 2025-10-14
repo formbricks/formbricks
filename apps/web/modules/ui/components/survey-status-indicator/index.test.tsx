@@ -25,9 +25,8 @@ vi.mock("lucide-react", () => ({
   PencilIcon: () => <div data-testid="pencil-icon" />,
 }));
 
-// Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "common.gathering_responses": "Gathering responses",

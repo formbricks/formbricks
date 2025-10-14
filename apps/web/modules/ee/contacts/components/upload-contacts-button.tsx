@@ -1,5 +1,11 @@
 "use client";
 
+import { parse } from "csv-parse/sync";
+import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/helper";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
@@ -18,12 +24,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
-import { useTranslate } from "@tolgee/react";
-import { parse } from "csv-parse/sync";
-import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 
 interface UploadContactsCSVButtonProps {
   environmentId: string;
@@ -34,7 +34,7 @@ export const UploadContactsCSVButton = ({
   environmentId,
   contactAttributeKeys,
 }: UploadContactsCSVButtonProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const errorContainerRef = useRef<HTMLDivElement | null>(null);

@@ -55,9 +55,8 @@ vi.mock("@/modules/ui/components/popover", () => ({
   ),
 }));
 
-// Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "environments.project.tags.add_tag": "Add tag",

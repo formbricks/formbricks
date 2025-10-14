@@ -1,13 +1,13 @@
-import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
-import { getUser } from "@/lib/user/service";
-import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { getUser } from "@/lib/user/service";
+import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import Page from "./page";
 
 // Mock services and utils
@@ -31,7 +31,7 @@ vi.mock("@/modules/environments/lib/utils", () => ({
 }));
 
 const t = (key: any) => key;
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => t,
 }));
 

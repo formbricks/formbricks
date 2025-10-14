@@ -56,13 +56,6 @@ vi.mock("lucide-react", async (importOriginal) => {
   };
 });
 
-// Mock Tolgee provider
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock("@/modules/ui/components/popover", () => ({
   Popover: ({ children, open, onOpenChange }: any) => (
     <div data-testid="popover" data-open={open}>

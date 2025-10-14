@@ -1,12 +1,12 @@
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
-import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
-import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
+import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
+import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { OrganizationActions } from "./organization-actions";
 
 // Mock the next/navigation module
@@ -83,13 +83,6 @@ const localStorageMock = (() => {
   };
 })();
 Object.defineProperty(window, "localStorage", { value: localStorageMock });
-
-// Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key) => key,
-  }),
-}));
 
 // Mock Button component
 vi.mock("@/modules/ui/components/button", () => ({

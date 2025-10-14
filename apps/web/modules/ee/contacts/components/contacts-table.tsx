@@ -1,17 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { deleteContactAction } from "@/modules/ee/contacts/actions";
-import { Button } from "@/modules/ui/components/button";
-import {
-  DataTableHeader,
-  DataTableSettingsModal,
-  DataTableToolbar,
-} from "@/modules/ui/components/data-table";
-import { getCommonPinningStyles } from "@/modules/ui/components/data-table/lib/utils";
-import { SearchBar } from "@/modules/ui/components/search-bar";
-import { Skeleton } from "@/modules/ui/components/skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 import {
   DndContext,
   type DragEndEvent,
@@ -26,9 +14,21 @@ import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
+import { deleteContactAction } from "@/modules/ee/contacts/actions";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DataTableHeader,
+  DataTableSettingsModal,
+  DataTableToolbar,
+} from "@/modules/ui/components/data-table";
+import { getCommonPinningStyles } from "@/modules/ui/components/data-table/lib/utils";
+import { SearchBar } from "@/modules/ui/components/search-bar";
+import { Skeleton } from "@/modules/ui/components/skeleton";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { TContactTableData } from "../types/contact";
 import { generateContactTableColumns } from "./contact-table-column";
 
@@ -63,7 +63,7 @@ export const ContactsTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const [parent] = useAutoAnimate();
 

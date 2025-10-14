@@ -43,12 +43,6 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("DynamicPopupTab", () => {
   afterEach(() => {
     cleanup();

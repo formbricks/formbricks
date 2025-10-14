@@ -5,8 +5,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { PendingDowngradeBanner } from "./index";
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string, params?: any) => {
       if (key === "common.pending_downgrade") return "Pending Downgrade";
       if (key === "common.we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable")

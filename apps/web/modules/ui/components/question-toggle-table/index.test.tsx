@@ -43,13 +43,6 @@ vi.mock("@/modules/survey/components/question-form-input", () => ({
   ),
 }));
 
-// Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("QuestionToggleTable", () => {
   afterEach(() => {
     cleanup();

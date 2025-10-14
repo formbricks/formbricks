@@ -26,11 +26,6 @@ vi.mock("@/modules/ui/components/delete-dialog", () => ({
       </div>
     ) : null,
 }));
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string, params?: any) => (params?.projectName ? `${key} ${params.projectName}` : key),
-  }),
-}));
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -99,7 +94,7 @@ describe("DeleteProjectRender", () => {
     );
     expect(
       screen.getByText(
-        "environments.project.general.delete_project_name_includes_surveys_responses_people_and_more Project 1"
+        "environments.project.general.delete_project_name_includes_surveys_responses_people_and_more"
       )
     ).toBeInTheDocument();
     expect(screen.getByText("environments.project.general.this_action_cannot_be_undone")).toBeInTheDocument();

@@ -1,3 +1,7 @@
+import { createId } from "@paralleldrive/cuid2";
+import { TFunction } from "i18next";
+import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TTemplate } from "@formbricks/types/templates";
 import {
   buildCTAQuestion,
   buildConsentQuestion,
@@ -13,12 +17,8 @@ import {
   hiddenFieldsDefault,
 } from "@/app/lib/survey-builder";
 import { createI18nString } from "@/lib/i18n/utils";
-import { createId } from "@paralleldrive/cuid2";
-import { TFnType } from "@tolgee/react";
-import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TTemplate } from "@formbricks/types/templates";
 
-const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
+const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
@@ -118,7 +118,7 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
   );
 };
 
-const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
+const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
 
@@ -217,7 +217,7 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
   );
 };
 
-const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
+const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId()];
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
@@ -294,7 +294,7 @@ const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
   );
 };
 
-const onboardingSegmentation = (t: TFnType): TTemplate => {
+const onboardingSegmentation = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.onboarding_segmentation"),
@@ -355,7 +355,7 @@ const onboardingSegmentation = (t: TFnType): TTemplate => {
   );
 };
 
-const churnSurvey = (t: TFnType): TTemplate => {
+const churnSurvey = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
@@ -445,7 +445,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
   );
 };
 
-const earnedAdvocacyScore = (t: TFnType): TTemplate => {
+const earnedAdvocacyScore = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
@@ -521,7 +521,7 @@ const earnedAdvocacyScore = (t: TFnType): TTemplate => {
   );
 };
 
-const usabilityScoreRatingSurvey = (t: TFnType): TTemplate => {
+const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.usability_score_name"),
@@ -636,7 +636,7 @@ const usabilityScoreRatingSurvey = (t: TFnType): TTemplate => {
   );
 };
 
-const improveTrialConversion = (t: TFnType): TTemplate => {
+const improveTrialConversion = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [
     createId(),
@@ -746,7 +746,7 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
   );
 };
 
-const reviewPrompt = (t: TFnType): TTemplate => {
+const reviewPrompt = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
 
@@ -828,7 +828,7 @@ const reviewPrompt = (t: TFnType): TTemplate => {
   );
 };
 
-const interviewPrompt = (t: TFnType): TTemplate => {
+const interviewPrompt = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.interview_prompt_name"),
@@ -853,7 +853,7 @@ const interviewPrompt = (t: TFnType): TTemplate => {
   );
 };
 
-const improveActivationRate = (t: TFnType): TTemplate => {
+const improveActivationRate = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
@@ -947,7 +947,7 @@ const improveActivationRate = (t: TFnType): TTemplate => {
   );
 };
 
-const employeeSatisfaction = (t: TFnType): TTemplate => {
+const employeeSatisfaction = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.employee_satisfaction_name"),
@@ -1025,7 +1025,7 @@ const employeeSatisfaction = (t: TFnType): TTemplate => {
   );
 };
 
-const uncoverStrengthsAndWeaknesses = (t: TFnType): TTemplate => {
+const uncoverStrengthsAndWeaknesses = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.uncover_strengths_and_weaknesses_name"),
@@ -1079,7 +1079,7 @@ const uncoverStrengthsAndWeaknesses = (t: TFnType): TTemplate => {
   );
 };
 
-const productMarketFitShort = (t: TFnType): TTemplate => {
+const productMarketFitShort = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.product_market_fit_short_name"),
@@ -1116,7 +1116,7 @@ const productMarketFitShort = (t: TFnType): TTemplate => {
   );
 };
 
-const marketAttribution = (t: TFnType): TTemplate => {
+const marketAttribution = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.market_attribution_name"),
@@ -1147,7 +1147,7 @@ const marketAttribution = (t: TFnType): TTemplate => {
   );
 };
 
-const changingSubscriptionExperience = (t: TFnType): TTemplate => {
+const changingSubscriptionExperience = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.changing_subscription_experience_name"),
@@ -1190,7 +1190,7 @@ const changingSubscriptionExperience = (t: TFnType): TTemplate => {
   );
 };
 
-const identifyCustomerGoals = (t: TFnType): TTemplate => {
+const identifyCustomerGoals = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.identify_customer_goals_name"),
@@ -1220,7 +1220,7 @@ const identifyCustomerGoals = (t: TFnType): TTemplate => {
   );
 };
 
-const featureChaser = (t: TFnType): TTemplate => {
+const featureChaser = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.feature_chaser_name"),
@@ -1259,7 +1259,7 @@ const featureChaser = (t: TFnType): TTemplate => {
   );
 };
 
-const fakeDoorFollowUp = (t: TFnType): TTemplate => {
+const fakeDoorFollowUp = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.fake_door_follow_up_name"),
@@ -1300,7 +1300,7 @@ const fakeDoorFollowUp = (t: TFnType): TTemplate => {
   );
 };
 
-const feedbackBox = (t: TFnType): TTemplate => {
+const feedbackBox = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId()];
   const localSurvey = getDefaultSurveyPreset(t);
@@ -1371,7 +1371,7 @@ const feedbackBox = (t: TFnType): TTemplate => {
   );
 };
 
-const integrationSetupSurvey = (t: TFnType): TTemplate => {
+const integrationSetupSurvey = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return buildSurvey(
@@ -1446,7 +1446,7 @@ const integrationSetupSurvey = (t: TFnType): TTemplate => {
   );
 };
 
-const newIntegrationSurvey = (t: TFnType): TTemplate => {
+const newIntegrationSurvey = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.new_integration_survey_name"),
@@ -1478,7 +1478,7 @@ const newIntegrationSurvey = (t: TFnType): TTemplate => {
   );
 };
 
-const docsFeedback = (t: TFnType): TTemplate => {
+const docsFeedback = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.docs_feedback_name"),
@@ -1518,7 +1518,7 @@ const docsFeedback = (t: TFnType): TTemplate => {
   );
 };
 
-const nps = (t: TFnType): TTemplate => {
+const nps = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.nps_name"),
@@ -1547,7 +1547,7 @@ const nps = (t: TFnType): TTemplate => {
   );
 };
 
-const customerSatisfactionScore = (t: TFnType): TTemplate => {
+const customerSatisfactionScore = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -1719,7 +1719,7 @@ const customerSatisfactionScore = (t: TFnType): TTemplate => {
   );
 };
 
-const collectFeedback = (t: TFnType): TTemplate => {
+const collectFeedback = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -1875,7 +1875,7 @@ const collectFeedback = (t: TFnType): TTemplate => {
   );
 };
 
-const identifyUpsellOpportunities = (t: TFnType): TTemplate => {
+const identifyUpsellOpportunities = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.identify_upsell_opportunities_name"),
@@ -1905,7 +1905,7 @@ const identifyUpsellOpportunities = (t: TFnType): TTemplate => {
   );
 };
 
-const prioritizeFeatures = (t: TFnType): TTemplate => {
+const prioritizeFeatures = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.prioritize_features_name"),
@@ -1958,7 +1958,7 @@ const prioritizeFeatures = (t: TFnType): TTemplate => {
   );
 };
 
-const gaugeFeatureSatisfaction = (t: TFnType): TTemplate => {
+const gaugeFeatureSatisfaction = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.gauge_feature_satisfaction_name"),
@@ -1992,7 +1992,7 @@ const gaugeFeatureSatisfaction = (t: TFnType): TTemplate => {
   );
 };
 
-const marketSiteClarity = (t: TFnType): TTemplate => {
+const marketSiteClarity = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.market_site_clarity_name"),
@@ -2034,7 +2034,7 @@ const marketSiteClarity = (t: TFnType): TTemplate => {
   );
 };
 
-const customerEffortScore = (t: TFnType): TTemplate => {
+const customerEffortScore = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.customer_effort_score_name"),
@@ -2066,7 +2066,7 @@ const customerEffortScore = (t: TFnType): TTemplate => {
   );
 };
 
-const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
+const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.career_development_survey_name"),
@@ -2153,7 +2153,7 @@ const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
   );
 };
 
-const professionalDevelopmentSurvey = (t: TFnType): TTemplate => {
+const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.professional_development_survey_name"),
@@ -2239,7 +2239,7 @@ const professionalDevelopmentSurvey = (t: TFnType): TTemplate => {
   );
 };
 
-const rateCheckoutExperience = (t: TFnType): TTemplate => {
+const rateCheckoutExperience = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
   return buildSurvey(
@@ -2316,7 +2316,7 @@ const rateCheckoutExperience = (t: TFnType): TTemplate => {
   );
 };
 
-const measureSearchExperience = (t: TFnType): TTemplate => {
+const measureSearchExperience = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
   return buildSurvey(
@@ -2393,7 +2393,7 @@ const measureSearchExperience = (t: TFnType): TTemplate => {
   );
 };
 
-const evaluateContentQuality = (t: TFnType): TTemplate => {
+const evaluateContentQuality = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
   return buildSurvey(
@@ -2470,7 +2470,7 @@ const evaluateContentQuality = (t: TFnType): TTemplate => {
   );
 };
 
-const measureTaskAccomplishment = (t: TFnType): TTemplate => {
+const measureTaskAccomplishment = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId()];
@@ -2642,7 +2642,7 @@ const measureTaskAccomplishment = (t: TFnType): TTemplate => {
   );
 };
 
-const identifySignUpBarriers = (t: TFnType): TTemplate => {
+const identifySignUpBarriers = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [
     createId(),
@@ -2808,7 +2808,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
   );
 };
 
-const buildProductRoadmap = (t: TFnType): TTemplate => {
+const buildProductRoadmap = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.build_product_roadmap_name"),
@@ -2841,7 +2841,7 @@ const buildProductRoadmap = (t: TFnType): TTemplate => {
   );
 };
 
-const understandPurchaseIntention = (t: TFnType): TTemplate => {
+const understandPurchaseIntention = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
   return buildSurvey(
@@ -2897,7 +2897,7 @@ const understandPurchaseIntention = (t: TFnType): TTemplate => {
   );
 };
 
-const improveNewsletterContent = (t: TFnType): TTemplate => {
+const improveNewsletterContent = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
   return buildSurvey(
@@ -2980,7 +2980,7 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
   );
 };
 
-const evaluateAProductIdea = (t: TFnType): TTemplate => {
+const evaluateAProductIdea = (t: TFunction): TTemplate => {
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -3089,7 +3089,7 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
   );
 };
 
-const understandLowEngagement = (t: TFnType): TTemplate => {
+const understandLowEngagement = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
 
@@ -3179,7 +3179,7 @@ const understandLowEngagement = (t: TFnType): TTemplate => {
   );
 };
 
-const employeeWellBeing = (t: TFnType): TTemplate => {
+const employeeWellBeing = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.employee_well_being_name"),
@@ -3229,7 +3229,7 @@ const employeeWellBeing = (t: TFnType): TTemplate => {
   );
 };
 
-const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
+const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.long_term_retention_check_in_name"),
@@ -3338,7 +3338,7 @@ const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
   );
 };
 
-const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
+const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.professional_development_growth_survey_name"),
@@ -3388,7 +3388,7 @@ const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
   );
 };
 
-const recognitionAndReward = (t: TFnType): TTemplate => {
+const recognitionAndReward = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.recognition_and_reward_survey_name"),
@@ -3437,7 +3437,7 @@ const recognitionAndReward = (t: TFnType): TTemplate => {
   );
 };
 
-const alignmentAndEngagement = (t: TFnType): TTemplate => {
+const alignmentAndEngagement = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.alignment_and_engagement_survey_name"),
@@ -3486,7 +3486,7 @@ const alignmentAndEngagement = (t: TFnType): TTemplate => {
   );
 };
 
-const supportiveWorkCulture = (t: TFnType): TTemplate => {
+const supportiveWorkCulture = (t: TFunction): TTemplate => {
   return buildSurvey(
     {
       name: t("templates.supportive_work_culture_survey_name"),
@@ -3536,7 +3536,7 @@ const supportiveWorkCulture = (t: TFnType): TTemplate => {
   );
 };
 
-export const templates = (t: TFnType): TTemplate[] => [
+export const templates = (t: TFunction): TTemplate[] => [
   cartAbandonmentSurvey(t),
   siteAbandonmentSurvey(t),
   productMarketFitSuperhuman(t),
@@ -3588,7 +3588,7 @@ export const templates = (t: TFnType): TTemplate[] => [
   careerDevelopmentSurvey(t),
 ];
 
-export const customSurveyTemplate = (t: TFnType): TTemplate => {
+export const customSurveyTemplate = (t: TFunction): TTemplate => {
   return {
     name: t("templates.custom_survey_name"),
     description: t("templates.custom_survey_description"),
@@ -3613,7 +3613,7 @@ export const customSurveyTemplate = (t: TFnType): TTemplate => {
   };
 };
 
-export const previewSurvey = (projectName: string, t: TFnType) => {
+export const previewSurvey = (projectName: string, t: TFunction) => {
   return {
     id: "cltxxaa6x0000g8hacxdxejeu",
     createdAt: new Date(),

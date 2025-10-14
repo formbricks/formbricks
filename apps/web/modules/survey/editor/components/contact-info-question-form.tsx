@@ -1,15 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { PlusIcon } from "lucide-react";
+import { type JSX, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { type JSX, useEffect } from "react";
-import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface ContactInfoQuestionFormProps {
   localSurvey: TSurvey;
@@ -35,7 +35,7 @@ export const ContactInfoQuestionForm = ({
   locale,
   isStorageConfigured = true,
 }: ContactInfoQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
   const fields = [

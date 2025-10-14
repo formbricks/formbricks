@@ -1,17 +1,17 @@
+import { redirect } from "next/navigation";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/AirtableWrapper";
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys";
 import { getAirtableTables } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { getIntegrations } from "@/lib/integration/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
-import { redirect } from "next/navigation";
-import { TIntegrationItem } from "@formbricks/types/integration";
-import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
 const Page = async (props) => {
   const params = await props.params;

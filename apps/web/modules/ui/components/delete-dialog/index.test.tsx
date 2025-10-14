@@ -4,8 +4,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { DeleteDialog } from "./index";
 
 // Mock the translation function
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "common.delete": "Delete",

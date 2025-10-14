@@ -6,8 +6,8 @@ import { resendVerificationEmailAction } from "../actions";
 import { RequestVerificationEmail } from "./request-verification-email";
 
 // Mock dependencies
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string, params?: { email?: string }) => {
       if (key === "auth.verification-requested.no_email_provided") {
         return "No email provided";

@@ -29,13 +29,6 @@ vi.mock("@/modules/ee/billing/actions", () => {
   };
 });
 
-// Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("PricingTable", () => {
   afterEach(() => {
     cleanup();

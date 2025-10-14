@@ -32,7 +32,7 @@ describe("MergeTagsCombobox", () => {
     { label: "Tag 2", value: "tag2" },
   ];
 
-  test("renders button with tolgee string", () => {
+  test("renders button with translated string", () => {
     render(<MergeTagsCombobox tags={tags} onSelect={vi.fn()} />);
     expect(screen.getByText("environments.project.tags.merge")).toBeInTheDocument();
   });

@@ -1,3 +1,13 @@
+import { createId } from "@paralleldrive/cuid2";
+import { TFunction } from "i18next";
+import { TSurveyQuotaLogic } from "@formbricks/types/quota";
+import {
+  TConditionGroup,
+  TSingleCondition,
+  TSurvey,
+  TSurveyLogicConditionsOperator,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
   createGroupFromResource,
@@ -19,21 +29,11 @@ import {
   TConditionsEditorConfig,
   TGenericConditionGroup,
 } from "@/modules/ui/components/conditions-editor/types";
-import { createId } from "@paralleldrive/cuid2";
-import { TFnType } from "@tolgee/react";
-import { TSurveyQuotaLogic } from "@formbricks/types/quota";
-import {
-  TConditionGroup,
-  TSingleCondition,
-  TSurvey,
-  TSurveyLogicConditionsOperator,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
 
 // Factory parameters interface
 export interface SharedConditionsFactoryParams {
   survey: TSurvey;
-  t: TFnType;
+  t: TFunction;
   questionIdx?: number;
   getDefaultOperator: () => TSurveyLogicConditionsOperator;
   includeCreateGroup?: boolean;

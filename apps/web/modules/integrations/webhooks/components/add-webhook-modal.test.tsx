@@ -94,12 +94,6 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock("react-hot-toast", () => ({
   default: {
     success: vi.fn(),

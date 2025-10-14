@@ -1,8 +1,8 @@
-import { EditSegmentModal } from "@/modules/ee/contacts/segments/components/edit-segment-modal";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { EditSegmentModal } from "@/modules/ee/contacts/segments/components/edit-segment-modal";
 
 // Mock child components
 vi.mock("@/modules/ee/contacts/segments/components/segment-settings", () => ({
@@ -57,8 +57,8 @@ vi.mock("@/modules/ui/components/dialog", () => ({
 }));
 
 // Mock useTranslate
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations = {
         "common.activity": "Activity",

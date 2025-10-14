@@ -1,12 +1,8 @@
-import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
-import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
+import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { AccessTable } from "./access-table";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (k: string) => k }),
-}));
 
 describe("AccessTable", () => {
   afterEach(() => {
@@ -32,7 +28,7 @@ describe("AccessTable", () => {
     expect(screen.getByText(TeamPermissionMapping["read"])).toBeInTheDocument();
   });
 
-  test("renders table headers with tolgee keys", () => {
+  test("renders table headers with translated keys", () => {
     render(<AccessTable teams={[]} />);
     expect(screen.getByText("environments.project.teams.team_name")).toBeInTheDocument();
     expect(screen.getByText("common.size")).toBeInTheDocument();

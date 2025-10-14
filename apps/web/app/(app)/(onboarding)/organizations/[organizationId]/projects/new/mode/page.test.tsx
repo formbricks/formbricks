@@ -1,17 +1,16 @@
-import { getUserProjects } from "@/lib/project/service";
-import { getOrganizationAuth } from "@/modules/organization/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getUserProjects } from "@/lib/project/service";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import Page from "./page";
 
 const mockTranslate = vi.fn((key) => key);
 
 vi.mock("@/modules/organization/lib/utils", () => ({ getOrganizationAuth: vi.fn() }));
 vi.mock("@/lib/project/service", () => ({ getUserProjects: vi.fn() }));
-vi.mock("@/tolgee/server", () => ({ getTranslate: vi.fn() }));
+vi.mock("@/lingodotdev/server", () => ({ getTranslate: vi.fn(() => (key: string) => key) }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("next/link", () => ({
   __esModule: true,
@@ -43,7 +42,6 @@ describe("Mode Page", () => {
 
   test("renders header and options without close link when no projects", async () => {
     vi.mocked(getOrganizationAuth).mockResolvedValueOnce({ session: { user: { id: "u1" } } } as any);
-    vi.mocked(getTranslate).mockResolvedValue(mockTranslate);
     vi.mocked(getUserProjects).mockResolvedValueOnce([] as any);
 
     const element = await Page({ params });
@@ -60,7 +58,6 @@ describe("Mode Page", () => {
 
   test("renders close link when projects exist", async () => {
     vi.mocked(getOrganizationAuth).mockResolvedValueOnce({ session: { user: { id: "u1" } } } as any);
-    vi.mocked(getTranslate).mockResolvedValue(mockTranslate);
     vi.mocked(getUserProjects).mockResolvedValueOnce([{ id: "p1" } as any]);
 
     const element = await Page({ params });

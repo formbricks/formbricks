@@ -48,14 +48,16 @@ describe("I18nProvider", () => {
     cleanup();
   });
 
-  test("should render children wrapped in I18nextProvider", () => {
+  test("should render children wrapped in I18nextProvider", async () => {
     render(
-      <I18nProvider language="en-US" defaultLanguage="en-US">
+      <I18nProvider data-testid="i18n-provider" language="en-US" defaultLanguage="en-US">
         <div data-testid="child">Test Child</div>
       </I18nProvider>
     );
 
-    expect(screen.getByTestId("i18next-provider")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("i18next-provider")).toBeInTheDocument();
+    });
     expect(screen.getByTestId("child")).toBeInTheDocument();
     expect(screen.getByText("Test Child")).toBeInTheDocument();
   });

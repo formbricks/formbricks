@@ -1,5 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { ZUserPassword } from "@formbricks/types/user";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -12,11 +17,6 @@ import {
 } from "@/modules/ui/components/dialog";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
-import { ZUserPassword } from "@formbricks/types/user";
 
 interface PasswordConfirmationModalProps {
   open: boolean;
@@ -39,7 +39,7 @@ export const PasswordConfirmationModal = ({
   newEmail,
   onConfirm,
 }: PasswordConfirmationModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(PasswordConfirmationSchema),

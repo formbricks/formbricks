@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@/lib/i18n/utils";
@@ -53,7 +53,7 @@ export function LocalizedEditor({
   locale,
   questionId,
 }: Readonly<LocalizedEditorProps>) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
     [localSurvey.languages]

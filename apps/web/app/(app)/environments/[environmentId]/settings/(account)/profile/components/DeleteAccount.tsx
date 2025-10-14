@@ -1,13 +1,13 @@
 "use client";
 
+import type { Session } from "next-auth";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TUser } from "@formbricks/types/user";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import type { Session } from "next-auth";
-import { useState } from "react";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TUser } from "@formbricks/types/user";
 
 export const DeleteAccount = ({
   session,
@@ -24,7 +24,7 @@ export const DeleteAccount = ({
 }) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const isDeleteDisabled = !isMultiOrgEnabled && organizationsWithSingleOwner.length > 0;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   if (!session) {
     return null;
   }

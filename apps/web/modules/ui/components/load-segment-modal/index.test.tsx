@@ -59,8 +59,8 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations = {
         "environments.surveys.edit.load_segment": "Load Segment",

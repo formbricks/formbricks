@@ -1,13 +1,13 @@
 "use client";
 
+import { InboxIcon } from "lucide-react";
+import type { JSX } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { IdBadge } from "@/modules/ui/components/id-badge";
-import { useTranslate } from "@tolgee/react";
-import { InboxIcon } from "lucide-react";
-import type { JSX } from "react";
-import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
 
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;
@@ -22,7 +22,7 @@ export const QuestionSummaryHeader = ({
   showResponses = true,
   survey,
 }: HeadProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const questionType = getQuestionTypes(t).find((type) => type.id === questionSummary.question.type);
 
   return (

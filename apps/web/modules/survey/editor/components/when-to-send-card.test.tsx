@@ -1,10 +1,10 @@
-import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
 import { ActionClass, OrganizationRole } from "@prisma/client";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // Adjust path as necessary
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
 import { WhenToSendCard } from "./when-to-send-card";
 
 // Mock environment-dependent modules
@@ -16,9 +16,8 @@ vi.mock("@/lib/constants", () => ({
 
 vi.mock("@/modules/survey/editor/actions", () => ({}));
 
-// Mock @tolgee/react
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string, params?: any) => {
       if (key === "environments.surveys.edit.show_to_x_percentage_of_targeted_users") {
         return `Show to ${params.percentage}% of targeted users`;

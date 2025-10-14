@@ -1,9 +1,9 @@
-import { generatePersonalLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { generatePersonalLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { PersonalLinksTab } from "./personal-links-tab";
 
 // Mock dependencies
@@ -21,12 +21,6 @@ vi.mock("react-hot-toast", () => ({
 
 vi.mock("@/lib/utils/helper", () => ({
   getFormattedErrorMessage: vi.fn(),
-}));
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
 }));
 
 // Mock UI components

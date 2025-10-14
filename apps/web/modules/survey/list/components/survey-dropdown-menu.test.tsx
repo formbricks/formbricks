@@ -1,20 +1,15 @@
 // Import the actions to access mocked functions
-import { deleteSurveyAction } from "@/modules/survey/list/actions";
-import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { deleteSurveyAction } from "@/modules/survey/list/actions";
+import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 // Cast to mocked functions
 const mockDeleteSurveyAction = vi.mocked(deleteSurveyAction);
 const mockToast = vi.mocked(toast);
-
-// Mock translation
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
 
 // Mock constants
 vi.mock("@/lib/constants", () => ({

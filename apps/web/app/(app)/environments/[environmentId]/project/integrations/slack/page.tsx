@@ -1,15 +1,15 @@
+import { redirect } from "next/navigation";
+import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys";
 import { SlackWrapper } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/SlackWrapper";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
 import { getIntegrationByType } from "@/lib/integration/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
-import { redirect } from "next/navigation";
-import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 
 const Page = async (props) => {
   const params = await props.params;

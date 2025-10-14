@@ -18,13 +18,6 @@ vi.mock("./selected-row-settings", () => ({
   SelectedRowSettings: vi.fn(() => <div data-testid="selected-row-settings"></div>),
 }));
 
-// Mock useTranslate
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key) => key,
-  }),
-}));
-
 // Mock toast
 vi.mock("react-hot-toast", () => ({
   default: {

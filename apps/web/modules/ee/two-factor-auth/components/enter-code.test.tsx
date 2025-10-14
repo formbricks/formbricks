@@ -1,15 +1,9 @@
-import { enableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { enableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { EnterCode } from "./enter-code";
-
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
 
 vi.mock("react-hot-toast", () => ({
   default: {

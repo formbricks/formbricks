@@ -72,9 +72,8 @@ vi.mock("framer-motion", async () => {
   };
 });
 
-// Mock tolgee
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "common.link_survey": "Link Survey",

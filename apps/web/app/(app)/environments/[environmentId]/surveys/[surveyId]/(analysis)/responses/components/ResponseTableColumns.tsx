@@ -1,5 +1,11 @@
 "use client";
 
+import { ColumnDef } from "@tanstack/react-table";
+import { TFunction } from "i18next";
+import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
+import Link from "next/link";
+import { TResponseTableData } from "@formbricks/types/responses";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
@@ -12,12 +18,6 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
-import { ColumnDef } from "@tanstack/react-table";
-import { TFnType } from "@tolgee/react";
-import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
-import Link from "next/link";
-import { TResponseTableData } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   COLUMNS_ICON_MAP,
   METADATA_FIELDS,
@@ -31,7 +31,7 @@ const getQuestionColumnsData = (
   question: TSurveyQuestion,
   survey: TSurvey,
   isExpanded: boolean,
-  t: TFnType
+  t: TFunction
 ): ColumnDef<TResponseTableData>[] => {
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
@@ -226,7 +226,7 @@ const getQuestionColumnsData = (
   }
 };
 
-const getMetadataColumnsData = (t: TFnType): ColumnDef<TResponseTableData>[] => {
+const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] => {
   const metadataColumns: ColumnDef<TResponseTableData>[] = [];
 
   METADATA_FIELDS.forEach((label) => {
@@ -257,7 +257,7 @@ export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isReadOnly: boolean,
-  t: TFnType,
+  t: TFunction,
   showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>

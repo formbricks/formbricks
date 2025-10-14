@@ -33,7 +33,7 @@ describe("TagsLoading", () => {
     cleanup();
   });
 
-  test("renders all tolgee strings and skeletons", () => {
+  test("renders all translated strings and skeletons", () => {
     render(<TagsLoading />);
     expect(screen.getByTestId("page-content-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("page-header")).toBeInTheDocument();

@@ -14,18 +14,6 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => {
-      const translations: { [key: string]: string } = {
-        "environments.surveys.edit.edit_recall": "Edit Recall",
-        "environments.surveys.edit.add_fallback_placeholder": "Add fallback value...",
-      };
-      return translations[key] || key;
-    },
-  }),
-}));
-
 vi.mock("@/lib/utils/recall", async () => {
   const actual = await vi.importActual("@/lib/utils/recall");
   return {

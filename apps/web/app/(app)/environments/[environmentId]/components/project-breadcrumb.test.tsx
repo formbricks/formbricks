@@ -13,12 +13,6 @@ vi.mock("next/navigation", () => ({
   usePathname: vi.fn(() => "/environments/env-123/project/general"),
 }));
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 vi.mock("@/modules/projects/components/project-limit-modal", () => ({
   ProjectLimitModal: ({ open, setOpen, buttons, projectLimit }: any) =>
     open ? (

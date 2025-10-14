@@ -1,7 +1,5 @@
 // extend this object in order to add more validation rules
-import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -24,6 +22,8 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { findLanguageCodesForDuplicateLabels } from "@formbricks/types/surveys/validation";
+import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
 // Utility function to check if label is valid for all required languages
 export const isLabelValidForAllLanguages = (
@@ -241,7 +241,7 @@ export const isEndingCardValid = (
 export const isSurveyValid = (
   survey: TSurvey,
   selectedLanguageCode: string,
-  t: TFnType,
+  t: TFunction,
   responseCount?: number
 ) => {
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);

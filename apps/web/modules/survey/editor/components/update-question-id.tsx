@@ -1,13 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { validateId } from "@formbricks/types/surveys/validation";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { validateId } from "@formbricks/types/surveys/validation";
 
 interface UpdateQuestionIdProps {
   localSurvey: TSurvey;
@@ -22,7 +22,7 @@ export const UpdateQuestionId = ({
   questionIdx,
   updateQuestion,
 }: UpdateQuestionIdProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [currentValue, setCurrentValue] = useState(question.id);
   const [prevValue, setPrevValue] = useState(question.id);
   const [isInputInvalid, setIsInputInvalid] = useState(

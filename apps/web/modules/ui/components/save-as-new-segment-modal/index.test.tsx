@@ -95,8 +95,8 @@ vi.mock("@/modules/ui/components/input", () => ({
 }));
 
 // Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
     t: (key) => {
       const translations = {
         "environments.segments.save_as_new_segment": "Save as New Segment",

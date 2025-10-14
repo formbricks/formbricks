@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import Loading from "./loading";
 
 // Mock the getTranslate function
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string) => key,
 }));
 
@@ -23,7 +23,7 @@ describe("Loading", () => {
     // Check for the presence of the secondary navigation mock
     expect(screen.getByText("ContactsSecondaryNavigation")).toBeInTheDocument();
 
-    // Check for table headers based on tolgee keys
+    // Check for table headers based on translated keys
     expect(screen.getByText("common.title")).toBeInTheDocument();
     expect(screen.getByText("common.surveys")).toBeInTheDocument();
     expect(screen.getByText("common.updated_at")).toBeInTheDocument();

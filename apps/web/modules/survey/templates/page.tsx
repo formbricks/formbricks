@@ -1,7 +1,7 @@
+import { redirect } from "next/navigation";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
-import { getTranslate } from "@/tolgee/server";
-import { redirect } from "next/navigation";
 import { TemplateContainerWithPreview } from "./components/template-container";
 
 interface SurveyTemplateProps {

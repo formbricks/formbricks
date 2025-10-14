@@ -1,14 +1,14 @@
-import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 import { XMTemplateList } from "./XMTemplateList";
 
 // Prepare push mock and module mocks before importing component
 const pushMock = vi.fn();
-vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t: (key: string) => key }) }));
+vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock("next/navigation", () => ({ useRouter: vi.fn(() => ({ push: pushMock })) }));
 vi.mock("react-hot-toast", () => ({ default: { error: vi.fn() } }));
 vi.mock("@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/xm-templates", () => ({

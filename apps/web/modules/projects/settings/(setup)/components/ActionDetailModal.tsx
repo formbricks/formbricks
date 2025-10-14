@@ -1,10 +1,10 @@
 "use client";
 
-import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
-import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
+import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { ActionActivityTab } from "./ActionActivityTab";
 import { ActionSettingsTab } from "./ActionSettingsTab";
 
@@ -31,7 +31,7 @@ export const ActionDetailModal = ({
   otherEnvActionClasses,
   otherEnvironment,
 }: ActionDetailModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const tabs = [
     {
       title: t("common.activity"),

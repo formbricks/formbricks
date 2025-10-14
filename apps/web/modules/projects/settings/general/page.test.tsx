@@ -1,8 +1,8 @@
-import { getProjects } from "@/lib/project/service";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getProjects } from "@/lib/project/service";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GeneralSettingsPage } from "./page";
 
 vi.mock("@/modules/projects/settings/components/project-config-navigation", () => ({
@@ -37,7 +37,7 @@ vi.mock("./components/delete-project", () => ({
   DeleteProject: (props: any) => <div data-testid="delete-project">{props.environmentId}</div>,
 }));
 
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(() => {
     // Return a mock translator that just returns the key
     return (key: string) => key;
@@ -88,7 +88,7 @@ describe("GeneralSettingsPage", () => {
     cleanup();
   });
 
-  test("renders all tolgee strings and main UI elements", async () => {
+  test("renders all translated strings and main UI elements", async () => {
     const props = { params: { environmentId: "env1" } } as any;
 
     vi.mocked(getProjects).mockResolvedValue([mockProject]);

@@ -31,12 +31,6 @@ const translations: Record<string, string> = {
   "common.copied_to_clipboard": "Copied to clipboard",
 };
 
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => translations[key] || key,
-  }),
-}));
-
 describe("DisplayBackupCodes", () => {
   const mockBackupCodes = ["1234567890", "0987654321"];
   const mockSetOpen = vi.fn();

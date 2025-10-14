@@ -40,13 +40,6 @@ vi.mock("@/modules/ui/components/password-input", () => ({
   ),
 }));
 
-// Mock the useTranslate hook
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("PasswordConfirmationModal", () => {
   const defaultProps = {
     open: true,

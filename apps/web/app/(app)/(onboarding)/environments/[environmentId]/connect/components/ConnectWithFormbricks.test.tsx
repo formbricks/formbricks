@@ -7,7 +7,7 @@ import { ConnectWithFormbricks } from "./ConnectWithFormbricks";
 // Mocks before import
 const pushMock = vi.fn();
 const refreshMock = vi.fn();
-vi.mock("@tolgee/react", () => ({ useTranslate: () => ({ t: (key: string) => key }) }));
+vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock("next/navigation", () => ({ useRouter: vi.fn(() => ({ push: pushMock, refresh: refreshMock })) }));
 vi.mock("./OnboardingSetupInstructions", () => ({
   OnboardingSetupInstructions: () => <div data-testid="instructions" />,

@@ -1,14 +1,15 @@
 "use client";
 
-import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 
 interface ResponseDataViewProps {
   survey: TSurvey;
@@ -83,7 +84,7 @@ export const extractResponseData = (response: TResponseWithQuotas, survey: TSurv
 export const mapResponsesToTableData = (
   responses: TResponseWithQuotas[],
   survey: TSurvey,
-  t: TFnType
+  t: TFunction
 ): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),
@@ -124,7 +125,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   isQuotasAllowed,
   quotas,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const data = mapResponsesToTableData(responses, survey, t);
 
   return (

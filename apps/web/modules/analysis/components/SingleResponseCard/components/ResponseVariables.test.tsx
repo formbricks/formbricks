@@ -24,11 +24,6 @@ vi.mock("@/modules/ui/components/tooltip", () => ({
   TooltipTrigger: ({ children }: any) => <div>{children}</div>,
 }));
 
-// Mock useTranslate
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({ t: (key: string) => key }),
-}));
-
 // Mock i18n utils
 vi.mock("@/modules/i18n/utils", () => ({
   getLocalizedValue: vi.fn((val, _) => val),
