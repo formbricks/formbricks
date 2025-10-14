@@ -51,8 +51,11 @@ export const getShuffledChoicesIds = (
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });
+  const noneOption = choices.find((choice) => {
+    return choice.id === "none";
+  });
 
-  const shuffledChoices = otherOption ? [...choices.filter((choice) => choice.id !== "other")] : [...choices];
+  const shuffledChoices = choices.filter((choice) => choice.id !== "other" && choice.id !== "none");
 
   if (shuffleOption === "all") {
     shuffle(shuffledChoices);
@@ -67,6 +70,9 @@ export const getShuffledChoicesIds = (
 
   if (otherOption) {
     shuffledChoices.push(otherOption);
+  }
+  if (noneOption) {
+    shuffledChoices.push(noneOption);
   }
 
   return shuffledChoices.map((choice) => choice.id);

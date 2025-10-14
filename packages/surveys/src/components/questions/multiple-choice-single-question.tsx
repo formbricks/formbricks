@@ -78,6 +78,11 @@ export function MultipleChoiceSingleQuestion({
     [question.choices]
   );
 
+  const noneOption = useMemo(
+    () => question.choices.find((choice) => choice.id === "none"),
+    [question.choices]
+  );
+
   useEffect(() => {
     if (isFirstQuestion && !value) {
       const prefillAnswer = new URLSearchParams(window.location.search).get(question.id);
@@ -134,7 +139,7 @@ export function MultipleChoiceSingleQuestion({
               role="radiogroup"
               ref={choicesContainerRef}>
               {questionChoices.map((choice, idx) => {
-                if (!choice || choice.id === "other") return;
+                if (!choice || choice.id === "other" || choice.id === "none") return;
                 return (
                   <label
                     key={choice.id}
@@ -253,6 +258,53 @@ export function MultipleChoiceSingleQuestion({
                       maxLength={250}
                     />
                   ) : null}
+                </label>
+              ) : null}
+              {noneOption ? (
+                <label
+                  tabIndex={isCurrent ? 0 : -1}
+                  className={cn(
+                    value === getLocalizedValue(noneOption.label, languageCode)
+                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                      : "fb-border-border",
+                    "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                  )}
+                  onKeyDown={(e) => {
+                    // Accessibility: if spacebar was pressed pass this down to the input
+                    if (e.key === " ") {
+                      e.preventDefault();
+                      document.getElementById(noneOption.id)?.click();
+                      document.getElementById(noneOption.id)?.focus();
+                    }
+                  }}>
+                  <span className="fb-flex fb-items-center fb-text-sm">
+                    <input
+                      tabIndex={-1}
+                      dir={dir}
+                      type="radio"
+                      id={noneOption.id}
+                      name={question.id}
+                      value={getLocalizedValue(noneOption.label, languageCode)}
+                      className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-flex-shrink-0 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                      aria-labelledby={`${noneOption.id}-label`}
+                      onClick={() => {
+                        const noneValue = getLocalizedValue(noneOption.label, languageCode);
+                        if (!question.required && value === noneValue) {
+                          onChange({ [question.id]: undefined });
+                        } else {
+                          setOtherSelected(false);
+                          onChange({ [question.id]: noneValue });
+                        }
+                      }}
+                      checked={value === getLocalizedValue(noneOption.label, languageCode)}
+                    />
+                    <span
+                      id={`${noneOption.id}-label`}
+                      className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium"
+                      dir="auto">
+                      {getLocalizedValue(noneOption.label, languageCode)}
+                    </span>
+                  </span>
                 </label>
               ) : null}
             </div>
