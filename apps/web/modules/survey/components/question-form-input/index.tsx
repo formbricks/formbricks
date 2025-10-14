@@ -11,6 +11,7 @@ import {
   TSurveyEndScreenCard,
   TSurveyQuestion,
   TSurveyQuestionChoice,
+  TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -280,6 +281,13 @@ export const QuestionFormInput = ({
   const [firstRender, setFirstRender] = useState(true);
 
   const renderRemoveDescriptionButton = () => {
+    if (
+      question &&
+      (question.type === TSurveyQuestionTypeEnum.CTA || question.type === TSurveyQuestionTypeEnum.Consent)
+    ) {
+      return false;
+    }
+
     if (id === "subheader") {
       return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
     }

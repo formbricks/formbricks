@@ -1,9 +1,9 @@
-import { getUpdatedTtc } from "@/lib/ttc";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { type TSurveyCTAQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getUpdatedTtc } from "@/lib/ttc";
 import { CTAQuestion } from "./cta-question";
 
 // Mock dependencies
@@ -58,7 +58,7 @@ describe("CTAQuestion", () => {
     id: "q1",
     type: TSurveyQuestionTypeEnum.CTA,
     headline: { default: "Test Headline" },
-    html: { default: "Test HTML content" },
+    subheader: { default: "Test Subheader" },
     buttonLabel: { default: "Click Me" },
     dismissButtonLabel: { default: "Skip This" },
     backButtonLabel: { default: "Go Back" },

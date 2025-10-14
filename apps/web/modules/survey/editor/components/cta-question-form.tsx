@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { type JSX } from "react";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
@@ -43,9 +42,9 @@ export const CTAQuestionForm = ({
     },
     { value: "external", label: t("environments.surveys.edit.button_to_link_to_external_url") },
   ];
-  const [parent] = useAutoAnimate();
+
   return (
-    <form ref={parent}>
+    <form>
       <QuestionFormInput
         id="headline"
         value={question.headline}
@@ -63,8 +62,8 @@ export const CTAQuestionForm = ({
 
       <div className="mt-3">
         <QuestionFormInput
-          id="html"
-          value={question.html}
+          id="subheader"
+          value={question.subheader}
           label={t("common.description")}
           localSurvey={localSurvey}
           questionIdx={questionIdx}

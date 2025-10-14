@@ -1,12 +1,4 @@
 import "server-only";
-import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
-import { RESPONSES_PER_PAGE } from "@/lib/constants";
-import { getDisplayCountBySurveyId } from "@/lib/display/service";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { buildWhereClause } from "@/lib/response/utils";
-import { getSurvey } from "@/lib/survey/service";
-import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
@@ -41,6 +33,15 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
+import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { getDisplayCountBySurveyId } from "@/lib/display/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { buildWhereClause } from "@/lib/response/utils";
+import { getSurvey } from "@/lib/survey/service";
+import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
+import { validateInputs } from "@/lib/utils/validate";
 import { convertFloatTo2Decimal } from "./utils";
 
 interface TSurveySummaryResponse {
@@ -259,7 +260,7 @@ export const getSurveySummaryDropOff = (
     return {
       questionId: question.id,
       questionType: question.type,
-      headline: getLocalizedValue(question.headline, "default"),
+      headline: getTextContent(getLocalizedValue(question.headline, "default")),
       ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
       impressions: impressionsArr[index] || 0,
       dropOffCount: dropOffArr[index] || 0,

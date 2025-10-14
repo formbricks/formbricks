@@ -554,7 +554,7 @@ export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
 
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Consent),
-  html: ZI18nString.optional(),
+  subheader: ZI18nString, // Override base to make it required
   label: ZI18nString,
 });
 
@@ -589,7 +589,7 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
-  html: ZI18nString.optional(),
+  subheader: ZI18nString, // Override base to make it required
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
@@ -930,14 +930,7 @@ export const ZSurvey = z
       }
 
       const defaultLanguageCode = "default";
-      const initialFieldsToValidate = [
-        "html",
-        "buttonLabel",
-        "upperLabel",
-        "lowerLabel",
-        "label",
-        "placeholder",
-      ];
+      const initialFieldsToValidate = ["buttonLabel", "upperLabel", "lowerLabel", "label", "placeholder"];
 
       let fieldsToValidate =
         questionIndex === 0 || isBackButtonHidden

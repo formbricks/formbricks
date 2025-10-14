@@ -30,6 +30,7 @@ export const ConsentQuestionForm = ({
   isStorageConfigured = true,
 }: ConsentQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
+
   return (
     <form>
       <QuestionFormInput
@@ -49,8 +50,8 @@ export const ConsentQuestionForm = ({
 
       <div className="mt-3">
         <QuestionFormInput
-          id="html"
-          value={question.html}
+          id="subheader"
+          value={question.subheader}
           label={t("common.description")}
           localSurvey={localSurvey}
           questionIdx={questionIdx}

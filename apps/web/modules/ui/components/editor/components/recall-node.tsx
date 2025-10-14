@@ -4,8 +4,7 @@ import type { DOMConversionMap, DOMConversionOutput, DOMExportOutput, NodeKey, S
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import { ReactNode } from "react";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
-import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
+import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
 
 export interface RecallPayload {
   recallItem: TSurveyRecallItem;
@@ -135,24 +134,13 @@ export class RecallNode extends DecoratorNode<ReactNode> {
   }
 
   decorate(): ReactNode {
-    const cleanLabel = getTextContent(this.__recallItem.label).replace(/\s+/g, " ").trim();
-
-    const truncateLabel = (text: string, maxLength: number = 25): string => {
-      if (text.length <= maxLength) {
-        return text;
-      }
-      const start = text.slice(0, 10);
-      const end = text.slice(-10);
-      return `${start}...${end}`;
-    };
-
-    const displayLabel = truncateLabel(replaceRecallInfoWithUnderline(cleanLabel));
+    const displayLabel = getTextContentWithRecallTruncated(this.__recallItem.label);
 
     return (
       <span
         className="recall-node z-30 inline-flex h-fit justify-center whitespace-nowrap rounded-md bg-slate-100 text-sm text-slate-700"
-        aria-label={`Recall: ${cleanLabel}`}
-        title={cleanLabel}>
+        aria-label={`Recall: ${displayLabel}`}
+        title={displayLabel}>
         @{displayLabel}
       </span>
     );
