@@ -338,4 +338,149 @@ describe("MultipleChoiceMultiQuestion", () => {
     const hasRequiredCheckbox = checkboxes.some((checkbox) => checkbox.hasAttribute("required"));
     expect(hasRequiredCheckbox).toBe(true);
   });
+
+  test("renders and allows selecting 'None' option", async () => {
+    const onChange = vi.fn();
+    const questionWithNone = {
+      ...defaultProps.question,
+      choices: [
+        { id: "c1", label: { en: "Option 1" } },
+        { id: "c2", label: { en: "Option 2" } },
+        { id: "none", label: { en: "None of the above" } },
+      ],
+    } as TSurveyMultipleChoiceQuestion;
+
+    render(<MultipleChoiceMultiQuestion {...defaultProps} question={questionWithNone} onChange={onChange} />);
+
+    const noneCheckbox = screen.getByRole("checkbox", { name: "None of the above" });
+    expect(noneCheckbox).toBeInTheDocument();
+
+    await userEvent.click(noneCheckbox);
+
+    expect(onChange).toHaveBeenCalledWith({ q1: ["None of the above"] });
+  });
+
+  test("'None' option clears other selections when checked", async () => {
+    const onChange = vi.fn();
+    const questionWithNone = {
+      ...defaultProps.question,
+      choices: [
+        { id: "c1", label: { en: "Option 1" } },
+        { id: "c2", label: { en: "Option 2" } },
+        { id: "none", label: { en: "None of the above" } },
+      ],
+    } as TSurveyMultipleChoiceQuestion;
+
+    render(
+      <MultipleChoiceMultiQuestion
+        {...defaultProps}
+        question={questionWithNone}
+        value={["Option 1", "Option 2"]}
+        onChange={onChange}
+      />
+    );
+
+    const noneCheckbox = screen.getByRole("checkbox", { name: "None of the above" });
+    await userEvent.click(noneCheckbox);
+
+    expect(onChange).toHaveBeenCalledWith({ q1: ["None of the above"] });
+  });
+
+  test("'None' option clears 'Other' selection when checked", async () => {
+    const onChange = vi.fn();
+    const questionWithBoth = {
+      ...defaultProps.question,
+      choices: [
+        { id: "c1", label: { en: "Option 1" } },
+        { id: "other", label: { en: "Other" } },
+        { id: "none", label: { en: "None of the above" } },
+      ],
+    } as TSurveyMultipleChoiceQuestion;
+
+    render(
+      <MultipleChoiceMultiQuestion
+        {...defaultProps}
+        question={questionWithBoth}
+        value={["Custom response"]}
+        onChange={onChange}
+      />
+    );
+
+    const otherCheckbox = screen.getByRole("checkbox", { name: "Other" });
+    expect(otherCheckbox).toBeChecked();
+    expect(screen.getByDisplayValue("Custom response")).toBeInTheDocument();
+
+    const noneCheckbox = screen.getByRole("checkbox", { name: "None of the above" });
+    await userEvent.click(noneCheckbox);
+
+    expect(onChange).toHaveBeenCalledWith({ q1: ["None of the above"] });
+  });
+
+  test("allows deselecting 'None' option", async () => {
+    const onChange = vi.fn();
+    const questionWithNone = {
+      ...defaultProps.question,
+      choices: [
+        { id: "c1", label: { en: "Option 1" } },
+        { id: "none", label: { en: "None of the above" } },
+      ],
+    } as TSurveyMultipleChoiceQuestion;
+
+    render(
+      <MultipleChoiceMultiQuestion
+        {...defaultProps}
+        question={questionWithNone}
+        value={["None of the above"]}
+        onChange={onChange}
+      />
+    );
+
+    const noneCheckbox = screen.getByRole("checkbox", { name: "None of the above" });
+    expect(noneCheckbox).toBeChecked();
+
+    await userEvent.click(noneCheckbox);
+
+    expect(onChange).toHaveBeenCalledWith({ q1: [] });
+  });
+
+  test("handles keyboard accessibility for 'None' option with spacebar", async () => {
+    const onChange = vi.fn();
+    const questionWithNone = {
+      ...defaultProps.question,
+      choices: [
+        { id: "c1", label: { en: "Option 1" } },
+        { id: "none", label: { en: "None of the above" } },
+      ],
+    } as TSurveyMultipleChoiceQuestion;
+
+    render(<MultipleChoiceMultiQuestion {...defaultProps} question={questionWithNone} onChange={onChange} />);
+
+    const noneLabel = screen.getByText("None of the above").closest("label");
+    expect(noneLabel).toBeInTheDocument();
+
+    fireEvent.keyDown(noneLabel!, { key: " " });
+
+    expect(onChange).toHaveBeenCalledWith({ q1: ["None of the above"] });
+  });
+
+  test("'None' option is checked when value matches", () => {
+    const questionWithNone = {
+      ...defaultProps.question,
+      choices: [
+        { id: "c1", label: { en: "Option 1" } },
+        { id: "none", label: { en: "None of the above" } },
+      ],
+    } as TSurveyMultipleChoiceQuestion;
+
+    render(
+      <MultipleChoiceMultiQuestion
+        {...defaultProps}
+        question={questionWithNone}
+        value={["None of the above"]}
+      />
+    );
+
+    const noneCheckbox = screen.getByRole("checkbox", { name: "None of the above" });
+    expect(noneCheckbox).toBeChecked();
+  });
 });

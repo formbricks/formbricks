@@ -1,28 +1,19 @@
 import * as Sentry from "@sentry/nextjs";
-import { compare, hash } from "bcryptjs";
 import { createHash, randomUUID } from "crypto";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { hashSecret, verifySecret } from "@/lib/crypto";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
 export const hashPassword = async (password: string) => {
-  const hashedPassword = await hash(password, 12);
-  return hashedPassword;
+  return await hashSecret(password, 12);
 };
 
 export const verifyPassword = async (password: string, hashedPassword: string) => {
-  try {
-    const isValid = await compare(password, hashedPassword);
-    return isValid;
-  } catch (error) {
-    // Log warning for debugging purposes, but don't throw to maintain security
-    logger.warn({ error }, "Password verification failed due to invalid hash format");
-    // Return false for invalid hashes or other bcrypt errors
-    return false;
-  }
+  return await verifySecret(password, hashedPassword);
 };
 
 /**

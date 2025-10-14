@@ -1,11 +1,11 @@
+import { describe, expect, test, vi } from "vitest";
+import { z } from "zod";
+import { err, ok } from "@formbricks/types/error-handlers";
 import { apiWrapper } from "@/modules/api/v2/auth/api-wrapper";
 import { authenticateRequest } from "@/modules/api/v2/auth/authenticate-request";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
-import { describe, expect, test, vi } from "vitest";
-import { z } from "zod";
-import { err, ok } from "@formbricks/types/error-handlers";
 
 vi.mock("../authenticate-request", () => ({
   authenticateRequest: vi.fn(),
@@ -39,8 +39,7 @@ const mockAuthentication = {
       permission: "manage" as const,
     },
   ],
-  hashedApiKey: "hashed-api-key",
-  apiKeyId: "api-key-id",
+  apiKeyId: "hashed-api-key",
   organizationId: "org-id",
   organizationAccess: {} as any,
 } as any;

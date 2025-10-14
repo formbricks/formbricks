@@ -346,19 +346,22 @@ export const getQuestionSummary = async (
       case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
       case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
         let values: TSurveyQuestionSummaryMultipleChoice["choices"] = [];
-        // check last choice is others or not
-        const lastChoice = question.choices[question.choices.length - 1];
-        const isOthersEnabled = lastChoice.id === "other";
 
-        const questionChoices = question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
-        if (isOthersEnabled) {
-          questionChoices.pop();
-        }
+        const otherOption = question.choices.find((choice) => choice.id === "other");
+        const noneOption = question.choices.find((choice) => choice.id === "none");
+
+        const questionChoices = question.choices
+          .filter((choice) => choice.id !== "other" && choice.id !== "none")
+          .map((choice) => getLocalizedValue(choice.label, "default"));
 
         const choiceCountMap = questionChoices.reduce((acc: Record<string, number>, choice) => {
           acc[choice] = 0;
           return acc;
         }, {});
+
+        // Track "none" count separately
+        const noneLabel = noneOption ? getLocalizedValue(noneOption.label, "default") : null;
+        let noneCount = 0;
 
         const otherValues: TSurveyQuestionSummaryMultipleChoice["choices"][number]["others"] = [];
         let totalSelectionCount = 0;
@@ -379,7 +382,9 @@ export const getQuestionSummary = async (
                 totalSelectionCount++;
                 if (questionChoices.includes(value)) {
                   choiceCountMap[value]++;
-                } else if (isOthersEnabled) {
+                } else if (noneLabel && value === noneLabel) {
+                  noneCount++;
+                } else if (otherOption) {
                   otherValues.push({
                     value,
                     contact: response.contact,
@@ -397,7 +402,9 @@ export const getQuestionSummary = async (
               totalSelectionCount++;
               if (questionChoices.includes(answer)) {
                 choiceCountMap[answer]++;
-              } else if (isOthersEnabled) {
+              } else if (noneLabel && answer === noneLabel) {
+                noneCount++;
+              } else if (otherOption) {
                 otherValues.push({
                   value: answer,
                   contact: response.contact,
@@ -422,9 +429,9 @@ export const getQuestionSummary = async (
           });
         });
 
-        if (isOthersEnabled) {
+        if (otherOption) {
           values.push({
-            value: getLocalizedValue(lastChoice.label, "default") || "Other",
+            value: getLocalizedValue(otherOption.label, "default") || "Other",
             count: otherValues.length,
             percentage:
               totalResponseCount > 0
@@ -433,6 +440,17 @@ export const getQuestionSummary = async (
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
+
+        // Add "none" option at the end if it exists
+        if (noneOption && noneLabel) {
+          values.push({
+            value: noneLabel,
+            count: noneCount,
+            percentage:
+              totalResponseCount > 0 ? convertFloatTo2Decimal((noneCount / totalResponseCount) * 100) : 0,
+          });
+        }
+
         summary.push({
           type: question.type,
           question,
