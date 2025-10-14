@@ -554,7 +554,6 @@ export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
 
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Consent),
-  subheader: ZI18nString, // Override base to make it required
   label: ZI18nString,
 });
 
@@ -589,7 +588,6 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
-  subheader: ZI18nString, // Override base to make it required
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),

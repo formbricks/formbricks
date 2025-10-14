@@ -76,7 +76,9 @@ export const QuestionSkip = ({
                       {getTextContent(
                         parseRecallInfo(
                           getLocalizedValue(
-                            questions.find((question) => question.id === questionId)!.headline,
+                            questions.find((question) => question.id === questionId)?.headline ?? {
+                              default: "",
+                            },
                             "default"
                           ),
                           responseData
@@ -113,7 +115,9 @@ export const QuestionSkip = ({
                         {getTextContent(
                           parseRecallInfo(
                             getLocalizedValue(
-                              questions.find((question) => question.id === questionId)!.headline,
+                              questions.find((question) => question.id === questionId)?.headline ?? {
+                                default: "",
+                              },
                               "default"
                             ),
                             responseData

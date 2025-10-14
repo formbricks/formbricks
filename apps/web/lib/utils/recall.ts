@@ -61,7 +61,7 @@ const getRecallItemLabel = <T extends TSurvey>(
 
   const surveyQuestion = survey.questions.find((question) => question.id === recallItemId);
   if (surveyQuestion) {
-    const headline = surveyQuestion.headline[languageCode];
+    const headline = getLocalizedValue(surveyQuestion.headline, languageCode);
     // Strip HTML tags to prevent raw HTML from showing in nested recalls
     return headline ? getTextContent(headline) : headline;
   }
