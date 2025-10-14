@@ -40,11 +40,6 @@ export const extractParts = (text: string): string[] => {
     return parts;
   }
 
-  // If text starts with a slash, add empty string first to maintain odd/even pattern
-  if (text.startsWith("/")) {
-    parts.push("");
-  }
-
   while (i < text.length) {
     const start = text.indexOf("/", i);
     if (start === -1) {

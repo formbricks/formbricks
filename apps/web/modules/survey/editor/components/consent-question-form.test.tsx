@@ -65,7 +65,7 @@ describe("ConsentQuestionForm", () => {
 
     // Check html (description) field
     expect(questionFormInputs[1]).toHaveTextContent("common.description");
-    expect(questionFormInputs[1]).toHaveAttribute("data-field-id", "html");
+    expect(questionFormInputs[1]).toHaveAttribute("data-field-id", "subheader");
 
     // Check label (checkbox label) field
     expect(questionFormInputs[2]).toHaveTextContent("environments.surveys.edit.checkbox_label*");

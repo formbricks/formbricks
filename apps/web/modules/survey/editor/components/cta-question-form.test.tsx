@@ -73,7 +73,7 @@ describe("CTAQuestionForm", () => {
 
     // Check that we have headline, html (description), and buttonLabel fields
     expect(questionFormInputs[0]).toHaveAttribute("data-field-id", "headline");
-    expect(questionFormInputs[1]).toHaveAttribute("data-field-id", "html");
+    expect(questionFormInputs[1]).toHaveAttribute("data-field-id", "subheader");
     expect(questionFormInputs[2]).toHaveAttribute("data-field-id", "buttonLabel");
 
     expect(screen.getByTestId("options-switch")).toBeInTheDocument();
