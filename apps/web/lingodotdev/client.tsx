@@ -5,6 +5,7 @@ import ICU from "i18next-icu";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { ReactNode, useEffect, useState } from "react";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { logger } from "@formbricks/logger";
 
 let isInit = false;
 
@@ -38,6 +39,7 @@ export const I18nProvider = ({ children, language, defaultLanguage }: I18nProvid
           isInit = true;
           setIsReady(true);
         } catch (error) {
+          logger.error(error);
           setIsReady(true);
         }
       } else {

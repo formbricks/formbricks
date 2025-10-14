@@ -19,7 +19,7 @@ export function LanguageLabels() {
   );
 }
 
-function AliasTooltip({ t }: { t: TFunction }) {
+function AliasTooltip({ t }: Readonly<{ t: TFunction }>) {
   return (
     <TooltipProvider delayDuration={80}>
       <Tooltip>
