@@ -13,11 +13,15 @@ import { RecallItemSelect } from "./recall-item-select";
 vi.mock("@/lib/utils/recall", () => ({
   replaceRecallInfoWithUnderline: vi.fn((text) => `_${text}_`),
   getTextContentWithRecallTruncated: vi.fn((text: string, maxLength: number = 25) => {
-    // Simple mock: clean text and truncate
-    const cleaned = text
-      .replace(/<[^>]*>/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
+    // Remove all HTML tags by repeatedly applying the regex
+    let cleaned = text;
+    let prev;
+    do {
+      prev = cleaned;
+      cleaned = cleaned.replace(/<[^>]*>/g, "");
+    } while (cleaned !== prev);
+    cleaned = cleaned.replace(/\s+/g, " ").trim();
+
     const withRecallReplaced = cleaned.replace(/#recall:[^#]+#/g, "___");
 
     if (withRecallReplaced.length <= maxLength) {

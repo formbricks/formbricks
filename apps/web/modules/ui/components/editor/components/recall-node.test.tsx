@@ -25,10 +25,7 @@ vi.mock("@/lib/utils/recall", () => ({
   }),
   getTextContentWithRecallTruncated: vi.fn((text: string, maxLength: number = 25) => {
     // Mock: strip HTML tags, clean whitespace, truncate, replace recall patterns
-    const cleanText = text
-      .replace(/<[^>]*>/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
+    const cleanText = text.replace(/<|>/g, "").replace(/\s+/g, " ").trim();
     const withRecallReplaced = cleanText.replace(/#recall:[^#]+#/g, "___");
 
     if (withRecallReplaced.length <= maxLength) {
