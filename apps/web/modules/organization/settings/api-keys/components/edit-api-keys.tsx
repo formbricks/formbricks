@@ -2,9 +2,9 @@
 
 import { ApiKeyPermission } from "@prisma/client";
 import { FilesIcon, TrashIcon } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
