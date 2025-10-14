@@ -36,6 +36,9 @@ importers:
       eslint:
         specifier: 8.57.0
         version: 8.57.0
+      glob:
+        specifier: ^11.0.2
+        version: 11.0.2
       husky:
         specifier: 9.1.7
         version: 9.1.7
