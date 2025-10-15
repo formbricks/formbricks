@@ -1429,7 +1429,7 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
 
 export const getSurveyFollowUpActionDefaultBody = (t: TFnType): string => {
   return t("templates.follow_ups_modal_action_body")
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replaceAll(/[\u200B-\u200D\uFEFF]/g, "")
     .trim();
 };
 

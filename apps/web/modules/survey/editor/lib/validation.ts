@@ -21,8 +21,7 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { findLanguageCodesForDuplicateLabels } from "@formbricks/types/surveys/validation";
-import { getTextContent } from "@formbricks/types/surveys/validation";
+import { findLanguageCodesForDuplicateLabels, getTextContent } from "@formbricks/types/surveys/validation";
 import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
@@ -36,9 +35,7 @@ export const isLabelValidForAllLanguages = (
   });
   const languageCodes = extractLanguageCodes(filteredLanguages);
   const languages = languageCodes.length === 0 ? ["default"] : languageCodes;
-  return languages.every(
-    (language) => label && label[language] && getTextContent(label[language]).length > 0
-  );
+  return languages.every((language) => label?.[language] && getTextContent(label[language]).length > 0);
 };
 
 // Validation logic for multiple choice questions

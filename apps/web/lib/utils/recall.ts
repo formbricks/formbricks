@@ -273,7 +273,7 @@ export const parseRecallInfo = (
 };
 
 export const getTextContentWithRecallTruncated = (text: string, maxLength: number = 25): string => {
-  const cleanText = getTextContent(text).replace(/\s+/g, " ").trim();
+  const cleanText = getTextContent(text).replaceAll(/\s+/g, " ").trim();
 
   if (cleanText.length <= maxLength) {
     return replaceRecallInfoWithUnderline(cleanText);

@@ -82,7 +82,7 @@ export function LocalizedEditor({
           // This ensures old surveys maintain semibold styling when converted to HTML
           if (id === "headline" && text && !isValidHTML(text)) {
             // Use [\s\S]*? to match any character including newlines
-            html = html.replace(/<p>([\s\S]*?)<\/p>/g, "<p><strong>$1</strong></p>");
+            html = html.replaceAll(/<p>([\s\S]*?)<\/p>/g, "<p><strong>$1</strong></p>");
           }
 
           return html;
@@ -113,7 +113,7 @@ export function LocalizedEditor({
             }
 
             const translatedContent = {
-              ...value,
+              ...(value ?? {}),
               [selectedLanguageCode]: v,
             };
             updateQuestion({ [id]: translatedContent });
@@ -122,7 +122,7 @@ export function LocalizedEditor({
 
           if (currentQuestion && currentQuestion[id] !== undefined) {
             const translatedContent = {
-              ...value,
+              ...(value ?? {}),
               [selectedLanguageCode]: v,
             };
             updateQuestion(questionIdx, { [id]: translatedContent });

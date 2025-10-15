@@ -447,7 +447,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Multi-Select Ask respondents" }).click();
   await fillRichTextEditor(page, "Question*", params.multiSelectQuestion.question);
   await page.getByRole("button", { name: "Add description" }).click();
-  await page.locator('input[name="subheader"]').fill(params.multiSelectQuestion.description);
+  await fillRichTextEditor(page, "Description", params.multiSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.multiSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.multiSelectQuestion.options[1]);
   await page.getByPlaceholder("Option 3").fill(params.multiSelectQuestion.options[2]);
@@ -490,7 +490,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Rating" }).click();
   await fillRichTextEditor(page, "Question*", params.ratingQuestion.question);
   await page.getByRole("button", { name: "Add description" }).click();
-  await page.locator('input[name="subheader"]').fill(params.ratingQuestion.description);
+  await fillRichTextEditor(page, "Description", params.ratingQuestion.description);
   await page.getByPlaceholder("Not good").fill(params.ratingQuestion.lowLabel);
   await page.getByPlaceholder("Very satisfied").fill(params.ratingQuestion.highLabel);
 
@@ -536,7 +536,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Matrix" }).click();
   await fillRichTextEditor(page, "Question*", params.matrix.question);
   await page.getByRole("button", { name: "Add description" }).click();
-  await page.locator('input[name="subheader"]').fill(params.matrix.description);
+  await fillRichTextEditor(page, "Description", params.matrix.description);
   await page.locator("#row-0").click();
   await page.locator("#row-0").fill(params.matrix.rows[0]);
   await page.locator("#row-1").click();
