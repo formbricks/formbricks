@@ -31,6 +31,11 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
+// Mock the timeSince function
+vi.mock("@/lib/time", () => ({
+  timeSince: vi.fn(() => "2 days ago"),
+}));
+
 // Mock the Dialog components
 vi.mock("@/modules/ui/components/dialog", () => ({
   Dialog: ({ children, open, onOpenChange }: any) =>
@@ -322,5 +327,41 @@ describe("EditAPIKeys", () => {
 
     expect(writeText).toHaveBeenCalledWith("test-api-key-123");
     expect(toast.success).toHaveBeenCalledWith("environments.project.api_keys.api_key_copied_to_clipboard");
+  });
+
+  test("displays 'secret' when no actualKey is provided", () => {
+    render(<EditAPIKeys {...defaultProps} />);
+
+    // The API keys in mockApiKeys don't have actualKey, so they should display "secret"
+    expect(screen.getAllByText("environments.project.api_keys.secret")).toHaveLength(2);
+  });
+
+  test("stops propagation when clicking copy button", async () => {
+    const writeText = vi.fn();
+    Object.assign(navigator, {
+      clipboard: {
+        writeText,
+      },
+    });
+
+    const apiKeyWithActual = {
+      ...mockApiKeys[0],
+      actualKey: "test-api-key-123",
+    } as TApiKeyWithEnvironmentPermission & { actualKey: string };
+
+    render(<EditAPIKeys {...defaultProps} apiKeys={[apiKeyWithActual]} />);
+
+    const copyButton = screen.getByTestId("copy-button");
+    await userEvent.click(copyButton);
+
+    // View permission modal should not open when clicking copy button
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+  });
+
+  test("displays created at time for each API key", () => {
+    render(<EditAPIKeys {...defaultProps} />);
+
+    // Should show "2 days ago" for both API keys (mocked)
+    expect(screen.getAllByText("2 days ago")).toHaveLength(2);
   });
 });

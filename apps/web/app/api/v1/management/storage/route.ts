@@ -1,3 +1,6 @@
+import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { TUploadPublicFileRequest, ZUploadPublicFileRequest } from "@formbricks/types/storage";
 import { checkAuth } from "@/app/api/v1/management/storage/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -5,9 +8,6 @@ import { TApiV1Authentication, withV1ApiWrapper } from "@/app/lib/api/with-api-l
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
-import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { TUploadPublicFileRequest, ZUploadPublicFileRequest } from "@formbricks/types/storage";
 
 // api endpoint for getting a signed url for uploading a public file
 // uploaded files will be public, anyone can access the file
@@ -52,7 +52,16 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const signedUrlResponse = await getSignedUrlForUpload(fileName, environmentId, fileType, "public");
+    const MAX_PUBLIC_FILE_SIZE_MB = 5;
+    const maxFileUploadSize = MAX_PUBLIC_FILE_SIZE_MB * 1024 * 1024;
+
+    const signedUrlResponse = await getSignedUrlForUpload(
+      fileName,
+      environmentId,
+      fileType,
+      "public",
+      maxFileUploadSize
+    );
 
     if (!signedUrlResponse.ok) {
       logger.error({ error: signedUrlResponse.error }, "Error getting signed url for upload");

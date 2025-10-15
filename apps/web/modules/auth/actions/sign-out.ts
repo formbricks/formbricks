@@ -1,7 +1,7 @@
 "use server";
 
-import { logSignOut } from "@/modules/auth/lib/utils";
 import { logger } from "@formbricks/logger";
+import { logSignOut } from "@/modules/auth/lib/utils";
 
 /**
  * Logs a sign out event
@@ -27,11 +27,14 @@ export const logSignOutAction = async (
   try {
     logSignOut(userId, userEmail, context);
   } catch (error) {
-    logger.error("Failed to log sign out event", {
-      userId,
-      context,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error(
+      {
+        userId,
+        context,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Failed to log sign out event"
+    );
     // Re-throw to ensure callers are aware of the failure
     throw error;
   }

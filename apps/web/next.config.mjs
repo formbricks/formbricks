@@ -28,6 +28,12 @@ const nextConfig = {
   experimental: {},
   transpilePackages: ["@formbricks/database"],
   images: {
+    // Optimize image processing to reduce CPU time and prevent timeouts
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920], // Removed 3840 to avoid processing huge images
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Standard sizes for smaller images
+    formats: ["image/webp"], // WebP is faster to process and smaller than JPEG/PNG
+    minimumCacheTTL: 60, // Cache optimized images for at least 60 seconds
+    dangerouslyAllowSVG: true, // Allow SVG images
     remotePatterns: [
       {
         protocol: "https",

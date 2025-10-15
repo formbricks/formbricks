@@ -1,16 +1,7 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-import { Input } from "@/modules/ui/components/input";
-import { cn } from "@/modules/ui/lib/utils";
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
-import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
+import { $isLinkNode } from "@lexical/link";
 import {
   $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
@@ -20,24 +11,31 @@ import {
 } from "@lexical/list";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
-import { $isAtNodeEnd, $wrapNodes } from "@lexical/selection";
+import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
-import type { BaseSelection, EditorState, LexicalEditor, NodeSelection, RangeSelection } from "lexical";
+import { useTranslate } from "@tolgee/react";
+import type { RangeSelection } from "lexical";
 import {
   $createParagraphNode,
   $getRoot,
   $getSelection,
-  $insertNodes,
   $isRangeSelection,
   COMMAND_PRIORITY_CRITICAL,
   FORMAT_TEXT_COMMAND,
   PASTE_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
-import { Bold, ChevronDownIcon, Italic, Link, Underline } from "lucide-react";
+import { AtSign, Bold, ChevronDownIcon, Italic, Link, PencilIcon, Underline } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { AddVariablesDropdown } from "./add-variables-dropdown";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { cn } from "@/modules/ui/lib/utils";
 import type { TextEditorProps } from "./editor";
 
 const LowPriority = 1;
@@ -56,162 +54,6 @@ const blockTypeToBlockName: BlockType = {
   h2: "Small Heading",
 };
 
-const positionEditorElement = (editor: HTMLInputElement, rect: DOMRect | null) => {
-  if (rect === null) {
-    editor.style.opacity = "0";
-    editor.style.top = "-1000px";
-    editor.style.left = "-1000px";
-  } else {
-    editor.style.opacity = "1";
-    editor.style.top = `${rect.top + rect.height + window.pageYOffset + 10}px`;
-    editor.style.left = `${rect.left + window.pageXOffset - editor.offsetWidth / 2 + rect.width / 2}px`;
-  }
-};
-
-const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
-  const editorRef = useRef<HTMLInputElement>(null);
-  const mouseDownRef = useRef(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [linkUrl, setLinkUrl] = useState("");
-  const [isEditMode, setEditMode] = useState(false);
-  const [lastSelection, setLastSelection] = useState<RangeSelection | NodeSelection | BaseSelection | null>(
-    null
-  );
-
-  const updateLinkEditor = useCallback(() => {
-    const selection = $getSelection();
-    if ($isRangeSelection(selection)) {
-      const node = getSelectedNode(selection);
-      const parent = node.getParent();
-      if ($isLinkNode(parent)) {
-        setLinkUrl(parent.getURL());
-      } else if ($isLinkNode(node)) {
-        setLinkUrl(node.getURL());
-      } else {
-        setLinkUrl("");
-      }
-    }
-    const editorElem = editorRef.current;
-    const nativeSelection = window.getSelection();
-    const activeElement = document.activeElement;
-
-    if (editorElem === null) {
-      return;
-    }
-
-    const rootElement = editor.getRootElement();
-    if (
-      selection !== null &&
-      !nativeSelection?.isCollapsed &&
-      rootElement !== null &&
-      rootElement.contains(nativeSelection?.anchorNode || null)
-    ) {
-      const domRange = nativeSelection?.getRangeAt(0);
-      let rect: DOMRect | undefined;
-      if (nativeSelection?.anchorNode === rootElement) {
-        let inner: Element = rootElement;
-        while (inner.firstElementChild != null) {
-          inner = inner.firstElementChild;
-        }
-        rect = inner.getBoundingClientRect();
-      } else {
-        rect = domRange?.getBoundingClientRect();
-      }
-      if (!mouseDownRef.current) {
-        positionEditorElement(editorElem, rect || null);
-      }
-
-      setLastSelection(selection);
-    } else if (!activeElement || activeElement.className !== "link-input") {
-      positionEditorElement(editorElem, null);
-      setLastSelection(null);
-      setEditMode(false);
-      setLinkUrl("");
-    }
-
-    return true;
-  }, [editor]);
-
-  useEffect(() => {
-    return mergeRegister(
-      editor.registerUpdateListener(({ editorState }: { editorState: EditorState }) => {
-        editorState.read(() => {
-          updateLinkEditor();
-        });
-      }),
-
-      editor.registerCommand(
-        SELECTION_CHANGE_COMMAND,
-        () => {
-          updateLinkEditor();
-          return true;
-        },
-        LowPriority
-      )
-    );
-  }, [editor, updateLinkEditor]);
-
-  useEffect(() => {
-    editor.getEditorState().read(() => {
-      updateLinkEditor();
-    });
-  }, [editor, updateLinkEditor]);
-
-  useEffect(() => {
-    if (isEditMode && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isEditMode]);
-
-  useEffect(() => {
-    setEditMode(true);
-  }, []);
-
-  const linkAttributes = {
-    target: "_blank",
-    rel: "noopener noreferrer",
-  };
-
-  const handleSubmit = () => {
-    if (lastSelection && linkUrl) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
-        url: linkUrl,
-        ...linkAttributes,
-      });
-    }
-    setEditMode(false);
-  };
-
-  return (
-    <div ref={editorRef} className="link-editor">
-      {isEditMode && (
-        <div className="flex">
-          <Input
-            className="bg-white"
-            ref={inputRef}
-            value={linkUrl}
-            onChange={(event) => {
-              setLinkUrl(event.target.value);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                handleSubmit();
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                setEditMode(false);
-              }
-            }}
-          />
-          <Button className="py-2" onClick={handleSubmit}>
-            Add
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const getSelectedNode = (selection: RangeSelection) => {
   const anchor = selection.anchor;
   const focus = selection.focus;
@@ -228,15 +70,58 @@ const getSelectedNode = (selection: RangeSelection) => {
   }
 };
 
-export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement | null }) => {
+const getButtonClassName = (active: boolean): string =>
+  active
+    ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
+    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900";
+
+interface ToolbarButtonProps {
+  icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
+  onClick: () => void;
+  tooltipText: string;
+  disabled: boolean;
+}
+
+const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText, disabled }: ToolbarButtonProps) => (
+  <TooltipProvider delayDuration={0}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className={getButtonClassName(active)}>
+          <Icon />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{tooltipText}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
+export const ToolbarPlugin = (
+  props: TextEditorProps & {
+    setShowRecallItemSelect: (show: boolean) => void;
+    recallItemsCount?: number;
+    setShowFallbackInput: (show: boolean) => void;
+    setShowLinkEditor: (show: boolean) => void;
+  }
+) => {
   const [editor] = useLexicalComposerContext();
 
+  const { t } = useTranslate();
   const toolbarRef = useRef(null);
   const [blockType, setBlockType] = useState("paragraph");
   const [isLink, setIsLink] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
+  const [hasTextSelection, setHasTextSelection] = useState(false);
 
   // save ref to setText to use it in event listeners safely
   const setText = useRef<any>(props.setText);
@@ -251,7 +136,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         const selection = $getSelection();
 
         if ($isRangeSelection(selection)) {
-          $wrapNodes(selection, () => $createParagraphNode());
+          $setBlocksType(selection, () => $createParagraphNode());
         }
       });
     }
@@ -263,7 +148,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         const selection = $getSelection();
 
         if ($isRangeSelection(selection)) {
-          $wrapNodes(selection, () => $createHeadingNode("h1"));
+          $setBlocksType(selection, () => $createHeadingNode("h1"));
         }
       });
     }
@@ -275,7 +160,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         const selection = $getSelection();
 
         if ($isRangeSelection(selection)) {
-          $wrapNodes(selection, () => $createHeadingNode("h2"));
+          $setBlocksType(selection, () => $createHeadingNode("h2"));
         }
       });
     }
@@ -320,6 +205,7 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
+      setHasTextSelection(!selection.isCollapsed());
       const anchorNode = selection.anchor.getNode();
       const element = anchorNode.getKey() === "root" ? anchorNode : anchorNode.getTopLevelElementOrThrow();
       const elementKey = element.getKey();
@@ -347,18 +233,6 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
     }
   }, [editor]);
 
-  const addVariable = (variable: string) => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        editor.update(() => {
-          const formatedVariable = `{${variable.toUpperCase().replace(/ /g, "_")}}`;
-          selection?.insertRawText(formatedVariable);
-        });
-      }
-    });
-  };
-
   useEffect(() => {
     if (!props.firstRender) {
       editor.update(() => {
@@ -370,10 +244,8 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
             const dom = parser.parseFromString(props.getText(), "text/html");
 
             const nodes = $generateNodesFromDOM(editor, dom);
-            const paragraph = $createParagraphNode();
-            root.clear().append(paragraph);
-            paragraph.select();
-            $insertNodes(nodes);
+            root.clear();
+            root.append(...nodes);
           });
         }
       });
@@ -389,15 +261,11 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         const dom = parser.parseFromString(props.getText(), "text/html");
 
         const nodes = $generateNodesFromDOM(editor, dom);
-        const paragraph = $createParagraphNode();
-        $getRoot().clear().append(paragraph);
+        const root = $getRoot();
+        root.clear();
+        root.append(...nodes);
 
-        paragraph.select();
-
-        $getRoot().select();
-        $insertNodes(nodes);
-
-        editor.registerUpdateListener(({ editorState, prevEditorState }) => {
+        editor.registerUpdateListener(({ editorState }) => {
           editorState.read(() => {
             const textInHtml = $generateHtmlFromNodes(editor)
               .replace(/&lt;/g, "<")
@@ -405,7 +273,6 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
               .replace(/white-space:\s*pre-wrap;?/g, "");
             setText.current(textInHtml);
           });
-          if (!prevEditorState._selection) editor.blur();
         });
       });
     }
@@ -431,13 +298,19 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
 
   const insertLink = useCallback(() => {
     if (!isLink) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
-        url: "https://",
+      // Check if there's text selected before opening link editor
+      editor.read(() => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+          return; // Don't open link editor if no text is selected
+        }
+        props.setShowLinkEditor(true);
       });
     } else {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+      // If we're already in a link, open the editor to edit it
+      props.setShowLinkEditor(true);
     }
-  }, [editor, isLink]);
+  }, [editor, isLink, props]);
 
   useEffect(() => {
     return editor.registerCommand(
@@ -467,24 +340,50 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
       icon: Bold,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"),
       active: isBold,
+      tooltipText: t("environments.surveys.edit.bold"),
+      disabled: false,
     },
     {
       key: "italic",
       icon: Italic,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"),
       active: isItalic,
+      tooltipText: t("environments.surveys.edit.italic"),
+      disabled: false,
     },
     {
       key: "underline",
       icon: Underline,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
       active: isUnderline,
+      tooltipText: t("environments.surveys.edit.underline"),
+      disabled: false,
     },
     {
       key: "link",
       icon: Link,
       onClick: insertLink,
       active: isLink,
+      tooltipText: isLink
+        ? t("environments.surveys.edit.edit_link")
+        : t("environments.surveys.edit.insert_link"),
+      disabled: !isLink && !hasTextSelection,
+    },
+    {
+      key: "recall",
+      icon: AtSign,
+      onClick: () => props.setShowRecallItemSelect(true),
+      active: false,
+      tooltipText: t("environments.surveys.edit.recall_data"),
+      disabled: false,
+    },
+    {
+      key: "editRecall",
+      icon: PencilIcon,
+      onClick: () => props.setShowFallbackInput(true),
+      active: false,
+      tooltipText: t("environments.surveys.edit.edit_recall"),
+      disabled: !props.recallItemsCount || props.recallItemsCount === 0,
     },
   ];
 
@@ -524,30 +423,17 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         </DropdownMenu>
       )}
 
-      {items.map(({ key, icon: Icon, onClick, active }) =>
+      {items.map(({ key, icon, onClick, active, tooltipText, disabled }) =>
         !props.excludedToolbarItems?.includes(key) ? (
-          <Button
+          <ToolbarButton
             key={key}
-            variant="ghost"
-            type="button"
+            icon={icon}
+            active={active}
+            disabled={disabled}
             onClick={onClick}
-            className={active ? "bg-subtle active-button" : "inactive-button"}>
-            <Icon />
-          </Button>
-        ) : null
-      )}
-      {isLink &&
-        !props.excludedToolbarItems?.includes("link") &&
-        createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)}
-
-      {props.variables && (
-        <div className="ml-auto">
-          <AddVariablesDropdown
-            addVariable={addVariable}
-            isTextEditor={true}
-            variables={props.variables || []}
+            tooltipText={tooltipText}
           />
-        </div>
+        ) : null
       )}
     </div>
   );

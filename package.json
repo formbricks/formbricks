@@ -30,7 +30,7 @@
     "test": "turbo run test --no-cache",
     "test:coverage": "turbo run test:coverage --no-cache",
     "test:e2e": "playwright test",
-    "test-e2e:azure": "pnpm test:e2e -c playwright.service.config.ts --workers=20",
+    "test-e2e:azure": "pnpm test:e2e -c playwright.service.config.ts --workers=10",
     "prepare": "husky install",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
@@ -76,6 +76,13 @@
   "pnpm": {
     "patchedDependencies": {
       "next-auth@4.24.11": "patches/next-auth@4.24.11.patch"
+    },
+    "overrides": {
+      "axios": ">=1.12.2",
+      "tar-fs": "2.1.4"
+    },
+    "comments": {
+      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: axios (CVE-2025-58754) - awaiting @boxyhq/saml-jackson update | tar-fs (Dependabot #205) - awaiting upstream dependency updates"
     }
   }
 }
