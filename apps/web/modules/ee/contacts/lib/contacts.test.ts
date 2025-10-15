@@ -319,6 +319,54 @@ describe("createContactsFromCSV", () => {
       createContactsFromCSV(csvData, environmentId, "skip", { email: "email", name: "name" })
     ).rejects.toThrow(genericError);
   });
+
+  test("handles case-insensitive attribute keys (language, userId, firstName, lastName, email)", async () => {
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.contactAttributeKey.findMany)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { key: "email", id: "id-email" },
+        { key: "userId", id: "id-userId" },
+        { key: "firstName", id: "id-firstName" },
+        { key: "lastName", id: "id-lastName" },
+        { key: "language", id: "id-language" },
+      ] as any);
+    vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 5 });
+    vi.mocked(prisma.contact.create).mockResolvedValue({
+      id: "c1",
+      environmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      attributes: [
+        { attributeKey: { key: "email" }, value: "john@example.com" },
+        { attributeKey: { key: "userId" }, value: "user123" },
+        { attributeKey: { key: "firstName" }, value: "John" },
+        { attributeKey: { key: "lastName" }, value: "Doe" },
+        { attributeKey: { key: "language" }, value: "en" },
+      ],
+    } as any);
+    // CSV data with normalized keys (already handled by client-side component)
+    const csvData = [
+      {
+        email: "john@example.com",
+        userId: "user123",
+        firstName: "John",
+        lastName: "Doe",
+        language: "en",
+      },
+    ];
+    const result = await createContactsFromCSV(csvData, environmentId, "skip", {
+      email: "email",
+      userId: "userId",
+      firstName: "firstName",
+      lastName: "lastName",
+      language: "language",
+    });
+    expect(Array.isArray(result)).toBe(true);
+    expect(result[0].id).toBe("c1");
+    expect(prisma.contactAttributeKey.createMany).toHaveBeenCalled();
+  });
 });
 
 describe("buildContactWhereClause", () => {

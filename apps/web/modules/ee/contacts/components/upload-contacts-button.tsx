@@ -167,6 +167,17 @@ export const UploadContactsCSVButton = ({
     const transformedCsvData = csvResponse.map((record) => {
       const newRecord: Record<string, string> = {};
       Object.entries(record).forEach(([key, value]) => {
+        // Normalize default attribute keys to their canonical form for case-insensitive matching
+        const defaultAttributeKeysMap: Record<string, string> = {
+          userid: "userId",
+          firstname: "firstName",
+          lastname: "lastName",
+          email: "email",
+          language: "language",
+        };
+        const keyLower = key.toLowerCase();
+        const normalizedKey = defaultAttributeKeysMap[keyLower] || key;
+
         // if the key is in the attribute map, we wanna replace it
         if (attributeMap[key]) {
           const attrKeyId = attributeMap[key];
@@ -178,7 +189,7 @@ export const UploadContactsCSVButton = ({
             newRecord[attrKeyId] = value;
           }
         } else {
-          newRecord[key] = value;
+          newRecord[normalizedKey] = value;
         }
       });
 
@@ -244,6 +255,8 @@ export const UploadContactsCSVButton = ({
   }, [error]);
 
   // Function to download an example CSV
+  // Note: The example uses canonical casing for default attributes (email, userId, firstName, lastName, language)
+  // The upload process is case-insensitive for these attributes (e.g., "Language" will be normalized to "language")
   const handleDownloadExampleCSV = () => {
     const exampleData = [
       { email: "user1@example.com", userId: "1001", firstName: "John", lastName: "Doe" },
