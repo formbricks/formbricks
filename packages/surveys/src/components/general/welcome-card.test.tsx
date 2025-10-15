@@ -119,9 +119,10 @@ describe("WelcomeCard", () => {
         showResponseCount: false,
       },
     };
-    const { getByTestId } = render(<WelcomeCard {...defaultProps} survey={shortSurvey} />);
+    const { getByTestId, unmount } = render(<WelcomeCard {...defaultProps} survey={shortSurvey} />);
     const timeDisplay = getByTestId("fb__surveys__welcome-card__time-display");
     expect(timeDisplay).toHaveTextContent(/common.takes common.less_than_x_minutes/);
+    unmount();
 
     // Test medium survey (12 questions)
     const mediumSurvey = {
@@ -133,11 +134,12 @@ describe("WelcomeCard", () => {
         showResponseCount: false,
       },
     };
-    const { getByTestId: getByTestIdMedium } = render(
+    const { getByTestId: getByTestIdMedium, unmount: unmountMedium } = render(
       <WelcomeCard {...defaultProps} survey={mediumSurvey} />
     );
     const mediumTimeDisplay = getByTestIdMedium("fb__surveys__welcome-card__time-display");
     expect(mediumTimeDisplay).toHaveTextContent(/common.takes common.x_minutes/);
+    unmountMedium();
 
     // Test long survey (25 questions)
     const longSurvey = {
@@ -262,12 +264,13 @@ describe("WelcomeCard", () => {
         showResponseCount: false,
       },
     };
-    const { getByTestId: getByTestIdEmpty } = render(
+    const { getByTestId: getByTestIdEmpty, unmount: unmountEmpty } = render(
       <WelcomeCard {...defaultProps} survey={emptyQuestionsSurvey} />
     );
     expect(getByTestIdEmpty("fb__surveys__welcome-card__time-display")).toHaveTextContent(
       /common.takes common.less_than_x_minutes/
     );
+    unmountEmpty();
 
     // Test with exactly 24 questions (6 minutes boundary)
     const boundaryQuestionsSurvey = {

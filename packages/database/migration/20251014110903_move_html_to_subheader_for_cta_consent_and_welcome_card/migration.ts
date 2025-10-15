@@ -31,8 +31,7 @@ const processCtaOrConsentQuestion = (question: SurveyQuestion): boolean => {
   // If html field exists, move it to subheader
   if (question.html) {
     question.subheader = question.html;
-    // Keep html for backward compatibility during transition
-    // Will be removed in schema update
+    delete question.html; // Remove the old html field
     return true;
   }
 
@@ -43,8 +42,7 @@ const processWelcomeCard = (welcomeCard: WelcomeCard): boolean => {
   // If html field exists, move it to subheader for consistency with ending cards
   if (welcomeCard.html) {
     welcomeCard.subheader = welcomeCard.html;
-    // Keep html for backward compatibility during transition
-    // Will be removed in schema update
+    delete welcomeCard.html; // Remove the old html field
     return true;
   }
 
@@ -54,7 +52,7 @@ const processWelcomeCard = (welcomeCard: WelcomeCard): boolean => {
 export const moveHtmlToSubheaderForCtaAndConsent: MigrationScript = {
   type: "data",
   id: "htm2sub4ctacnsnt1014",
-  name: "20251014110903_move_html_to_subheader_for_cta_and_consent",
+  name: "20251014110903_move_html_to_subheader_for_cta_consent_and_welcome_card",
   run: async ({ tx }) => {
     // Select all surveys that might need migration
     const surveys = await tx.$queryRaw<SurveyRecord[]>`
@@ -107,32 +105,42 @@ export const moveHtmlToSubheaderForCtaAndConsent: MigrationScript = {
 
     logger.info(`Updating ${updates.length.toString()} surveys`);
 
-    // Execute updates using raw SQL with parameterized queries to prevent SQL injection
+    // Execute updates in batches using Promise.all for better performance
     // We use raw queries to avoid breaking migrations in future schema changes
+    const BATCH_SIZE = 10000;
     let updatedCount = 0;
-    for (const update of updates) {
-      if (update.questions && update.welcomeCard) {
-        await tx.$executeRaw`
-          UPDATE "Survey" 
-          SET 
-            questions = ${JSON.stringify(update.questions)}::jsonb,
-            "welcomeCard" = ${JSON.stringify(update.welcomeCard)}::jsonb
-          WHERE id = ${update.id}
-        `;
-      } else if (update.questions) {
-        await tx.$executeRaw`
-          UPDATE "Survey" 
-          SET questions = ${JSON.stringify(update.questions)}::jsonb
-          WHERE id = ${update.id}
-        `;
-      } else if (update.welcomeCard) {
-        await tx.$executeRaw`
-          UPDATE "Survey" 
-          SET "welcomeCard" = ${JSON.stringify(update.welcomeCard)}::jsonb
-          WHERE id = ${update.id}
-        `;
-      }
-      updatedCount++;
+
+    for (let i = 0; i < updates.length; i += BATCH_SIZE) {
+      const batch = updates.slice(i, i + BATCH_SIZE);
+
+      await Promise.all(
+        batch.map(async (update) => {
+          if (update.questions && update.welcomeCard) {
+            await tx.$executeRaw`
+              UPDATE "Survey" 
+              SET 
+                questions = ${JSON.stringify(update.questions)}::jsonb,
+                "welcomeCard" = ${JSON.stringify(update.welcomeCard)}::jsonb
+              WHERE id = ${update.id}
+            `;
+          } else if (update.questions) {
+            await tx.$executeRaw`
+              UPDATE "Survey" 
+              SET questions = ${JSON.stringify(update.questions)}::jsonb
+              WHERE id = ${update.id}
+            `;
+          } else if (update.welcomeCard) {
+            await tx.$executeRaw`
+              UPDATE "Survey" 
+              SET "welcomeCard" = ${JSON.stringify(update.welcomeCard)}::jsonb
+              WHERE id = ${update.id}
+            `;
+          }
+        })
+      );
+
+      updatedCount += batch.length;
+      logger.info(`Progress: ${updatedCount.toString()}/${updates.length.toString()} surveys updated`);
     }
 
     logger.info(
