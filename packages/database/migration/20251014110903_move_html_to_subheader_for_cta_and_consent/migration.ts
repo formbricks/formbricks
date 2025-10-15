@@ -10,9 +10,16 @@ interface SurveyQuestion {
   [key: string]: unknown;
 }
 
+interface WelcomeCard {
+  html?: I18nString;
+  subheader?: I18nString;
+  [key: string]: unknown;
+}
+
 interface SurveyRecord {
   id: string;
   questions: SurveyQuestion[];
+  welcomeCard?: WelcomeCard;
 }
 
 const processCtaOrConsentQuestion = (question: SurveyQuestion): boolean => {
@@ -29,9 +36,15 @@ const processCtaOrConsentQuestion = (question: SurveyQuestion): boolean => {
     return true;
   }
 
-  // If html doesn't exist but subheader also doesn't exist, create empty subheader
-  if (!question.subheader) {
-    question.subheader = { default: "" };
+  return false;
+};
+
+const processWelcomeCard = (welcomeCard: WelcomeCard): boolean => {
+  // If html field exists, move it to subheader for consistency with ending cards
+  if (welcomeCard.html) {
+    welcomeCard.subheader = welcomeCard.html;
+    // Keep html for backward compatibility during transition
+    // Will be removed in schema update
     return true;
   }
 
@@ -43,34 +56,47 @@ export const moveHtmlToSubheaderForCtaAndConsent: MigrationScript = {
   id: "htm2sub4ctacnsnt1014",
   name: "20251014110903_move_html_to_subheader_for_cta_and_consent",
   run: async ({ tx }) => {
-    // Select all surveys with CTA or Consent questions
+    // Select all surveys that might need migration
     const surveys = await tx.$queryRaw<SurveyRecord[]>`
-      SELECT id, questions
+      SELECT id, questions, "welcomeCard"
       FROM "Survey"
       WHERE questions @> '[{"type": "cta"}]'
          OR questions @> '[{"type": "consent"}]'
+         OR "welcomeCard"->>'html' IS NOT NULL
     `;
 
     if (surveys.length === 0) {
-      logger.info("No surveys with CTA or Consent questions found");
+      logger.info("No surveys found that need migration");
       return;
     }
 
-    logger.info(`Found ${surveys.length.toString()} surveys with CTA or Consent questions`);
+    logger.info(`Found ${surveys.length.toString()} surveys to process`);
 
     // Process surveys and collect updates
-    const updates: { id: string; questions: SurveyQuestion[] }[] = [];
+    const updates: { id: string; questions?: SurveyQuestion[]; welcomeCard?: WelcomeCard }[] = [];
 
     for (const survey of surveys) {
-      let shouldUpdate = false;
+      let questionsUpdated = false;
+      let welcomeCardUpdated = false;
 
+      // Process questions
       for (const question of survey.questions) {
         const wasUpdated = processCtaOrConsentQuestion(question);
-        if (wasUpdated) shouldUpdate = true;
+        if (wasUpdated) questionsUpdated = true;
       }
 
-      if (shouldUpdate) {
-        updates.push({ id: survey.id, questions: survey.questions });
+      // Process welcome card
+      if (survey.welcomeCard && typeof survey.welcomeCard === "object") {
+        welcomeCardUpdated = processWelcomeCard(survey.welcomeCard);
+      }
+
+      if (questionsUpdated || welcomeCardUpdated) {
+        const update: { id: string; questions?: SurveyQuestion[]; welcomeCard?: WelcomeCard } = {
+          id: survey.id,
+        };
+        if (questionsUpdated) update.questions = survey.questions;
+        if (welcomeCardUpdated) update.welcomeCard = survey.welcomeCard;
+        updates.push(update);
       }
     }
 
@@ -81,20 +107,36 @@ export const moveHtmlToSubheaderForCtaAndConsent: MigrationScript = {
 
     logger.info(`Updating ${updates.length.toString()} surveys`);
 
-    // Execute all updates in a single SQL statement using VALUES
-    const valuesList = updates
-      .map((update) => `('${update.id}', '${JSON.stringify(update.questions).replace(/'/g, "''")}'::jsonb)`)
-      .join(", ");
-
-    const result = await tx.$executeRawUnsafe(`
-      UPDATE "Survey" 
-      SET questions = v.questions
-      FROM (VALUES ${valuesList}) AS v(id, questions)
-      WHERE "Survey".id = v.id
-    `);
+    // Execute updates using raw SQL with parameterized queries to prevent SQL injection
+    // We use raw queries to avoid breaking migrations in future schema changes
+    let updatedCount = 0;
+    for (const update of updates) {
+      if (update.questions && update.welcomeCard) {
+        await tx.$executeRaw`
+          UPDATE "Survey" 
+          SET 
+            questions = ${JSON.stringify(update.questions)}::jsonb,
+            "welcomeCard" = ${JSON.stringify(update.welcomeCard)}::jsonb
+          WHERE id = ${update.id}
+        `;
+      } else if (update.questions) {
+        await tx.$executeRaw`
+          UPDATE "Survey" 
+          SET questions = ${JSON.stringify(update.questions)}::jsonb
+          WHERE id = ${update.id}
+        `;
+      } else if (update.welcomeCard) {
+        await tx.$executeRaw`
+          UPDATE "Survey" 
+          SET "welcomeCard" = ${JSON.stringify(update.welcomeCard)}::jsonb
+          WHERE id = ${update.id}
+        `;
+      }
+      updatedCount++;
+    }
 
     logger.info(
-      `Successfully updated ${result.toString()} surveys - moved html to subheader for CTA and Consent questions`
+      `Successfully updated ${updatedCount.toString()} surveys - moved html to subheader for CTA/Consent questions and welcome cards`
     );
   },
 };

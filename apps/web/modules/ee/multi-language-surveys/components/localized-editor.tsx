@@ -69,6 +69,7 @@ export function LocalizedEditor({
   return (
     <div className="relative w-full">
       <Editor
+        id={id}
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}

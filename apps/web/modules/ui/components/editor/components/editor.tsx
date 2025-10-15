@@ -56,6 +56,7 @@ export type TextEditorProps = {
   fallbacks?: { [id: string]: string };
   addFallback?: () => void;
   autoFocus?: boolean;
+  id?: string;
 };
 
 const editorConfig = {
@@ -120,7 +121,11 @@ export const Editor = (props: TextEditorProps) => {
               style={{ height: props.height }}>
               <RichTextPlugin
                 contentEditable={
-                  <ContentEditable style={{ height: props.height }} className="editor-input" />
+                  <ContentEditable
+                    style={{ height: props.height }}
+                    className="editor-input"
+                    aria-labelledby={props.id}
+                  />
                 }
                 placeholder={
                   <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">

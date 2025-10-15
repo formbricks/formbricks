@@ -139,8 +139,8 @@ export const EditWelcomeCard = ({
             </div>
             <div className="mt-3">
               <QuestionFormInput
-                id="html"
-                value={localSurvey.welcomeCard.html}
+                id="subheader"
+                value={localSurvey.welcomeCard.subheader}
                 label={t("environments.surveys.edit.welcome_message")}
                 localSurvey={localSurvey}
                 questionIdx={-1}

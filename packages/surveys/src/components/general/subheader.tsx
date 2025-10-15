@@ -17,6 +17,7 @@ export function Subheader({ subheader, questionId }: SubheaderProps) {
     <label
       htmlFor={questionId}
       className="fb-text-subheading fb-block fb-break-words fb-text-sm fb-font-normal fb-leading-6"
+      data-testid="subheader"
       dir="auto">
       {isHtml ? (
         <span className="fb-htmlbody" dangerouslySetInnerHTML={{ __html: safeHtml }} />

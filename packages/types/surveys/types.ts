@@ -101,7 +101,7 @@ export const ZSurveyWelcomeCard = z
   .object({
     enabled: z.boolean(),
     headline: ZI18nString.optional(),
-    html: ZI18nString.optional(),
+    subheader: ZI18nString.optional(),
     fileUrl: z.string().optional(),
     buttonLabel: ZI18nString.optional(),
     timeToFinish: z.boolean().default(true),
@@ -888,10 +888,10 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.html && welcomeCard.html.default.trim() !== "") {
+      if (welcomeCard.subheader && welcomeCard.subheader.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
-          "welcomeCardHtml",
-          welcomeCard.html,
+          "welcomeCardSubheader",
+          welcomeCard.subheader,
           languages,
           "welcome"
         );
