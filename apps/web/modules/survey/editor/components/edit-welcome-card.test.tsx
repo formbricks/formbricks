@@ -47,7 +47,7 @@ const mockSurvey = {
 mockSurvey.welcomeCard = {
   enabled: true,
   headline: { default: "Welcome!" },
-  html: { default: "<p>Thank you for participating.</p>" },
+  subheader: { default: "<p>Thank you for participating.</p>" },
   buttonLabel: { default: "Start Survey" },
   timeToFinish: true,
   showResponseCount: false,
@@ -103,7 +103,9 @@ describe("EditWelcomeCard", () => {
     expect(screen.getByLabelText("common.on")).toBeInTheDocument();
     expect(screen.getByTestId("file-input")).toBeInTheDocument();
     expect(screen.getByTestId("question-form-input-headline")).toHaveValue("Welcome!");
-    expect(screen.getByTestId("question-form-input-html")).toHaveValue("<p>Thank you for participating.</p>");
+    expect(screen.getByTestId("question-form-input-subheader")).toHaveValue(
+      "<p>Thank you for participating.</p>"
+    );
     expect(screen.getByTestId("question-form-input-buttonLabel")).toHaveValue("Start Survey");
     expect(screen.getByLabelText("common.time_to_finish")).toBeInTheDocument();
     const timeToFinishSwitch = screen.getAllByRole("switch")[1]; // Assuming the second switch is for timeToFinish
