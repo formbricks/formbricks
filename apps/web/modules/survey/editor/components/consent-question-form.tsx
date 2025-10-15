@@ -31,52 +31,43 @@ export const ConsentQuestionForm = ({
 }: ConsentQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
 
+  // Common props shared across all QuestionFormInput components
+  const commonInputProps = {
+    localSurvey,
+    questionIdx,
+    isInvalid,
+    updateQuestion,
+    selectedLanguageCode,
+    setSelectedLanguageCode,
+    locale,
+    isStorageConfigured,
+  };
+
   return (
     <form>
       <QuestionFormInput
+        {...commonInputProps}
         id="headline"
         value={question.headline}
         label={t("environments.surveys.edit.question") + "*"}
-        localSurvey={localSurvey}
-        questionIdx={questionIdx}
-        isInvalid={isInvalid}
-        updateQuestion={updateQuestion}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
-        isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div className="mt-3">
         <QuestionFormInput
+          {...commonInputProps}
           id="subheader"
           value={question.subheader}
           label={t("common.description")}
-          localSurvey={localSurvey}
-          questionIdx={questionIdx}
-          isInvalid={isInvalid}
-          updateQuestion={updateQuestion}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-          locale={locale}
-          isStorageConfigured={isStorageConfigured}
         />
       </div>
 
       <QuestionFormInput
+        {...commonInputProps}
         id="label"
         label={t("environments.surveys.edit.checkbox_label") + "*"}
         placeholder="I agree to the terms and conditions"
         value={question.label}
-        localSurvey={localSurvey}
-        questionIdx={questionIdx}
-        isInvalid={isInvalid}
-        updateQuestion={updateQuestion}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
-        isStorageConfigured={isStorageConfigured}
       />
     </form>
   );
