@@ -1,7 +1,7 @@
-import { createI18nString } from "@/lib/i18n/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyCTAQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
 import { CTAQuestionForm } from "./cta-question-form";
 
 vi.mock("@formkit/auto-animate/react", () => ({
@@ -65,6 +65,7 @@ describe("CTAQuestionForm", () => {
         setSelectedLanguageCode={mockSetSelectedLanguageCode}
         locale={mockLocale}
         isStorageConfigured={true}
+        isExternalUrlsAllowed={true}
       />
     );
 
