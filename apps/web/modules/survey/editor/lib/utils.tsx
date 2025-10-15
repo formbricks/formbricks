@@ -1280,7 +1280,7 @@ const checkWelcomeCardForRecall = (welcomeCard: TSurveyWelcomeCard, recallPatter
 
   return (
     checkTextForRecallPattern(welcomeCard.headline, recallPattern) ||
-    checkTextForRecallPattern(welcomeCard.html, recallPattern)
+    checkTextForRecallPattern(welcomeCard.subheader, recallPattern)
   );
 };
 
@@ -1292,11 +1292,6 @@ const checkQuestionForRecall = (question: TSurveyQuestion, recallPattern: string
 
   // Check subheader
   if (checkTextForRecallPattern(question.subheader, recallPattern)) {
-    return true;
-  }
-
-  // Check html field (for consent and CTA questions)
-  if ("html" in question && checkTextForRecallPattern(question.html, recallPattern)) {
     return true;
   }
 

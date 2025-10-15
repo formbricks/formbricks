@@ -131,8 +131,7 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): T
   for (const question of survey.questions) {
     if (
       doesTextHaveRecall(getLocalizedValue(question.headline, language)) ||
-      (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language))) ||
-      ("html" in question && doesTextHaveRecall(getLocalizedValue(question.html, language)))
+      (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language)))
     ) {
       return question;
     }
