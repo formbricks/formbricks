@@ -168,7 +168,8 @@ export const mockSurvey: TSurvey = {
   triggers: [],
   segment: null,
   followUps: mockFollowUps,
-} as unknown as TSurvey;
+  metadata: {},
+};
 
 export const mockContactQuestion: TSurveyContactInfoQuestion = {
   id: "zyoobxyolyqj17bt1i4ofr37",

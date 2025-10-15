@@ -125,10 +125,11 @@ export const Editor = (props: TextEditorProps) => {
                     style={{ height: props.height }}
                     className="editor-input"
                     aria-labelledby={props.id}
+                    dir="auto"
                   />
                 }
                 placeholder={
-                  <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">
+                  <div className="-mt-11 cursor-text p-3 text-sm text-slate-400" dir="auto">
                     {props.placeholder ?? ""}
                   </div>
                 }
