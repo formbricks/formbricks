@@ -58,6 +58,8 @@ interface QuestionFormInputProps {
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
   isStorageConfigured: boolean;
   autoFocus?: boolean;
+  firstRender?: boolean;
+  setFirstRender?: (value: boolean) => void;
 }
 
 export const QuestionFormInput = ({
@@ -81,6 +83,8 @@ export const QuestionFormInput = ({
   onKeyDown,
   isStorageConfigured = true,
   autoFocus,
+  firstRender: externalFirstRender,
+  setFirstRender: externalSetFirstRender,
 }: QuestionFormInputProps) => {
   const { t } = useTranslate();
   const defaultLanguageCode =
@@ -278,7 +282,12 @@ export const QuestionFormInput = ({
   const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
 
   const [animationParent] = useAutoAnimate();
-  const [firstRender, setFirstRender] = useState(true);
+  const [internalFirstRender, setInternalFirstRender] = useState(true);
+
+  // Use external firstRender state if provided, otherwise use internal state
+  const firstRender = externalFirstRender !== undefined ? externalFirstRender : internalFirstRender;
+  const setFirstRender =
+    externalSetFirstRender !== undefined ? externalSetFirstRender : setInternalFirstRender;
 
   const renderRemoveDescriptionButton = () => {
     if (
@@ -340,7 +349,7 @@ export const QuestionFormInput = ({
           <div className="flex w-full items-start gap-2">
             <div className="flex-1">
               <LocalizedEditor
-                key={`${questionId}-${id}`}
+                key={`${questionId}-${id}-${selectedLanguageCode}`}
                 id={id}
                 value={value}
                 localSurvey={localSurvey}

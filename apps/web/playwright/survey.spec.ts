@@ -6,11 +6,14 @@ import { createSurvey, createSurveyWithLogic, uploadFileForFileUploadQuestion } 
 
 test.use({
   launchOptions: {
-    slowMo: 110,
+    slowMo: 150,
   },
 });
 
 test.describe("Survey Create & Submit Response without logic", async () => {
+  // 5 minutes
+  test.setTimeout(1000 * 60 * 5);
+
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {
@@ -235,8 +238,8 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 });
 
 test.describe("Multi Language Survey Create", async () => {
-  // 4 minutes
-  test.setTimeout(1000 * 60 * 4);
+  // 5 minutes
+  test.setTimeout(1000 * 60 * 5);
 
   test("Create Survey", async ({ page, users }) => {
     const user = await users.create();
@@ -607,8 +610,8 @@ test.describe("Multi Language Survey Create", async () => {
 });
 
 test.describe("Testing Survey with advanced logic", async () => {
-  // 6 minutes
-  test.setTimeout(1000 * 60 * 6);
+  // 8 minutes
+  test.setTimeout(1000 * 60 * 8);
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {
@@ -782,9 +785,9 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("cell", { name: "This is my Matrix Question: Roses – 0" }).locator("div").click();
-      await page.getByRole("cell", { name: "This is my Matrix Question: Trees – 0" }).locator("div").click();
-      await page.getByRole("cell", { name: "This is my Matrix Question: Ocean – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "Roses – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "Trees – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "Ocean – 0" }).locator("div").click();
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // CTA Question

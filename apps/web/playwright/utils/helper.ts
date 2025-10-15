@@ -176,7 +176,7 @@ export const fillRichTextEditor = async (page: Page, labelText: string, content:
   await editor.press("Meta+a"); // Cmd+A on Mac, Ctrl+A is handled automatically by Playwright
   await editor.press("Backspace");
   // Type the new content
-  await editor.pressSequentially(content);
+  await editor.pressSequentially(content, { delay: 50 });
 };
 
 export const createSurvey = async (page: Page, params: CreateSurveyParams) => {

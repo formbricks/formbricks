@@ -4,6 +4,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
@@ -36,6 +37,7 @@ export const EditWelcomeCard = ({
   isStorageConfigured = true,
 }: EditWelcomeCardProps) => {
   const { t } = useTranslate();
+  const [firstRender, setFirstRender] = useState(true);
 
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
@@ -135,6 +137,8 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                firstRender={firstRender}
+                setFirstRender={setFirstRender}
               />
             </div>
             <div className="mt-3">
@@ -150,6 +154,8 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                firstRender={firstRender}
+                setFirstRender={setFirstRender}
               />
             </div>
 
@@ -170,6 +176,8 @@ export const EditWelcomeCard = ({
                     label={t("environments.surveys.edit.next_button_label")}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
+                    firstRender={firstRender}
+                    setFirstRender={setFirstRender}
                   />
                 </div>
               </div>
