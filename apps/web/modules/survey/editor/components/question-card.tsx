@@ -63,6 +63,7 @@ interface QuestionCardProps {
   responseCount: number;
   onAlertTrigger: () => void;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed: boolean;
 }
 
 export const QuestionCard = ({
@@ -87,6 +88,7 @@ export const QuestionCard = ({
   responseCount,
   onAlertTrigger,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -344,6 +346,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm

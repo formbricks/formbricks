@@ -16,6 +16,7 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getExternalUrlsPermission } from "@/modules/survey/editor/lib/external-urls-permission";
 import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
@@ -71,13 +72,19 @@ export const SurveyEditorPage = async (props) => {
   ]);
 
   const isUserTargetingAllowed = await getIsContactsEnabled();
-  const [isMultiLanguageAllowed, isSurveyFollowUpsAllowed, isSpamProtectionAllowed, isQuotasAllowed] =
-    await Promise.all([
-      getMultiLanguagePermission(organizationBilling.plan),
-      getSurveyFollowUpsPermission(organizationBilling.plan),
-      getIsSpamProtectionEnabled(organizationBilling.plan),
-      getIsQuotasEnabled(organizationBilling.plan),
-    ]);
+  const [
+    isMultiLanguageAllowed,
+    isSurveyFollowUpsAllowed,
+    isSpamProtectionAllowed,
+    isQuotasAllowed,
+    isExternalUrlsAllowed,
+  ] = await Promise.all([
+    getMultiLanguagePermission(organizationBilling.plan),
+    getSurveyFollowUpsPermission(organizationBilling.plan),
+    getIsSpamProtectionEnabled(organizationBilling.plan),
+    getIsQuotasEnabled(organizationBilling.plan),
+    getExternalUrlsPermission(organizationBilling.plan),
+  ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
   const [projectLanguages, teamMemberDetails] = await Promise.all([
@@ -115,7 +122,6 @@ export const SurveyEditorPage = async (props) => {
       isMultiLanguageAllowed={isMultiLanguageAllowed}
       isSpamProtectionAllowed={isSpamProtectionAllowed}
       projectLanguages={projectLanguages}
-      plan={organizationBilling.plan}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
       isCxMode={isCxMode}
@@ -127,6 +133,7 @@ export const SurveyEditorPage = async (props) => {
       isStorageConfigured={IS_STORAGE_CONFIGURED}
       isQuotasAllowed={isQuotasAllowed}
       quotas={quotas}
+      isExternalUrlsAllowed={isExternalUrlsAllowed}
     />
   );
 };

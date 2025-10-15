@@ -1,5 +1,21 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { createId } from "@paralleldrive/cuid2";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
+import { GripIcon, Handshake, Undo2 } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyQuestionId,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
@@ -13,23 +29,6 @@ import {
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { createId } from "@paralleldrive/cuid2";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { GripIcon, Handshake, Undo2 } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurveyQuota } from "@formbricks/types/quota";
-import {
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyQuestionId,
-  TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface EditEndingCardProps {
   localSurvey: TSurvey;
@@ -40,12 +39,12 @@ interface EditEndingCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
   quotas: TSurveyQuota[];
+  isExternalUrlsAllowed: boolean;
 }
 
 export const EditEndingCard = ({
@@ -57,17 +56,18 @@ export const EditEndingCard = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  plan,
   addEndingCard,
   isFormbricksCloud,
   locale,
   isStorageConfigured,
   quotas,
+  isExternalUrlsAllowed,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
   const { t } = useTranslate();
+
   const isRedirectToUrlDisabled = isFormbricksCloud
-    ? plan === "free" && endingCard.type !== "redirectToUrl"
+    ? !isExternalUrlsAllowed && endingCard.type !== "redirectToUrl"
     : false;
 
   const [openDeleteConfirmationModal, setOpenDeleteConfirmationModal] = useState(false);
@@ -253,7 +253,7 @@ export const EditEndingCard = ({
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "mt-3 pb-6"}`}>
           <TooltipRenderer
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
-            tooltipContent={t("environments.surveys.edit.redirect_to_url_not_available_on_free_plan")}
+            tooltipContent={t("environments.surveys.edit.external_urls_paywall_tooltip")}
             triggerClass="w-full">
             <OptionsSwitch
               options={endingCardTypes}
@@ -281,6 +281,7 @@ export const EditEndingCard = ({
               endingCard={endingCard}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           )}
           {endingCard.type === "redirectToUrl" && (

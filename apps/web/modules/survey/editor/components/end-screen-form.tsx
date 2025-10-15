@@ -1,5 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { PlusIcon } from "lucide-react";
+import { useRef, useState } from "react";
+import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -8,12 +13,6 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { useState } from "react";
-import { useRef } from "react";
-import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface EndScreenFormProps {
   localSurvey: TSurvey;
@@ -25,6 +24,7 @@ interface EndScreenFormProps {
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed: boolean;
 }
 
 export const EndScreenForm = ({
@@ -37,6 +37,7 @@ export const EndScreenForm = ({
   endingCard,
   locale,
   isStorageConfigured,
+  isExternalUrlsAllowed,
 }: EndScreenFormProps) => {
   const { t } = useTranslate();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -180,7 +181,7 @@ export const EndScreenForm = ({
                           ref={inputRef}
                           id="buttonLink"
                           name="buttonLink"
-                          className="relative text-black caret-black"
+                          className={`relative text-black caret-black ${!isExternalUrlsAllowed ? "cursor-not-allowed opacity-50" : ""}`}
                           placeholder="https://formbricks.com"
                           value={
                             recallToHeadline(
@@ -192,7 +193,8 @@ export const EndScreenForm = ({
                               "default"
                             )[selectedLanguageCode]
                           }
-                          onChange={(e) => onChange(e.target.value)}
+                          onChange={(e) => isExternalUrlsAllowed && onChange(e.target.value)}
+                          disabled={!isExternalUrlsAllowed}
                         />
                         {children}
                       </div>
@@ -200,6 +202,11 @@ export const EndScreenForm = ({
                   }}
                 />
               </div>
+              {!isExternalUrlsAllowed && (
+                <p className="text-xs text-slate-500">
+                  {t("environments.surveys.edit.external_urls_paywall_tooltip")}
+                </p>
+              )}
             </div>
           </div>
         )}
