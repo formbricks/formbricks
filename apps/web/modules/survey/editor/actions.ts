@@ -1,29 +1,29 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { ZActionClassInput } from "@formbricks/types/action-classes";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
-  getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromProjectId,
-  getOrganizationIdFromSurveyId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromSurveyId,
+    getOrganizationIdFromEnvironmentId,
+    getOrganizationIdFromProjectId,
+    getOrganizationIdFromSurveyId,
+    getProjectIdFromEnvironmentId,
+    getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
-import { getExternalUrlsPermission } from "@/modules/survey/editor/lib/external-urls-permission";
+import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
+import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { getProject } from "./lib/project";
 
 /**
@@ -43,66 +43,6 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
   const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organizationBilling.plan);
   if (!isSurveyFollowUpsEnabled) {
     throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
-  }
-};
-
-/**
- * Checks if external URLs can be added or modified for the given organization.
- * Grandfathers existing external URLs (allows keeping them even on free plan).
- *
- * @param { string } organizationId  The ID of the organization to check.
- * @param { TSurvey } newSurvey  The new survey state.
- * @param { TSurvey | null } oldSurvey  The old survey state (or null for new surveys).
- * @returns { Promise<void> }  A promise that resolves if the permission is granted.
- * @throws { ResourceNotFoundError }  If the organization is not found.
- * @throws { OperationNotAllowedError }  If external URLs are not allowed and new/changed URLs are detected.
- */
-const checkExternalUrlsPermission = async (
-  organizationId: string,
-  newSurvey: TSurvey,
-  oldSurvey: TSurvey | null
-): Promise<void> => {
-  const organizationBilling = await getOrganizationBilling(organizationId);
-  if (!organizationBilling) {
-    throw new ResourceNotFoundError("Organization", organizationId);
-  }
-
-  const isExternalUrlsAllowed = await getExternalUrlsPermission(organizationBilling.plan);
-  if (isExternalUrlsAllowed) {
-    return; // Permission granted, no need to check further
-  }
-
-  // Check ending cards for new/changed button links
-  for (const newEnding of newSurvey.endings) {
-    const oldEnding = oldSurvey?.endings.find((e) => e.id === newEnding.id);
-
-    if (newEnding.type === "endScreen" && newEnding.buttonLink) {
-      // If this is a new URL or changed URL, block it
-      if (!oldEnding || oldEnding.type !== "endScreen" || oldEnding.buttonLink !== newEnding.buttonLink) {
-        throw new OperationNotAllowedError(
-          "External URLs are not enabled for this organization. Upgrade to use external button links."
-        );
-      }
-    }
-  }
-
-  // Check CTA questions for new/changed external button URLs
-  for (const newQuestion of newSurvey.questions) {
-    const oldQuestion = oldSurvey?.questions.find((q) => q.id === newQuestion.id);
-
-    if (newQuestion.type === "cta" && newQuestion.buttonExternal) {
-      // If this is newly enabled external or changed URL, block it
-      if (
-        !oldQuestion ||
-        oldQuestion.type !== "cta" ||
-        !oldQuestion.buttonExternal ||
-        oldQuestion.buttonUrl !== newQuestion.buttonUrl
-      ) {
-        throw new OperationNotAllowedError(
-          "External URLs are not enabled for this organization. Upgrade to use external CTA buttons."
-        );
-      }
-    }
   }
 };
 
