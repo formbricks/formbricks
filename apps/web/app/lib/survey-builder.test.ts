@@ -538,7 +538,7 @@ describe("Helper Functions", () => {
     const card = getDefaultWelcomeCard(mockT);
     expect(card.enabled).toBe(false);
     expect(card.headline).toEqual({ default: "templates.default_welcome_card_headline" });
-    expect(card.html).toEqual({ default: "templates.default_welcome_card_html" });
+    expect(card.subheader).toEqual({ default: "templates.default_welcome_card_html" });
     expect(card.buttonLabel).toEqual({ default: "templates.default_welcome_card_button_label" });
     // boolean flags
     expect(card.timeToFinish).toBe(false);

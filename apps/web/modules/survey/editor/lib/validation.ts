@@ -148,7 +148,7 @@ export const validationRules = {
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
     //question specific fields
-    let fieldsToValidate = ["html", "buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
+    let fieldsToValidate = ["buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
 
     // Remove backButtonLabel from validation if it is the first question
     if (isFirstQuestion) {
@@ -213,7 +213,7 @@ const isContentValid = (content: Record<string, string> | undefined, surveyLangu
 };
 
 export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TSurveyLanguage[]): boolean => {
-  return isContentValid(card.headline, surveyLanguages) && isContentValid(card.html, surveyLanguages);
+  return isContentValid(card.headline, surveyLanguages) && isContentValid(card.subheader, surveyLanguages);
 };
 
 export const isEndingCardValid = (

@@ -364,7 +364,7 @@ export const getDefaultWelcomeCard = (t: TFnType): TSurveyWelcomeCard => {
   return {
     enabled: false,
     headline: createI18nString(t("templates.default_welcome_card_headline"), []),
-    html: createI18nString(t("templates.default_welcome_card_html"), []),
+    subheader: createI18nString(t("templates.default_welcome_card_html"), []),
     buttonLabel: createI18nString(t("templates.default_welcome_card_button_label"), []),
     timeToFinish: false,
     showResponseCount: false,

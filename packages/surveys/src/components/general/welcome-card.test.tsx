@@ -180,7 +180,7 @@ describe("WelcomeCard", () => {
     const minimalProps = {
       ...defaultProps,
       headline: undefined,
-      html: undefined,
+      subheader: undefined,
       buttonLabel: undefined,
       fileUrl: undefined,
       responseCount: undefined,

@@ -300,7 +300,7 @@ const mockSurvey = {
   welcomeCard: {
     enabled: true,
     headline: createI18nString("Welcome", ["en", "fr"]),
-    html: createI18nString("<p>Welcome to our survey</p>", ["en", "fr"]),
+    subheader: createI18nString("<p>Welcome to our survey</p>", ["en", "fr"]),
     buttonLabel: createI18nString("Start", ["en", "fr"]),
     fileUrl: "",
     videoUrl: "",
