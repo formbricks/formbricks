@@ -7,7 +7,7 @@
  */
 export const isValidHTML = (str: string): boolean => {
   // This should ideally never happen because the surveys package should be used in an environment where DOM is available
-  if (typeof window === "undefined") return false;
+  if (typeof globalThis?.window === "undefined") return false;
 
   if (!str) return false;
 

@@ -285,9 +285,8 @@ export const QuestionFormInput = ({
   const [internalFirstRender, setInternalFirstRender] = useState(true);
 
   // Use external firstRender state if provided, otherwise use internal state
-  const firstRender = externalFirstRender !== undefined ? externalFirstRender : internalFirstRender;
-  const setFirstRender =
-    externalSetFirstRender !== undefined ? externalSetFirstRender : setInternalFirstRender;
+  const firstRender = externalFirstRender ?? internalFirstRender;
+  const setFirstRender = externalSetFirstRender ?? setInternalFirstRender;
 
   const renderRemoveDescriptionButton = () => {
     if (
