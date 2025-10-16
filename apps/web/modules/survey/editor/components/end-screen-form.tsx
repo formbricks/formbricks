@@ -2,7 +2,8 @@
 
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { useRef } from "react";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
@@ -20,7 +21,7 @@ interface EndScreenFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  updateSurvey: (input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }>) => void;
+  updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -45,7 +46,6 @@ export const EndScreenForm = ({
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
   );
-
   return (
     <form>
       <QuestionFormInput
@@ -60,7 +60,6 @@ export const EndScreenForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
       />
       <div>
         {endingCard.subheader !== undefined && (
@@ -78,7 +77,6 @@ export const EndScreenForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
               />
             </div>
           </div>
@@ -91,10 +89,8 @@ export const EndScreenForm = ({
             variant="secondary"
             type="button"
             onClick={() => {
-              // Directly update the state, bypassing the guard in updateSurvey
               updateSurvey({
                 subheader: createI18nString("", surveyLanguageCodes),
-                _forceUpdate: true,
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />

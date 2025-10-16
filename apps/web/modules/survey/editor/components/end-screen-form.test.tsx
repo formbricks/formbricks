@@ -140,13 +140,9 @@ describe("EndScreenForm", () => {
 
     if (buttonElement) {
       await userEvent.click(buttonElement);
-      // Check that the subheader was added (may be called multiple times due to autoFocus)
-      expect(mockUpdateSurvey).toHaveBeenCalledWith(
-        expect.objectContaining({
-          subheader: expect.any(Object),
-          _forceUpdate: true,
-        })
-      );
+      expect(mockUpdateSurvey).toHaveBeenCalledWith({
+        subheader: expect.any(Object),
+      });
     }
   });
 

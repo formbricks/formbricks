@@ -14,7 +14,6 @@ import {
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { BaseSelectDropdown } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
@@ -118,9 +117,7 @@ const renderQuestionSelection = ({
                             : field.onChange(field.value?.filter((value) => value !== question.id));
                         }}
                       />
-                      <span className="ml-2">
-                        {getTextContent(getLocalizedValue(question.headline, "default"))}
-                      </span>
+                      <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
                     </label>
                   </div>
                 )}

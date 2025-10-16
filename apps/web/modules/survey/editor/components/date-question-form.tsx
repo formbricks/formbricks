@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { type JSX } from "react";
+import type { JSX } from "react";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -53,7 +53,6 @@ export const DateQuestionForm = ({
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
   const [parent] = useAutoAnimate();
-
   return (
     <form>
       <QuestionFormInput
@@ -68,7 +67,6 @@ export const DateQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -77,7 +75,7 @@ export const DateQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={t("common.description")}
+                label={t("environments.surveys.edit.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -86,7 +84,6 @@ export const DateQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>

@@ -142,7 +142,7 @@ describe("FollowUpItem", () => {
     },
     endings: [],
     welcomeCard: {
-      subheader: {
+      html: {
         default: "Thanks for providing your feedback - let's go!‌‌‍‍‌‍‍‍‌‌‌‍‍‌‌‌‍‌‌‌‌‌‍‌‍‌‌",
       },
       enabled: false,

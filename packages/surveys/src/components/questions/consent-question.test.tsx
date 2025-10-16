@@ -24,7 +24,7 @@ describe("ConsentQuestion", () => {
     id: "consent-q",
     type: TSurveyQuestionTypeEnum.Consent,
     headline: { default: "Consent Headline" },
-    subheader: { default: "Consent Subheader" },
+    html: { default: "This is the consent text" },
     label: { default: "I agree to the terms" },
     buttonLabel: { default: "Submit" },
     backButtonLabel: { default: "Back" },

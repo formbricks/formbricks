@@ -681,7 +681,7 @@ export function Survey({
           <WelcomeCard
             key="start"
             headline={localSurvey.welcomeCard.headline}
-            subheader={localSurvey.welcomeCard.subheader}
+            html={localSurvey.welcomeCard.html}
             fileUrl={localSurvey.welcomeCard.fileUrl}
             buttonLabel={localSurvey.welcomeCard.buttonLabel}
             onSubmit={onSubmit}

@@ -21,7 +21,7 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { findLanguageCodesForDuplicateLabels, getTextContent } from "@formbricks/types/surveys/validation";
+import { findLanguageCodesForDuplicateLabels } from "@formbricks/types/surveys/validation";
 import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
@@ -35,7 +35,7 @@ export const isLabelValidForAllLanguages = (
   });
   const languageCodes = extractLanguageCodes(filteredLanguages);
   const languages = languageCodes.length === 0 ? ["default"] : languageCodes;
-  return languages.every((language) => label?.[language] && getTextContent(label[language]).length > 0);
+  return languages.every((language) => label && label[language] && label[language].trim() !== "");
 };
 
 // Validation logic for multiple choice questions
@@ -145,7 +145,7 @@ export const validationRules = {
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
     //question specific fields
-    let fieldsToValidate = ["buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
+    let fieldsToValidate = ["html", "buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
 
     // Remove backButtonLabel from validation if it is the first question
     if (isFirstQuestion) {
@@ -210,7 +210,7 @@ const isContentValid = (content: Record<string, string> | undefined, surveyLangu
 };
 
 export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TSurveyLanguage[]): boolean => {
-  return isContentValid(card.headline, surveyLanguages) && isContentValid(card.subheader, surveyLanguages);
+  return isContentValid(card.headline, surveyLanguages) && isContentValid(card.html, surveyLanguages);
 };
 
 export const isEndingCardValid = (

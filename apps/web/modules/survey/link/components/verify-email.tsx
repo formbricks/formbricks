@@ -9,7 +9,6 @@ import { Toaster, toast } from "react-hot-toast";
 import { z } from "zod";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -175,7 +174,7 @@ export const VerifyEmail = ({
               {localSurvey.questions.map((question, index) => (
                 <p
                   key={index}
-                  className="my-1 text-sm">{`${(index + 1).toString()}. ${getTextContent(getLocalizedValue(question.headline, languageCode))}`}</p>
+                  className="my-1 text-sm">{`${(index + 1).toString()}. ${getLocalizedValue(question.headline, languageCode)}`}</p>
               ))}
             </div>
             <Button variant="ghost" className="mt-6" onClick={handlePreviewClick}>

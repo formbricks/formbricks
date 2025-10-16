@@ -145,7 +145,6 @@ export const FileUploadQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -163,7 +162,6 @@ export const FileUploadQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>

@@ -1,6 +1,5 @@
 import { TResponse, TResponseDataValue } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { getLanguageCode, getLocalizedValue } from "./i18n/utils";
 
@@ -46,11 +45,9 @@ export const getQuestionResponseMapping = (
     const answer = response.data[question.id];
 
     questionResponseMapping.push({
-      question: getTextContent(
-        parseRecallInfo(
-          getLocalizedValue(question.headline, responseLanguageCode ?? "default"),
-          response.data
-        )
+      question: parseRecallInfo(
+        getLocalizedValue(question.headline, responseLanguageCode ?? "default"),
+        response.data
       ),
       response: convertResponseValue(answer, question),
       type: question.type,

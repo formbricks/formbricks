@@ -62,7 +62,6 @@ const baseSurvey: TSurvey = {
   autoComplete: null,
   segment: null,
   pin: null,
-  metadata: {},
 };
 
 const attributes: TAttributes = {
@@ -103,7 +102,7 @@ describe("replaceAttributeRecall", () => {
       welcomeCard: {
         enabled: true,
         headline: { default: "Welcome, recall:name!" },
-        subheader: { default: "<p>Some content</p>" },
+        html: { default: "<p>Some content</p>" },
         buttonLabel: { default: "Start" },
         timeToFinish: false,
         showResponseCount: false,
@@ -207,7 +206,7 @@ describe("replaceAttributeRecall", () => {
       welcomeCard: {
         enabled: true,
         headline: { default: "Welcome!" },
-        subheader: { default: "<p>Some content</p>" },
+        html: { default: "<p>Some content</p>" },
         buttonLabel: { default: "Start" },
         timeToFinish: false,
         showResponseCount: false,

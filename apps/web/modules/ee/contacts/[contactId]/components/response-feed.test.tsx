@@ -54,7 +54,7 @@ describe("ResponseFeed", () => {
         welcomeCard: {
           enabled: false,
           headline: "",
-          subheader: "",
+          html: "",
         },
         displayLimit: null,
         autoComplete: null,

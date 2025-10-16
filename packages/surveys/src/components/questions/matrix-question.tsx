@@ -185,7 +185,10 @@ export function MatrixQuestion({
                                 getLocalizedValue(column.label, languageCode)
                               : false
                           }
-                          aria-label={`${getLocalizedValue(row.label, languageCode)} – ${getLocalizedValue(
+                          aria-label={`${getLocalizedValue(
+                            question.headline,
+                            languageCode
+                          )}: ${getLocalizedValue(row.label, languageCode)} – ${getLocalizedValue(
                             column.label,
                             languageCode
                           )}`}

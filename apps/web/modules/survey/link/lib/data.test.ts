@@ -79,7 +79,7 @@ describe("data", () => {
         timeToFinish: false,
         showResponseCount: false,
         headline: { default: "Welcome" },
-        subheader: { default: "" },
+        html: { default: "" },
         buttonLabel: { default: "Start" },
       },
       questions: [],

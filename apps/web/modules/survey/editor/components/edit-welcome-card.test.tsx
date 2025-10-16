@@ -6,6 +6,12 @@ import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome
 
 vi.mock("@/lib/cn");
 
+vi.mock("@/modules/ee/multi-language-surveys/components/localized-editor", () => ({
+  LocalizedEditor: vi.fn(({ value, id }) => (
+    <textarea data-testid={`localized-editor-${id}`} defaultValue={value?.default}></textarea>
+  )),
+}));
+
 vi.mock("@/modules/survey/components/question-form-input", () => ({
   QuestionFormInput: vi.fn(({ value, id }) => (
     <input data-testid={`question-form-input-${id}`} defaultValue={value?.default}></input>
@@ -47,7 +53,7 @@ const mockSurvey = {
 mockSurvey.welcomeCard = {
   enabled: true,
   headline: { default: "Welcome!" },
-  subheader: { default: "<p>Thank you for participating.</p>" },
+  html: { default: "<p>Thank you for participating.</p>" },
   buttonLabel: { default: "Start Survey" },
   timeToFinish: true,
   showResponseCount: false,
@@ -103,9 +109,7 @@ describe("EditWelcomeCard", () => {
     expect(screen.getByLabelText("common.on")).toBeInTheDocument();
     expect(screen.getByTestId("file-input")).toBeInTheDocument();
     expect(screen.getByTestId("question-form-input-headline")).toHaveValue("Welcome!");
-    expect(screen.getByTestId("question-form-input-subheader")).toHaveValue(
-      "<p>Thank you for participating.</p>"
-    );
+    expect(screen.getByTestId("localized-editor-html")).toHaveValue("<p>Thank you for participating.</p>");
     expect(screen.getByTestId("question-form-input-buttonLabel")).toHaveValue("Start Survey");
     expect(screen.getByLabelText("common.time_to_finish")).toBeInTheDocument();
     const timeToFinishSwitch = screen.getAllByRole("switch")[1]; // Assuming the second switch is for timeToFinish
