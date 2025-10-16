@@ -1,7 +1,3 @@
-import { createId } from "@paralleldrive/cuid2";
-import { TFnType } from "@tolgee/react";
-import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TTemplate } from "@formbricks/types/templates";
 import {
   buildCTAQuestion,
   buildConsentQuestion,
@@ -17,6 +13,10 @@ import {
   hiddenFieldsDefault,
 } from "@/app/lib/survey-builder";
 import { createI18nString } from "@/lib/i18n/utils";
+import { createId } from "@paralleldrive/cuid2";
+import { TFnType } from "@tolgee/react";
+import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TTemplate } from "@formbricks/types/templates";
 
 const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
@@ -32,7 +32,7 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
-          subheader: t("templates.card_abandonment_survey_question_1_html"),
+          html: t("templates.card_abandonment_survey_question_1_html"),
           logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
           headline: t("templates.card_abandonment_survey_question_1_headline"),
           required: false,
@@ -92,7 +92,6 @@ const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
           id: reusableQuestionIds[1],
           logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[2], "isSkipped")],
           headline: t("templates.card_abandonment_survey_question_6_headline"),
-          subheader: "",
           required: false,
           label: t("templates.card_abandonment_survey_question_6_label"),
           t,
@@ -134,7 +133,7 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
-          subheader: t("templates.site_abandonment_survey_question_1_html"),
+          html: t("templates.site_abandonment_survey_question_1_html"),
           logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
           headline: t("templates.site_abandonment_survey_question_2_headline"),
           required: false,
@@ -193,7 +192,6 @@ const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
           id: reusableQuestionIds[1],
           logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[2], "isSkipped")],
           headline: t("templates.site_abandonment_survey_question_7_headline"),
-          subheader: "",
           required: false,
           label: t("templates.site_abandonment_survey_question_7_label"),
           t,
@@ -233,7 +231,7 @@ const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
-          subheader: t("templates.product_market_fit_superhuman_question_1_html"),
+          html: t("templates.product_market_fit_superhuman_question_1_html"),
           logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
           headline: t("templates.product_market_fit_superhuman_question_1_headline"),
           required: false,
@@ -411,7 +409,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           id: reusableQuestionIds[2],
-          subheader: t("templates.churn_survey_question_3_html"),
+          html: t("templates.churn_survey_question_3_html"),
           logic: [createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isClicked")],
           headline: t("templates.churn_survey_question_3_headline"),
           required: true,
@@ -431,7 +429,7 @@ const churnSurvey = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           id: reusableQuestionIds[4],
-          subheader: t("templates.churn_survey_question_5_html"),
+          html: t("templates.churn_survey_question_5_html"),
           logic: [createJumpLogic(reusableQuestionIds[4], localSurvey.endings[0].id, "isClicked")],
           headline: t("templates.churn_survey_question_5_headline"),
           required: true,
@@ -709,7 +707,7 @@ const improveTrialConversion = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           id: reusableQuestionIds[3],
-          subheader: t("templates.improve_trial_conversion_question_4_html"),
+          html: t("templates.improve_trial_conversion_question_4_html"),
           logic: [createJumpLogic(reusableQuestionIds[3], localSurvey.endings[0].id, "isClicked")],
           headline: t("templates.improve_trial_conversion_question_4_headline"),
           required: true,
@@ -804,7 +802,7 @@ const reviewPrompt = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           id: reusableQuestionIds[1],
-          subheader: t("templates.review_prompt_question_2_html"),
+          html: t("templates.review_prompt_question_2_html"),
           logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isClicked")],
           headline: t("templates.review_prompt_question_2_headline"),
           required: true,
@@ -842,7 +840,7 @@ const interviewPrompt = (t: TFnType): TTemplate => {
         buildCTAQuestion({
           id: createId(),
           headline: t("templates.interview_prompt_question_1_headline"),
-          subheader: t("templates.interview_prompt_question_1_html"),
+          html: t("templates.interview_prompt_question_1_html"),
           buttonLabel: t("templates.interview_prompt_question_1_button_label"),
           buttonUrl: "https://cal.com/johannes",
           buttonExternal: true,
@@ -1345,7 +1343,7 @@ const feedbackBox = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           id: reusableQuestionIds[2],
-          subheader: t("templates.feedback_box_question_3_html"),
+          html: t("templates.feedback_box_question_3_html"),
           logic: [
             createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isClicked"),
             createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isSkipped"),
@@ -2024,7 +2022,6 @@ const marketSiteClarity = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           headline: t("templates.market_site_clarity_question_3_headline"),
-          subheader: "",
           required: false,
           buttonLabel: t("templates.market_site_clarity_question_3_button_label"),
           buttonUrl: "https://app.formbricks.com/auth/signup",
@@ -2671,7 +2668,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
-          subheader: t("templates.identify_sign_up_barriers_question_1_html"),
+          html: t("templates.identify_sign_up_barriers_question_1_html"),
           logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
           headline: t("templates.identify_sign_up_barriers_question_1_headline"),
           required: false,
@@ -2796,7 +2793,7 @@ const identifySignUpBarriers = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           id: reusableQuestionIds[8],
-          subheader: t("templates.identify_sign_up_barriers_question_9_html"),
+          html: t("templates.identify_sign_up_barriers_question_9_html"),
           headline: t("templates.identify_sign_up_barriers_question_9_headline"),
           required: false,
           buttonUrl: "https://app.formbricks.com/auth/signup",
@@ -2968,7 +2965,7 @@ const improveNewsletterContent = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           id: reusableQuestionIds[2],
-          subheader: t("templates.improve_newsletter_content_question_3_html"),
+          html: t("templates.improve_newsletter_content_question_3_html"),
           headline: t("templates.improve_newsletter_content_question_3_headline"),
           required: false,
           buttonUrl: "https://formbricks.com",
@@ -3004,7 +3001,7 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
       questions: [
         buildCTAQuestion({
           id: reusableQuestionIds[0],
-          subheader: t("templates.evaluate_a_product_idea_question_1_html"),
+          html: t("templates.evaluate_a_product_idea_question_1_html"),
           headline: t("templates.evaluate_a_product_idea_question_1_headline"),
           required: true,
           buttonLabel: t("templates.evaluate_a_product_idea_question_1_button_label"),
@@ -3037,7 +3034,7 @@ const evaluateAProductIdea = (t: TFnType): TTemplate => {
         }),
         buildCTAQuestion({
           id: reusableQuestionIds[3],
-          subheader: t("templates.evaluate_a_product_idea_question_4_html"),
+          html: t("templates.evaluate_a_product_idea_question_4_html"),
           headline: t("templates.evaluate_a_product_idea_question_4_headline"),
           required: true,
           buttonLabel: t("templates.evaluate_a_product_idea_question_4_button_label"),

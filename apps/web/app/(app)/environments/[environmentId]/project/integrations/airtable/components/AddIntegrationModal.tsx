@@ -1,20 +1,5 @@
 "use client";
 
-import { TFnType, useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Control, Controller, useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
-import { TIntegrationItem } from "@formbricks/types/integration";
-import {
-  TIntegrationAirtable,
-  TIntegrationAirtableConfigData,
-  TIntegrationAirtableInput,
-  TIntegrationAirtableTables,
-} from "@formbricks/types/integration/airtable";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { BaseSelectDropdown } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
@@ -42,6 +27,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { TFnType, useTranslate } from "@tolgee/react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Control, Controller, useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import {
+  TIntegrationAirtable,
+  TIntegrationAirtableConfigData,
+  TIntegrationAirtableInput,
+  TIntegrationAirtableTables,
+} from "@formbricks/types/integration/airtable";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { IntegrationModalInputs } from "../lib/types";
 
 type EditModeProps =
@@ -118,9 +117,7 @@ const renderQuestionSelection = ({
                             : field.onChange(field.value?.filter((value) => value !== question.id));
                         }}
                       />
-                      <span className="ml-2">
-                        {getTextContent(getLocalizedValue(question.headline, "default"))}
-                      </span>
+                      <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
                     </label>
                   </div>
                 )}

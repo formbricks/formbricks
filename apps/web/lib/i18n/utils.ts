@@ -1,8 +1,8 @@
+import { INVISIBLE_REGEX } from "@/lib/i18n/constants";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TLanguage } from "@formbricks/types/project";
 import { TI18nString, TSurveyLanguage } from "@formbricks/types/surveys/types";
-import { INVISIBLE_REGEX } from "@/lib/i18n/constants";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 // https://github.com/tolgee/tolgee-js/blob/main/packages/web/src/package/observers/invisible/secret.ts
 const removeTolgeeInvisibleMarks = (str: string) => {

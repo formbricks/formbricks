@@ -1,6 +1,5 @@
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";
@@ -60,11 +59,7 @@ const getRecallItemLabel = <T extends TSurvey>(
   if (isHiddenField) return recallItemId;
 
   const surveyQuestion = survey.questions.find((question) => question.id === recallItemId);
-  if (surveyQuestion) {
-    const headline = getLocalizedValue(surveyQuestion.headline, languageCode);
-    // Strip HTML tags to prevent raw HTML from showing in nested recalls
-    return headline ? getTextContent(headline) : headline;
-  }
+  if (surveyQuestion) return surveyQuestion.headline[languageCode];
 
   const variable = survey.variables?.find((variable) => variable.id === recallItemId);
   if (variable) return variable.name;
@@ -131,7 +126,8 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): T
   for (const question of survey.questions) {
     if (
       doesTextHaveRecall(getLocalizedValue(question.headline, language)) ||
-      (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language)))
+      (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language))) ||
+      ("html" in question && doesTextHaveRecall(getLocalizedValue(question.html, language)))
     ) {
       return question;
     }
@@ -270,19 +266,4 @@ export const parseRecallInfo = (
   }
 
   return modifiedText;
-};
-
-export const getTextContentWithRecallTruncated = (text: string, maxLength: number = 25): string => {
-  const cleanText = getTextContent(text).replaceAll(/\s+/g, " ").trim();
-
-  if (cleanText.length <= maxLength) {
-    return replaceRecallInfoWithUnderline(cleanText);
-  }
-
-  const recalledCleanText = replaceRecallInfoWithUnderline(cleanText);
-
-  const start = recalledCleanText.slice(0, 10);
-  const end = recalledCleanText.slice(-10);
-
-  return `${start}...${end}`;
 };

@@ -73,7 +73,7 @@ const ZSurveyBase = z.object({
       timeToFinish: z.boolean(),
       showResponseCount: z.boolean(),
       headline: z.record(z.string()).optional(),
-      subheader: z.record(z.string()).optional(),
+      html: z.record(z.string()).optional(),
       fileUrl: z.string().optional(),
       buttonLabel: z.record(z.string()).optional(),
       videoUrl: z.string().optional(),

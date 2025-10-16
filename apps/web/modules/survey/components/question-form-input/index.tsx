@@ -11,14 +11,12 @@ import {
   TSurveyEndScreenCard,
   TSurveyQuestion,
   TSurveyQuestionChoice,
-  TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
 import { Button } from "@/modules/ui/components/button";
@@ -57,9 +55,6 @@ interface QuestionFormInputProps {
   locale: TUserLocale;
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
   isStorageConfigured: boolean;
-  autoFocus?: boolean;
-  firstRender?: boolean;
-  setFirstRender?: (value: boolean) => void;
 }
 
 export const QuestionFormInput = ({
@@ -82,9 +77,6 @@ export const QuestionFormInput = ({
   locale,
   onKeyDown,
   isStorageConfigured = true,
-  autoFocus,
-  firstRender: externalFirstRender,
-  setFirstRender: externalSetFirstRender,
 }: QuestionFormInputProps) => {
   const { t } = useTranslate();
   const defaultLanguageCode =
@@ -282,132 +274,13 @@ export const QuestionFormInput = ({
   const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
 
   const [animationParent] = useAutoAnimate();
-  const [internalFirstRender, setInternalFirstRender] = useState(true);
 
-  // Use external firstRender state if provided, otherwise use internal state
-  const firstRender = externalFirstRender ?? internalFirstRender;
-  const setFirstRender = externalSetFirstRender ?? setInternalFirstRender;
+  const renderRemoveDescriptionButton = useMemo(() => {
+    if (id !== "subheader") return false;
+    return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
 
-  const renderRemoveDescriptionButton = () => {
-    if (
-      question &&
-      (question.type === TSurveyQuestionTypeEnum.CTA || question.type === TSurveyQuestionTypeEnum.Consent)
-    ) {
-      return false;
-    }
-
-    if (id === "subheader") {
-      return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
-    }
-
-    return false;
-  };
-
-  const useRichTextEditor = id === "headline" || id === "subheader" || id === "html";
-
-  // For rich text editor fields, we need either updateQuestion or updateSurvey
-  if (useRichTextEditor && !updateQuestion && !updateSurvey) {
-    throw new Error("Either updateQuestion or updateSurvey must be provided");
-  }
-
-  if (useRichTextEditor) {
-    return (
-      <div className="w-full">
-        {label && (
-          <div className="mb-2 mt-3">
-            <Label htmlFor={id}>{label}</Label>
-          </div>
-        )}
-        <div className="flex flex-col gap-4" ref={animationParent}>
-          {showImageUploader && id === "headline" && (
-            <FileInput
-              id="question-image"
-              allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-              environmentId={localSurvey.environmentId}
-              onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
-                if (url) {
-                  const update =
-                    fileType === "video"
-                      ? { videoUrl: url[0], imageUrl: "" }
-                      : { imageUrl: url[0], videoUrl: "" };
-                  if ((isWelcomeCard || isEndingCard) && updateSurvey) {
-                    updateSurvey(update);
-                  } else if (updateQuestion) {
-                    updateQuestion(questionIdx, update);
-                  }
-                }
-              }}
-              fileUrl={getFileUrl()}
-              videoUrl={getVideoUrl()}
-              isVideoAllowed={true}
-              maxSizeInMB={5}
-              isStorageConfigured={isStorageConfigured}
-            />
-          )}
-
-          <div className="flex w-full items-start gap-2">
-            <div className="flex-1">
-              <LocalizedEditor
-                key={`${questionId}-${id}-${selectedLanguageCode}`}
-                id={id}
-                value={value}
-                localSurvey={localSurvey}
-                questionIdx={questionIdx}
-                isInvalid={isInvalid}
-                updateQuestion={(isWelcomeCard || isEndingCard ? updateSurvey : updateQuestion)!}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                firstRender={firstRender}
-                setFirstRender={setFirstRender}
-                locale={locale}
-                questionId={questionId}
-                isCard={isWelcomeCard || isEndingCard}
-                autoFocus={autoFocus}
-              />
-            </div>
-
-            {id === "headline" && !isWelcomeCard && (
-              <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  aria-label="Toggle image uploader"
-                  data-testid="toggle-image-uploader-button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowImageUploader((prev) => !prev);
-                  }}>
-                  <ImagePlusIcon />
-                </Button>
-              </TooltipRenderer>
-            )}
-
-            {id === "subheader" && renderRemoveDescriptionButton() && (
-              <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  aria-label="Remove description"
-                  onClick={(e) => {
-                    e.preventDefault();
-
-                    if (updateSurvey) {
-                      updateSurvey({ subheader: undefined });
-                    }
-
-                    if (updateQuestion) {
-                      updateQuestion(questionIdx, { subheader: undefined });
-                    }
-                  }}>
-                  <TrashIcon />
-                </Button>
-              </TooltipRenderer>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endingCard?.type, id, question?.subheader]);
 
   return (
     <div className="w-full">
@@ -547,7 +420,7 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                        {renderRemoveDescriptionButton() ? (
+                        {renderRemoveDescriptionButton ? (
                           <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
                             <Button
                               variant="secondary"
@@ -556,13 +429,11 @@ export const QuestionFormInput = ({
                               className="ml-2"
                               onClick={(e) => {
                                 e.preventDefault();
-
-                                if (updateSurvey) {
-                                  updateSurvey({ subheader: undefined });
-                                }
-
                                 if (updateQuestion) {
                                   updateQuestion(questionIdx, { subheader: undefined });
+                                }
+                                if (updateSurvey) {
+                                  updateSurvey({ subheader: undefined });
                                 }
                               }}>
                               <TrashIcon />

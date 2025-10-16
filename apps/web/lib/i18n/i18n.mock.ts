@@ -1,3 +1,4 @@
+import { mockSurveyLanguages } from "@/lib/survey/__mock__/survey.mock";
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -14,7 +15,6 @@ import {
   TSurveyRatingQuestion,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { mockSurveyLanguages } from "@/lib/survey/__mock__/survey.mock";
 
 export const mockWelcomeCard: TSurveyWelcomeCard = {
   html: {

@@ -1,16 +1,3 @@
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { type JSX, useCallback } from "react";
-import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
-import { type TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
-import type {
-  TResponseData,
-  TResponseDataValue,
-  TResponseTtc,
-  TResponseUpdate,
-  TResponseVariables,
-} from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
-import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
 import { FormbricksBranding } from "@/components/general/formbricks-branding";
@@ -30,6 +17,19 @@ import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
 import { cn, getDefaultLanguageCode } from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { type JSX, useCallback } from "react";
+import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { type TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
+import type {
+  TResponseData,
+  TResponseDataValue,
+  TResponseTtc,
+  TResponseUpdate,
+  TResponseVariables,
+} from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
+import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface VariableStackEntry {
   questionId: TSurveyQuestionId;
@@ -681,7 +681,7 @@ export function Survey({
           <WelcomeCard
             key="start"
             headline={localSurvey.welcomeCard.headline}
-            subheader={localSurvey.welcomeCard.subheader}
+            html={localSurvey.welcomeCard.html}
             fileUrl={localSurvey.welcomeCard.fileUrl}
             buttonLabel={localSurvey.welcomeCard.buttonLabel}
             onSubmit={onSubmit}

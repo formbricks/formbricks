@@ -1,12 +1,5 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { TFnType } from "@tolgee/react";
-import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
-import Link from "next/link";
-import { TResponseTableData } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
@@ -19,6 +12,12 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
+import { ColumnDef } from "@tanstack/react-table";
+import { TFnType } from "@tolgee/react";
+import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
+import Link from "next/link";
+import { TResponseTableData } from "@formbricks/types/responses";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   COLUMNS_ICON_MAP,
   METADATA_FIELDS,
@@ -55,9 +54,7 @@ const getQuestionColumnsData = (
 
   // Helper function to get localized question headline
   const getQuestionHeadline = (question: TSurveyQuestion, survey: TSurvey) => {
-    return getTextContent(
-      getLocalizedValue(recallToHeadline(question.headline, survey, false, "default"), "default")
-    );
+    return getLocalizedValue(recallToHeadline(question.headline, survey, false, "default"), "default");
   };
 
   // Helper function to render choice ID badges
@@ -86,7 +83,7 @@ const getQuestionColumnsData = (
                 <div className="flex items-center space-x-2 overflow-hidden">
                   <span className="h-4 w-4">{QUESTIONS_ICON_MAP["matrix"]}</span>
                   <span className="truncate">
-                    {getTextContent(getLocalizedValue(question.headline, "default")) +
+                    {getLocalizedValue(question.headline, "default") +
                       " - " +
                       getLocalizedValue(matrixRow.label, "default")}
                   </span>
@@ -202,11 +199,9 @@ const getQuestionColumnsData = (
               <div className="flex items-center space-x-2 overflow-hidden">
                 <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
                 <span className="truncate">
-                  {getTextContent(
-                    getLocalizedValue(
-                      recallToHeadline(question.headline, survey, false, "default"),
-                      "default"
-                    )
+                  {getLocalizedValue(
+                    recallToHeadline(question.headline, survey, false, "default"),
+                    "default"
                   )}
                 </span>
               </div>

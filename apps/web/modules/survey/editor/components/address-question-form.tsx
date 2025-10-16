@@ -1,15 +1,15 @@
 "use client";
 
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
+import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect } from "react";
 import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Button } from "@/modules/ui/components/button";
-import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
 
 interface AddressQuestionFormProps {
   localSurvey: TSurvey;
@@ -93,7 +93,6 @@ export const AddressQuestionForm = ({
   ]);
 
   const [parent] = useAutoAnimate();
-
   return (
     <form>
       <QuestionFormInput
@@ -108,7 +107,6 @@ export const AddressQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div ref={parent}>
@@ -127,7 +125,6 @@ export const AddressQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>

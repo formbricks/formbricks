@@ -15,7 +15,6 @@ import {
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -224,17 +223,18 @@ export const QuestionCard = ({
           aria-label="Toggle question details">
           <div>
             <div className="flex grow">
+              {/*  <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
+                {QUESTIONS_ICON_MAP[question.type]}
+              </div> */}
               <div className="flex grow flex-col justify-center" dir="auto">
                 <h3 className="text-sm font-semibold">
                   {recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
                     selectedLanguageCode
                   ]
                     ? formatTextWithSlashes(
-                        getTextContent(
-                          recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
-                            selectedLanguageCode
-                          ] ?? ""
-                        )
+                        recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
+                          selectedLanguageCode
+                        ] ?? ""
                       )
                     : getTSurveyQuestionTypeEnumName(question.type, t)}
                 </h3>
