@@ -168,12 +168,6 @@ export const createEnvironment = async (
               description: "Your contact's last name",
               type: "default",
             },
-            {
-              key: "language",
-              name: "Language",
-              description: "The language preference of a contact",
-              type: "default",
-            },
           ],
         },
       },
