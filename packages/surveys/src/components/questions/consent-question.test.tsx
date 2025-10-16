@@ -1,9 +1,9 @@
-import { getUpdatedTtc } from "@/lib/ttc";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { type TSurveyConsentQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getUpdatedTtc } from "@/lib/ttc";
 import { ConsentQuestion } from "./consent-question";
 
 vi.mock("@/lib/ttc", () => ({
@@ -24,7 +24,7 @@ describe("ConsentQuestion", () => {
     id: "consent-q",
     type: TSurveyQuestionTypeEnum.Consent,
     headline: { default: "Consent Headline" },
-    html: { default: "This is the consent text" },
+    subheader: { default: "Consent Subheader" },
     label: { default: "I agree to the terms" },
     buttonLabel: { default: "Submit" },
     backButtonLabel: { default: "Back" },

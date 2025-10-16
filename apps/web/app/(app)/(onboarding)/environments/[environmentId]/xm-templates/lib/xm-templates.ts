@@ -1,3 +1,7 @@
+import { createId } from "@paralleldrive/cuid2";
+import { TFnType } from "@tolgee/react";
+import { logger } from "@formbricks/logger";
+import { TXMTemplate } from "@formbricks/types/templates";
 import {
   buildCTAQuestion,
   buildNPSQuestion,
@@ -5,10 +9,6 @@ import {
   buildRatingQuestion,
   getDefaultEndingCard,
 } from "@/app/lib/survey-builder";
-import { createId } from "@paralleldrive/cuid2";
-import { TFnType } from "@tolgee/react";
-import { logger } from "@formbricks/logger";
-import { TXMTemplate } from "@formbricks/types/templates";
 
 export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
   try {
@@ -105,7 +105,7 @@ const starRatingSurvey = (t: TFnType): TXMTemplate => {
       }),
       buildCTAQuestion({
         id: reusableQuestionIds[1],
-        html: t("templates.star_rating_survey_question_2_html"),
+        subheader: t("templates.star_rating_survey_question_2_html"),
         logic: [
           {
             id: createId(),
@@ -322,7 +322,7 @@ const smileysRatingSurvey = (t: TFnType): TXMTemplate => {
       }),
       buildCTAQuestion({
         id: reusableQuestionIds[1],
-        html: t("templates.smileys_survey_question_2_html"),
+        subheader: t("templates.smileys_survey_question_2_html"),
         logic: [
           {
             id: createId(),

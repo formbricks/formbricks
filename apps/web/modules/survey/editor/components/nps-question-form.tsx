@@ -1,15 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
+import { PlusIcon } from "lucide-react";
+import { type JSX } from "react";
+import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import type { JSX } from "react";
-import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;
@@ -38,7 +38,6 @@ export const NPSQuestionForm = ({
 }: NPSQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-  // Auto animate
   const [parent] = useAutoAnimate();
 
   return (
@@ -55,6 +54,7 @@ export const NPSQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div ref={parent}>
@@ -73,6 +73,7 @@ export const NPSQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>
@@ -88,7 +89,6 @@ export const NPSQuestionForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             {t("environments.surveys.edit.add_description")}
           </Button>

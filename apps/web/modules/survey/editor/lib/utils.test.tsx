@@ -1599,25 +1599,5 @@ describe("Survey Editor Utils", () => {
 
       expect(result).toBe(10); // Index of question11
     });
-
-    test("should find recall pattern in question html field", () => {
-      const surveyWithRecall = {
-        ...createMockSurvey(),
-        questions: [
-          ...createMockSurvey().questions,
-          {
-            id: "question11",
-            type: TSurveyQuestionTypeEnum.Consent,
-            headline: { default: "Question" },
-            html: { default: "HTML #recall:question1/fallback:default" },
-            required: false,
-          },
-        ],
-      } as TSurvey;
-
-      const result = isUsedInRecall(surveyWithRecall, "question1");
-
-      expect(result).toBe(10); // Index of question11
-    });
   });
 });

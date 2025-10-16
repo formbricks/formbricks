@@ -1,5 +1,20 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { CircleHelpIcon } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import {
+  TIntegrationSlack,
+  TIntegrationSlackConfigData,
+  TIntegrationSlackInput,
+} from "@formbricks/types/integration/slack";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -18,20 +33,6 @@ import {
 } from "@/modules/ui/components/dialog";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { CircleHelpIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TIntegrationItem } from "@formbricks/types/integration";
-import {
-  TIntegrationSlack,
-  TIntegrationSlackConfigData,
-  TIntegrationSlackInput,
-} from "@formbricks/types/integration/slack";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface AddChannelMappingModalProps {
   environmentId: string;
@@ -281,7 +282,9 @@ export const AddChannelMappingModal = ({
                                   handleCheckboxChange(question.id);
                                 }}
                               />
-                              <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
+                              <span className="ml-2">
+                                {getTextContent(getLocalizedValue(question.headline, "default"))}
+                              </span>
                             </label>
                           </div>
                         ))}

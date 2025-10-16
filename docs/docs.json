@@ -192,6 +192,7 @@
                 "icon": "lightbulb",
                 "pages": [
                   "xm-and-surveys/xm/best-practices/contact-form",
+                  "xm-and-surveys/xm/best-practices/headless-surveys",
                   "xm-and-surveys/xm/best-practices/docs-feedback",
                   "xm-and-surveys/xm/best-practices/feature-chaser",
                   "xm-and-surveys/xm/best-practices/feedback-box",
