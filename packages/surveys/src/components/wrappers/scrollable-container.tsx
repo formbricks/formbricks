@@ -1,10 +1,11 @@
-import { cn } from "@/lib/utils";
 import type { JSX, Ref } from "preact";
 import { forwardRef } from "preact/compat";
 import { useEffect, useImperativeHandle, useRef, useState } from "preact/hooks";
+import { cn } from "@/lib/utils";
 
 interface ScrollableContainerProps {
   children: JSX.Element;
+  fullSizeCards?: boolean;
 }
 
 export interface ScrollableContainerHandle {
@@ -12,7 +13,7 @@ export interface ScrollableContainerHandle {
 }
 
 export const ScrollableContainer = forwardRef<ScrollableContainerHandle, ScrollableContainerProps>(
-  ({ children }: ScrollableContainerProps, ref: Ref<ScrollableContainerHandle>) => {
+  ({ children, fullSizeCards = false }: ScrollableContainerProps, ref: Ref<ScrollableContainerHandle>) => {
     const [isAtBottom, setIsAtBottom] = useState(false);
     const [isAtTop, setIsAtTop] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -69,7 +70,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
         <div
           ref={containerRef}
           style={{
-            maxHeight: isSurveyPreview ? "42dvh" : "60dvh",
+            maxHeight: fullSizeCards ? "calc(100vh - 4rem)" : isSurveyPreview ? "42dvh" : "60dvh",
           }}
           className={cn("fb-overflow-auto fb-px-4 fb-bg-survey-bg")}>
           {children}

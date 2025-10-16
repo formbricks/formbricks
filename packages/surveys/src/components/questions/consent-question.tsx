@@ -1,3 +1,6 @@
+import { useCallback, useState } from "preact/hooks";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -6,9 +9,6 @@ import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useCallback, useState } from "preact/hooks";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
@@ -25,6 +25,7 @@ interface ConsentQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards?: boolean;
 }
 
 export function ConsentQuestion({
@@ -42,6 +43,7 @@ export function ConsentQuestion({
   autoFocusEnabled,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<ConsentQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -60,7 +62,7 @@ export function ConsentQuestion({
   );
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {
