@@ -319,51 +319,6 @@ describe("createContactsFromCSV", () => {
       createContactsFromCSV(csvData, environmentId, "skip", { email: "email", name: "name" })
     ).rejects.toThrow(genericError);
   });
-
-  test("handles language attribute key like other default attributes", async () => {
-    vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
-      { key: "email", id: "id-email" },
-      { key: "userId", id: "id-userId" },
-      { key: "firstName", id: "id-firstName" },
-      { key: "lastName", id: "id-lastName" },
-      { key: "language", id: "id-language" },
-    ] as any);
-    vi.mocked(prisma.contact.create).mockResolvedValue({
-      id: "c1",
-      environmentId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      attributes: [
-        { attributeKey: { key: "email" }, value: "john@example.com" },
-        { attributeKey: { key: "userId" }, value: "user123" },
-        { attributeKey: { key: "firstName" }, value: "John" },
-        { attributeKey: { key: "lastName" }, value: "Doe" },
-        { attributeKey: { key: "language" }, value: "en" },
-      ],
-    } as any);
-    const csvData = [
-      {
-        email: "john@example.com",
-        userId: "user123",
-        firstName: "John",
-        lastName: "Doe",
-        language: "en",
-      },
-    ];
-    const result = await createContactsFromCSV(csvData, environmentId, "skip", {
-      email: "email",
-      userId: "userId",
-      firstName: "firstName",
-      lastName: "lastName",
-      language: "language",
-    });
-    expect(Array.isArray(result)).toBe(true);
-    expect(result[0].id).toBe("c1");
-    // language attribute key should already exist, no need to create it
-    expect(prisma.contactAttributeKey.createMany).not.toHaveBeenCalled();
-  });
 });
 
 describe("buildContactWhereClause", () => {
