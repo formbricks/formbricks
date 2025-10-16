@@ -1,12 +1,10 @@
 "use client";
 
 import { useTranslate } from "@tolgee/react";
-import { type JSX, useState } from "react";
+import { type JSX } from "react";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Label } from "@/modules/ui/components/label";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
@@ -31,57 +29,45 @@ export const ConsentQuestionForm = ({
   locale,
   isStorageConfigured = true,
 }: ConsentQuestionFormProps): JSX.Element => {
-  const [firstRender, setFirstRender] = useState(true);
   const { t } = useTranslate();
+
+  // Common props shared across all QuestionFormInput components
+  const commonInputProps = {
+    localSurvey,
+    questionIdx,
+    isInvalid,
+    updateQuestion,
+    selectedLanguageCode,
+    setSelectedLanguageCode,
+    locale,
+    isStorageConfigured,
+  };
+
   return (
     <form>
       <QuestionFormInput
+        {...commonInputProps}
         id="headline"
-        label={t("environments.surveys.edit.question") + "*"}
         value={question.headline}
-        localSurvey={localSurvey}
-        questionIdx={questionIdx}
-        isInvalid={isInvalid}
-        updateQuestion={updateQuestion}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
-        isStorageConfigured={isStorageConfigured}
+        label={t("environments.surveys.edit.question") + "*"}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div className="mt-3">
-        <Label htmlFor="subheader">{t("common.description")}</Label>
-        <div className="mt-2">
-          <LocalizedEditor
-            id="subheader"
-            value={question.html}
-            localSurvey={localSurvey}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            firstRender={firstRender}
-            setFirstRender={setFirstRender}
-            questionIdx={questionIdx}
-            locale={locale}
-            questionId={question.id}
-          />
-        </div>
+        <QuestionFormInput
+          {...commonInputProps}
+          id="subheader"
+          value={question.subheader}
+          label={t("common.description")}
+        />
       </div>
 
       <QuestionFormInput
+        {...commonInputProps}
         id="label"
         label={t("environments.surveys.edit.checkbox_label") + "*"}
         placeholder="I agree to the terms and conditions"
         value={question.label}
-        localSurvey={localSurvey}
-        questionIdx={questionIdx}
-        isInvalid={isInvalid}
-        updateQuestion={updateQuestion}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
-        isStorageConfigured={isStorageConfigured}
       />
     </form>
   );

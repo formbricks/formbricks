@@ -1,13 +1,14 @@
 "use client";
 
-import { recallToHeadline } from "@/lib/utils/recall";
-import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
-import { IdBadge } from "@/modules/ui/components/id-badge";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import type { JSX } from "react";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;
@@ -30,7 +31,9 @@ export const QuestionSummaryHeader = ({
       <div className={"align-center flex justify-between gap-4"}>
         <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
           {formatTextWithSlashes(
-            recallToHeadline(questionSummary.question.headline, survey, true, "default")["default"],
+            getTextContent(
+              recallToHeadline(questionSummary.question.headline, survey, true, "default")["default"]
+            ),
             "@",
             ["text-lg"]
           )}

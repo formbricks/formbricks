@@ -2,6 +2,7 @@ import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { TRANSFORMERS } from "@lexical/markdown";
+import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -54,6 +55,8 @@ export type TextEditorProps = {
   selectedLanguageCode?: string;
   fallbacks?: { [id: string]: string };
   addFallback?: () => void;
+  autoFocus?: boolean;
+  id?: string;
 };
 
 const editorConfig = {
@@ -118,10 +121,15 @@ export const Editor = (props: TextEditorProps) => {
               style={{ height: props.height }}>
               <RichTextPlugin
                 contentEditable={
-                  <ContentEditable style={{ height: props.height }} className="editor-input" />
+                  <ContentEditable
+                    style={{ height: props.height }}
+                    className="editor-input"
+                    aria-labelledby={props.id}
+                    dir="auto"
+                  />
                 }
                 placeholder={
-                  <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">
+                  <div className="-mt-11 cursor-text p-3 text-sm text-slate-400" dir="auto">
                     {props.placeholder ?? ""}
                   </div>
                 }
@@ -130,6 +138,7 @@ export const Editor = (props: TextEditorProps) => {
               <ListPlugin />
               <LinkPlugin />
               <AutoLinkPlugin />
+              {props.autoFocus && <AutoFocusPlugin />}
               {props.localSurvey && props.questionId && props.selectedLanguageCode && (
                 <RecallPlugin
                   localSurvey={props.localSurvey}
