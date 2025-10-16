@@ -1,12 +1,3 @@
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useCallback, useMemo, useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type {
-  TSurveyQuestionChoice,
-  TSurveyQuestionId,
-  TSurveyRankingQuestion,
-} from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -19,6 +10,15 @@ import {
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type {
+  TSurveyQuestionChoice,
+  TSurveyQuestionId,
+  TSurveyRankingQuestion,
+} from "@formbricks/types/surveys/types";
 
 interface RankingQuestionProps {
   question: TSurveyRankingQuestion;

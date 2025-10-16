@@ -1,3 +1,5 @@
+import { cache } from "@/lib/cache";
+import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -5,8 +7,6 @@ import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { cache } from "@/lib/cache";
-import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import {
   getExistingContactResponse,
   getOrganizationBilling,
@@ -79,7 +79,7 @@ describe("data", () => {
         timeToFinish: false,
         showResponseCount: false,
         headline: { default: "Welcome" },
-        subheader: { default: "" },
+        html: { default: "" },
         buttonLabel: { default: "Start" },
       },
       questions: [],

@@ -1,13 +1,3 @@
-import { TSurveyQuota } from "@formbricks/types/quota";
-import {
-  TResponseFilterCriteria,
-  TResponseHiddenFieldsFilter,
-  TSurveyContactAttributes,
-  TSurveyMetaFieldFilter,
-} from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
-import { TTag } from "@formbricks/types/tags";
 import {
   DateRange,
   FilterValue,
@@ -19,8 +9,15 @@ import {
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { recallToHeadline } from "@/lib/utils/recall";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import {
+  TResponseFilterCriteria,
+  TResponseHiddenFieldsFilter,
+  TSurveyContactAttributes,
+  TSurveyMetaFieldFilter,
+} from "@formbricks/types/responses";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TTag } from "@formbricks/types/tags";
 
 const conditionOptions = {
   openText: ["is"],
@@ -83,9 +80,7 @@ export const generateQuestionAndFilterOptions = (
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
       questionsOptions.push({
-        label: getTextContent(
-          getLocalizedValue(recallToHeadline(q.headline, survey, false, "default"), "default")
-        ),
+        label: q.headline,
         questionType: q.type,
         type: OptionsType.QUESTIONS,
         id: q.id,

@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
 import { getPrefillValue } from "./utils";
@@ -85,6 +85,7 @@ describe("survey link utils", () => {
         required: false,
         logic: [],
         buttonLabel: { default: "Click me" },
+        html: { default: "" },
         subheader: { default: "" },
       },
       {
@@ -136,7 +137,7 @@ describe("survey link utils", () => {
     welcomeCard: {
       enabled: true,
       headline: { default: "Welcome" },
-      subheader: { default: "" },
+      html: { default: "" },
       buttonLabel: { default: "Start" },
     },
     hiddenFields: {},

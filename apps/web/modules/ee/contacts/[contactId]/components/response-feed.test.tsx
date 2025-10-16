@@ -1,3 +1,4 @@
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -6,7 +7,6 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { ResponseFeed } from "./response-feed";
 
 // Mock the hooks and components
@@ -54,7 +54,7 @@ describe("ResponseFeed", () => {
         welcomeCard: {
           enabled: false,
           headline: "",
-          subheader: "",
+          html: "",
         },
         displayLimit: null,
         autoComplete: null,

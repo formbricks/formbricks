@@ -1,11 +1,3 @@
-import { type JSX } from "preact";
-import { useCallback, useMemo, useState } from "preact/hooks";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type {
-  TSurveyMatrixQuestion,
-  TSurveyMatrixQuestionChoice,
-  TSurveyQuestionId,
-} from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -15,6 +7,14 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
+import { type JSX } from "preact";
+import { useCallback, useMemo, useState } from "preact/hooks";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type {
+  TSurveyMatrixQuestion,
+  TSurveyMatrixQuestionChoice,
+  TSurveyQuestionId,
+} from "@formbricks/types/surveys/types";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -185,7 +185,10 @@ export function MatrixQuestion({
                                 getLocalizedValue(column.label, languageCode)
                               : false
                           }
-                          aria-label={`${getLocalizedValue(row.label, languageCode)} – ${getLocalizedValue(
+                          aria-label={`${getLocalizedValue(
+                            question.headline,
+                            languageCode
+                          )}: ${getLocalizedValue(row.label, languageCode)} – ${getLocalizedValue(
                             column.label,
                             languageCode
                           )}`}

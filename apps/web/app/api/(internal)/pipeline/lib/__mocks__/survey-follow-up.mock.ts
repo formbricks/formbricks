@@ -91,7 +91,7 @@ export const mockSurvey: TSurvey = {
   createdBy: "cm98dg3xm000019hpubj39vfi",
   status: "inProgress",
   welcomeCard: {
-    subheader: {
+    html: {
       default: "Thanks for providing your feedback - let's go!‌‌‍‍‌‍‍‍‌‌‌‍‍‌‌‌‍‌‌‌‌‌‍‌‍‌‌",
     },
     enabled: false,
@@ -168,7 +168,6 @@ export const mockSurvey: TSurvey = {
   triggers: [],
   segment: null,
   followUps: mockFollowUps,
-  metadata: {},
 };
 
 export const mockContactQuestion: TSurveyContactInfoQuestion = {

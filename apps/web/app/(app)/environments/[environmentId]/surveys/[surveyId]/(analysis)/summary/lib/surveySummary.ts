@@ -33,7 +33,6 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
@@ -260,7 +259,7 @@ export const getSurveySummaryDropOff = (
     return {
       questionId: question.id,
       questionType: question.type,
-      headline: getTextContent(getLocalizedValue(question.headline, "default")),
+      headline: getLocalizedValue(question.headline, "default"),
       ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
       impressions: impressionsArr[index] || 0,
       dropOffCount: dropOffArr[index] || 0,

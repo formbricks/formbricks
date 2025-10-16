@@ -1,19 +1,19 @@
-import { useEffect } from "preact/hooks";
-import { useTranslation } from "react-i18next";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
-import { type TI18nString } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
+import { useEffect } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
+import { type TI18nString } from "@formbricks/types/surveys/types";
 import { Headline } from "./headline";
-import { Subheader } from "./subheader";
+import { HtmlBody } from "./html-body";
 
 interface WelcomeCardProps {
   headline?: TI18nString;
-  subheader?: TI18nString;
+  html?: TI18nString;
   fileUrl?: string;
   buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -65,7 +65,7 @@ function UsersIcon() {
 
 export function WelcomeCard({
   headline,
-  subheader,
+  html,
   fileUrl,
   buttonLabel,
   onSubmit,
@@ -150,13 +150,8 @@ export function WelcomeCard({
           headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), responseData, variablesData)}
           questionId="welcomeCard"
         />
-        <Subheader
-          subheader={replaceRecallInfo(
-            getLocalizedValue(subheader, languageCode),
-            responseData,
-            variablesData
-          )}
-          questionId="welcomeCard"
+        <HtmlBody
+          htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), responseData, variablesData)}
         />
         <div className="fb-mt-4 fb-flex fb-gap-4 fb-pt-4">
           <SubmitButton
@@ -174,9 +169,7 @@ export function WelcomeCard({
           />
         </div>
         {timeToFinish && !showResponseCount ? (
-          <div
-            className="fb-items-center fb-text-subheading fb-my-4 fb-flex"
-            data-testid="fb__surveys__welcome-card__time-display">
+          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
             <TimerIcon />
             <p className="fb-pt-1 fb-text-xs">
               <span>

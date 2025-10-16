@@ -1,9 +1,9 @@
+import { getUpdatedTtc } from "@/lib/ttc";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { type TSurveyCTAQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { getUpdatedTtc } from "@/lib/ttc";
 import { CTAQuestion } from "./cta-question";
 
 // Mock dependencies
@@ -27,8 +27,8 @@ vi.mock("@/components/general/headline", () => ({
   Headline: vi.fn(({ headline }) => <div data-testid="headline">{headline}</div>),
 }));
 
-vi.mock("@/components/general/subheader", () => ({
-  Subheader: vi.fn(({ subheader }) => <div data-testid="subheader">{subheader}</div>),
+vi.mock("@/components/general/html-body", () => ({
+  HtmlBody: vi.fn(({ htmlString }) => <div data-testid="html-body">{htmlString}</div>),
 }));
 
 vi.mock("@/components/general/question-media", () => ({
@@ -58,7 +58,7 @@ describe("CTAQuestion", () => {
     id: "q1",
     type: TSurveyQuestionTypeEnum.CTA,
     headline: { default: "Test Headline" },
-    subheader: { default: "Test Subheader" },
+    html: { default: "Test HTML content" },
     buttonLabel: { default: "Click Me" },
     dismissButtonLabel: { default: "Skip This" },
     backButtonLabel: { default: "Go Back" },
@@ -86,7 +86,7 @@ describe("CTAQuestion", () => {
   test("renders correctly without media", () => {
     render(<CTAQuestion {...mockProps} />);
     expect(screen.getByTestId("headline")).toBeInTheDocument();
-    expect(screen.getByTestId("subheader")).toBeInTheDocument();
+    expect(screen.getByTestId("html-body")).toBeInTheDocument();
     expect(screen.getByTestId("back-button")).toBeInTheDocument();
     expect(screen.getByTestId("submit-button")).toBeInTheDocument();
     expect(screen.queryByTestId("question-media")).not.toBeInTheDocument();

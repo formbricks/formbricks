@@ -4,7 +4,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { type JSX } from "react";
+import type { JSX } from "react";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
@@ -70,14 +70,14 @@ export const PictureSelectionForm = ({
       choices: updatedChoices,
     });
   };
-
+  // Auto animate
   const [parent] = useAutoAnimate();
   return (
     <form>
       <QuestionFormInput
         id="headline"
-        value={question.headline}
         label={t("environments.surveys.edit.question") + "*"}
+        value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -86,7 +86,6 @@ export const PictureSelectionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -104,7 +103,6 @@ export const PictureSelectionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>
