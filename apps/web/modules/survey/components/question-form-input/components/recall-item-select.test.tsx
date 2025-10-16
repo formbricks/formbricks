@@ -11,7 +11,6 @@ import {
 import { RecallItemSelect } from "./recall-item-select";
 
 vi.mock("@/lib/utils/recall", () => ({
-  replaceRecallInfoWithUnderline: vi.fn((text) => `_${text}_`),
   getTextContentWithRecallTruncated: vi.fn((text: string, maxLength: number = 25) => {
     // Remove all HTML tags by repeatedly applying the regex
     let cleaned = text;
