@@ -117,6 +117,268 @@ Please take a look at our [migration guide](/self-hosting/advanced/migration) fo
    docker compose up -d
    ```
 
+## Optional: Adding MinIO for File Storage
+
+MinIO provides S3-compatible object storage for file uploads in Formbricks. If you want to enable features like image uploads, file uploads in surveys, or custom logos, you can add MinIO to your Docker setup.
+
+<Note>
+  For detailed information about file storage options and configuration, see our [File Uploads Configuration](/self-hosting/configuration/file-uploads) guide.
+</Note>
+
+<Warning>
+  **For production deployments with HTTPS**, use the [one-click setup script](/self-hosting/setup/one-click) which automatically configures MinIO with Traefik, SSL certificates, and a subdomain (required for MinIO in production). The setups below are suitable for local development or testing only.
+</Warning>
+
+### Quick Start: Using docker-compose.dev.yml (Easiest)
+
+The fastest way to test MinIO with Formbricks is to use the included `docker-compose.dev.yml` which already has MinIO pre-configured.
+
+1. **Start MinIO and Services**
+
+   From the repository root:
+
+   ```bash
+   docker compose -f docker-compose.dev.yml up -d
+   ```
+
+   This starts PostgreSQL, Valkey (Redis), MinIO, and Mailhog.
+
+2. **Access MinIO Console**
+
+   Open http://localhost:9001 in your browser.
+
+   Login credentials:
+   - Username: `devminio`
+   - Password: `devminio123`
+
+3. **Create Bucket**
+
+   - Click "Buckets" in the left sidebar
+   - Click "Create Bucket"
+   - Name it: `formbricks`
+   - Click "Create Bucket"
+   - Optional: Set Access Policy to "Public" for development
+
+4. **Configure Formbricks**
+
+   Update your `.env` file or environment variables with MinIO configuration:
+
+   ```bash
+   # MinIO S3 Storage
+   S3_ACCESS_KEY="devminio"
+   S3_SECRET_KEY="devminio123"
+   S3_REGION="us-east-1"
+   S3_BUCKET_NAME="formbricks"
+   S3_ENDPOINT_URL="http://localhost:9000"
+   S3_FORCE_PATH_STYLE="1"
+   ```
+
+5. **Verify in MinIO Console**
+
+   After uploading files in Formbricks, view them at http://localhost:9001:
+   - Navigate to Buckets → formbricks → Browse
+   - Your uploaded files will appear here
+
+<Note>
+  The `docker-compose.dev.yml` file includes MinIO with console access on port 9001, making it easy to visually verify file uploads. This is the recommended approach for development and testing.
+</Note>
+
+### Manual MinIO Setup (Custom Configuration)
+
+<Note>
+  **Recommended**: Use the docker-compose.dev.yml approach above for easier setup. Only use this manual approach if you need to customize the MinIO configuration or integrate it into an existing docker-compose.yml.
+</Note>
+
+If you prefer to manually add MinIO to your own docker-compose.yml:
+
+1. **Add MinIO Service and Init Container**
+
+   Add the following services to your `docker-compose.yml` file:
+
+   ```yaml
+   services:
+     # ... existing formbricks and postgres services ...
+
+     minio:
+       restart: always
+       image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
+       command: server /data
+       environment:
+         MINIO_ROOT_USER: "formbricks-root"
+         MINIO_ROOT_PASSWORD: "change-this-secure-password"
+       ports:
+         - "9000:9000"
+       volumes:
+         - minio-data:/data
+
+     minio-init:
+       image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+       depends_on:
+         - minio
+       environment:
+         MINIO_ROOT_USER: "formbricks-root"
+         MINIO_ROOT_PASSWORD: "change-this-secure-password"
+         MINIO_SERVICE_USER: "formbricks-service"
+         MINIO_SERVICE_PASSWORD: "change-this-service-password"
+         MINIO_BUCKET_NAME: "formbricks-uploads"
+       entrypoint: ["/bin/sh", "/tmp/minio-init.sh"]
+       volumes:
+         - ./minio-init.sh:/tmp/minio-init.sh:ro
+   ```
+
+2. **Create MinIO Initialization Script**
+
+   Create a file named `minio-init.sh` in the same directory as your `docker-compose.yml`:
+
+   ```bash
+   #!/bin/sh
+   echo '⏳ Waiting for MinIO to be ready...'
+   attempts=0
+   max_attempts=30
+   until mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1 \
+     && mc ls minio >/dev/null 2>&1; do
+     attempts=$((attempts + 1))
+     if [ $attempts -ge $max_attempts ]; then
+       printf '❌ Failed to connect to MinIO after %s attempts\n' $max_attempts
+       exit 1
+     fi
+     printf '...still waiting attempt %s/%s\n' $attempts $max_attempts
+     sleep 2
+   done
+   echo '🔗 MinIO reachable; alias configured.'
+
+   echo '🪣 Creating bucket (idempotent)...';
+   mc mb minio/$MINIO_BUCKET_NAME --ignore-existing;
+
+   echo '📄 Creating JSON policy file...';
+   cat > /tmp/formbricks-policy.json << EOF
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+         "Resource": ["arn:aws:s3:::\$MINIO_BUCKET_NAME/*"]
+       },
+       {
+         "Effect": "Allow",
+         "Action": ["s3:ListBucket"],
+         "Resource": ["arn:aws:s3:::\$MINIO_BUCKET_NAME"]
+       }
+     ]
+   }
+   EOF
+
+   echo '🔒 Creating policy (idempotent)...';
+   if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
+     mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json || mc admin policy add minio formbricks-policy /tmp/formbricks-policy.json;
+     echo 'Policy created successfully.';
+   else
+     echo 'Policy already exists, skipping creation.';
+   fi
+
+   echo '👤 Creating service user (idempotent)...';
+   if ! mc admin user info minio "$MINIO_SERVICE_USER" >/dev/null 2>&1; then
+     mc admin user add minio "$MINIO_SERVICE_USER" "$MINIO_SERVICE_PASSWORD";
+     echo 'User created successfully.';
+   else
+     echo 'User already exists, skipping creation.';
+   fi
+
+   echo '🔗 Attaching policy to user (idempotent)...';
+   mc admin policy attach minio formbricks-policy --user "$MINIO_SERVICE_USER" || echo 'Policy already attached or attachment failed (non-fatal).';
+
+   echo '✅ MinIO setup complete!';
+   exit 0;
+   ```
+
+   Make it executable:
+
+   ```bash
+   chmod +x minio-init.sh
+   ```
+
+3. **Update Formbricks Service Dependencies**
+
+   Modify the `formbricks` service to wait for MinIO initialization:
+
+   ```yaml
+   formbricks:
+     restart: always
+     image: ghcr.io/formbricks/formbricks:latest
+     depends_on:
+       postgres:
+         condition: service_started
+       minio-init:
+         condition: service_completed_successfully
+     # ... rest of configuration
+   ```
+
+4. **Configure S3 Environment Variables**
+
+   Add the following environment variables to the `formbricks` service:
+
+   ```yaml
+   # S3 Storage Configuration for MinIO
+   S3_ACCESS_KEY: "formbricks-service"
+   S3_SECRET_KEY: "change-this-service-password"
+   S3_REGION: "us-east-1"
+   S3_BUCKET_NAME: "formbricks-uploads"
+   S3_ENDPOINT_URL: "http://minio:9000"
+   S3_FORCE_PATH_STYLE: "1"
+   ```
+
+5. **Add MinIO Volume**
+
+   Add the MinIO volume to the `volumes` section:
+
+   ```yaml
+   volumes:
+     postgres:
+       driver: local
+     redis:
+       driver: local
+     minio-data:
+       driver: local
+   ```
+
+6. **Start Services**
+
+   Start all services:
+
+   ```bash
+   docker compose up -d
+   ```
+
+   The `minio-init` container will automatically create the bucket, set up the policy, and create a service user with least-privilege access.
+
+### Production Setup with Traefik
+
+For production deployments, use the [one-click setup script](/self-hosting/setup/one-click) which automatically configures:
+
+- MinIO service with Traefik reverse proxy
+- Dedicated subdomain (e.g., `files.yourdomain.com`) - **required for production**
+- Automatic SSL certificate generation via Let's Encrypt
+- CORS configuration for your domain
+- Rate limiting middleware
+- Secure credential generation
+
+The production setup from [formbricks.sh](https://github.com/formbricks/formbricks/blob/main/docker/formbricks.sh) includes advanced features not covered in this manual setup. For production use, we strongly recommend using the one-click installer.
+
+### MinIO Setup Summary
+
+Choose the right MinIO setup for your needs:
+
+| Setup Type | When to Use | Complexity | Features |
+|------------|-------------|------------|----------|
+| **docker-compose.dev.yml** | Development & Testing | ⭐ Easiest | Pre-configured, Web Console (port 9001) |
+| **Manual Setup** | Custom configurations | ⭐⭐ Moderate | Full control, Custom credentials |
+| **One-Click Script** | Production deployments | ⭐⭐⭐ Advanced | HTTPS, Subdomain, Traefik, Auto SSL |
+
+<Note>
+  **For quick testing**: Use docker-compose.dev.yml - it's pre-configured and includes the MinIO web console for visual file management.
+</Note>
+
 ## Debug
 
 If you encounter any issues, you can check the logs of the container with this command:
@@ -161,6 +423,40 @@ formbricks-quickstart-formbricks-1  | Listening on port 3000 url: http://<random
 ```
 
 You can close the logs again by hitting `CTRL + C`.
+
+### MinIO-Specific Troubleshooting
+
+If you added MinIO and encounter file upload issues:
+
+**Check MinIO is running:**
+
+```bash
+docker compose ps minio
+```
+
+**Check MinIO logs:**
+
+```bash
+docker compose logs minio
+```
+
+**Verify bucket exists:**
+
+Access the MinIO Console at [**http://localhost:9001**](http://localhost:9001) and verify the bucket exists.
+
+**Test connection from Formbricks:**
+
+```bash
+docker compose exec formbricks sh -c 'wget -O- http://minio:9000/minio/health/ready'
+```
+
+**Common MinIO issues:**
+
+- **Connection refused**: Ensure MinIO container is running and port 9000 is accessible
+- **Bucket not found**: Create the bucket using MinIO Console or `mc` client
+- **Authentication failed**: Verify `S3_ACCESS_KEY` and `S3_SECRET_KEY` match `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`
+- **Files not accessible**: Check bucket access policy allows public read if needed
+- **Network issues**: Ensure `S3_ENDPOINT_URL` points to `http://minio:9000` (internal Docker network)
 
 <Note>
   **Customizing environment variables**
