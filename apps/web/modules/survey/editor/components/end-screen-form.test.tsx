@@ -1,9 +1,9 @@
-import { createI18nString } from "@/lib/i18n/utils";
 import { render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyEndScreenCard, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString } from "@/lib/i18n/utils";
 import { EndScreenForm } from "./end-screen-form";
 
 // Mock window.matchMedia - required for useAutoAnimate
@@ -140,9 +140,13 @@ describe("EndScreenForm", () => {
 
     if (buttonElement) {
       await userEvent.click(buttonElement);
-      expect(mockUpdateSurvey).toHaveBeenCalledWith({
-        subheader: expect.any(Object),
-      });
+      // Check that the subheader was added (may be called multiple times due to autoFocus)
+      expect(mockUpdateSurvey).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subheader: expect.any(Object),
+          _forceUpdate: true,
+        })
+      );
     }
   });
 

@@ -22,7 +22,7 @@ const mockSurvey: TSurvey = {
   welcomeCard: {
     enabled: false,
     headline: { default: "Welcome" },
-    html: { default: "" },
+    subheader: { default: "" },
     timeToFinish: false,
     showResponseCount: false,
     buttonLabel: { default: "Start" },

@@ -1,4 +1,3 @@
-import { parseRecallInfo } from "@/lib/utils/recall";
 import { describe, expect, test, vi } from "vitest";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TLanguage } from "@formbricks/types/project";
@@ -8,6 +7,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { replaceAttributeRecall } from "./utils";
 
 vi.mock("@/lib/utils/recall", () => ({
@@ -62,6 +62,7 @@ const baseSurvey: TSurvey = {
   autoComplete: null,
   segment: null,
   pin: null,
+  metadata: {},
 };
 
 const attributes: TAttributes = {
@@ -102,7 +103,7 @@ describe("replaceAttributeRecall", () => {
       welcomeCard: {
         enabled: true,
         headline: { default: "Welcome, recall:name!" },
-        html: { default: "<p>Some content</p>" },
+        subheader: { default: "<p>Some content</p>" },
         buttonLabel: { default: "Start" },
         timeToFinish: false,
         showResponseCount: false,
@@ -206,7 +207,7 @@ describe("replaceAttributeRecall", () => {
       welcomeCard: {
         enabled: true,
         headline: { default: "Welcome!" },
-        html: { default: "<p>Some content</p>" },
+        subheader: { default: "<p>Some content</p>" },
         buttonLabel: { default: "Start" },
         timeToFinish: false,
         showResponseCount: false,

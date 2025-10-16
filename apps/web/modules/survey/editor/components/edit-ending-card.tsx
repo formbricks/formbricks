@@ -1,5 +1,23 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { createId } from "@paralleldrive/cuid2";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
+import { GripIcon, Handshake, Undo2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyQuestionId,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
@@ -13,23 +31,6 @@ import {
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { createId } from "@paralleldrive/cuid2";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { GripIcon, Handshake, Undo2 } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurveyQuota } from "@formbricks/types/quota";
-import {
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyQuestionId,
-  TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface EditEndingCardProps {
   localSurvey: TSurvey;
@@ -64,8 +65,13 @@ export const EditEndingCard = ({
   isStorageConfigured,
   quotas,
 }: EditEndingCardProps) => {
-  const endingCard = localSurvey.endings[endingCardIndex];
   const { t } = useTranslate();
+
+  const endingCard = useMemo(
+    () => localSurvey.endings[endingCardIndex],
+    [localSurvey.endings, endingCardIndex]
+  );
+
   const isRedirectToUrlDisabled = isFormbricksCloud
     ? plan === "free" && endingCard.type !== "redirectToUrl"
     : false;
@@ -95,10 +101,30 @@ export const EditEndingCard = ({
     }
   };
 
-  const updateSurvey = (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => {
+  const updateSurvey = (
+    data: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }> | Partial<TSurveyRedirectUrlCard>
+  ) => {
     setLocalSurvey((prevSurvey) => {
+      const currentEnding = prevSurvey.endings[endingCardIndex];
+
+      // If subheader was explicitly deleted (is undefined) in the current state,
+      // block ALL attempts to recreate it (from Editor cleanup/updates)
+      // UNLESS it's a forced update from the "Add Description" button
+      const filteredData = { ...data };
+      const isForceUpdate = "_forceUpdate" in filteredData;
+      if (isForceUpdate) {
+        delete (filteredData as any)._forceUpdate; // Remove the flag
+      }
+
+      if (!isForceUpdate && currentEnding?.type === "endScreen" && currentEnding.subheader === undefined) {
+        if ("subheader" in filteredData) {
+          // Block subheader updates when it's been deleted (Editor cleanup trying to recreate)
+          delete filteredData.subheader;
+        }
+      }
+
       const updatedEndings = prevSurvey.endings.map((ending, idx) =>
-        idx === endingCardIndex ? { ...ending, ...data } : ending
+        idx === endingCardIndex ? { ...ending, ...filteredData } : ending
       );
       return { ...prevSurvey, endings: updatedEndings };
     });
@@ -216,9 +242,11 @@ export const EditEndingCard = ({
                       selectedLanguageCode
                     ]
                       ? formatTextWithSlashes(
-                          recallToHeadline(endingCard.headline, localSurvey, true, selectedLanguageCode)[
-                            selectedLanguageCode
-                          ]
+                          getTextContent(
+                            recallToHeadline(endingCard.headline, localSurvey, true, selectedLanguageCode)[
+                              selectedLanguageCode
+                            ]
+                          )
                         )
                       : t("environments.surveys.edit.ending_card"))}
                   {endingCard.type === "redirectToUrl" &&

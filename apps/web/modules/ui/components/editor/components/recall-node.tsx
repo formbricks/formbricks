@@ -4,7 +4,7 @@ import type { DOMConversionMap, DOMConversionOutput, DOMExportOutput, NodeKey, S
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import { ReactNode } from "react";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
+import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
 
 export interface RecallPayload {
   recallItem: TSurveyRecallItem;
@@ -134,12 +134,13 @@ export class RecallNode extends DecoratorNode<ReactNode> {
   }
 
   decorate(): ReactNode {
-    const displayLabel = replaceRecallInfoWithUnderline(this.__recallItem.label);
+    const displayLabel = getTextContentWithRecallTruncated(this.__recallItem.label);
 
     return (
       <span
-        className="recall-node z-30 inline-flex h-fit justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-slate-700"
-        aria-label={`Recall: ${displayLabel}`}>
+        className="recall-node z-30 inline-flex h-fit justify-center whitespace-nowrap rounded-md bg-slate-100 text-sm text-slate-700"
+        aria-label={`Recall: ${displayLabel}`}
+        title={displayLabel}>
         @{displayLabel}
       </span>
     );
