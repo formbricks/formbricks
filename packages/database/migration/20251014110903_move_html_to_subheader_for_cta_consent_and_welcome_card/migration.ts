@@ -144,8 +144,7 @@ export const moveHtmlToSubheaderForCtaAndConsent: MigrationScript = {
         UPDATE "Survey" AS s
         SET 
           questions = COALESCE(v.questions, s.questions),
-          "welcomeCard" = COALESCE(v."welcomeCard", s."welcomeCard"),
-          "updated_at" = NOW()
+          "welcomeCard" = COALESCE(v."welcomeCard", s."welcomeCard")
         FROM (VALUES ${valuesClause}) AS v(id, questions, "welcomeCard")
         WHERE s.id = v.id::text
       `;
