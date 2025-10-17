@@ -1,7 +1,7 @@
 import { type RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
+import { ZEmail, ZUrl } from "@formbricks/types/common";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
@@ -82,13 +82,13 @@ export function OpenTextQuestion({
     // Validate input format if value is provided
     if (value && value.trim() !== "") {
       if (question.inputType === "email") {
-        if (!z.string().email().safeParse(value).success) {
+        if (!ZEmail.safeParse(value).success) {
           input?.setCustomValidity(t("errors.please_enter_a_valid_email_address"));
           input?.reportValidity();
           return;
         }
       } else if (question.inputType === "url") {
-        if (!z.string().url().safeParse(value).success) {
+        if (!ZUrl.safeParse(value).success) {
           input?.setCustomValidity(t("errors.please_enter_a_valid_url"));
           input?.reportValidity();
           return;
