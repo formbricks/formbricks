@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -19,14 +20,12 @@ import {
 import { verifyInviteToken } from "@/lib/jwt";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
-import { Testimonial } from "@/modules/auth/components/testimonial";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
   getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
-import { notFound } from "next/navigation";
 import { SignupForm } from "./components/signup-form";
 
 export const SignupPage = async ({ searchParams: searchParamsProps }) => {
@@ -56,34 +55,29 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const emailFromSearchParams = searchParams["email"];
 
   return (
-    <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
-      <div className="col-span-2 hidden lg:flex">
-        <Testimonial />
-      </div>
-      <div className="col-span-3 flex flex-col items-center justify-center">
-        <FormWrapper>
-          <SignupForm
-            webAppUrl={WEBAPP_URL}
-            termsUrl={TERMS_URL}
-            privacyUrl={PRIVACY_URL}
-            emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
-            emailAuthEnabled={EMAIL_AUTH_ENABLED}
-            googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
-            githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
-            azureOAuthEnabled={AZURE_OAUTH_ENABLED}
-            oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
-            oidcDisplayName={OIDC_DISPLAY_NAME}
-            userLocale={locale}
-            emailFromSearchParams={emailFromSearchParams}
-            isSsoEnabled={isSsoEnabled}
-            samlSsoEnabled={samlSsoEnabled}
-            isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
-            samlTenant={SAML_TENANT}
-            samlProduct={SAML_PRODUCT}
-            turnstileSiteKey={TURNSTILE_SITE_KEY}
-          />
-        </FormWrapper>
-      </div>
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#00C4B8]">
+      <FormWrapper>
+        <SignupForm
+          webAppUrl={WEBAPP_URL}
+          termsUrl={TERMS_URL}
+          privacyUrl={PRIVACY_URL}
+          emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
+          emailAuthEnabled={EMAIL_AUTH_ENABLED}
+          googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
+          githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
+          azureOAuthEnabled={AZURE_OAUTH_ENABLED}
+          oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
+          oidcDisplayName={OIDC_DISPLAY_NAME}
+          userLocale={locale}
+          emailFromSearchParams={emailFromSearchParams}
+          isSsoEnabled={isSsoEnabled}
+          samlSsoEnabled={samlSsoEnabled}
+          isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
+          samlTenant={SAML_TENANT}
+          samlProduct={SAML_PRODUCT}
+          turnstileSiteKey={TURNSTILE_SITE_KEY}
+        />
+      </FormWrapper>
     </div>
   );
 };
