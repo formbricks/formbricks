@@ -88,3 +88,90 @@ describe("getExternalUrlsPermission - Formbricks Cloud", () => {
     expect(result).toBe(true);
   });
 });
+
+describe("getExternalUrlsPermission - Self-hosted", () => {
+  afterEach(() => {
+    cleanup();
+    vi.resetModules();
+  });
+
+  test("should return true for free plan in self-hosted", async () => {
+    vi.doMock("@/lib/constants", () => ({
+      IS_FORMBRICKS_CLOUD: false,
+      PROJECT_FEATURE_KEYS: {
+        FREE: "free",
+        PRO: "pro",
+        ENTERPRISE: "enterprise",
+        SCALE: "scale",
+      },
+    }));
+
+    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
+    const result = await getExternalUrlsPermissionSelfHosted("free");
+    expect(result).toBe(true);
+  });
+
+  test("should return true for pro plan in self-hosted", async () => {
+    vi.doMock("@/lib/constants", () => ({
+      IS_FORMBRICKS_CLOUD: false,
+      PROJECT_FEATURE_KEYS: {
+        FREE: "free",
+        PRO: "pro",
+        ENTERPRISE: "enterprise",
+        SCALE: "scale",
+      },
+    }));
+
+    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
+    const result = await getExternalUrlsPermissionSelfHosted("pro");
+    expect(result).toBe(true);
+  });
+
+  test("should return true for enterprise plan in self-hosted", async () => {
+    vi.doMock("@/lib/constants", () => ({
+      IS_FORMBRICKS_CLOUD: false,
+      PROJECT_FEATURE_KEYS: {
+        FREE: "free",
+        PRO: "pro",
+        ENTERPRISE: "enterprise",
+        SCALE: "scale",
+      },
+    }));
+
+    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
+    const result = await getExternalUrlsPermissionSelfHosted("enterprise");
+    expect(result).toBe(true);
+  });
+
+  test("should return true for scale plan in self-hosted", async () => {
+    vi.doMock("@/lib/constants", () => ({
+      IS_FORMBRICKS_CLOUD: false,
+      PROJECT_FEATURE_KEYS: {
+        FREE: "free",
+        PRO: "pro",
+        ENTERPRISE: "enterprise",
+        SCALE: "scale",
+      },
+    }));
+
+    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
+    const result = await getExternalUrlsPermissionSelfHosted("scale");
+    expect(result).toBe(true);
+  });
+
+  test("should return true for any plan in self-hosted", async () => {
+    vi.doMock("@/lib/constants", () => ({
+      IS_FORMBRICKS_CLOUD: false,
+      PROJECT_FEATURE_KEYS: {
+        FREE: "free",
+        PRO: "pro",
+        ENTERPRISE: "enterprise",
+        SCALE: "scale",
+      },
+    }));
+
+    const { getExternalUrlsPermission: getExternalUrlsPermissionSelfHosted } = await import("./permission");
+    const result = await getExternalUrlsPermissionSelfHosted("custom-plan");
+    expect(result).toBe(true);
+  });
+});

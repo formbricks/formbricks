@@ -1,19 +1,19 @@
-import { createI18nString } from "@/lib/i18n/utils";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { createI18nString } from "@/lib/i18n/utils";
 import { checkExternalUrlsPermission } from "./check-external-urls-permission";
 
 vi.mock("@/modules/survey/lib/survey", () => ({
   getOrganizationBilling: vi.fn(),
 }));
 
-vi.mock("./external-urls-permission", () => ({
+vi.mock("@/modules/survey/lib/permission", () => ({
   getExternalUrlsPermission: vi.fn(),
 }));
 
 const { getOrganizationBilling } = await import("@/modules/survey/lib/survey");
-const { getExternalUrlsPermission } = await import("./external-urls-permission");
+const { getExternalUrlsPermission } = await import("@/modules/survey/lib/permission");
 
 describe("checkExternalUrlsPermission", () => {
   const mockOrganizationId = "org123";
@@ -53,7 +53,8 @@ describe("checkExternalUrlsPermission", () => {
       showResponseCount: false,
     },
     triggers: [],
-  };
+    metadata: {},
+  } as unknown as TSurvey;
 
   const mockOrganizationBilling = {
     id: mockOrganizationId,
@@ -179,9 +180,9 @@ describe("checkExternalUrlsPermission", () => {
       ],
     };
 
-    await expect(
-      checkExternalUrlsPermission(mockOrganizationId, newSurvey, oldSurvey)
-    ).rejects.toThrow(OperationNotAllowedError);
+    await expect(checkExternalUrlsPermission(mockOrganizationId, newSurvey, oldSurvey)).rejects.toThrow(
+      OperationNotAllowedError
+    );
   });
 
   test("should allow ending card without button link", async () => {
@@ -304,9 +305,9 @@ describe("checkExternalUrlsPermission", () => {
       ],
     };
 
-    await expect(
-      checkExternalUrlsPermission(mockOrganizationId, newSurvey, oldSurvey)
-    ).rejects.toThrow(OperationNotAllowedError);
+    await expect(checkExternalUrlsPermission(mockOrganizationId, newSurvey, oldSurvey)).rejects.toThrow(
+      OperationNotAllowedError
+    );
   });
 
   test("should throw OperationNotAllowedError when changing external CTA button URL without permission", async () => {
@@ -343,9 +344,9 @@ describe("checkExternalUrlsPermission", () => {
       ],
     };
 
-    await expect(
-      checkExternalUrlsPermission(mockOrganizationId, newSurvey, oldSurvey)
-    ).rejects.toThrow(OperationNotAllowedError);
+    await expect(checkExternalUrlsPermission(mockOrganizationId, newSurvey, oldSurvey)).rejects.toThrow(
+      OperationNotAllowedError
+    );
   });
 
   test("should allow internal CTA button without permission", async () => {
@@ -406,9 +407,6 @@ describe("checkExternalUrlsPermission", () => {
       ],
     };
 
-    await expect(
-      checkExternalUrlsPermission(mockOrganizationId, complexSurvey, null)
-    ).resolves.not.toThrow();
+    await expect(checkExternalUrlsPermission(mockOrganizationId, complexSurvey, null)).resolves.not.toThrow();
   });
 });
-
