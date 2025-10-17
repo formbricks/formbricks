@@ -60,7 +60,7 @@ export const MainNavigation = ({
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslate();
-  const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem("isMainNavCollapsed") === "true");
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
@@ -74,6 +74,13 @@ export const MainNavigation = ({
     setIsCollapsed(!isCollapsed);
     localStorage.setItem("isMainNavCollapsed", isCollapsed ? "false" : "true");
   };
+
+  useEffect(() => {
+    const isMainNavCollapsed = localStorage.getItem("isMainNavCollapsed");
+    if (isMainNavCollapsed) {
+      setIsCollapsed(isMainNavCollapsed === "true");
+    }
+  }, []);
 
   useEffect(() => {
     const toggleTextOpacity = () => {
