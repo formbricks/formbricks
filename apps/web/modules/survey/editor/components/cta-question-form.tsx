@@ -21,7 +21,7 @@ interface CTAQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
-  isExternalUrlsAllowed: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const CTAQuestionForm = ({
@@ -61,6 +61,7 @@ export const CTAQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div className="mt-3">
@@ -76,6 +77,7 @@ export const CTAQuestionForm = ({
           setSelectedLanguageCode={setSelectedLanguageCode}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
+          isExternalUrlsAllowed={isExternalUrlsAllowed}
         />
       </div>
       <div className="mt-3">

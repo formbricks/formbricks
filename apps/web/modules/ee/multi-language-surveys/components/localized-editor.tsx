@@ -27,6 +27,7 @@ interface LocalizedEditorProps {
   questionId: string;
   isCard?: boolean; // Flag to indicate if this is a welcome/ending card
   autoFocus?: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 const checkIfValueIsIncomplete = (
@@ -58,6 +59,7 @@ export function LocalizedEditor({
   questionId,
   isCard,
   autoFocus,
+  isExternalUrlsAllowed,
 }: Readonly<LocalizedEditorProps>) {
   const { t } = useTranslate();
 
@@ -131,6 +133,7 @@ export function LocalizedEditor({
         localSurvey={localSurvey}
         questionId={questionId}
         selectedLanguageCode={selectedLanguageCode}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       {localSurvey.languages.length > 1 && (
         <div>

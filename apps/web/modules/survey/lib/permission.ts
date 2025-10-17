@@ -27,5 +27,5 @@ export const getExternalUrlsPermission = async (
   billingPlan: Organization["billing"]["plan"]
 ): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return billingPlan !== PROJECT_FEATURE_KEYS.FREE;
-  return false;
+  return true;
 };

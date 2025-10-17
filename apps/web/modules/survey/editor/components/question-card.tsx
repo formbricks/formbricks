@@ -296,6 +296,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
@@ -308,6 +309,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
@@ -320,6 +322,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
@@ -333,6 +336,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
@@ -360,6 +364,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
@@ -372,6 +377,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
@@ -384,6 +390,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
@@ -410,6 +417,7 @@ export const QuestionCard = ({
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
@@ -423,6 +431,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
@@ -435,6 +444,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
@@ -447,6 +457,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
@@ -459,6 +470,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
@@ -472,6 +484,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : null}
           <div className="mt-4">
