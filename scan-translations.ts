@@ -173,9 +173,9 @@ async function scanSourceFiles(): Promise<Set<string>> {
 /**
  * Get all locale files in the locales directory
  */
-function getLocaleFiles(): string[] {
+async function getLocaleFiles(): Promise<string[]> {
     try {
-        const files = fs.readdirSync(LOCALES_DIR);
+        const files = await fs.promises.readdir(LOCALES_DIR);
         return files
             .filter(file => file.endsWith('.json'))
             .map(file => file.replace('.json', ''));
@@ -187,16 +187,12 @@ function getLocaleFiles(): string[] {
 /**
  * Load translation keys from a specific locale file
  */
-function loadKeysFromLocale(locale: string): Set<string> {
+async function loadKeysFromLocale(locale: string): Promise<Set<string>> {
     const localePath = path.join(LOCALES_DIR, `${locale}.json`);
     const translationKeys = new Set<string>();
 
-    if (!fs.existsSync(localePath)) {
-        throw new Error(`❌ Locale file not found: ${localePath}`);
-    }
-
     try {
-        const content = fs.readFileSync(localePath, "utf-8");
+        const content = await fs.promises.readFile(localePath, "utf-8");
         const translations = JSON.parse(content);
         const keys = flattenKeys(translations);
 
@@ -211,14 +207,22 @@ function loadKeysFromLocale(locale: string): Set<string> {
 /**
  * Load translation keys from all locale files
  */
-function loadAllTranslationKeys(): Map<string, Set<string>> {
+async function loadAllTranslationKeys(): Promise<Map<string, Set<string>>> {
     console.log("📚 Loading translation keys from locale files...\n");
 
-    const allLocales = getLocaleFiles();
+    const allLocales = await getLocaleFiles();
     const translationsByLocale = new Map<string, Set<string>>();
 
-    for (const locale of allLocales) {
-        const keys = loadKeysFromLocale(locale);
+    // Load all locale files in parallel for better performance
+    const localeResults = await Promise.all(
+        allLocales.map(async (locale) => {
+            const keys = await loadKeysFromLocale(locale);
+            return { locale, keys };
+        })
+    );
+
+    // Populate the map and log results
+    for (const { locale, keys } of localeResults) {
         translationsByLocale.set(locale, keys);
         console.log(`   • ${locale}.json: ${keys.size} keys`);
     }
@@ -416,7 +420,7 @@ async function main(): Promise<void> {
         const usedKeys = await scanSourceFiles();
 
         // Load translation keys from all locale files
-        const translationsByLocale = loadAllTranslationKeys();
+        const translationsByLocale = await loadAllTranslationKeys();
         const defaultKeys = translationsByLocale.get(DEFAULT_LOCALE)!;
 
         // Compare and find issues
