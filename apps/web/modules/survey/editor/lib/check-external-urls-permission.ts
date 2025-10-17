@@ -1,7 +1,7 @@
-import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getExternalUrlsPermission } from "./external-urls-permission";
+import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 /**
  * Checks if external URLs can be added or modified for the given organization.
@@ -60,4 +60,3 @@ export const checkExternalUrlsPermission = async (
     }
   }
 };
-
