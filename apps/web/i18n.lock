@@ -1232,7 +1232,6 @@ checksums:
     environments/surveys/edit/days_before_showing_this_survey_again: 8b4623eab862615fa60064400008eb23
     environments/surveys/edit/decide_how_often_people_can_answer_this_survey: 58427b0f0a7a258c24fa2acd9913e95e
     environments/surveys/edit/delete_choice: fd750208d414b9ad8c980c161a0199e1
-    environments/surveys/edit/description: e17686a22ffad04cc7bb70524ed4478b
     environments/surveys/edit/disable_the_visibility_of_survey_progress: 2af631010114307ac2a91612559c9618
     environments/surveys/edit/display_an_estimate_of_completion_time_for_survey: 03f0a816569399c1c61d08dbc913de06
     environments/surveys/edit/display_number_of_responses_for_survey: 06294567ecba9aba2cce337c669577f6
