@@ -4,6 +4,7 @@ import { getEmailFromEmailToken } from "@/lib/jwt";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
+import { VerificationMessage } from "@/modules/auth/verification-requested/components/verification-message";
 
 export const VerificationRequestedPage = async ({ searchParams }) => {
   const t = await getTranslate();
@@ -18,12 +19,7 @@ export const VerificationRequestedPage = async ({ searchParams }) => {
             <h1 className="leading-2 mb-4 text-center text-lg font-semibold text-slate-900">
               {t("auth.verification-requested.please_confirm_your_email_address")}
             </h1>
-            <p className="text-center text-sm text-slate-700">
-              {/* <Trans
-                i18nKey="auth.verification-requested.verification_email_successfully_sent_info"
-                components={{ email, span: <span /> }}
-              /> */}
-            </p>
+            <VerificationMessage email={email} />
             <hr className="my-4" />
             <p className="text-center text-xs text-slate-500">
               {t("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")}

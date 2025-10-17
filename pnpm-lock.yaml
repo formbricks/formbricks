@@ -36,6 +36,9 @@ importers:
       eslint:
         specifier: 8.57.0
         version: 8.57.0
+      glob:
+        specifier: ^11.0.2
+        version: 11.0.2
       husky:
         specifier: 9.1.7
         version: 9.1.7
@@ -687,6 +690,10 @@ importers:
         version: 4.5.3(@types/node@22.15.18)(rollup@4.50.1)(typescript@5.8.3)(vite@6.3.6(@types/node@22.15.18)(jiti@2.5.1)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.0))
 
   packages/i18n-utils:
+    dependencies:
+      glob:
+        specifier: ^11.0.2
+        version: 11.0.2
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -694,6 +701,12 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.15.18
+      tsx:
+        specifier: ^4.19.4
+        version: 4.19.4
       vite:
         specifier: 6.3.6
         version: 6.3.6(@types/node@22.15.18)(jiti@2.5.1)(terser@5.39.1)(tsx@4.19.4)(yaml@2.8.0)

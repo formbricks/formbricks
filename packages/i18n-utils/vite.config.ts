@@ -1,6 +1,7 @@
+/// <reference types="vitest" />
 import { resolve } from "node:path";
-import { PluginOption, defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import { PluginOption, defineConfig } from "vitest/config";
 
 export default defineConfig({
   build: {
@@ -12,6 +13,13 @@ export default defineConfig({
     },
     outDir: "dist",
     emptyOutDir: false,
+  },
+  test: {
+    environment: "node",
+    globals: true,
+    coverage: {
+      reporter: ["text", "json", "html", "lcov"],
+    },
   },
   plugins: [
     dts({

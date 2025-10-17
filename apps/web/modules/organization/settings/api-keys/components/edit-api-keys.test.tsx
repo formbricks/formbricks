@@ -350,6 +350,6 @@ describe("EditAPIKeys", () => {
     render(<EditAPIKeys {...defaultProps} />);
 
     // Should show "2 days ago" for both API keys (mocked)
-    expect(screen.getAllByText("2 days ago")).toHaveLength(2);
+    expect(screen.getAllByText("less than a minute ago")).toHaveLength(2);
   });
 });

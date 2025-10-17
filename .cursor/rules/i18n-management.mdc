@@ -1,0 +1,457 @@
+---
+title: i18n Management with Lingo.dev
+description: Guidelines for managing internationalization (i18n) with Lingo.dev, including translation workflow, key validation, and best practices
+---
+
+# i18n Management with Lingo.dev
+
+This rule defines the workflow and best practices for managing internationalization (i18n) in the Formbricks project using Lingo.dev.
+
+## Overview
+
+Formbricks uses [Lingo.dev](https://lingo.dev) for managing translations across multiple languages. The translation workflow includes:
+
+1. **Translation Keys**: Defined in code using the `t()` function from `react-i18next`
+2. **Translation Files**: JSON files stored in `apps/web/locales/` for each supported language
+3. **Validation**: Automated scanning to detect missing and unused translation keys
+4. **CI/CD**: Pre-commit hooks and GitHub Actions to enforce translation quality
+
+## Translation Workflow
+
+### 1. Using Translations in Code
+
+When adding translatable text in the web app, use the `t()` function or `<Trans>` component:
+
+**Using the `t()` function:**
+```tsx
+import { useTranslate } from "@/lib/i18n/translate";
+
+const MyComponent = () => {
+  const { t } = useTranslate();
+  
+  return (
+    <div>
+      <h1>{t("common.welcome")}</h1>
+      <p>{t("pages.dashboard.description")}</p>
+    </div>
+  );
+};
+```
+
+**Using the `<Trans>` component (for text with HTML elements):**
+```tsx
+import { Trans } from "react-i18next";
+
+const MyComponent = () => {
+  return (
+    <div>
+      <p>
+        <Trans
+          i18nKey="auth.terms_agreement"
+          components={{ 
+            link: <a href="/terms" />,
+            b: <b />
+          }}
+        />
+      </p>
+    </div>
+  );
+};
+```
+
+**Key Naming Conventions:**
+- Use dot notation for nested keys: `section.subsection.key`
+- Use descriptive names: `auth.login.success_message` not `auth.msg1`
+- Group related keys together: `auth.*`, `errors.*`, `common.*`
+- Use lowercase with underscores: `user_profile_settings` not `UserProfileSettings`
+
+### 2. Translation File Structure
+
+Translation files are located in `apps/web/locales/` and use the following naming convention:
+- `en-US.json` (English - United States, default)
+- `de-DE.json` (German)
+- `fr-FR.json` (French)
+- `pt-BR.json` (Portuguese - Brazil)
+- etc.
+
+**File Structure:**
+```json
+{
+  "common": {
+    "welcome": "Welcome",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email_placeholder": "Enter your email",
+      "password_placeholder": "Enter your password"
+    }
+  }
+}
+```
+
+### 3. Adding New Translation Keys
+
+When adding new translation keys:
+
+1. **Add the key in your code** using `t("your.new.key")`
+2. **Add translation for that key in en-US.json file**
+3. **Run the translation workflow:**
+   ```bash
+   pnpm i18n
+   ```
+   This will:
+   - Generate translations for all languages using Lingo.dev
+   - Validate that all keys are present and used
+
+4. **Review and commit** the generated translation files
+
+### 4. Available Scripts
+
+```bash
+# Generate translations using Lingo.dev
+pnpm generate-translations
+
+# Scan and validate translation keys
+pnpm scan-translations
+
+# Full workflow: generate + validate
+pnpm i18n
+
+# Validate only (without generation)
+pnpm i18n:validate
+```
+
+## Translation Key Validation
+
+### Automated Validation
+
+The project includes automated validation that runs:
+- **Pre-commit hook**: Validates translations before allowing commits (when `LINGODOTDEV_API_KEY` is set)
+- **GitHub Actions**: Validates translations on every PR and push to main
+
+### Validation Rules
+
+The validation script (`scan-translations.ts`) checks for:
+
+1. **Missing Keys**: Translation keys used in code but not present in translation files
+2. **Unused Keys**: Translation keys present in translation files but not used in code
+3. **Incomplete Translations**: Keys that exist in the default language (`en-US`) but are missing in target languages
+
+**What gets scanned:**
+- All `.ts` and `.tsx` files in `apps/web/`
+- Both `t()` function calls and `<Trans i18nKey="">` components
+- All locale files (`de-DE.json`, `fr-FR.json`, `ja-JP.json`, etc.)
+
+**What gets excluded:**
+- Test files (`*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`)
+- Build directories (`node_modules`, `dist`, `build`, `.next`, `coverage`)
+- Locale files themselves (from code scanning)
+
+**Note:** Test files are excluded because they often use mock or example translation keys for testing purposes that don't need to exist in production translation files.
+
+### Fixing Validation Errors
+
+#### Missing Keys
+
+If you encounter missing key errors:
+
+```
+❌ MISSING KEYS (2):
+
+   These keys are used in code but not found in translation files:
+
+   • auth.signup.email_required
+   • settings.profile.update_success
+```
+
+**Resolution:**
+1. Ensure that translations for those keys are present in en-US.json .  
+2. Run `pnpm generate-translations` to have Lingo.dev generate the missing translations
+3. OR manually add the keys to `apps/web/locales/en-US.json`:
+   ```json
+   {
+     "auth": {
+       "signup": {
+         "email_required": "Email is required"
+       }
+     },
+     "settings": {
+       "profile": {
+         "update_success": "Profile updated successfully"
+       }
+     }
+   }
+   ```
+3. Run `pnpm scan-translations` to verify
+4. Commit the changes
+
+#### Unused Keys
+
+If you encounter unused key errors:
+
+```
+⚠️  UNUSED KEYS (1):
+
+   These keys exist in translation files but are not used in code:
+
+   • old.deprecated.key
+```
+
+**Resolution:**
+1. If the key is truly unused, remove it from all translation files
+2. If the key should be used, add it to your code using `t("old.deprecated.key")`
+3. Run `pnpm scan-translations` to verify
+4. Commit the changes
+
+#### Incomplete Translations
+
+If you encounter incomplete translation errors:
+
+```
+⚠️  INCOMPLETE TRANSLATIONS:
+
+   Some keys from en-US are missing in target languages:
+
+   📝 de-DE (5 missing keys):
+      • auth.new_feature.title
+      • auth.new_feature.description
+      • settings.advanced.option
+      ... and 2 more
+```
+
+**Resolution:**
+1. **Recommended:** Run `pnpm generate-translations` to have Lingo.dev automatically translate the missing keys
+2. **Manual:** Add the missing keys to the target language files:
+   ```bash
+   # Copy the structure from en-US.json and translate the values
+   # For example, in de-DE.json:
+   {
+     "auth": {
+       "new_feature": {
+         "title": "Neues Feature",
+         "description": "Beschreibung des neuen Features"
+       }
+     }
+   }
+   ```
+3. Run `pnpm scan-translations` to verify all translations are complete
+4. Commit the changes
+
+## Pre-commit Hook Behavior
+
+The pre-commit hook will:
+
+1. Run `lint-staged` for code formatting
+2. If `LINGODOTDEV_API_KEY` is set:
+   - Generate translations using Lingo.dev
+   - Validate translation keys
+   - Auto-add updated locale files to the commit
+   - **Block the commit** if validation fails
+3. If `LINGODOTDEV_API_KEY` is not set:
+   - Skip translation validation (for community contributors)
+   - Show a warning message
+
+## Environment Variables
+
+### LINGODOTDEV_API_KEY
+
+This is the API key for Lingo.dev integration.
+
+**For Core Team:**
+- Add to your local `.env` file
+- Required for running translation generation
+
+**For Community Contributors:**
+- Not required for local development
+- Translation validation will be skipped
+- The CI will still validate translations
+
+## Best Practices
+
+### 1. Keep Keys Organized
+
+Group related keys together:
+```json
+{
+  "auth": {
+    "login": { ... },
+    "signup": { ... },
+    "forgot_password": { ... }
+  },
+  "dashboard": {
+    "header": { ... },
+    "sidebar": { ... }
+  }
+}
+```
+
+### 2. Avoid Hardcoded Strings
+
+**❌ Bad:**
+```tsx
+<button>Click here</button>
+```
+
+**✅ Good:**
+```tsx
+<button>{t("common.click_here")}</button>
+```
+
+### 3. Use Interpolation for Dynamic Content
+
+**❌ Bad:**
+```tsx
+{t("welcome")} {userName}!
+```
+
+**✅ Good:**
+```tsx
+{t("auth.welcome_message", { userName })}
+```
+
+With translation:
+```json
+{
+  "auth": {
+    "welcome_message": "Welcome, {userName}!"
+  }
+}
+```
+
+### 4. Avoid Dynamic Key Construction
+
+**❌ Bad:**
+```tsx
+const key = `errors.${errorCode}`;
+t(key);
+```
+
+**✅ Good:**
+```tsx
+switch (errorCode) {
+  case "401":
+    return t("errors.unauthorized");
+  case "404":
+    return t("errors.not_found");
+  default:
+    return t("errors.unknown");
+}
+```
+
+### 5. Test Translation Keys
+
+When adding new features:
+1. Add translation keys
+2. Test in multiple languages using the language switcher
+3. Ensure text doesn't overflow in longer translations (German, French)
+4. Run `pnpm scan-translations` before committing
+
+## Troubleshooting
+
+### Issue: Pre-commit hook fails with validation errors
+
+**Solution:**
+```bash
+# Run the full i18n workflow
+pnpm i18n
+
+# Fix any missing or unused keys
+# Then commit again
+git add .
+git commit -m "your message"
+```
+
+### Issue: Translation validation passes locally but fails in CI
+
+**Solution:**
+- Ensure all translation files are committed
+- Check that `scan-translations.ts` hasn't been modified
+- Verify that locale files are properly formatted JSON
+
+### Issue: Cannot commit because of missing translations
+
+**Solution:**
+```bash
+# If you have LINGODOTDEV_API_KEY:
+pnpm generate-translations
+
+# If you don't have the API key (community contributor):
+# Manually add the missing keys to en-US.json
+# Then run validation:
+pnpm scan-translations
+```
+
+### Issue: Getting "unused keys" for keys that are used
+
+**Solution:**
+- The script scans `.ts` and `.tsx` files only
+- If keys are used in other file types, they may be flagged
+- Verify the key is actually used with `grep -r "your.key" apps/web/`
+- If it's a false positive, consider updating the scanning patterns in `scan-translations.ts`
+
+## AI Assistant Guidelines
+
+When assisting with i18n-related tasks, always:
+
+1. **Use the `t()` function** for all user-facing text
+2. **Follow key naming conventions** (lowercase, dots for nesting)
+3. **Run validation** after making changes: `pnpm scan-translations`
+4. **Fix missing keys** by adding them to `en-US.json`
+5. **Remove unused keys** from all translation files
+6. **Test the pre-commit hook** if making changes to translation workflow
+7. **Update this rule file** if translation workflow changes
+
+### Fixing Missing Translation Keys
+
+When the AI encounters missing translation key errors:
+
+1. Identify the missing keys from the error output
+2. Determine the appropriate section and naming for each key
+3. Add the keys to `apps/web/locales/en-US.json` with meaningful English text
+4. Ensure proper JSON structure and nesting
+5. Run `pnpm scan-translations` to verify
+6. Inform the user that other language files will be updated via Lingo.dev
+
+**Example:**
+```typescript
+// Error: Missing key "settings.api.rate_limit_exceeded"
+
+// Add to en-US.json:
+{
+  "settings": {
+    "api": {
+      "rate_limit_exceeded": "API rate limit exceeded. Please try again later."
+    }
+  }
+}
+```
+
+### Removing Unused Translation Keys
+
+When the AI encounters unused translation key errors:
+
+1. Verify the keys are truly unused by searching the codebase
+2. Remove the keys from `apps/web/locales/en-US.json`
+3. Note that removal from other language files can be handled via Lingo.dev
+4. Run `pnpm scan-translations` to verify
+
+## Migration Notes
+
+This project previously used Tolgee for translations. As of this migration:
+
+- **Old scripts**: `tolgee-pull` is deprecated (kept for reference)
+- **New scripts**: Use `pnpm i18n` or `pnpm generate-translations`
+- **Old workflows**: `tolgee.yml` and `tolgee-missing-key-check.yml` removed
+- **New workflow**: `translation-check.yml` handles all validation
+
+---
+
+**Last Updated:** October 14, 2025
+**Related Files:**
+- `scan-translations.ts` - Translation validation script
+- `.husky/pre-commit` - Pre-commit hook with i18n validation
+- `.github/workflows/translation-check.yml` - CI workflow for translation validation
+- `apps/web/locales/*.json` - Translation files
