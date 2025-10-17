@@ -1,19 +1,3 @@
-/**
- * Unit Tests for Translation Key Scanner
- *
- * This test suite validates the translation key scanning and validation functionality
- * used to maintain translation files integrity in the Formbricks application.
- *
- * Test Coverage:
- * - stripComments: Validates that translation keys in code comments are properly ignored
- * - extractKeysFromContent: Tests extraction of translation keys from various patterns (t(), Trans, i18nKey)
- * - flattenKeys: Tests flattening of nested translation JSON structures
- * - detectKeysWithSpaces: Validates detection of invalid keys containing whitespace
- * - Integration tests: End-to-end validation of the complete workflow
- *
- * Run tests:
- *   pnpm test:scan-translations
- */
 import { describe, expect, test } from "vitest";
 import {
   type TranslationKeys,
@@ -21,7 +5,7 @@ import {
   extractKeysFromContent,
   flattenKeys,
   stripComments,
-} from "../../scan-translations";
+} from "./scan-translations";
 
 describe("Translation Scanner", () => {
   describe("stripComments", () => {

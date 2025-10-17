@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Translation Key Scanner for Lingo.dev Integration
+ * Translation Key Scanner
  *
  * This script scans the web app for translation keys and validates them against
  * the translation files. It detects missing keys and unused keys.
@@ -16,9 +16,15 @@
 import { glob } from "glob";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Configuration
-const WEB_APP_DIR = path.join(__dirname, "apps", "web");
+const WEB_APP_DIR = path.join(__dirname, "..", "..", "..", "apps", "web");
 const LOCALES_DIR = path.join(WEB_APP_DIR, "locales");
 const DEFAULT_LOCALE = "en-US";
 
@@ -398,7 +404,7 @@ function displayResults(results: ScanResults): void {
 async function main(): Promise<void> {
   console.log("\n");
   console.log("╔══════════════════════════════════════════════════════════╗");
-  console.log("║         Translation Key Validation for Lingo.dev        ║");
+  console.log("║         Translation Key Validation for Formbricks        ║");
   console.log("╚══════════════════════════════════════════════════════════╝");
   console.log();
 
