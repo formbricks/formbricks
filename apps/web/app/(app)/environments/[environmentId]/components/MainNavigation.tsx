@@ -76,10 +76,8 @@ export const MainNavigation = ({
   };
 
   useEffect(() => {
-    const isMainNavCollapsed = localStorage.getItem("isMainNavCollapsed");
-    if (isMainNavCollapsed) {
-      setIsCollapsed(isMainNavCollapsed === "true");
-    }
+    const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
+    setIsCollapsed(isCollapsedValueFromLocalStorage);
   }, []);
 
   useEffect(() => {
