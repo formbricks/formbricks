@@ -26,6 +26,7 @@ interface MultipleChoiceMultiProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards?: boolean;
 }
 
 export function MultipleChoiceMultiQuestion({
@@ -43,6 +44,7 @@ export function MultipleChoiceMultiQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<MultipleChoiceMultiProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -161,7 +163,7 @@ export function MultipleChoiceMultiQuestion({
   const otherOptionInputDir = !otherValue ? dir : "auto";
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

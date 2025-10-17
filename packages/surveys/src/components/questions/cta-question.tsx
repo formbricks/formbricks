@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -6,9 +9,6 @@ import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useState } from "react";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
@@ -25,6 +25,7 @@ interface CTAQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
+  fullSizeCards?: boolean;
 }
 
 export function CTAQuestion({
@@ -41,6 +42,7 @@ export function CTAQuestion({
   currentQuestionId,
   isBackButtonHidden,
   onOpenExternalURL,
+  fullSizeCards,
 }: Readonly<CTAQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -49,7 +51,7 @@ export function CTAQuestion({
 
   return (
     <div key={question.id}>
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable ? (
             <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />

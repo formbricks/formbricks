@@ -26,6 +26,7 @@ interface MultipleChoiceSingleProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards?: boolean;
 }
 
 export function MultipleChoiceSingleQuestion({
@@ -43,6 +44,7 @@ export function MultipleChoiceSingleQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<MultipleChoiceSingleProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
@@ -110,7 +112,7 @@ export function MultipleChoiceSingleQuestion({
   const otherOptionInputDir = !value ? dir : "auto";
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {
