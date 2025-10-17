@@ -45,20 +45,6 @@ jobs:
         with:
           version: 9.15.9
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          STORE_PATH=$(pnpm store path --silent)
-          echo "STORE_PATH=${STORE_PATH}" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.2.0
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -75,4 +61,3 @@ jobs:
           echo ""
           echo "✅ Translation validation completed successfully!"
           echo ""
-
