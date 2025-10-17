@@ -54,7 +54,9 @@ checksums:
     errors/invalid_device_error/message: 8813dcd0e3e41934af18d7a15f8c83f4
     errors/invalid_device_error/title: 20d261b478aaba161b0853a588926e23
     errors/please_book_an_appointment: 9e8acea3721f660b6a988f79c4105ab8
+    errors/please_enter_a_valid_email_address: 8de4bc8832b11b380bc4cbcedc16e48b
     errors/please_enter_a_valid_phone_number: 1530eb9ab7d6d190bddb37667c711631
+    errors/please_enter_a_valid_url: e3bcfb605be4ee32aa19d9ac32bb11a4
     errors/please_fill_out_this_field: 88d4fd502ae8d423277aef723afcd1a7
     errors/please_rank_all_items_before_submitting: 24fb14a2550bd7ec3e253dda0997cea8
     errors/please_select_a_date: 1abdc8ffb887dbbdcc0d05486cd84de7
