@@ -22,7 +22,7 @@ import {
   TSurveyQuestionId,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys/types";
-import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
+import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,7 +130,7 @@ export const RecallItemSelect = ({
       });
 
     return filteredQuestions;
-  }, [localSurvey.questions, questionId, recallItemIds]);
+  }, [localSurvey.questions, questionId, recallItemIds, selectedLanguageCode]);
 
   const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
     return [...surveyQuestionRecallItems, ...hiddenFieldRecallItems, ...variableRecallItems].filter(
@@ -142,11 +142,6 @@ export const RecallItemSelect = ({
       }
     );
   }, [surveyQuestionRecallItems, hiddenFieldRecallItems, variableRecallItems, searchValue]);
-
-  // function to modify headline (recallInfo to corresponding headline)
-  const getRecallLabel = (label: string): string => {
-    return replaceRecallInfoWithUnderline(label);
-  };
 
   const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
@@ -212,7 +207,7 @@ export const RecallItemSelect = ({
                 }}>
                 <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
                 <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                  {getRecallLabel(recallItem.label)}
+                  {getTextContentWithRecallTruncated(recallItem.label)}
                 </p>
               </DropdownMenuItem>
             );

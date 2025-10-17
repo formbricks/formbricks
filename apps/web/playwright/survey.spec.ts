@@ -1,15 +1,19 @@
 import { expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
+import * as helper from "./utils/helper";
 import { createSurvey, createSurveyWithLogic, uploadFileForFileUploadQuestion } from "./utils/helper";
 
 test.use({
   launchOptions: {
-    slowMo: 110,
+    slowMo: 150,
   },
 });
 
 test.describe("Survey Create & Submit Response without logic", async () => {
+  // 5 minutes
+  test.setTimeout(1000 * 60 * 5);
+
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {
@@ -198,18 +202,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-      await page
-        .getByRole("cell", { name: "How much do you love these flowers?: Roses – 0" })
-        .locator("div")
-        .click();
-      await page
-        .getByRole("cell", { name: "How much do you love these flowers?: Trees – 0" })
-        .locator("div")
-        .click();
-      await page
-        .getByRole("cell", { name: "How much do you love these flowers?: Ocean – 0" })
-        .locator("div")
-        .click();
+      await page.getByRole("cell", { name: "Roses – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "Trees – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "Ocean – 0" }).locator("div").click();
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // Address Question
@@ -243,8 +238,8 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 });
 
 test.describe("Multi Language Survey Create", async () => {
-  // 4 minutes
-  test.setTimeout(1000 * 60 * 4);
+  // 5 minutes
+  test.setTimeout(1000 * 60 * 5);
 
   test("Create Survey", async ({ page, users }) => {
     const user = await users.create();
@@ -285,7 +280,7 @@ test.describe("Multi Language Survey Create", async () => {
     // Add questions in default language
     await page.getByText("Add question").click();
     await page.getByRole("button", { name: "Single-Select" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.singleSelectQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.singleSelectQuestion.question);
     await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.singleSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.singleSelectQuestion.options[1]);
 
@@ -295,7 +290,7 @@ test.describe("Multi Language Survey Create", async () => {
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Multi-Select Ask respondents" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.multiSelectQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.multiSelectQuestion.question);
     await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.multiSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.multiSelectQuestion.options[1]);
     await page.getByPlaceholder("Option 3").fill(surveys.createAndSubmit.multiSelectQuestion.options[2]);
@@ -305,7 +300,11 @@ test.describe("Multi Language Survey Create", async () => {
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Picture Selection" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.pictureSelectQuestion.question);
+    await helper.fillRichTextEditor(
+      page,
+      "Question*",
+      surveys.createAndSubmit.pictureSelectQuestion.question
+    );
 
     // Handle file uploads
     await uploadFileForFileUploadQuestion(page);
@@ -316,7 +315,7 @@ test.describe("Multi Language Survey Create", async () => {
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Rating" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.ratingQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.ratingQuestion.question);
     await page.getByPlaceholder("Not good").fill(surveys.createAndSubmit.ratingQuestion.lowLabel);
     await page.getByPlaceholder("Very satisfied").fill(surveys.createAndSubmit.ratingQuestion.highLabel);
 
@@ -326,7 +325,7 @@ test.describe("Multi Language Survey Create", async () => {
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.npsQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.npsQuestion.question);
     await page.getByLabel("Lower label").fill(surveys.createAndSubmit.npsQuestion.lowLabel);
     await page.getByLabel("Upper label").fill(surveys.createAndSubmit.npsQuestion.highLabel);
 
@@ -336,7 +335,7 @@ test.describe("Multi Language Survey Create", async () => {
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Date" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.dateQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.dateQuestion.question);
 
     await page
       .locator("div")
@@ -344,7 +343,7 @@ test.describe("Multi Language Survey Create", async () => {
       .nth(1)
       .click();
     await page.getByRole("button", { name: "File Upload" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.fileUploadQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.fileUploadQuestion.question);
 
     await page
       .locator("div")
@@ -354,7 +353,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     await page.getByRole("button", { name: "Matrix" }).scrollIntoViewIfNeeded();
     await page.getByRole("button", { name: "Matrix" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.matrix.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.matrix.question);
     await page.locator("#row-0").click();
     await page.locator("#row-0").fill(surveys.createAndSubmit.matrix.rows[0]);
     await page.locator("#row-1").click();
@@ -379,7 +378,7 @@ test.describe("Multi Language Survey Create", async () => {
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Address" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.address.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.address.question);
     await page.getByRole("row", { name: "Address Line 2" }).getByRole("switch").nth(1).click();
     await page.getByRole("row", { name: "City" }).getByRole("cell").nth(2).click();
     await page.getByRole("row", { name: "State" }).getByRole("switch").nth(1).click();
@@ -392,7 +391,7 @@ test.describe("Multi Language Survey Create", async () => {
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Ranking" }).click();
-    await page.getByLabel("Question*").fill(surveys.createAndSubmit.ranking.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.ranking.question);
     await page.getByPlaceholder("Option 1").click();
     await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.ranking.choices[0]);
     await page.getByPlaceholder("Option 2").click();
@@ -412,20 +411,15 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "English" }).nth(1).click();
     await page.getByRole("button", { name: "German" }).click();
 
-    // Fill welcome card in german
-    await page.locator(".editor-input").click();
-    await page.locator(".editor-input").fill(surveys.germanCreate.welcomeCard.description);
-    await page.getByLabel("Note*").click();
-    await page.getByLabel("Note*").fill(surveys.germanCreate.welcomeCard.headline);
+    // Fill welcome card in german using rich text editor helper
+    await helper.fillRichTextEditor(page, "Note*", surveys.germanCreate.welcomeCard.headline);
+    await helper.fillRichTextEditor(page, "Welcome message", surveys.germanCreate.welcomeCard.description);
     await page.getByPlaceholder("Next").click();
     await page.getByPlaceholder("Next").fill(surveys.germanCreate.welcomeCard.buttonLabel);
 
     // Fill Open text question in german
     await page.getByRole("main").getByText("Free text").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.openTextQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.openTextQuestion.question);
     await page.getByLabel("Placeholder").click();
     await page.getByLabel("Placeholder").fill(surveys.germanCreate.openTextQuestion.placeholder);
     await page.getByText("Show Advanced settings").first().click();
@@ -434,10 +428,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Single select question in german
     await page.getByRole("main").getByText("Single-Select").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.singleSelectQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.singleSelectQuestion.question);
     await page.getByPlaceholder("Option 1").click();
     await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.singleSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").click();
@@ -451,10 +442,7 @@ test.describe("Multi Language Survey Create", async () => {
     // Fill Multi select question in german
     await page.getByRole("main").getByRole("heading", { name: "Multi-Select" }).click();
 
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.multiSelectQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.multiSelectQuestion.question);
     await page.getByPlaceholder("Option 1").click();
     await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.multiSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").click();
@@ -469,10 +457,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Picture select question in german
     await page.getByRole("main").getByText("Picture Selection").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.pictureSelectQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.pictureSelectQuestion.question);
     await page.getByText("Show Advanced settings").first().click();
     await page.getByPlaceholder("Next").click();
     await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
@@ -481,10 +466,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Rating question in german
     await page.getByRole("main").getByText("Rating").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.ratingQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.ratingQuestion.question);
     await page.getByPlaceholder("Not good").click();
     await page.getByPlaceholder("Not good").fill(surveys.germanCreate.ratingQuestion.lowLabel);
     await page.getByPlaceholder("Very satisfied").click();
@@ -495,8 +477,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill NPS question in german
     await page.getByRole("main").getByText("Net Promoter Score (NPS)").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.npsQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.npsQuestion.question);
     await page.getByLabel("Lower Label").click();
     await page.getByLabel("Lower Label").fill(surveys.germanCreate.npsQuestion.lowLabel);
     await page.getByLabel("Upper Label").click();
@@ -507,10 +488,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Date question in german
     await page.getByRole("main").getByText("Date").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.dateQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.dateQuestion.question);
     await page.getByText("Show Advanced settings").first().click();
     await page.getByPlaceholder("Next").click();
     await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
@@ -519,10 +497,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill File upload question in german
     await page.getByRole("main").getByText("File Upload").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.fileUploadQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.fileUploadQuestion.question);
     await page.getByText("Show Advanced settings").first().click();
     await page.getByPlaceholder("Next").click();
     await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
@@ -531,8 +506,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Matrix question in german
     await page.getByRole("main").getByText("Matrix").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.matrix.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.matrix.question);
     await page.locator("#row-0").click();
     await page.locator("#row-0").fill(surveys.germanCreate.matrix.rows[0]);
     await page.locator("#row-1").click();
@@ -555,10 +529,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Address question in german
     await page.getByRole("main").getByText("Address").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.addressQuestion.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.addressQuestion.question);
     await page.locator('[id="addressLine1\\.placeholder"]').click();
     await page
       .locator('[id="addressLine1\\.placeholder"]')
@@ -589,8 +560,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Ranking question in german
     await page.getByRole("main").getByText("Ranking").click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.ranking.question);
+    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.ranking.question);
     await page.getByPlaceholder("Option 1").click();
     await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.ranking.choices[0]);
     await page.getByPlaceholder("Option 2").click();
@@ -609,12 +579,8 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Fill Thank you card in german
     await page.getByText("Ending card").first().click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.endingCard.headline);
-    await page.getByPlaceholder("Your description here. Recall").click();
-    await page
-      .getByPlaceholder("Your description here. Recall")
-      .fill(surveys.germanCreate.endingCard.description);
+    await helper.fillRichTextEditor(page, "Note*", surveys.germanCreate.endingCard.headline);
+    await helper.fillRichTextEditor(page, "Description", surveys.germanCreate.endingCard.description);
 
     await page.locator("#showButton").check();
 
@@ -644,8 +610,8 @@ test.describe("Multi Language Survey Create", async () => {
 });
 
 test.describe("Testing Survey with advanced logic", async () => {
-  // 6 minutes
-  test.setTimeout(1000 * 60 * 6);
+  // 8 minutes
+  test.setTimeout(1000 * 60 * 8);
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {
@@ -819,9 +785,9 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("cell", { name: "This is my Matrix Question: Roses – 0" }).locator("div").click();
-      await page.getByRole("cell", { name: "This is my Matrix Question: Trees – 0" }).locator("div").click();
-      await page.getByRole("cell", { name: "This is my Matrix Question: Ocean – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "Roses – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "Trees – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "Ocean – 0" }).locator("div").click();
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // CTA Question

@@ -9,11 +9,11 @@ vi.mock("@formkit/auto-animate/react", () => ({
 }));
 
 vi.mock("@/modules/survey/components/question-form-input", () => ({
-  QuestionFormInput: () => <div data-testid="question-form-input">QuestionFormInput</div>,
-}));
-
-vi.mock("@/modules/ee/multi-language-surveys/components/localized-editor", () => ({
-  LocalizedEditor: () => <div data-testid="localized-editor">LocalizedEditor</div>,
+  QuestionFormInput: ({ id }: { id: string }) => (
+    <div data-testid="question-form-input" data-field-id={id}>
+      QuestionFormInput-{id}
+    </div>
+  ),
 }));
 
 vi.mock("@/modules/ui/components/options-switch", () => ({
@@ -70,8 +70,13 @@ describe("CTAQuestionForm", () => {
     );
 
     const questionFormInputs = screen.getAllByTestId("question-form-input");
-    expect(questionFormInputs.length).toBe(2);
-    expect(screen.getByTestId("localized-editor")).toBeInTheDocument();
+    expect(questionFormInputs.length).toBe(3);
+
+    // Check that we have headline, html (description), and buttonLabel fields
+    expect(questionFormInputs[0]).toHaveAttribute("data-field-id", "headline");
+    expect(questionFormInputs[1]).toHaveAttribute("data-field-id", "subheader");
+    expect(questionFormInputs[2]).toHaveAttribute("data-field-id", "buttonLabel");
+
     expect(screen.getByTestId("options-switch")).toBeInTheDocument();
   });
 });

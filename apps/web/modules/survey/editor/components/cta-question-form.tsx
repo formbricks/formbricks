@@ -1,11 +1,9 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
-import { type JSX, useState } from "react";
+import { type JSX } from "react";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -47,10 +45,9 @@ export const CTAQuestionForm = ({
     },
     { value: "external", label: t("environments.surveys.edit.button_to_link_to_external_url") },
   ];
-  const [firstRender, setFirstRender] = useState(true);
-  const [parent] = useAutoAnimate();
+
   return (
-    <form ref={parent}>
+    <form>
       <QuestionFormInput
         id="headline"
         value={question.headline}
@@ -63,26 +60,23 @@ export const CTAQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div className="mt-3">
-        <Label htmlFor="subheader">{t("common.description")}</Label>
-        <div className="mt-2">
-          <LocalizedEditor
-            id="subheader"
-            value={question.html}
-            localSurvey={localSurvey}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            firstRender={firstRender}
-            setFirstRender={setFirstRender}
-            questionIdx={questionIdx}
-            locale={locale}
-            questionId={question.id}
-          />
-        </div>
+        <QuestionFormInput
+          id="subheader"
+          value={question.subheader}
+          label={t("common.description")}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          isInvalid={isInvalid}
+          updateQuestion={updateQuestion}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          locale={locale}
+          isStorageConfigured={isStorageConfigured}
+        />
       </div>
       <div className="mt-3">
         <TooltipRenderer
