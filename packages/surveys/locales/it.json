@@ -59,7 +59,9 @@
       "title": "Questo dispositivo non supporta la protezione anti-spam."
     },
     "please_book_an_appointment": "Prenota un appuntamento",
+    "please_enter_a_valid_email_address": "Inserisci un indirizzo email valido",
     "please_enter_a_valid_phone_number": "Inserisci un numero di telefono valido",
+    "please_enter_a_valid_url": "Inserisci un URL valido",
     "please_fill_out_this_field": "Compila questo campo",
     "please_rank_all_items_before_submitting": "Classifica tutti gli elementi prima di inviare",
     "please_select_a_date": "Seleziona una data",

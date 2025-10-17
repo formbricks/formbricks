@@ -59,7 +59,9 @@
       "title": "このデバイスはスパム保護に対応していません。"
     },
     "please_book_an_appointment": "予約をお取りください",
+    "please_enter_a_valid_email_address": "有効なメールアドレスを入力してください",
     "please_enter_a_valid_phone_number": "有効な電話番号を入力してください",
+    "please_enter_a_valid_url": "有効なURLを入力してください",
     "please_fill_out_this_field": "このフィールドに入力してください",
     "please_rank_all_items_before_submitting": "送信する前にすべての項目をランク付けしてください",
     "please_select_a_date": "日付を選択してください",

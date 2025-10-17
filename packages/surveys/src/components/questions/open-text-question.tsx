@@ -1,3 +1,9 @@
+import { type RefObject } from "preact";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -6,11 +12,6 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { type RefObject } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -71,13 +72,38 @@ export function OpenTextQuestion({
     const input = inputRef.current;
     input?.setCustomValidity("");
 
+    // Check required field
     if (question.required && (!value || value.trim() === "")) {
       input?.setCustomValidity(t("errors.please_fill_out_this_field"));
       input?.reportValidity();
       return;
     }
 
-    // at this point, validity is clean
+    // Validate input format if value is provided
+    if (value && value.trim() !== "") {
+      if (question.inputType === "email") {
+        if (!z.string().email().safeParse(value).success) {
+          input?.setCustomValidity(t("errors.please_enter_a_valid_email_address"));
+          input?.reportValidity();
+          return;
+        }
+      } else if (question.inputType === "url") {
+        if (!z.string().url().safeParse(value).success) {
+          input?.setCustomValidity(t("errors.please_enter_a_valid_url"));
+          input?.reportValidity();
+          return;
+        }
+      } else if (question.inputType === "phone") {
+        const phoneRegex = /^[+]?[\d\s\-()]{7,}$/;
+        if (!phoneRegex.test(value)) {
+          input?.setCustomValidity(t("errors.please_enter_a_valid_phone_number"));
+          input?.reportValidity();
+          return;
+        }
+      }
+    }
+
+    // All validation passed
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
     onSubmit({ [question.id]: value }, updatedTtc);
@@ -112,23 +138,21 @@ export function OpenTextQuestion({
               required={question.required}
               value={value ? value : ""}
               type={question.inputType}
-            onInput={(e) => {
-                  const input = e.currentTarget;
-                  handleInputChange(input.value);
-                  if (question.inputType === "email") {
-                    if (input.validity.typeMismatch || input.validity.patternMismatch) {
-                      input.setCustomValidity(t("errors.please_enter_a_valid_email_address"));
-                    }
-                      input.reportValidity(); // triggers instant browser feedback
-                  }
-                }}
+              onInput={(e) => {
+                const input = e.currentTarget;
+                handleInputChange(input.value);
+                // Clear any previous validation errors while typing
+                input.setCustomValidity("");
+              }}
               className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
-              pattern={
-                    question.inputType === "phone"? "^[+]?\\d(?:[\\d\\-\\s]{7,}\\d)?$"
-                      : question.inputType === "email"?"^(?![^@]*\\.\\.)(?!\\.)[A-Za-z0-9_%+-](?:[A-Za-z0-9._%+-]*[A-Za-z0-9_%+-])?@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z0-9]{2,}$": ".*"
-                 }
-              title={  question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number")
-                      : question.inputType === "email"? t("errors.please_enter_a_valid_email_address")
+              pattern=".*"
+              title={
+                question.inputType === "phone"
+                  ? t("errors.please_enter_a_valid_phone_number")
+                  : question.inputType === "email"
+                    ? t("errors.please_enter_a_valid_email_address")
+                    : question.inputType === "url"
+                      ? t("errors.please_enter_a_valid_url")
                       : undefined
               }
               minLength={question.inputType === "text" ? question.charLimit?.min : undefined}

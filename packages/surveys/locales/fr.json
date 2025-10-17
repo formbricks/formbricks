@@ -59,7 +59,9 @@
       "title": "Cet appareil ne prend pas en charge la protection contre le spam."
     },
     "please_book_an_appointment": "Veuillez prendre rendez-vous",
+    "please_enter_a_valid_email_address": "Veuillez saisir une adresse e-mail valide",
     "please_enter_a_valid_phone_number": "Veuillez saisir un numéro de téléphone valide",
+    "please_enter_a_valid_url": "Veuillez saisir une URL valide",
     "please_fill_out_this_field": "Veuillez remplir ce champ",
     "please_rank_all_items_before_submitting": "Veuillez classer tous les éléments avant de soumettre",
     "please_select_a_date": "Veuillez sélectionner une date",
