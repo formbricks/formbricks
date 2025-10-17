@@ -1,13 +1,5 @@
 "use client";
 
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { isSurveyResponsePresentAction, sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
-import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
-import { StackedCardsContainer } from "@/modules/ui/components/stacked-cards-container";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { ArrowLeft, MailIcon } from "lucide-react";
@@ -17,6 +9,15 @@ import { Toaster, toast } from "react-hot-toast";
 import { z } from "zod";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { isSurveyResponsePresentAction, sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { StackedCardsContainer } from "@/modules/ui/components/stacked-cards-container";
 
 interface VerifyEmailProps {
   survey: TSurvey;
@@ -174,7 +175,7 @@ export const VerifyEmail = ({
               {localSurvey.questions.map((question, index) => (
                 <p
                   key={index}
-                  className="my-1 text-sm">{`${(index + 1).toString()}. ${getLocalizedValue(question.headline, languageCode)}`}</p>
+                  className="my-1 text-sm">{`${(index + 1).toString()}. ${getTextContent(getLocalizedValue(question.headline, languageCode))}`}</p>
               ))}
             </div>
             <Button variant="ghost" className="mt-6" onClick={handlePreviewClick}>

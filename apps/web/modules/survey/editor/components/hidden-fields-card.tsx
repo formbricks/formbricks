@@ -11,7 +11,7 @@ import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/typ
 import { validateId } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
-import { findHiddenFieldUsedInLogic, isUsedInQuota } from "@/modules/survey/editor/lib/utils";
+import { findHiddenFieldUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -83,6 +83,28 @@ export const HiddenFieldsCard = ({
             questionIndex: quesIdx + 1,
           }
         )
+      );
+      return;
+    }
+    const recallQuestionIdx = isUsedInRecall(localSurvey, fieldId);
+    if (recallQuestionIdx === -2) {
+      toast.error(
+        t("environments.surveys.edit.hidden_field_used_in_recall_welcome", { hiddenField: fieldId })
+      );
+      return;
+    }
+    if (recallQuestionIdx === localSurvey.questions.length) {
+      toast.error(
+        t("environments.surveys.edit.hidden_field_used_in_recall_ending_card", { hiddenField: fieldId })
+      );
+      return;
+    }
+    if (recallQuestionIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.hidden_field_used_in_recall", {
+          hiddenField: fieldId,
+          questionIndex: recallQuestionIdx + 1,
+        })
       );
       return;
     }

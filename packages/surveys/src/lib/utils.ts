@@ -1,4 +1,3 @@
-import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
@@ -10,6 +9,7 @@ import {
   type TSurveyQuestion,
   type TSurveyQuestionChoice,
 } from "@formbricks/types/surveys/types";
+import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
@@ -51,8 +51,11 @@ export const getShuffledChoicesIds = (
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });
+  const noneOption = choices.find((choice) => {
+    return choice.id === "none";
+  });
 
-  const shuffledChoices = otherOption ? [...choices.filter((choice) => choice.id !== "other")] : [...choices];
+  const shuffledChoices = choices.filter((choice) => choice.id !== "other" && choice.id !== "none");
 
   if (shuffleOption === "all") {
     shuffle(shuffledChoices);
@@ -67,6 +70,9 @@ export const getShuffledChoicesIds = (
 
   if (otherOption) {
     shuffledChoices.push(otherOption);
+  }
+  if (noneOption) {
+    shuffledChoices.push(noneOption);
   }
 
   return shuffledChoices.map((choice) => choice.id);

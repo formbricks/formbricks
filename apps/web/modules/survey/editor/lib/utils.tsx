@@ -1,18 +1,15 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { isConditionGroup } from "@/lib/surveyLogic/utils";
-import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
-import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TConditionGroup,
+  TI18nString,
   TLeftOperand,
   TRightOperand,
   TSingleCondition,
   TSurvey,
+  TSurveyEndings,
   TSurveyLogic,
   TSurveyLogicAction,
   TSurveyLogicActions,
@@ -21,7 +18,14 @@ import {
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
+  TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { isConditionGroup } from "@/lib/surveyLogic/utils";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
 export const MAX_STRING_LENGTH = 2000;
@@ -117,9 +121,10 @@ export const getConditionValueOptions = (
     .forEach((question) => {
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         // Rows submenu
+        const questionHeadline = getTextContent(getLocalizedValue(question.headline, "default"));
         const rows = question.rows.map((row, rowIdx) => ({
           icon: getQuestionIconMapping(t)[question.type],
-          label: `${getLocalizedValue(row.label, "default")} (${getLocalizedValue(question.headline, "default")})`,
+          label: `${getLocalizedValue(row.label, "default")} (${questionHeadline})`,
           value: `${question.id}.${rowIdx}`,
           meta: {
             type: "question",
@@ -129,7 +134,7 @@ export const getConditionValueOptions = (
 
         questionOptions.push({
           icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
+          label: questionHeadline,
           value: question.id,
           meta: {
             type: "question",
@@ -152,7 +157,7 @@ export const getConditionValueOptions = (
       } else {
         questionOptions.push({
           icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
+          label: getTextContent(getLocalizedValue(question.headline, "default")),
           value: question.id,
           meta: {
             type: "question",
@@ -374,7 +379,7 @@ export const getMatchValueProps = (
       const questionOptions = allowedQuestions.map((question) => {
         return {
           icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
+          label: getTextContent(getLocalizedValue(question.headline, "default")),
           value: question.id,
           meta: {
             type: "question",
@@ -443,15 +448,27 @@ export const getMatchValueProps = (
       selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
       selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
     ) {
-      const choices = selectedQuestion.choices.map((choice) => {
-        return {
-          label: getLocalizedValue(choice.label, "default"),
-          value: choice.id,
-          meta: {
-            type: "static",
-          },
-        };
-      });
+      const operatorsToFilterNone = [
+        "includesOneOf",
+        "includesAllOf",
+        "doesNotIncludeOneOf",
+        "doesNotIncludeAllOf",
+      ];
+      const shouldFilterNone =
+        selectedQuestion.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
+        operatorsToFilterNone.includes(condition.operator);
+
+      const choices = selectedQuestion.choices
+        .filter((choice) => !shouldFilterNone || choice.id !== "none")
+        .map((choice) => {
+          return {
+            label: getLocalizedValue(choice.label, "default"),
+            value: choice.id,
+            meta: {
+              type: "static",
+            },
+          };
+        });
 
       return {
         show: true,
@@ -912,7 +929,7 @@ export const getActionTargetOptions = (
   const questionOptions = questions.map((question) => {
     return {
       icon: getQuestionIconMapping(t)[question.type],
-      label: getLocalizedValue(question.headline, "default"),
+      label: getTextContent(getLocalizedValue(question.headline, "default")),
       value: question.id,
     };
   });
@@ -923,7 +940,8 @@ export const getActionTargetOptions = (
     return {
       label:
         ending.type === "endScreen"
-          ? getLocalizedValue(ending.headline, "default") || t("environments.surveys.edit.end_screen_card")
+          ? getTextContent(getLocalizedValue(ending.headline, "default")) ||
+            t("environments.surveys.edit.end_screen_card")
           : ending.label || t("environments.surveys.edit.redirect_thank_you_card"),
       value: ending.id,
     };
@@ -1030,7 +1048,7 @@ export const getActionValueOptions = (
     const questionOptions = allowedQuestions.map((question) => {
       return {
         icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
+        label: getTextContent(getLocalizedValue(question.headline, "default")),
         value: question.id,
         meta: {
           type: "question",
@@ -1088,7 +1106,7 @@ export const getActionValueOptions = (
     const questionOptions = allowedQuestions.map((question) => {
       return {
         icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
+        label: getTextContent(getLocalizedValue(question.headline, "default")),
         value: question.id,
         meta: {
           type: "question",
@@ -1253,6 +1271,71 @@ export const isUsedInQuota = (
   return false;
 };
 
+const checkTextForRecallPattern = (textObject: TI18nString | undefined, recallPattern: string): boolean => {
+  return textObject ? Object.values(textObject).some((text: string) => text.includes(recallPattern)) : false;
+};
+
+const checkWelcomeCardForRecall = (welcomeCard: TSurveyWelcomeCard, recallPattern: string): boolean => {
+  if (!welcomeCard.enabled) return false;
+
+  return (
+    checkTextForRecallPattern(welcomeCard.headline, recallPattern) ||
+    checkTextForRecallPattern(welcomeCard.subheader, recallPattern)
+  );
+};
+
+const checkQuestionForRecall = (question: TSurveyQuestion, recallPattern: string): boolean => {
+  // Check headline
+  if (Object.values(question.headline).some((text) => text.includes(recallPattern))) {
+    return true;
+  }
+
+  // Check subheader
+  if (checkTextForRecallPattern(question.subheader, recallPattern)) {
+    return true;
+  }
+
+  return false;
+};
+
+const checkEndingCardsForRecall = (endings: TSurveyEndings | undefined, recallPattern: string): boolean => {
+  if (!endings) return false;
+
+  return endings.some((ending) => {
+    if (ending.type === "endScreen") {
+      return (
+        checkTextForRecallPattern(ending.headline, recallPattern) ||
+        checkTextForRecallPattern(ending.subheader, recallPattern)
+      );
+    }
+    return false;
+  });
+};
+
+export const isUsedInRecall = (survey: TSurvey, id: string): number => {
+  const recallPattern = `#recall:${id}/fallback:`;
+
+  // Check welcome card
+  if (checkWelcomeCardForRecall(survey.welcomeCard, recallPattern)) {
+    return -2; // Special index for welcome card
+  }
+
+  // Check questions
+  const questionIndex = survey.questions.findIndex((question) =>
+    checkQuestionForRecall(question, recallPattern)
+  );
+  if (questionIndex !== -1) {
+    return questionIndex;
+  }
+
+  // Check ending cards
+  if (checkEndingCardsForRecall(survey.endings, recallPattern)) {
+    return survey.questions.length; // Special index for ending cards
+  }
+
+  return -1; // Not found
+};
+
 export const findOptionUsedInLogic = (
   survey: TSurvey,
   questionId: TSurveyQuestionId,
@@ -1344,8 +1427,10 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
-export const getSurveyFollowUpActionDefaultBody = (t: TFnType) => {
-  return t("templates.follow_ups_modal_action_body") as string;
+export const getSurveyFollowUpActionDefaultBody = (t: TFnType): string => {
+  return t("templates.follow_ups_modal_action_body")
+    .replaceAll(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
 };
 
 export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string): number => {

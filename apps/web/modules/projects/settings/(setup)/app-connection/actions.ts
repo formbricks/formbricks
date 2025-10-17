@@ -1,5 +1,9 @@
 "use server";
 
+import { z } from "zod";
+import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { ZId } from "@formbricks/types/common";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
 import { getSurveysByActionClassId } from "@/lib/survey/service";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
@@ -7,10 +11,6 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromActionClassId, getProjectIdFromActionClassId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { z } from "zod";
-import { ZActionClassInput } from "@formbricks/types/action-classes";
-import { ZId } from "@formbricks/types/common";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZDeleteActionClassAction = z.object({
   actionClassId: ZId,
@@ -124,15 +124,11 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
 
 const getLatestStableFbRelease = async (): Promise<string | null> => {
   try {
-    const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases");
-    const releases = await res.json();
+    const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases/latest");
+    const release = await res.json();
 
-    if (Array.isArray(releases)) {
-      const latestStableReleaseTag = releases.filter((release) => !release.prerelease)?.[0]
-        ?.tag_name as string;
-      if (latestStableReleaseTag) {
-        return latestStableReleaseTag;
-      }
+    if (release && release.tag_name) {
+      return release.tag_name;
     }
 
     return null;

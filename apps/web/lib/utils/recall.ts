@@ -1,7 +1,8 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";
 
 export interface fallbacks {
@@ -59,7 +60,11 @@ const getRecallItemLabel = <T extends TSurvey>(
   if (isHiddenField) return recallItemId;
 
   const surveyQuestion = survey.questions.find((question) => question.id === recallItemId);
-  if (surveyQuestion) return surveyQuestion.headline[languageCode];
+  if (surveyQuestion) {
+    const headline = getLocalizedValue(surveyQuestion.headline, languageCode);
+    // Strip HTML tags to prevent raw HTML from showing in nested recalls
+    return headline ? getTextContent(headline) : headline;
+  }
 
   const variable = survey.variables?.find((variable) => variable.id === recallItemId);
   if (variable) return variable.name;
@@ -118,15 +123,15 @@ export const replaceRecallInfoWithUnderline = (label: string): string => {
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
 export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): TSurveyQuestion | null => {
-  const findRecalls = (text: string) => {
+  const doesTextHaveRecall = (text: string) => {
     const recalls = text.match(/#recall:[^ ]+/g);
-    return recalls && recalls.some((recall) => !extractFallbackValue(recall));
+    return recalls?.some((recall) => !extractFallbackValue(recall));
   };
 
   for (const question of survey.questions) {
     if (
-      findRecalls(getLocalizedValue(question.headline, language)) ||
-      (question.subheader && findRecalls(getLocalizedValue(question.subheader, language)))
+      doesTextHaveRecall(getLocalizedValue(question.headline, language)) ||
+      (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language)))
     ) {
       return question;
     }
@@ -265,4 +270,19 @@ export const parseRecallInfo = (
   }
 
   return modifiedText;
+};
+
+export const getTextContentWithRecallTruncated = (text: string, maxLength: number = 25): string => {
+  const cleanText = getTextContent(text).replaceAll(/\s+/g, " ").trim();
+
+  if (cleanText.length <= maxLength) {
+    return replaceRecallInfoWithUnderline(cleanText);
+  }
+
+  const recalledCleanText = replaceRecallInfoWithUnderline(cleanText);
+
+  const start = recalledCleanText.slice(0, 10);
+  const end = recalledCleanText.slice(-10);
+
+  return `${start}...${end}`;
 };

@@ -1,10 +1,3 @@
-import { cn } from "@/lib/cn";
-import { WEBAPP_URL } from "@/lib/constants";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { isLight, mixColor } from "@/lib/utils/colors";
-import { parseRecallInfo } from "@/lib/utils/recall";
-import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import {
   Column,
   Container,
@@ -21,6 +14,13 @@ import { TFnType } from "@tolgee/react";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { WEBAPP_URL } from "@/lib/constants";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { isLight, mixColor } from "@/lib/utils/colors";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 import { QuestionHeader } from "./email-question-header";
 
@@ -94,16 +94,7 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Consent:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
-          <Container className="text-question-color m-0 text-sm font-normal leading-6">
-            <div
-              className="m-0 p-0"
-              dangerouslySetInnerHTML={{
-                __html: getLocalizedValue(firstQuestion.html, defaultLanguageCode) || "",
-              }}
-            />
-          </Container>
-
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="border-input-border-color bg-input-color rounded-custom m-0 mt-4 block w-full max-w-none border border-solid p-4 font-medium text-slate-800">
             <Text className="text-question-color m-0 inline-block">
               {getLocalizedValue(firstQuestion.label, defaultLanguageCode)}
@@ -181,16 +172,7 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
-          <Container className="text-question-color ml-0 mt-2 text-sm font-normal leading-6">
-            <div
-              className="m-0 p-0"
-              dangerouslySetInnerHTML={{
-                __html: getLocalizedValue(firstQuestion.html, defaultLanguageCode) || "",
-              }}
-            />
-          </Container>
-
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="mx-0 mt-4 max-w-none">
             {!firstQuestion.required && (
               <EmailButton

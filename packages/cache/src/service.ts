@@ -67,10 +67,13 @@ export class CacheService {
         return ok(JSON.parse(value) as T);
       } catch (parseError) {
         // JSON parse failure indicates corrupted cache data - treat as cache miss
-        logger.warn("Corrupted cache data detected, treating as cache miss", {
-          key,
-          parseError,
-        });
+        logger.warn(
+          {
+            key,
+            parseError,
+          },
+          "Corrupted cache data detected, treating as cache miss"
+        );
         return err({
           code: ErrorCode.CacheCorruptionError,
         });

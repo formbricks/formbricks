@@ -1,10 +1,10 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { Mock } from "vitest";
+import { prisma } from "@formbricks/database";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
 } from "@/modules/ee/license-check/types/enterprise-license";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { Mock } from "vitest";
-import { prisma } from "@formbricks/database";
 
 // Mock declarations must be at the top level
 vi.mock("@/lib/env", () => ({
@@ -59,6 +59,17 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+const mockLogger = {
+  error: vi.fn(),
+  warn: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+};
+
+vi.mock("@formbricks/logger", () => ({
+  logger: mockLogger,
+}));
+
 // Mock constants as they are used in the original license.ts indirectly
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal();
@@ -80,6 +91,10 @@ describe("License Core Logic", () => {
     mockCache.set.mockReset();
     mockCache.del.mockReset();
     mockCache.withCache.mockReset();
+    mockLogger.error.mockReset();
+    mockLogger.warn.mockReset();
+    mockLogger.info.mockReset();
+    mockLogger.debug.mockReset();
 
     // Set up default mock implementations for Result types
     mockCache.get.mockResolvedValue({ ok: true, data: null });
@@ -524,6 +539,138 @@ describe("License Core Logic", () => {
         expect.any(Function),
         expect.stringContaining(`fb:license:${expectedHash}:status`),
         expect.any(Number)
+      );
+    });
+  });
+
+  describe("Error and Warning Logging", () => {
+    test("should log warning when setPreviousResult cache.set fails (line 176-178)", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
+        status: "active",
+        features: {
+          isMultiOrgEnabled: true,
+          contacts: true,
+          projects: 10,
+          whitelabel: true,
+          removeBranding: true,
+          twoFactorAuth: true,
+          sso: true,
+          saml: true,
+          spamProtection: true,
+          ai: false,
+          auditLogs: true,
+          multiLanguageSurveys: true,
+          accessControl: true,
+          quotas: true,
+        },
+      };
+
+      // Mock successful fetch from API
+      mockCache.withCache.mockResolvedValue(mockFetchedLicenseDetails);
+
+      // Mock cache.set to fail when saving previous result
+      mockCache.set.mockResolvedValue({
+        ok: false,
+        error: new Error("Redis connection failed"),
+      });
+
+      await getEnterpriseLicense();
+
+      // Verify that the warning was logged
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        { error: new Error("Redis connection failed") },
+        "Failed to cache previous result"
+      );
+    });
+
+    test("should log error when trackApiError is called (line 196-203)", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      // Mock cache.withCache to execute the function (simulating cache miss)
+      mockCache.withCache.mockImplementation(async (fn) => await fn());
+
+      // Mock API response with 500 status
+      const mockStatus = 500;
+      fetch.mockResolvedValueOnce({
+        ok: false,
+        status: mockStatus,
+        json: async () => ({ error: "Internal Server Error" }),
+      } as any);
+
+      await getEnterpriseLicense();
+
+      // Verify that the API error was logged with correct structure
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: mockStatus,
+          code: "API_ERROR",
+          timestamp: expect.any(String),
+        }),
+        expect.stringContaining("License API error:")
+      );
+    });
+
+    test("should log error when trackApiError is called with different status codes (line 196-203)", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      // Test with 403 Forbidden
+      mockCache.withCache.mockImplementation(async (fn) => await fn());
+      const mockStatus = 403;
+      fetch.mockResolvedValueOnce({
+        ok: false,
+        status: mockStatus,
+        json: async () => ({ error: "Forbidden" }),
+      } as any);
+
+      await getEnterpriseLicense();
+
+      // Verify that the API error was logged with correct structure
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: mockStatus,
+          code: "API_ERROR",
+          timestamp: expect.any(String),
+        }),
+        expect.stringContaining("License API error:")
+      );
+    });
+
+    test("should log info when trackFallbackUsage is called during grace period", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = (await import("node-fetch")).default as Mock;
+
+      const previousTime = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
+      const mockPreviousResult = {
+        active: true,
+        features: { removeBranding: true, projects: 5 },
+        lastChecked: previousTime,
+        version: 1,
+      };
+
+      mockCache.withCache.mockResolvedValue(null);
+      mockCache.get.mockImplementation(async (key) => {
+        if (key.includes(":previous_result")) {
+          return { ok: true, data: mockPreviousResult };
+        }
+        return { ok: true, data: null };
+      });
+
+      fetch.mockResolvedValueOnce({ ok: false, status: 500 } as any);
+
+      await getEnterpriseLicense();
+
+      // Verify that the fallback info was logged
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fallbackLevel: "grace",
+          timestamp: expect.any(String),
+        }),
+        expect.stringContaining("Using license fallback level: grace")
       );
     });
   });

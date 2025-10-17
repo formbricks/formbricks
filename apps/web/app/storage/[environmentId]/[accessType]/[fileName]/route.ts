@@ -1,3 +1,7 @@
+import { getServerSession } from "next-auth";
+import { type NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { TAccessType, ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authorizePrivateDownload } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/auth";
@@ -6,10 +10,6 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { deleteFile, getSignedUrlForDownload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
-import { getServerSession } from "next-auth";
-import { type NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { TAccessType, ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
 import { logFileDeletion } from "./lib/audit-logs";
 
 export const GET = async (
@@ -100,7 +100,7 @@ export const DELETE = async (
   if (authResult.ok) {
     try {
       if (authResult.data.authType === "apiKey") {
-        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.hashedApiKey);
+        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.apiKeyId);
       } else {
         await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
       }
