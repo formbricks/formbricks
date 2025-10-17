@@ -72,14 +72,12 @@ export function OpenTextQuestion({
     const input = inputRef.current;
     input?.setCustomValidity("");
 
-    // Check required field
     if (question.required && (!value || value.trim() === "")) {
       input?.setCustomValidity(t("errors.please_fill_out_this_field"));
       input?.reportValidity();
       return;
     }
 
-    // Validate input format if value is provided
     if (value && value.trim() !== "") {
       if (question.inputType === "email") {
         if (!ZEmail.safeParse(value).success) {
@@ -103,7 +101,6 @@ export function OpenTextQuestion({
       }
     }
 
-    // All validation passed
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
     onSubmit({ [question.id]: value }, updatedTtc);
@@ -141,7 +138,6 @@ export function OpenTextQuestion({
               onInput={(e) => {
                 const input = e.currentTarget;
                 handleInputChange(input.value);
-                // Clear any previous validation errors while typing
                 input.setCustomValidity("");
               }}
               className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
