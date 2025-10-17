@@ -157,7 +157,7 @@ export const MainNavigation = ({
       {project && (
         <aside
           className={cn(
-            "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md",
+            "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <div>
