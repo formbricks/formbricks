@@ -17,7 +17,7 @@ const migrationsDir = path.resolve(__dirname, "../../migration");
 
 async function createMigration(): Promise<void> {
   // Log the full path to verify directory location
-  logger.info(migrationsDir, "Migrations Directory Full Path");
+  logger.info({ migrationsDir }, "Migrations Directory Full Path");
 
   // Check if migrations directory exists, create if not
   const hasAccess = await fs
@@ -27,7 +27,7 @@ async function createMigration(): Promise<void> {
 
   if (!hasAccess) {
     await fs.mkdir(migrationsDir, { recursive: true });
-    logger.info(`Created migrations directory: ${migrationsDir}`);
+    logger.info({ migrationsDir }, `Created migrations directory`);
   }
 
   const migrationNameSpaced = await promptForMigrationName();
@@ -60,11 +60,11 @@ async function createMigration(): Promise<void> {
 
   // Create the migration directory
   await fs.mkdir(fullMigrationPath, { recursive: true });
-  logger.info(fullMigrationPath, "Created migration directory");
+  logger.info({ fullMigrationPath }, "Created migration directory");
 
   // Create the migration file
   await fs.writeFile(filePath, getTemplateContent(migrationFunctionName, migrationNameTimestamped));
-  logger.info(filePath, "New migration created");
+  logger.info({ filePath }, "New migration created");
 }
 
 function promptForMigrationName(): Promise<string> {

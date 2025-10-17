@@ -184,7 +184,6 @@ export const MatrixQuestionForm = ({
       show: true,
     },
   };
-  /// Auto animate
   const [parent] = useAutoAnimate();
 
   return (
@@ -201,6 +200,7 @@ export const MatrixQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -218,6 +218,7 @@ export const MatrixQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>

@@ -201,7 +201,7 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
     icon: MousePointerClickIcon,
     preset: {
       headline: createI18nString("", []),
-      html: createI18nString("", []),
+      subheader: createI18nString("", []),
       buttonLabel: createI18nString(t("templates.book_interview"), []),
       buttonExternal: false,
       dismissButtonLabel: createI18nString(t("templates.skip"), []),
@@ -215,7 +215,7 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
     icon: CheckIcon,
     preset: {
       headline: createI18nString("", []),
-      html: createI18nString("", []),
+      subheader: createI18nString("", []),
       label: createI18nString("", []),
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),

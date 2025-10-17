@@ -95,12 +95,12 @@ export const parseRecallInformation = (
   }
   if (
     (question.type === TSurveyQuestionTypeEnum.CTA || question.type === TSurveyQuestionTypeEnum.Consent) &&
-    question.html &&
-    question.html[languageCode].includes("recall:") &&
-    modifiedQuestion.html
+    question.subheader &&
+    question.subheader[languageCode].includes("recall:") &&
+    modifiedQuestion.subheader
   ) {
-    modifiedQuestion.html[languageCode] = replaceRecallInfo(
-      getLocalizedValue(modifiedQuestion.html, languageCode),
+    modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
+      getLocalizedValue(modifiedQuestion.subheader, languageCode),
       responseData,
       variables
     );

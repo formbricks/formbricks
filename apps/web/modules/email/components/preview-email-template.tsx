@@ -94,16 +94,7 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Consent:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
-          <Container className="text-question-color m-0 text-sm font-normal leading-6">
-            <div
-              className="m-0 p-0"
-              dangerouslySetInnerHTML={{
-                __html: getLocalizedValue(firstQuestion.html, defaultLanguageCode) || "",
-              }}
-            />
-          </Container>
-
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="border-input-border-color bg-input-color rounded-custom m-0 mt-4 block w-full max-w-none border border-solid p-4 font-medium text-slate-800">
             <Text className="text-question-color m-0 inline-block">
               {getLocalizedValue(firstQuestion.label, defaultLanguageCode)}
@@ -181,16 +172,7 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
-          <Container className="text-question-color ml-0 mt-2 text-sm font-normal leading-6">
-            <div
-              className="m-0 p-0"
-              dangerouslySetInnerHTML={{
-                __html: getLocalizedValue(firstQuestion.html, defaultLanguageCode) || "",
-              }}
-            />
-          </Container>
-
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="mx-0 mt-4 max-w-none">
             {!firstQuestion.required && (
               <EmailButton

@@ -82,7 +82,6 @@ export const ContactInfoQuestionForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.firstName, question.lastName, question.email, question.phone, question.company]);
 
-  // Auto animate
   const [parent] = useAutoAnimate();
 
   return (
@@ -99,6 +98,7 @@ export const ContactInfoQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div ref={parent}>
@@ -117,6 +117,7 @@ export const ContactInfoQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>

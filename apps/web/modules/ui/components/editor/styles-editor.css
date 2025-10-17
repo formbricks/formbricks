@@ -21,7 +21,6 @@
   position: relative;
   line-height: 24px;
   font-weight: 400;
-  text-align: left;
   border-color: #cbd5e1;
   border-width: 1px;
   padding: 1px;
@@ -36,11 +35,11 @@
   position: relative;
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
-  overflow: auto;
+  overflow-y: auto;
   resize: vertical;
   height: auto;
-  min-height: var(--editor-min-height, 40px);
-  max-height: 150px;
+  min-height: var(--editor-min-height, 48px);
+  max-height: 200px;
 }
 
 .editor-input {
@@ -49,7 +48,7 @@
   position: relative;
   tab-size: 1;
   outline: 0;
-  padding: 10px 10px;
+  padding: 5px 10px 10px 10px;
   outline: none;
 }
 

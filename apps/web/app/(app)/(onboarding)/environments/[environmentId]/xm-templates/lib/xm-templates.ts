@@ -105,7 +105,7 @@ const starRatingSurvey = (t: TFunction): TXMTemplate => {
       }),
       buildCTAQuestion({
         id: reusableQuestionIds[1],
-        html: t("templates.star_rating_survey_question_2_html"),
+        subheader: t("templates.star_rating_survey_question_2_html"),
         logic: [
           {
             id: createId(),
@@ -322,7 +322,7 @@ const smileysRatingSurvey = (t: TFunction): TXMTemplate => {
       }),
       buildCTAQuestion({
         id: reusableQuestionIds[1],
-        html: t("templates.smileys_survey_question_2_html"),
+        subheader: t("templates.smileys_survey_question_2_html"),
         logic: [
           {
             id: createId(),

@@ -26,7 +26,7 @@ describe("WelcomeCard", () => {
 
   const defaultProps = {
     headline: { default: "Welcome to our survey" },
-    html: { default: "This is a test survey" },
+    subheader: { default: "This is a test survey" },
     buttonLabel: { default: "Start" },
     onSubmit: vi.fn(),
     survey: mockSurvey,
@@ -38,17 +38,28 @@ describe("WelcomeCard", () => {
   };
 
   test("renders welcome card with basic content", () => {
-    const { container } = render(<WelcomeCard {...defaultProps} />);
+    const { container, getByTestId } = render(<WelcomeCard {...defaultProps} />);
 
     expect(container.querySelector(".fb-text-heading")).toHaveTextContent("Welcome to our survey");
-    expect(container.querySelector(".fb-htmlbody")).toHaveTextContent("This is a test survey");
+    expect(getByTestId("subheader")).toHaveTextContent("This is a test survey");
     expect(container.querySelector("button")).toHaveTextContent("Start");
   });
 
   test("shows time to complete when timeToFinish is true", () => {
-    const { container } = render(<WelcomeCard {...defaultProps} />);
+    const propsWithTimeOnly = {
+      ...defaultProps,
+      survey: {
+        ...mockSurvey,
+        welcomeCard: {
+          ...mockSurvey.welcomeCard,
+          timeToFinish: true,
+          showResponseCount: false,
+        },
+      },
+    };
+    const { getByTestId } = render(<WelcomeCard {...propsWithTimeOnly} />);
 
-    const timeDisplay = container.querySelector(".fb-text-subheading");
+    const timeDisplay = getByTestId("fb__surveys__welcome-card__time-display");
     expect(timeDisplay).toBeInTheDocument();
     expect(timeDisplay).toHaveTextContent(/common.takes/);
   });
@@ -100,26 +111,48 @@ describe("WelcomeCard", () => {
 
   test("calculates time to complete correctly for different survey lengths", () => {
     // Test short survey (2 questions)
-    const { container } = render(<WelcomeCard {...defaultProps} />);
-    const timeDisplay = container.querySelector(".fb-text-subheading");
+    const shortSurvey = {
+      ...mockSurvey,
+      welcomeCard: {
+        ...mockSurvey.welcomeCard,
+        timeToFinish: true,
+        showResponseCount: false,
+      },
+    };
+    const { getByTestId, unmount } = render(<WelcomeCard {...defaultProps} survey={shortSurvey} />);
+    const timeDisplay = getByTestId("fb__surveys__welcome-card__time-display");
     expect(timeDisplay).toHaveTextContent(/common.takes common.less_than_x_minutes/);
+    unmount();
 
     // Test medium survey (12 questions)
     const mediumSurvey = {
       ...mockSurvey,
       questions: Array(12).fill({ id: "q", logic: [] }),
+      welcomeCard: {
+        ...mockSurvey.welcomeCard,
+        timeToFinish: true,
+        showResponseCount: false,
+      },
     };
-    const { container: mediumContainer } = render(<WelcomeCard {...defaultProps} survey={mediumSurvey} />);
-    const mediumTimeDisplay = mediumContainer.querySelector(".fb-text-subheading");
+    const { getByTestId: getByTestIdMedium, unmount: unmountMedium } = render(
+      <WelcomeCard {...defaultProps} survey={mediumSurvey} />
+    );
+    const mediumTimeDisplay = getByTestIdMedium("fb__surveys__welcome-card__time-display");
     expect(mediumTimeDisplay).toHaveTextContent(/common.takes common.x_minutes/);
+    unmountMedium();
 
     // Test long survey (25 questions)
     const longSurvey = {
       ...mockSurvey,
       questions: Array(25).fill({ id: "q", logic: [] }),
+      welcomeCard: {
+        ...mockSurvey.welcomeCard,
+        timeToFinish: true,
+        showResponseCount: false,
+      },
     };
-    const { container: longContainer } = render(<WelcomeCard {...defaultProps} survey={longSurvey} />);
-    const longTimeDisplay = longContainer.querySelector(".fb-text-subheading");
+    const { getByTestId: getByTestIdLong } = render(<WelcomeCard {...defaultProps} survey={longSurvey} />);
+    const longTimeDisplay = getByTestIdLong("fb__surveys__welcome-card__time-display");
     expect(longTimeDisplay).toHaveTextContent(/common.takes common.x_plus_minutes/);
   });
 
@@ -147,7 +180,7 @@ describe("WelcomeCard", () => {
     const minimalProps = {
       ...defaultProps,
       headline: undefined,
-      html: undefined,
+      subheader: undefined,
       buttonLabel: undefined,
       fileUrl: undefined,
       responseCount: undefined,
@@ -225,23 +258,34 @@ describe("WelcomeCard", () => {
       ...mockSurvey,
       questions: [{ id: "dummy", logic: [] }], // Add dummy question to avoid logic error
       endings: [],
+      welcomeCard: {
+        ...mockSurvey.welcomeCard,
+        timeToFinish: true,
+        showResponseCount: false,
+      },
     };
-    const { container: emptyContainer } = render(
+    const { getByTestId: getByTestIdEmpty, unmount: unmountEmpty } = render(
       <WelcomeCard {...defaultProps} survey={emptyQuestionsSurvey} />
     );
-    expect(emptyContainer.querySelector(".fb-text-subheading")).toHaveTextContent(
+    expect(getByTestIdEmpty("fb__surveys__welcome-card__time-display")).toHaveTextContent(
       /common.takes common.less_than_x_minutes/
     );
+    unmountEmpty();
 
     // Test with exactly 24 questions (6 minutes boundary)
     const boundaryQuestionsSurvey = {
       ...mockSurvey,
       questions: Array(24).fill({ id: "q", logic: [] }),
+      welcomeCard: {
+        ...mockSurvey.welcomeCard,
+        timeToFinish: true,
+        showResponseCount: false,
+      },
     };
-    const { container: boundaryContainer } = render(
+    const { getByTestId: getByTestIdBoundary } = render(
       <WelcomeCard {...defaultProps} survey={boundaryQuestionsSurvey} />
     );
-    expect(boundaryContainer.querySelector(".fb-text-subheading")).toHaveTextContent(
+    expect(getByTestIdBoundary("fb__surveys__welcome-card__time-display")).toHaveTextContent(
       /common.takes common.x_minutes/
     );
   });
@@ -250,15 +294,15 @@ describe("WelcomeCard", () => {
     const localizedProps = {
       ...defaultProps,
       headline: { default: "Welcome", es: "Bienvenido" },
-      html: { default: "Test", es: "Prueba" },
+      subheader: { default: "Test", es: "Prueba" },
       buttonLabel: { default: "Start", es: "Comenzar" },
       languageCode: "es",
     };
 
-    const { container } = render(<WelcomeCard {...localizedProps} />);
+    const { container, getByTestId } = render(<WelcomeCard {...localizedProps} />);
 
     expect(container.querySelector(".fb-text-heading")).toHaveTextContent("Bienvenido");
-    expect(container.querySelector(".fb-htmlbody")).toHaveTextContent("Prueba");
+    expect(getByTestId("subheader")).toHaveTextContent("Prueba");
     expect(container.querySelector("button")).toHaveTextContent("Comenzar");
   });
 
