@@ -1,9 +1,9 @@
-import { responses } from "@/app/lib/api/response";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { Session } from "next-auth";
 import { describe, expect, test, vi } from "vitest";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { responses } from "@/app/lib/api/response";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { checkAuth } from "./utils";
 
 // Create mock response objects
@@ -56,8 +56,7 @@ describe("checkAuth", () => {
           projectName: "Project 1",
         },
       ],
-      hashedApiKey: "hashed-key",
-      apiKeyId: "api-key-id",
+      apiKeyId: "hashed-key",
       organizationId: "org-id",
       organizationAccess: {
         accessControl: {},
@@ -89,8 +88,7 @@ describe("checkAuth", () => {
           projectName: "Project 1",
         },
       ],
-      hashedApiKey: "hashed-key",
-      apiKeyId: "api-key-id",
+      apiKeyId: "hashed-key",
       organizationId: "org-id",
       organizationAccess: {
         accessControl: {},

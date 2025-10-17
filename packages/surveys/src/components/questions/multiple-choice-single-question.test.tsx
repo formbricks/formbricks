@@ -272,4 +272,368 @@ describe("MultipleChoiceSingleQuestion", () => {
     const backButton = screen.getByTestId("back-button");
     expect(backButton).toHaveAttribute("tabIndex", "0");
   });
+
+  test("allows deselecting a choice when question is not required", async () => {
+    const user = userEvent.setup();
+    const optionalQuestion = { ...mockQuestion, required: false };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={optionalQuestion} value="Choice 1" />);
+
+    const choice1Radio = screen.getByLabelText("Choice 1");
+    await user.click(choice1Radio);
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: undefined });
+  });
+
+  test("does not deselect a choice when question is required", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="Choice 1" />);
+
+    const choice1Radio = screen.getByLabelText("Choice 1");
+    await user.click(choice1Radio);
+
+    expect(mockOnChange).not.toHaveBeenCalledWith({ q1: undefined });
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "Choice 1" });
+  });
+
+  test("allows deselecting 'Other' option when question is not required", async () => {
+    const user = userEvent.setup();
+    const optionalQuestion = { ...mockQuestion, required: false };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={optionalQuestion} value="Some text" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: undefined });
+  });
+
+  test("does not deselect 'Other' option when question is required", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="Some text" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(mockOnChange).not.toHaveBeenCalledWith({ q1: undefined });
+  });
+
+  test("clears otherSelected when selecting a regular choice after 'Other' was selected", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(screen.getByPlaceholderText("Please specify")).toBeInTheDocument();
+
+    mockOnChange.mockClear();
+
+    const choice1Radio = screen.getByLabelText("Choice 1");
+    await user.click(choice1Radio);
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "Choice 1" });
+  });
+
+  test("renders and allows selecting 'None' option", async () => {
+    const user = userEvent.setup();
+    const questionWithNone = {
+      ...mockQuestion,
+      choices: [
+        { id: "c1", label: { default: "Choice 1" } },
+        { id: "c2", label: { default: "Choice 2" } },
+        { id: "none", label: { default: "None of the above" } },
+      ],
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithNone} />);
+
+    const noneRadio = screen.getByLabelText("None of the above");
+    expect(noneRadio).toBeInTheDocument();
+
+    await user.click(noneRadio);
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "None of the above" });
+  });
+
+  test("'None' option clears otherSelected state", async () => {
+    const user = userEvent.setup();
+    const questionWithBoth = {
+      ...mockQuestion,
+      choices: [
+        { id: "c1", label: { default: "Choice 1" } },
+        { id: "other", label: { default: "Other" } },
+        { id: "none", label: { default: "None of the above" } },
+      ],
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithBoth} value="" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(screen.getByPlaceholderText("Please specify")).toBeInTheDocument();
+
+    mockOnChange.mockClear();
+
+    const noneRadio = screen.getByLabelText("None of the above");
+    await user.click(noneRadio);
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "None of the above" });
+  });
+
+  test("handles spacebar key press on 'Other' option label when not selected", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} />);
+
+    const otherLabel = screen.getByLabelText("Other").closest("label");
+
+    if (otherLabel) {
+      await user.type(otherLabel, " ");
+    }
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "" });
+  });
+
+  test("does not trigger click when spacebar is pressed on 'Other' option label and otherSelected is true", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    mockOnChange.mockClear();
+
+    const otherLabel = screen.getByRole("radio", { name: "Other" }).closest("label");
+
+    if (otherLabel) {
+      await user.type(otherLabel, " ");
+    }
+
+    expect(mockOnChange).not.toHaveBeenCalled();
+  });
+
+  test("handles spacebar key press on 'None' option label", async () => {
+    const user = userEvent.setup();
+    const questionWithNone = {
+      ...mockQuestion,
+      choices: [
+        { id: "c1", label: { default: "Choice 1" } },
+        { id: "none", label: { default: "None of the above" } },
+      ],
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithNone} />);
+
+    const noneLabel = screen.getByLabelText("None of the above").closest("label");
+
+    if (noneLabel) {
+      await user.type(noneLabel, " ");
+    }
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "None of the above" });
+  });
+
+  test("displays custom other option placeholder when provided", async () => {
+    const user = userEvent.setup();
+    const questionWithCustomPlaceholder = {
+      ...mockQuestion,
+      otherOptionPlaceholder: { default: "Custom placeholder text" },
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithCustomPlaceholder} />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(screen.getByPlaceholderText("Custom placeholder text")).toBeInTheDocument();
+  });
+
+  test("displays default placeholder when otherOptionPlaceholder is empty", async () => {
+    const user = userEvent.setup();
+    const questionWithEmptyPlaceholder = {
+      ...mockQuestion,
+      otherOptionPlaceholder: { default: "" },
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithEmptyPlaceholder} />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    expect(screen.getByPlaceholderText("Please specify")).toBeInTheDocument();
+  });
+
+  test("'None' option is checked when value matches", () => {
+    const questionWithNone = {
+      ...mockQuestion,
+      choices: [
+        { id: "c1", label: { default: "Choice 1" } },
+        { id: "none", label: { default: "None of the above" } },
+      ],
+    };
+
+    render(
+      <MultipleChoiceSingleQuestion {...defaultProps} question={questionWithNone} value="None of the above" />
+    );
+
+    const noneRadio = screen.getByLabelText("None of the above");
+    expect(noneRadio).toBeChecked();
+  });
+
+  test("displays video content when available", () => {
+    const questionWithVideo = {
+      ...mockQuestion,
+      videoUrl: "https://example.com/video.mp4",
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithVideo} />);
+    expect(screen.getByTestId("question-media")).toBeInTheDocument();
+  });
+
+  test("handles auto focus on first choice", () => {
+    render(<MultipleChoiceSingleQuestion {...defaultProps} autoFocusEnabled={true} />);
+
+    const firstChoiceLabel = screen.getByLabelText("Choice 1").closest("label");
+    expect(firstChoiceLabel).toHaveAttribute("autoFocus");
+  });
+
+  test("handles direction prop correctly", () => {
+    render(<MultipleChoiceSingleQuestion {...defaultProps} dir="rtl" />);
+
+    const choice1Radio = screen.getByLabelText("Choice 1");
+    expect(choice1Radio).toHaveAttribute("dir", "rtl");
+  });
+
+  test("handles prefilled answer from URL for 'Other' option", () => {
+    const mockGet = vi.fn().mockReturnValue("Other");
+    const mockURLSearchParams = vi.fn(() => ({
+      get: mockGet,
+    }));
+
+    global.URLSearchParams = mockURLSearchParams as any;
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} isFirstQuestion={true} value={undefined} />);
+
+    expect(mockURLSearchParams).toHaveBeenCalledWith(window.location.search);
+    expect(mockGet).toHaveBeenCalledWith("q1");
+  });
+
+  test("handles spacebar key press on regular choice label", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} />);
+
+    const choice1Label = screen.getByLabelText("Choice 1").closest("label");
+
+    if (choice1Label) {
+      await user.type(choice1Label, " ");
+    }
+
+    expect(mockOnChange).toHaveBeenCalledWith({ q1: "Choice 1" });
+  });
+
+  test("handles tabIndex correctly for different question states", () => {
+    render(<MultipleChoiceSingleQuestion {...defaultProps} currentQuestionId="q2" />);
+
+    const submitButton = screen.getByTestId("submit-button");
+    expect(submitButton).toHaveAttribute("tabIndex", "-1");
+
+    const backButton = screen.getByTestId("back-button");
+    expect(backButton).toHaveAttribute("tabIndex", "-1");
+  });
+
+  test("handles other option input with maxLength constraint", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    const otherInput = screen.getByPlaceholderText("Please specify");
+    expect(otherInput).toHaveAttribute("maxLength", "250");
+  });
+
+  test("handles other option input with pattern validation", async () => {
+    const user = userEvent.setup();
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    await user.click(otherRadio);
+
+    const otherInput = screen.getByPlaceholderText("Please specify");
+    expect(otherInput).toHaveAttribute("pattern", ".*\\S+.*");
+  });
+
+  test("handles shuffle option 'all'", () => {
+    const questionWithShuffle = {
+      ...mockQuestion,
+      shuffleOption: "all" as const,
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithShuffle} />);
+
+    expect(screen.getByLabelText("Choice 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("Choice 2")).toBeInTheDocument();
+  });
+
+  test("handles shuffle option 'exceptLast'", () => {
+    const questionWithShuffle = {
+      ...mockQuestion,
+      shuffleOption: "exceptLast" as const,
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithShuffle} />);
+
+    expect(screen.getByLabelText("Choice 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("Choice 2")).toBeInTheDocument();
+  });
+
+  test("handles shuffle option 'none'", () => {
+    const questionWithNoShuffle = {
+      ...mockQuestion,
+      shuffleOption: "none" as const,
+    };
+
+    render(<MultipleChoiceSingleQuestion {...defaultProps} question={questionWithNoShuffle} />);
+
+    expect(screen.getByLabelText("Choice 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("Choice 2")).toBeInTheDocument();
+  });
+
+  test("handles other option input direction when value is set", () => {
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="Some text" dir="rtl" />);
+
+    const otherRadio = screen.getByRole("radio", { name: "Other" });
+    expect(otherRadio).toHaveAttribute("dir", "rtl");
+  });
+
+  test("handles back button click with TTC update", async () => {
+    const user = userEvent.setup();
+    render(<MultipleChoiceSingleQuestion {...defaultProps} />);
+
+    const backButton = screen.getByTestId("back-button");
+    await user.click(backButton);
+
+    expect(mockOnBack).toHaveBeenCalled();
+    expect(mockSetTtc).toHaveBeenCalled();
+  });
+
+  test("handles form submission with TTC update", async () => {
+    const user = userEvent.setup();
+    render(<MultipleChoiceSingleQuestion {...defaultProps} value="Choice 1" />);
+
+    const submitButton = screen.getByTestId("submit-button");
+    await user.click(submitButton);
+
+    expect(mockOnSubmit).toHaveBeenCalledWith({ q1: "Choice 1" }, expect.any(Object));
+    expect(mockSetTtc).toHaveBeenCalled();
+  });
 });

@@ -103,7 +103,7 @@ const mockSurvey: TJsEnvironmentStateSurvey = {
   welcomeCard: {
     enabled: true,
     headline: { default: "Welcome!" },
-    html: { default: "Welcome text" },
+    subheader: { default: "Welcome text" },
     timeToFinish: false,
     showResponseCount: false,
     buttonLabel: { default: "Start" },

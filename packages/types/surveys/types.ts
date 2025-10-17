@@ -101,7 +101,7 @@ export const ZSurveyWelcomeCard = z
   .object({
     enabled: z.boolean(),
     headline: ZI18nString.optional(),
-    html: ZI18nString.optional(),
+    subheader: ZI18nString.optional(),
     fileUrl: z.string().optional(),
     buttonLabel: ZI18nString.optional(),
     timeToFinish: z.boolean().default(true),
@@ -554,7 +554,6 @@ export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
 
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Consent),
-  html: ZI18nString.optional(),
   label: ZI18nString,
 });
 
@@ -589,7 +588,6 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
-  html: ZI18nString.optional(),
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
@@ -890,10 +888,10 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.html && welcomeCard.html.default.trim() !== "") {
+      if (welcomeCard.subheader && welcomeCard.subheader.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
-          "welcomeCardHtml",
-          welcomeCard.html,
+          "welcomeCardSubheader",
+          welcomeCard.subheader,
           languages,
           "welcome"
         );
@@ -930,14 +928,7 @@ export const ZSurvey = z
       }
 
       const defaultLanguageCode = "default";
-      const initialFieldsToValidate = [
-        "html",
-        "buttonLabel",
-        "upperLabel",
-        "lowerLabel",
-        "label",
-        "placeholder",
-      ];
+      const initialFieldsToValidate = ["buttonLabel", "upperLabel", "lowerLabel", "label", "placeholder"];
 
       let fieldsToValidate =
         questionIndex === 0 || isBackButtonHidden
@@ -1373,7 +1364,7 @@ export const ZSurvey = z
                   return false;
                 })
                 .map((q) => q.id),
-              ...(survey.hiddenFields.enabled ? (survey.hiddenFields.fieldIds ?? []) : []),
+              ...(survey.hiddenFields.fieldIds ?? []),
             ];
 
             if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {

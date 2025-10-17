@@ -1,16 +1,16 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
+import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
+import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Dropdown } from "@/modules/survey/editor/components/rating-type-dropdown";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
-import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;
@@ -39,6 +39,7 @@ export const RatingQuestionForm = ({
   const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -53,6 +54,7 @@ export const RatingQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div ref={parent}>
@@ -71,6 +73,7 @@ export const RatingQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>

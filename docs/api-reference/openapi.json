@@ -5709,7 +5709,7 @@
     },
     "/api/v1/management/storage": {
       "post": {
-        "description": "API endpoint for uploading public files. Uploaded files are public and accessible by anyone. This endpoint requires authentication. It accepts a JSON body with fileName, fileType, environmentId, and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading the file to S3.",
+        "description": "API endpoint for uploading public files. Uploaded files are public and accessible by anyone. This endpoint requires authentication and enforces a hard limit of 5 MB for all uploads. It accepts a JSON body with fileName, fileType, environmentId, and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading the file to S3.",
         "parameters": [
           {
             "example": "{{apiKey}}",

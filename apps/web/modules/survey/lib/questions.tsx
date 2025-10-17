@@ -1,5 +1,3 @@
-import { createI18nString } from "@/lib/i18n/utils";
-import { replaceQuestionPresetPlaceholders } from "@/lib/utils/templates";
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
 import {
@@ -40,6 +38,8 @@ import {
   TSurveyRankingQuestion,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
+import { replaceQuestionPresetPlaceholders } from "@/lib/utils/templates";
 
 export type TQuestion = {
   id: string;
@@ -201,7 +201,7 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
     icon: MousePointerClickIcon,
     preset: {
       headline: createI18nString("", []),
-      html: createI18nString("", []),
+      subheader: createI18nString("", []),
       buttonLabel: createI18nString(t("templates.book_interview"), []),
       buttonExternal: false,
       dismissButtonLabel: createI18nString(t("templates.skip"), []),
@@ -215,7 +215,7 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
     icon: CheckIcon,
     preset: {
       headline: createI18nString("", []),
-      html: createI18nString("", []),
+      subheader: createI18nString("", []),
       label: createI18nString("", []),
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),

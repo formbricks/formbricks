@@ -1,8 +1,9 @@
 import { ApiKey, ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
-import { ZApiKey } from "@formbricks/database/zod/api-keys";
+import { ZApiKey, ZApiKeyEnvironment } from "@formbricks/database/zod/api-keys";
 import { ZOrganizationAccess } from "@formbricks/types/api-key";
 import { ZEnvironment } from "@formbricks/types/environment";
+import { ZProject } from "@formbricks/types/project";
 
 export const ZApiKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
@@ -53,3 +54,15 @@ export interface TApiKeyWithEnvironmentPermission
   extends Pick<ApiKey, "id" | "label" | "createdAt" | "organizationAccess"> {
   apiKeyEnvironments: TApiKeyEnvironmentPermission[];
 }
+
+export const ZApiKeyWithEnvironmentAndProject = ZApiKey.extend({
+  apiKeyEnvironments: z.array(
+    ZApiKeyEnvironment.extend({
+      environment: ZEnvironment.extend({
+        project: ZProject.pick({ id: true, name: true }),
+      }),
+    })
+  ),
+});
+
+export type TApiKeyWithEnvironmentAndProject = z.infer<typeof ZApiKeyWithEnvironmentAndProject>;

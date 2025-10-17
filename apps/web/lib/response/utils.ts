@@ -1,4 +1,3 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { Prisma } from "@prisma/client";
 import {
   TResponse,
@@ -17,6 +16,9 @@ import {
   TSurveyQuestion,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
 import { getFormattedDateTimeString } from "../utils/datetime";
@@ -659,11 +661,13 @@ export const extracMetadataKeys = (obj: TResponse["meta"]) => {
 
 export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
   const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
-  const questions = survey.questions.map((question, idx) => {
-    const headline = getLocalizedValue(question.headline, "default") ?? question.id;
+  const modifiedSurvey = replaceHeadlineRecall(survey, "default");
+
+  const questions = modifiedSurvey.questions.map((question, idx) => {
+    const headline = getTextContent(getLocalizedValue(question.headline, "default")) ?? question.id;
     if (question.type === "matrix") {
       return question.rows.map((row) => {
-        return `${idx + 1}. ${headline} - ${getLocalizedValue(row.label, "default")}`;
+        return `${idx + 1}. ${headline} - ${getTextContent(getLocalizedValue(row.label, "default"))}`;
       });
     } else if (
       question.type === "multipleChoiceMulti" ||

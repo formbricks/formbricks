@@ -1,5 +1,17 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import {
+  TIntegrationGoogleSheets,
+  TIntegrationGoogleSheetsConfigData,
+  TIntegrationGoogleSheetsInput,
+} from "@formbricks/types/integration/google-sheet";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { getSpreadsheetNameByIdAction } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/actions";
 import {
@@ -26,17 +38,6 @@ import {
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import {
-  TIntegrationGoogleSheets,
-  TIntegrationGoogleSheetsConfigData,
-  TIntegrationGoogleSheetsInput,
-} from "@formbricks/types/integration/google-sheet";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -276,7 +277,7 @@ export const AddIntegrationModal = ({
                                 }}
                               />
                               <span className="ml-2 w-[30rem] truncate">
-                                {getLocalizedValue(question.headline, "default")}
+                                {getTextContent(getLocalizedValue(question.headline, "default"))}
                               </span>
                             </label>
                           </div>

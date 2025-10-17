@@ -1,6 +1,6 @@
-import { logSignOut } from "@/modules/auth/lib/utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { logSignOut } from "@/modules/auth/lib/utils";
 import { logSignOutAction } from "./sign-out";
 
 // Mock the dependencies
@@ -80,6 +80,7 @@ describe("logSignOutAction", () => {
       "email_change",
       "session_timeout",
       "forced_logout",
+      "password_reset",
     ] as const;
 
     for (const reason of reasons) {
@@ -100,11 +101,14 @@ describe("logSignOutAction", () => {
 
     await expect(() => logSignOutAction(mockUserId, mockUserEmail, mockContext)).rejects.toThrow(mockError);
 
-    expect(logger.error).toHaveBeenCalledWith("Failed to log sign out event", {
-      userId: mockUserId,
-      context: mockContext,
-      error: mockError.message,
-    });
+    expect(logger.error).toHaveBeenCalledWith(
+      {
+        userId: mockUserId,
+        context: mockContext,
+        error: mockError.message,
+      },
+      "Failed to log sign out event"
+    );
     expect(logger.error).toHaveBeenCalledTimes(1);
   });
 
@@ -116,11 +120,14 @@ describe("logSignOutAction", () => {
 
     await expect(() => logSignOutAction(mockUserId, mockUserEmail, mockContext)).rejects.toThrow(mockError);
 
-    expect(logger.error).toHaveBeenCalledWith("Failed to log sign out event", {
-      userId: mockUserId,
-      context: mockContext,
-      error: mockError,
-    });
+    expect(logger.error).toHaveBeenCalledWith(
+      {
+        userId: mockUserId,
+        context: mockContext,
+        error: mockError,
+      },
+      "Failed to log sign out event"
+    );
     expect(logger.error).toHaveBeenCalledTimes(1);
   });
 
@@ -133,11 +140,14 @@ describe("logSignOutAction", () => {
 
     await expect(() => logSignOutAction(mockUserId, mockUserEmail, emptyContext)).rejects.toThrow(mockError);
 
-    expect(logger.error).toHaveBeenCalledWith("Failed to log sign out event", {
-      userId: mockUserId,
-      context: emptyContext,
-      error: mockError.message,
-    });
+    expect(logger.error).toHaveBeenCalledWith(
+      {
+        userId: mockUserId,
+        context: emptyContext,
+        error: mockError.message,
+      },
+      "Failed to log sign out event"
+    );
     expect(logger.error).toHaveBeenCalledTimes(1);
   });
 

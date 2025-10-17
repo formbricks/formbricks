@@ -1,11 +1,11 @@
-import { createI18nString } from "@/lib/i18n/utils";
-// Import FileInput to get the mocked version
-import { FileInput } from "@/modules/ui/components/file-input";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
+// Import FileInput to get the mocked version
+import { FileInput } from "@/modules/ui/components/file-input";
 import { QuestionFormInput } from "./index";
 
 // Mock all the modules that might cause server-side environment variable access issues
@@ -162,6 +162,26 @@ vi.mock("@/modules/ui/components/tooltip", () => ({
   TooltipRenderer: ({ children, tooltipContent }: any) => (
     <span data-tooltip={tooltipContent}>{children}</span>
   ),
+  TooltipProvider: ({ children }: any) => <div>{children}</div>,
+  Tooltip: ({ children }: any) => <div>{children}</div>,
+  TooltipTrigger: ({ children, asChild }: any) => (asChild ? children : <div>{children}</div>),
+  TooltipContent: ({ children }: any) => <div>{children}</div>,
+}));
+
+// Mock LocalizedEditor to render as a simple input for testing
+vi.mock("@/modules/ee/multi-language-surveys/components/localized-editor", () => ({
+  LocalizedEditor: ({ id, value, updateQuestion, questionIdx }: any) => (
+    <input
+      data-testid={id}
+      id={id}
+      defaultValue={value?.default || ""}
+      onChange={(e) => {
+        if (updateQuestion) {
+          updateQuestion(questionIdx, { [id]: { default: e.target.value } });
+        }
+      }}
+    />
+  ),
 }));
 
 // Mock component imports to avoid rendering real components that might access server-side resources
@@ -280,7 +300,7 @@ const mockSurvey = {
   welcomeCard: {
     enabled: true,
     headline: createI18nString("Welcome", ["en", "fr"]),
-    html: createI18nString("<p>Welcome to our survey</p>", ["en", "fr"]),
+    subheader: createI18nString("<p>Welcome to our survey</p>", ["en", "fr"]),
     buttonLabel: createI18nString("Start", ["en", "fr"]),
     fileUrl: "",
     videoUrl: "",

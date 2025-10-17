@@ -16,6 +16,11 @@ on:
         required: false
         type: boolean
         default: false
+      make_latest:
+        description: "Whether to move stable tag (from GitHub release 'Set as the latest release' option)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -32,8 +37,8 @@ jobs:
     timeout-minutes: 10 # Prevent hung git operations
     permissions:
       contents: write # Required to push tags
-    # Only move stable tag for non-prerelease versions
-    if: ${{ !inputs.is_prerelease }}
+    # Only move stable tag for non-prerelease versions AND when make_latest is true
+    if: ${{ !inputs.is_prerelease && inputs.make_latest }}
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
