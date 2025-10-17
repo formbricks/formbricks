@@ -60,10 +60,9 @@ export const MainNavigation = ({
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslate();
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
-  const [isMounted, setIsMounted] = useState(false);
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const project = projects.find((project) => project.id === environment.projectId);
@@ -79,7 +78,6 @@ export const MainNavigation = ({
   useEffect(() => {
     const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
     setIsCollapsed(isCollapsedValueFromLocalStorage);
-    setTimeout(() => setIsMounted(true), 0);
   }, []);
 
   useEffect(() => {
@@ -165,7 +163,6 @@ export const MainNavigation = ({
         <aside
           className={cn(
             "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md",
-            isMounted && "transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <div>
