@@ -11,7 +11,26 @@ import {
 import { RecallItemSelect } from "./recall-item-select";
 
 vi.mock("@/lib/utils/recall", () => ({
-  replaceRecallInfoWithUnderline: vi.fn((text) => `_${text}_`),
+  getTextContentWithRecallTruncated: vi.fn((text: string, maxLength: number = 25) => {
+    // Remove all HTML tags by repeatedly applying the regex
+    let cleaned = text;
+    let prev;
+    do {
+      prev = cleaned;
+      cleaned = cleaned.replace(/<[^>]*>/g, "");
+    } while (cleaned !== prev);
+    cleaned = cleaned.replace(/\s+/g, " ").trim();
+
+    const withRecallReplaced = cleaned.replace(/#recall:[^#]+#/g, "___");
+
+    if (withRecallReplaced.length <= maxLength) {
+      return withRecallReplaced;
+    }
+
+    const start = withRecallReplaced.slice(0, 10);
+    const end = withRecallReplaced.slice(-10);
+    return `${start}...${end}`;
+  }),
 }));
 
 describe("RecallItemSelect", () => {
@@ -78,15 +97,15 @@ describe("RecallItemSelect", () => {
       />
     );
 
-    expect(screen.getByText("_Question 1_")).toBeInTheDocument();
-    expect(screen.getByText("_Question 2_")).toBeInTheDocument();
-    expect(screen.getByText("_hidden1_")).toBeInTheDocument();
-    expect(screen.getByText("_hidden2_")).toBeInTheDocument();
-    expect(screen.getByText("_Variable 1_")).toBeInTheDocument();
-    expect(screen.getByText("_Variable 2_")).toBeInTheDocument();
+    expect(screen.getByText("Question 1")).toBeInTheDocument();
+    expect(screen.getByText("Question 2")).toBeInTheDocument();
+    expect(screen.getByText("hidden1")).toBeInTheDocument();
+    expect(screen.getByText("hidden2")).toBeInTheDocument();
+    expect(screen.getByText("Variable 1")).toBeInTheDocument();
+    expect(screen.getByText("Variable 2")).toBeInTheDocument();
 
-    expect(screen.queryByText("_Current Question_")).not.toBeInTheDocument();
-    expect(screen.queryByText("_File Upload Question_")).not.toBeInTheDocument();
+    expect(screen.queryByText("Current Question")).not.toBeInTheDocument();
+    expect(screen.queryByText("File Upload Question")).not.toBeInTheDocument();
   });
 
   test("do not render questions if questionId is 'start' (welcome card)", async () => {
@@ -102,16 +121,16 @@ describe("RecallItemSelect", () => {
       />
     );
 
-    expect(screen.queryByText("_Question 1_")).not.toBeInTheDocument();
-    expect(screen.queryByText("_Question 2_")).not.toBeInTheDocument();
+    expect(screen.queryByText("Question 1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Question 2")).not.toBeInTheDocument();
 
-    expect(screen.getByText("_hidden1_")).toBeInTheDocument();
-    expect(screen.getByText("_hidden2_")).toBeInTheDocument();
-    expect(screen.getByText("_Variable 1_")).toBeInTheDocument();
-    expect(screen.getByText("_Variable 2_")).toBeInTheDocument();
+    expect(screen.getByText("hidden1")).toBeInTheDocument();
+    expect(screen.getByText("hidden2")).toBeInTheDocument();
+    expect(screen.getByText("Variable 1")).toBeInTheDocument();
+    expect(screen.getByText("Variable 2")).toBeInTheDocument();
 
-    expect(screen.queryByText("_Current Question_")).not.toBeInTheDocument();
-    expect(screen.queryByText("_File Upload Question_")).not.toBeInTheDocument();
+    expect(screen.queryByText("Current Question")).not.toBeInTheDocument();
+    expect(screen.queryByText("File Upload Question")).not.toBeInTheDocument();
   });
 
   test("filters recall items based on search input", async () => {
@@ -131,9 +150,9 @@ describe("RecallItemSelect", () => {
     const searchInput = screen.getByPlaceholderText("Search options");
     await user.type(searchInput, "Variable");
 
-    expect(screen.getByText("_Variable 1_")).toBeInTheDocument();
-    expect(screen.getByText("_Variable 2_")).toBeInTheDocument();
-    expect(screen.queryByText("_Question 1_")).not.toBeInTheDocument();
+    expect(screen.getByText("Variable 1")).toBeInTheDocument();
+    expect(screen.getByText("Variable 2")).toBeInTheDocument();
+    expect(screen.queryByText("Question 1")).not.toBeInTheDocument();
   });
 
   test("calls addRecallItem and setShowRecallItemSelect when item is selected", async () => {
@@ -150,7 +169,7 @@ describe("RecallItemSelect", () => {
       />
     );
 
-    const firstItem = screen.getByText("_Question 1_");
+    const firstItem = screen.getByText("Question 1");
     await user.click(firstItem);
 
     expect(mockAddRecallItem).toHaveBeenCalledWith({
@@ -176,8 +195,8 @@ describe("RecallItemSelect", () => {
       />
     );
 
-    expect(screen.queryByText("_Question 1_")).not.toBeInTheDocument();
-    expect(screen.getByText("_Question 2_")).toBeInTheDocument();
+    expect(screen.queryByText("Question 1")).not.toBeInTheDocument();
+    expect(screen.getByText("Question 2")).toBeInTheDocument();
   });
 
   test("shows 'No recall items found' when search has no results", async () => {
@@ -197,6 +216,6 @@ describe("RecallItemSelect", () => {
     const searchInput = screen.getByPlaceholderText("Search options");
     await user.type(searchInput, "nonexistent");
 
-    expect(screen.getByText("No recall items found 🤷")).toBeInTheDocument();
+    expect(screen.getByText("environments.surveys.edit.no_recall_items_found")).toBeInTheDocument();
   });
 });

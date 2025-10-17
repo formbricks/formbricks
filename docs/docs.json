@@ -79,7 +79,8 @@
                   "xm-and-surveys/surveys/general-features/hide-back-button",
                   "xm-and-surveys/surveys/general-features/email-followups",
                   "xm-and-surveys/surveys/general-features/quota-management",
-                  "xm-and-surveys/surveys/general-features/spam-protection"
+                  "xm-and-surveys/surveys/general-features/spam-protection",
+                  "xm-and-surveys/surveys/general-features/tags"
                 ]
               },
               {
@@ -191,6 +192,7 @@
                 "icon": "lightbulb",
                 "pages": [
                   "xm-and-surveys/xm/best-practices/contact-form",
+                  "xm-and-surveys/xm/best-practices/headless-surveys",
                   "xm-and-surveys/xm/best-practices/docs-feedback",
                   "xm-and-surveys/xm/best-practices/feature-chaser",
                   "xm-and-surveys/xm/best-practices/feedback-box",

@@ -6,23 +6,37 @@ icon: "key"
 
 To unlock Formbricks Enterprise Edition features, you need to activate your Enterprise License Key. Follow these steps to activate your license:
 
-## 1. Set the License Key
+<Steps>
+  <Step title="Set the License Key">
+    Add your Enterprise License Key as an environment variable in your deployment:
 
-Add your Enterprise License Key as an environment variable in your deployment:
+    ```bash
+    ENTERPRISE_LICENSE_KEY=
+    ```
 
-```bash
-ENTERPRISE_LICENSE_KEY=
-```
+    - Add your Enterprise License Key after `ENTERPRISE_LICENSE_KEY=` with the key you received from Formbricks.
+    - How you set environment variables depends on your deployment (Docker, Kubernetes, .env file, etc.).
+  </Step>
 
-- Add your Enterprise License Key after `ENTERPRISE_LICENSE_KEY=` with the key you received from Formbricks.
-- How you set environment variables depends on your deployment (Docker, Kubernetes, .env file, etc.).
+  <Step title="Restart Your Instance">
+    After setting the environment variable, **restart your Formbricks instance** to apply the changes.
+  </Step>
 
-## 2. Restart Your Instance
+  <Step title="Verify License Activation">
+    To verify if your license is active, visit `Organization Settings` -> `Enterprise License` to check the confirmation screen.
+  </Step>
 
-After setting the environment variable, **restart your Formbricks instance** to apply the changes.
+  <Step title="Ensure License Server is Reachable">
+    Your Formbricks instance performs a daily license check to verify your Enterprise License. If you're deploying Formbricks behind a firewall or have network restrictions, you need to whitelist the following:
 
-## 3. Verify License Activation
-To verify if your license is active, visit `Organization Settings` -> `Enterprise License` to check the confirmation screen.
+    - **Domain**: `ee.formbricks.com`
+    - **URL**: `https://ee.formbricks.com/api/licenses/check`
+    - **Protocol**: HTTPS (Port 443)
+    - **Method**: POST
+    - **Frequency**: Every 24 hours
 
-### Troubleshooting
-Your server needs to be able to reach the Formbricks License Server. In case you're deploying Formbricks behind a firewall, please reach out to hola@formbricks.com for more info.
+    The license check includes a 3-day grace period. If the check fails temporarily, your instance will continue using cached license information for up to 3 days.
+  </Step>
+</Steps>
+
+    If you have questions or need assistance with network configuration, please reach out to hola@formbricks.com.

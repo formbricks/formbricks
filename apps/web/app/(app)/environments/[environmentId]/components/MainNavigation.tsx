@@ -1,20 +1,5 @@
 "use client";
 
-import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
-import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
-import FBLogo from "@/images/formbricks-wordmark.svg";
-import { cn } from "@/lib/cn";
-import { getAccessFlags } from "@/lib/membership/utils";
-import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
-import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
-import { ProfileAvatar } from "@/modules/ui/components/avatars";
-import { Button } from "@/modules/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
 import { useTranslate } from "@tolgee/react";
 import {
   ArrowUpRightIcon,
@@ -36,6 +21,21 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
+import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
+import FBLogo from "@/images/formbricks-wordmark.svg";
+import { cn } from "@/lib/cn";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { getLatestStableFbReleaseAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
+import { ProfileAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
@@ -60,7 +60,7 @@ export const MainNavigation = ({
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslate();
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });

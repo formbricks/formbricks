@@ -1,11 +1,5 @@
 "use client";
 
-import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
-import { Button } from "@/modules/ui/components/button";
-import { Label } from "@/modules/ui/components/label";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -15,13 +9,18 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useRef, useState } from "react";
 import { TI18nString, TSurvey, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { QuestionOptionChoice } from "@/modules/survey/editor/components/question-option-choice";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 
 interface RankingQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyRankingQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyRankingQuestion>) => void;
-  lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
@@ -132,6 +131,7 @@ export const RankingQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div ref={parent}>
@@ -150,6 +150,7 @@ export const RankingQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>
@@ -195,28 +196,27 @@ export const RankingQuestionForm = ({
             }}>
             <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
               <div className="flex flex-col gap-2" ref={parent}>
-                {question.choices &&
-                  question.choices.map((choice, choiceIdx) => (
-                    <QuestionOptionChoice
-                      key={choice.id}
-                      choice={choice}
-                      choiceIdx={choiceIdx}
-                      questionIdx={questionIdx}
-                      updateChoice={updateChoice}
-                      deleteChoice={deleteChoice}
-                      addChoice={addChoice}
-                      isInvalid={isInvalid}
-                      localSurvey={localSurvey}
-                      selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
-                      surveyLanguages={surveyLanguages}
-                      question={question}
-                      updateQuestion={updateQuestion}
-                      surveyLanguageCodes={surveyLanguageCodes}
-                      locale={locale}
-                      isStorageConfigured={isStorageConfigured}
-                    />
-                  ))}
+                {question.choices?.map((choice, choiceIdx) => (
+                  <QuestionOptionChoice
+                    key={choice.id}
+                    choice={choice}
+                    choiceIdx={choiceIdx}
+                    questionIdx={questionIdx}
+                    updateChoice={updateChoice}
+                    deleteChoice={deleteChoice}
+                    addChoice={addChoice}
+                    isInvalid={isInvalid}
+                    localSurvey={localSurvey}
+                    selectedLanguageCode={selectedLanguageCode}
+                    setSelectedLanguageCode={setSelectedLanguageCode}
+                    surveyLanguages={surveyLanguages}
+                    question={question}
+                    updateQuestion={updateQuestion}
+                    surveyLanguageCodes={surveyLanguageCodes}
+                    locale={locale}
+                    isStorageConfigured={isStorageConfigured}
+                  />
+                ))}
               </div>
             </SortableContext>
           </DndContext>

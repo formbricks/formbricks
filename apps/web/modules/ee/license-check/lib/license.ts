@@ -1,11 +1,4 @@
 import "server-only";
-import { cache } from "@/lib/cache";
-import { env } from "@/lib/env";
-import { hashString } from "@/lib/hash-string";
-import {
-  TEnterpriseLicenseDetails,
-  TEnterpriseLicenseFeatures,
-} from "@/modules/ee/license-check/types/enterprise-license";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
@@ -13,6 +6,13 @@ import { z } from "zod";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { cache } from "@/lib/cache";
+import { env } from "@/lib/env";
+import { hashString } from "@/lib/hash-string";
+import {
+  TEnterpriseLicenseDetails,
+  TEnterpriseLicenseFeatures,
+} from "@/modules/ee/license-check/types/enterprise-license";
 
 // Configuration
 const CONFIG = {
@@ -154,7 +154,7 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
       };
     }
   } catch (error) {
-    logger.error("Failed to get previous result from cache", { error });
+    logger.error({ error }, "Failed to get previous result from cache");
   }
 
   return {
@@ -174,27 +174,33 @@ const setPreviousResult = async (previousResult: TPreviousResult) => {
       CONFIG.CACHE.PREVIOUS_RESULT_TTL_MS
     );
     if (!result.ok) {
-      logger.warn("Failed to cache previous result", { error: result.error });
+      logger.warn({ error: result.error }, "Failed to cache previous result");
     }
   } catch (error) {
-    logger.error("Failed to set previous result in cache", { error });
+    logger.error({ error }, "Failed to set previous result in cache");
   }
 };
 
 // Monitoring functions
 const trackFallbackUsage = (level: FallbackLevel) => {
-  logger.info(`Using license fallback level: ${level}`, {
-    fallbackLevel: level,
-    timestamp: new Date().toISOString(),
-  });
+  logger.info(
+    {
+      fallbackLevel: level,
+      timestamp: new Date().toISOString(),
+    },
+    `Using license fallback level: ${level}`
+  );
 };
 
 const trackApiError = (error: LicenseApiError) => {
-  logger.error(`License API error: ${error.message}`, {
-    status: error.status,
-    code: error.code,
-    timestamp: new Date().toISOString(),
-  });
+  logger.error(
+    {
+      status: error.status,
+      code: error.code,
+      timestamp: new Date().toISOString(),
+    },
+    `License API error: ${error.message}`
+  );
 };
 
 // Validation functions
