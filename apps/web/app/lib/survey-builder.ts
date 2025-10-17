@@ -218,7 +218,7 @@ export const buildConsentQuestion = ({
 }: {
   id?: string;
   headline: string;
-  subheader?: string;
+  subheader: string;
   buttonLabel?: string;
   backButtonLabel?: string;
   required?: boolean;
@@ -229,7 +229,7 @@ export const buildConsentQuestion = ({
   return {
     id: id ?? createId(),
     type: TSurveyQuestionTypeEnum.Consent,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    subheader: createI18nString(subheader, []),
     headline: createI18nString(headline, []),
     buttonLabel: getDefaultButtonLabel(buttonLabel, t),
     backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
@@ -242,7 +242,7 @@ export const buildConsentQuestion = ({
 export const buildCTAQuestion = ({
   id,
   headline,
-  html,
+  subheader,
   buttonLabel,
   buttonExternal,
   backButtonLabel,
@@ -255,7 +255,7 @@ export const buildCTAQuestion = ({
   id?: string;
   headline: string;
   buttonExternal: boolean;
-  html?: string;
+  subheader: string;
   buttonLabel?: string;
   backButtonLabel?: string;
   required?: boolean;
@@ -267,7 +267,7 @@ export const buildCTAQuestion = ({
   return {
     id: id ?? createId(),
     type: TSurveyQuestionTypeEnum.CTA,
-    html: html ? createI18nString(html, []) : undefined,
+    subheader: createI18nString(subheader, []),
     headline: createI18nString(headline, []),
     buttonLabel: getDefaultButtonLabel(buttonLabel, t),
     backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
@@ -364,7 +364,7 @@ export const getDefaultWelcomeCard = (t: TFunction): TSurveyWelcomeCard => {
   return {
     enabled: false,
     headline: createI18nString(t("templates.default_welcome_card_headline"), []),
-    html: createI18nString(t("templates.default_welcome_card_html"), []),
+    subheader: createI18nString(t("templates.default_welcome_card_html"), []),
     buttonLabel: createI18nString(t("templates.default_welcome_card_button_label"), []),
     timeToFinish: false,
     showResponseCount: false,

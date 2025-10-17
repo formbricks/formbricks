@@ -86,15 +86,16 @@ export const OpenQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        label={t("environments.surveys.edit.question") + "*"}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div ref={parent}>
@@ -104,15 +105,16 @@ export const OpenQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                label={t("common.description")}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>

@@ -11,6 +11,7 @@ import {
   TIntegrationGoogleSheetsInput,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { getSpreadsheetNameByIdAction } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/actions";
 import {
@@ -276,7 +277,7 @@ export const AddIntegrationModal = ({
                                 }}
                               />
                               <span className="ml-2 w-[30rem] truncate">
-                                {getLocalizedValue(question.headline, "default")}
+                                {getTextContent(getLocalizedValue(question.headline, "default"))}
                               </span>
                             </label>
                           </div>

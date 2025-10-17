@@ -93,6 +93,7 @@ export const AddressQuestionForm = ({
   ]);
 
   const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -107,6 +108,7 @@ export const AddressQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
 
       <div ref={parent}>
@@ -125,6 +127,7 @@ export const AddressQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>

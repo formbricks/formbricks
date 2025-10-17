@@ -223,7 +223,15 @@ export const RecallPlugin = ({
         }
       });
     },
-    [localSurvey, selectedLanguageCode, editor, convertTextToRecallNodes, findAllRecallNodes]
+    [
+      findAllRecallNodes,
+      localSurvey,
+      selectedLanguageCode,
+      setRecallItems,
+      setFallbacks,
+      editor,
+      convertTextToRecallNodes,
+    ]
   );
 
   // Handle @ key press for recall trigger
@@ -260,7 +268,7 @@ export const RecallPlugin = ({
       }
       return false;
     },
-    [editor]
+    [editor, setShowRecallItemSelect]
   );
 
   // Close dropdown when clicking outside
@@ -277,7 +285,7 @@ export const RecallPlugin = ({
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [showRecallItemSelect]);
+  }, [setShowRecallItemSelect, showRecallItemSelect]);
 
   // Clean up when dropdown closes
   useEffect(() => {
@@ -385,11 +393,13 @@ export const RecallPlugin = ({
     },
     [
       editor,
+      setShowRecallItemSelect,
+      recallItems,
+      setRecallItems,
       atSymbolPosition,
       replaceAtSymbolWithStoredPosition,
       replaceAtSymbolWithCurrentSelection,
       onShowFallbackInput,
-      recallItems,
     ]
   );
 

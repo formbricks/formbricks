@@ -3,6 +3,7 @@
 import { ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString, TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { getEnabledLanguages } from "@/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
@@ -82,7 +83,7 @@ export const MultiLangWrapper = ({
           {usedLanguageCode !== "default" && value && typeof value["default"] !== "undefined" && (
             <div className="mt-1 text-xs text-slate-500">
               <strong>{t("environments.project.languages.translate")}:</strong>{" "}
-              {recallToHeadline(value, localSurvey, false, "default")["default"]}
+              {getTextContent(recallToHeadline(value, localSurvey, false, "default")["default"] ?? "")}
             </div>
           )}
 

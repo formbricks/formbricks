@@ -1,0 +1,220 @@
+---
+title: "Headless Surveys"
+icon: "pen"
+description: "Using Formbricks as a Headless Survey Platform"
+---
+
+This document shows how you can use Formbricks to manage survey definitions and response collection via APIs, while rendering the surveys in your own frontend and forwarding the response data to your own analytics pipelines.
+
+## In a nutshell
+
+### What Formbricks handles:
+
+1. **Survey Management:** Create, update, and host survey definitions through the Formbricks Management API or dashboard.  
+2. **Response Handling:** Receive and securely store responses via the Client or Management API.  
+3. **Webhooks Delivery:** Send real-time response data to your configured endpoints when responses are created, updated, or completed.
+
+### What you handle:
+
+1. **Custom Survey Wrapper / UI:** Build your own front-end package that fetches the survey (via API or local cache), renders it, and captures user responses.  
+2. **Analysis & Reporting:** Process incoming webhook data or fetched responses in your own analytics, data warehouse, or visualization tools. You can still make use of Formbricks to view Survey stats and data, but any type of custom dashboards is currently not supported.
+
+## Why choose this approach?
+
+1. **Your UI, your brand:** You take full control of survey look, feel, transitions, validations, and logic in your application stack.  
+2. **Separation of concerns:** Formbricks functions like a specialized “Backend-as-a-Service” for survey schemas and response handling; you control the frontend and analytics.  
+3. **OSS, self-hostable**: With Formbricks being open source, you can self-host without vendor lock-in.
+
+
+## Core components
+
+1. **Formbricks Backend:** Use the Formbricks app or Management API to create surveys (questions, flows, locales, validations).  
+2. **Your UI Survey Package:** Renders your custom UI, collects the data and sends to Formbricks backend using Formbricks API. For inspiration, you can start looking [here](https://github.com/formbricks/formbricks/tree/main/packages/surveys). With an active Enterprise license you can even fork our surveys package, make changes and keep them private to your organization (freed from AGPL obligation to also release your changes under AGPL)  
+3. **Webhook Integration:** Using in-built Webhook integration forward the data to your Analysis tool or Data warehouse.  
+4. **Your Analysis Tool / Data Warehouse:** Receive all the data from Formbricks integration and process it for analysis.
+
+## Data Flow
+
+### **Create Survey with Formbricks:** 
+
+Create a survey in Formbricks (UI) or programmatically via the Management API. Read more about the API endpoint [here](https://formbricks.com/docs/api-reference/management-api--survey/create-survey).  
+Returns: Full survey object with id, schema, and configuration.  
+⚠️ Backend only: Requires API key \- call from your server, not client-side.
+
+```javascript
+POST /api/v1/management/surveys
+Headers:
+  x-api-key: <your-api-key>
+  Content-Type: application/json
+
+Body:
+{
+  "environmentId": "your-environment-id",
+  "type": "link",
+  "name": "Customer Feedback Survey",
+  "questions": [
+    ...
+  ]
+}
+```
+
+### **Fetch Survey Schema:**
+
+Get the survey schema using the Formbricks API. Read more about the API endpoint [here](https://formbricks.com/docs/api-reference/management-api--survey/get-survey-by-id).
+
+GET /api/v1/management/surveys/{surveyId}  
+Headers: x-api-key: \<your-api-key\>
+
+#### 
+
+**Returns**: Complete survey JSON schema including:
+
+- Questions array with types, logic, and validation  
+- Display settings and styling  
+- Languages and translations  
+- Branching/skip logic  
+- Thank you pages and redirects
+
+#### **Implementation Options:**
+
+**Option A (Live)**: Your backend fetches at runtime and serves to your UI
+
+1. Fresh data on every request  
+2. Requires backend proxy endpoint
+
+⚠️ Backend only: API key required, cannot be called from browser.
+
+ **Optional:**: Store survey JSON in your CDN/storage
+
+1. Faster client load times  
+2. Periodically refresh from Management API  
+3. Best for high-traffic scenarios
+
+⚠️ Backend only: API key required, cannot be called from browser.
+
+**Option B (Client Environment API)**:  You can fetch all the survey schema and surveys from the Client side using the Client Environment API. However, this only works for Website & App surveys since they are the only ones that are made public on the Client API for our SDK to pull into an app. Make sure that:
+
+1. Survey type: Website & App  
+2. Recontact Options: Overwrite Global Waiting Time & Always show  
+3. Targeting: None
+
+These are **necessary requirements** for the survey to show up in the endpoint.
+
+More about the Endpoint [here](https://formbricks.com/docs/api-reference/client-api--environment/get-environment-state).
+
+```javascript
+GET /api/v1/client/{environmentId}/environment
+Headers:
+  Content-Type: application/json
+
+Body:
+{
+  "data": {
+    "actionClasses": [
+      { ... },
+      { ... }
+    ],
+    "project": {
+      "id": "<project_id>",
+      ...
+    },
+    "surveys": [
+      {
+        "id": "<survey_id>",
+        "name": "Start from scratch",
+        "status": "inProgress",
+        "question": "What would you like to know?",
+        "trigger": "code action",
+        "ending": "Thank you! We appreciate your feedback."
+      }
+    ]
+  }
+}
+```
+
+### **Render Survey with Your Custom UI:**
+
+Your frontend receives the survey JSON and renders it using your own UI components. 
+
+For inspiration, you can start looking [here](https://github.com/formbricks/formbricks/tree/main/packages/surveys). With an active Enterprise license you can even fork our surveys package, make changes and keep them private to your organization (freed from AGPL obligation to also release your changes under AGPL)
+
+* Question rendering based on type (openText, multipleChoiceSingle, rating, etc.)  
+* Skip logic and conditional branching  
+* Input validation  
+* Progress tracking  
+* Custom styling and branding
+
+### **Submit Responses to Formbricks:**
+
+#### **Client-side Submission (Recommended):**
+
+Post responses directly from the browser to Formbricks Client API. Read more about it [here](https://formbricks.com/docs/api-reference/client-api--response/create-response).  
+✅ No authentication required \- Safe for browser/mobile apps.
+
+```javascript
+POST /api/v1/client/{environmentId}/responses
+Headers:
+  Content-Type: application/json
+
+Body:
+{
+  "surveyId": "survey-xyz",
+  "data": {
+    "question-id-1": "Customer's answer",
+    "question-id-2": 5,
+    "question-id-3": ["option1", "option2"]
+  },
+  "finished": true
+}
+
+```
+
+#### **Server-side Submission (Alternative):**
+
+Proxy responses through your backend.   
+Use when: You need server-side validation, PII handling, or response enrichment before storage.
+
+### **Consume Analytics & Response Data:**
+
+#### **Option A: Real-time Webhooks (Recommended):**
+
+Configure webhooks in Formbricks to push response data to your system. Read more about Webhooks [here](https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks#webhooks).
+
+1. Go to Formbricks Settings → Webhooks  
+2. Add your endpoint URL: https://your-domain.com/webhooks/formbricks  
+3. Select triggers:  
+   * responseCreated \- New response started  
+   * responseUpdated \- Response in progress  
+   * responseFinished \- Response completed
+
+**Webhook payload example:**
+
+```javascript
+{
+  "event": "responseFinished",
+  "data": {
+    "id": "response-123",
+    "surveyId": "survey-xyz",
+    "data": {
+      "question-id-1": "answer"
+      ...
+    },
+    "createdAt": "2025-01-15T10:30:00Z",
+    "finished": true
+  }
+}
+
+```
+
+Forward to your analytics tool, data warehouse, or CRM in real-time.
+
+#### **Option B: Pull from API on Demand:**
+
+Fetch responses periodically from your backend, read more about the Endpoint [here](https://formbricks.com/docs/api-reference/management-api--response/get-survey-responses).
+
+```javascript
+GET /api/v1/management/responses?surveyId={surveyId}
+Headers:
+  x-api-key: <your-api-key>
+```
+

@@ -14,6 +14,7 @@ import {
   TIntegrationSlackInput,
 } from "@formbricks/types/integration/slack";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -281,7 +282,9 @@ export const AddChannelMappingModal = ({
                                   handleCheckboxChange(question.id);
                                 }}
                               />
-                              <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
+                              <span className="ml-2">
+                                {getTextContent(getLocalizedValue(question.headline, "default"))}
+                              </span>
                             </label>
                           </div>
                         ))}

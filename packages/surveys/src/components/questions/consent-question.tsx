@@ -1,14 +1,14 @@
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { HtmlBody } from "@/components/general/html-body";
-import { QuestionMedia } from "@/components/general/question-media";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Subheader } from "@/components/general/subheader";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
@@ -75,7 +75,10 @@ export function ConsentQuestion({
           questionId={question.id}
           required={question.required}
         />
-        <HtmlBody htmlString={getLocalizedValue(question.html, languageCode) || ""} />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
         <label
           ref={consentRef}
           tabIndex={isCurrent ? 0 : -1}

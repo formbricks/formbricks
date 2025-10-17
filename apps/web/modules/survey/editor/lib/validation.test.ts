@@ -1,5 +1,5 @@
+import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
-import { TFunction } from "react-i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
@@ -183,7 +183,7 @@ describe("validation.isWelcomeCardValid", () => {
   const baseWelcomeCard: TSurveyWelcomeCard = {
     enabled: true,
     headline: { default: "Welcome", en: "Welcome", de: "Willkommen" },
-    html: { default: "<p>Info</p>", en: "<p>Info</p>", de: "<p>Infos</p>" },
+    subheader: { default: "<p>Info</p>", en: "<p>Info</p>", de: "<p>Infos</p>" },
     timeToFinish: false,
     showResponseCount: false,
   };
@@ -197,13 +197,13 @@ describe("validation.isWelcomeCardValid", () => {
     expect(validation.isWelcomeCardValid(card, surveyLanguagesEnabled)).toBe(false);
   });
 
-  test("should return false if html is invalid (when html is provided)", () => {
-    const card = { ...baseWelcomeCard, html: { default: "<p>Info</p>", en: "<p>Info</p>", de: "  " } };
+  test("should return false if subheader is invalid (when subheader is provided)", () => {
+    const card = { ...baseWelcomeCard, subheader: { default: "<p>Info</p>", en: "<p>Info</p>", de: "  " } };
     expect(validation.isWelcomeCardValid(card, surveyLanguagesEnabled)).toBe(false);
   });
 
-  test("should return true if html is undefined", () => {
-    const card = { ...baseWelcomeCard, html: undefined };
+  test("should return true if subheader is undefined", () => {
+    const card = { ...baseWelcomeCard, subheader: undefined };
     expect(validation.isWelcomeCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 });
@@ -372,7 +372,7 @@ describe("validation.validateQuestion", () => {
       type: TSurveyQuestionTypeEnum.Consent,
       headline: { default: "Consent", en: "Consent", de: "Zustimmung" },
       label: { default: "I agree", en: "I agree", de: "Ich stimme zu" },
-      html: { default: "Details...", en: "Details...", de: "Details..." },
+      subheader: { default: "Details...", en: "Details...", de: "Details..." },
     };
 
     test("should return true for a valid Consent question", () => {

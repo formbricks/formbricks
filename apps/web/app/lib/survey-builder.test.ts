@@ -312,6 +312,7 @@ describe("Survey Builder", () => {
     test("creates a consent question with required fields", () => {
       const question = buildConsentQuestion({
         headline: "Consent Question",
+        subheader: "",
         label: "I agree to terms",
         t: mockT,
       });
@@ -319,6 +320,7 @@ describe("Survey Builder", () => {
       expect(question).toMatchObject({
         type: TSurveyQuestionTypeEnum.Consent,
         headline: { default: "Consent Question" },
+        subheader: { default: "" },
         label: { default: "I agree to terms" },
         buttonLabel: { default: "common.next" },
         backButtonLabel: { default: "common.back" },
@@ -366,6 +368,7 @@ describe("Survey Builder", () => {
     test("creates a CTA question with required fields", () => {
       const question = buildCTAQuestion({
         headline: "CTA Question",
+        subheader: "",
         buttonExternal: false,
         t: mockT,
       });
@@ -373,6 +376,7 @@ describe("Survey Builder", () => {
       expect(question).toMatchObject({
         type: TSurveyQuestionTypeEnum.CTA,
         headline: { default: "CTA Question" },
+        subheader: { default: "" },
         buttonLabel: { default: "common.next" },
         backButtonLabel: { default: "common.back" },
         required: false,
@@ -397,7 +401,7 @@ describe("Survey Builder", () => {
       const question = buildCTAQuestion({
         id: "custom-id",
         headline: "CTA Question",
-        html: "<p>Click the button</p>",
+        subheader: "<p>Click the button</p>",
         buttonLabel: "Click me",
         buttonExternal: true,
         buttonUrl: "https://example.com",
@@ -409,7 +413,7 @@ describe("Survey Builder", () => {
       });
 
       expect(question.id).toBe("custom-id");
-      expect(question.html).toEqual({ default: "<p>Click the button</p>" });
+      expect(question.subheader).toEqual({ default: "<p>Click the button</p>" });
       expect(question.buttonLabel).toEqual({ default: "Click me" });
       expect(question.buttonExternal).toBe(true);
       expect(question.buttonUrl).toBe("https://example.com");
@@ -422,6 +426,7 @@ describe("Survey Builder", () => {
     test("handles external button with URL", () => {
       const question = buildCTAQuestion({
         headline: "CTA Question",
+        subheader: "",
         buttonExternal: true,
         buttonUrl: "https://formbricks.com",
         t: mockT,
@@ -532,7 +537,7 @@ describe("Helper Functions", () => {
     const card = getDefaultWelcomeCard(mockT);
     expect(card.enabled).toBe(false);
     expect(card.headline).toEqual({ default: "templates.default_welcome_card_headline" });
-    expect(card.html).toEqual({ default: "templates.default_welcome_card_html" });
+    expect(card.subheader).toEqual({ default: "templates.default_welcome_card_html" });
     expect(card.buttonLabel).toEqual({ default: "templates.default_welcome_card_button_label" });
     // boolean flags
     expect(card.timeToFinish).toBe(false);
