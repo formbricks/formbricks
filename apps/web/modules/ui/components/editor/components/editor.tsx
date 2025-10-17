@@ -24,7 +24,6 @@ import "../styles-editor.css";
 import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "./auto-link-plugin";
 import { EditorContentChecker } from "./editor-content-checker";
 import { LinkEditor } from "./link-editor";
-import { PasteLinkHandlerPlugin } from "./paste-link-handler-plugin";
 import { RecallNode } from "./recall-node";
 import { RecallPlugin } from "./recall-plugin";
 import { ToolbarPlugin } from "./toolbar-plugin";
@@ -142,7 +141,6 @@ export const Editor = (props: TextEditorProps) => {
               {props.isExternalUrlsAllowed && <LinkPlugin />}
               {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
               {props.autoFocus && <AutoFocusPlugin />}
-              <PasteLinkHandlerPlugin isExternalUrlsAllowed={props.isExternalUrlsAllowed} />
               {props.localSurvey && props.questionId && props.selectedLanguageCode && (
                 <RecallPlugin
                   localSurvey={props.localSurvey}
