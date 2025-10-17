@@ -59,7 +59,9 @@
       "title": "Это устройство не поддерживает защиту от спама."
     },
     "please_book_an_appointment": "Пожалуйста, запишитесь на приём",
+    "please_enter_a_valid_email_address": "Пожалуйста, введите действительный адрес электронной почты",
     "please_enter_a_valid_phone_number": "Пожалуйста, введите действительный номер телефона",
+    "please_enter_a_valid_url": "Пожалуйста, введите действительный URL-адрес",
     "please_fill_out_this_field": "Пожалуйста, заполните это поле",
     "please_rank_all_items_before_submitting": "Пожалуйста, оцените все элементы перед отправкой",
     "please_select_a_date": "Пожалуйста, выберите дату",

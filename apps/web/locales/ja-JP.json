@@ -1315,7 +1315,6 @@
         "days_before_showing_this_survey_again": "日後にこのフォームを再度表示します。",
         "decide_how_often_people_can_answer_this_survey": "このフォームに人々が何回回答できるかを決定します。",
         "delete_choice": "選択肢を削除",
-        "description": "説明",
         "disable_the_visibility_of_survey_progress": "フォームの進捗状況の表示を無効にする。",
         "display_an_estimate_of_completion_time_for_survey": "フォームの完了時間の目安を表示",
         "display_number_of_responses_for_survey": "フォームの回答数を表示",

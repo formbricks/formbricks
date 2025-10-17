@@ -59,7 +59,9 @@
       "title": "Este dispositivo não suporta proteção contra spam."
     },
     "please_book_an_appointment": "Por favor, marque uma consulta",
+    "please_enter_a_valid_email_address": "Por favor, insira um endereço de email válido",
     "please_enter_a_valid_phone_number": "Por favor, insira um número de telefone válido",
+    "please_enter_a_valid_url": "Por favor, insira uma URL válida",
     "please_fill_out_this_field": "Por favor, preencha este campo",
     "please_rank_all_items_before_submitting": "Por favor, classifique todos os itens antes de enviar",
     "please_select_a_date": "Por favor, selecione uma data",
