@@ -12,12 +12,12 @@
  * Exit codes:
  *   0: Success, no issues found
  *   1: Validation errors found (missing or unused keys)
+ *   2: Invalid or missing API key
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { glob } from "glob";
-
 // Configuration
 const WEB_APP_DIR = path.join(__dirname, "apps", "web");
 const LOCALES_DIR = path.join(WEB_APP_DIR, "locales");
@@ -49,23 +49,24 @@ const EXCLUDE_DIRS = [
     "**/*.spec.tsx",
 ];
 
-interface TranslationKeys {
+export interface TranslationKeys {
     [key: string]: string | TranslationKeys;
 }
 
 interface ScanResults {
     usedKeys: Set<string>;
     translationKeys: Set<string>;
-    missingKeys: string[];
-    unusedKeys: string[];
+    missingKeys: Set<string>;
+    unusedKeys: Set<string>;
     incompleteTranslations: Map<string, string[]>; // locale -> missing keys
+    keysWithSpaces: Set<string>; // keys that contain spaces
 }
 
 /**
  * Recursively flatten nested translation keys
  * Example: { auth: { login: "Login" } } => ["auth.login"]
  */
-function flattenKeys(obj: TranslationKeys, prefix: string = ""): string[] {
+export function flattenKeys(obj: TranslationKeys, prefix: string = ""): string[] {
     let keys: string[] = [];
 
     for (const key in obj) {
@@ -83,17 +84,38 @@ function flattenKeys(obj: TranslationKeys, prefix: string = ""): string[] {
 }
 
 /**
+ * Remove comments from content to avoid detecting translation keys in comments
+ * This function carefully preserves // in URLs and strings while removing actual comments
+ */
+export function stripComments(content: string): string {
+    // Remove multi-line comments (/* ... */) first
+    let result = content.replaceAll(/\/\*[\s\S]*?\*\//g, '');
+
+    // Remove single-line comments, but be careful not to match:
+    // - https:// or http:// in URLs
+    // - // inside strings
+    // This regex matches // that is NOT preceded by : (to avoid https://)
+    // and removes everything after it until end of line
+    result = result.replaceAll(/(?<!:)\/\/.*$/gm, '');
+
+    return result;
+}
+
+/**
  * Extract translation keys from a file's content
  */
-function extractKeysFromContent(content: string): string[] {
+export function extractKeysFromContent(content: string): string[] {
     const keys: string[] = [];
 
+    // Strip comments first to avoid detecting keys in comments
+    const contentWithoutComments = stripComments(content);
+
     for (const pattern of TRANSLATION_PATTERNS) {
-        let match;
+        let match: RegExpExecArray | null = null;
         // Reset lastIndex for global regex
         pattern.lastIndex = 0;
 
-        while ((match = pattern.exec(content)) !== null) {
+        while ((match = pattern.exec(contentWithoutComments)) !== null) {
             const key = match[1];
             // Skip dynamic keys (containing variables like ${}, {{}} etc.)
             if (!key.includes("${") && !key.includes("{{") && !key.includes("}")) {
@@ -122,14 +144,24 @@ async function scanSourceFiles(): Promise<Set<string>> {
 
     console.log(`Found ${files.length} files to scan\n`);
 
-    for (const file of files) {
-        try {
-            const content = fs.readFileSync(file, "utf-8");
-            const keys = extractKeysFromContent(content);
+    // Read all files in parallel for better performance
+    const fileContents = await Promise.all(
+        files.map(async (file) => {
+            try {
+                const content = await fs.promises.readFile(file, "utf-8");
+                return { file, content };
+            } catch (error) {
+                console.error(`❌ Error: Could not read file ${file}: ${error}`);
+                return null;
+            }
+        })
+    );
 
+    // Process the contents
+    for (const result of fileContents) {
+        if (result) {
+            const keys = extractKeysFromContent(result.content);
             keys.forEach(key => usedKeys.add(key));
-        } catch (error) {
-            console.error(`❌ Error: Could not read file ${file}: ${error}`);
         }
     }
 
@@ -142,10 +174,14 @@ async function scanSourceFiles(): Promise<Set<string>> {
  * Get all locale files in the locales directory
  */
 function getLocaleFiles(): string[] {
-    const files = fs.readdirSync(LOCALES_DIR);
-    return files
-        .filter(file => file.endsWith('.json'))
-        .map(file => file.replace('.json', ''));
+    try {
+        const files = fs.readdirSync(LOCALES_DIR);
+        return files
+            .filter(file => file.endsWith('.json'))
+            .map(file => file.replace('.json', ''));
+    } catch (error) {
+        throw new Error(`❌ Failed to read locales directory at ${LOCALES_DIR}: ${error}`);
+    }
 }
 
 /**
@@ -225,6 +261,29 @@ function checkIncompleteTranslations(translationsByLocale: Map<string, Set<strin
 }
 
 /**
+ * Detect keys that contain spaces (which should not be used in translation keys)
+ */
+export function detectKeysWithSpaces(usedKeys: Set<string>, translationKeys: Set<string>): Set<string> {
+    const keysWithSpaces = new Set<string>();
+
+    // Check used keys for spaces
+    for (const key of usedKeys) {
+        if (/\s/.test(key)) {
+            keysWithSpaces.add(key);
+        }
+    }
+
+    // Check translation keys for spaces
+    for (const key of translationKeys) {
+        if (/\s/.test(key)) {
+            keysWithSpaces.add(key);
+        }
+    }
+
+    return keysWithSpaces;
+}
+
+/**
  * Compare used keys with translation keys to find missing and unused keys
  */
 function compareKeys(
@@ -234,32 +293,36 @@ function compareKeys(
 ): ScanResults {
     console.log("🔄 Comparing keys...\n");
 
-    const missingKeys: string[] = [];
-    const unusedKeys: string[] = [];
+    const missingKeys = new Set<string>();
+    const unusedKeys = new Set<string>();
 
     // Find missing keys (used but not in translations)
     for (const key of usedKeys) {
         if (!translationKeys.has(key)) {
-            missingKeys.push(key);
+            missingKeys.add(key);
         }
     }
 
     // Find unused keys (in translations but not used)
     for (const key of translationKeys) {
         if (!usedKeys.has(key)) {
-            unusedKeys.push(key);
+            unusedKeys.add(key);
         }
     }
 
     // Check for incomplete translations across locales
     const incompleteTranslations = checkIncompleteTranslations(translationsByLocale);
 
+    // Detect keys with spaces
+    const keysWithSpaces = detectKeysWithSpaces(usedKeys, translationKeys);
+
     return {
         usedKeys,
         translationKeys,
-        missingKeys: missingKeys.sort(),
-        unusedKeys: unusedKeys.sort(),
+        missingKeys,
+        unusedKeys,
         incompleteTranslations,
+        keysWithSpaces,
     };
 }
 
@@ -271,9 +334,10 @@ function displayResults(results: ScanResults): void {
     console.log("                    VALIDATION RESULTS                     ");
     console.log("═══════════════════════════════════════════════════════════\n");
 
-    const hasIssues = results.missingKeys.length > 0 ||
-        results.unusedKeys.length > 0 ||
-        results.incompleteTranslations.size > 0;
+    const hasIssues = results.missingKeys.size > 0 ||
+        results.unusedKeys.size > 0 ||
+        results.incompleteTranslations.size > 0 ||
+        results.keysWithSpaces.size > 0;
 
     if (!hasIssues) {
         console.log("✅ All translation keys are valid!\n");
@@ -281,30 +345,31 @@ function displayResults(results: ScanResults): void {
         console.log(`   • ${results.translationKeys.size} keys in translations`);
         console.log(`   • 0 missing keys`);
         console.log(`   • 0 unused keys`);
+        console.log(`   • 0 keys with spaces`);
         console.log(`   • All locales complete\n`);
         return;
     }
 
-    if (results.missingKeys.length > 0) {
-        console.log(`❌ MISSING KEYS (${results.missingKeys.length}):\n`);
+    if (results.missingKeys.size > 0) {
+        console.log(`❌ MISSING KEYS (${results.missingKeys.size}):\n`);
         console.log("   These keys are used in code but not found in translation files:\n");
-        results.missingKeys.forEach(key => {
+        const sortedMissingKeys = Array.from(results.missingKeys).sort();
+        sortedMissingKeys.forEach(key => {
             console.log(`   • ${key}`);
         });
-        console.log();
     }
 
-    if (results.unusedKeys.length > 0) {
-        console.log(`⚠️  UNUSED KEYS (${results.unusedKeys.length}):\n`);
+    if (results.unusedKeys.size > 0) {
+        console.log(`\n⚠️  UNUSED KEYS (${results.unusedKeys.size}):\n`);
         console.log("   These keys exist in translation files but are not used in code:\n");
-        results.unusedKeys.forEach(key => {
+        const sortedUnusedKeys = Array.from(results.unusedKeys).sort();
+        sortedUnusedKeys.forEach(key => {
             console.log(`   • ${key}`);
         });
-        console.log();
     }
 
     if (results.incompleteTranslations.size > 0) {
-        console.log(`⚠️  INCOMPLETE TRANSLATIONS:\n`);
+        console.log(`\n⚠️  INCOMPLETE TRANSLATIONS:\n`);
         console.log(`   Some keys from ${DEFAULT_LOCALE} are missing in target languages:\n`);
 
         for (const [locale, missingKeys] of results.incompleteTranslations.entries()) {
@@ -319,13 +384,23 @@ function displayResults(results: ScanResults): void {
             if (missingKeys.length > 10) {
                 console.log(`      ... and ${missingKeys.length - 10} more`);
             }
-            console.log();
         }
+    }
+
+    if (results.keysWithSpaces.size > 0) {
+        console.log(`\n❌ KEYS WITH SPACES (${results.keysWithSpaces.size}):\n`);
+        console.log("   Translation keys should not contain spaces. These keys have spaces:\n");
+        const sortedKeysWithSpaces = Array.from(results.keysWithSpaces).sort();
+        sortedKeysWithSpaces.forEach(key => {
+            // Show the key with visible spaces marked
+            const visualKey = key.replaceAll(' ', '␣').replaceAll('\t', '⇥').replaceAll('\n', '↵');
+            console.log(`   • "${visualKey}"`);
+        });
+        console.log("\n   Please remove spaces from these keys or use valid key names.\n");
     }
 
     console.log("═══════════════════════════════════════════════════════════\n");
 }
-
 /**
  * Main execution
  */
@@ -351,15 +426,18 @@ async function main(): Promise<void> {
         displayResults(results);
 
         // Exit with error if validation failed
-        if (results.missingKeys.length > 0 || results.unusedKeys.length > 0 || results.incompleteTranslations.size > 0) {
+        if (results.missingKeys.size > 0 || results.unusedKeys.size > 0 || results.incompleteTranslations.size > 0 || results.keysWithSpaces.size > 0) {
             console.error("❌ Translation validation failed!\n");
             console.error("   Please fix the issues above before committing.\n");
 
-            if (results.missingKeys.length > 0) {
+            if (results.missingKeys.size > 0) {
                 console.error("   • Add missing keys to your translation files");
             }
-            if (results.unusedKeys.length > 0) {
+            if (results.unusedKeys.size > 0) {
                 console.error("   • Remove unused keys from translation files");
+            }
+            if (results.keysWithSpaces.size > 0) {
+                console.error("   • Remove spaces from translation keys (use underscores or camelCase instead)");
             }
             if (results.incompleteTranslations.size > 0) {
                 console.error("   • Run 'pnpm generate-translations' to complete translations");

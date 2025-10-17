@@ -97,7 +97,8 @@ Translation files are located in `apps/web/locales/` and use the following namin
 When adding new translation keys:
 
 1. **Add the key in your code** using `t("your.new.key")`
-2. **Run the translation workflow:**
+2. **Add translation for that key in en-US.json file**
+3. **Run the translation workflow:**
    ```bash
    pnpm i18n
    ```
@@ -105,7 +106,7 @@ When adding new translation keys:
    - Generate translations for all languages using Lingo.dev
    - Validate that all keys are present and used
 
-3. **Review and commit** the generated translation files
+4. **Review and commit** the generated translation files
 
 ### 4. Available Scripts
 
@@ -167,8 +168,9 @@ If you encounter missing key errors:
 ```
 
 **Resolution:**
-1. Run `pnpm generate-translations` to have Lingo.dev generate the missing translations
-2. OR manually add the keys to `apps/web/locales/en-US.json`:
+1. Ensure that translations for those keys are present in en-US.json .  
+2. Run `pnpm generate-translations` to have Lingo.dev generate the missing translations
+3. OR manually add the keys to `apps/web/locales/en-US.json`:
    ```json
    {
      "auth": {
