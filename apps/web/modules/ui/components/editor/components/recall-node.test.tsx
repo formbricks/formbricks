@@ -3,7 +3,7 @@ import { cleanup, render } from "@testing-library/react";
 import { $applyNodeReplacement } from "lexical";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
+import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
 import { $createRecallNode, RecallNode, RecallPayload, SerializedRecallNode } from "./recall-node";
 
 vi.mock("lexical", () => ({
@@ -22,6 +22,19 @@ vi.mock("lexical", () => ({
 vi.mock("@/lib/utils/recall", () => ({
   replaceRecallInfoWithUnderline: vi.fn((label: string) => {
     return label.replace(/#recall:[^#]+#/g, "___");
+  }),
+  getTextContentWithRecallTruncated: vi.fn((text: string, maxLength: number = 25) => {
+    // Mock: strip HTML tags, clean whitespace, truncate, replace recall patterns
+    const cleanText = text.replace(/<|>/g, "").replace(/\s+/g, " ").trim();
+    const withRecallReplaced = cleanText.replace(/#recall:[^#]+#/g, "___");
+
+    if (withRecallReplaced.length <= maxLength) {
+      return withRecallReplaced;
+    }
+
+    const start = withRecallReplaced.slice(0, 10);
+    const end = withRecallReplaced.slice(-10);
+    return `${start}...${end}`;
   }),
 }));
 
@@ -353,15 +366,15 @@ describe("RecallNode", () => {
       expect(span?.textContent).toContain("@");
     });
 
-    test("calls replaceRecallInfoWithUnderline with label", () => {
+    test("calls getTextContentWithRecallTruncated with label", () => {
       const node = new RecallNode(mockPayload);
       node.decorate();
 
-      expect(vi.mocked(replaceRecallInfoWithUnderline)).toHaveBeenCalledWith("What is your name?");
+      expect(vi.mocked(getTextContentWithRecallTruncated)).toHaveBeenCalledWith("What is your name?");
     });
 
     test("handles label with nested recall patterns", () => {
-      vi.mocked(replaceRecallInfoWithUnderline).mockReturnValueOnce("Processed Label");
+      vi.mocked(getTextContentWithRecallTruncated).mockReturnValueOnce("Processed Label");
 
       const payloadWithNestedRecall: RecallPayload = {
         recallItem: {
@@ -376,7 +389,7 @@ describe("RecallNode", () => {
       const decorated = node.decorate();
 
       const { container } = render(<>{decorated}</>);
-      expect(vi.mocked(replaceRecallInfoWithUnderline)).toHaveBeenCalledWith(
+      expect(vi.mocked(getTextContentWithRecallTruncated)).toHaveBeenCalledWith(
         "What is your #recall:name/fallback:name# answer?"
       );
       expect(container.textContent).toContain("@Processed Label");

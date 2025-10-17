@@ -177,7 +177,6 @@ describe("QuestionConditional", () => {
       required: true,
       subheader: { default: "" },
       format: "M-d-y" as const,
-      html: { default: "" },
     };
 
     render(<QuestionConditional {...baseProps} question={question} value="" />);
