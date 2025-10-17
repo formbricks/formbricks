@@ -2361,6 +2361,19 @@
                   },
                   "noCodeConfig": {
                     "description": "Configuration object required when type is 'noCode'. Defines the conditions for triggering the action. Not needed for 'code' type.",
+                    "example": {
+                      "elementSelector": {
+                        "cssSelector": ".button-class",
+                        "innerHtml": "Click me"
+                      },
+                      "type": "click",
+                      "urlFilters": [
+                        {
+                          "rule": "contains",
+                          "value": "https://www.google.com"
+                        }
+                      ]
+                    },
                     "nullable": true,
                     "type": "object"
                   },
