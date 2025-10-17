@@ -92,6 +92,11 @@ export function LocalizedEditor({
         key={`${questionId}-${id}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
+          let sanitizedContent = v;
+          if (!isExternalUrlsAllowed) {
+            sanitizedContent = v.replaceAll(/<a[^>]*>(.*?)<\/a>/gi, "$1");
+          }
+
           // Check if the question still exists before updating
           const currentQuestion = localSurvey.questions[questionIdx];
 
@@ -115,8 +120,8 @@ export function LocalizedEditor({
             }
 
             const translatedContent = {
-              ...(value ?? {}),
-              [selectedLanguageCode]: v,
+              ...value,
+              [selectedLanguageCode]: sanitizedContent,
             };
             updateQuestion({ [id]: translatedContent });
             return;
@@ -124,8 +129,8 @@ export function LocalizedEditor({
 
           if (currentQuestion && currentQuestion[id] !== undefined) {
             const translatedContent = {
-              ...(value ?? {}),
-              [selectedLanguageCode]: v,
+              ...value,
+              [selectedLanguageCode]: sanitizedContent,
             };
             updateQuestion(questionIdx, { [id]: translatedContent });
           }
