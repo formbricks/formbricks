@@ -1,5 +1,11 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
+import { useTranslate } from "@tolgee/react";
+import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { logger } from "@formbricks/logger";
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
@@ -12,12 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
-import * as Sentry from "@sentry/nextjs";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { logger } from "@formbricks/logger";
 
 interface ProjectBreadcrumbProps {
   currentProjectId: string;
@@ -31,6 +31,17 @@ interface ProjectBreadcrumbProps {
   isAccessControlAllowed: boolean;
   isEnvironmentBreadcrumbVisible: boolean;
 }
+
+const isActiveProjectSetting = (pathname: string, settingId: string): boolean => {
+  // Match /project/{settingId} or /project/{settingId}/... but exclude settings paths
+  // Exclude paths with /settings/
+  if (pathname.includes("/settings/")) {
+    return false;
+  }
+  // Check if path matches /project/{settingId} (with optional trailing path)
+  const pattern = new RegExp(`/project/${settingId}(?:/|$)`);
+  return pattern.test(pathname);
+};
 
 export const ProjectBreadcrumb = ({
   currentProjectId,
@@ -51,6 +62,10 @@ export const ProjectBreadcrumb = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, [pathname]);
 
   const projectSettings = [
     {
@@ -111,6 +126,11 @@ export const ProjectBreadcrumb = ({
       return;
     }
     setOpenCreateProjectModal(true);
+  };
+
+  const handleProjectSettingsNavigation = (settingId: string) => {
+    setIsLoading(true);
+    router.push(`/environments/${currentEnvironmentId}/project/${settingId}`);
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
@@ -194,8 +214,8 @@ export const ProjectBreadcrumb = ({
             {projectSettings.map((setting) => (
               <DropdownMenuCheckboxItem
                 key={setting.id}
-                checked={pathname.includes(setting.id)}
-                onClick={() => router.push(setting.href)}
+                checked={isActiveProjectSetting(pathname, setting.id)}
+                onClick={() => handleProjectSettingsNavigation(setting.id)}
                 className="cursor-pointer">
                 {setting.label}
               </DropdownMenuCheckboxItem>
