@@ -207,7 +207,7 @@ If you prefer to manually add MinIO to your own docker-compose.yml:
 
      minio:
        restart: always
-       image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
+       image: minio/minio@sha256:9966a92a734f9411e32f4f41d7d9d826fcdc0f68c4e20b70295bd4e7c11f8a2f   //(RELEASE.2025-09-07).
        command: server /data --console-address ":9001"
        environment:
          MINIO_ROOT_USER: "formbricks-root"
@@ -219,7 +219,7 @@ If you prefer to manually add MinIO to your own docker-compose.yml:
          - minio-data:/data
 
      minio-init:
-       image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+       image: minio/mc@sha256:37d109dddbbb2c95873f5fc81ac93f37023264770fc580a7564148892087b1b7   //(RELEASE.2025-08-13)
        depends_on:
          - minio
        environment:
@@ -232,6 +232,10 @@ If you prefer to manually add MinIO to your own docker-compose.yml:
        volumes:
          - ./minio-init.sh:/tmp/minio-init.sh:ro
    ```
+
+<Note>
+  **Recommended**: Keep checking periodically for updates and regenerate hashes using docker inspect --format='{{.RepoDigests}}' minio/minio:latest.
+</Note>
 
 2. **Create MinIO Initialization Script**
 
