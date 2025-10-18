@@ -8,6 +8,7 @@ import { QuestionFormInput } from "@/modules/survey/components/question-form-inp
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface CTAQuestionFormProps {
   localSurvey: TSurvey;
@@ -20,6 +21,7 @@ interface CTAQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const CTAQuestionForm = ({
@@ -33,6 +35,7 @@ export const CTAQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: CTAQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const options = [
@@ -58,6 +61,7 @@ export const CTAQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div className="mt-3">
@@ -73,14 +77,28 @@ export const CTAQuestionForm = ({
           setSelectedLanguageCode={setSelectedLanguageCode}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
+          isExternalUrlsAllowed={isExternalUrlsAllowed}
         />
       </div>
       <div className="mt-3">
-        <OptionsSwitch
-          options={options}
-          currentOption={question.buttonExternal ? "external" : "internal"}
-          handleOptionChange={(e) => updateQuestion(questionIdx, { buttonExternal: e === "external" })}
-        />
+        <TooltipRenderer
+          shouldRender={!isExternalUrlsAllowed && !question.buttonExternal}
+          tooltipContent={t("environments.surveys.edit.external_urls_paywall_tooltip")}>
+          <OptionsSwitch
+            options={options.map((opt) => ({
+              ...opt,
+              disabled: opt.value === "external" && !isExternalUrlsAllowed && !question.buttonExternal,
+            }))}
+            currentOption={question.buttonExternal ? "external" : "internal"}
+            handleOptionChange={(e) => {
+              const canSwitchToExternal =
+                e !== "external" || isExternalUrlsAllowed || question.buttonExternal;
+              if (canSwitchToExternal) {
+                updateQuestion(questionIdx, { buttonExternal: e === "external" });
+              }
+            }}
+          />
+        </TooltipRenderer>
       </div>
 
       <div className="mt-2 flex justify-between gap-8">

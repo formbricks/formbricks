@@ -1,7 +1,7 @@
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
-import { TRANSFORMERS } from "@lexical/markdown";
+import { LINK, TRANSFORMERS } from "@lexical/markdown";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -57,6 +57,7 @@ export type TextEditorProps = {
   addFallback?: () => void;
   autoFocus?: boolean;
   id?: string;
+  isExternalUrlsAllowed?: boolean;
 };
 
 const editorConfig = {
@@ -114,6 +115,7 @@ export const Editor = (props: TextEditorProps) => {
               recallItemsCount={recallItems.length}
               setShowFallbackInput={setShowFallbackInput}
               setShowLinkEditor={setShowLinkEditor}
+              isExternalUrlsAllowed={props.isExternalUrlsAllowed}
             />
             {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
             <div
@@ -136,8 +138,8 @@ export const Editor = (props: TextEditorProps) => {
                 ErrorBoundary={LexicalErrorBoundary}
               />
               <ListPlugin />
-              <LinkPlugin />
-              <AutoLinkPlugin />
+              {props.isExternalUrlsAllowed && <LinkPlugin />}
+              {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
               {props.autoFocus && <AutoFocusPlugin />}
               {props.localSurvey && props.questionId && props.selectedLanguageCode && (
                 <RecallPlugin
@@ -160,8 +162,8 @@ export const Editor = (props: TextEditorProps) => {
                   props.disableLists
                     ? TRANSFORMERS.filter((value, index) => {
                         if (index !== 3 && index !== 4) return value;
-                      })
-                    : TRANSFORMERS
+                      }).filter((t) => (props.isExternalUrlsAllowed ? true : t !== LINK))
+                    : TRANSFORMERS.filter((t) => (props.isExternalUrlsAllowed ? true : t !== LINK))
                 }
               />
             </div>

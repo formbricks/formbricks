@@ -113,12 +113,30 @@ describe("Editor", () => {
     expect(screen.getByTestId("toolbar-plugin")).toBeInTheDocument();
     expect(screen.getByTestId("rich-text-plugin")).toBeInTheDocument();
     expect(screen.getByTestId("list-plugin")).toBeInTheDocument();
-    expect(screen.getByTestId("link-plugin")).toBeInTheDocument();
-    expect(screen.getByTestId("auto-link-plugin")).toBeInTheDocument();
     expect(screen.getByTestId("markdown-plugin")).toBeInTheDocument();
+
+    // Link plugins should not be rendered by default (isExternalUrlsAllowed is undefined/false)
+    expect(screen.queryByTestId("link-plugin")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("auto-link-plugin")).not.toBeInTheDocument();
 
     // Editor should be editable by default
     expect(screen.getByTestId("lexical-composer")).toHaveAttribute("data-editable", "true");
+  });
+
+  test("renders link plugins when isExternalUrlsAllowed is true", () => {
+    render(<Editor getText={() => "Sample text"} setText={() => {}} isExternalUrlsAllowed={true} />);
+
+    // Link plugins should be rendered when external URLs are allowed
+    expect(screen.getByTestId("link-plugin")).toBeInTheDocument();
+    expect(screen.getByTestId("auto-link-plugin")).toBeInTheDocument();
+  });
+
+  test("does not render link plugins when isExternalUrlsAllowed is false", () => {
+    render(<Editor getText={() => "Sample text"} setText={() => {}} isExternalUrlsAllowed={false} />);
+
+    // Link plugins should not be rendered when external URLs are not allowed
+    expect(screen.queryByTestId("link-plugin")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("auto-link-plugin")).not.toBeInTheDocument();
   });
 
   test("renders the editor with custom height", () => {

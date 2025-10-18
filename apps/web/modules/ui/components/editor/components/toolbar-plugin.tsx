@@ -274,6 +274,8 @@ export const ToolbarPlugin = (
         });
       });
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -315,6 +317,14 @@ export const ToolbarPlugin = (
 
   if (!props.editable) return <></>;
 
+  const getLinkItemTooltipText = () => {
+    if (!props.isExternalUrlsAllowed) {
+      return t("environments.surveys.edit.external_urls_paywall_tooltip");
+    }
+
+    return isLink ? t("environments.surveys.edit.edit_link") : t("environments.surveys.edit.insert_link");
+  };
+
   const items = [
     {
       key: "bold",
@@ -345,10 +355,8 @@ export const ToolbarPlugin = (
       icon: Link,
       onClick: insertLink,
       active: isLink,
-      tooltipText: isLink
-        ? t("environments.surveys.edit.edit_link")
-        : t("environments.surveys.edit.insert_link"),
-      disabled: !isLink && !hasTextSelection,
+      tooltipText: getLinkItemTooltipText(),
+      disabled: !props.isExternalUrlsAllowed || (!isLink && !hasTextSelection),
     },
     {
       key: "recall",

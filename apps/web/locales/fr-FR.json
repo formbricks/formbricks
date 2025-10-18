@@ -1343,6 +1343,7 @@
         "error_saving_changes": "Erreur lors de l'enregistrement des modifications",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Même après avoir soumis une réponse (par exemple, la boîte de feedback)",
         "everyone": "Tout le monde",
+        "external_urls_paywall_tooltip": "Veuillez passer à la version supérieure pour personnaliser l'URL externe. Prévention contre l'hameçonnage.",
         "fallback_missing": "Fallback manquant",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} est utilisé dans la logique de la question {questionIndex}. Veuillez d'abord le supprimer de la logique.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Le champ masqué \"{fieldId}\" est utilisé dans le quota \"{quotaName}\"",

@@ -1343,6 +1343,7 @@
         "error_saving_changes": "Erro ao guardar alterações",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Mesmo depois de terem enviado uma resposta (por exemplo, Caixa de Feedback)",
         "everyone": "Todos",
+        "external_urls_paywall_tooltip": "Por favor, atualize para personalizar o URL externo. Prevenção contra phishing.",
         "fallback_missing": "Substituição em falta",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} é usado na lógica da pergunta {questionIndex}. Por favor, remova-o da lógica primeiro.",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "Campo oculto \"{fieldId}\" está a ser usado na quota \"{quotaName}\"",

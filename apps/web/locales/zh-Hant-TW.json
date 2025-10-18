@@ -1343,6 +1343,7 @@
         "error_saving_changes": "儲存變更時發生錯誤",
         "even_after_they_submitted_a_response_e_g_feedback_box": "即使他們提交回應之後（例如，意見反應方塊）",
         "everyone": "所有人",
+        "external_urls_paywall_tooltip": "請升級以自訂 external URL 。 Phishing 預防。",
         "fallback_missing": "遺失的回退",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "'{'fieldId'}' 用於問題 '{'questionIndex'}' 的邏輯中。請先從邏輯中移除。",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "隱藏欄位 \"{fieldId}\" 正被使用於 \"{quotaName}\" 配額中",

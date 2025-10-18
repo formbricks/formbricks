@@ -16,6 +16,7 @@ interface ConsentQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const ConsentQuestionForm = ({
@@ -28,6 +29,7 @@ export const ConsentQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: ConsentQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
 
@@ -41,6 +43,7 @@ export const ConsentQuestionForm = ({
     setSelectedLanguageCode,
     locale,
     isStorageConfigured,
+    isExternalUrlsAllowed,
   };
 
   return (

@@ -1343,6 +1343,7 @@
         "error_saving_changes": "保存 更改 时 出错",
         "even_after_they_submitted_a_response_e_g_feedback_box": "即使 他们 提交 了 回复（例如 反馈框）",
         "everyone": "所有 人",
+        "external_urls_paywall_tooltip": "请升级 以自定义 外部 URL 。 网络钓鱼 预防 。",
         "fallback_missing": "备用 缺失",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "\"{fieldId} 在 问题 {questionIndex} 的 逻辑 中 使用。请 先 从 逻辑 中 删除 它。\"",
         "fieldId_is_used_in_quota_please_remove_it_from_quota_first": "隐藏 字段 \"{fieldId}\" 正在 被 \"{quotaName}\" 配额 使用",
