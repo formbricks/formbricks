@@ -322,11 +322,20 @@ export const getQuestionSummary = async (
         let values: TSurveyQuestionSummaryOpenText["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
-          if (answer && typeof answer === "string") {
+          // Handle both string and array formats (API can send either)
+          let normalizedAnswer: string | null = null;
+          if (typeof answer === "string" && answer) {
+            normalizedAnswer = answer;
+          } else if (Array.isArray(answer) && answer.length > 0) {
+            // Join array values with ", " to match Response Card behavior
+            normalizedAnswer = answer.filter((v) => v != null && v !== "").join(", ");
+          }
+
+          if (normalizedAnswer) {
             values.push({
               id: response.id,
               updatedAt: response.updatedAt,
-              value: answer,
+              value: normalizedAnswer,
               contact: response.contact,
               contactAttributes: response.contactAttributes,
             });
