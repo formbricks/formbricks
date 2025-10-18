@@ -1,3 +1,5 @@
+import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
+import { ZResponse } from "@formbricks/database/zod/responses";
 import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import {
   deleteResponseEndpoint,
@@ -6,8 +8,6 @@ import {
 } from "@/modules/api/v2/management/responses/[responseId]/lib/openapi";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
-import { ZResponse } from "@formbricks/database/zod/responses";
 
 export const getResponsesEndpoint: ZodOpenApiOperationObject = {
   operationId: "getResponses",
@@ -32,7 +32,8 @@ export const getResponsesEndpoint: ZodOpenApiOperationObject = {
 export const createResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "createResponse",
   summary: "Create a response",
-  description: "Creates a response in the database.",
+  description:
+    "Creates a response in the database. This will trigger the response pipeline, including webhooks, integrations, follow-up emails, and other configured actions.",
   tags: ["Management API - Responses"],
   requestBody: {
     required: true,

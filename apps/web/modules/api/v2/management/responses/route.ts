@@ -1,3 +1,6 @@
+import { Response } from "@prisma/client";
+import { NextRequest } from "next/server";
+import { sendToPipeline } from "@/app/lib/pipelines";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -8,8 +11,6 @@ import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
-import { Response } from "@prisma/client";
-import { NextRequest } from "next/server";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
 
 export const GET = async (request: NextRequest) =>
@@ -129,6 +130,23 @@ export const POST = async (request: Request) =>
       const createResponseResult = await createResponseWithQuotaEvaluation(environmentId, body);
       if (!createResponseResult.ok) {
         return handleApiError(request, createResponseResult.error, auditLog);
+      }
+
+      // Send to pipeline
+      sendToPipeline({
+        event: "responseCreated",
+        environmentId: environmentId,
+        surveyId: body.surveyId,
+        response: createResponseResult.data,
+      });
+
+      if (createResponseResult.data.finished) {
+        sendToPipeline({
+          event: "responseFinished",
+          environmentId: environmentId,
+          surveyId: body.surveyId,
+          response: createResponseResult.data,
+        });
       }
 
       if (auditLog) {

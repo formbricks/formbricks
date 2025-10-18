@@ -731,7 +731,7 @@ paths:
     post:
       operationId: createResponse
       summary: Create a response
-      description: Creates a response in the database.
+      description: Creates a response in the database. This will trigger the response pipeline, including webhooks, integrations, follow-up emails, and other configured actions.
       tags:
         - Management API - Responses
       requestBody:
@@ -1082,7 +1082,7 @@ paths:
     put:
       operationId: updateResponse
       summary: Update a response
-      description: Updates a response in the database.
+      description: Updates a response in the database. This will trigger the response pipeline, including webhooks, integrations, follow-up emails (if the response is marked as finished), and other configured actions.
       tags:
         - Management API - Responses
       parameters:
@@ -1094,40 +1094,20 @@ paths:
           required: true
       requestBody:
         required: true
-        description: The response to update
+        description: The response fields to update
         content:
           application/json:
             schema:
               type: object
               properties:
-                createdAt:
-                  type: string
-                updatedAt:
-                  type: string
-                environmentId:
-                  type: string
-                surveyId:
-                  type: string
-                userId:
-                  type:
-                    - string
-                    - "null"
-                displayId:
-                  type:
-                    - string
-                    - "null"
-                singleUseId:
-                  type:
-                    - string
-                    - "null"
                 finished:
                   type: boolean
+                  description: Whether the response is finished
                 endingId:
                   type:
                     - string
                     - "null"
-                language:
-                  type: string
+                  description: The ID of the ending
                 data:
                   type: object
                   additionalProperties:
@@ -1140,41 +1120,22 @@ paths:
                       - type: object
                         additionalProperties:
                           type: string
+                  description: The response data (question answers)
                 variables:
                   type: object
                   additionalProperties:
                     anyOf:
                       - type: string
                       - type: number
+                  description: The variables of the response
                 ttc:
                   type: object
                   additionalProperties:
                     type: number
-                meta:
-                  type: object
-                  properties:
-                    source:
-                      type: string
-                    url:
-                      type: string
-                    userAgent:
-                      type: object
-                      properties:
-                        browser:
-                          type: string
-                        device:
-                          type: string
-                        os:
-                          type: string
-                    country:
-                      type: string
-                    action:
-                      type: string
-              required:
-                - environmentId
-                - surveyId
-                - finished
-                - data
+                  description: Time to complete for each question
+                language:
+                  type: string
+                  description: The language of the response
       responses:
         "200":
           description: Response updated successfully.

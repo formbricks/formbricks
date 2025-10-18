@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { sendToPipeline } from "@/app/lib/pipelines";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -12,7 +14,6 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
-import { z } from "zod";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
@@ -194,6 +195,23 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
 
       if (!response.ok) {
         return handleApiError(request, response.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+      }
+
+      // Send to pipeline
+      sendToPipeline({
+        event: "responseUpdated",
+        environmentId: environmentIdResult.data,
+        surveyId: existingResponse.data.surveyId,
+        response: response.data,
+      });
+
+      if (response.data.finished) {
+        sendToPipeline({
+          event: "responseFinished",
+          environmentId: environmentIdResult.data,
+          surveyId: existingResponse.data.surveyId,
+          response: response.data,
+        });
       }
 
       if (auditLog) {
