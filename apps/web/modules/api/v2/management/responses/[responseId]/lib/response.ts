@@ -1,15 +1,16 @@
-import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
-import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
-import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
-import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma, Response } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { TResponse } from "@formbricks/types/responses";
+import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
+import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
+import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
+import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 
 export const getResponse = reactCache(async (responseId: string) => {
   try {
@@ -31,6 +32,72 @@ export const getResponse = reactCache(async (responseId: string) => {
     });
   }
 });
+
+export const getResponseForPipeline = async (
+  responseId: string
+): Promise<Result<TResponse, ApiErrorResponseV2>> => {
+  try {
+    const responsePrisma = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        surveyId: true,
+        displayId: true,
+        finished: true,
+        data: true,
+        meta: true,
+        ttc: true,
+        variables: true,
+        contactAttributes: true,
+        singleUseId: true,
+        language: true,
+        endingId: true,
+        contact: {
+          select: {
+            id: true,
+          },
+        },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                createdAt: true,
+                updatedAt: true,
+                name: true,
+                environmentId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!responsePrisma) {
+      return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
+    }
+
+    return ok({
+      ...responsePrisma,
+      contact: responsePrisma.contact
+        ? {
+            id: responsePrisma.contact.id,
+            userId: responsePrisma.contactAttributes?.userId,
+          }
+        : null,
+      tags: responsePrisma.tags.map((t) => t.tag),
+    });
+  } catch (error) {
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "response", issue: error.message }],
+    });
+  }
+};
 
 export const deleteResponse = async (responseId: string): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {

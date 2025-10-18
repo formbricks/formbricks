@@ -1,9 +1,9 @@
-import { ZResponseIdSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
-import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
 import { ZResponse } from "@formbricks/database/zod/responses";
-import { ZResponseInput } from "@formbricks/types/responses";
+import { ZResponseUpdateInput } from "@formbricks/types/responses";
+import { ZResponseIdSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
+import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 
 export const getResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "getResponse",
@@ -52,7 +52,8 @@ export const deleteResponseEndpoint: ZodOpenApiOperationObject = {
 export const updateResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateResponse",
   summary: "Update a response",
-  description: "Updates a response in the database.",
+  description:
+    "Updates a response in the database. This will trigger the response pipeline, including webhooks, integrations, follow-up emails (if the response is marked as finished), and other configured actions.",
   tags: ["Management API - Responses"],
   requestParams: {
     path: z.object({
@@ -61,10 +62,10 @@ export const updateResponseEndpoint: ZodOpenApiOperationObject = {
   },
   requestBody: {
     required: true,
-    description: "The response to update",
+    description: "The response fields to update",
     content: {
       "application/json": {
-        schema: ZResponseInput,
+        schema: ZResponseUpdateInput,
       },
     },
   },
