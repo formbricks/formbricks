@@ -2989,9 +2989,28 @@
               "schema": {
                 "example": {
                   "environmentId": "{{environmentId}}",
+                  "key": "my-custom-attribute",
                   "name": "My new Attribute",
-                  "type": "code"
+                  "type": "custom"
                 },
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "environmentId": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": ["custom"]
+                  }
+                },
+                "required": ["environmentId", "key", "name", "type"],
                 "type": "object"
               }
             }
@@ -3008,8 +3027,9 @@
                     "description": null,
                     "environmentId": "clurwouax000azffxt7n5unn3",
                     "id": "clvcapx7v0000xz1zskcgf5k0",
+                    "key": "my-custom-attribute",
                     "name": "My new Attribute",
-                    "type": "code",
+                    "type": "custom",
                     "updatedAt": "2024-04-23T11:21:38.155Z"
                   }
                 },
@@ -5916,19 +5936,19 @@
                             {
                               "id": "xpoxuu3sifk1ee8he67ctf5i",
                               "label": {
-                                "default": "Sun ☀️"
+                                "default": "Sun \u2600\ufe0f"
                               }
                             },
                             {
                               "id": "hnsovcdmxtcbly6tig1az3qc",
                               "label": {
-                                "default": "Ocean 🌊"
+                                "default": "Ocean \ud83c\udf0a"
                               }
                             },
                             {
                               "id": "kcnelzdxknvwo8fq20d3nrr5",
                               "label": {
-                                "default": "Palms 🌴"
+                                "default": "Palms \ud83c\udf34"
                               }
                             }
                           ],
@@ -6097,19 +6117,19 @@
                         {
                           "id": "xpoxuu3sifk1ee8he67ctf5i",
                           "label": {
-                            "default": "Sun ☀️"
+                            "default": "Sun \u2600\ufe0f"
                           }
                         },
                         {
                           "id": "hnsovcdmxtcbly6tig1az3qc",
                           "label": {
-                            "default": "Ocean 🌊"
+                            "default": "Ocean \ud83c\udf0a"
                           }
                         },
                         {
                           "id": "kcnelzdxknvwo8fq20d3nrr5",
                           "label": {
-                            "default": "Palms 🌴"
+                            "default": "Palms \ud83c\udf34"
                           }
                         }
                       ],
@@ -6215,19 +6235,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun ☀️"
+                              "default": "Sun \u2600\ufe0f"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean 🌊"
+                              "default": "Ocean \ud83c\udf0a"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms 🌴"
+                              "default": "Palms \ud83c\udf34"
                             }
                           }
                         ],
@@ -6481,19 +6501,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun ☀️"
+                              "default": "Sun \u2600\ufe0f"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean 🌊"
+                              "default": "Ocean \ud83c\udf0a"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms 🌴"
+                              "default": "Palms \ud83c\udf34"
                             }
                           }
                         ],
@@ -6734,19 +6754,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun ☀️"
+                              "default": "Sun \u2600\ufe0f"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean 🌊"
+                              "default": "Ocean \ud83c\udf0a"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms 🌴"
+                              "default": "Palms \ud83c\udf34"
                             }
                           }
                         ],
@@ -6937,19 +6957,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun ☀️"
+                              "default": "Sun \u2600\ufe0f"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean 🌊"
+                              "default": "Ocean \ud83c\udf0a"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms 🌴"
+                              "default": "Palms \ud83c\udf34"
                             }
                           }
                         ],
