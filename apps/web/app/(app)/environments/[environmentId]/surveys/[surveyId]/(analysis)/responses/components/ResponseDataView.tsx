@@ -1,6 +1,5 @@
 "use client";
 
-import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { TFnType, useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -9,6 +8,7 @@ import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@fo
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 
 interface ResponseDataViewProps {
   survey: TSurvey;
@@ -30,51 +30,55 @@ interface ResponseDataViewProps {
 // Export for testing
 export const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
   const addressKeys = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
-  return Array.isArray(responseValue)
-    ? responseValue.reduce((acc, curr, index) => {
-        acc[addressKeys[index]] = curr || ""; // Fallback to empty string if undefined
-        return acc;
-      }, {})
-    : {};
+  if (!Array.isArray(responseValue)) return {};
+  const result: Record<string, string> = {};
+  for (let index = 0; index < responseValue.length; index++) {
+    const curr = responseValue[index];
+    result[addressKeys[index]] = (curr as string) || "";
+  }
+  return result;
 };
 
 // Export for testing
 export const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
   const addressKeys = ["firstName", "lastName", "email", "phone", "company"];
-  return Array.isArray(responseValue)
-    ? responseValue.reduce((acc, curr, index) => {
-        acc[addressKeys[index]] = curr || ""; // Fallback to empty string if undefined
-        return acc;
-      }, {})
-    : {};
+  if (!Array.isArray(responseValue)) return {};
+  const result: Record<string, string> = {};
+  for (let index = 0; index < responseValue.length; index++) {
+    const curr = responseValue[index];
+    result[addressKeys[index]] = (curr as string) || "";
+  }
+  return result;
 };
 
 // Export for testing
 export const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Record<string, any> => {
-  let responseData: Record<string, any> = {};
+  const responseData: Record<string, any> = {};
 
-  survey.questions.forEach((question) => {
+  for (const question of survey.questions) {
     const responseValue = response.data[question.id];
     switch (question.type) {
       case "matrix":
         if (typeof responseValue === "object") {
-          responseData = { ...responseData, ...responseValue };
+          Object.assign(responseData, responseValue);
         }
         break;
       case "address":
-        responseData = { ...responseData, ...formatAddressData(responseValue) };
+        Object.assign(responseData, formatAddressData(responseValue));
         break;
       case "contactInfo":
-        responseData = { ...responseData, ...formatContactInfoData(responseValue) };
+        Object.assign(responseData, formatContactInfoData(responseValue));
         break;
       default:
         responseData[question.id] = responseValue;
     }
-  });
+  }
 
-  survey.hiddenFields.fieldIds?.forEach((fieldId) => {
-    responseData[fieldId] = response.data[fieldId];
-  });
+  if (survey.hiddenFields.fieldIds) {
+    for (const fieldId of survey.hiddenFields.fieldIds) {
+      responseData[fieldId] = response.data[fieldId];
+    }
+  }
 
   return responseData;
 };
@@ -125,6 +129,10 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   quotas,
 }) => {
   const { t } = useTranslate();
+  const [selectedResponseId, setSelectedResponseId] = React.useState<string | null>(null);
+  const setSelectedResponseIdTransition = React.useCallback((id: string | null) => {
+    React.startTransition(() => setSelectedResponseId(id));
+  }, []);
   const data = mapResponsesToTableData(responses, survey, t);
 
   return (
@@ -145,6 +153,8 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         locale={locale}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
+        selectedResponseId={selectedResponseId}
+        setSelectedResponseId={setSelectedResponseIdTransition}
       />
     </div>
   );

@@ -1,19 +1,5 @@
 "use client";
 
-import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
-import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
-import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
-import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
-import { Button } from "@/modules/ui/components/button";
-import {
-  DataTableHeader,
-  DataTableSettingsModal,
-  DataTableToolbar,
-} from "@/modules/ui/components/data-table";
-import { Skeleton } from "@/modules/ui/components/skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 import {
   DndContext,
   type DragEndEvent,
@@ -38,6 +24,20 @@ import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/respo
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
+import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
+import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
+import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DataTableHeader,
+  DataTableSettingsModal,
+  DataTableToolbar,
+} from "@/modules/ui/components/data-table";
+import { Skeleton } from "@/modules/ui/components/skeleton";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 
 interface ResponseTableProps {
   data: TResponseTableData[];
@@ -55,6 +55,8 @@ interface ResponseTableProps {
   locale: TUserLocale;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  selectedResponseId: string | null;
+  setSelectedResponseId: (id: string | null) => void;
 }
 
 export const ResponseTable = ({
@@ -73,12 +75,13 @@ export const ResponseTable = ({
   locale,
   isQuotasAllowed,
   quotas,
+  selectedResponseId,
+  setSelectedResponseId,
 }: ResponseTableProps) => {
   const { t } = useTranslate();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
-  const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
   const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -86,7 +89,10 @@ export const ResponseTable = ({
 
   const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn);
+  const columns = useMemo(
+    () => generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn),
+    [survey, isExpanded, isReadOnly, t, showQuotasColumn]
+  );
 
   // Save settings to localStorage when they change
   useEffect(() => {
@@ -110,7 +116,7 @@ export const ResponseTable = ({
 
   // Memoize table data and columns
   const tableData: TResponseTableData[] = useMemo(
-    () => (isFetchingFirstPage ? Array(10).fill({}) : data),
+    () => (isFetchingFirstPage ? new Array(10).fill({}) : data),
     [data, isFetchingFirstPage]
   );
 
@@ -248,7 +254,7 @@ export const ResponseTable = ({
                 ))}
               </TableHeader>
 
-              <TableBody ref={parent}>
+              <TableBody ref={responses && responses.length > 200 ? undefined : parent}>
                 {table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -261,7 +267,6 @@ export const ResponseTable = ({
                         row={row}
                         isExpanded={isExpanded ?? false}
                         setSelectedResponseId={setSelectedResponseId}
-                        responses={responses}
                       />
                     ))}
                   </TableRow>

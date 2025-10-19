@@ -1,11 +1,5 @@
 "use client";
 
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
-import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
-import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -14,6 +8,12 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
+import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import { getFormattedFilters } from "@/app/lib/surveys/surveys";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -122,12 +122,11 @@ export const ResponsePage = ({
   useEffect(() => {
     setPage(1);
     setHasMore(true);
-    setResponses([]);
   }, [filters]);
 
   return (
     <>
-      <div className="flex gap-1.5">
+      <div className="flex h-9 gap-1.5">
         <CustomFilter survey={surveyMemoized} />
       </div>
       <ResponseDataView

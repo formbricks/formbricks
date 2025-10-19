@@ -1,11 +1,5 @@
 "use client";
 
-import { getChoiceIdByValue } from "@/lib/response/utils";
-import { getContactIdentifier } from "@/lib/utils/contact";
-import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { Button } from "@/modules/ui/components/button";
-import { IdBadge } from "@/modules/ui/components/id-badge";
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +12,12 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
+import { getChoiceIdByValue } from "@/lib/response/utils";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import { IdBadge } from "@/modules/ui/components/id-badge";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -86,7 +86,7 @@ export const MultipleChoiceSummary = ({
         }
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-        {results.map((result, resultsIdx) => {
+        {results.map((result) => {
           const choiceId = getChoiceIdByValue(result.value, questionSummary.question);
           return (
             <Fragment key={result.value}>
@@ -107,7 +107,7 @@ export const MultipleChoiceSummary = ({
                 <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
                   <div className="mr-8 flex w-full justify-between space-x-2 sm:justify-normal">
                     <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
-                      {results.length - resultsIdx} - {result.value}
+                      {result.value}
                     </p>
                     {choiceId && <IdBadge id={choiceId} />}
                   </div>

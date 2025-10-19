@@ -47,6 +47,7 @@ vi.mock("@/modules/ui/components/dialog", () => ({
   DialogBody: vi.fn(({ children }) => <div data-testid="dialog-body">{children}</div>),
   DialogFooter: vi.fn(({ children }) => <div data-testid="dialog-footer">{children}</div>),
   DialogTitle: vi.fn(({ children }) => <div data-testid="dialog-title">{children}</div>),
+  DialogDescription: vi.fn(({ children }) => <div data-testid="dialog-description">{children}</div>),
 }));
 
 vi.mock("@radix-ui/react-visually-hidden", () => ({

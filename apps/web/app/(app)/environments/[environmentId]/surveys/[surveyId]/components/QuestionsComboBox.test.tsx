@@ -42,8 +42,8 @@ describe("QuestionsComboBox", () => {
       <QuestionsComboBox options={mockOptions} selected={currentSelected} onChangeValue={onChange} />
     );
 
-    // Open the dropdown
-    await userEvent.click(screen.getByRole("button"));
+    // Open the dropdown - target the chevron button specifically
+    await userEvent.click(screen.getByRole("button", { name: "common.select" }));
     expect(screen.getByPlaceholderText("common.search...")).toBeInTheDocument();
 
     // Select an option

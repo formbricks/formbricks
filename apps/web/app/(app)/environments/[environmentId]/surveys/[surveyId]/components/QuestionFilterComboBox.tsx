@@ -1,12 +1,19 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import clsx from "clsx";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import { Button } from "@/modules/ui/components/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList,
 } from "@/modules/ui/components/command";
@@ -17,11 +24,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import clsx from "clsx";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
-import * as React from "react";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 type QuestionFilterComboBoxProps = {
   filterOptions: string[] | undefined;
@@ -48,117 +50,130 @@ export const QuestionFilterComboBox = ({
   disabled = false,
   fieldId,
 }: QuestionFilterComboBoxProps) => {
-  const [open, setOpen] = React.useState(false);
-  const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
-  const commandRef = React.useRef(null);
-  const [searchQuery, setSearchQuery] = React.useState<string>("");
-  const defaultLanguageCode = "default";
-  useClickOutside(commandRef, () => setOpen(false));
+  const [open, setOpen] = useState(false);
+  const commandRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslate();
-  // multiple when question type is multi selection
-  const isMultiple =
-    type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-    type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-    type === TSurveyQuestionTypeEnum.PictureSelection ||
-    (type === TSurveyQuestionTypeEnum.NPS && filterValue === "Includes either");
 
-  // when question type is multi selection so we remove the option from the options which has been already selected
-  const options = isMultiple
-    ? filterComboBoxOptions?.filter(
-        (o) =>
-          !filterComboBoxValue?.includes(
-            typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
-          )
-      )
-    : filterComboBoxOptions;
+  useClickOutside(commandRef, () => setOpen(false));
 
-  // disable the combo box for selection of value when question type is nps or rating and selected value is submitted or skipped
+  const defaultLanguageCode = "default";
+
+  // Check if multiple selection is allowed
+  const isMultiple = useMemo(
+    () =>
+      type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+      type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+      type === TSurveyQuestionTypeEnum.PictureSelection ||
+      (type === TSurveyQuestionTypeEnum.NPS && filterValue === "Includes either"),
+    [type, filterValue]
+  );
+
+  // Filter out already selected options for multi-select
+  const options = useMemo(() => {
+    if (!isMultiple) return filterComboBoxOptions;
+
+    return filterComboBoxOptions?.filter((o) => {
+      const optionValue = typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o;
+      return !filterComboBoxValue?.includes(optionValue);
+    });
+  }, [isMultiple, filterComboBoxOptions, filterComboBoxValue, defaultLanguageCode]);
+
+  // Disable combo box for NPS/Rating when Submitted/Skipped
   const isDisabledComboBox =
     (type === TSurveyQuestionTypeEnum.NPS || type === TSurveyQuestionTypeEnum.Rating) &&
     (filterValue === "Submitted" || filterValue === "Skipped");
 
-  // Check if this is a URL field with string comparison operations that require text input
+  // Check if this is a text input field (URL meta field)
   const isTextInputField = type === OptionsType.META && fieldId === "url";
 
-  const filteredOptions = options?.filter((o) =>
-    (typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o)
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
+  // Filter options based on search query
+  const filteredOptions = useMemo(
+    () =>
+      options?.filter((o) => {
+        const optionValue = typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o;
+        return optionValue.toLowerCase().includes(searchQuery.toLowerCase());
+      }),
+    [options, searchQuery, defaultLanguageCode]
   );
 
-  const filterComboBoxItem = !Array.isArray(filterComboBoxValue) ? (
-    <p className="text-slate-600">{filterComboBoxValue}</p>
-  ) : (
-    <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
-      {typeof filterComboBoxValue !== "string" &&
-        filterComboBoxValue?.map((o, index) => (
+  const handleCommandItemSelect = (o: string) => {
+    const value = typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o;
+
+    if (isMultiple) {
+      const newValue = Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, value] : [value];
+      onChangeFilterComboBoxValue(newValue);
+      return;
+    }
+
+    onChangeFilterComboBoxValue(value);
+    setOpen(false);
+  };
+
+  const isComboBoxDisabled = disabled || isDisabledComboBox || !filterValue;
+
+  const handleOpenDropdown = () => {
+    if (isComboBoxDisabled) return;
+    setOpen(true);
+  };
+  const ChevronIcon = open ? ChevronUp : ChevronDown;
+
+  // Render multi-select tags
+  const renderMultiSelectTags = () => {
+    if (!Array.isArray(filterComboBoxValue) || filterComboBoxValue.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="no-scrollbar flex grow gap-2 overflow-auto">
+        {filterComboBoxValue.map((o, index) => (
           <button
             key={`${o}-${index}`}
             type="button"
-            onClick={() => handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o))}
-            className="w-30 flex items-center whitespace-nowrap bg-slate-100 px-2 text-slate-600">
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o));
+            }}
+            className="flex items-center gap-1 whitespace-nowrap rounded bg-slate-100 px-2 py-1 text-sm text-slate-600 hover:bg-slate-200">
             {o}
-            <X width={14} height={14} className="ml-2" />
+            <X className="h-3 w-3" />
           </button>
         ))}
-    </div>
-  );
-
-  const commandItemOnSelect = (o: string) => {
-    if (!isMultiple) {
-      onChangeFilterComboBoxValue(typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o);
-    } else {
-      onChangeFilterComboBoxValue(
-        Array.isArray(filterComboBoxValue)
-          ? [...filterComboBoxValue, typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
-          : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
-      );
-    }
-    if (!isMultiple) {
-      setOpen(false);
-    }
+      </div>
+    );
   };
 
   return (
-    <div className="inline-flex w-full flex-row">
-      {filterOptions && filterOptions?.length <= 1 ? (
-        <div className="h-9 max-w-fit rounded-md rounded-r-none border-r-[1px] border-slate-300 bg-white p-2 text-sm text-slate-600">
-          <p className="mr-1 max-w-[50px] truncate text-slate-600 sm:max-w-[100px]">{filterValue}</p>
+    <div className="inline-flex h-fit w-full flex-row rounded-md border border-slate-300 hover:border-slate-400">
+      {filterOptions && filterOptions.length <= 1 ? (
+        <div className="flex h-9 max-w-fit items-center rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600">
+          <p className="mr-1 max-w-[50px] truncate sm:max-w-[100px]">{filterValue}</p>
         </div>
       ) : (
         <DropdownMenu
           onOpenChange={(value) => {
-            value && setOpen(false);
-            setOpenFilterValue(value);
+            if (value) setOpen(false);
           }}>
           <DropdownMenuTrigger
             disabled={disabled}
             className={clsx(
-              "h-9 max-w-fit rounded-md rounded-r-none border-r-[1px] border-slate-300 bg-white p-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
-              !disabled ? "cursor-pointer" : "opacity-50"
+              "flex h-9 max-w-fit items-center justify-between gap-2 rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
+              disabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
             )}>
-            <div className="flex items-center justify-between">
-              {!filterValue ? (
-                <p className="text-slate-400">{t("common.select")}...</p>
-              ) : (
-                <p className="mr-1 max-w-[50px] truncate text-slate-600 sm:max-w-[80px]">{filterValue}</p>
-              )}
-              {filterOptions && filterOptions.length > 1 && (
-                <>
-                  {openFilterValue ? (
-                    <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
-                  ) : (
-                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                  )}
-                </>
-              )}
-            </div>
+            {filterValue ? (
+              <p className="max-w-[50px] truncate sm:max-w-[80px]">{filterValue}</p>
+            ) : (
+              <p className="text-slate-400">{t("common.select")}...</p>
+            )}
+            {filterOptions && filterOptions.length > 1 && (
+              <ChevronIcon className="h-4 w-4 flex-shrink-0 opacity-50" />
+            )}
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white p-2">
+          <DropdownMenuContent className="bg-white">
             {filterOptions?.map((o, index) => (
               <DropdownMenuItem
                 key={`${o}-${index}`}
-                className="px-0.5 py-1 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                className="cursor-pointer"
                 onClick={() => onChangeFilterValue(o)}>
                 {o}
               </DropdownMenuItem>
@@ -166,78 +181,88 @@ export const QuestionFilterComboBox = ({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+
       {isTextInputField ? (
         <Input
           type="text"
           value={typeof filterComboBoxValue === "string" ? filterComboBoxValue : ""}
           onChange={(e) => onChangeFilterComboBoxValue(e.target.value)}
-          disabled={disabled || !filterValue}
+          disabled={isComboBoxDisabled}
+          placeholder={t("common.enter_url")}
           className="h-9 rounded-l-none border-none bg-white text-sm focus:ring-offset-0"
         />
       ) : (
-        <Command ref={commandRef} className="h-10 overflow-visible bg-transparent">
+        <Command ref={commandRef} className="relative h-fit w-full min-w-0 overflow-visible bg-transparent">
+          {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role */}
           <div
+            role="button"
+            tabIndex={isComboBoxDisabled ? -1 : 0}
             className={clsx(
-              "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm"
-            )}>
-            {filterComboBoxValue && filterComboBoxValue.length > 0 ? (
-              filterComboBoxItem
-            ) : (
-              <button
-                type="button"
-                onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
-                disabled={disabled || isDisabledComboBox || !filterValue}
-                className={clsx(
-                  "flex-1 text-left text-slate-400",
-                  disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
-                )}>
-                {t("common.select")}...
-              </button>
+              "flex min-w-0 items-center gap-2 rounded-md rounded-l-none bg-white pl-2",
+              isComboBoxDisabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
             )}
-            <button
-              type="button"
-              onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
-              disabled={disabled || isDisabledComboBox || !filterValue}
-              className={clsx(
-                "ml-2 flex items-center justify-center",
-                disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
-              )}>
-              {open ? (
-                <ChevronUp className="h-4 w-4 opacity-50" />
+            onClick={handleOpenDropdown}
+            onKeyDown={(e) => {
+              const isActivationKey = e.key === "Enter" || e.key === " ";
+              if (isActivationKey && !isComboBoxDisabled) {
+                e.preventDefault();
+                handleOpenDropdown();
+              }
+            }}>
+            <div className="min-w-0 flex-1">
+              {!filterComboBoxValue || filterComboBoxValue.length === 0 ? (
+                <p className={clsx("text-sm", isComboBoxDisabled ? "text-slate-300" : "text-slate-400")}>
+                  {t("common.select")}...
+                </p>
+              ) : Array.isArray(filterComboBoxValue) ? (
+                renderMultiSelectTags()
               ) : (
-                <ChevronDown className="h-4 w-4 opacity-50" />
+                <p className="truncate text-sm text-slate-600">{filterComboBoxValue}</p>
               )}
-            </button>
+            </div>
+
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isComboBoxDisabled) return;
+                setOpen(!open);
+              }}
+              disabled={isComboBoxDisabled}
+              variant="secondary"
+              size="icon"
+              className="flex-shrink-0"
+              aria-expanded={open}
+              aria-label={t("common.select")}>
+              <ChevronIcon />
+            </Button>
           </div>
-          <div className="relative mt-2 h-full">
-            {open && (
-              <div className="animate-in absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-                <CommandList>
-                  <div className="p-2">
-                    <Input
-                      type="text"
-                      autoFocus
-                      placeholder={t("common.search") + "..."}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full rounded-md border border-slate-300 p-2 text-sm focus:border-slate-300"
-                    />
-                  </div>
-                  <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
-                  <CommandGroup>
-                    {filteredOptions?.map((o, index) => (
+
+          {open && (
+            <div className="animate-in absolute top-full z-10 mt-1 w-full overflow-auto rounded-md bg-white shadow-md outline-none">
+              <CommandList className="max-h-52">
+                <CommandInput
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                  placeholder={`${t("common.search")}...`}
+                  className="border-none"
+                />
+                <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
+                <CommandGroup>
+                  {filteredOptions?.map((o) => {
+                    const optionValue = typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o;
+                    return (
                       <CommandItem
-                        key={`option-${typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}-${index}`}
-                        onSelect={() => commandItemOnSelect(o)}
+                        key={optionValue}
+                        onSelect={() => handleCommandItemSelect(o)}
                         className="cursor-pointer">
-                        {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
+                        {optionValue}
                       </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </div>
-            )}
-          </div>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </div>
+          )}
         </Command>
       )}
     </div>

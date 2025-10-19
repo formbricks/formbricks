@@ -1,14 +1,14 @@
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { format } from "date-fns";
 import { useParams } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { CustomFilter } from "./CustomFilter";
 
 vi.mock("@/app/(app)/environments/[environmentId]/components/ResponseFilterContext", () => ({
@@ -83,6 +83,20 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("./ResponseFilter", () => ({
   ResponseFilter: vi.fn(() => <div data-testid="response-filter-mock">ResponseFilter Mock</div>),
+  PopoverTriggerButton: vi.fn(({ children, isOpen }) => (
+    <button data-testid="popover-trigger-button">{children}</button>
+  )),
+}));
+
+vi.mock("@/modules/ui/components/dropdown-menu", () => ({
+  DropdownMenu: vi.fn(({ children, onOpenChange }) => <div>{children}</div>),
+  DropdownMenuTrigger: vi.fn(({ children, asChild }) => <div>{children}</div>),
+  DropdownMenuContent: vi.fn(({ children }) => <div>{children}</div>),
+  DropdownMenuItem: vi.fn(({ children, onClick, "data-testid": testId }) => (
+    <button onClick={onClick} data-testid={testId}>
+      {children}
+    </button>
+  )),
 }));
 
 const mockSurvey = {
@@ -138,14 +152,16 @@ describe("CustomFilter", () => {
   test("renders correctly with initial props", () => {
     render(<CustomFilter survey={mockSurvey} />);
     expect(screen.getByTestId("response-filter-mock")).toBeInTheDocument();
-    expect(screen.getByText("environments.surveys.summary.all_time")).toBeInTheDocument();
+    expect(screen.getAllByText("environments.surveys.summary.all_time")[0]).toBeInTheDocument();
     expect(screen.getByText("common.download")).toBeInTheDocument();
   });
 
   test("opens custom date picker when 'Custom range' is clicked", async () => {
     const user = userEvent.setup();
     render(<CustomFilter survey={mockSurvey} />);
-    const dropdownTrigger = screen.getByText("environments.surveys.summary.all_time").closest("button")!;
+    const dropdownTrigger = screen
+      .getAllByText("environments.surveys.summary.all_time")[0]
+      .closest("button")!;
     // Similar to above, assuming direct clickability.
     await user.click(dropdownTrigger);
     const customRangeOption = screen.getByText("environments.surveys.summary.custom_range");
@@ -175,7 +191,9 @@ describe("CustomFilter", () => {
     });
 
     render(<CustomFilter survey={mockSurvey} />);
-    const dropdownTrigger = screen.getByText("environments.surveys.summary.all_time").closest("button")!; // Ensure targeting button
+    const dropdownTrigger = screen
+      .getAllByText("environments.surveys.summary.all_time")[0]
+      .closest("button")!; // Ensure targeting button
     await user.click(dropdownTrigger);
     const customRangeOption = screen.getByText("environments.surveys.summary.custom_range");
     await user.click(customRangeOption);
@@ -198,8 +216,8 @@ describe("CustomFilter", () => {
       data: undefined,
     });
 
-    // Test CSV download
-    const downloadButton = screen.getByTestId("fb__custom-filter-download-responses-button");
+    // Test CSV download - the download button is now the PopoverTriggerButton
+    const downloadButton = screen.getByText("common.download").closest("button")!;
     await user.click(downloadButton);
     const downloadAllCsv = screen.getByTestId("fb__custom-filter-download-all-csv");
     await user.click(downloadAllCsv);

@@ -46,8 +46,10 @@ describe("QuestionFilterComboBox", () => {
       filterComboBoxValue: ["X", "Y"],
     };
     render(<QuestionFilterComboBox {...props} />);
-    const removeButtons = screen.getAllByRole("button", { name: /X/i });
-    await userEvent.click(removeButtons[0]);
+    // Find the button containing "X" text (the tag with X value, not the X icon)
+    const tagButtons = screen.getAllByRole("button");
+    const xTagButton = tagButtons.find((btn) => btn.textContent === "X");
+    await userEvent.click(xTagButton!);
     expect(props.handleRemoveMultiSelect).toHaveBeenCalledWith(["Y"]);
   });
 
@@ -75,18 +77,20 @@ describe("QuestionFilterComboBox", () => {
   test("combobox is disabled when filterValue is 'Submitted' for NPS questions", async () => {
     const props = { ...defaultProps, type: "nps", filterValue: "Submitted" } as any;
     render(<QuestionFilterComboBox {...props} />);
-    const comboBoxOpenerButton = screen.getAllByRole("button")[1];
-    expect(comboBoxOpenerButton).toBeDisabled();
-    await userEvent.click(comboBoxOpenerButton);
+    // Find the chevron button (the actual Button component)
+    const chevronButton = screen.getByRole("button", { name: "common.select" });
+    expect(chevronButton).toBeDisabled();
+    await userEvent.click(chevronButton);
     expect(screen.queryByText("X")).not.toBeInTheDocument();
   });
 
   test("combobox is disabled when filterValue is 'Skipped' for rating questions", async () => {
     const props = { ...defaultProps, type: "rating", filterValue: "Skipped" } as any;
     render(<QuestionFilterComboBox {...props} />);
-    const comboBoxOpenerButton = screen.getAllByRole("button")[1];
-    expect(comboBoxOpenerButton).toBeDisabled();
-    await userEvent.click(comboBoxOpenerButton);
+    // Find the chevron button (the actual Button component)
+    const chevronButton = screen.getByRole("button", { name: "common.select" });
+    expect(chevronButton).toBeDisabled();
+    await userEvent.click(chevronButton);
     expect(screen.queryByText("X")).not.toBeInTheDocument();
   });
 
