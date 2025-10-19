@@ -111,7 +111,7 @@ describe("SelectedCommandItem", () => {
   });
 
   test("renders fallback color and no icon for unknown type", () => {
-    const { container } = render(<SelectedCommandItem label="Unknown" type={"UNKNOWN"} />);
+    const { container } = render(<SelectedCommandItem label="Unknown" type={"UNKNOWN" as any} />);
     expect(container.querySelector(".bg-amber-500")).toBeInTheDocument();
     expect(container.querySelector("svg")).not.toBeInTheDocument();
     expect(container.textContent).toContain("Unknown");
@@ -119,7 +119,7 @@ describe("SelectedCommandItem", () => {
 
   test("renders fallback for non-string label", () => {
     const { container } = render(
-      <SelectedCommandItem label={{ default: "NonString" }} type={OptionsType.QUESTIONS} />
+      <SelectedCommandItem label={{ default: "NonString" } as any} type={OptionsType.QUESTIONS} />
     );
     expect(container.textContent).toContain("NonString");
   });
