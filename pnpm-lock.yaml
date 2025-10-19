@@ -701,6 +701,9 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
+      '@formbricks/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@types/node':
         specifier: ^22.10.5
         version: 22.15.18

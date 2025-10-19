@@ -173,8 +173,10 @@ describe("Translation Scanner", () => {
     });
 
     test("skips dynamic keys with ${}", () => {
-      const content = "const text = t(`auth.${type}.title`);";
+      // eslint-disable-next-line no-template-curly-in-string -- we want to test the dynamic key
+      const content = "const text = t('auth.${type}.title`);";
       const keys = extractKeysFromContent(content);
+      // eslint-disable-next-line no-template-curly-in-string -- we want to test the dynamic key
       expect(keys).not.toContain("auth.${type}.title");
     });
 

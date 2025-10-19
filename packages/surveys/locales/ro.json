@@ -48,7 +48,6 @@
       "duplicate_files": "Următoarele fișiere sunt deja încărcate: {duplicateNames}. Fișierele duplicate nu sunt permise.",
       "file_size_exceeded": "Următoarele fișiere depășesc dimensiunea maximă de {maxSizeInMB} MB și au fost eliminate: {fileNames}",
       "file_size_exceeded_alert": "Fișierul trebuie să fie mai mic de {maxSizeInMB} MB",
-      "native_upload_failed": "Eroare la încărcarea fișierului nativ.",
       "no_valid_file_types_selected": "Nu au fost selectate tipuri de fișiere valide. Te rugăm să selectezi un tip de fișier valid.",
       "only_one_file_can_be_uploaded_at_a_time": "Poți încărca doar un singur fișier odată.",
       "upload_failed": "Încărcarea a eșuat! Te rugăm să încerci din nou.",

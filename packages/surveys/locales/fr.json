@@ -48,7 +48,6 @@
       "duplicate_files": "Les fichiers suivants sont déjà téléchargés : {duplicateNames}. Les fichiers en double ne sont pas autorisés.",
       "file_size_exceeded": "Les fichiers suivants dépassent la taille maximale de {maxSizeInMB} Mo et ont été supprimés : {fileNames}",
       "file_size_exceeded_alert": "Le fichier doit être inférieur à {maxSizeInMB} Mo",
-      "native_upload_failed": "Erreur lors du téléchargement du fichier natif.",
       "no_valid_file_types_selected": "Aucun type de fichier valide sélectionné. Veuillez sélectionner un type de fichier valide.",
       "only_one_file_can_be_uploaded_at_a_time": "Un seul fichier peut être téléchargé à la fois.",
       "upload_failed": "Échec du téléchargement ! Veuillez réessayer.",

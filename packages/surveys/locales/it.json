@@ -48,7 +48,6 @@
       "duplicate_files": "I seguenti file sono già caricati: {duplicateNames}. I file duplicati non sono consentiti.",
       "file_size_exceeded": "I seguenti file superano la dimensione massima di {maxSizeInMB} MB e sono stati rimossi: {fileNames}",
       "file_size_exceeded_alert": "Il file deve essere inferiore a {maxSizeInMB} MB",
-      "native_upload_failed": "Errore durante il caricamento del file nativo.",
       "no_valid_file_types_selected": "Nessun tipo di file valido selezionato. Seleziona un tipo di file valido.",
       "only_one_file_can_be_uploaded_at_a_time": "È possibile caricare solo un file alla volta.",
       "upload_failed": "Caricamento fallito! Riprova.",

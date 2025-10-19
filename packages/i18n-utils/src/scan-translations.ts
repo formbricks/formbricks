@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+/* eslint-disable no-console -- CLI script needs synchronous console output */
 /**
  * Translation Key Scanner
  *
@@ -23,21 +23,26 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Configuration
+// Configuration for Web App
 const WEB_APP_DIR = path.join(__dirname, "..", "..", "..", "apps", "web");
-const LOCALES_DIR = path.join(WEB_APP_DIR, "locales");
-const DEFAULT_LOCALE = "en-US";
+const WEB_APP_LOCALES_DIR = path.join(WEB_APP_DIR, "locales");
+const WEB_APP_DEFAULT_LOCALE = "en-US";
+
+// Configuration for Surveys Package
+const SURVEYS_PKG_DIR = path.join(__dirname, "..", "..", "..", "packages", "surveys");
+const SURVEYS_LOCALES_DIR = path.join(SURVEYS_PKG_DIR, "locales");
+const SURVEYS_DEFAULT_LOCALE = "en";
 
 // Patterns to match translation keys
 const TRANSLATION_PATTERNS = [
   // Pattern: t("key") or t('key')
-  /\bt\s*\(\s*["']([^"']+)["']/g,
+  /\bt\s*\(\s*["'](?<temp1>[^"']+)["']/g,
   // Pattern: t(`key`)
-  /\bt\s*\(\s*`([^`]+)`/g,
+  /\bt\s*\(\s*`(?<temp1>[^`]+)`/g,
   // Pattern: <Trans i18nKey="key" /> or <Trans i18nKey='key' />
-  /i18nKey\s*=\s*["']([^"']+)["']/g,
+  /i18nKey\s*=\s*["'](?<temp1>[^"']+)["']/g,
   // Pattern: <Trans i18nKey={"key"} /> or <Trans i18nKey={'key'} />
-  /i18nKey\s*=\s*\{\s*["']([^"']+)["']\s*\}/g,
+  /i18nKey\s*=\s*\{\s*["'](?<temp1>[^"']+)["']\s*\}/g,
 ];
 
 // Directories and files to exclude from scanning
@@ -69,17 +74,16 @@ interface ScanResults {
 
 /**
  * Recursively flatten nested translation keys
- * Example: { auth: { login: "Login" } } => ["auth.login"]
  */
-export function flattenKeys(obj: TranslationKeys, prefix: string = ""): string[] {
+export function flattenKeys(obj: TranslationKeys, prefix = ""): string[] {
   let keys: string[] = [];
 
   for (const key in obj) {
     const fullKey = prefix ? `${prefix}.${key}` : key;
     const value = obj[key];
 
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      keys = keys.concat(flattenKeys(value as TranslationKeys, fullKey));
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      keys = keys.concat(flattenKeys(value, fullKey));
     } else {
       keys.push(fullKey);
     }
@@ -135,19 +139,19 @@ export function extractKeysFromContent(content: string): string[] {
 /**
  * Scan source files for translation keys
  */
-async function scanSourceFiles(): Promise<Set<string>> {
-  console.log("🔍 Scanning source files for translation keys...\n");
+async function scanSourceFiles(sourceDir: string, packageName: string): Promise<Set<string>> {
+  console.log(`🔍 Scanning ${packageName} source files for translation keys...`);
 
   const usedKeys = new Set<string>();
 
   // Find all TypeScript and TypeScript React files
   const files = await glob("**/*.{ts,tsx}", {
-    cwd: WEB_APP_DIR,
+    cwd: sourceDir,
     ignore: EXCLUDE_DIRS,
     absolute: true,
   });
 
-  console.log(`Found ${files.length} files to scan\n`);
+  console.log(`   Found ${files.length.toString()} files to scan`);
 
   for (const file of files) {
     try {
@@ -155,11 +159,11 @@ async function scanSourceFiles(): Promise<Set<string>> {
       const keys = extractKeysFromContent(content);
       keys.forEach((key) => usedKeys.add(key));
     } catch (error) {
-      console.error(`❌ Error: Could not read file ${file}: ${error}`);
+      console.error(`❌ Error: Could not read file ${file}:`, error);
     }
   }
 
-  console.log(`✅ Found ${usedKeys.size} unique translation keys in source files\n`);
+  console.log(`   ✅ Found ${usedKeys.size.toString()} unique translation keys\n`);
 
   return usedKeys;
 }
@@ -167,48 +171,54 @@ async function scanSourceFiles(): Promise<Set<string>> {
 /**
  * Get all locale files in the locales directory
  */
-async function getLocaleFiles(): Promise<string[]> {
+async function getLocaleFiles(localesDir: string): Promise<string[]> {
   try {
-    const files = await fs.promises.readdir(LOCALES_DIR);
+    const files = await fs.promises.readdir(localesDir);
     return files.filter((file) => file.endsWith(".json")).map((file) => file.replace(".json", ""));
   } catch (error) {
-    throw new Error(`❌ Failed to read locales directory at ${LOCALES_DIR}: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`❌ Failed to read locales directory at ${localesDir}: ${errorMessage}`);
   }
 }
 
 /**
  * Load translation keys from a specific locale file
  */
-async function loadKeysFromLocale(locale: string): Promise<Set<string>> {
-  const localePath = path.join(LOCALES_DIR, `${locale}.json`);
+async function loadKeysFromLocale(locale: string, localesDir: string): Promise<Set<string>> {
+  const localePath = path.join(localesDir, `${locale}.json`);
   const translationKeys = new Set<string>();
 
   try {
     const content = await fs.promises.readFile(localePath, "utf-8");
-    const translations = JSON.parse(content);
+    const translations = JSON.parse(content) as TranslationKeys;
     const keys = flattenKeys(translations);
 
     keys.forEach((key) => translationKeys.add(key));
 
     return translationKeys;
   } catch (error) {
-    throw new Error(`❌ Failed to parse ${localePath}: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`❌ Failed to parse ${localePath}: ${errorMessage}`);
   }
 }
 
 /**
  * Load translation keys from all locale files
  */
-async function loadAllTranslationKeys(): Promise<Map<string, Set<string>>> {
-  console.log("📚 Loading translation keys from locale files...\n");
+async function loadAllTranslationKeys(
+  localesDir: string,
+  defaultLocale: string,
+  packageName: string
+): Promise<Map<string, Set<string>>> {
+  console.log(`📚 Loading ${packageName} translation keys from locale files...`);
 
-  const allLocales = await getLocaleFiles();
+  const allLocales = await getLocaleFiles(localesDir);
   const translationsByLocale = new Map<string, Set<string>>();
 
   // Load all locale files in parallel for better performance
   const localeResults = await Promise.all(
     allLocales.map(async (locale) => {
-      const keys = await loadKeysFromLocale(locale);
+      const keys = await loadKeysFromLocale(locale, localesDir);
       return { locale, keys };
     })
   );
@@ -216,14 +226,13 @@ async function loadAllTranslationKeys(): Promise<Map<string, Set<string>>> {
   // Populate the map and log results
   for (const { locale, keys } of localeResults) {
     translationsByLocale.set(locale, keys);
-    console.log(`   • ${locale}.json: ${keys.size} keys`);
+    console.log(`   • ${locale}.json: ${keys.size.toString()} keys`);
   }
-
   console.log();
 
   // Verify default locale exists
-  if (!translationsByLocale.has(DEFAULT_LOCALE)) {
-    throw new Error(`❌ Default locale ${DEFAULT_LOCALE} not found`);
+  if (!translationsByLocale.has(defaultLocale)) {
+    throw new Error(`❌ Default locale ${defaultLocale} not found in ${packageName}`);
   }
 
   return translationsByLocale;
@@ -232,13 +241,20 @@ async function loadAllTranslationKeys(): Promise<Map<string, Set<string>>> {
 /**
  * Check for incomplete translations across locales
  */
-function checkIncompleteTranslations(translationsByLocale: Map<string, Set<string>>): Map<string, string[]> {
-  const defaultKeys = translationsByLocale.get(DEFAULT_LOCALE)!;
+function checkIncompleteTranslations(
+  translationsByLocale: Map<string, Set<string>>,
+  defaultLocale: string
+): Map<string, string[]> {
+  const defaultKeys = translationsByLocale.get(defaultLocale);
+  if (!defaultKeys) {
+    throw new Error(`Default locale ${defaultLocale} not found`);
+  }
+
   const incompleteTranslations = new Map<string, string[]>();
 
   for (const [locale, keys] of translationsByLocale.entries()) {
     // Skip the default locale
-    if (locale === DEFAULT_LOCALE) continue;
+    if (locale === defaultLocale) continue;
 
     const missingKeys: string[] = [];
 
@@ -285,9 +301,11 @@ export function detectKeysWithSpaces(usedKeys: Set<string>, translationKeys: Set
 function compareKeys(
   usedKeys: Set<string>,
   translationKeys: Set<string>,
-  translationsByLocale: Map<string, Set<string>>
+  translationsByLocale: Map<string, Set<string>>,
+  defaultLocale: string,
+  packageName: string
 ): ScanResults {
-  console.log("🔄 Comparing keys...\n");
+  console.log(`🔄 Comparing ${packageName} keys...`);
 
   const missingKeys = new Set<string>();
   const unusedKeys = new Set<string>();
@@ -307,10 +325,12 @@ function compareKeys(
   }
 
   // Check for incomplete translations across locales
-  const incompleteTranslations = checkIncompleteTranslations(translationsByLocale);
+  const incompleteTranslations = checkIncompleteTranslations(translationsByLocale, defaultLocale);
 
   // Detect keys with spaces
   const keysWithSpaces = detectKeysWithSpaces(usedKeys, translationKeys);
+
+  console.log();
 
   return {
     usedKeys,
@@ -325,9 +345,9 @@ function compareKeys(
 /**
  * Display validation results
  */
-function displayResults(results: ScanResults): void {
+function displayResults(results: ScanResults, packageName: string, defaultLocale: string): void {
   console.log("═══════════════════════════════════════════════════════════");
-  console.log("                    VALIDATION RESULTS                     ");
+  console.log(`              ${packageName} VALIDATION RESULTS              `);
   console.log("═══════════════════════════════════════════════════════════\n");
 
   const hasIssues =
@@ -338,8 +358,8 @@ function displayResults(results: ScanResults): void {
 
   if (!hasIssues) {
     console.log("✅ All translation keys are valid!\n");
-    console.log(`   • ${results.usedKeys.size} keys used in code`);
-    console.log(`   • ${results.translationKeys.size} keys in translations`);
+    console.log(`   • ${results.usedKeys.size.toString()} keys used in code`);
+    console.log(`   • ${results.translationKeys.size.toString()} keys in translations`);
     console.log(`   • 0 missing keys`);
     console.log(`   • 0 unused keys`);
     console.log(`   • 0 keys with spaces`);
@@ -348,7 +368,7 @@ function displayResults(results: ScanResults): void {
   }
 
   if (results.missingKeys.size > 0) {
-    console.log(`❌ MISSING KEYS (${results.missingKeys.size}):\n`);
+    console.log(`❌ MISSING KEYS (${results.missingKeys.size.toString()}):\n`);
     console.log("   These keys are used in code but not found in translation files:\n");
     const sortedMissingKeys = Array.from(results.missingKeys).sort();
     sortedMissingKeys.forEach((key) => {
@@ -357,7 +377,7 @@ function displayResults(results: ScanResults): void {
   }
 
   if (results.unusedKeys.size > 0) {
-    console.log(`\n⚠️  UNUSED KEYS (${results.unusedKeys.size}):\n`);
+    console.log(`\n⚠️  UNUSED KEYS (${results.unusedKeys.size.toString()}):\n`);
     console.log("   These keys exist in translation files but are not used in code:\n");
     const sortedUnusedKeys = Array.from(results.unusedKeys).sort();
     sortedUnusedKeys.forEach((key) => {
@@ -367,10 +387,10 @@ function displayResults(results: ScanResults): void {
 
   if (results.incompleteTranslations.size > 0) {
     console.log(`\n⚠️  INCOMPLETE TRANSLATIONS:\n`);
-    console.log(`   Some keys from ${DEFAULT_LOCALE} are missing in target languages:\n`);
+    console.log(`   Some keys from ${defaultLocale} are missing in target languages:\n`);
 
     for (const [locale, missingKeys] of results.incompleteTranslations.entries()) {
-      console.log(`   📝 ${locale} (${missingKeys.length} missing keys):`);
+      console.log(`   📝 ${locale} (${missingKeys.length.toString()} missing keys):`);
 
       // Show first 10 missing keys for each locale to avoid overwhelming output
       const keysToShow = missingKeys.slice(0, 10);
@@ -379,13 +399,14 @@ function displayResults(results: ScanResults): void {
       });
 
       if (missingKeys.length > 10) {
-        console.log(`      ... and ${missingKeys.length - 10} more`);
+        const moreKeys = missingKeys.length - 10;
+        console.log(`      ... and ${moreKeys.toString()} more`);
       }
     }
   }
 
   if (results.keysWithSpaces.size > 0) {
-    console.log(`\n❌ KEYS WITH SPACES (${results.keysWithSpaces.size}):\n`);
+    console.log(`\n❌ KEYS WITH SPACES (${results.keysWithSpaces.size.toString()}):\n`);
     console.log("   Translation keys should not contain spaces. These keys have spaces:\n");
     const sortedKeysWithSpaces = Array.from(results.keysWithSpaces).sort();
     sortedKeysWithSpaces.forEach((key) => {
@@ -399,6 +420,35 @@ function displayResults(results: ScanResults): void {
   console.log("═══════════════════════════════════════════════════════════\n");
 }
 /**
+ * Validate translations for a single package
+ */
+async function validatePackage(
+  sourceDir: string,
+  localesDir: string,
+  defaultLocale: string,
+  packageName: string
+): Promise<ScanResults> {
+  // Scan source files for used keys
+  const usedKeys = await scanSourceFiles(sourceDir, packageName);
+
+  // Load translation keys from all locale files
+  const translationsByLocale = await loadAllTranslationKeys(localesDir, defaultLocale, packageName);
+  const defaultKeys = translationsByLocale.get(defaultLocale);
+
+  if (!defaultKeys) {
+    throw new Error(`Default locale ${defaultLocale} not found in ${packageName}`);
+  }
+
+  // Compare and find issues
+  const results = compareKeys(usedKeys, defaultKeys, translationsByLocale, defaultLocale, packageName);
+
+  // Display results
+  displayResults(results, packageName, defaultLocale);
+
+  return results;
+}
+
+/**
  * Main execution
  */
 async function main(): Promise<void> {
@@ -409,54 +459,67 @@ async function main(): Promise<void> {
   console.log();
 
   try {
-    // Scan source files for used keys
-    const usedKeys = await scanSourceFiles();
+    // Validate Web App
+    const webAppResults = await validatePackage(
+      WEB_APP_DIR,
+      WEB_APP_LOCALES_DIR,
+      WEB_APP_DEFAULT_LOCALE,
+      "Web App"
+    );
 
-    // Load translation keys from all locale files
-    const translationsByLocale = await loadAllTranslationKeys();
-    const defaultKeys = translationsByLocale.get(DEFAULT_LOCALE)!;
+    // Validate Surveys Package
+    const surveysResults = await validatePackage(
+      SURVEYS_PKG_DIR,
+      SURVEYS_LOCALES_DIR,
+      SURVEYS_DEFAULT_LOCALE,
+      "Surveys Package"
+    );
 
-    // Compare and find issues
-    const results = compareKeys(usedKeys, defaultKeys, translationsByLocale);
+    // Check if any package has issues
+    const hasWebAppIssues =
+      webAppResults.missingKeys.size > 0 ||
+      webAppResults.unusedKeys.size > 0 ||
+      webAppResults.incompleteTranslations.size > 0 ||
+      webAppResults.keysWithSpaces.size > 0;
 
-    // Display results
-    displayResults(results);
+    const hasSurveysIssues =
+      surveysResults.missingKeys.size > 0 ||
+      surveysResults.unusedKeys.size > 0 ||
+      surveysResults.incompleteTranslations.size > 0 ||
+      surveysResults.keysWithSpaces.size > 0;
 
-    // Exit with error if validation failed
-    if (
-      results.missingKeys.size > 0 ||
-      results.unusedKeys.size > 0 ||
-      results.incompleteTranslations.size > 0 ||
-      results.keysWithSpaces.size > 0
-    ) {
+    // Exit with error if validation failed for any package
+    if (hasWebAppIssues || hasSurveysIssues) {
+      console.error("═══════════════════════════════════════════════════════════");
       console.error("❌ Translation validation failed!\n");
       console.error("   Please fix the issues above before committing.\n");
 
-      if (results.missingKeys.size > 0) {
+      if (webAppResults.missingKeys.size > 0 || surveysResults.missingKeys.size > 0) {
         console.error("   • Add missing keys to your translation files");
       }
-      if (results.unusedKeys.size > 0) {
+      if (webAppResults.unusedKeys.size > 0 || surveysResults.unusedKeys.size > 0) {
         console.error("   • Remove unused keys from translation files");
       }
-      if (results.keysWithSpaces.size > 0) {
+      if (webAppResults.keysWithSpaces.size > 0 || surveysResults.keysWithSpaces.size > 0) {
         console.error("   • Remove spaces from translation keys (use underscores or camelCase instead)");
       }
-      if (results.incompleteTranslations.size > 0) {
-        console.error("   • Run 'pnpm generate-translations' to complete translations");
-        console.error("   • Or manually add missing keys to target language files");
+      if (webAppResults.incompleteTranslations.size > 0 || surveysResults.incompleteTranslations.size > 0) {
+        console.error("   • Complete missing translations in target language files");
       }
       console.error();
       process.exit(1);
     }
 
-    console.log("✅ Translation validation passed!\n");
+    console.log("═══════════════════════════════════════════════════════════");
+    console.log("✅ All translation validations passed!\n");
     process.exit(0);
   } catch (error) {
     console.error("\n❌ Error during validation:\n");
-    console.error(`   ${error}\n`);
+    console.error("   ", error);
+    console.error();
     process.exit(1);
   }
 }
 
 // Run the script
-main();
+void main();

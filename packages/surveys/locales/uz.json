@@ -48,7 +48,6 @@
       "duplicate_files": "Quyidagi fayllar allaqachon yuklangan: {duplicateNames}. Takroriy fayllarga ruxsat berilmaydi.",
       "file_size_exceeded": "Quyidagi fayl(lar) {maxSizeInMB} MB maksimal hajmdan oshib ketdi va olib tashlandi: {fileNames}",
       "file_size_exceeded_alert": "Fayl hajmi {maxSizeInMB} MB dan kam bo'lishi kerak",
-      "native_upload_failed": "Mahalliy faylni yuklashda xatolik yuz berdi.",
       "no_valid_file_types_selected": "Hech qanday yaroqli fayl turi tanlanmadi. Iltimos, yaroqli fayl turini tanlang.",
       "only_one_file_can_be_uploaded_at_a_time": "Bir vaqtning o'zida faqat bitta fayl yuklanishi mumkin.",
       "upload_failed": "Yuklash muvaffaqiyatsiz tugadi! Iltimos, qayta urinib ko'ring.",
