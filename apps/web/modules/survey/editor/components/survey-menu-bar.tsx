@@ -1,17 +1,12 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
-import { Button } from "@/modules/ui/components/button";
-import { Input } from "@/modules/ui/components/input";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { isEqual } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import toast from "react-hot-toast";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
@@ -23,11 +18,18 @@ import {
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
+  setSavedSurvey: (survey: TSurvey) => void;
   survey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environmentId: string;
@@ -47,6 +49,7 @@ interface SurveyMenuBarProps {
 export const SurveyMenuBar = ({
   localSurvey,
   survey,
+  setSavedSurvey,
   environmentId,
   setLocalSurvey,
   activeId,
@@ -247,9 +250,12 @@ export const SurveyMenuBar = ({
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
-        setLocalSurvey(updatedSurveyResponse.data);
+        const updatedSurvey = updatedSurveyResponse.data;
+        flushSync(() => {
+          setLocalSurvey(updatedSurvey);
+          setSavedSurvey(updatedSurvey);
+        });
         toast.success(t("environments.surveys.edit.changes_saved"));
-        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
@@ -292,12 +298,18 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      await updateSurveyAction({
+      const publishedSurveyResponse = await updateSurveyAction({
         ...localSurvey,
         status,
         segment,
       });
       setIsSurveyPublishing(false);
+      if (publishedSurveyResponse?.data) {
+        const publishedSurvey = publishedSurveyResponse.data;
+        flushSync(() => {
+          setSavedSurvey(publishedSurvey);
+        });
+      }
       router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
       console.error(error);

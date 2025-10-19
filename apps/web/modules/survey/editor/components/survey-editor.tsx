@@ -83,6 +83,7 @@ export const SurveyEditor = ({
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
+  const [savedSurvey, setSavedSurvey] = useState<TSurvey>(survey);
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
@@ -108,6 +109,7 @@ export const SurveyEditor = ({
 
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
+      setSavedSurvey(surveyClone);
 
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
@@ -160,8 +162,9 @@ export const SurveyEditor = ({
       <SurveyMenuBar
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
-        survey={survey}
+        survey={savedSurvey}
         environmentId={environment.id}
+        setSavedSurvey={setSavedSurvey}
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidQuestions={setInvalidQuestions}
