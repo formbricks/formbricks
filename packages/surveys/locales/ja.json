@@ -48,7 +48,6 @@
       "duplicate_files": "以下のファイルはすでにアップロードされています：{duplicateNames}。重複ファイルは許可されていません。",
       "file_size_exceeded": "以下のファイルは最大サイズ{maxSizeInMB}MBを超えているため削除されました：{fileNames}",
       "file_size_exceeded_alert": "ファイルは{maxSizeInMB}MB未満である必要があります",
-      "native_upload_failed": "ネイティブファイルのアップロードエラー。",
       "no_valid_file_types_selected": "有効なファイルタイプが選択されていません。有効なファイルタイプを選択してください。",
       "only_one_file_can_be_uploaded_at_a_time": "一度にアップロードできるファイルは1つだけです。",
       "upload_failed": "アップロードに失敗しました！もう一度お試しください。",
