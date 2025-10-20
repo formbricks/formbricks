@@ -48,7 +48,6 @@
       "duplicate_files": "निम्नलिखित फ़ाइलें पहले से ही अपलोड की गई हैं: {duplicateNames}। डुप्लिकेट फ़ाइलों की अनुमति नहीं है।",
       "file_size_exceeded": "निम्नलिखित फ़ाइल(ें) अधिकतम आकार {maxSizeInMB} MB से अधिक हैं और हटा दी गई हैं: {fileNames}",
       "file_size_exceeded_alert": "फ़ाइल {maxSizeInMB} MB से कम होनी चाहिए",
-      "native_upload_failed": "नेटिव फ़ाइल अपलोड करने में त्रुटि।",
       "no_valid_file_types_selected": "कोई मान्य फ़ाइल प्रकार नहीं चुना गया है। कृपया एक मान्य फ़ाइल प्रकार चुनें।",
       "only_one_file_can_be_uploaded_at_a_time": "एक समय में केवल एक फ़ाइल अपलोड की जा सकती है।",
       "upload_failed": "अपलोड विफल! कृपया पुनः प्रयास करें।",
