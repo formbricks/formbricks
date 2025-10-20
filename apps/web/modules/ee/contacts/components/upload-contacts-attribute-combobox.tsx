@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { useEffect } from "react";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -9,8 +11,6 @@ import {
   CommandList,
 } from "@/modules/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useTranslate } from "@tolgee/react";
-import { useEffect } from "react";
 
 type Key = {
   label: string;
@@ -92,7 +92,7 @@ export const UploadContactsAttributeCombobox = ({
               }}
             />
           </div>
-          <CommandList>
+          <CommandList className="border-0">
             <CommandGroup>
               {keys.map((tag) => {
                 return (

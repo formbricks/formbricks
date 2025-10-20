@@ -116,7 +116,13 @@ export const ResponseTable = ({
 
   // Memoize table data and columns
   const tableData: TResponseTableData[] = useMemo(
-    () => (isFetchingFirstPage ? new Array(10).fill({}) : data),
+    () =>
+      isFetchingFirstPage
+        ? Array.from(
+            { length: 10 },
+            (_, index) => ({ responseId: `skeleton-${index}` }) as TResponseTableData
+          )
+        : data,
     [data, isFetchingFirstPage]
   );
 

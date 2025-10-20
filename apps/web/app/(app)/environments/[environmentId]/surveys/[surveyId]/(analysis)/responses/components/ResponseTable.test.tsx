@@ -1,6 +1,3 @@
-import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
@@ -10,6 +7,9 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
+import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
@@ -124,7 +124,7 @@ vi.mock(
   "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell",
   () => ({
     ResponseTableCell: ({ cell, row, setSelectedResponseId }: any) => (
-      <td data-testid={`cell-${cell.id}-${row.id}`} onClick={() => setSelectedResponseId(row.id)}>
+      <td data-testid={`cell-${cell.id}-${row.id}`} onClick={() => setSelectedResponseId?.(row.id)}>
         Cell Content
       </td>
     ),
@@ -227,10 +227,14 @@ const mockProps = {
   isReadOnly: false,
   fetchNextPage: vi.fn(),
   hasMore: false,
-  deleteResponses: vi.fn(),
+  updateResponseList: vi.fn(),
   updateResponse: vi.fn(),
   isFetchingFirstPage: false,
   locale: "en" as TUserLocale,
+  isQuotasAllowed: false,
+  quotas: [],
+  selectedResponseId: null,
+  setSelectedResponseId: vi.fn(),
 };
 
 // Setup a container for React Testing Library before each test
@@ -456,18 +460,15 @@ describe("ResponseTable", () => {
   });
 
   // Test response modal
-  test("opens and closes response modal when a cell is clicked", async () => {
+  test("calls setSelectedResponseId when a cell is clicked", async () => {
     const container = document.getElementById("test-container");
-    render(<ResponseTable {...mockProps} />, { container: container! });
+    const setSelectedResponseId = vi.fn();
+    render(<ResponseTable {...mockProps} setSelectedResponseId={setSelectedResponseId} />, {
+      container: container!,
+    });
     const cell = screen.getByTestId("cell-resp1_select-resp1");
     await userEvent.click(cell);
-    expect(screen.getByTestId("response-modal")).toBeInTheDocument();
-    // Close the modal
-    const closeButton = screen.getByText("Close");
-    await userEvent.click(closeButton);
-
-    // Modal should be closed now
-    expect(screen.queryByTestId("response-modal")).not.toBeInTheDocument();
+    expect(setSelectedResponseId).toHaveBeenCalledWith("resp1");
   });
 
   test("shows error toast when download action returns error", async () => {

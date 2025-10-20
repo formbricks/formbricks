@@ -234,10 +234,10 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           </p>
           <div className="flex items-center space-x-2">
             <Select
+              value={filterValue.responseStatus ?? "all"}
               onValueChange={(val) => {
                 handleResponseStatusChange(val as TResponseStatus);
-              }}
-              defaultValue={filterValue.responseStatus}>
+              }}>
               <SelectTrigger className="w-full bg-white text-slate-700">
                 <SelectValue />
               </SelectTrigger>

@@ -46,7 +46,7 @@ describe("MultipleChoiceSummary", () => {
       />
     );
     expect(screen.getByTestId("header")).toBeDefined();
-    const btn = screen.getByText("1 - C");
+    const btn = screen.getByText("C");
     await userEvent.click(btn);
     expect(setFilter).toHaveBeenCalledWith(
       "q",
@@ -140,8 +140,8 @@ describe("MultipleChoiceSummary", () => {
       />
     );
     const btns = screen.getAllByRole("button");
-    expect(btns[0]).toHaveTextContent("2 - A");
-    expect(btns[1]).toHaveTextContent("1 - B");
+    expect(btns[0]).toHaveTextContent("A");
+    expect(btns[1]).toHaveTextContent("B");
   });
 
   test("sorts by count when neither has others", () => {
@@ -167,8 +167,8 @@ describe("MultipleChoiceSummary", () => {
       />
     );
     const btns = screen.getAllByRole("button");
-    expect(btns[0]).toHaveTextContent("2 - YID: other2 common.selections50%");
-    expect(btns[1]).toHaveTextContent("1 - XID: other1 common.selection50%");
+    expect(btns[0]).toHaveTextContent("Y");
+    expect(btns[1]).toHaveTextContent("X");
   });
 
   test("places choice with others after one without when reversed inputs", () => {
@@ -194,8 +194,8 @@ describe("MultipleChoiceSummary", () => {
       />
     );
     const btns = screen.getAllByRole("button");
-    expect(btns[0]).toHaveTextContent("2 - D");
-    expect(btns[1]).toHaveTextContent("1 - C");
+    expect(btns[0]).toHaveTextContent("D");
+    expect(btns[1]).toHaveTextContent("C");
   });
 
   test("multi type non-other uses includes_all", async () => {
@@ -228,7 +228,7 @@ describe("MultipleChoiceSummary", () => {
       />
     );
 
-    const btn = screen.getByText("2 - C4");
+    const btn = screen.getByText("C4");
     await userEvent.click(btn);
     expect(setFilter).toHaveBeenCalledWith(
       "q4",
@@ -269,7 +269,7 @@ describe("MultipleChoiceSummary", () => {
       />
     );
 
-    const btn = screen.getByText("2 - O5");
+    const btn = screen.getByText("O5");
     await userEvent.click(btn);
     expect(setFilter).toHaveBeenCalledWith(
       "q5",
@@ -362,7 +362,7 @@ describe("MultipleChoiceSummary", () => {
     ];
 
     expectedMappings.forEach(({ text, id }, index) => {
-      expect(screen.getByText(`${3 - index} - ${text}`)).toBeInTheDocument();
+      expect(screen.getByText(text)).toBeInTheDocument();
       expect(idBadges[index]).toHaveAttribute("data-id", id);
     });
   });
