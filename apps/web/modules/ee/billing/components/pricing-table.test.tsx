@@ -64,17 +64,14 @@ describe("PricingTable", () => {
     };
 
     const mockStripePriceLookupKeys = {
-      STARTUP_MONTHLY: "startup_monthly",
-      STARTUP_YEARLY: "startup_yearly",
-      SCALE_MONTHLY: "scale_monthly",
-      SCALE_YEARLY: "scale_yearly",
+      STARTUP_MAY25_MONTHLY: "startup_monthly",
+      STARTUP_MAY25_YEARLY: "startup_yearly",
     };
 
     const mockProjectFeatureKeys = {
       FREE: "free",
       STARTUP: "startup",
-      SCALE: "scale",
-      ENTERPRISE: "enterprise",
+      CUSTOM: "custom",
     };
 
     render(
@@ -127,17 +124,14 @@ describe("PricingTable", () => {
       };
 
       const mockStripePriceLookupKeys = {
-        STARTUP_MONTHLY: "startup_monthly",
-        STARTUP_YEARLY: "startup_yearly",
-        SCALE_MONTHLY: "scale_monthly",
-        SCALE_YEARLY: "scale_yearly",
+        STARTUP_MAY25_MONTHLY: "startup_monthly",
+        STARTUP_MAY25_YEARLY: "startup_yearly",
       };
 
       const mockProjectFeatureKeys = {
         FREE: "free",
         STARTUP: "startup",
-        SCALE: "scale",
-        ENTERPRISE: "enterprise",
+        CUSTOM: "custom",
       };
 
       const handleMonthlyToggle = (period: TOrganizationBillingPeriod) => {

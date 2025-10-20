@@ -19,7 +19,7 @@ interface PricingCardProps {
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    ENTERPRISE: string;
+    CUSTOM: string;
   };
 }
 
@@ -40,10 +40,7 @@ export const PricingCard = ({
       return true;
     }
 
-    if (
-      organization.billing.plan === projectFeatureKeys.ENTERPRISE &&
-      plan.id === projectFeatureKeys.ENTERPRISE
-    ) {
+    if (organization.billing.plan === projectFeatureKeys.CUSTOM && plan.id === projectFeatureKeys.CUSTOM) {
       return true;
     }
 
@@ -53,7 +50,7 @@ export const PricingCard = ({
     organization.billing.plan,
     plan.id,
     planPeriod,
-    projectFeatureKeys.ENTERPRISE,
+    projectFeatureKeys.CUSTOM,
     projectFeatureKeys.FREE,
   ]);
 
@@ -62,7 +59,7 @@ export const PricingCard = ({
       return null;
     }
 
-    if (plan.id === projectFeatureKeys.ENTERPRISE) {
+    if (plan.id === projectFeatureKeys.CUSTOM) {
       return (
         <Button
           variant="outline"
@@ -115,7 +112,7 @@ export const PricingCard = ({
     plan.featured,
     plan.href,
     plan.id,
-    projectFeatureKeys.ENTERPRISE,
+    projectFeatureKeys.CUSTOM,
     projectFeatureKeys.FREE,
     projectFeatureKeys.STARTUP,
     t,
@@ -151,13 +148,13 @@ export const PricingCard = ({
                 plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
-              {plan.id !== projectFeatureKeys.ENTERPRISE
+              {plan.id !== projectFeatureKeys.CUSTOM
                 ? planPeriod === "monthly"
                   ? plan.price.monthly
                   : plan.price.yearly
                 : plan.price.monthly}
             </p>
-            {plan.id !== projectFeatureKeys.ENTERPRISE && (
+            {plan.id !== projectFeatureKeys.CUSTOM && (
               <div className="text-sm leading-5">
                 <p className={plan.featured ? "text-slate-700" : "text-slate-600"}>
                   / {planPeriod === "monthly" ? "Month" : "Year"}

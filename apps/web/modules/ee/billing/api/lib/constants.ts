@@ -58,7 +58,7 @@ export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
   };
 
   const customPlan: TPricingPlan = {
-    id: "enterprise",
+    id: "custom",
     name: t("environments.settings.billing.custom"),
     featured: false,
     CTA: t("common.request_pricing"),

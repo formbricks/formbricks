@@ -26,7 +26,7 @@ interface PricingTableProps {
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    ENTERPRISE: string;
+    CUSTOM: string;
   };
   hasBillingRights: boolean;
 }
@@ -127,11 +127,11 @@ export const PricingTable = ({
   };
 
   const responsesUnlimitedCheck =
-    organization.billing.plan === "enterprise" && organization.billing.limits.monthly.responses === null;
+    organization.billing.plan === "custom" && organization.billing.limits.monthly.responses === null;
   const peopleUnlimitedCheck =
-    organization.billing.plan === "enterprise" && organization.billing.limits.monthly.miu === null;
+    organization.billing.plan === "custom" && organization.billing.limits.monthly.miu === null;
   const projectsUnlimitedCheck =
-    organization.billing.plan === "enterprise" && organization.billing.limits.projects === null;
+    organization.billing.plan === "custom" && organization.billing.limits.projects === null;
 
   return (
     <main>
