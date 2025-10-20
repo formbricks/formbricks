@@ -1,9 +1,5 @@
 "use client";
 
-import { ClientLogo } from "@/modules/ui/components/client-logo";
-import { MediaBackground } from "@/modules/ui/components/media-background";
-import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
-import { SurveyInline } from "@/modules/ui/components/survey";
 import { Environment, Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { Variants, motion } from "framer-motion";
@@ -11,6 +7,10 @@ import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-reac
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { ClientLogo } from "@/modules/ui/components/client-logo";
+import { MediaBackground } from "@/modules/ui/components/media-background";
+import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
+import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { TabOption } from "./components/tab-option";
 

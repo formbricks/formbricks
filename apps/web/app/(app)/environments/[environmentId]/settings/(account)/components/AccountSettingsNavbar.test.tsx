@@ -1,7 +1,7 @@
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { cleanup, render } from "@testing-library/react";
 import { usePathname } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { AccountSettingsNavbar } from "./AccountSettingsNavbar";
 
 vi.mock("next/navigation", () => ({

@@ -1,6 +1,4 @@
 import "server-only";
-import { validateInputs } from "@/lib/utils/validate";
-import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -11,6 +9,8 @@ import {
   TJsEnvironmentStateProject,
   TJsEnvironmentStateSurvey,
 } from "@formbricks/types/js";
+import { validateInputs } from "@/lib/utils/validate";
+import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 
 /**
  * Optimized data fetcher for environment state

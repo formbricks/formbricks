@@ -1,12 +1,12 @@
 "use server";
 
-import { TOrganizationTeam } from "@/app/(app)/(onboarding)/types/onboarding";
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
+import { TOrganizationTeam } from "@/app/(app)/(onboarding)/types/onboarding";
+import { validateInputs } from "@/lib/utils/validate";
 
 export const getTeamsByOrganizationId = reactCache(
   async (organizationId: string): Promise<TOrganizationTeam[] | null> => {

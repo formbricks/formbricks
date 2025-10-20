@@ -1,8 +1,8 @@
-import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 import { Project } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 
 // Mock the QuestionCard component
 vi.mock("@/modules/survey/editor/components/question-card", () => ({

@@ -1,8 +1,8 @@
-import { updateResponse } from "@/lib/response/service";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { prisma } from "@formbricks/database";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
+import { updateResponse } from "@/lib/response/service";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 
 export const updateResponseWithQuotaEvaluation = async (
   responseId: string,

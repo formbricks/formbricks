@@ -1,5 +1,5 @@
-import { TeamsPage } from "@/modules/organization/settings/teams/page";
 import { describe, expect, test, vi } from "vitest";
+import { TeamsPage } from "@/modules/organization/settings/teams/page";
 import Page from "./page";
 
 vi.mock("@/lib/constants", () => ({

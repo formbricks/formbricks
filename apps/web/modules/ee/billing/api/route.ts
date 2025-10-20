@@ -1,7 +1,7 @@
-import { webhookHandler } from "@/modules/ee/billing/api/lib/stripe-webhook";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { logger } from "@formbricks/logger";
+import { webhookHandler } from "@/modules/ee/billing/api/lib/stripe-webhook";
 
 export const POST = async (request: Request) => {
   try {

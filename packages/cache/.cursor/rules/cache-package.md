@@ -3,6 +3,7 @@
 ## Core Principles
 
 ### Redis-Only Architecture
+
 - **Mandatory Redis**: All deployments MUST use Redis via `REDIS_URL` environment variable
 - **Singleton Client**: Use `getCacheService()` - returns singleton instance per process using `globalThis`
 - **Result Types**: Core operations return `Result<T, CacheError>` for explicit error handling
@@ -10,6 +11,7 @@
 - **Cross-Platform**: Uses `globalThis` for Edge Runtime, Lambda, and HMR compatibility
 
 ### Type Safety & Validation
+
 - **Branded Cache Keys**: Use `CacheKey` type to prevent raw string usage
 - **Runtime Validation**: Use `validateInputs()` function with Zod schemas
 - **Error Codes**: Use `ErrorCode` enum for consistent error categorization
@@ -38,9 +40,17 @@ types/
 ## Required Patterns
 
 ### globalThis Singleton Pattern
+
 ```typescript
 // ✅ GOOD - Use globalThis singleton client
 import { getCacheService } from "@formbricks/cache";
+// ✅ GOOD - Production validation (index.ts)
+import { validateRedisConfig } from "@formbricks/cache";
+// Throws if REDIS_URL missing in production
+
+// ❌ BAD - CacheService class not exported for direct instantiation
+import { CacheService } from "@formbricks/cache";
+
 const result = await getCacheService();
 if (!result.ok) {
   // Handle initialization error - Redis connection failed
@@ -49,15 +59,13 @@ if (!result.ok) {
 }
 const cacheService = result.data;
 
-// ✅ GOOD - Production validation (index.ts)
-import { validateRedisConfig } from "@formbricks/cache";
 validateRedisConfig(); // Throws if REDIS_URL missing in production
 
-// ❌ BAD - CacheService class not exported for direct instantiation
-import { CacheService } from "@formbricks/cache"; // Won't work!
+// Won't work!
 ```
 
 ### Result Type Error Handling
+
 ```typescript
 // ✅ GOOD - Core operations return Result<T, CacheError>
 const result = await cacheService.get<UserData>(key);
@@ -85,21 +93,27 @@ logger.warn({ error }, "Cache unavailable; executing function directly");
 ```
 
 ### Core Validation & Error Types
+
 ```typescript
 // Unified error interface
-interface CacheError { code: ErrorCode; }
+interface CacheError {
+  code: ErrorCode;
+}
 
 enum ErrorCode {
   Unknown = "unknown",
-  CacheValidationError = "cache_validation_error", 
+  CacheValidationError = "cache_validation_error",
   RedisConnectionError = "redis_connection_error",
   RedisOperationError = "redis_operation_error",
   CacheCorruptionError = "cache_corruption_error",
 }
 
 // Key validation: min 1 char, non-whitespace
-export const ZCacheKey = z.string().min(1).refine(k => k.trim().length > 0);
-// TTL validation: min 1000ms for Redis seconds conversion  
+export const ZCacheKey = z
+  .string()
+  .min(1)
+  .refine((k) => k.trim().length > 0);
+// TTL validation: min 1000ms for Redis seconds conversion
 export const ZTtlMs = z.number().int().min(1000).finite();
 
 // Generic validation function (returns array of validated values)
@@ -109,6 +123,7 @@ export function validateInputs(...pairs: [unknown, ZodType][]): Result<unknown[]
 ## Cache Key Generation
 
 ### Key Generators (cache-keys.ts)
+
 ```typescript
 export const createCacheKey = {
   environment: {
@@ -131,6 +146,7 @@ export const createCacheKey = {
 ```
 
 ### Internal Key Utility (utils/key.ts)
+
 - **Not exported** from package - internal only
 - **Validates** `fb:resource:identifier[:subresource]*` pattern
 - **Prevents empty parts** and malformed keys
@@ -156,14 +172,17 @@ cacheService.getRedisClient(): RedisClient | null
 ```
 
 ### Redis Availability Method
+
 Standardized Redis connectivity check across the codebase.
 
 **Method Implementation:**
+
 - `isRedisAvailable()`: Checks client state (`isReady && isOpen`) + Redis ping test
 - Returns `Promise<boolean>` - true if Redis is available and responsive
 - Used for health monitoring, status checks, and external validation
 
 ### Service Implementation - Cognitive Complexity Reduction
+
 The `withCache` method is split into helper methods to reduce cognitive complexity:
 
 ```typescript
@@ -172,7 +191,7 @@ async withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<
   // Early returns for Redis availability and validation
   const cachedValue = await this.tryGetCachedValue<T>(key, ttlMs);
   if (cachedValue !== undefined) return cachedValue;
-  
+
   const fresh = await fn();
   await this.trySetCache(key, fresh, ttlMs);
   return fresh;
@@ -186,6 +205,7 @@ private async trySetCache(key, value, ttlMs): Promise<void>
 ## Null vs Undefined Handling
 
 ### Caching Behavior
+
 - **`null` values**: Cached normally (represents intentional absence)
 - **`undefined` values**: NOT cached (preserves JavaScript semantics)
 - **Cache miss**: Returns `null` (Redis returns null for missing keys)
@@ -198,7 +218,7 @@ const nullResult = await cacheService.withCache(
   ttl
 ); // Returns null, value is cached
 
-// ✅ GOOD - Undefined values are NOT cached  
+// ✅ GOOD - Undefined values are NOT cached
 const undefinedResult = await cacheService.withCache(
   () => Promise.resolve(undefined), // Undefined result
   key,
@@ -220,6 +240,7 @@ if (result.ok && result.data === null) {
 ## Logging Standards
 
 ### Error Logging Strategy
+
 - **Detailed logging at source** - Log full context where errors occur
 - **Clean Result objects** - Only error codes in Result, not messages
 - **Level strategy**:
@@ -231,10 +252,10 @@ if (result.ok && result.data === null) {
 
 ```typescript
 // ✅ GOOD - Rich logging, clean Result
-logger.error("Cache validation failed", { 
-  value, 
+logger.error("Cache validation failed", {
+  value,
   error: "TTL must be at least 1000ms",
-  validationErrors: [...] 
+  validationErrors: [...]
 });
 return err({ code: ErrorCode.CacheValidationError });
 
@@ -245,14 +266,16 @@ return await fn(); // Always return function result
 
 ## Testing Patterns
 
-### Unit Tests (*.test.ts)
+### Unit Tests (\*.test.ts)
+
 - **Result error cases**: Validation, Redis, corruption errors
 - **Null vs undefined**: Caching behavior differences
-- **withCache fallbacks**: Cache failures gracefully handled  
+- **withCache fallbacks**: Cache failures gracefully handled
 - **Edge cases**: Empty arrays, invalid TTLs, malformed keys
 - **Mock dependencies**: Redis client, logger with all levels
 
 ### Integration Tests (cache-integration.test.ts)
+
 - **End-to-End Redis Operations**: Tests against live Redis instance
 - **Auto-Skip Logic**: Automatically skips when Redis unavailable (`REDIS_URL` not set)
 - **Comprehensive Coverage**: All cache operations through real code paths
@@ -284,6 +307,7 @@ describe("Cache Integration Tests", () => {
 ## Web App Integration Pattern
 
 ### Cache Facade (apps/web/lib/cache/index.ts)
+
 The web app uses a simplified Proxy-based facade that calls `getCacheService()` directly:
 
 ```typescript
@@ -306,6 +330,7 @@ const redis = await cache.getRedisClient();
 ```
 
 ### Proxy Implementation
+
 - **Lazy Initialization**: Calls `getCacheService()` for each operation via Proxy
 - **Graceful Degradation**: `withCache` falls back to direct execution on cache failure
 - **Server-Only**: Uses "server-only" import to prevent client-side usage
@@ -314,6 +339,7 @@ const redis = await cache.getRedisClient();
 ## Architecture Updates
 
 ### globalThis Singleton (client.ts)
+
 ```typescript
 // Cross-platform singleton using globalThis (not global)
 const globalForCache = globalThis as unknown as {
@@ -326,6 +352,7 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
 ```
 
 ### Fast-Fail Connection Strategy
+
 - **No Reconnection in Factory**: Redis client uses fast-fail connection
 - **Background Reconnection**: Handled by Redis client's built-in retry logic
 - **Early Checks**: `isReady` check at method start to avoid 1-second timeouts
@@ -334,7 +361,7 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
 ## Key Rules Summary
 
 1. **globalThis Singleton**: Use `getCacheService()` - cross-platform singleton
-2. **Result Types**: Core ops return `Result<T, CacheError>` - no throwing  
+2. **Result Types**: Core ops return `Result<T, CacheError>` - no throwing
 3. **Never-Failing withCache**: Returns `T` directly, handles cache errors internally
 4. **Standardized Redis Check**: Use `isRedisAvailable()` method with ping test
 5. **Structured Logging**: Context object first, then message string

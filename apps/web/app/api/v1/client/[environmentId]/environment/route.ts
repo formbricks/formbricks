@@ -1,9 +1,9 @@
-import { getEnvironmentState } from "@/app/api/v1/client/[environmentId]/environment/lib/environmentState";
-import { responses } from "@/app/lib/api/response";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { getEnvironmentState } from "@/app/api/v1/client/[environmentId]/environment/lib/environmentState";
+import { responses } from "@/app/lib/api/response";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(

@@ -1,8 +1,8 @@
+import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { CloseIcon } from "@/components/icons/close-icon";
 import { mixColor } from "@/lib/color";
 import { cn } from "@/lib/utils";
-import { useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 
 interface SurveyCloseButtonProps {
   onClose?: () => void;

@@ -1,3 +1,7 @@
+import { XIcon } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { TProjectConfigChannel, TProjectConfigIndustry, TProjectMode } from "@formbricks/types/project";
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
 import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
@@ -7,10 +11,6 @@ import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
 import { getTranslate } from "@/tolgee/server";
-import { XIcon } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { TProjectConfigChannel, TProjectConfigIndustry, TProjectMode } from "@formbricks/types/project";
 
 interface ProjectSettingsPageProps {
   params: Promise<{

@@ -1,13 +1,13 @@
+import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
 const fetchAndAuthorizeActionClass = async (
   authentication: TAuthenticationApiKey,

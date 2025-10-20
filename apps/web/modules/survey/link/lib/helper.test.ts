@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { verifyTokenForLinkSurvey } from "@/lib/jwt";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { checkAndValidateSingleUseId, getEmailVerificationDetails } from "./helper";
 
 vi.mock("@/lib/jwt", () => ({

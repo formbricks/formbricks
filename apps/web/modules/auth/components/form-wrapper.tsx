@@ -1,5 +1,5 @@
-import { Logo } from "@/modules/ui/components/logo";
 import Link from "next/link";
+import { Logo } from "@/modules/ui/components/logo";
 
 interface FormWrapperProps {
   children: React.ReactNode;

@@ -1,5 +1,12 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
+import { PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { inviteOrganizationMemberAction } from "@/modules/setup/organization/[organizationId]/invite/actions";
 import {
@@ -10,13 +17,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/ale
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
 
 interface InviteMembersProps {
   IS_SMTP_CONFIGURED: boolean;

@@ -1,6 +1,6 @@
-import * as constants from "@/lib/constants";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
+import * as constants from "@/lib/constants";
 import { getSurveyFollowUpsPermission } from "./utils";
 
 vi.mock("@/lib/constants", async () => {

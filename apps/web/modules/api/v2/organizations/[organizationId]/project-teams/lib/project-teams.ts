@@ -1,3 +1,7 @@
+import { ProjectTeam } from "@prisma/client";
+import { z } from "zod";
+import { prisma } from "@formbricks/database";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { captureTelemetry } from "@/lib/telemetry";
 import { getProjectTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/utils";
 import {
@@ -7,10 +11,6 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
-import { ProjectTeam } from "@prisma/client";
-import { z } from "zod";
-import { prisma } from "@formbricks/database";
-import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getProjectTeams = async (
   organizationId: string,

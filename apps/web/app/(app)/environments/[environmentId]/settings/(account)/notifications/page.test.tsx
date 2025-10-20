@@ -1,9 +1,9 @@
-import { getUser } from "@/lib/user/service";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TUser } from "@formbricks/types/user";
+import { getUser } from "@/lib/user/service";
 import { EditAlerts } from "./components/EditAlerts";
 import Page from "./page";
 import { Membership } from "./types";

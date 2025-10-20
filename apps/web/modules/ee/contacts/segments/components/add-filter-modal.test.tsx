@@ -1,10 +1,10 @@
-import { AddFilterModal } from "@/modules/ee/contacts/segments/components/add-filter-modal";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 // Added waitFor
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
+import { AddFilterModal } from "@/modules/ee/contacts/segments/components/add-filter-modal";
 
 // Mock the Dialog components
 vi.mock("@/modules/ui/components/dialog", () => ({

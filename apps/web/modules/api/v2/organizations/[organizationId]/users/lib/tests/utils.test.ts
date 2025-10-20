@@ -1,6 +1,6 @@
+import { describe, expect, test, vi } from "vitest";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
-import { describe, expect, test, vi } from "vitest";
 import { getUsersQuery } from "../utils";
 
 vi.mock("@/modules/api/v2/management/lib/utils", () => ({

@@ -1,8 +1,8 @@
 "use client";
 
+import { HexColorInput } from "react-colorful";
 import { cn } from "@/lib/cn";
 import { PopoverPicker } from "@/modules/ui/components/color-picker/components/popover-picker";
-import { HexColorInput } from "react-colorful";
 
 interface ColorPickerProps {
   color: string;

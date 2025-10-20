@@ -1,9 +1,9 @@
 "use client";
 
-import { Label } from "@/modules/ui/components/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { TFnType, useTranslate } from "@tolgee/react";
 import { InfoIcon } from "lucide-react";
+import { Label } from "@/modules/ui/components/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 export function LanguageLabels() {
   const { t } = useTranslate();

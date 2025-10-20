@@ -1,3 +1,7 @@
+import { useCallback, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import { type TSurveyCalQuestion, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { CalEmbed } from "@/components/general/cal-embed";
@@ -10,10 +14,6 @@ import {
 } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useCallback, useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import { type TSurveyCalQuestion, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;

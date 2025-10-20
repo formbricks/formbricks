@@ -1,13 +1,13 @@
-import * as instanceService from "@/lib/instance/service";
-import * as organizationService from "@/lib/organization/service";
-import * as userService from "@/lib/user/service";
-import * as licenseCheck from "@/modules/ee/license-check/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import * as nextAuth from "next-auth";
 import * as nextNavigation from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AuthenticationError } from "@formbricks/types/errors";
+import * as instanceService from "@/lib/instance/service";
+import * as organizationService from "@/lib/organization/service";
+import * as userService from "@/lib/user/service";
+import * as licenseCheck from "@/modules/ee/license-check/lib/utils";
 import { CreateOrganizationPage } from "./page";
 
 // Mock environment variables

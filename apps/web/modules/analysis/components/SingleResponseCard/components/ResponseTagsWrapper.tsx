@@ -1,16 +1,16 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TagError } from "@/modules/projects/settings/types/tag";
-import { Button } from "@/modules/ui/components/button";
-import { Tag } from "@/modules/ui/components/tag";
-import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
 import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TTag } from "@formbricks/types/tags";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { TagError } from "@/modules/projects/settings/types/tag";
+import { Button } from "@/modules/ui/components/button";
+import { Tag } from "@/modules/ui/components/tag";
+import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {

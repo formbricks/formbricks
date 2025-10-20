@@ -1,7 +1,7 @@
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 
 // Mock the Dialog components
 vi.mock("@/modules/ui/components/dialog", () => ({

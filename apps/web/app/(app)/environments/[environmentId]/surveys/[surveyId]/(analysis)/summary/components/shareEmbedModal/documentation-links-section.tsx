@@ -1,10 +1,10 @@
 "use client";
 
-import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
-import { H4 } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
+import { H4 } from "@/modules/ui/components/typography";
 
 interface DocumentationLink {
   href: string;

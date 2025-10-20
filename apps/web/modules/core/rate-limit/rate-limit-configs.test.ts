@@ -1,5 +1,5 @@
-import { ZRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ZRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 import { rateLimitConfigs } from "./rate-limit-configs";

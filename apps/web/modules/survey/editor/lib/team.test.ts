@@ -1,6 +1,6 @@
-import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { getTeamMemberDetails } from "./team";
 
 // Mock prisma

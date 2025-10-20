@@ -1,9 +1,9 @@
 "use client";
 
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
 import { BlocksIcon, BrushIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface ProjectConfigNavigationProps {
   activeId: string;

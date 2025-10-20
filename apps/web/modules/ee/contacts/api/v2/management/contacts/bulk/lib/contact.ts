@@ -1,10 +1,10 @@
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
 
 export const upsertBulkContacts = async (
   contacts: TContactBulkUploadContact[],

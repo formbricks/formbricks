@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { MousePointerClickIcon } from "lucide-react";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import {
   Dialog,
@@ -9,8 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
-import { MousePointerClickIcon } from "lucide-react";
 import SurveyCopyOptions from "./survey-copy-options";
 
 interface CopySurveyModalProps {

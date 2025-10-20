@@ -16,13 +16,13 @@ When generating test files inside the "/app/web" path, follow these rules:
 - When using "screen.getByText" check for the tolgee string if it is being used in the file.
 - The types for mocked variables can be found in the "packages/types" path. Be sure that every imported type exists before using it. Don't create types that are not already in the codebase.
 - When mocking data check if the properties added are part of the type of the object being mocked. Only specify known properties, don't use properties that are not part of the type.
-  
+
 If it's a test for a ".tsx" file, follow these extra instructions:
 
 - Add this code inside the "describe" block and before any test:
 
 afterEach(() => {
-    cleanup();
+cleanup();
 });
 
 - The "afterEach" function should only have the "cleanup()" line inside it and should be adde to the "vitest" imports.

@@ -1,9 +1,9 @@
 // Import the mocked function to access it in tests
-import { getSurvey } from "@/lib/survey/service";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getSurvey } from "@/lib/survey/service";
 import SurveyLayout from "./layout";
 
 // Mock the getSurvey function

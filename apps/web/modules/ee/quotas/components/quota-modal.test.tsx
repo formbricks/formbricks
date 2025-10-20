@@ -1,10 +1,10 @@
-import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { QuotaModal } from "./quota-modal";
 
 // Mock @paralleldrive/cuid2

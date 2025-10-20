@@ -1,6 +1,6 @@
-import { convertToEmbedUrl } from "@/lib/video-upload";
 import { cleanup, render, screen } from "@testing-library/preact";
 import { afterEach, describe, expect, test } from "vitest";
+import { convertToEmbedUrl } from "@/lib/video-upload";
 import { QuestionMedia } from "./question-media";
 
 describe("QuestionMedia", () => {

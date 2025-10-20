@@ -1,6 +1,3 @@
-import { updateResponse } from "@/lib/response/service";
-import { evaluateLogic } from "@/lib/surveyLogic/utils";
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -9,6 +6,9 @@ import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { updateResponse } from "@/lib/response/service";
+import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { validateInputs } from "@/lib/utils/validate";
 import { evaluateQuotas, handleQuotas, upsertResponseQuotaLinks } from "./utils";
 
 // Mock dependencies

@@ -1,9 +1,9 @@
-import { getUser } from "@/lib/user/service";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
+import { getUser } from "@/lib/user/service";
 import AppLayout from "./layout";
 
 vi.mock("next-auth", () => ({

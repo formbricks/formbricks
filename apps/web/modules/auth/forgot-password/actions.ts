@@ -1,14 +1,14 @@
 "use server";
 
+import { z } from "zod";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { ZUserEmail } from "@formbricks/types/user";
 import { PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { actionClient } from "@/lib/utils/action-client";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { sendForgotPasswordEmail } from "@/modules/email";
-import { z } from "zod";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZUserEmail } from "@formbricks/types/user";
 
 const ZForgotPasswordAction = z.object({
   email: ZUserEmail,

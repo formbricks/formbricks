@@ -1,9 +1,9 @@
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { CreateTeamModal } from "./create-team-modal";
 
 vi.mock("@/modules/ui/components/dialog", () => ({

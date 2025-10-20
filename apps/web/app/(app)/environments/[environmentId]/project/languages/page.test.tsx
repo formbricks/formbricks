@@ -1,5 +1,5 @@
-import { LanguagesPage } from "@/modules/ee/languages/page";
 import { describe, expect, test, vi } from "vitest";
+import { LanguagesPage } from "@/modules/ee/languages/page";
 import Page from "./page";
 
 vi.mock("@/lib/constants", () => ({

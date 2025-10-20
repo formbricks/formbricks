@@ -1,6 +1,6 @@
-import { INTERCOM_APP_ID, INTERCOM_SECRET_KEY, IS_INTERCOM_CONFIGURED } from "@/lib/constants";
 import { createHmac } from "crypto";
 import type { TUser } from "@formbricks/types/user";
+import { INTERCOM_APP_ID, INTERCOM_SECRET_KEY, IS_INTERCOM_CONFIGURED } from "@/lib/constants";
 import { IntercomClient } from "./IntercomClient";
 
 interface IntercomClientWrapperProps {

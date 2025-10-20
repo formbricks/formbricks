@@ -1,13 +1,13 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectBrandingAction } from "@/modules/ee/whitelabel/remove-branding/actions";
 import { TProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslate } from "@tolgee/react";
-import { useState } from "react";
-import toast from "react-hot-toast";
 
 interface EditBrandingProps {
   type: "linkSurvey" | "appSurvey";

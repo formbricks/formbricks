@@ -1,9 +1,3 @@
-import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
-import { validateInputs } from "@/lib/utils/validate";
-import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
-import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -12,6 +6,12 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { validateInputs } from "@/lib/utils/validate";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
+import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
+import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
 import { TProjectWithLanguages, TSurvey } from "../types/surveys";
 // Import the module to be tested
 import {

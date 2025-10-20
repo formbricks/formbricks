@@ -1,5 +1,14 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { TFnType, useTranslate } from "@tolgee/react";
+import { CheckIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createQuotaAction,
@@ -10,15 +19,6 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { TFnType, useTranslate } from "@tolgee/react";
-import { CheckIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { QuotaList } from "./quota-list";
 import { QuotaModal } from "./quota-modal";
 

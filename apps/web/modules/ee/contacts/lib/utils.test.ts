@@ -1,5 +1,5 @@
-import { TTransformPersonInput } from "@/modules/ee/contacts/types/contact";
 import { describe, expect, test } from "vitest";
+import { TTransformPersonInput } from "@/modules/ee/contacts/types/contact";
 import { convertPrismaContactAttributes, getContactIdentifier, transformPrismaContact } from "./utils";
 
 const mockPrismaAttributes = [

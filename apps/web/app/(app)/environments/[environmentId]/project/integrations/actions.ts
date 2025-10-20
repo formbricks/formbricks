@@ -1,5 +1,8 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { ZIntegrationInput } from "@formbricks/types/integration";
 import { createOrUpdateIntegration, deleteIntegration } from "@/lib/integration/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -11,9 +14,6 @@ import {
   getProjectIdFromIntegrationId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { ZIntegrationInput } from "@formbricks/types/integration";
 
 const ZCreateOrUpdateIntegrationAction = z.object({
   environmentId: ZId,

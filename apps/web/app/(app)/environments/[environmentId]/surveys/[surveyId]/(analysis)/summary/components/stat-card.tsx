@@ -1,7 +1,7 @@
 "use client";
 
-import { BaseCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/base-card";
 import { ReactNode } from "react";
+import { BaseCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/base-card";
 
 interface StatCardProps {
   label: ReactNode;

@@ -1,12 +1,12 @@
 "use client";
 
-import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { Webhook } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { type JSX, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 
 interface WebhookTableProps {
   environment: TEnvironment;

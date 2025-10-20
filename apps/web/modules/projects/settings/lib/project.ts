@@ -1,7 +1,4 @@
 import "server-only";
-import { createEnvironment } from "@/lib/environment/service";
-import { validateInputs } from "@/lib/utils/validate";
-import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
@@ -10,6 +7,9 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TProject, TProjectUpdateInput, ZProject, ZProjectUpdateInput } from "@formbricks/types/project";
+import { createEnvironment } from "@/lib/environment/service";
+import { validateInputs } from "@/lib/utils/validate";
+import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
 
 const selectProject = {
   id: true,

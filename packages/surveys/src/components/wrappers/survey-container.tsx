@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "preact/hooks";
 import { type TPlacement } from "@formbricks/types/common";
+import { cn } from "@/lib/utils";
 
 interface SurveyContainerProps {
   mode: "modal" | "inline";

@@ -1,4 +1,10 @@
 import "server-only";
+import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
+import { z } from "zod";
+import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/common";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TOrganizationTeam,
@@ -8,12 +14,6 @@ import {
   TUserTeam,
   ZTeamSettingsFormSchema,
 } from "@/modules/ee/teams/team-list/types/team";
-import { Prisma } from "@prisma/client";
-import { cache as reactCache } from "react";
-import { z } from "zod";
-import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getTeamsByOrganizationId = reactCache(
   async (organizationId: string): Promise<TOrganizationTeam[] | null> => {

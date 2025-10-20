@@ -1,9 +1,9 @@
-import { ZResponseIdSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
-import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
 import { ZResponse } from "@formbricks/database/zod/responses";
 import { ZResponseInput } from "@formbricks/types/responses";
+import { ZResponseIdSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
+import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 
 export const getResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "getResponse",

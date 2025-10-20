@@ -1,8 +1,8 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { Dialog, DialogContent } from "@/modules/ui/components/dialog";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { useTranslate } from "@tolgee/react";
 
 interface ProjectLimitModalProps {
   open: boolean;

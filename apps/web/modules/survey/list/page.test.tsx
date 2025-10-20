@@ -1,10 +1,10 @@
-import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
+import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { SurveysPage } from "./page";
 
 // Mock all dependencies

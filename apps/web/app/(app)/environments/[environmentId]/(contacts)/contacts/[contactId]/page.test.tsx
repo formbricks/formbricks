@@ -1,5 +1,5 @@
-import { SingleContactPage } from "@/modules/ee/contacts/[contactId]/page";
 import { describe, expect, test, vi } from "vitest";
+import { SingleContactPage } from "@/modules/ee/contacts/[contactId]/page";
 import Page from "./page";
 
 // mock constants

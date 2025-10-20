@@ -1,3 +1,4 @@
+import type { Session } from "next-auth";
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { getOrganizationsByUserId } from "@/app/(app)/environments/[environmentId]/lib/organization";
@@ -21,7 +22,6 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
 import { getTranslate } from "@/tolgee/server";
-import type { Session } from "next-auth";
 
 interface EnvironmentLayoutProps {
   environmentId: string;

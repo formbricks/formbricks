@@ -1,5 +1,3 @@
-import { SegmentFilter } from "@/modules/ee/contacts/segments/components/segment-filter";
-import * as segmentUtils from "@/modules/ee/contacts/segments/lib/utils";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -11,6 +9,8 @@ import {
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
 } from "@formbricks/types/segment";
+import { SegmentFilter } from "@/modules/ee/contacts/segments/components/segment-filter";
+import * as segmentUtils from "@/modules/ee/contacts/segments/lib/utils";
 
 // Mock ResizeObserver
 const ResizeObserverMock = vi.fn(() => ({

@@ -1,11 +1,11 @@
-import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
-import { getUserProjects } from "@/lib/project/service";
-import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
-import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
+import { getUserProjects } from "@/lib/project/service";
+import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import Page from "./page";
 
 vi.mock("@/lib/constants", () => ({ DEFAULT_BRAND_COLOR: "#fff" }));

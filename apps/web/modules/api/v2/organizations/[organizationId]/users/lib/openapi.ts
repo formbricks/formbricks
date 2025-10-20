@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
+import { ZUser } from "@formbricks/database/zod/users";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import {
   ZGetUsersFilter,
@@ -6,9 +9,6 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { z } from "zod";
-import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
-import { ZUser } from "@formbricks/database/zod/users";
 
 export const getUsersEndpoint: ZodOpenApiOperationObject = {
   operationId: "getUsers",

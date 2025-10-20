@@ -1,5 +1,5 @@
-import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
 import { Toaster } from "react-hot-toast";
+import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
 
 export const SetupLayout = ({ children }: { children: React.ReactNode }) => {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
-import { BaseCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/base-card";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { BaseCard } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/base-card";
 
 interface InteractiveCardProps {
   tab: "dropOffs" | "quotas";

@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -10,8 +12,6 @@ import {
   deleteApiKey,
   updateApiKey,
 } from "@/modules/organization/settings/api-keys/lib/api-key";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
 import { ZApiKeyCreateInput, ZApiKeyUpdateInput } from "./types/api-keys";
 
 const ZDeleteApiKeyAction = z.object({

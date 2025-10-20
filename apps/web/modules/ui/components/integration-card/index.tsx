@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import Link from "next/link";
+import { Button } from "@/modules/ui/components/button";
 
 interface CardProps {
   connectText?: string;

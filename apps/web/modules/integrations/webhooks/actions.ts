@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -18,8 +20,6 @@ import {
   updateWebhook,
 } from "@/modules/integrations/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/modules/integrations/webhooks/types/webhooks";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
 
 const ZCreateWebhookAction = z.object({
   environmentId: ZId,

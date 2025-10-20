@@ -1,3 +1,7 @@
+import { Metadata } from "next";
+import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { gethasNoOrganizations } from "@/lib/instance/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
@@ -7,10 +11,6 @@ import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { getTranslate } from "@/tolgee/server";
-import { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { notFound } from "next/navigation";
-import { AuthenticationError } from "@formbricks/types/errors";
 import { CreateOrganization } from "./components/create-organization";
 
 export const metadata: Metadata = {

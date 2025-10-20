@@ -1,13 +1,13 @@
 "use client";
 
-import { timeSince } from "@/lib/time";
-import { getContactIdentifier } from "@/lib/utils/contact";
-import { ArrayResponse } from "@/modules/ui/components/array-response";
-import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { TSurvey, TSurveyQuestionSummaryContactInfo } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { ArrayResponse } from "@/modules/ui/components/array-response";
+import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface ContactInfoSummaryProps {

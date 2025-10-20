@@ -1,3 +1,9 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { TTag } from "@formbricks/types/tags";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
@@ -15,12 +21,6 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { TTag } from "@formbricks/types/tags";
-import { TUser, TUserLocale } from "@formbricks/types/user";
 
 vi.mock(
   "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation",

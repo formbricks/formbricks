@@ -1,12 +1,12 @@
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { notFound, redirect } from "next/navigation";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getTranslate } from "@/tolgee/server";
-import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
-import { notFound, redirect } from "next/navigation";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/modules/ee/license-check/lib/license", () => ({
   getEnterpriseLicense: vi.fn().mockResolvedValue({

@@ -1,7 +1,3 @@
-import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
-import { getQuestionResponseMapping } from "@/lib/responses";
-import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 import {
   Body,
   Column,
@@ -20,6 +16,10 @@ import React from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
+import { getQuestionResponseMapping } from "@/lib/responses";
+import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
+import { getTranslate } from "@/tolgee/server";
 
 const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";

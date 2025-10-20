@@ -1,6 +1,5 @@
 "use client";
 
-import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
@@ -9,6 +8,7 @@ import {
   TSurveyQuestionSummaryNps,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

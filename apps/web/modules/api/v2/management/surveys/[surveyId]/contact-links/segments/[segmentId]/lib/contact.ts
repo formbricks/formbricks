@@ -1,12 +1,12 @@
+import { cache as reactCache } from "react";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import { err, ok } from "@formbricks/types/error-handlers";
 import { getContactAttributeKeys } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key";
 import { getSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment";
 import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/surveys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
-import { cache as reactCache } from "react";
-import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
-import { err, ok } from "@formbricks/types/error-handlers";
 
 export const getContactsInSegment = reactCache(
   async (surveyId: string, segmentId: string, limit: number, skip: number, attributeKeys?: string) => {

@@ -1,9 +1,9 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import { getProjectByEnvironmentId } from "./project";
 
 vi.mock("@/lib/utils/validate", () => ({

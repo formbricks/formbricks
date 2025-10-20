@@ -1,4 +1,3 @@
-import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -7,6 +6,7 @@ import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.share
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { DeleteContactButton } from "./delete-contact-button";
 
 vi.mock("next/navigation", () => ({

@@ -1,9 +1,9 @@
-import { getShuffledRowIndices } from "@/lib/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { type TSurveyMatrixQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getShuffledRowIndices } from "@/lib/utils";
 import { MatrixQuestion } from "./matrix-question";
 
 // Mock dependencies

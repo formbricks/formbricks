@@ -1,7 +1,5 @@
 "use client";
 
-import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,6 +9,8 @@ import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 import { SingleResponseCardBody } from "./components/SingleResponseCardBody";
