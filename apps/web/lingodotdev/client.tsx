@@ -21,7 +21,12 @@ export const I18nProvider = ({ children, language, defaultLanguage }: I18nProvid
 
   useEffect(() => {
     const initializeI18n = async () => {
-      if (!isInit) {
+      if (isInit) {
+        if (i18n.language !== locale) {
+          await i18n.changeLanguage(locale);
+        }
+        setIsReady(true);
+      } else {
         try {
           await i18n
             .use(ICU)
@@ -42,11 +47,6 @@ export const I18nProvider = ({ children, language, defaultLanguage }: I18nProvid
           logger.error(error);
           setIsReady(true);
         }
-      } else {
-        if (i18n.language !== locale) {
-          await i18n.changeLanguage(locale);
-        }
-        setIsReady(true);
       }
     };
 
