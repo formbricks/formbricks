@@ -1,6 +1,3 @@
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { CreateSegmentModal } from "@/modules/ee/contacts/segments/components/create-segment-modal";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 // Import within
 import userEvent from "@testing-library/user-event";
@@ -9,6 +6,9 @@ import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { CreateSegmentModal } from "@/modules/ee/contacts/segments/components/create-segment-modal";
 
 // Mock dependencies
 vi.mock("react-hot-toast", () => ({

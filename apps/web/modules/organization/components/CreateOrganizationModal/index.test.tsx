@@ -1,9 +1,9 @@
-import { createOrganizationAction } from "@/modules/organization/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { createOrganizationAction } from "@/modules/organization/actions";
 import { CreateOrganizationModal } from "./index";
 
 vi.mock("@/modules/ui/components/dialog", () => ({

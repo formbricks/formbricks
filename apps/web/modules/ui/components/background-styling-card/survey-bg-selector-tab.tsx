@@ -1,13 +1,13 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
+import { useEffect, useState } from "react";
 import { AnimatedSurveyBg } from "@/modules/survey/editor/components/animated-survey-bg";
 import { ColorSurveyBg } from "@/modules/survey/editor/components/color-survey-bg";
 import { UploadImageSurveyBg } from "@/modules/survey/editor/components/image-survey-bg";
 import { ImageFromUnsplashSurveyBg } from "@/modules/survey/editor/components/unsplash-images";
 import { TabBar } from "@/modules/ui/components/tab-bar";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { useEffect, useState } from "react";
 
 interface SurveyBgSelectorTabProps {
   handleBgChange: (bg: string, bgType: string) => void;

@@ -1,3 +1,5 @@
+import { NextRequest } from "next/server";
+import { z } from "zod";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -13,8 +15,6 @@ import {
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { NextRequest } from "next/server";
-import { z } from "zod";
 
 export const GET = async (request: NextRequest, props: { params: Promise<{ webhookId: string }> }) =>
   authenticatedApiClient({

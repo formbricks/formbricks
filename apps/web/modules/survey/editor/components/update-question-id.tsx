@@ -1,13 +1,13 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
-import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 
 interface UpdateQuestionIdProps {
   localSurvey: TSurvey;

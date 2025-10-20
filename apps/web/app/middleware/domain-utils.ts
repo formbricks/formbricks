@@ -1,5 +1,5 @@
-import { env } from "@/lib/env";
 import { NextRequest } from "next/server";
+import { env } from "@/lib/env";
 
 /**
  * Get the public domain from PUBLIC_URL environment variable

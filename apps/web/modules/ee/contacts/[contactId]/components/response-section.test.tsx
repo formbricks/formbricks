@@ -1,10 +1,3 @@
-import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getResponsesByContactId } from "@/lib/response/service";
-import { getSurveys } from "@/lib/survey/service";
-import { getUser } from "@/lib/user/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { TFnType } from "@tolgee/react";
@@ -12,6 +5,13 @@ import { getServerSession } from "next-auth";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag } from "@formbricks/types/tags";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getResponsesByContactId } from "@/lib/response/service";
+import { getSurveys } from "@/lib/survey/service";
+import { getUser } from "@/lib/user/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTranslate } from "@/tolgee/server";
 import { ResponseSection } from "./response-section";
 
 vi.mock("@/lib/project/service", () => ({

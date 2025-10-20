@@ -1,9 +1,9 @@
 "use client";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon, PauseIcon, PencilIcon } from "lucide-react";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface SurveyStatusIndicatorProps {
   status: TSurvey["status"];

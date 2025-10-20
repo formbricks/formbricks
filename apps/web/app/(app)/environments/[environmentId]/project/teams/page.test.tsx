@@ -1,5 +1,5 @@
-import { ProjectTeams } from "@/modules/ee/teams/project-teams/page";
 import { describe, expect, test, vi } from "vitest";
+import { ProjectTeams } from "@/modules/ee/teams/project-teams/page";
 import Page from "./page";
 
 vi.mock("@/lib/constants", () => ({

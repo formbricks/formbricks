@@ -1,5 +1,5 @@
-import { ProjectLookSettingsLoading as OriginalProjectLookSettingsLoading } from "@/modules/projects/settings/look/loading";
 import { describe, expect, test, vi } from "vitest";
+import { ProjectLookSettingsLoading as OriginalProjectLookSettingsLoading } from "@/modules/projects/settings/look/loading";
 import ProjectLookSettingsLoading from "./loading";
 
 // Mock the original component to ensure we are testing the re-export

@@ -1,8 +1,8 @@
-import { type TInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { type TInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 
 export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<boolean> => {
   try {

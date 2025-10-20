@@ -1,7 +1,7 @@
-import { timeSince } from "@/lib/time";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TActionClass } from "@formbricks/types/action-classes";
+import { timeSince } from "@/lib/time";
 import { ActionClassDataRow } from "./ActionRowData";
 
 vi.mock("@/lib/time", () => ({

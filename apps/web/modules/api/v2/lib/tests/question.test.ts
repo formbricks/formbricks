@@ -1,10 +1,10 @@
-import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
 import { describe, expect, test, vi } from "vitest";
 import {
   TSurveyQuestion,
   TSurveyQuestionChoice,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
 import { validateOtherOptionLength, validateOtherOptionLengthForMultipleChoice } from "../question";
 
 vi.mock("@/lib/i18n/utils", () => ({

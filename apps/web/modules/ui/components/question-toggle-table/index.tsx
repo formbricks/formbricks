@@ -1,7 +1,5 @@
 "use client";
 
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
@@ -10,6 +8,8 @@ import {
   TSurveyContactInfoQuestion,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface QuestionToggleTableProps {
   type: "address" | "contact";

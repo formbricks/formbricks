@@ -1,9 +1,9 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma, Webhook } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 
 export const getWebhookCountBySource = async (
   environmentId: string,

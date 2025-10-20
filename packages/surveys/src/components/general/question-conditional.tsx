@@ -1,3 +1,13 @@
+import { useEffect } from "react";
+import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
+import { type TUploadFileConfig } from "@formbricks/types/storage";
+import {
+  type TSurveyQuestion,
+  type TSurveyQuestionChoice,
+  type TSurveyQuestionId,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { AddressQuestion } from "@/components/questions/address-question";
 import { CalQuestion } from "@/components/questions/cal-question";
 import { ConsentQuestion } from "@/components/questions/consent-question";
@@ -14,16 +24,6 @@ import { PictureSelectionQuestion } from "@/components/questions/picture-selecti
 import { RankingQuestion } from "@/components/questions/ranking-question";
 import { RatingQuestion } from "@/components/questions/rating-question";
 import { getLocalizedValue } from "@/lib/i18n";
-import { useEffect } from "react";
-import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
-import { type TUploadFileConfig } from "@formbricks/types/storage";
-import {
-  type TSurveyQuestion,
-  type TSurveyQuestionChoice,
-  type TSurveyQuestionId,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;

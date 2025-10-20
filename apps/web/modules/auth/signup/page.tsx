@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -26,7 +27,6 @@ import {
   getIsSamlSsoEnabled,
   getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
-import { notFound } from "next/navigation";
 import { SignupForm } from "./components/signup-form";
 
 export const SignupPage = async ({ searchParams: searchParamsProps }) => {

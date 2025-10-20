@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils";
 import type { JSX, Ref } from "preact";
 import { forwardRef } from "preact/compat";
 import { useEffect, useImperativeHandle, useRef, useState } from "preact/hooks";
+import { cn } from "@/lib/utils";
 
 interface ScrollableContainerProps {
   children: JSX.Element;

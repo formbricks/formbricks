@@ -1,6 +1,6 @@
-import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { render } from "@testing-library/react";
 import { type MockedFunction, beforeEach, describe, expect, test, vi } from "vitest";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { ClientLogout } from "./index";
 
 // Mock next-auth/react

@@ -1,9 +1,9 @@
-import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
+import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { EditOrganizationNameForm } from "./EditOrganizationNameForm";
 
 vi.mock("@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions", () => ({

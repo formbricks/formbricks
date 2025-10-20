@@ -1,10 +1,10 @@
-import { getUpdatedTtc } from "@/lib/ttc";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/preact";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyNPSQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getUpdatedTtc } from "@/lib/ttc";
 import { NPSQuestion } from "./nps-question";
 
 vi.mock("@/lib/i18n", () => ({

@@ -1,6 +1,6 @@
-import { SettingsTitle } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
+import { SettingsTitle } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
 
 describe("SettingsTitle", () => {
   afterEach(() => {

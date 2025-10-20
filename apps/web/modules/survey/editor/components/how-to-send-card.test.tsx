@@ -1,4 +1,3 @@
-import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { Environment } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -6,6 +5,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TLanguage } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
+import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { HowToSendCard } from "./how-to-send-card";
 
 // Mock constants

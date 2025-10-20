@@ -1,8 +1,8 @@
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 
 const OnboardingLayout = async (props) => {
   const params = await props.params;

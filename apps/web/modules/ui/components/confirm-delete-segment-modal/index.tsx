@@ -1,5 +1,8 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import React, { useMemo } from "react";
+import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -10,9 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
-import React, { useMemo } from "react";
-import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 
 interface ConfirmDeleteSegmentModalProps {
   open: boolean;

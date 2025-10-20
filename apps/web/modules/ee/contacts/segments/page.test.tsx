@@ -1,4 +1,8 @@
 // Import the actual constants module to get its type/shape for mocking
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TSegment } from "@formbricks/types/segment";
 import * as constants from "@/lib/constants";
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -10,10 +14,6 @@ import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth"
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getTranslate } from "@/tolgee/server";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment } from "@formbricks/types/segment";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 import { SegmentsPage } from "./page";
 

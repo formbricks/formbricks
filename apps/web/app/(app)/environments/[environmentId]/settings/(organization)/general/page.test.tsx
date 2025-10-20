@@ -1,3 +1,6 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TUser } from "@formbricks/types/user";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
@@ -7,9 +10,6 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { getTranslate } from "@/tolgee/server";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TUser } from "@formbricks/types/user";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 import Page from "./page";

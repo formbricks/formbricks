@@ -1,9 +1,9 @@
-import * as segmentUtils from "@/modules/ee/contacts/segments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TBaseFilter, TBaseFilters, TSegment } from "@formbricks/types/segment";
+import * as segmentUtils from "@/modules/ee/contacts/segments/lib/utils";
 import { SegmentEditor } from "./segment-editor";
 
 // Mock child components

@@ -1,6 +1,5 @@
 "use client";
 
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { useTranslate } from "@tolgee/react";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -9,6 +8,7 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { ResponseFeed } from "./response-feed";
 
 interface ResponseTimelineProps {

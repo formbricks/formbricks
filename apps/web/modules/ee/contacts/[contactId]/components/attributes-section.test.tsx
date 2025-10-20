@@ -1,10 +1,10 @@
-import { getResponsesByContactId } from "@/lib/response/service";
-import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
-import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
+import { getResponsesByContactId } from "@/lib/response/service";
+import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
+import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { AttributesSection } from "./attributes-section";
 
 vi.mock("@/lib/response/service", () => ({

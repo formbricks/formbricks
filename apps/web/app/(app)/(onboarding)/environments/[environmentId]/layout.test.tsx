@@ -1,8 +1,8 @@
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import OnboardingLayout from "./layout";
 
 vi.mock("@/lib/constants", () => ({

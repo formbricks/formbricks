@@ -1,10 +1,3 @@
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
-import { calculateTtcTotal } from "@/lib/response/utils";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -12,6 +5,13 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseInput } from "@formbricks/types/responses";
+import {
+  getMonthlyOrganizationResponseCount,
+  getOrganizationByEnvironmentId,
+} from "@/lib/organization/service";
+import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
+import { calculateTtcTotal } from "@/lib/response/utils";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { createResponse, createResponseWithQuotaEvaluation } from "./response";
 
 let mockIsFormbricksCloud = false;

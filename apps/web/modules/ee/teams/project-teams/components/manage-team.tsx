@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ManageTeamProps {
   environmentId: string;

@@ -1,6 +1,6 @@
+import { TUserLocale } from "@formbricks/types/user";
 import { getApiKeysWithEnvironmentPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
-import { TUserLocale } from "@formbricks/types/user";
 import { EditAPIKeys } from "./edit-api-keys";
 
 interface ApiKeyListProps {

@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { getTag } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -13,8 +15,6 @@ import {
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { deleteTag, mergeTags, updateTagName } from "@/modules/projects/settings/lib/tag";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
 
 const ZDeleteTagAction = z.object({
   tagId: ZId,

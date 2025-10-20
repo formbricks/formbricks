@@ -1,10 +1,10 @@
-import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
 import { ResetPasswordForm } from "./reset-password-form";
 
 vi.mock("next/navigation", () => ({

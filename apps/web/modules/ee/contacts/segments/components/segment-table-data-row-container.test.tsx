@@ -1,9 +1,9 @@
-import { getSurveysBySegmentId } from "@/lib/survey/service";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getSurveysBySegmentId } from "@/lib/survey/service";
 import { SegmentTableDataRow } from "./segment-table-data-row";
 import { SegmentTableDataRowContainer } from "./segment-table-data-row-container";
 

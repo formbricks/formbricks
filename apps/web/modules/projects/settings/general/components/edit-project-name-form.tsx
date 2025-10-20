@@ -1,5 +1,12 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
+import { useRouter } from "next/navigation";
+import { SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { z } from "zod";
+import { TProject, ZProject } from "@formbricks/types/project";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -13,13 +20,6 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import { TProject, ZProject } from "@formbricks/types/project";
 
 interface EditProjectNameProps {
   project: TProject;

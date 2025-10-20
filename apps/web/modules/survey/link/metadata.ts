@@ -1,6 +1,6 @@
-import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 
 export const getMetadataForLinkSurvey = async (

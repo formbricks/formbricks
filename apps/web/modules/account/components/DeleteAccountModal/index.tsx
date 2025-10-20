@@ -1,13 +1,13 @@
 "use client";
 
-import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { Input } from "@/modules/ui/components/input";
 import { T, useTranslate } from "@tolgee/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { Input } from "@/modules/ui/components/input";
 import { deleteUserAction } from "./actions";
 
 interface DeleteAccountModalProps {

@@ -1,10 +1,5 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { Language } from "@prisma/client";
 import { TFnType, useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
@@ -14,6 +9,11 @@ import { toast } from "react-hot-toast";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import type { TProject } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import {
   createLanguageAction,
   deleteLanguageAction,

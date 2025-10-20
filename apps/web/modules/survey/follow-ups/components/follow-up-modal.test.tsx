@@ -1,9 +1,9 @@
-import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpModal } from "./follow-up-modal";
 
 // Mock react-hook-form

@@ -1,3 +1,11 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import type { Session } from "next-auth";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembership } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TProject } from "@formbricks/types/project";
+import { TUser } from "@formbricks/types/user";
 import { getOrganizationsByUserId } from "@/app/(app)/environments/[environmentId]/lib/organization";
 import { getProjectsByUserId } from "@/app/(app)/environments/[environmentId]/lib/project";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
@@ -15,14 +23,6 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
-import { cleanup, render, screen } from "@testing-library/react";
-import type { Session } from "next-auth";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TMembership } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
-import { TUser } from "@formbricks/types/user";
 
 // Mock services and utils
 vi.mock("@/lib/environment/service", () => ({

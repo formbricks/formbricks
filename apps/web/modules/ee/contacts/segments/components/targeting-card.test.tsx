@@ -1,10 +1,10 @@
-import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 
 // Mock Data (Moved from mocks.ts)
 const mockInitialSegment: TSegment = {

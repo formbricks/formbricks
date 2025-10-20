@@ -1,5 +1,13 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
@@ -14,14 +22,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
-import { ZSegmentFilters } from "@formbricks/types/segment";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 

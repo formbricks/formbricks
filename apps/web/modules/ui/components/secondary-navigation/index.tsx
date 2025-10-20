@@ -1,5 +1,5 @@
-import { cn } from "@/lib/cn";
 import Link from "next/link";
+import { cn } from "@/lib/cn";
 
 interface SecondaryNavbarProps {
   navigation: {

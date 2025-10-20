@@ -1,5 +1,5 @@
-import { AppConnectionPage as OriginalAppConnectionPage } from "@/modules/projects/settings/(setup)/app-connection/page";
 import { describe, expect, test, vi } from "vitest";
+import { AppConnectionPage as OriginalAppConnectionPage } from "@/modules/projects/settings/(setup)/app-connection/page";
 import AppConnectionPage from "./page";
 
 vi.mock("@/lib/constants", () => ({

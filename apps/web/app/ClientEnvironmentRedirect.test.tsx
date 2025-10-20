@@ -1,8 +1,8 @@
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import ClientEnvironmentRedirect from "./ClientEnvironmentRedirect";
 
 vi.mock("next/navigation", () => ({

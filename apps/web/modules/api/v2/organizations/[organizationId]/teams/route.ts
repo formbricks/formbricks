@@ -1,3 +1,6 @@
+import { NextRequest } from "next/server";
+import { z } from "zod";
+import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -8,9 +11,6 @@ import {
   ZTeamInput,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
-import { NextRequest } from "next/server";
-import { z } from "zod";
-import { OrganizationAccessType } from "@formbricks/types/api-key";
 
 export const GET = async (request: NextRequest, props: { params: Promise<{ organizationId: string }> }) =>
   authenticatedApiClient({

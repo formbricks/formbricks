@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -18,7 +19,6 @@ import {
   getIsSamlSsoEnabled,
   getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
-import { Metadata } from "next";
 import { LoginForm } from "./components/login-form";
 
 export const metadata: Metadata = {

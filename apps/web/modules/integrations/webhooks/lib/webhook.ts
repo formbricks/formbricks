@@ -1,5 +1,3 @@
-import { validateInputs } from "@/lib/utils/validate";
-import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -10,6 +8,8 @@ import {
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
+import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
 
 export const updateWebhook = async (

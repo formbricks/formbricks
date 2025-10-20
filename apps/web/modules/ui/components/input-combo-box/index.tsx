@@ -1,5 +1,17 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
+import Image from "next/image";
+import React, {
+  ForwardRefExoticComponent,
+  Fragment,
+  RefAttributes,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@/lib/cn";
 import {
   Command,
@@ -21,18 +33,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
-import Image from "next/image";
-import React, {
-  ForwardRefExoticComponent,
-  Fragment,
-  RefAttributes,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;

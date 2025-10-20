@@ -1,7 +1,7 @@
+import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { ZContactCreateRequest, ZContactResponse } from "@/modules/ee/contacts/types/contact";
-import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 
 export const createContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "createContact",

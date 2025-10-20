@@ -1,11 +1,11 @@
-import { createI18nString } from "@/lib/i18n/utils";
-import { OpenQuestionForm } from "@/modules/survey/editor/components/open-question-form";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 // Import fireEvent, remove rtlRerender if not used elsewhere
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString } from "@/lib/i18n/utils";
+import { OpenQuestionForm } from "@/modules/survey/editor/components/open-question-form";
 
 // Mock dependencies
 vi.mock("@/lib/i18n/utils", () => ({

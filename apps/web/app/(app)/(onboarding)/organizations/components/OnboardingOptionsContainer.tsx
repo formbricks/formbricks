@@ -1,7 +1,7 @@
-import { OptionCard } from "@/modules/ui/components/option-card";
 import { LucideProps } from "lucide-react";
 import Link from "next/link";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
+import { OptionCard } from "@/modules/ui/components/option-card";
 
 interface OnboardingOptionsContainerProps {
   options: {

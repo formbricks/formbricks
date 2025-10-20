@@ -1,10 +1,10 @@
 "use client";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import { TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyVariables } from "@formbricks/types/surveys/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface HiddenFieldsProps {
   variables: TSurveyVariables;

@@ -1,8 +1,8 @@
-import { getProjects } from "@/lib/project/service";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getProjects } from "@/lib/project/service";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GeneralSettingsPage } from "./page";
 
 vi.mock("@/modules/projects/settings/components/project-config-navigation", () => ({

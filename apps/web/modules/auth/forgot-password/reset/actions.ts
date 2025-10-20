@@ -1,5 +1,8 @@
 "use server";
 
+import { z } from "zod";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
 import { actionClient } from "@/lib/utils/action-client";
@@ -7,9 +10,6 @@ import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getUser, updateUser } from "@/modules/auth/lib/user";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendPasswordResetNotifyEmail } from "@/modules/email";
-import { z } from "zod";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZUserPassword } from "@formbricks/types/user";
 
 const ZResetPasswordAction = z.object({
   token: z.string(),

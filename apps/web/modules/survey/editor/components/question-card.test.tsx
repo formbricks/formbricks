@@ -1,10 +1,10 @@
-import { QuestionCard } from "@/modules/survey/editor/components/question-card";
 import { Project } from "@prisma/client";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 // Import waitFor
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { QuestionCard } from "@/modules/survey/editor/components/question-card";
 
 // Mock child components
 vi.mock("@/modules/survey/components/question-form-input", () => ({

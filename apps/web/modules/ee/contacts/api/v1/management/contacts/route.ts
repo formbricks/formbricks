@@ -1,7 +1,7 @@
+import { DatabaseError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { DatabaseError } from "@formbricks/types/errors";
 import { getContacts } from "./lib/contacts";
 
 export const GET = withV1ApiWrapper({

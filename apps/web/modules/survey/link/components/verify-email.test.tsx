@@ -1,9 +1,9 @@
-import { isSurveyResponsePresentAction, sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { isSurveyResponsePresentAction, sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
 import { VerifyEmail } from "./verify-email";
 
 vi.mock("@/lib/constants", () => ({

@@ -1,7 +1,7 @@
-import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 
 export const ZTeamRole = z.enum(["admin", "contributor"]);
 export type TTeamRole = z.infer<typeof ZTeamRole>;
