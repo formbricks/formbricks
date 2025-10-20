@@ -1,9 +1,3 @@
-import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
-import { getDisplayCountBySurveyId } from "@/lib/display/service";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { getResponseCountBySurveyId } from "@/lib/response/service";
-import { getSurvey } from "@/lib/survey/service";
-import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -16,6 +10,12 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
+import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
+import { getDisplayCountBySurveyId } from "@/lib/display/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
+import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
 import {
   getQuestionSummary,
   getResponsesForSummary,
@@ -374,6 +374,102 @@ describe("getQuestionSummary", () => {
     expect(openTextSummary?.responseCount).toBe(1);
     // @ts-expect-error
     expect(openTextSummary?.samples[0].value).toBe("Open answer");
+  });
+
+  test("summarizes OpenText questions with array answer format", async () => {
+    const responsesWithArray = [
+      {
+        id: "r1",
+        data: { q_open: ["Answer 1", "Answer 2", "Answer 3"] },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: {},
+        finished: true,
+      },
+    ];
+    const summary = await getQuestionSummary(survey, responsesWithArray, mockDropOff);
+    const openTextSummary = summary.find((s: any) => s.question?.id === "q_open");
+    expect(openTextSummary?.type).toBe(TSurveyQuestionTypeEnum.OpenText);
+    expect(openTextSummary?.responseCount).toBe(1);
+    // @ts-expect-error
+    expect(openTextSummary?.samples[0].value).toBe("Answer 1, Answer 2, Answer 3");
+  });
+
+  test("summarizes OpenText questions with array containing null/empty values", async () => {
+    const responsesWithPartialArray = [
+      {
+        id: "r1",
+        data: { q_open: ["Valid answer", null, "", "Another answer", undefined] },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: {},
+        finished: true,
+      },
+    ];
+    const summary = await getQuestionSummary(survey, responsesWithPartialArray, mockDropOff);
+    const openTextSummary = summary.find((s: any) => s.question?.id === "q_open");
+    expect(openTextSummary?.type).toBe(TSurveyQuestionTypeEnum.OpenText);
+    expect(openTextSummary?.responseCount).toBe(1);
+    // @ts-expect-error - filters out null, empty string, and undefined
+    expect(openTextSummary?.samples[0].value).toBe("Valid answer, Another answer");
+  });
+
+  test("summarizes OpenText questions ignoring empty arrays", async () => {
+    const responsesWithEmptyArray = [
+      {
+        id: "r1",
+        data: { q_open: [] },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: {},
+        finished: true,
+      },
+    ];
+    const summary = await getQuestionSummary(survey, responsesWithEmptyArray, mockDropOff);
+    const openTextSummary = summary.find((s: any) => s.question?.id === "q_open");
+    expect(openTextSummary?.type).toBe(TSurveyQuestionTypeEnum.OpenText);
+    expect(openTextSummary?.responseCount).toBe(0);
+    // @ts-expect-error
+    expect(openTextSummary?.samples).toHaveLength(0);
+  });
+
+  test("summarizes OpenText questions with mixed string and array responses", async () => {
+    const mixedResponses = [
+      {
+        id: "r1",
+        data: { q_open: "String answer" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { q_open: ["Array", "answer"] },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: {},
+        finished: true,
+      },
+    ];
+    const summary = await getQuestionSummary(survey, mixedResponses, mockDropOff);
+    const openTextSummary = summary.find((s: any) => s.question?.id === "q_open");
+    expect(openTextSummary?.type).toBe(TSurveyQuestionTypeEnum.OpenText);
+    expect(openTextSummary?.responseCount).toBe(2);
+    // @ts-expect-error
+    expect(openTextSummary?.samples[0].value).toBe("String answer");
+    // @ts-expect-error
+    expect(openTextSummary?.samples[1].value).toBe("Array, answer");
   });
 
   test("summarizes MultipleChoiceSingle questions", async () => {
