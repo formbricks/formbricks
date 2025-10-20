@@ -29,6 +29,7 @@ interface FileUploadFormProps {
   isFormbricksCloud: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const FileUploadQuestionForm = ({
@@ -43,6 +44,7 @@ export const FileUploadQuestionForm = ({
   isFormbricksCloud,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
   const { t } = useTranslation();
@@ -146,6 +148,7 @@ export const FileUploadQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -164,6 +167,7 @@ export const FileUploadQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

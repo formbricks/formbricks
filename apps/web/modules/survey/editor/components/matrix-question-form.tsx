@@ -29,6 +29,7 @@ interface MatrixQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const MatrixQuestionForm = ({
@@ -41,6 +42,7 @@ export const MatrixQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
@@ -201,6 +203,7 @@ export const MatrixQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -219,6 +222,7 @@ export const MatrixQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

@@ -22,6 +22,7 @@ interface ContactInfoQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const ContactInfoQuestionForm = ({
@@ -34,6 +35,7 @@ export const ContactInfoQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: ContactInfoQuestionFormProps): JSX.Element => {
   const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
@@ -99,6 +101,7 @@ export const ContactInfoQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -118,6 +121,7 @@ export const ContactInfoQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

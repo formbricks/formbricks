@@ -60,6 +60,7 @@ interface QuestionFormInputProps {
   autoFocus?: boolean;
   firstRender?: boolean;
   setFirstRender?: (value: boolean) => void;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const QuestionFormInput = ({
@@ -85,6 +86,7 @@ export const QuestionFormInput = ({
   autoFocus,
   firstRender: externalFirstRender,
   setFirstRender: externalSetFirstRender,
+  isExternalUrlsAllowed,
 }: QuestionFormInputProps) => {
   const { t } = useTranslation();
   const defaultLanguageCode =
@@ -363,6 +365,7 @@ export const QuestionFormInput = ({
                 questionId={questionId}
                 isCard={isWelcomeCard || isEndingCard}
                 autoFocus={autoFocus}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
 

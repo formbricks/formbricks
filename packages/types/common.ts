@@ -4,6 +4,8 @@ export const ZBoolean = z.boolean();
 
 export const ZString = z.string();
 
+export const ZUrl = z.string().url();
+
 export const ZNumber = z.number();
 
 export const ZOptionalNumber = z.number().optional();
@@ -178,3 +180,5 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
     });
   }
 };
+
+export const ZEmail = z.string().email();

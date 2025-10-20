@@ -27,6 +27,7 @@ interface LocalizedEditorProps {
   questionId: string;
   isCard?: boolean; // Flag to indicate if this is a welcome/ending card
   autoFocus?: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 const checkIfValueIsIncomplete = (
@@ -58,6 +59,7 @@ export function LocalizedEditor({
   questionId,
   isCard,
   autoFocus,
+  isExternalUrlsAllowed,
 }: Readonly<LocalizedEditorProps>) {
   const { t } = useTranslation();
 
@@ -90,6 +92,11 @@ export function LocalizedEditor({
         key={`${questionId}-${id}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
+          let sanitizedContent = v;
+          if (!isExternalUrlsAllowed) {
+            sanitizedContent = v.replaceAll(/<a[^>]*>(.*?)<\/a>/gi, "$1");
+          }
+
           // Check if the question still exists before updating
           const currentQuestion = localSurvey.questions[questionIdx];
 
@@ -113,8 +120,8 @@ export function LocalizedEditor({
             }
 
             const translatedContent = {
-              ...(value ?? {}),
-              [selectedLanguageCode]: v,
+              ...value,
+              [selectedLanguageCode]: sanitizedContent,
             };
             updateQuestion({ [id]: translatedContent });
             return;
@@ -122,8 +129,8 @@ export function LocalizedEditor({
 
           if (currentQuestion && currentQuestion[id] !== undefined) {
             const translatedContent = {
-              ...(value ?? {}),
-              [selectedLanguageCode]: v,
+              ...value,
+              [selectedLanguageCode]: sanitizedContent,
             };
             updateQuestion(questionIdx, { [id]: translatedContent });
           }
@@ -131,6 +138,7 @@ export function LocalizedEditor({
         localSurvey={localSurvey}
         questionId={questionId}
         selectedLanguageCode={selectedLanguageCode}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       {localSurvey.languages.length > 1 && (
         <div>

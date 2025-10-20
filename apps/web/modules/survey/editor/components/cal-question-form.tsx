@@ -23,6 +23,7 @@ interface CalQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const CalQuestionForm = ({
@@ -35,6 +36,7 @@ export const CalQuestionForm = ({
   isInvalid,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: CalQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [isCalHostEnabled, setIsCalHostEnabled] = useState(!!question.calHost);
@@ -64,6 +66,7 @@ export const CalQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div>
         {question.subheader !== undefined && (
@@ -82,6 +85,7 @@ export const CalQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

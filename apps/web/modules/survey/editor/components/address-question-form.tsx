@@ -21,6 +21,7 @@ interface AddressQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const AddressQuestionForm = ({
@@ -33,6 +34,7 @@ export const AddressQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: AddressQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
   const { t } = useTranslation();
@@ -109,6 +111,7 @@ export const AddressQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -128,6 +131,7 @@ export const AddressQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

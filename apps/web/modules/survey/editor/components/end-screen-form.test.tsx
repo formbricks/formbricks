@@ -105,6 +105,7 @@ const defaultProps = {
   endingCard: defaultEndScreenCard,
   locale: "en-US" as TUserLocale,
   isStorageConfigured: true,
+  isExternalUrlsAllowed: true,
 };
 
 describe("EndScreenForm", () => {
@@ -279,5 +280,39 @@ describe("EndScreenForm", () => {
     // Check for button label input using ID selector
     const buttonLabelInput = container.querySelector("#buttonLabel");
     expect(buttonLabelInput).toBeInTheDocument();
+  });
+
+  test("disables buttonLink input when isExternalUrlsAllowed is false", () => {
+    const propsWithDisabledUrl = {
+      ...defaultProps,
+      endingCard: {
+        ...defaultEndScreenCard,
+        buttonLabel: createI18nString("Click Me", ["en"]),
+        buttonLink: "https://example.com",
+      },
+      isExternalUrlsAllowed: false,
+    };
+
+    const { container } = render(<EndScreenForm {...propsWithDisabledUrl} />);
+
+    const buttonLinkInput = container.querySelector("#buttonLink") as HTMLInputElement;
+    expect(buttonLinkInput).toBeInTheDocument();
+    expect(buttonLinkInput).toBeDisabled();
+  });
+
+  test("shows upgrade message when isExternalUrlsAllowed is false", () => {
+    const propsWithDisabledUrl = {
+      ...defaultProps,
+      endingCard: {
+        ...defaultEndScreenCard,
+        buttonLabel: createI18nString("Click Me", ["en"]),
+        buttonLink: undefined,
+      },
+      isExternalUrlsAllowed: false,
+    };
+
+    const { getByText } = render(<EndScreenForm {...propsWithDisabledUrl} />);
+
+    expect(getByText("environments.surveys.edit.external_urls_paywall_tooltip")).toBeInTheDocument();
   });
 });
