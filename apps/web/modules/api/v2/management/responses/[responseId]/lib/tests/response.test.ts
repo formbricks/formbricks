@@ -1,13 +1,19 @@
 import { response, responseId, responseInput, survey } from "./__mocks__/response.mock";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { deleteDisplay } from "../display";
-import { deleteResponse, getResponse, updateResponse, updateResponseWithQuotaEvaluation } from "../response";
+import {
+  deleteResponse,
+  getResponse,
+  getResponseForPipeline,
+  updateResponse,
+  updateResponseWithQuotaEvaluation,
+} from "../response";
 import { getSurveyQuestions } from "../survey";
 import { findAndDeleteUploadedFilesInResponse } from "../utils";
 
@@ -101,6 +107,191 @@ describe("Response Lib", () => {
         expect(result.error).toEqual({
           type: "internal_server_error",
           details: [{ field: "response", issue: "DB error" }],
+        });
+      }
+    });
+  });
+
+  describe("getResponseForPipeline", () => {
+    test("return the response with contact and tags when found", async () => {
+      const mockPrismaResponse = {
+        id: responseId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        surveyId: "kbr8tnr2q2vgztyrfnqlgfjt",
+        displayId: "jowdit1qrf04t97jcc0io9di",
+        finished: true,
+        data: { question1: "answer1" },
+        meta: {},
+        ttc: {},
+        variables: {},
+        contactAttributes: { userId: "user123" },
+        singleUseId: null,
+        language: "en",
+        endingId: null,
+        contact: {
+          id: "olwablfltg9eszoh0nz83w02",
+        },
+        tags: [
+          {
+            tag: {
+              id: "tag123",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              name: "important",
+              environmentId: "env123",
+            },
+          },
+        ],
+      };
+
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockPrismaResponse as any);
+
+      const result = await getResponseForPipeline(responseId);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual({
+          ...mockPrismaResponse,
+          contact: {
+            id: "olwablfltg9eszoh0nz83w02",
+            userId: "user123",
+          },
+          tags: [
+            {
+              id: "tag123",
+              createdAt: mockPrismaResponse.tags[0].tag.createdAt,
+              updatedAt: mockPrismaResponse.tags[0].tag.updatedAt,
+              name: "important",
+              environmentId: "env123",
+            },
+          ],
+        });
+      }
+      expect(prisma.response.findUnique).toHaveBeenCalledWith({
+        where: { id: responseId },
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          surveyId: true,
+          displayId: true,
+          finished: true,
+          data: true,
+          meta: true,
+          ttc: true,
+          variables: true,
+          contactAttributes: true,
+          singleUseId: true,
+          language: true,
+          endingId: true,
+          contact: {
+            select: {
+              id: true,
+            },
+          },
+          tags: {
+            select: {
+              tag: {
+                select: {
+                  id: true,
+                  createdAt: true,
+                  updatedAt: true,
+                  name: true,
+                  environmentId: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    test("return the response with null contact when contact does not exist", async () => {
+      const mockPrismaResponseWithoutContact = {
+        id: responseId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        surveyId: "kbr8tnr2q2vgztyrfnqlgfjt",
+        displayId: "jowdit1qrf04t97jcc0io9di",
+        finished: true,
+        data: { question1: "answer1" },
+        meta: {},
+        ttc: {},
+        variables: {},
+        contactAttributes: null,
+        singleUseId: null,
+        language: "en",
+        endingId: null,
+        contact: null,
+        tags: [],
+      };
+
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockPrismaResponseWithoutContact as any);
+
+      const result = await getResponseForPipeline(responseId);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.contact).toBeNull();
+        expect(result.data.tags).toEqual([]);
+      }
+    });
+
+    test("return a not_found error when the response is missing", async () => {
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(null);
+
+      const result = await getResponseForPipeline(responseId);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "response", issue: "not found" }],
+        });
+      }
+    });
+
+    test("return an internal_server_error when prisma throws an error", async () => {
+      vi.mocked(prisma.response.findUnique).mockRejectedValue(new Error("DB error"));
+
+      const result = await getResponseForPipeline(responseId);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "internal_server_error",
+          details: [{ field: "response", issue: "DB error" }],
+        });
+      }
+    });
+
+    test("handle response with contact but no userId in contactAttributes", async () => {
+      const mockPrismaResponse = {
+        id: responseId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        surveyId: "kbr8tnr2q2vgztyrfnqlgfjt",
+        displayId: null,
+        finished: false,
+        data: {},
+        meta: {},
+        ttc: {},
+        variables: {},
+        contactAttributes: {},
+        singleUseId: null,
+        language: "en",
+        endingId: null,
+        contact: {
+          id: "contact-id",
+        },
+        tags: [],
+      };
+
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockPrismaResponse as any);
+
+      const result = await getResponseForPipeline(responseId);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.contact).toEqual({
+          id: "contact-id",
+          userId: undefined,
         });
       }
     });
