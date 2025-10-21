@@ -1,5 +1,21 @@
 "use client";
 
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useTranslate } from "@tolgee/react";
+import {
+  Code2Icon,
+  LinkIcon,
+  MailIcon,
+  QrCodeIcon,
+  Settings,
+  Share2Icon,
+  SquareStack,
+  UserIcon,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { TSegment } from "@formbricks/types/segment";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUser } from "@formbricks/types/user";
 import { AnonymousLinksTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/anonymous-links-tab";
 import { AppTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/app-tab";
 import { DynamicPopupTab } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/dynamic-popup-tab";
@@ -17,22 +33,6 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { getSurveyUrl } from "@/modules/analysis/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useTranslate } from "@tolgee/react";
-import {
-  Code2Icon,
-  LinkIcon,
-  MailIcon,
-  QrCodeIcon,
-  Settings,
-  Share2Icon,
-  SquareStack,
-  UserIcon,
-} from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUser } from "@formbricks/types/user";
 import { ShareView } from "./shareEmbedModal/share-view";
 import { SuccessView } from "./shareEmbedModal/success-view";
 

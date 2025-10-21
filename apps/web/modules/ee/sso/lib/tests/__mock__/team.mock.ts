@@ -1,5 +1,5 @@
-import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 import { OrganizationRole, Team, TeamUserRole } from "@prisma/client";
+import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 
 /**
  * Common constants and IDs used across tests

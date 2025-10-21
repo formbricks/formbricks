@@ -1,10 +1,10 @@
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createUserAction } from "@/modules/auth/signup/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createUserAction } from "@/modules/auth/signup/actions";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { SignupForm } from "./signup-form";
 

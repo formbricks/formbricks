@@ -1,9 +1,9 @@
 "use client";
 
-import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
 import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys/types";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface CalSummaryProps {

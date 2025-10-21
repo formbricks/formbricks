@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -5,7 +6,6 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { NextRequest } from "next/server";
 
 export const GET = withV1ApiWrapper({
   handler: async ({

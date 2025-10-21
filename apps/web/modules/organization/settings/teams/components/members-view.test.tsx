@@ -1,10 +1,10 @@
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
-import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
+import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
 import { MembersLoading, MembersView } from "./members-view";
 
 vi.mock("@/app/(app)/environments/[environmentId]/settings/components/SettingsCard", () => ({

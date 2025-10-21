@@ -1,7 +1,7 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ValidationError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import { TProjectUpdateBrandingInput } from "../types/project";
 import { updateProjectBranding } from "./project";
 

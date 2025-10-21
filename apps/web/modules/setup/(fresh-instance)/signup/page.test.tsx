@@ -1,9 +1,9 @@
-import { findMatchingLocale } from "@/lib/utils/locale";
-import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { findMatchingLocale } from "@/lib/utils/locale";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getTranslate } from "@/tolgee/server";
 import { SignupPage } from "./page";
 
 // Mock dependencies

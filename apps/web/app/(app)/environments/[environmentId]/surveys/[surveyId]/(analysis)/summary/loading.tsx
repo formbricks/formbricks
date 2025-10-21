@@ -1,9 +1,9 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
-import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
   const { t } = useTranslate();

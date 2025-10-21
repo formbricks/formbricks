@@ -1,9 +1,9 @@
-import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TPlacement } from "@formbricks/types/common";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 
 // Mock the Placement component
 vi.mock("@/modules/survey/editor/components/placement", () => ({

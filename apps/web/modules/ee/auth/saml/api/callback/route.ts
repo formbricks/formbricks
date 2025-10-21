@@ -1,6 +1,6 @@
+import { redirect } from "next/navigation";
 import { responses } from "@/app/lib/api/response";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
-import { redirect } from "next/navigation";
 
 interface SAMLCallbackBody {
   RelayState: string;

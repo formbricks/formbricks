@@ -1,8 +1,8 @@
+import { NextRequest } from "next/server";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getRoles } from "@/modules/api/v2/roles/lib/utils";
-import { NextRequest } from "next/server";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({

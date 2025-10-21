@@ -1,9 +1,9 @@
-import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import { PinScreen } from "./pin-screen";
 
 vi.mock("@/modules/survey/link/actions", () => ({

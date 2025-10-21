@@ -1,12 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
+import { cn } from "@/lib/cn";
 import "./style.css";
 
 interface CodeBlockProps {

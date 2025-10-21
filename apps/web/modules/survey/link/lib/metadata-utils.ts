@@ -1,9 +1,9 @@
+import { Metadata } from "next";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import { Metadata } from "next";
 
 type TBasicSurveyMetadata = {
   title: string;

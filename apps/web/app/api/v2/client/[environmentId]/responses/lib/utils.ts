@@ -1,3 +1,5 @@
+import { logger } from "@formbricks/logger";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
@@ -5,8 +7,6 @@ import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
-import { logger } from "@formbricks/logger";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const RECAPTCHA_VERIFICATION_ERROR_CODE = "recaptcha_verification_failed";
 

@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { logger } from "@formbricks/logger";
+import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -5,9 +8,6 @@ import { hasOrganizationIdAndAccess } from "@/modules/api/v2/organizations/[orga
 import { checkAuthenticationAndAccess } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/utils";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { z } from "zod";
-import { logger } from "@formbricks/logger";
-import { OrganizationAccessType } from "@formbricks/types/api-key";
 import {
   createProjectTeam,
   deleteProjectTeam,

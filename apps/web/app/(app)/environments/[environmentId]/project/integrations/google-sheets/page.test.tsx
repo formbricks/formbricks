@@ -1,9 +1,3 @@
-import Page from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/page";
-import { getSurveys } from "@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys";
-import { getIntegrations } from "@/lib/integration/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { cleanup, render, screen } from "@testing-library/react";
 import { redirect } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -13,6 +7,12 @@ import {
   TIntegrationGoogleSheetsCredential,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import Page from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/page";
+import { getSurveys } from "@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys";
+import { getIntegrations } from "@/lib/integration/service";
+import { findMatchingLocale } from "@/lib/utils/locale";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 
 // Mock dependencies
 vi.mock(

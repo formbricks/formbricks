@@ -1,5 +1,8 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { CheckIcon, CopyIcon } from "lucide-react";
+import toast from "react-hot-toast";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -10,9 +13,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon, CopyIcon } from "lucide-react";
-import toast from "react-hot-toast";
 
 interface ShareInviteModalProps {
   inviteToken: string;

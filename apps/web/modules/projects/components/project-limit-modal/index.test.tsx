@@ -1,7 +1,7 @@
-import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { ProjectLimitModal } from "./index";
 
 vi.mock("@/modules/ui/components/dialog", () => ({

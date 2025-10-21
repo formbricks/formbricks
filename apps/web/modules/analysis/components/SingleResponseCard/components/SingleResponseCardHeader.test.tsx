@@ -1,4 +1,3 @@
-import { isSubmissionTimeMoreThan5Minutes } from "@/modules/analysis/components/SingleResponseCard/util";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -6,6 +5,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
+import { isSubmissionTimeMoreThan5Minutes } from "@/modules/analysis/components/SingleResponseCard/util";
 import { SingleResponseCardHeader } from "./SingleResponseCardHeader";
 
 // Mocks

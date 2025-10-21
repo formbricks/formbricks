@@ -1,10 +1,10 @@
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { SettingsView } from "./settings-view";
 
 // Mock child components

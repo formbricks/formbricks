@@ -1,14 +1,14 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { logger } from "@formbricks/logger";
+import { ZId } from "@formbricks/types/common";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface LinkSurveyPageProps {
   params: Promise<{

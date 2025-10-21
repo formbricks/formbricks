@@ -1,10 +1,10 @@
-import { getLocale } from "@/tolgee/language";
-import { getTolgee } from "@/tolgee/server";
 import { cleanup } from "@testing-library/react";
 import { TolgeeInstance } from "@tolgee/react";
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { getLocale } from "@/tolgee/language";
+import { getTolgee } from "@/tolgee/server";
 import RootLayout, { metadata } from "./layout";
 
 // Mock dependencies for the layout

@@ -1,8 +1,8 @@
 "use client";
 
+import { ReactNode } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
-import { ReactNode } from "react";
 
 interface BaseCardProps {
   label: ReactNode;

@@ -1,13 +1,13 @@
 import "server-only";
-import { DEFAULT_TEAM_ID } from "@/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { validateInputs } from "@/lib/utils/validate";
-import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { Organization, Team } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { DEFAULT_TEAM_ID } from "@/lib/constants";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { validateInputs } from "@/lib/utils/validate";
+import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 
 export const getOrganizationByTeamId = reactCache(async (teamId: string): Promise<Organization | null> => {
   validateInputs([teamId, z.string().cuid2()]);

@@ -1,9 +1,9 @@
-import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, renderHook } from "@testing-library/react";
 import { signOut } from "next-auth/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 
 // Import the actual hook (unmock it for testing)
 vi.unmock("@/modules/auth/hooks/use-sign-out");

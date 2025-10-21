@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/GoogleSheetWrapper";
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys";
 import {
@@ -13,8 +15,6 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { redirect } from "next/navigation";
-import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 
 const Page = async (props) => {
   const params = await props.params;

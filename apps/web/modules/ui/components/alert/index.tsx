@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { VariantProps, cva } from "class-variance-authority";
 import {
   AlertCircleIcon,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { createContext, useContext, useMemo } from "react";
+import { cn } from "@/lib/cn";
 import { Button, ButtonProps } from "../button";
 
 // Create a context to share variant and size with child components

@@ -1,8 +1,8 @@
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { validateInputs } from "@/lib/utils/validate";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { validateInputs } from "@/lib/utils/validate";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "../team";
 import {
   MOCK_DEFAULT_TEAM,

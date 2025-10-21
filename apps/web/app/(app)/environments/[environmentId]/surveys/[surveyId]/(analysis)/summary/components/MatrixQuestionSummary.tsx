@@ -1,6 +1,5 @@
 "use client";
 
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
@@ -9,6 +8,7 @@ import {
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {

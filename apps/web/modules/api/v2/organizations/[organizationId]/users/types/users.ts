@@ -1,7 +1,7 @@
-import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import { z } from "zod";
 import { ZUser } from "@formbricks/database/zod/users";
 import { ZUserName } from "@formbricks/types/user";
+import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetUsersFilter = ZGetFilter.extend({
   id: z.string().optional(),

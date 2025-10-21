@@ -1,5 +1,18 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
+import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import {
+  TActionNumberVariableCalculateOperator,
+  TActionObjective,
+  TActionTextVariableCalculateOperator,
+  TActionVariableValueType,
+  TSurvey,
+  TSurveyLogic,
+  TSurveyLogicAction,
+  TSurveyQuestion,
+} from "@formbricks/types/surveys/types";
 import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
 import {
   getActionObjectiveOptions,
@@ -18,19 +31,6 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { cn } from "@/modules/ui/lib/utils";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import {
-  TActionNumberVariableCalculateOperator,
-  TActionObjective,
-  TActionTextVariableCalculateOperator,
-  TActionVariableValueType,
-  TSurvey,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-} from "@formbricks/types/surveys/types";
 
 interface LogicEditorActions {
   localSurvey: TSurvey;

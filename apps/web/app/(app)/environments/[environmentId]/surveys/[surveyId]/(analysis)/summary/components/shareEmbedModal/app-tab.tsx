@@ -1,9 +1,5 @@
 "use client";
 
-import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
-import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
-import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { H4, InlineSmall, Small } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
 import {
   CodeXmlIcon,
@@ -17,6 +13,10 @@ import Link from "next/link";
 import { ReactNode, useMemo } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSegment } from "@formbricks/types/segment";
+import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { H4, InlineSmall, Small } from "@/modules/ui/components/typography";
 import { DocumentationLinksSection } from "./documentation-links-section";
 
 const createDocumentationLinks = (t: ReturnType<typeof useTranslate>["t"]) => [

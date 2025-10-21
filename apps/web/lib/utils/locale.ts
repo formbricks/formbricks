@@ -1,6 +1,6 @@
-import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
 import { headers } from "next/headers";
 import { TUserLocale } from "@formbricks/types/user";
+import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
 
 export const findMatchingLocale = async (): Promise<TUserLocale> => {
   const headersList = await headers();

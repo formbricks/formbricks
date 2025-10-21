@@ -1,10 +1,10 @@
 "use server";
 
+import { z } from "zod";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { createEmailToken } from "@/lib/jwt";
 import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
-import { z } from "zod";
-import { InvalidInputError } from "@formbricks/types/errors";
 
 const ZCreateEmailTokenAction = z.object({
   email: z.string().min(5).max(255).email({ message: "Invalid email" }),

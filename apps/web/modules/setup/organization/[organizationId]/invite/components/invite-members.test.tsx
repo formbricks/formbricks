@@ -1,8 +1,8 @@
-import { inviteOrganizationMemberAction } from "@/modules/setup/organization/[organizationId]/invite/actions";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { inviteOrganizationMemberAction } from "@/modules/setup/organization/[organizationId]/invite/actions";
 import { InviteMembers } from "./invite-members";
 
 // Mock next/navigation

@@ -1,10 +1,10 @@
-import { isLight, mixColor } from "@/lib/color";
-import global from "@/styles/global.css?inline";
-import preflight from "@/styles/preflight.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { isLight, mixColor } from "@/lib/color";
+import global from "@/styles/global.css?inline";
+import preflight from "@/styles/preflight.css?inline";
 import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
 

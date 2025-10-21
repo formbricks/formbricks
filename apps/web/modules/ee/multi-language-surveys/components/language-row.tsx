@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
-import { Input } from "@/modules/ui/components/input";
 import { Language } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { TUserLocale } from "@formbricks/types/user";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { LanguageSelect } from "./language-select";
 
 interface LanguageRowProps {

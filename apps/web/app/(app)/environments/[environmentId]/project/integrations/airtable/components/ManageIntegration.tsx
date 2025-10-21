@@ -1,12 +1,5 @@
 "use client";
 
-import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
-import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/AddIntegrationModal";
-import { timeSince } from "@/lib/time";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Button } from "@/modules/ui/components/button";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -16,6 +9,13 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
+import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/AddIntegrationModal";
+import { timeSince } from "@/lib/time";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { IntegrationModalInputs } from "../lib/types";
 
 interface ManageIntegrationProps {

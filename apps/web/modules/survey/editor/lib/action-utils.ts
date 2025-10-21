@@ -1,4 +1,3 @@
-import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TFnType } from "@tolgee/react";
 import { useMemo } from "react";
@@ -9,6 +8,7 @@ import {
   TActionClassInputCode,
   ZActionClassInput,
 } from "@formbricks/types/action-classes";
+import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 
 /**
  * Extract action class keys from code-type action classes

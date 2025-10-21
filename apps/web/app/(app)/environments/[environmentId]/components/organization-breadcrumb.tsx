@@ -1,15 +1,5 @@
 "use client";
 
-import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
-import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
 import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
 import {
@@ -23,6 +13,16 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { logger } from "@formbricks/logger";
+import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
+import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;

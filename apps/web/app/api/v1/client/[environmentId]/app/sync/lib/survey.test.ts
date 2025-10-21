@@ -1,8 +1,3 @@
-import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getSurveys } from "@/lib/survey/service";
-import { anySurveyHasFilters } from "@/lib/survey/utils";
-import { diffInDays } from "@/lib/utils/datetime";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -11,6 +6,11 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getSurveys } from "@/lib/survey/service";
+import { anySurveyHasFilters } from "@/lib/survey/utils";
+import { diffInDays } from "@/lib/utils/datetime";
+import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { getSyncSurveys } from "./survey";
 
 vi.mock("@/lib/project/service", () => ({

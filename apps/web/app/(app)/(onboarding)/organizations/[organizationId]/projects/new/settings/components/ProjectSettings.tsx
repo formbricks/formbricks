@@ -1,5 +1,19 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import {
+  TProjectConfigChannel,
+  TProjectConfigIndustry,
+  TProjectMode,
+  TProjectUpdateInput,
+  ZProjectUpdateInput,
+} from "@formbricks/types/project";
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { previewSurvey } from "@/app/lib/templates";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
@@ -20,20 +34,6 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { SurveyInline } from "@/modules/ui/components/survey";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
-import {
-  TProjectConfigChannel,
-  TProjectConfigIndustry,
-  TProjectMode,
-  TProjectUpdateInput,
-  ZProjectUpdateInput,
-} from "@formbricks/types/project";
 
 interface ProjectSettingsProps {
   organizationId: string;

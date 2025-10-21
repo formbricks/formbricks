@@ -1,5 +1,3 @@
-import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
-import { fetchTables } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
@@ -13,6 +11,8 @@ import {
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
+import { fetchTables } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
 import { AddIntegrationModal } from "./AddIntegrationModal";
 
 // Mock dependencies

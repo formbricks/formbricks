@@ -454,4 +454,328 @@ describe("OpenTextQuestion", () => {
     const textarea = screen.getByRole("textbox");
     expect(textarea).not.toHaveAttribute("autoFocus");
   });
+
+  test("prevents submission when required field is empty", async () => {
+    const onSubmit = vi.fn();
+    const setCustomValidityMock = vi.fn();
+    const reportValidityMock = vi.fn(() => true);
+
+    const setCustomValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "setCustomValidity")
+      .mockImplementation(setCustomValidityMock);
+    const reportValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "reportValidity")
+      .mockImplementation(reportValidityMock);
+
+    const { container } = render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value=""
+        onSubmit={onSubmit}
+        question={{ ...defaultQuestion, required: true }}
+      />
+    );
+
+    const form = container.querySelector("form");
+    fireEvent.submit(form!);
+
+    expect(setCustomValidityMock).toHaveBeenCalledWith("errors.please_fill_out_this_field");
+    expect(reportValidityMock).toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    setCustomValiditySpy.mockRestore();
+    reportValiditySpy.mockRestore();
+  });
+
+  test("prevents submission when required field contains only whitespace", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const setCustomValidityMock = vi.fn();
+    const reportValidityMock = vi.fn(() => true);
+
+    const setCustomValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "setCustomValidity")
+      .mockImplementation(setCustomValidityMock);
+    const reportValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "reportValidity")
+      .mockImplementation(reportValidityMock);
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="   "
+        onSubmit={onSubmit}
+        question={{ ...defaultQuestion, required: true }}
+      />
+    );
+
+    const submitButton = screen.getByRole("button", { name: "Submit" });
+    await user.click(submitButton);
+
+    expect(setCustomValidityMock).toHaveBeenCalledWith("errors.please_fill_out_this_field");
+    expect(reportValidityMock).toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    setCustomValiditySpy.mockRestore();
+    reportValiditySpy.mockRestore();
+  });
+
+  test("prevents submission with invalid email", async () => {
+    const onSubmit = vi.fn();
+    const setCustomValidityMock = vi.fn();
+    const reportValidityMock = vi.fn(() => true);
+
+    const setCustomValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "setCustomValidity")
+      .mockImplementation(setCustomValidityMock);
+    const reportValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "reportValidity")
+      .mockImplementation(reportValidityMock);
+
+    const { container } = render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="invalid-email"
+        onSubmit={onSubmit}
+        question={{ ...defaultQuestion, inputType: "email" }}
+      />
+    );
+
+    const form = container.querySelector("form");
+    fireEvent.submit(form!);
+
+    expect(setCustomValidityMock).toHaveBeenCalledWith("errors.please_enter_a_valid_email_address");
+    expect(reportValidityMock).toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    setCustomValiditySpy.mockRestore();
+    reportValiditySpy.mockRestore();
+  });
+
+  test("allows submission with valid email", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const setTtc = vi.fn();
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="test@example.com"
+        onSubmit={onSubmit}
+        setTtc={setTtc}
+        question={{ ...defaultQuestion, inputType: "email" }}
+      />
+    );
+
+    const submitButton = screen.getByRole("button", { name: "Submit" });
+    await user.click(submitButton);
+
+    expect(onSubmit).toHaveBeenCalledWith({ q1: "test@example.com" }, {});
+    expect(setTtc).toHaveBeenCalled();
+  });
+
+  test("prevents submission with invalid URL", async () => {
+    const onSubmit = vi.fn();
+    const setCustomValidityMock = vi.fn();
+    const reportValidityMock = vi.fn(() => true);
+
+    const setCustomValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "setCustomValidity")
+      .mockImplementation(setCustomValidityMock);
+    const reportValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "reportValidity")
+      .mockImplementation(reportValidityMock);
+
+    const { container } = render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="not-a-url"
+        onSubmit={onSubmit}
+        question={{ ...defaultQuestion, inputType: "url" }}
+      />
+    );
+
+    const form = container.querySelector("form");
+    fireEvent.submit(form!);
+
+    expect(setCustomValidityMock).toHaveBeenCalledWith("errors.please_enter_a_valid_url");
+    expect(reportValidityMock).toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    setCustomValiditySpy.mockRestore();
+    reportValiditySpy.mockRestore();
+  });
+
+  test("allows submission with valid URL", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const setTtc = vi.fn();
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="https://example.com"
+        onSubmit={onSubmit}
+        setTtc={setTtc}
+        question={{ ...defaultQuestion, inputType: "url" }}
+      />
+    );
+
+    const submitButton = screen.getByRole("button", { name: "Submit" });
+    await user.click(submitButton);
+
+    expect(onSubmit).toHaveBeenCalledWith({ q1: "https://example.com" }, {});
+    expect(setTtc).toHaveBeenCalled();
+  });
+
+  test("prevents submission with invalid phone number", async () => {
+    const onSubmit = vi.fn();
+    const setCustomValidityMock = vi.fn();
+    const reportValidityMock = vi.fn(() => true);
+
+    const setCustomValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "setCustomValidity")
+      .mockImplementation(setCustomValidityMock);
+    const reportValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "reportValidity")
+      .mockImplementation(reportValidityMock);
+
+    const { container } = render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="abc"
+        onSubmit={onSubmit}
+        question={{ ...defaultQuestion, inputType: "phone" }}
+      />
+    );
+
+    const form = container.querySelector("form");
+    fireEvent.submit(form!);
+
+    expect(setCustomValidityMock).toHaveBeenCalledWith("errors.please_enter_a_valid_phone_number");
+    expect(reportValidityMock).toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    setCustomValiditySpy.mockRestore();
+    reportValiditySpy.mockRestore();
+  });
+
+  test("allows submission with valid phone number", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const setTtc = vi.fn();
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="+1234567890"
+        onSubmit={onSubmit}
+        setTtc={setTtc}
+        question={{ ...defaultQuestion, inputType: "phone" }}
+      />
+    );
+
+    const submitButton = screen.getByRole("button", { name: "Submit" });
+    await user.click(submitButton);
+
+    expect(onSubmit).toHaveBeenCalledWith({ q1: "+1234567890" }, {});
+    expect(setTtc).toHaveBeenCalled();
+  });
+
+  test("allows submission with valid phone number with spaces and dashes", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const setTtc = vi.fn();
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="+1 234 567 890"
+        onSubmit={onSubmit}
+        setTtc={setTtc}
+        question={{ ...defaultQuestion, inputType: "phone" }}
+      />
+    );
+
+    const submitButton = screen.getByRole("button", { name: "Submit" });
+    await user.click(submitButton);
+
+    expect(onSubmit).toHaveBeenCalledWith({ q1: "+1 234 567 890" }, {});
+    expect(setTtc).toHaveBeenCalled();
+  });
+
+  test("prevents submission with phone number that is too short", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const setCustomValidityMock = vi.fn();
+    const reportValidityMock = vi.fn(() => true);
+
+    const setCustomValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "setCustomValidity")
+      .mockImplementation(setCustomValidityMock);
+    const reportValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "reportValidity")
+      .mockImplementation(reportValidityMock);
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value="123"
+        onSubmit={onSubmit}
+        question={{ ...defaultQuestion, inputType: "phone" }}
+      />
+    );
+
+    const submitButton = screen.getByRole("button", { name: "Submit" });
+    await user.click(submitButton);
+
+    expect(setCustomValidityMock).toHaveBeenCalledWith("errors.please_enter_a_valid_phone_number");
+    expect(reportValidityMock).toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    setCustomValiditySpy.mockRestore();
+    reportValiditySpy.mockRestore();
+  });
+
+  test("clears custom validity on input change", async () => {
+    const onChange = vi.fn();
+    const setCustomValidityMock = vi.fn();
+
+    const setCustomValiditySpy = vi
+      .spyOn(HTMLInputElement.prototype, "setCustomValidity")
+      .mockImplementation(setCustomValidityMock);
+
+    render(<OpenTextQuestion {...defaultProps} onChange={onChange} />);
+
+    const input = screen.getByPlaceholderText("Type here...");
+
+    fireEvent.input(input, { target: { value: "Test" } });
+
+    expect(setCustomValidityMock).toHaveBeenCalledWith("");
+    expect(onChange).toHaveBeenCalledWith({ q1: "Test" });
+
+    setCustomValiditySpy.mockRestore();
+  });
+
+  test("allows submission of optional empty field", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    const setTtc = vi.fn();
+
+    render(
+      <OpenTextQuestion
+        {...defaultProps}
+        value=""
+        onSubmit={onSubmit}
+        setTtc={setTtc}
+        question={{ ...defaultQuestion, required: false }}
+      />
+    );
+
+    const submitButton = screen.getByRole("button", { name: "Submit" });
+    await user.click(submitButton);
+
+    expect(onSubmit).toHaveBeenCalledWith({ q1: "" }, {});
+    expect(setTtc).toHaveBeenCalled();
+  });
 });

@@ -1,7 +1,7 @@
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
-import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TBaseFilters } from "@formbricks/types/segment";
+import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 
 /**
  * Checks if a segment filter contains a recursive reference to itself

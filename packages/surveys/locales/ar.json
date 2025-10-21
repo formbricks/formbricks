@@ -59,7 +59,9 @@
       "title": "هذا الجهاز لا يدعم حماية البريد المزعج."
     },
     "please_book_an_appointment": "يرجى حجز موعد",
+    "please_enter_a_valid_email_address": "الرجاء إدخال عنوان بريد إلكتروني صالح",
     "please_enter_a_valid_phone_number": "يرجى إدخال رقم هاتف صحيح",
+    "please_enter_a_valid_url": "الرجاء إدخال عنوان URL صالح",
     "please_fill_out_this_field": "يرجى ملء هذا الحقل",
     "please_rank_all_items_before_submitting": "يرجى ترتيب جميع العناصر قبل الإرسال",
     "please_select_a_date": "يرجى اختيار تاريخ",

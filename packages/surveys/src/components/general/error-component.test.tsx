@@ -1,7 +1,7 @@
-import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/preact";
 import { afterEach, describe, expect, test } from "vitest";
+import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import { ErrorComponent } from "./error-component";
 
 describe("ErrorComponent", () => {

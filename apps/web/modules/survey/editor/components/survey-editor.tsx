@@ -1,5 +1,12 @@
 "use client";
 
+import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSegment } from "@formbricks/types/segment";
+import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
@@ -14,14 +21,6 @@ import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-ba
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
-import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { refetchProjectAction } from "../actions";
 
 interface SurveyEditorProps {
@@ -49,8 +48,8 @@ interface SurveyEditorProps {
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
   isStorageConfigured: boolean;
-  plan: TOrganizationBillingPlan;
   quotas: TSurveyQuota[];
+  isExternalUrlsAllowed: boolean;
 }
 
 export const SurveyEditor = ({
@@ -72,7 +71,6 @@ export const SurveyEditor = ({
   isQuotasAllowed,
   isCxMode = false,
   locale,
-  plan,
   projectPermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
@@ -80,6 +78,7 @@ export const SurveyEditor = ({
   teamMemberDetails,
   isStorageConfigured,
   quotas,
+  isExternalUrlsAllowed,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -197,17 +196,17 @@ export const SurveyEditor = ({
               projectLanguages={projectLanguages}
               invalidQuestions={invalidQuestions}
               setInvalidQuestions={setInvalidQuestions}
-              selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+              selectedLanguageCode={selectedLanguageCode || "default"}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isMultiLanguageAllowed={isMultiLanguageAllowed}
               isFormbricksCloud={isFormbricksCloud}
-              plan={plan}
               isCxMode={isCxMode}
               locale={locale}
               responseCount={responseCount}
               setIsCautionDialogOpen={setIsCautionDialogOpen}
               isStorageConfigured={isStorageConfigured}
               quotas={quotas}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           )}
 

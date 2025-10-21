@@ -1,5 +1,12 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { UsersIcon } from "lucide-react";
+import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -11,13 +18,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { UsersIcon } from "lucide-react";
-import { useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SaveAsNewSegmentModalProps {
   open: boolean;

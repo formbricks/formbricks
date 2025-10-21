@@ -1,8 +1,8 @@
-import { getEmailFromEmailToken } from "@/lib/jwt";
-import { SignupWithoutVerificationSuccessPage } from "@/modules/auth/signup-without-verification-success/page";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getEmailFromEmailToken } from "@/lib/jwt";
+import { SignupWithoutVerificationSuccessPage } from "@/modules/auth/signup-without-verification-success/page";
 
 vi.mock("@/tolgee/server", () => ({
   getTranslate: async () => (key: string) => key,

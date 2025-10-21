@@ -59,7 +59,9 @@
       "title": "Dieses Gerät unterstützt keinen Spam-Schutz."
     },
     "please_book_an_appointment": "Bitte vereinbaren Sie einen Termin",
+    "please_enter_a_valid_email_address": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "please_enter_a_valid_phone_number": "Bitte geben Sie eine gültige Telefonnummer ein",
+    "please_enter_a_valid_url": "Bitte geben Sie eine gültige URL ein",
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
     "please_rank_all_items_before_submitting": "Bitte ordnen Sie alle Elemente vor dem Absenden",
     "please_select_a_date": "Bitte wählen Sie ein Datum aus",

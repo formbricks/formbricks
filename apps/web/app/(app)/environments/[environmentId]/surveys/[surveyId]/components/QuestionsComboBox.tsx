@@ -1,16 +1,5 @@
 "use client";
 
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/modules/ui/components/command";
-import { NetPromoterScoreIcon } from "@/modules/ui/components/icons";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import {
@@ -41,6 +30,17 @@ import {
 } from "lucide-react";
 import { Fragment, useRef, useState } from "react";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/modules/ui/components/command";
+import { NetPromoterScoreIcon } from "@/modules/ui/components/icons";
 
 export enum OptionsType {
   QUESTIONS = "Questions",

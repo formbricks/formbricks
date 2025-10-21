@@ -1,3 +1,5 @@
+import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
+import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 import {
   deleteContactAttributeKeyEndpoint,
   getContactAttributeKeyEndpoint,
@@ -9,8 +11,6 @@ import {
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
-import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 
 export const getContactAttributeKeysEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactAttributeKeys",

@@ -1,3 +1,9 @@
+import { createId } from "@paralleldrive/cuid2";
+import { Project } from "@prisma/client";
+// Import React for the mock
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AddQuestionButton } from "@/modules/survey/editor/components/add-question-button";
 import {
   TQuestion,
@@ -5,12 +11,6 @@ import {
   getQuestionDefaults,
   getQuestionTypes,
 } from "@/modules/survey/lib/questions";
-import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
-// Import React for the mock
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock dependencies
 vi.mock("@/lib/cn", () => ({

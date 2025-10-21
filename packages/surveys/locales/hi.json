@@ -59,7 +59,9 @@
       "title": "यह डिवाइस स्पैम सुरक्षा का समर्थन नहीं करता है।"
     },
     "please_book_an_appointment": "कृपया एक अपॉइंटमेंट बुक करें",
+    "please_enter_a_valid_email_address": "कृपया एक वैध ईमेल पता दर्ज करें",
     "please_enter_a_valid_phone_number": "कृपया एक वैध फोन नंबर दर्ज करें",
+    "please_enter_a_valid_url": "कृपया एक वैध URL दर्ज करें",
     "please_fill_out_this_field": "कृपया इस फील्ड को भरें",
     "please_rank_all_items_before_submitting": "जमा करने से पहले कृपया सभी आइटम्स को रैंक करें",
     "please_select_a_date": "कृपया एक तारीख चुनें",

@@ -29,6 +29,7 @@ interface OpenQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const OpenQuestionForm = ({
@@ -41,6 +42,7 @@ export const OpenQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: OpenQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const questionTypes = [
@@ -79,7 +81,7 @@ export const OpenQuestionForm = ({
     } else {
       setIsCharLimitEnabled(false);
     }
-  }, []);
+  }, [question?.charLimit?.max, question?.charLimit?.min]);
 
   return (
     <form>
@@ -96,6 +98,7 @@ export const OpenQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -115,6 +118,7 @@ export const OpenQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

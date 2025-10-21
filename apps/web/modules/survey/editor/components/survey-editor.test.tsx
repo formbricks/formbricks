@@ -1,5 +1,3 @@
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { refetchProjectAction } from "@/modules/survey/editor/actions";
 import { Environment, Language, OrganizationRole, Project } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -7,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TLanguage } from "@formbricks/types/project";
 import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { refetchProjectAction } from "@/modules/survey/editor/actions";
 import { SurveyEditor } from "./survey-editor";
 
 // Mock child components and hooks

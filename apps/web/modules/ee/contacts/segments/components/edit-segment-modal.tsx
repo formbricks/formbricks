@@ -1,5 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { UsersIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
 import {
   Dialog,
@@ -9,11 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
-import { UsersIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { SegmentActivityTab } from "./segment-activity-tab";
 
 interface EditSegmentModalProps {

@@ -1,5 +1,8 @@
 "use client";
 
+import { Language } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { DefaultTag } from "@/modules/ui/components/default-tag";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -9,9 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { Language } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { ConfirmationModalProps } from "./multi-language-card";
 
 interface DefaultLanguageSelectProps {

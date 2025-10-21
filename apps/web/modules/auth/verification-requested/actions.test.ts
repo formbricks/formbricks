@@ -1,11 +1,11 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendVerificationEmail } from "@/modules/email";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { resendVerificationEmailAction } from "./actions";
 
 // Mock dependencies

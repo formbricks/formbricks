@@ -1,7 +1,3 @@
-import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
-import { getSurveysAction } from "@/modules/survey/list/actions";
-import { getFormattedFilters } from "@/modules/survey/list/lib/utils";
-import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
+import { getSurveysAction } from "@/modules/survey/list/actions";
+import { getFormattedFilters } from "@/modules/survey/list/lib/utils";
+import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { SurveyCard } from "./survey-card";
 import { SurveysList, initialFilters as surveyFiltersInitialFiltersFromModule } from "./survey-list";
 import { SurveyLoading } from "./survey-loading";

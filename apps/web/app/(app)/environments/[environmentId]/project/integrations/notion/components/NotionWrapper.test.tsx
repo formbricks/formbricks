@@ -1,10 +1,10 @@
-import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/notion/lib/notion";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionCredential } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/notion/lib/notion";
 import { NotionWrapper } from "./NotionWrapper";
 
 vi.mock("@/lib/constants", () => ({

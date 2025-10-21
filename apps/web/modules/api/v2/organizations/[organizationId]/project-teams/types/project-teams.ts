@@ -1,6 +1,6 @@
-import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import { z } from "zod";
 import { ZProjectTeam } from "@formbricks/database/zod/project-teams";
+import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetProjectTeamsFilter = ZGetFilter.extend({
   teamId: z.string().cuid2().optional(),

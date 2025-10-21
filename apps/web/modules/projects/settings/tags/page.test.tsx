@@ -1,6 +1,6 @@
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TagsPage } from "./page";
 
 vi.mock("@/app/(app)/environments/[environmentId]/settings/components/SettingsCard", () => ({

@@ -1,4 +1,3 @@
-import { FileUploadSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/FileUploadSummary";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -8,6 +7,7 @@ import {
   TSurveyQuestionSummaryFileUpload,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { FileUploadSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/FileUploadSummary";
 
 // Mock child components and hooks
 vi.mock("@/modules/ui/components/avatars", () => ({

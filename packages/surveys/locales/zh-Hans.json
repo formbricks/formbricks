@@ -59,7 +59,9 @@
       "title": "此设备不支持垃圾邮件保护。"
     },
     "please_book_an_appointment": "请预约",
+    "please_enter_a_valid_email_address": "请输入有效的电子邮件地址",
     "please_enter_a_valid_phone_number": "请输入有效的电话号码",
+    "please_enter_a_valid_url": "请输入有效的URL",
     "please_fill_out_this_field": "请填写此字段",
     "please_rank_all_items_before_submitting": "请在提交之前对所有项目进行排名",
     "please_select_a_date": "请选择一个日期",

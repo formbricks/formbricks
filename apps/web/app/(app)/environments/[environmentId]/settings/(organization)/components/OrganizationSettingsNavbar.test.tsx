@@ -1,8 +1,8 @@
-import { getAccessFlags } from "@/lib/membership/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { usePathname } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { OrganizationSettingsNavbar } from "./OrganizationSettingsNavbar";
 
 vi.mock("next/navigation", () => ({

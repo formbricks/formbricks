@@ -1,8 +1,8 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { OptionIds } from "./option-ids";
 
 vi.mock("@/lib/i18n/utils", () => ({

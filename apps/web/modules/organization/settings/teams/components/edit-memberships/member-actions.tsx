@@ -1,5 +1,12 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { TMember } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createInviteTokenAction,
@@ -12,13 +19,6 @@ import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { TMember } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 
 interface MemberActionsProps {
   organization: TOrganization;

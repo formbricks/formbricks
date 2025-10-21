@@ -1,3 +1,9 @@
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render } from "@testing-library/react";
+import { notFound } from "next/navigation";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
@@ -5,12 +11,6 @@ import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
-import "@testing-library/jest-dom/vitest";
-import { cleanup, render } from "@testing-library/react";
-import { notFound } from "next/navigation";
-import { afterEach, describe, expect, test, vi } from "vitest";
-import { logger } from "@formbricks/logger";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { LinkSurveyPage, generateMetadata } from "./page";
 
 // Mock server-side constants to prevent client-side access

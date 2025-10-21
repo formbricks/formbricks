@@ -1,4 +1,3 @@
-import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -9,6 +8,7 @@ import {
   TIntegrationSlackCredential,
 } from "@formbricks/types/integration/slack";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { AddChannelMappingModal } from "./AddChannelMappingModal";
 
 // Mock dependencies

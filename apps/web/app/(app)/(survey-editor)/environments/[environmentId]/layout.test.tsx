@@ -1,5 +1,3 @@
-import { getEnvironment } from "@/lib/environment/service";
-import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import { redirect } from "next/navigation";
@@ -7,6 +5,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { getEnvironment } from "@/lib/environment/service";
+import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import SurveyEditorEnvironmentLayout from "./layout";
 
 // Mock sub-components to render identifiable elements
