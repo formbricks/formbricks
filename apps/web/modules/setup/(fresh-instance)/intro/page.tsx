@@ -14,9 +14,9 @@ export const IntroPage = async () => {
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">{t("setup.intro.welcome_to_formbricks")}</h2>
       <div className="mx-auto max-w-sm space-y-4 text-sm leading-6 text-slate-600">
-        <b>{t("setup.intro.paragraph_1")}</b>
-        <b>{t("setup.intro.paragraph_2")}</b>
-        <b>{t("setup.intro.paragraph_3")}</b>
+        <p dangerouslySetInnerHTML={{ __html: t("setup.intro.paragraph_1") }} />
+        <p dangerouslySetInnerHTML={{ __html: t("setup.intro.paragraph_2") }} />
+        <p dangerouslySetInnerHTML={{ __html: t("setup.intro.paragraph_3") }} />
       </div>
       <Button className="mt-6" asChild>
         <Link href="/setup/signup">{t("setup.intro.get_started")}</Link>
