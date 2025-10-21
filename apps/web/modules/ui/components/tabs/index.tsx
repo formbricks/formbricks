@@ -1,9 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { type VariantProps, cva } from "class-variance-authority";
 import * as React from "react";
+import { cn } from "@/lib/cn";
 
 const tabsVariants = cva(
   "bg-slate-100 rounded-lg p-1 inline-flex items-center overflow-x-auto [scrollbar-width:none]",

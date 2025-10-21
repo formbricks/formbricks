@@ -1,6 +1,6 @@
+import React from "react";
 import { cn } from "@/lib/cn";
 import { IdBadge } from "@/modules/ui/components/id-badge";
-import React from "react";
 
 interface ResponseBadgesProps {
   items: { value: string | number; id?: string }[];

@@ -1,6 +1,6 @@
-import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { createUser, getUsers, updateUser } from "../users";
 
 const mockUser = {

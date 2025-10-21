@@ -1,14 +1,14 @@
-import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
-import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
-import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
-import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
+import { getActionClasses } from "@/modules/survey/lib/action-class";
+import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   try {

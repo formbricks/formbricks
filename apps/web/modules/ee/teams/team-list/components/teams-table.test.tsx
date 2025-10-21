@@ -1,9 +1,9 @@
-import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/actions";
-import { TOrganizationMember, TOtherTeam, TUserTeam } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/actions";
+import { TOrganizationMember, TOtherTeam, TUserTeam } from "@/modules/ee/teams/team-list/types/team";
 import { TeamsTable } from "./teams-table";
 
 vi.mock("@/modules/ee/teams/team-list/components/create-team-button", () => ({

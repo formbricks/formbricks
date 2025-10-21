@@ -1,4 +1,3 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -6,6 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
+import { validateInputs } from "@/lib/utils/validate";
 
 const selectContactAttribute = {
   value: true,

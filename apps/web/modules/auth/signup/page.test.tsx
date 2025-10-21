@@ -1,3 +1,7 @@
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { notFound } from "next/navigation";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { verifyInviteToken } from "@/lib/jwt";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
@@ -6,10 +10,6 @@ import {
   getIsSamlSsoEnabled,
   getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
-import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
-import { notFound } from "next/navigation";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SignupPage } from "./page";
 
 // Mock the necessary dependencies

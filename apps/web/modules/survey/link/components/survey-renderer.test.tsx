@@ -1,7 +1,3 @@
-import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
-import { getOrganizationBilling } from "@/modules/survey/lib/survey";
-import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
-import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { Organization } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
@@ -9,6 +5,10 @@ import { notFound } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TLanguage } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
+import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { renderSurvey } from "./survey-renderer";
 
 // Mock dependencies

@@ -1,6 +1,6 @@
-import { CommandDialog, CommandSeparator, CommandShortcut } from "@/modules/ui/components/command/index";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { CommandDialog, CommandSeparator, CommandShortcut } from "@/modules/ui/components/command/index";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from ".";
 
 window.HTMLElement.prototype.scrollIntoView = vi.fn();

@@ -1,8 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 import { IdBadge } from "@/modules/ui/components/id-badge";
-import Image from "next/image";
 
 interface PictureSelectionResponseProps {
   choices: { id: string; imageUrl: string }[];

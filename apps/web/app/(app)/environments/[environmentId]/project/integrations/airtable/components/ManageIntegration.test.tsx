@@ -1,9 +1,9 @@
-import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationAirtable, TIntegrationAirtableConfig } from "@formbricks/types/integration/airtable";
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { ManageIntegration } from "./ManageIntegration";
 
 vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/actions", () => ({

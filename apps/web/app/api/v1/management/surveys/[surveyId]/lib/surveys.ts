@@ -1,9 +1,9 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 
 export const deleteSurvey = async (surveyId: string) => {
   validateInputs([surveyId, z.string().cuid2()]);

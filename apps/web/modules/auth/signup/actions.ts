@@ -1,5 +1,8 @@
 "use server";
 
+import { z } from "zod";
+import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
+import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
 import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
@@ -16,9 +19,6 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
-import { z } from "zod";
-import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
-import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreatedUser = ZUser.pick({
   name: true,

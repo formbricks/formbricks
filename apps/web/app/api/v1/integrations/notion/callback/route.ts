@@ -1,3 +1,5 @@
+import { NextRequest } from "next/server";
+import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import {
@@ -9,8 +11,6 @@ import {
 } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
-import { NextRequest } from "next/server";
-import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req }: { req: NextRequest }) => {

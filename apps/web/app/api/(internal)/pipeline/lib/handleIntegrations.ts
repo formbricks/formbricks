@@ -1,3 +1,12 @@
+import { logger } from "@formbricks/logger";
+import { Result } from "@formbricks/types/error-handlers";
+import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
+import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { TIntegrationSlack } from "@formbricks/types/integration/slack";
+import { TResponseMeta } from "@formbricks/types/responses";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
@@ -9,15 +18,6 @@ import { writeDataToSlack } from "@/lib/slack/service";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
-import { logger } from "@formbricks/logger";
-import { Result } from "@formbricks/types/error-handlers";
-import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
-import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
-import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
-import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
-import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { TResponseMeta } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];

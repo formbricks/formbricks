@@ -1,8 +1,8 @@
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { SurveyStatus, SurveyType } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TBaseFilters } from "@formbricks/types/segment";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getContactsInSegment } from "../contact";
 import { getSegment } from "../segment";
 import { getSurvey } from "../surveys";

@@ -1,11 +1,4 @@
 import "server-only";
-import {
-  GOOGLE_SHEETS_CLIENT_ID,
-  GOOGLE_SHEETS_CLIENT_SECRET,
-  GOOGLE_SHEETS_REDIRECT_URL,
-} from "@/lib/constants";
-import { GOOGLE_SHEET_MESSAGE_LIMIT } from "@/lib/constants";
-import { createOrUpdateIntegration } from "@/lib/integration/service";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { ZString } from "@formbricks/types/common";
@@ -14,6 +7,13 @@ import {
   TIntegrationGoogleSheets,
   ZIntegrationGoogleSheets,
 } from "@formbricks/types/integration/google-sheet";
+import {
+  GOOGLE_SHEETS_CLIENT_ID,
+  GOOGLE_SHEETS_CLIENT_SECRET,
+  GOOGLE_SHEETS_REDIRECT_URL,
+} from "@/lib/constants";
+import { GOOGLE_SHEET_MESSAGE_LIMIT } from "@/lib/constants";
+import { createOrUpdateIntegration } from "@/lib/integration/service";
 import { truncateText } from "../utils/strings";
 import { validateInputs } from "../utils/validate";
 

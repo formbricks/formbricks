@@ -1,9 +1,9 @@
-import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
+import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
 import { AirtableWrapper } from "./AirtableWrapper";
 
 // Mock child components

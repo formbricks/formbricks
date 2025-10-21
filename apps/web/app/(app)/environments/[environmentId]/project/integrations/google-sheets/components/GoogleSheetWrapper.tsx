@@ -1,9 +1,5 @@
 "use client";
 
-import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/ManageIntegration";
-import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/google";
-import googleSheetLogo from "@/images/googleSheetsLogo.png";
-import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
@@ -12,6 +8,10 @@ import {
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/ManageIntegration";
+import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/google";
+import googleSheetLogo from "@/images/googleSheetsLogo.png";
+import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { AddIntegrationModal } from "./AddIntegrationModal";
 
 interface GoogleSheetWrapperProps {

@@ -1,6 +1,6 @@
-import { TContact } from "@/modules/ee/contacts/types/contact";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { TContact } from "@/modules/ee/contacts/types/contact";
 import { getContactByUserId } from "./contact";
 
 // Mock prisma

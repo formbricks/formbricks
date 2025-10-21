@@ -1,7 +1,7 @@
-import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 
 interface UpgradePromptButton {
   text: string;

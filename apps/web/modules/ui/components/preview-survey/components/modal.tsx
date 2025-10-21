@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { TPlacement } from "@formbricks/types/common";
+import { cn } from "@/lib/cn";
 import { getPlacementStyle } from "../lib/utils";
 
 interface ModalProps {

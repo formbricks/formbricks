@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -12,7 +13,6 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { validateFileUploads } from "@/modules/storage/utils";
-import { z } from "zod";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>

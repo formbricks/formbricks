@@ -1,5 +1,5 @@
-import { RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { logger } from "@formbricks/logger";
+import { RECAPTCHA_SECRET_KEY, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 
 /**
  * Verifies a reCAPTCHA token with Google's reCAPTCHA API

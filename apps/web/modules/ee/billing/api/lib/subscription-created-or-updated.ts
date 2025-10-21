@@ -1,6 +1,3 @@
-import { PROJECT_FEATURE_KEYS, STRIPE_API_VERSION } from "@/lib/constants";
-import { env } from "@/lib/env";
-import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -10,6 +7,9 @@ import {
   ZOrganizationBillingPeriod,
   ZOrganizationBillingPlan,
 } from "@formbricks/types/organizations";
+import { PROJECT_FEATURE_KEYS, STRIPE_API_VERSION } from "@/lib/constants";
+import { env } from "@/lib/env";
+import { getOrganization, updateOrganization } from "@/lib/organization/service";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration

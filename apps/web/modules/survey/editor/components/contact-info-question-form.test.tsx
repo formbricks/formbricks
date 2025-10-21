@@ -1,4 +1,3 @@
-import { createI18nString } from "@/lib/i18n/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
@@ -6,6 +5,7 @@ import {
   TSurveyContactInfoQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
 import { ContactInfoQuestionForm } from "./contact-info-question-form";
 
 // Mock QuestionFormInput component

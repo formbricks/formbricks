@@ -1,5 +1,5 @@
-import { cache } from "@/lib/cache";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { cache } from "@/lib/cache";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";

@@ -1,8 +1,8 @@
-import { convertDateTimeStringShort } from "@/lib/time";
-import { SegmentActivityTab } from "@/modules/ee/contacts/segments/components/segment-activity-tab";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSegment } from "@formbricks/types/segment";
+import { convertDateTimeStringShort } from "@/lib/time";
+import { SegmentActivityTab } from "@/modules/ee/contacts/segments/components/segment-activity-tab";
 
 const mockSegmentBase: TSegment & { activeSurveys: string[]; inactiveSurveys: string[] } = {
   id: "seg123",

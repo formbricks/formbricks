@@ -1,6 +1,6 @@
-import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import { z } from "zod";
 import { ZResponse } from "@formbricks/database/zod/responses";
+import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetResponsesFilter = ZGetFilter.extend({
   surveyId: z.string().cuid2().optional(),

@@ -1,5 +1,5 @@
-import { TagsPage } from "@/modules/projects/settings/tags/page";
 import { describe, expect, test, vi } from "vitest";
+import { TagsPage } from "@/modules/projects/settings/tags/page";
 import Page from "./page";
 
 vi.mock("@/lib/constants", () => ({

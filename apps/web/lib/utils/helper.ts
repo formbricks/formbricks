@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
@@ -15,7 +16,6 @@ import {
   getTeam,
   getWebhook,
 } from "@/lib/utils/services";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getFormattedErrorMessage = (result): string => {
   let message = "";

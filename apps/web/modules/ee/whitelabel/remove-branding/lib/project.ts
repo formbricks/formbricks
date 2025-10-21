@@ -1,14 +1,14 @@
 import "server-only";
-import { validateInputs } from "@/lib/utils/validate";
-import {
-  TProjectUpdateBrandingInput,
-  ZProjectUpdateBrandingInput,
-} from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { ValidationError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
+import {
+  TProjectUpdateBrandingInput,
+  ZProjectUpdateBrandingInput,
+} from "@/modules/ee/whitelabel/remove-branding/types/project";
 
 export const updateProjectBranding = async (
   projectId: string,

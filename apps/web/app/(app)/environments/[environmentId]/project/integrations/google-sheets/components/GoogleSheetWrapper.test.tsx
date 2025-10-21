@@ -1,5 +1,3 @@
-import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/GoogleSheetWrapper";
-import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/google";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -9,6 +7,8 @@ import {
   TIntegrationGoogleSheetsCredential,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/components/GoogleSheetWrapper";
+import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/google";
 
 // Mock child components and functions
 vi.mock(
