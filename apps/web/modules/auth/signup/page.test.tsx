@@ -13,10 +13,6 @@ import {
 import { SignupPage } from "./page";
 
 // Mock the necessary dependencies
-vi.mock("@/modules/auth/components/testimonial", () => ({
-  Testimonial: () => null,
-}));
-
 vi.mock("@/modules/auth/components/form-wrapper", () => ({
   FormWrapper: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="form-wrapper">{children}</div>
