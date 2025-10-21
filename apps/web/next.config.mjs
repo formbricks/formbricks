@@ -16,7 +16,6 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
-  cacheMaxMemorySize: 0, // disable default in-memory caching
   output: "standalone",
   poweredByHeader: false,
   productionBrowserSourceMaps: true,
