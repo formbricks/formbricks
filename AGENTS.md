@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surface, with feature modules under `app/` and `modules/`, assets in `public/` and `images/`, and Playwright specs in `apps/web/playwright/`. `apps/storybook` renders reusable UI pieces for review. Shared logic lives in `packages/*`: `database` (Prisma schemas/migrations), `surveys`, `js-core`, `types`, plus linting and TypeScript presets (`config-*`). Deployment collateral is kept in `docs/`, `docker/`, and `helm-chart/`. Tests generally sit next to their source as `*.test.ts(x)` or inside `__tests__`.
+Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surface, with feature modules under `app/` and `modules/`, assets in `public/` and `images/`, and Playwright specs in `apps/web/playwright/`. `apps/storybook` renders reusable UI pieces for review. Shared logic lives in `packages/*`: `database` (Prisma schemas/migrations), `surveys`, `js-core`, `types`, plus linting and TypeScript presets (`config-*`). Deployment collateral is kept in `docs/`, `docker/`, and `helm-chart/`. Unit tests sit next to their source as `*.test.ts` or inside `__tests__`.
 
 ## Build, Test & Development Commands
 
@@ -21,7 +21,7 @@ TypeScript, React, and Prisma are the primary languages. Use the shared ESLint p
 
 ## Testing Guidelines
 
-Prefer Vitest with Testing Library for logic in `.ts` files, keeping specs colocated with the code they exercise (`utility.test.ts`). Do not write tests for `.tsx` files. Mock network and storage boundaries through helpers from `@formbricks/*`. Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows; keep coverage from regressing. End-to-end scenarios belong in `apps/web/playwright`, using descriptive filenames (`billing.spec.ts`) and tagging slow suites with `@slow` when necessary.
+Prefer Vitest with Testing Library for logic in `.ts` files, keeping specs colocated with the code they exercise (`utility.test.ts`). Do not write tests for `.tsx` files—React components are covered by Playwright E2E tests instead. Mock network and storage boundaries through helpers from `@formbricks/*`. Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows; keep coverage from regressing. End-to-end scenarios belong in `apps/web/playwright`, using descriptive filenames (`billing.spec.ts`) and tagging slow suites with `@slow` when necessary.
 
 ## Commit & Pull Request Guidelines
 
