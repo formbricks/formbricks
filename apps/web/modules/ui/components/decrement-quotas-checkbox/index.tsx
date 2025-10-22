@@ -1,5 +1,5 @@
-import { Checkbox } from "@/modules/ui/components/checkbox";
 import { useTranslate } from "@tolgee/react";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface DecrementQuotasCheckboxProps {
   title: string;

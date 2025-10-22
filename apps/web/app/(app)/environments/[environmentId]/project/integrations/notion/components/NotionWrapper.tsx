@@ -1,9 +1,5 @@
 "use client";
 
-import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/project/integrations/notion/components/AddIntegrationModal";
-import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/project/integrations/notion/components/ManageIntegration";
-import notionLogo from "@/images/notion.png";
-import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
@@ -13,6 +9,10 @@ import {
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/project/integrations/notion/components/AddIntegrationModal";
+import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/project/integrations/notion/components/ManageIntegration";
+import notionLogo from "@/images/notion.png";
+import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { authorize } from "../lib/notion";
 
 interface NotionWrapperProps {

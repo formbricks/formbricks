@@ -1,5 +1,9 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { MousePointerClickIcon } from "lucide-react";
+import { useState } from "react";
+import { TActionClass } from "@formbricks/types/action-classes";
 import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
 import {
   Dialog,
@@ -9,10 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
-import { MousePointerClickIcon } from "lucide-react";
-import { useState } from "react";
-import { TActionClass } from "@formbricks/types/action-classes";
 
 interface AddActionModalProps {
   environmentId: string;

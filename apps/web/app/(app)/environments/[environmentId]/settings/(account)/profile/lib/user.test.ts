@@ -1,7 +1,7 @@
-import { verifyPassword as mockVerifyPasswordImported } from "@/modules/auth/lib/utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { verifyPassword as mockVerifyPasswordImported } from "@/modules/auth/lib/utils";
 import { getIsEmailUnique, verifyUserPassword } from "./user";
 
 vi.mock("@/modules/auth/lib/utils", () => ({

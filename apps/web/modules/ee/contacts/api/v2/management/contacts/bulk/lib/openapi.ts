@@ -1,7 +1,7 @@
-import { managementServer } from "@/modules/api/v2/management/lib/openapi";
-import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
+import { managementServer } from "@/modules/api/v2/management/lib/openapi";
+import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 
 const bulkContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "uploadBulkContacts",

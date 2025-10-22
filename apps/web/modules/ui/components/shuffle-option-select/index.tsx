@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
 import { useTranslate } from "@tolgee/react";
 import {
   TShuffleOption,
@@ -14,6 +7,13 @@ import {
   TSurveyMultipleChoiceQuestion,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 
 interface ShuffleOptionType {
   id: string;

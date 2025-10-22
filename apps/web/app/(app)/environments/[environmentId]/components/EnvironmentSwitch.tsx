@@ -1,12 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
+import { cn } from "@/lib/cn";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface EnvironmentSwitchProps {
   environment: TEnvironment;

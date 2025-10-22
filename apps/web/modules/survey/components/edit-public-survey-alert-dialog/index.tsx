@@ -1,3 +1,4 @@
+import { useTranslate } from "@tolgee/react";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useTranslate } from "@tolgee/react";
 
 interface EditPublicSurveyAlertDialogProps {
   open: boolean;

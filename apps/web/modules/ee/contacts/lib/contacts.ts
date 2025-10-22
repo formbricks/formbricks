@@ -1,15 +1,15 @@
 import "server-only";
-import { ITEMS_PER_PAGE } from "@/lib/constants";
-import { validateInputs } from "@/lib/utils/validate";
-import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
+import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   TContact,
   TContactWithAttributes,

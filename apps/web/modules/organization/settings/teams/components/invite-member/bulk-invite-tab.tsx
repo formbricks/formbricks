@@ -1,9 +1,5 @@
 "use client";
 
-import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
-import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
 import Link from "next/link";
@@ -11,6 +7,10 @@ import Papa, { type ParseResult } from "papaparse";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;

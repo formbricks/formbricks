@@ -1,13 +1,13 @@
+import { Project, SurveyType } from "@prisma/client";
+import { type JSX, useState } from "react";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { LegalFooter } from "@/modules/survey/link/components/legal-footer";
 import { SurveyLoadingAnimation } from "@/modules/survey/link/components/survey-loading-animation";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
-import { Project, SurveyType } from "@prisma/client";
-import { type JSX, useState } from "react";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
 interface LinkSurveyWrapperProps {
   children: JSX.Element;

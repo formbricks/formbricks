@@ -1,7 +1,7 @@
-import { TContactCreateRequest } from "@/modules/ee/contacts/types/contact";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TContactCreateRequest } from "@/modules/ee/contacts/types/contact";
 import { createContact } from "./contact";
 
 // Mock prisma

@@ -1,5 +1,5 @@
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { LucideIcon } from "lucide-react";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Button } from "../button";
 
 interface IconAction {

@@ -1,8 +1,8 @@
+import { Metadata } from "next";
+import Link from "next/link";
 import { Button } from "@/modules/ui/components/button";
 import { getTranslate } from "@/tolgee/server";
 import { T } from "@/tolgee/server";
-import { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Intro",

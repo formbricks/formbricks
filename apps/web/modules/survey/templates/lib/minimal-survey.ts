@@ -1,6 +1,6 @@
-import { getDefaultEndingCard, getDefaultWelcomeCard } from "@/app/lib/survey-builder";
 import { TFnType } from "@tolgee/react";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getDefaultEndingCard, getDefaultWelcomeCard } from "@/app/lib/survey-builder";
 
 export const getMinimalSurvey = (t: TFnType): TSurvey => ({
   id: "someUniqueId1",

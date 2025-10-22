@@ -1,8 +1,8 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { Button } from "@/modules/ui/components/button";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
-import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
   const { t } = useTranslate();

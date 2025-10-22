@@ -1,12 +1,12 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { useRef } from "react";
+import { TSurvey, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { useRef } from "react";
-import { TSurvey, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface RedirectUrlFormProps {
   localSurvey: TSurvey;

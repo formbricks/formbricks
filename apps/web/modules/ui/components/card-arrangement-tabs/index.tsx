@@ -1,12 +1,12 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { TCardArrangementOptions } from "@formbricks/types/styling";
+import { TSurveyType } from "@formbricks/types/surveys/types";
 import { CasualCardArrangementIcon } from "@/modules/ui/components/icons/casual-card-arrangement-icon";
 import { SimpleCardsArrangementIcon } from "@/modules/ui/components/icons/simple-card-arrangement-icon";
 import { StraightCardArrangementIcon } from "@/modules/ui/components/icons/straight-card-arrangement-icon";
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
-import { useTranslate } from "@tolgee/react";
-import { TCardArrangementOptions } from "@formbricks/types/styling";
-import { TSurveyType } from "@formbricks/types/surveys/types";
 
 interface CardArrangementTabsProps {
   surveyType: TSurveyType;

@@ -1,8 +1,8 @@
+import Stripe from "stripe";
+import { logger } from "@formbricks/logger";
 import { STRIPE_API_VERSION } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { getOrganization } from "@/lib/organization/service";
-import Stripe from "stripe";
-import { logger } from "@formbricks/logger";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,

@@ -1,8 +1,8 @@
-import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 import { Column, Container, Img, Link, Row, Text } from "@react-email/components";
 import { TFnType } from "@tolgee/react";
 import { FileIcon } from "lucide-react";
 import { TSurveyQuestionType, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 
 export const renderEmailResponseValue = async (
   response: string | string[],

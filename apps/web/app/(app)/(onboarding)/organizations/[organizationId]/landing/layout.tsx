@@ -1,9 +1,9 @@
+import { getServerSession } from "next-auth";
+import { notFound, redirect } from "next/navigation";
 import { getEnvironments } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getUserProjects } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { notFound, redirect } from "next/navigation";
 
 const LandingLayout = async (props) => {
   const params = await props.params;

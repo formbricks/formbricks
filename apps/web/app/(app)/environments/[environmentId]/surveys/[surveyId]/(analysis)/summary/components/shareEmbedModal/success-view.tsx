@@ -1,11 +1,11 @@
-import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
-import { Badge } from "@/modules/ui/components/badge";
 import { useTranslate } from "@tolgee/react";
 import { BellRing, BlocksIcon, Share2Icon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
+import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
+import { Badge } from "@/modules/ui/components/badge";
 
 interface SuccessViewProps {
   survey: TSurvey;

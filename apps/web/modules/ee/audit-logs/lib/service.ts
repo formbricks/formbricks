@@ -1,5 +1,5 @@
-import { type TAuditLogEvent, ZAuditLogEventSchema } from "@/modules/ee/audit-logs/types/audit-log";
 import { logger } from "@formbricks/logger";
+import { type TAuditLogEvent, ZAuditLogEventSchema } from "@/modules/ee/audit-logs/types/audit-log";
 
 const validateEvent = (event: TAuditLogEvent): void => {
   const result = ZAuditLogEventSchema.safeParse(event);

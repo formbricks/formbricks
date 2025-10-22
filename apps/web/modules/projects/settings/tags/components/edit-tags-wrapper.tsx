@@ -1,11 +1,11 @@
 "use client";
 
-import { SingleTag } from "@/modules/projects/settings/tags/components/single-tag";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
+import { SingleTag } from "@/modules/projects/settings/tags/components/single-tag";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 
 interface EditTagsWrapperProps {
   environment: TEnvironment;

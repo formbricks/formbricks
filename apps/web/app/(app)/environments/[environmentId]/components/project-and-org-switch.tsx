@@ -1,10 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { EnvironmentBreadcrumb } from "@/app/(app)/environments/[environmentId]/components/environment-breadcrumb";
 import { OrganizationBreadcrumb } from "@/app/(app)/environments/[environmentId]/components/organization-breadcrumb";
 import { ProjectBreadcrumb } from "@/app/(app)/environments/[environmentId]/components/project-breadcrumb";
 import { Breadcrumb, BreadcrumbList } from "@/modules/ui/components/breadcrumb";
-import { useMemo } from "react";
 
 interface ProjectAndOrgSwitchProps {
   currentOrganizationId: string;

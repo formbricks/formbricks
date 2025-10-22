@@ -1,7 +1,5 @@
 "use client";
 
-import { templates } from "@/app/lib/templates";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
@@ -10,6 +8,8 @@ import toast from "react-hot-toast";
 import { ZProjectConfigChannel, ZProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
+import { templates } from "@/app/lib/templates";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";

@@ -1,5 +1,5 @@
-import { TGetContactAttributeKeysFilter } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TGetContactAttributeKeysFilter } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { getContactAttributeKeysQuery } from "../utils";
 
 describe("getContactAttributeKeysQuery", () => {

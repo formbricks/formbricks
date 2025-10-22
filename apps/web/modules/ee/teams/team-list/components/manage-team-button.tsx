@@ -1,8 +1,8 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
 
 interface ManageTeamButtonProps {
   onClick: () => void;

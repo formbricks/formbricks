@@ -1,14 +1,14 @@
 "use client";
 
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
-import { doesSamlConnectionExistAction } from "@/modules/ee/sso/actions";
-import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { LockIcon } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { doesSamlConnectionExistAction } from "@/modules/ee/sso/actions";
+import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
+import { Button } from "@/modules/ui/components/button";
 
 interface SamlButtonProps {
   inviteUrl?: string;

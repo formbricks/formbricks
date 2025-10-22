@@ -1,5 +1,10 @@
 "use client";
 
+import { Webhook } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
+import { WebhookIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { WebhookOverviewTab } from "@/modules/integrations/webhooks/components/webhook-overview-tab";
 import { WebhookSettingsTab } from "@/modules/integrations/webhooks/components/webhook-settings-tab";
 import {
@@ -10,11 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { Webhook } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { WebhookIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface WebhookModalProps {
   open: boolean;

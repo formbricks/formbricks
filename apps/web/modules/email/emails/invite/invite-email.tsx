@@ -1,6 +1,6 @@
-import { getTranslate } from "@/tolgee/server";
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
+import { getTranslate } from "@/tolgee/server";
 import { EmailButton } from "../../components/email-button";
 import { EmailFooter } from "../../components/email-footer";
 import { EmailTemplate } from "../../components/email-template";

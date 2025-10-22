@@ -1,13 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { Badge } from "@/modules/ui/components/badge";
-import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
-import { ColorPicker } from "@/modules/ui/components/color-picker";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
-import { Slider } from "@/modules/ui/components/slider";
-import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -17,6 +9,14 @@ import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { Badge } from "@/modules/ui/components/badge";
+import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
+import { ColorPicker } from "@/modules/ui/components/color-picker";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Slider } from "@/modules/ui/components/slider";
+import { Switch } from "@/modules/ui/components/switch";
 
 type CardStylingSettingsProps = {
   open: boolean;

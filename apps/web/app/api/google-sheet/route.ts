@@ -1,3 +1,6 @@
+import { google } from "googleapis";
+import { getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
 import { responses } from "@/app/lib/api/response";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -6,9 +9,6 @@ import {
 } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { google } from "googleapis";
-import { getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
