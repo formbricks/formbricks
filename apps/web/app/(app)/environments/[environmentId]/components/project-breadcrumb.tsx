@@ -4,7 +4,6 @@ import * as Sentry from "@sentry/nextjs";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-
 import { useEffect, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
@@ -35,7 +34,6 @@ interface ProjectBreadcrumbProps {
 
 const isActiveProjectSetting = (pathname: string, settingId: string): boolean => {
   // Match /project/{settingId} or /project/{settingId}/... but exclude settings paths
-  // Exclude paths with /settings/
   if (pathname.includes("/settings/")) {
     return false;
   }
