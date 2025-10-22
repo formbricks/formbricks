@@ -46,7 +46,7 @@ export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) =>
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
             />
           </div>
-          <CommandList>
+          <CommandList className="border-0">
             <CommandEmpty>
               <div className="p-2 text-sm text-slate-500">{t("environments.project.tags.no_tag_found")}</div>
             </CommandEmpty>

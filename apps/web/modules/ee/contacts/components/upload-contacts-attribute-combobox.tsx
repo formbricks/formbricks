@@ -92,7 +92,7 @@ export const UploadContactsAttributeCombobox = ({
               }}
             />
           </div>
-          <CommandList>
+          <CommandList className="border-0">
             <CommandGroup>
               {keys.map((tag) => {
                 return (

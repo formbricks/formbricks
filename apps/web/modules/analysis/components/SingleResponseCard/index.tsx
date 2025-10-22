@@ -1,8 +1,7 @@
 "use client";
 
 import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
@@ -42,46 +41,46 @@ export const SingleResponseCard = ({
   setSelectedResponseId,
   locale,
 }: SingleResponseCardProps) => {
-  const hasQuotas = (response.quotas && response.quotas.length > 0) ?? false;
+  const hasQuotas = (response?.quotas && response.quotas.length > 0) ?? false;
   const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
   const { t } = useTranslate();
   const environmentId = survey.environmentId;
-  const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  let skippedQuestions: string[][] = [];
-  let temp: string[] = [];
+  const skippedQuestions: string[][] = useMemo(() => {
+    const result: string[][] = [];
+    let temp: string[] = [];
 
-  if (response.finished) {
-    survey.questions.forEach((question) => {
-      if (!isValidValue(response.data[question.id])) {
-        temp.push(question.id);
-      } else if (temp.length > 0) {
-        skippedQuestions.push([...temp]);
-        temp = [];
+    if (response.finished) {
+      for (const question of survey.questions) {
+        if (!isValidValue(response.data[question.id])) {
+          temp.push(question.id);
+        } else if (temp.length > 0) {
+          result.push([...temp]);
+          temp = [];
+        }
       }
-    });
-  } else {
-    for (let index = survey.questions.length - 1; index >= 0; index--) {
-      const question = survey.questions[index];
-      if (
-        !response.data[question.id] &&
-        (skippedQuestions.length === 0 ||
-          (skippedQuestions.length > 0 && !isValidValue(response.data[question.id])))
-      ) {
-        temp.push(question.id);
-      } else if (temp.length > 0) {
-        temp.reverse();
-        skippedQuestions.push([...temp]);
-        temp = [];
+    } else {
+      for (let index = survey.questions.length - 1; index >= 0; index--) {
+        const question = survey.questions[index];
+        if (
+          !response.data[question.id] &&
+          (result.length === 0 || (result.length > 0 && !isValidValue(response.data[question.id])))
+        ) {
+          temp.push(question.id);
+        } else if (temp.length > 0) {
+          temp.reverse();
+          result.push([...temp]);
+          temp = [];
+        }
       }
     }
-  }
-  // Handle the case where the last entries are empty
-  if (temp.length > 0) {
-    skippedQuestions.push(temp);
-  }
+    if (temp.length > 0) {
+      result.push(temp);
+    }
+    return result;
+  }, [response.id, response.finished, response.data, survey.questions]);
 
   const handleDeleteResponse = async () => {
     setIsDeleting(true);
@@ -91,7 +90,6 @@ export const SingleResponseCard = ({
       }
       await deleteResponseAction({ responseId: response.id, decrementQuotas });
       updateResponseList?.([response.id]);
-      router.refresh();
       if (setSelectedResponseId) setSelectedResponseId(null);
       toast.success(t("environments.surveys.responses.response_deleted_successfully"));
       setDeleteDialogOpen(false);
