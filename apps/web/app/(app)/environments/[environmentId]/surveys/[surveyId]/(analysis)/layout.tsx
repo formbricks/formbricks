@@ -1,8 +1,8 @@
+import { Metadata } from "next";
+import { getServerSession } from "next-auth";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { Metadata } from "next";
-import { getServerSession } from "next-auth";
 
 type Props = {
   params: Promise<{ surveyId: string; environmentId: string }>;

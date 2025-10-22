@@ -1,5 +1,9 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { useMemo } from "react";
+import { type Control, Controller } from "react-hook-form";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -11,10 +15,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Muted, P } from "@/modules/ui/components/typography";
-import { useTranslate } from "@tolgee/react";
-import { useMemo } from "react";
-import { type Control, Controller } from "react-hook-form";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {
   control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;

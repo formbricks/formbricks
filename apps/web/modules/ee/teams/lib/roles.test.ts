@@ -1,9 +1,9 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId } from "./roles";
 
 vi.mock("@formbricks/database", () => ({

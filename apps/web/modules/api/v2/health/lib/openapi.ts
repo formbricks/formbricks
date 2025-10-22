@@ -1,6 +1,6 @@
+import { ZodOpenApiOperationObject } from "zod-openapi";
 import { ZOverallHealthStatus } from "@/modules/api/v2/health/types/health-status";
 import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
-import { ZodOpenApiOperationObject } from "zod-openapi";
 
 export const healthCheckEndpoint: ZodOpenApiOperationObject = {
   tags: ["Health"],

@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -19,7 +20,6 @@ import { findMatchingLocale } from "@/lib/utils/locale";
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTranslate } from "@/tolgee/server";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sign up",

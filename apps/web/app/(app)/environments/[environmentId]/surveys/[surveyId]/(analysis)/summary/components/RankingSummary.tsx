@@ -1,7 +1,7 @@
-import { getChoiceIdByValue } from "@/lib/response/utils";
-import { IdBadge } from "@/modules/ui/components/id-badge";
 import { useTranslate } from "@tolgee/react";
 import { TSurvey, TSurveyQuestionSummaryRanking } from "@formbricks/types/surveys/types";
+import { getChoiceIdByValue } from "@/lib/response/utils";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

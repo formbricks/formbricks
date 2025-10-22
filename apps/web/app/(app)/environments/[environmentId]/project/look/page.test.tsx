@@ -1,5 +1,5 @@
-import { ProjectLookSettingsPage } from "@/modules/projects/settings/look/page";
 import { describe, expect, test, vi } from "vitest";
+import { ProjectLookSettingsPage } from "@/modules/projects/settings/look/page";
 import Page from "./page";
 
 vi.mock("@/lib/constants", () => ({

@@ -1,9 +1,9 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { sendForgotPasswordEmail } from "@/modules/email";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { forgotPasswordAction } from "./actions";
 
 // Mock dependencies

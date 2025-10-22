@@ -1,10 +1,10 @@
-import { createOrganizationAction } from "@/app/setup/organization/create/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { createOrganizationAction } from "@/app/setup/organization/create/actions";
 import { CreateOrganization } from "./create-organization";
 
 // Mock dependencies

@@ -1,5 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { TOrganizationAccess } from "@formbricks/types/api-key";
 import {
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
@@ -19,11 +24,6 @@ import { DropdownMenu, DropdownMenuTrigger } from "@/modules/ui/components/dropd
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { TOrganizationAccess } from "@formbricks/types/api-key";
 
 interface ViewPermissionModalProps {
   open: boolean;

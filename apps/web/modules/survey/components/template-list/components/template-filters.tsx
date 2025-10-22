@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/cn";
 import { useTranslate } from "@tolgee/react";
 import { TTemplateFilter } from "@formbricks/types/templates";
+import { cn } from "@/lib/cn";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateFiltersProps {

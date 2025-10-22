@@ -1,9 +1,9 @@
-import { cache } from "@/lib/cache";
-import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
+import { cache } from "@/lib/cache";
+import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 
 /**

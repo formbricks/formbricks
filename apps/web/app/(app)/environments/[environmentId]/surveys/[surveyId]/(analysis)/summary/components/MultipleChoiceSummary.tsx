@@ -1,11 +1,5 @@
 "use client";
 
-import { getChoiceIdByValue } from "@/lib/response/utils";
-import { getContactIdentifier } from "@/lib/utils/contact";
-import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { Button } from "@/modules/ui/components/button";
-import { IdBadge } from "@/modules/ui/components/id-badge";
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +12,12 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
+import { getChoiceIdByValue } from "@/lib/response/utils";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import { IdBadge } from "@/modules/ui/components/id-badge";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

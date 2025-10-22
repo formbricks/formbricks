@@ -1,7 +1,3 @@
-import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
-import { getContactIdentifier } from "@/lib/utils/contact";
-import { getFormattedDateTimeString } from "@/lib/utils/datetime";
-import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponseTableData } from "@formbricks/types/responses";
@@ -12,6 +8,10 @@ import {
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
+import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { generateResponseTableColumns } from "./ResponseTableColumns";
 
 // Mock TFnType

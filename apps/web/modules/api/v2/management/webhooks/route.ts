@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -5,7 +6,6 @@ import { getEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/h
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
 import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { NextRequest } from "next/server";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({

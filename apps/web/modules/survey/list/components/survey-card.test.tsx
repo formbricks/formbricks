@@ -1,6 +1,6 @@
-import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { SurveyCard } from "./survey-card";
 
 // Mock constants

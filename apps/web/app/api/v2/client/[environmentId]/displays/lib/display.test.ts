@@ -1,8 +1,8 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import { TDisplayCreateInputV2 } from "../types/display";
 import { doesContactExist } from "./contact";
 import { createDisplay } from "./display";

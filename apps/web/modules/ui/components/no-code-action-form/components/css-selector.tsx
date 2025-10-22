@@ -1,11 +1,11 @@
 "use client";
 
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import { UseFormReturn } from "react-hook-form";
 import { TActionClassInput } from "@formbricks/types/action-classes";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 
 interface CssSelectorProps {
   form: UseFormReturn<TActionClassInput>;

@@ -1,8 +1,8 @@
-import { Placement } from "@/modules/survey/editor/components/placement";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TPlacement } from "@formbricks/types/common";
+import { Placement } from "@/modules/survey/editor/components/placement";
 
 // Mock useTranslate
 const mockSetCurrentPlacement = vi.fn();

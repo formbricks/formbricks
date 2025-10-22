@@ -1,10 +1,10 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma, Project } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 
 export const getProjectByEnvironmentId = reactCache(
   async (environmentId: string): Promise<Project | null> => {

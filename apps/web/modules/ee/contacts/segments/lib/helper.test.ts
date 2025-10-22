@@ -1,8 +1,8 @@
-import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TBaseFilters, TSegment } from "@formbricks/types/segment";
+import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
+import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
 // Mock dependencies
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({

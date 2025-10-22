@@ -1,11 +1,11 @@
-import { getEnvironment } from "@/lib/environment/service";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getPersonSegmentIds } from "@/modules/ee/contacts/api/v1/client/[environmentId]/user/lib/segments";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TEnvironment } from "@formbricks/types/environment";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getEnvironment } from "@/lib/environment/service";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getPersonSegmentIds } from "@/modules/ee/contacts/api/v1/client/[environmentId]/user/lib/segments";
 import { getContactByUserId } from "./contact";
 import { getPersonState } from "./person-state";
 

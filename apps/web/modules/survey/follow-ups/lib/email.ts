@@ -1,9 +1,9 @@
-import { sendEmail } from "@/modules/email";
-import { FollowUpEmail } from "@/modules/survey/follow-ups/components/follow-up-email";
 import { render } from "@react-email/components";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { sendEmail } from "@/modules/email";
+import { FollowUpEmail } from "@/modules/survey/follow-ups/components/follow-up-email";
 
 export const sendFollowUpEmail = async ({
   followUp,

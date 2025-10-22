@@ -1,10 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Button } from "@/modules/ui/components/button";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
+import { cn } from "@/lib/cn";
+import { Button } from "@/modules/ui/components/button";
 import { replacePresetPlaceholders } from "../lib/utils";
 import { TemplateTags } from "./template-tags";
 

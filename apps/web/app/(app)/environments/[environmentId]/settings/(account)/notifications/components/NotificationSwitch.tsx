@@ -1,12 +1,12 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TUserNotificationSettings } from "@formbricks/types/user";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Switch } from "@/modules/ui/components/switch";
 import { updateNotificationSettingsAction } from "../actions";
 
 interface NotificationSwitchProps {

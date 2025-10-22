@@ -1,12 +1,5 @@
 "use client";
 
-import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
-import { timeSince } from "@/lib/time";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Button } from "@/modules/ui/components/button";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
@@ -14,6 +7,13 @@ import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TUserLocale } from "@formbricks/types/user";
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
+import { timeSince } from "@/lib/time";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface ManageIntegrationProps {
   environment: TEnvironment;

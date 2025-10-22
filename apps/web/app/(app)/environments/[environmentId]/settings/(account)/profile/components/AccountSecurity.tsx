@@ -1,11 +1,11 @@
 "use client";
 
-import { DisableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/disable-two-factor-modal";
-import { EnableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/enable-two-factor-modal";
-import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
+import { DisableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/disable-two-factor-modal";
+import { EnableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/enable-two-factor-modal";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface AccountSecurityProps {
   user: TUser;

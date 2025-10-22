@@ -1,7 +1,7 @@
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
 
 export const createContact = async (
   contactData: TContactCreateRequest

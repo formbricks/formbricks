@@ -1,8 +1,8 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { TProject } from "@formbricks/types/project";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 export const replaceQuestionPresetPlaceholders = (
   question: TSurveyQuestion,

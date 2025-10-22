@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { Unplug } from "lucide-react";
 import Link from "next/link";
 import { TEnvironment } from "@formbricks/types/environment";
+import { Button } from "@/modules/ui/components/button";
 
 interface TEmptyAppSurveysProps {
   environment: TEnvironment;

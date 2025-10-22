@@ -1,5 +1,5 @@
-import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { describe, expect, test } from "vitest";
+import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { isInviteExpired } from "./utils";
 
 describe("isInviteExpired", () => {

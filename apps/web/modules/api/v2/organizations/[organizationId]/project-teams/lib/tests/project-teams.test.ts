@@ -1,11 +1,11 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TypeOf } from "zod";
+import { prisma } from "@formbricks/database";
 import {
   TGetProjectTeamsFilter,
   TProjectTeamInput,
   ZProjectZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TypeOf } from "zod";
-import { prisma } from "@formbricks/database";
 import { createProjectTeam, deleteProjectTeam, getProjectTeams, updateProjectTeam } from "../project-teams";
 
 vi.mock("@formbricks/database", () => ({

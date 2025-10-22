@@ -1,4 +1,3 @@
-import { templates } from "@/app/lib/templates";
 import { Project } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -7,6 +6,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TTemplate } from "@formbricks/types/templates";
+import { templates } from "@/app/lib/templates";
 import { createSurveyAction } from "./actions";
 import { TemplateList } from "./index";
 

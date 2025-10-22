@@ -1,3 +1,7 @@
+import type { IdentityProvider } from "@prisma/client";
+import AzureAD from "next-auth/providers/azure-ad";
+import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,
@@ -13,10 +17,6 @@ import {
   OIDC_SIGNING_ALGORITHM,
   WEBAPP_URL,
 } from "@/lib/constants";
-import type { IdentityProvider } from "@prisma/client";
-import AzureAD from "next-auth/providers/azure-ad";
-import GitHubProvider from "next-auth/providers/github";
-import GoogleProvider from "next-auth/providers/google";
 
 export const getSSOProviders = () => [
   GitHubProvider({

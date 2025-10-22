@@ -1,3 +1,9 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { redirect } from "next/navigation";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys";
 import { SlackWrapper } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/SlackWrapper";
 import Page from "@/app/(app)/environments/[environmentId]/project/integrations/slack/page";
@@ -5,12 +11,6 @@ import { getIntegrationByType } from "@/lib/integration/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
-import { cleanup, render, screen } from "@testing-library/react";
-import { redirect } from "next/navigation";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 // Mock dependencies
 vi.mock("@/app/(app)/environments/[environmentId]/project/integrations/lib/surveys", () => ({

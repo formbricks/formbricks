@@ -1,11 +1,11 @@
-import { getEnvironments } from "@/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getUserProjects } from "@/lib/project/service";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/preact";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getEnvironments } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getUserProjects } from "@/lib/project/service";
 import LandingLayout from "./layout";
 
 vi.mock("@/lib/constants", () => ({

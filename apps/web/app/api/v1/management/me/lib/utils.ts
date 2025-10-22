@@ -1,7 +1,7 @@
-import { authOptions } from "@/modules/auth/lib/authOptions";
 import { NextApiRequest, NextApiResponse } from "next";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const getSessionUser = async (req?: NextApiRequest, res?: NextApiResponse) => {
   // check for session (browser usage)

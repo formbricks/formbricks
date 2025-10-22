@@ -1,12 +1,12 @@
 "use client";
 
-import { Confetti } from "@/modules/ui/components/confetti";
 import { useTranslate } from "@tolgee/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { Confetti } from "@/modules/ui/components/confetti";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;

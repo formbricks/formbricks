@@ -1,5 +1,22 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
+import { PieChart, Trash2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { z } from "zod";
+import {
+  TSurveyQuota,
+  TSurveyQuotaInput,
+  TSurveyQuotaLogic,
+  ZSurveyQuotaAction,
+  ZSurveyQuotaInput,
+} from "@formbricks/types/quota";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
@@ -33,23 +50,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { PieChart, Trash2Icon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import {
-  TSurveyQuota,
-  TSurveyQuotaInput,
-  TSurveyQuotaLogic,
-  ZSurveyQuotaAction,
-  ZSurveyQuotaInput,
-} from "@formbricks/types/quota";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { QuotaConditionBuilder } from "./quota-condition-builder";
 
 interface QuotaModalProps {

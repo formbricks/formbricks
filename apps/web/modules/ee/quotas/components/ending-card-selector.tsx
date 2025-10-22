@@ -1,5 +1,8 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { HandshakeIcon, Undo2Icon } from "lucide-react";
+import { TSurveyEndings } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import {
   Select,
@@ -9,9 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslate } from "@tolgee/react";
-import { HandshakeIcon, Undo2Icon } from "lucide-react";
-import { TSurveyEndings } from "@formbricks/types/surveys/types";
 
 interface EndingCardSelectorProps {
   endings: TSurveyEndings;

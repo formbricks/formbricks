@@ -1,3 +1,7 @@
+import "@testing-library/jest-dom/vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { notFound } from "next/navigation";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { verifyInviteToken } from "@/lib/jwt";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
@@ -6,17 +10,9 @@ import {
   getIsSamlSsoEnabled,
   getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
-import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
-import { notFound } from "next/navigation";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SignupPage } from "./page";
 
 // Mock the necessary dependencies
-vi.mock("@/modules/auth/components/testimonial", () => ({
-  Testimonial: () => <div data-testid="testimonial">Testimonial</div>,
-}));
-
 vi.mock("@/modules/auth/components/form-wrapper", () => ({
   FormWrapper: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="form-wrapper">{children}</div>
@@ -131,8 +127,7 @@ describe("SignupPage", () => {
     const result = await SignupPage({ searchParams: mockSearchParams });
     render(result);
 
-    // Verify that all components are rendered
-    expect(screen.getByTestId("testimonial")).toBeInTheDocument();
+    // Verify main components are rendered
     expect(screen.getByTestId("form-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("signup-form")).toBeInTheDocument();
   });

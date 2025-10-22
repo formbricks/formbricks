@@ -1,5 +1,9 @@
 "use client";
 
+import { ActionClass } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
+import { useEffect, useState } from "react";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
 import { SavedActionsTab } from "@/modules/survey/editor/components/saved-actions-tab";
 import {
@@ -10,10 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { ActionClass } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { useEffect, useState } from "react";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AddActionModalProps {
   open: boolean;

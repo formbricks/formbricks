@@ -1,10 +1,10 @@
 "use client";
 
-import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
-import { Badge } from "@/modules/ui/components/multi-select/badge";
 import { Command as CommandPrimitive } from "cmdk";
 import { X } from "lucide-react";
 import * as React from "react";
+import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
+import { Badge } from "@/modules/ui/components/multi-select/badge";
 
 interface TOption<T> {
   value: T;

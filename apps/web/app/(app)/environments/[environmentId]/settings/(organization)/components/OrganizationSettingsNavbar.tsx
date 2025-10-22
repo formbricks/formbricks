@@ -1,10 +1,10 @@
 "use client";
 
-import { getAccessFlags } from "@/lib/membership/utils";
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
 import { usePathname } from "next/navigation";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface OrganizationSettingsNavbarProps {
   environmentId?: string;

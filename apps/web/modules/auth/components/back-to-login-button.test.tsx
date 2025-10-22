@@ -1,8 +1,8 @@
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { TFnType } from "@tolgee/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getTranslate } from "@/tolgee/server";
 import { BackToLoginButton } from "./back-to-login-button";
 
 vi.mock("@/tolgee/server", () => ({

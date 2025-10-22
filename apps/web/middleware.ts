@@ -1,11 +1,11 @@
-import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
-import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
-import { WEBAPP_URL } from "@/lib/constants";
-import { isValidCallbackUrl } from "@/lib/utils/url";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@formbricks/logger";
+import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
+import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
+import { WEBAPP_URL } from "@/lib/constants";
+import { isValidCallbackUrl } from "@/lib/utils/url";
 
 const handleAuth = async (request: NextRequest): Promise<Response | null> => {
   const token = await getToken({ req: request as any });

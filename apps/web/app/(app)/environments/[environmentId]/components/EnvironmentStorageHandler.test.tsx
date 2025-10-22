@@ -1,6 +1,6 @@
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { render } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import EnvironmentStorageHandler from "./EnvironmentStorageHandler";
 
 describe("EnvironmentStorageHandler", () => {

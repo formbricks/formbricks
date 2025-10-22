@@ -1,15 +1,15 @@
 "use client";
 
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { ActionClassesTable } from "@/modules/projects/settings/(setup)/components/ActionClassesTable";
-import { ActionClassDataRow } from "@/modules/projects/settings/(setup)/components/ActionRowData";
-import { ActionTableHeading } from "@/modules/projects/settings/(setup)/components/ActionTableHeading";
-import { AddActionModal } from "@/modules/projects/settings/(setup)/components/AddActionModal";
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TUserLocale } from "@formbricks/types/user";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { ActionClassesTable } from "@/modules/projects/settings/(setup)/components/ActionClassesTable";
+import { ActionClassDataRow } from "@/modules/projects/settings/(setup)/components/ActionRowData";
+import { ActionTableHeading } from "@/modules/projects/settings/(setup)/components/ActionTableHeading";
+import { AddActionModal } from "@/modules/projects/settings/(setup)/components/AddActionModal";
 
 interface ActionSettingsCardProps {
   environment: TEnvironment;

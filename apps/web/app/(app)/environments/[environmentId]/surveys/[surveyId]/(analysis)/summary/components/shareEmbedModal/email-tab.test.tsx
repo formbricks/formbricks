@@ -1,9 +1,9 @@
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthenticationError } from "@formbricks/types/errors";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
 import { EmailTab } from "./email-tab";
 

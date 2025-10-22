@@ -1,13 +1,13 @@
-import { getPublicDomain } from "@/lib/getPublicUrl";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getSurvey } from "@/lib/survey/service";
-import { getStyling } from "@/lib/utils/styling";
-import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getSurvey } from "@/lib/survey/service";
+import { getStyling } from "@/lib/utils/styling";
+import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 import { getEmailTemplateHtml } from "./emailTemplate";
 
 vi.mock("@/lib/constants", () => ({

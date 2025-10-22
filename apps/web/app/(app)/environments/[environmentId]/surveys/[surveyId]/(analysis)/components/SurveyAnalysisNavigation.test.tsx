@@ -1,11 +1,3 @@
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import {
-  getResponseCountAction,
-  revalidateSurveyIdPath,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
-import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -16,6 +8,14 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import {
+  getResponseCountAction,
+  revalidateSurveyIdPath,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
+import { getFormattedFilters } from "@/app/lib/surveys/surveys";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,

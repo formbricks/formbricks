@@ -1,10 +1,10 @@
-import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { getTeamsByOrganizationIdAction } from "@/modules/projects/settings/actions";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getTeamsByOrganizationIdAction } from "@/modules/projects/settings/actions";
 import { CreateProjectModal } from "./index";
 
 // Mock dependencies

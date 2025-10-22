@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
+import { ZProjectTeam } from "@formbricks/database/zod/project-teams";
 import {
   ZGetProjectTeamUpdateFilter,
   ZGetProjectTeamsFilter,
@@ -6,9 +9,6 @@ import {
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { z } from "zod";
-import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
-import { ZProjectTeam } from "@formbricks/database/zod/project-teams";
 
 export const getProjectTeamsEndpoint: ZodOpenApiOperationObject = {
   operationId: "getProjectTeams",

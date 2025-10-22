@@ -1,14 +1,6 @@
 "use client";
 
 import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/modules/ui/components/dialog";
-import {
   DndContext,
   DragEndEvent,
   PointerSensor,
@@ -22,6 +14,14 @@ import { useTranslate } from "@tolgee/react";
 import { SettingsIcon } from "lucide-react";
 import { useMemo } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { DataTableSettingsModalItem } from "./data-table-settings-modal-item";
 
 interface DataTableSettingsModalProps<T> {

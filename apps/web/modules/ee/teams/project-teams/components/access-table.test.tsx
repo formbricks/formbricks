@@ -1,7 +1,7 @@
-import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
-import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
+import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { AccessTable } from "./access-table";
 
 vi.mock("@tolgee/react", () => ({

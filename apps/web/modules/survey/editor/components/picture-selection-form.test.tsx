@@ -1,6 +1,3 @@
-import { createI18nString } from "@/lib/i18n/utils";
-import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
-import { FileInput } from "@/modules/ui/components/file-input";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -11,6 +8,9 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { createI18nString } from "@/lib/i18n/utils";
+import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
+import { FileInput } from "@/modules/ui/components/file-input";
 
 vi.mock("@formkit/auto-animate/react", () => ({
   useAutoAnimate: () => [vi.fn()],

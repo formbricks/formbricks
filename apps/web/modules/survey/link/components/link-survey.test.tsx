@@ -1,10 +1,10 @@
-import * as utils from "@/modules/survey/link/lib/utils";
 import { render, screen, waitFor } from "@testing-library/react";
 import * as navigation from "next/navigation";
 import React from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TResponseData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import * as utils from "@/modules/survey/link/lib/utils";
 import { LinkSurvey } from "./link-survey";
 
 // Allow tests to control search params via a module-level variable.

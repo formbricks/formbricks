@@ -1,11 +1,11 @@
+import { prisma } from "@formbricks/database";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { TJsPersonState } from "@formbricks/types/js";
 import { getEnvironment } from "@/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getContactAttributes } from "@/modules/ee/contacts/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/attributes";
 import { getContactByUserId } from "@/modules/ee/contacts/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/contact";
 import { getPersonSegmentIds } from "@/modules/ee/contacts/api/v1/client/[environmentId]/user/lib/segments";
-import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsPersonState } from "@formbricks/types/js";
 
 /**
  *

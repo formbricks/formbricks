@@ -1,8 +1,8 @@
 "use client";
 
-import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 
 interface DocumentationLinksProps {
   links: {

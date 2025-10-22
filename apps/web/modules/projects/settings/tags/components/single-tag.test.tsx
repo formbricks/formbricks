@@ -1,13 +1,13 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TTag } from "@formbricks/types/tags";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   deleteTagAction,
   mergeTagsAction,
   updateTagNameAction,
 } from "@/modules/projects/settings/tags/actions";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TTag } from "@formbricks/types/tags";
 import { SingleTag } from "./single-tag";
 
 vi.mock("@/modules/ui/components/delete-dialog", () => ({

@@ -1,9 +1,9 @@
-import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@/lib/constants";
 import { SAMLSSOConnectionWithEncodedMetadata, SAMLSSORecord } from "@boxyhq/saml-jackson";
 import { ConnectionAPIController } from "@boxyhq/saml-jackson/dist/controller/api";
 import fs from "fs/promises";
 import path from "path";
 import { logger } from "@formbricks/logger";
+import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@/lib/constants";
 
 const getPreloadedConnectionFile = async () => {
   const preloadedConnections = await fs.readdir(path.join(SAML_XML_DIR));

@@ -1,6 +1,6 @@
+import { Prisma } from "@prisma/client";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
-import { Prisma } from "@prisma/client";
 
 export const getResponsesQuery = (environmentIds: string[], params?: TGetResponsesFilter) => {
   let query: Prisma.ResponseFindManyArgs = {

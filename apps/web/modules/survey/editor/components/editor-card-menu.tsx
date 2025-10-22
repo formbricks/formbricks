@@ -1,5 +1,17 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
+import { Project } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
+import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
+import { useState } from "react";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
 import {
   getCXQuestionNameMap,
   getQuestionDefaults,
@@ -18,18 +30,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
-import {
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
 
 interface EditorCardMenuProps {
   survey: TSurvey;

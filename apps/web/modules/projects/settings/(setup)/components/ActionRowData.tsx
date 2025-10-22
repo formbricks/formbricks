@@ -1,7 +1,7 @@
-import { timeSince } from "@/lib/time";
-import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TUserLocale } from "@formbricks/types/user";
+import { timeSince } from "@/lib/time";
+import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
 
 export const ActionClassDataRow = ({
   actionClass,

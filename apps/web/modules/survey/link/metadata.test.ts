@@ -1,6 +1,6 @@
-import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 

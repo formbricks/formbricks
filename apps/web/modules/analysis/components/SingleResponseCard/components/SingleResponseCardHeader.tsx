@@ -1,11 +1,5 @@
 "use client";
 
-import { timeSince } from "@/lib/time";
-import { getContactIdentifier } from "@/lib/utils/contact";
-import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { IdBadge } from "@/modules/ui/components/id-badge";
-import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { LanguagesIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
@@ -15,6 +9,12 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { timeSince } from "@/lib/time";
+import { getContactIdentifier } from "@/lib/utils/contact";
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { IdBadge } from "@/modules/ui/components/id-badge";
+import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { isSubmissionTimeMoreThan5Minutes } from "../util";
 
 interface TooltipRendererProps {

@@ -1,5 +1,8 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { Control, Controller, UseFormSetValue } from "react-hook-form";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import { Label } from "@/modules/ui/components/label";
 import {
   Select,
@@ -8,9 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslate } from "@tolgee/react";
-import { Control, Controller, UseFormSetValue } from "react-hook-form";
-import { TIntegrationItem } from "@formbricks/types/integration";
 import { IntegrationModalInputs } from "../lib/types";
 
 interface BaseSelectProps {

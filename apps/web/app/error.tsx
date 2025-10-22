@@ -1,11 +1,11 @@
 "use client";
 
 // Error components must be Client components
-import { Button } from "@/modules/ui/components/button";
-import { ErrorComponent } from "@/modules/ui/components/error-component";
 import * as Sentry from "@sentry/nextjs";
 import { TFnType, useTranslate } from "@tolgee/react";
 import { type ClientErrorType, getClientErrorData } from "@formbricks/types/errors";
+import { Button } from "@/modules/ui/components/button";
+import { ErrorComponent } from "@/modules/ui/components/error-component";
 
 /**
  * Get translated error messages based on error type

@@ -1,11 +1,11 @@
 "use client";
 
-import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/components/upload-contacts-attribute-combobox";
-import { Badge } from "@/modules/ui/components/badge";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/components/upload-contacts-attribute-combobox";
+import { Badge } from "@/modules/ui/components/badge";
 
 interface UploadContactsAttributesProps {
   attributeMap: Record<string, string>;

@@ -1,5 +1,5 @@
-import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { describe, expect, test } from "vitest";
+import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 
 describe("helpers", () => {
   describe("createQuotaFullObject", () => {

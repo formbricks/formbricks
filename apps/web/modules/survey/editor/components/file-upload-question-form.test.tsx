@@ -1,9 +1,9 @@
-import { createI18nString } from "@/lib/i18n/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyFileUploadQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
 import { FileUploadQuestionForm } from "./file-upload-question-form";
 
 // Mock dependencies
