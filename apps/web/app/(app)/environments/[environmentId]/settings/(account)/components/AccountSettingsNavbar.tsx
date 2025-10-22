@@ -1,8 +1,8 @@
 "use client";
 
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
 import { usePathname } from "next/navigation";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface AccountSettingsNavbarProps {
   environmentId?: string;

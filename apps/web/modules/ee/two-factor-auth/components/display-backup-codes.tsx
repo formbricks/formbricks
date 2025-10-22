@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { toast } from "react-hot-toast";
+import { Button } from "@/modules/ui/components/button";
 
 interface DisplayBackupCodesProps {
   backupCodes: string[];

@@ -1,11 +1,11 @@
 "use client";
 
-import { revalidateSurveyIdPath } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon, PresentationIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { revalidateSurveyIdPath } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface SurveyAnalysisNavigationProps {
   environmentId: string;

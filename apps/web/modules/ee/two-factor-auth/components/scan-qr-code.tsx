@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
+import { Button } from "@/modules/ui/components/button";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 interface ScanQRCodeProps {

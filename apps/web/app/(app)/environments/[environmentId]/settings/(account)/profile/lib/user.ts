@@ -1,8 +1,8 @@
-import { verifyPassword } from "@/modules/auth/lib/utils";
 import { User } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { verifyPassword } from "@/modules/auth/lib/utils";
 
 export const getUserById = reactCache(
   async (userId: string): Promise<Pick<User, "password" | "identityProvider">> => {

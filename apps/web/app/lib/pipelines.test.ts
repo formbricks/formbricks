@@ -1,8 +1,8 @@
-import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { PipelineTriggers } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
+import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { sendToPipeline } from "./pipelines";
 
 // Mock the constants module

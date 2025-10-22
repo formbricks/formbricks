@@ -1,7 +1,7 @@
 "use client";
 
-import { Checkbox } from "@/modules/ui/components/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 
 export const getSelectionColumn = <T extends object>(): ColumnDef<T, unknown> => {
   return {

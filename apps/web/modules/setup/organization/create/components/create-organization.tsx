@@ -1,9 +1,5 @@
 "use client";
 
-import { createOrganizationAction } from "@/app/setup/organization/create/actions";
-import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
@@ -12,6 +8,10 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { ZOrganization } from "@formbricks/types/organizations";
+import { createOrganizationAction } from "@/app/setup/organization/create/actions";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 
 const ZCreateOrganizationFormSchema = ZOrganization.pick({ name: true });
 type TCreateOrganizationForm = z.infer<typeof ZCreateOrganizationFormSchema>;

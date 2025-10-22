@@ -1,11 +1,11 @@
-import { responses } from "@/app/lib/api/response";
-import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsUserIdentifyInput } from "@formbricks/types/js";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getPersonState } from "./lib/person-state";
 
 export const OPTIONS = async (): Promise<Response> => {

@@ -1,5 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Project } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { z } from "zod";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
@@ -9,12 +15,6 @@ import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/mod
 import { Label } from "@/modules/ui/components/label";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
 
 interface EditPlacementProps {
   project: Project;

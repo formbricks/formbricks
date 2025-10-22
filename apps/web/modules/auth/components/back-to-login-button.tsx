@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { Button } from "@/modules/ui/components/button";
 import { getTranslate } from "@/tolgee/server";
-import Link from "next/link";
 
 export const BackToLoginButton = async () => {
   const t = await getTranslate();

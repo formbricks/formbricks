@@ -1,14 +1,14 @@
+import { useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
 import { mixColor } from "@/lib/color";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import i18n from "@/lib/i18n.config";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { checkIfSurveyIsRTL, cn } from "@/lib/utils";
-import { useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 
 interface LanguageSwitchProps {
   survey: TJsEnvironmentStateSurvey;

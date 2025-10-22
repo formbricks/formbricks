@@ -1,9 +1,9 @@
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getOrganization } from "@/lib/organization/service";
 import { getServerSession } from "next-auth";
 import { describe, expect, test, vi } from "vitest";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getOrganization } from "@/lib/organization/service";
 import { getOrganizationAuth } from "./utils";
 
 vi.mock("@/lib/membership/service", () => ({

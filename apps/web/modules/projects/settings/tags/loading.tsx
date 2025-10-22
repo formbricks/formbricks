@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
 
 export const TagsLoading = () => {
   const { t } = useTranslate();

@@ -1,9 +1,9 @@
+import { useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { ExpandIcon } from "@/components/icons/expand-icon";
 import { ImageDownIcon } from "@/components/icons/image-down-icon";
 import { cn } from "@/lib/utils";
 import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
-import { useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 
 //Function to add extra params to videoUrls in order to reduce video controls
 const getVideoUrlWithParams = (videoUrl: string): string => {

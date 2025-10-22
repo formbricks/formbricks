@@ -1,6 +1,5 @@
 "use client";
 
-import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { TFnType, useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -9,6 +8,7 @@ import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@fo
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 
 interface ResponseDataViewProps {
   survey: TSurvey;

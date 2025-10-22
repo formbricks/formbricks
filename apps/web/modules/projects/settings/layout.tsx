@@ -1,6 +1,6 @@
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 
 export const metadata: Metadata = {
   title: "Configuration",

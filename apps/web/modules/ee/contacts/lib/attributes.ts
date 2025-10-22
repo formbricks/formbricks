@@ -1,10 +1,10 @@
+import { prisma } from "@formbricks/database";
+import { ZId, ZString } from "@formbricks/types/common";
+import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
-import { prisma } from "@formbricks/database";
-import { ZId, ZString } from "@formbricks/types/common";
-import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
 
 export const updateAttributes = async (
   contactId: string,

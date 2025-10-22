@@ -1,13 +1,13 @@
 "use client";
 
-import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
-import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import type { Session } from "next-auth";
 import { useState } from "react";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 export const DeleteAccount = ({
   session,

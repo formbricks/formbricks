@@ -1,11 +1,11 @@
 "use server";
 
+import { z } from "zod";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
-import { z } from "zod";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "./lib/two-factor-auth";
 
 const ZSetupTwoFactorAuthAction = z.object({

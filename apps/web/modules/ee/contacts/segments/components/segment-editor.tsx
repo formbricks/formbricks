@@ -1,5 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
@@ -18,11 +23,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useTranslate } from "@tolgee/react";
-import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentFilter } from "./segment-filter";
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
+import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
+import { Button } from "@/modules/ui/components/button";
 
 interface CreateTeamButtonProps {
   organizationId: string;

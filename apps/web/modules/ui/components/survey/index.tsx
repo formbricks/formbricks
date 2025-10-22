@@ -1,6 +1,6 @@
-import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
 
 const createContainerId = () => `formbricks-survey-container`;
 declare global {

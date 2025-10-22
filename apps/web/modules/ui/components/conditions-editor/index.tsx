@@ -1,5 +1,10 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
+import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
+import { FieldErrors } from "react-hook-form";
+import { TSurveyQuotaInput } from "@formbricks/types/quota";
 import { Button } from "@/modules/ui/components/button";
 import { isConditionGroup } from "@/modules/ui/components/conditions-editor/lib/utils";
 import {
@@ -17,11 +22,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { cn } from "@/modules/ui/lib/utils";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
-import { FieldErrors } from "react-hook-form";
-import { TSurveyQuotaInput } from "@formbricks/types/quota";
 import {
   TConditionsEditorCallbacks,
   TConditionsEditorConfig,

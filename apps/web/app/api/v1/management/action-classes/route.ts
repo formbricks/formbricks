@@ -1,12 +1,12 @@
+import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
+import { DatabaseError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { createActionClass } from "@/lib/actionClass/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
-import { DatabaseError } from "@formbricks/types/errors";
 import { getActionClasses } from "./lib/action-classes";
 
 export const GET = withV1ApiWrapper({

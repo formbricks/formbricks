@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { Webhook } from "lucide-react";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { Button } from "@/modules/ui/components/button";
 import { AddWebhookModal } from "./add-webhook-modal";
 
 interface AddWebhookButtonProps {

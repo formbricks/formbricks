@@ -1,11 +1,11 @@
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getResponse } from "@/lib/response/service";
-import { getSurvey } from "@/lib/survey/service";
-import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getResponse } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
+import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { sendFollowUpEmail } from "./email";
 import { sendFollowUpsForResponse } from "./follow-ups";
 import { getSurveyFollowUpsPermission } from "./utils";

@@ -1,4 +1,12 @@
 // utils.test.ts
+import { getServerSession } from "next-auth";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TEnvironment } from "@formbricks/types/environment";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { TMembership } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TProject } from "@formbricks/types/project";
+import { TUser } from "@formbricks/types/user";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getEnvironment } from "@/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -10,14 +18,6 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 // Pull in the mocked implementations to configure them in tests
 import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TEnvironment } from "@formbricks/types/environment";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TMembership } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
-import { TUser } from "@formbricks/types/user";
 import { environmentIdLayoutChecks, getEnvironmentAuth } from "./utils";
 
 // Mock all external dependencies

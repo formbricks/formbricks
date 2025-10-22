@@ -1,17 +1,17 @@
 "use client";
 
-import { getSlackChannelsAction } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/actions";
-import { AddChannelMappingModal } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/AddChannelMappingModal";
-import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/ManageIntegration";
-import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/lib/slack";
-import slackLogo from "@/images/slacklogo.png";
-import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useCallback, useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { getSlackChannelsAction } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/actions";
+import { AddChannelMappingModal } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/AddChannelMappingModal";
+import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/components/ManageIntegration";
+import { authorize } from "@/app/(app)/environments/[environmentId]/project/integrations/slack/lib/slack";
+import slackLogo from "@/images/slacklogo.png";
+import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 
 interface SlackWrapperProps {
   isEnabled: boolean;

@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { getProject, getUserProjects } from "@/lib/project/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -7,8 +9,6 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { deleteProject } from "@/modules/projects/settings/lib/project";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
 
 const ZProjectDeleteAction = z.object({
   projectId: ZId,

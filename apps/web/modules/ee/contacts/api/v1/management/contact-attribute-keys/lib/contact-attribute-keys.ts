@@ -1,11 +1,11 @@
-import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
-import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 
 export const getContactAttributeKeys = reactCache(
   async (environmentIds: string[]): Promise<TContactAttributeKey[]> => {

@@ -1,5 +1,10 @@
 // Deprecated: This api route is deprecated now and will be removed in the future.
 // Deprecated: This is currently only being used for the older react native SDKs. Please upgrade to the latest SDKs.
+import { NextRequest, userAgent } from "next/server";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import { TJsPeopleUserIdInput, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getContactByUserId } from "@/app/api/v1/client/[environmentId]/app/sync/lib/contact";
 import { getSyncSurveys } from "@/app/api/v1/client/[environmentId]/app/sync/lib/survey";
 import { replaceAttributeRecall } from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
@@ -19,11 +24,6 @@ import {
 } from "@/lib/posthogServer";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { NextRequest, userAgent } from "next/server";
-import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
-import { TJsPeopleUserIdInput, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 const validateInput = (
   environmentId: string,

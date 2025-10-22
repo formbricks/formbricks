@@ -1,4 +1,3 @@
-import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { logger } from "@formbricks/logger";
@@ -11,6 +10,7 @@ import {
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
 } from "@formbricks/types/segment";
+import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { getSegment } from "../segments";
 
 // Type for the result of the segment filter to prisma query generation

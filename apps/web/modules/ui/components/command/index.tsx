@@ -1,5 +1,8 @@
 "use client";
 
+import { Command as CommandPrimitive } from "cmdk";
+import { SearchIcon } from "lucide-react";
+import * as React from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +11,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { cn } from "@/modules/ui/lib/utils";
-import { Command as CommandPrimitive } from "cmdk";
-import { SearchIcon } from "lucide-react";
-import * as React from "react";
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (

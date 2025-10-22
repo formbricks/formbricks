@@ -1,6 +1,6 @@
+import React, { useState } from "react";
 import { isValidEmail } from "@/lib/utils/email";
 import { cn } from "@/modules/ui/lib/utils";
-import React, { useState } from "react";
 
 interface FollowUpActionMultiEmailInputProps {
   emails: string[];

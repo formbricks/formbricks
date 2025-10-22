@@ -1,8 +1,8 @@
 import "server-only";
-import { convertFloatTo2Decimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { convertFloatTo2Decimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 
 export const deleteResponsesAndDisplaysForSurvey = async (
   surveyId: string

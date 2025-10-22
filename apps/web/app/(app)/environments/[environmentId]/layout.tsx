@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
 import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { getEnvironment } from "@/lib/environment/service";
@@ -5,7 +6,6 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { EnvironmentIdBaseLayout } from "@/modules/ui/components/environmentId-base-layout";
-import { redirect } from "next/navigation";
 import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
 
 const EnvLayout = async (props: {

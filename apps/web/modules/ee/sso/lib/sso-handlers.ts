@@ -1,3 +1,8 @@
+import type { IdentityProvider, Organization } from "@prisma/client";
+import type { Account } from "next-auth";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 import { createAccount } from "@/lib/account/service";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
@@ -17,11 +22,6 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
-import type { IdentityProvider, Organization } from "@prisma/client";
-import type { Account } from "next-auth";
-import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
-import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 
 export const handleSsoCallback = async ({
   user,

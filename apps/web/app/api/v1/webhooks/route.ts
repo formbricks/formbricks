@@ -1,11 +1,11 @@
+import { NextRequest } from "next/server";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { NextRequest } from "next/server";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ authentication }: { authentication: NonNullable<TApiKeyAuthentication> }) => {

@@ -1,5 +1,5 @@
-import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TConnector } from "@formbricks/types/surveys/types";
+import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 
 export interface TGenericCondition {
   id: string;

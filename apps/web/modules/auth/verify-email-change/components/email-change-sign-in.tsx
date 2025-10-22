@@ -1,9 +1,9 @@
 "use client";
 
-import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 import { useTranslate } from "@tolgee/react";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 
 interface EmailChangeSignInProps {
   token: string;

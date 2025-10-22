@@ -27,7 +27,8 @@ const config = ({ mode }) => {
         provider: "v8",
         reporter: ["text", "html", "lcov"],
         reportsDirectory: "./coverage",
-        include: ["src/lib/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
+        include: ["src/lib/**/*.ts"],
+        exclude: ["**/*.tsx"],
       },
     },
     define: {

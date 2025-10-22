@@ -1,5 +1,3 @@
-import { createI18nString } from "@/lib/i18n/utils";
-import * as i18nUtils from "@/lib/i18n/utils";
 import "@testing-library/jest-dom/vitest";
 import { TFnType } from "@tolgee/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -10,6 +8,8 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
+import * as i18nUtils from "@/lib/i18n/utils";
 import {
   determineImageUploaderVisibility,
   getChoiceLabel,

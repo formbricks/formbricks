@@ -1,3 +1,6 @@
+import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { TUploadPrivateFileRequest, ZUploadPrivateFileRequest } from "@formbricks/types/storage";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -8,9 +11,6 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
-import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { TUploadPrivateFileRequest, ZUploadPrivateFileRequest } from "@formbricks/types/storage";
 
 interface Context {
   params: Promise<{
