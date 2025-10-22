@@ -1,11 +1,11 @@
+import jwt from "jsonwebtoken";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import * as crypto from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import jwt from "jsonwebtoken";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import * as contactSurveyLink from "./contact-survey-link";
 
 // Mock all modules needed (this gets hoisted to the top of the file)

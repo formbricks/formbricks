@@ -1,10 +1,10 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
 import { resendVerificationEmailAction } from "../actions";
 
 interface RequestVerificationEmailProps {

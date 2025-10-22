@@ -1,8 +1,8 @@
-import { verifyInviteToken } from "@/lib/jwt";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/preact";
 import { getServerSession } from "next-auth";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { verifyInviteToken } from "@/lib/jwt";
 import { getInvite } from "./lib/invite";
 import { InvitePage } from "./page";
 

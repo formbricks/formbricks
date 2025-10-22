@@ -1,8 +1,8 @@
-import { updateResponse } from "@/lib/response/service";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
+import { updateResponse } from "@/lib/response/service";
+import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { updateResponseWithQuotaEvaluation } from "./response";
 
 vi.mock("@/lib/response/service");

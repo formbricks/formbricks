@@ -1,5 +1,5 @@
-import { AppConnectionLoading as OriginalAppConnectionLoading } from "@/modules/projects/settings/(setup)/app-connection/loading";
 import { describe, expect, test, vi } from "vitest";
+import { AppConnectionLoading as OriginalAppConnectionLoading } from "@/modules/projects/settings/(setup)/app-connection/loading";
 import AppConnectionLoading from "./loading";
 
 // Mock the original component to ensure we are testing the re-export

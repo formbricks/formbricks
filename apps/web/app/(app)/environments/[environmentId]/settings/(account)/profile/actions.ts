@@ -1,5 +1,11 @@
 "use server";
 
+import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  TUserPersonalInfoUpdateInput,
+  TUserUpdateInput,
+  ZUserPersonalInfoUpdateInput,
+} from "@formbricks/types/user";
 import {
   getIsEmailUnique,
   verifyUserPassword,
@@ -13,12 +19,6 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendForgotPasswordEmail, sendVerificationNewEmail } from "@/modules/email";
-import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
-import {
-  TUserPersonalInfoUpdateInput,
-  TUserUpdateInput,
-  ZUserPersonalInfoUpdateInput,
-} from "@formbricks/types/user";
 
 function buildUserUpdatePayload(parsedInput: any): TUserUpdateInput {
   return {

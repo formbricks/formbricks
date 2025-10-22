@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { useState } from "react";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -10,8 +12,6 @@ import {
   CommandList,
 } from "@/modules/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useTranslate } from "@tolgee/react";
-import { useState } from "react";
 
 interface MergeTagsComboboxProps {
   tags: Tag[];

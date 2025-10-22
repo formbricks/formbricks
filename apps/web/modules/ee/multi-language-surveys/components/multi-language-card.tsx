@@ -1,13 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { Button } from "@/modules/ui/components/button";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
-import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Language } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -18,6 +10,14 @@ import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { DefaultLanguageSelect } from "./default-language-select";
 import { SecondaryLanguageSelect } from "./secondary-language-select";
 

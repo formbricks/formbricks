@@ -1,11 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { Alert, AlertTitle } from "@/modules/ui/components/alert";
-import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
-import { Slider } from "@/modules/ui/components/slider";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
@@ -13,6 +7,12 @@ import { CheckIcon } from "lucide-react";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { Slider } from "@/modules/ui/components/slider";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;

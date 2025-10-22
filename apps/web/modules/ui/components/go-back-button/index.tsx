@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/modules/ui/components/button";
 
 export const GoBackButton = ({ url }: { url?: string }) => {
   const router = useRouter();

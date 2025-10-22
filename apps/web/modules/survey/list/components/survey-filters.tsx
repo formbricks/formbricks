@@ -1,5 +1,11 @@
 "use client";
 
+import { TFnType, useTranslate } from "@tolgee/react";
+import { ChevronDownIcon, X } from "lucide-react";
+import { useState } from "react";
+import { useDebounce } from "react-use";
+import { TProjectConfigChannel } from "@formbricks/types/project";
+import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { SortOption } from "@/modules/survey/list/components/sort-option";
 import { initialFilters } from "@/modules/survey/list/components/survey-list";
 import { Button } from "@/modules/ui/components/button";
@@ -9,12 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import { TFnType, useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, X } from "lucide-react";
-import { useState } from "react";
-import { useDebounce } from "react-use";
-import { TProjectConfigChannel } from "@formbricks/types/project";
-import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { SurveyFilterDropdown } from "./survey-filter-dropdown";
 
 interface SurveyFilterProps {

@@ -1,5 +1,3 @@
-import { createI18nString } from "@/lib/i18n/utils";
-import { isLabelValidForAllLanguages } from "@/lib/i18n/utils";
 import { TFnType } from "@tolgee/react";
 import {
   TI18nString,
@@ -8,6 +6,8 @@ import {
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestion,
 } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
+import { isLabelValidForAllLanguages } from "@/lib/i18n/utils";
 
 // Function to get index for choice /rowLabel /columnLabel
 export const getIndex = (id: string, isChoice: boolean) => {

@@ -1,10 +1,10 @@
+import { Session } from "next-auth";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TUser } from "@formbricks/types/user";
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { IS_POSTHOG_CONFIGURED } from "@/lib/constants";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
-import { Session } from "next-auth";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TUser } from "@formbricks/types/user";
 
 interface EnvironmentIdBaseLayoutProps {
   children: React.ReactNode;

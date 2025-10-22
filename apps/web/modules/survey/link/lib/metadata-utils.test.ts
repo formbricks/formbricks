@@ -1,9 +1,9 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import {
   getBasicSurveyMetadata,
   getBrandColorForURL,

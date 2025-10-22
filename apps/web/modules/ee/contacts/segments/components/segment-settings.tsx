@@ -1,12 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { deleteSegmentAction, updateSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { Button } from "@/modules/ui/components/button";
-import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
-import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import { FilterIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -15,6 +8,13 @@ import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
+import { cn } from "@/lib/cn";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { deleteSegmentAction, updateSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
+import { Input } from "@/modules/ui/components/input";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 

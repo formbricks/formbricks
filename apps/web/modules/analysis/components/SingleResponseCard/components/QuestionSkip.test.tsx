@@ -1,7 +1,7 @@
-import { parseRecallInfo } from "@/lib/utils/recall";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { QuestionSkip } from "./QuestionSkip";
 
 vi.mock("@/modules/ui/components/tooltip", () => ({

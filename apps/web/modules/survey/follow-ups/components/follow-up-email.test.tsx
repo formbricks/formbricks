@@ -1,10 +1,10 @@
-import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { DefaultParamType, TFnType, TranslationKey } from "@tolgee/react/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getTranslate } from "@/tolgee/server";
 import { FollowUpEmail } from "./follow-up-email";
 
 vi.mock("@/lib/constants", () => ({

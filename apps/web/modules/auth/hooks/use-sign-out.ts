@@ -1,7 +1,7 @@
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
-import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 import { signOut } from "next-auth/react";
 import { logger } from "@formbricks/logger";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
+import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 
 interface UseSignOutOptions {
   reason?:

@@ -1,11 +1,11 @@
 // Retain only vitest import here
 // Import modules after mocks
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import { doesEnvironmentExist, getEnvironment, getProjectIdIfEnvironmentExists } from "./environment";
 
 vi.mock("@/lib/utils/validate");

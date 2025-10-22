@@ -1,7 +1,7 @@
+import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { ConditionalLogic } from "@/modules/survey/editor/components/conditional-logic";
 import { OptionIds } from "@/modules/survey/editor/components/option-ids";
 import { UpdateQuestionId } from "@/modules/survey/editor/components/update-question-id";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 interface AdvancedSettingsProps {
   question: TSurveyQuestion;

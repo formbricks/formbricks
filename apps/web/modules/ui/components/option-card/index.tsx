@@ -1,5 +1,5 @@
-import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import React from "react";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface PathwayOptionProps {
   size: "sm" | "md" | "lg";

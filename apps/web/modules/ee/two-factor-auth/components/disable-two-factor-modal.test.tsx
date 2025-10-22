@@ -1,8 +1,8 @@
-import { disableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { disableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { DisableTwoFactorModal } from "./disable-two-factor-modal";
 
 // Mock the Dialog components

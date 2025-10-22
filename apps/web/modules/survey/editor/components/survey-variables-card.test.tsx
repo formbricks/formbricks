@@ -1,8 +1,8 @@
-import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
+import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
 
 // Mock the child component
 vi.mock("@/modules/survey/editor/components/survey-variables-card-item", () => ({

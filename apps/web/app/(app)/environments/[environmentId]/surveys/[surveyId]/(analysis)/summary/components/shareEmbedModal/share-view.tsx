@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { useEffect, useState } from "react";
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import {
   LinkTabsType,
@@ -21,8 +23,6 @@ import {
 } from "@/modules/ui/components/sidebar";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Small } from "@/modules/ui/components/typography";
-import { useTranslate } from "@tolgee/react";
-import { useEffect, useState } from "react";
 
 interface ShareViewProps {
   tabs: Array<{

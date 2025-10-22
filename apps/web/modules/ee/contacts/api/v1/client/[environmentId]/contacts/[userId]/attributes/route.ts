@@ -1,12 +1,12 @@
+import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
 import { getContactByUserIdWithAttributes } from "./lib/contact";
 
 const validateParams = (

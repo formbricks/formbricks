@@ -151,9 +151,6 @@ importers:
       '@formbricks/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@fortedigital/nextjs-cache-handler':
-        specifier: 1.2.0
-        version: 1.2.0(next@15.5.2(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)
       '@hookform/resolvers':
         specifier: 5.0.1
         version: 5.0.1(react-hook-form@7.56.2(react@19.1.0))
@@ -343,9 +340,6 @@ importers:
       lodash:
         specifier: 4.17.21
         version: 4.17.21
-      lru-cache:
-        specifier: 11.1.0
-        version: 11.1.0
       lucide-react:
         specifier: 0.507.0
         version: 0.507.0(react@19.1.0)
@@ -458,9 +452,6 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../../packages/config-eslint
-      '@neshca/cache-handler':
-        specifier: 1.9.0
-        version: 1.9.0(next@15.5.2(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)
       '@testing-library/jest-dom':
         specifier: 6.6.3
         version: 6.6.3
@@ -871,6 +862,9 @@ importers:
       '@prisma/client':
         specifier: 6.14.0
         version: 6.14.0(prisma@6.14.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3)
+      node-html-parser:
+        specifier: 7.0.1
+        version: 7.0.1
       zod:
         specifier: 3.24.4
         version: 3.24.4
@@ -1986,12 +1980,6 @@ packages:
   '@formkit/auto-animate@0.8.2':
     resolution: {integrity: sha512-SwPWfeRa5veb1hOIBMdzI+73te5puUBHmqqaF1Bu7FjvxlYSz/kJcZKSa9Cg60zL0uRNeJL2SbRxV6Jp6Q1nFQ==}
 
-  '@fortedigital/nextjs-cache-handler@1.2.0':
-    resolution: {integrity: sha512-dHu7+D6yVHI5ii1/DgNSZM9wVPk8uKAB0zrRoNNbZq6hggpRRwAExV4J6bSGOd26RN6ZnfYaGLBmdb0gLpeBQg==}
-    peerDependencies:
-      next: '>=13.5.1'
-      redis: '>=4.6'
-
   '@gar/promisify@1.1.3':
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
 
@@ -2442,12 +2430,6 @@ packages:
 
   '@neoconfetti/react@1.0.0':
     resolution: {integrity: sha512-klcSooChXXOzIm+SE5IISIAn3bYzYfPjbX7D7HoqZL84oAfgREeSg5vSIaSFH+DaGzzvImTyWe1OyrJ67vik4A==}
-
-  '@neshca/cache-handler@1.9.0':
-    resolution: {integrity: sha512-dh0x4pdjDKvPRfZF5DZb8TtOUkbBfeTodOUdQsHDuv0oiuqQ3p7GLx38f6bPn8Sa4he8HsWo+rM4S20ZRqr7pA==}
-    peerDependencies:
-      next: '>= 13.5.1 < 15'
-      redis: '>= 4.6'
 
   '@next/env@15.5.2':
     resolution: {integrity: sha512-Qe06ew4zt12LeO6N7j8/nULSOe3fMXE4dM6xgpBQNvdzyK1sv5y4oAP3bq4LamrvGCZtmRYnW8URFCeX5nFgGg==}
@@ -8120,6 +8102,9 @@ packages:
   node-html-parser@6.1.13:
     resolution: {integrity: sha512-qIsTMOY4C/dAa5Q5vsobRpOOvPfC4pB61UVW2uSwZNUp0QU/jCekTal1vMmbO0DgdHeLUJpv/ARmDqErVxA3Sg==}
 
+  node-html-parser@7.0.1:
+    resolution: {integrity: sha512-KGtmPY2kS0thCWGK0VuPyOS+pBKhhe8gXztzA2ilAOhbUbxa9homF1bOyKvhGzMLXUoRds9IOmr/v5lr/lqNmA==}
+
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
 
@@ -12469,16 +12454,6 @@ snapshots:
 
   '@formkit/auto-animate@0.8.2': {}
 
-  '@fortedigital/nextjs-cache-handler@1.2.0(next@15.5.2(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)':
-    dependencies:
-      '@neshca/cache-handler': 1.9.0(next@15.5.2(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)
-      cluster-key-slot: 1.1.2
-      lru-cache: 11.1.0
-      next: 15.5.2(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      redis: 4.7.0
-    optionalDependencies:
-      '@rollup/rollup-linux-x64-gnu': 4.46.1
-
   '@gar/promisify@1.1.3':
     optional: true
 
@@ -13007,13 +12982,6 @@ snapshots:
     optional: true
 
   '@neoconfetti/react@1.0.0': {}
-
-  '@neshca/cache-handler@1.9.0(next@15.5.2(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)':
-    dependencies:
-      cluster-key-slot: 1.1.2
-      lru-cache: 10.4.3
-      next: 15.5.2(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      redis: 4.7.0
 
   '@next/env@15.5.2': {}
 
@@ -19486,6 +19454,11 @@ snapshots:
     optional: true
 
   node-html-parser@6.1.13:
+    dependencies:
+      css-select: 5.2.2
+      he: 1.2.0
+
+  node-html-parser@7.0.1:
     dependencies:
       css-select: 5.2.2
       he: 1.2.0

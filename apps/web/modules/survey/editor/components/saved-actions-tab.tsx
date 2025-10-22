@@ -1,12 +1,12 @@
 "use client";
 
-import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
-import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
-import { Input } from "@/modules/ui/components/input";
 import { ActionClass } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
+import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
+import { Input } from "@/modules/ui/components/input";
 
 interface SavedActionsTabProps {
   actionClasses: ActionClass[];

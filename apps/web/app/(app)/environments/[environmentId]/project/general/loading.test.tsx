@@ -1,5 +1,5 @@
-import { GeneralSettingsLoading as OriginalGeneralSettingsLoading } from "@/modules/projects/settings/general/loading";
 import { describe, expect, test, vi } from "vitest";
+import { GeneralSettingsLoading as OriginalGeneralSettingsLoading } from "@/modules/projects/settings/general/loading";
 import GeneralSettingsLoadingPage from "./loading";
 
 // Mock the original component to ensure we are testing the re-export

@@ -1,7 +1,3 @@
-import { getEnvironment } from "@/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import { redirect } from "next/navigation";
@@ -11,6 +7,10 @@ import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
+import { getEnvironment } from "@/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import EnvLayout from "./layout";
 
 // Mock sub-components to render identifiable elements

@@ -1,4 +1,3 @@
-import { Select, SelectContent, SelectItem } from "@/modules/ui/components/select";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -6,6 +5,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { ACTION_CLASS_PAGE_URL_RULES, TActionClassInput } from "@formbricks/types/action-classes";
+import { Select, SelectContent, SelectItem } from "@/modules/ui/components/select";
 import { PageUrlSelector } from "./page-url-selector";
 
 // Mock testURLmatch function

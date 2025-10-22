@@ -1,8 +1,5 @@
 "use client";
 
-import { getChoiceIdByValue } from "@/lib/response/utils";
-import { IdBadge } from "@/modules/ui/components/id-badge";
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Image from "next/image";
@@ -13,6 +10,9 @@ import {
   TSurveyQuestionSummaryPictureSelection,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { getChoiceIdByValue } from "@/lib/response/utils";
+import { IdBadge } from "@/modules/ui/components/id-badge";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

@@ -53,7 +53,8 @@ export const LimitsReachedBanner = ({
                       ) : null}
                       {isPeopleLimitReached && !isResponseLimitReached ? (
                         <>
-                          {t("common.you_have_reached_your_monthly_miu_limit_of")} {orgBillingPeopleLimit}.{" "}
+                          {t("common.you_have_reached_your_monthly_miu_limit_of")} {orgBillingPeopleLimit}
+                          .{" "}
                         </>
                       ) : null}
                       {!isPeopleLimitReached && isResponseLimitReached ? (

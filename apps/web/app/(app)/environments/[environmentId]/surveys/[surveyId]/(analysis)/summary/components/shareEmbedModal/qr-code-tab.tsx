@@ -1,14 +1,14 @@
 "use client";
 
-import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/get-qr-code-options";
-import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { Download, LoaderCircle } from "lucide-react";
 import QRCodeStyling from "qr-code-styling";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { logger } from "@formbricks/logger";
+import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/get-qr-code-options";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
 
 interface QRCodeTabProps {
   surveyUrl: string;

@@ -1,3 +1,7 @@
+import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
@@ -7,10 +11,6 @@ import { TApiAuditLog, TApiKeyAuthentication, withV1ApiWrapper } from "@/app/lib
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 
 const fetchAndAuthorizeSurvey = async (
   surveyId: string,

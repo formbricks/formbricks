@@ -1,8 +1,8 @@
-import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
+import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 import { Uploader } from "./uploader";
 
 vi.mock("@/modules/ui/components/storage-not-configured-toast/lib/utils", () => ({

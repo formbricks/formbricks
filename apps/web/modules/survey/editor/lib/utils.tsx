@@ -20,6 +20,7 @@ import {
   TSurveyVariable,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -120,9 +121,10 @@ export const getConditionValueOptions = (
     .forEach((question) => {
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
         // Rows submenu
+        const questionHeadline = getTextContent(getLocalizedValue(question.headline, "default"));
         const rows = question.rows.map((row, rowIdx) => ({
           icon: getQuestionIconMapping(t)[question.type],
-          label: `${getLocalizedValue(row.label, "default")} (${getLocalizedValue(question.headline, "default")})`,
+          label: `${getLocalizedValue(row.label, "default")} (${questionHeadline})`,
           value: `${question.id}.${rowIdx}`,
           meta: {
             type: "question",
@@ -132,7 +134,7 @@ export const getConditionValueOptions = (
 
         questionOptions.push({
           icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
+          label: questionHeadline,
           value: question.id,
           meta: {
             type: "question",
@@ -155,7 +157,7 @@ export const getConditionValueOptions = (
       } else {
         questionOptions.push({
           icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
+          label: getTextContent(getLocalizedValue(question.headline, "default")),
           value: question.id,
           meta: {
             type: "question",
@@ -377,7 +379,7 @@ export const getMatchValueProps = (
       const questionOptions = allowedQuestions.map((question) => {
         return {
           icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
+          label: getTextContent(getLocalizedValue(question.headline, "default")),
           value: question.id,
           meta: {
             type: "question",
@@ -927,7 +929,7 @@ export const getActionTargetOptions = (
   const questionOptions = questions.map((question) => {
     return {
       icon: getQuestionIconMapping(t)[question.type],
-      label: getLocalizedValue(question.headline, "default"),
+      label: getTextContent(getLocalizedValue(question.headline, "default")),
       value: question.id,
     };
   });
@@ -938,7 +940,8 @@ export const getActionTargetOptions = (
     return {
       label:
         ending.type === "endScreen"
-          ? getLocalizedValue(ending.headline, "default") || t("environments.surveys.edit.end_screen_card")
+          ? getTextContent(getLocalizedValue(ending.headline, "default")) ||
+            t("environments.surveys.edit.end_screen_card")
           : ending.label || t("environments.surveys.edit.redirect_thank_you_card"),
       value: ending.id,
     };
@@ -1045,7 +1048,7 @@ export const getActionValueOptions = (
     const questionOptions = allowedQuestions.map((question) => {
       return {
         icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
+        label: getTextContent(getLocalizedValue(question.headline, "default")),
         value: question.id,
         meta: {
           type: "question",
@@ -1103,7 +1106,7 @@ export const getActionValueOptions = (
     const questionOptions = allowedQuestions.map((question) => {
       return {
         icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
+        label: getTextContent(getLocalizedValue(question.headline, "default")),
         value: question.id,
         meta: {
           type: "question",
@@ -1277,7 +1280,7 @@ const checkWelcomeCardForRecall = (welcomeCard: TSurveyWelcomeCard, recallPatter
 
   return (
     checkTextForRecallPattern(welcomeCard.headline, recallPattern) ||
-    checkTextForRecallPattern(welcomeCard.html, recallPattern)
+    checkTextForRecallPattern(welcomeCard.subheader, recallPattern)
   );
 };
 
@@ -1289,11 +1292,6 @@ const checkQuestionForRecall = (question: TSurveyQuestion, recallPattern: string
 
   // Check subheader
   if (checkTextForRecallPattern(question.subheader, recallPattern)) {
-    return true;
-  }
-
-  // Check html field (for consent and CTA questions)
-  if ("html" in question && checkTextForRecallPattern(question.html, recallPattern)) {
     return true;
   }
 
@@ -1429,8 +1427,10 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
-export const getSurveyFollowUpActionDefaultBody = (t: TFnType) => {
-  return t("templates.follow_ups_modal_action_body") as string;
+export const getSurveyFollowUpActionDefaultBody = (t: TFnType): string => {
+  return t("templates.follow_ups_modal_action_body")
+    .replaceAll(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
 };
 
 export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string): number => {

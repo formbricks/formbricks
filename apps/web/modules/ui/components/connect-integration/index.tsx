@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
-import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
 import { useTranslate } from "@tolgee/react";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
@@ -9,6 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TIntegrationType } from "@formbricks/types/integration";
+import { Button } from "@/modules/ui/components/button";
+import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
 import { getIntegrationDetails } from "./lib/utils";
 
 interface ConnectIntegrationProps {

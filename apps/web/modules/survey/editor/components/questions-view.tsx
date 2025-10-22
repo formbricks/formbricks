@@ -15,16 +15,16 @@ import { Language, Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TConditionGroup,
   TSingleCondition,
+  TSurvey,
   TSurveyLogic,
   TSurveyLogicAction,
+  TSurveyQuestion,
   TSurveyQuestionId,
 } from "@formbricks/types/surveys/types";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
@@ -61,13 +61,13 @@ interface QuestionsViewProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
-  plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
   responseCount: number;
   setIsCautionDialogOpen: (open: boolean) => void;
   isStorageConfigured: boolean;
   quotas: TSurveyQuota[];
+  isExternalUrlsAllowed: boolean;
 }
 
 export const QuestionsView = ({
@@ -83,13 +83,13 @@ export const QuestionsView = ({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
-  plan,
   isCxMode,
   locale,
   responseCount,
   setIsCautionDialogOpen,
   isStorageConfigured = true,
   quotas,
+  isExternalUrlsAllowed,
 }: QuestionsViewProps) => {
   const { t } = useTranslate();
   const internalQuestionIdMap = useMemo(() => {
@@ -495,6 +495,7 @@ export const QuestionsView = ({
           responseCount={responseCount}
           onAlertTrigger={() => setIsCautionDialogOpen(true)}
           isStorageConfigured={isStorageConfigured}
+          isExternalUrlsAllowed={isExternalUrlsAllowed}
         />
       </DndContext>
 
@@ -519,12 +520,12 @@ export const QuestionsView = ({
                   isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   selectedLanguageCode={selectedLanguageCode}
-                  plan={plan}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
                   locale={locale}
                   isStorageConfigured={isStorageConfigured}
                   quotas={quotas}
+                  isExternalUrlsAllowed={isExternalUrlsAllowed}
                 />
               );
             })}

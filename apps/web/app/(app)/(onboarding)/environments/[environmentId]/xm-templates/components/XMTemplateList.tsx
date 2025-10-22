@@ -1,10 +1,5 @@
 "use client";
 
-import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/utils";
-import { getXMTemplates } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/xm-templates";
-import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 import { useTranslate } from "@tolgee/react";
 import { ActivityIcon, ShoppingCartIcon, SmileIcon, StarIcon, ThumbsUpIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -14,6 +9,11 @@ import { TProject } from "@formbricks/types/project";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
+import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/utils";
+import { getXMTemplates } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/xm-templates";
+import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 
 interface XMTemplateListProps {
   project: TProject;

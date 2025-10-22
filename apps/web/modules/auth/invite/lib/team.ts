@@ -1,9 +1,9 @@
 import "server-only";
-import { getAccessFlags } from "@/lib/membership/utils";
-import { CreateMembershipInvite } from "@/modules/auth/invite/types/invites";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { getAccessFlags } from "@/lib/membership/utils";
+import { CreateMembershipInvite } from "@/modules/auth/invite/types/invites";
 
 export const createTeamMembership = async (invite: CreateMembershipInvite, userId: string): Promise<void> => {
   const teamIds = invite.teamIds || [];

@@ -1,5 +1,5 @@
-import { SurveyListLoading as OriginalSurveyListLoading } from "@/modules/survey/list/loading";
 import { describe, expect, test, vi } from "vitest";
+import { SurveyListLoading as OriginalSurveyListLoading } from "@/modules/survey/list/loading";
 import SurveyListLoading from "./loading";
 
 // Mock the original component to ensure we are testing the re-export

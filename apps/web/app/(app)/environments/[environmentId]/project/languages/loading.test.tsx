@@ -1,5 +1,5 @@
-import { LanguagesLoading as OriginalLanguagesLoading } from "@/modules/ee/languages/loading";
 import { describe, expect, test, vi } from "vitest";
+import { LanguagesLoading as OriginalLanguagesLoading } from "@/modules/ee/languages/loading";
 import LanguagesLoading from "./loading";
 
 // Mock the original component to ensure we are testing the re-export

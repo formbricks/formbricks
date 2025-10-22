@@ -1,3 +1,7 @@
+import { getServerSession } from "next-auth";
+import Link from "next/link";
+import { after } from "next/server";
+import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -8,10 +12,6 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
 import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
-import Link from "next/link";
-import { after } from "next/server";
-import { logger } from "@formbricks/logger";
 import { ContentLayout } from "./components/content-layout";
 
 interface InvitePageProps {

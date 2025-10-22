@@ -1,6 +1,6 @@
-import * as crypto from "@/lib/crypto";
 import cuid2 from "@paralleldrive/cuid2";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as crypto from "@/lib/crypto";
 import { generateSurveySingleUseId, validateSurveySingleUseId } from "./singleUseSurveys";
 
 // Mock the crypto module

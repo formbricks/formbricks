@@ -1,9 +1,9 @@
 "use client";
 
-import { Checkbox } from "@/modules/ui/components/checkbox";
 import { useTranslate } from "@tolgee/react";
 import React from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface SurveyCheckboxGroupProps {
   surveys: TSurvey[];

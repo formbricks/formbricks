@@ -1,5 +1,11 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
+import { useTranslate } from "@tolgee/react";
+import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { logger } from "@formbricks/logger";
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
@@ -12,12 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
-import * as Sentry from "@sentry/nextjs";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { logger } from "@formbricks/logger";
 
 interface ProjectBreadcrumbProps {
   currentProjectId: string;

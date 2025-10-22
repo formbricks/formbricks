@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import DatePicker, { DatePickerProps } from "react-date-picker";
+import DatePicker from "react-date-picker";
+import { DatePickerProps } from "react-date-picker";
 import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";

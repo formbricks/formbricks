@@ -1,9 +1,9 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
 
 const LoadingCard = () => {
   const { t } = useTranslate();

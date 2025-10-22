@@ -1,5 +1,5 @@
-import { TagsLoading as OriginalTagsLoading } from "@/modules/projects/settings/tags/loading";
 import { describe, expect, test, vi } from "vitest";
+import { TagsLoading as OriginalTagsLoading } from "@/modules/projects/settings/tags/loading";
 import TagsLoading from "./loading";
 
 // Mock the original component to ensure we are testing the re-export

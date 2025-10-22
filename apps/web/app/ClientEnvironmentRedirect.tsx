@@ -1,8 +1,8 @@
 "use client";
 
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 
 interface ClientEnvironmentRedirectProps {
   userEnvironments: string[];

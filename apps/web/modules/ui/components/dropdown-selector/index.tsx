@@ -1,3 +1,4 @@
+import { ChevronDownIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,7 +7,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Label } from "@/modules/ui/components/label";
-import { ChevronDownIcon } from "lucide-react";
 
 interface DropdownSelectorProps {
   label?: string;

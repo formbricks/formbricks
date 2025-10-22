@@ -1,12 +1,12 @@
 "use server";
 
+import { z } from "zod";
 import { verifyEmailChangeToken } from "@/lib/jwt";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUser, updateUser } from "@/modules/auth/lib/user";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { z } from "zod";
 
 export const verifyEmailChangeAction = actionClient.schema(z.object({ token: z.string() })).action(
   withAuditLogging(

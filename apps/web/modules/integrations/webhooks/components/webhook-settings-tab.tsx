@@ -1,13 +1,5 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
-import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
-import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
-import { Button } from "@/modules/ui/components/button";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
@@ -18,6 +10,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
+import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
+import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
 import { TWebhookInput } from "../types/webhooks";
 

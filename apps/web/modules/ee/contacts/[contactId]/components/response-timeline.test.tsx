@@ -1,4 +1,3 @@
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { useTranslate } from "@tolgee/react";
@@ -8,6 +7,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { ResponseTimeline } from "./response-timeline";
 
 vi.mock("@tolgee/react", () => ({

@@ -1,3 +1,7 @@
+import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZResponseUpdateInput } from "@formbricks/types/responses";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -7,10 +11,6 @@ import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
-import { NextRequest } from "next/server";
-import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZResponseUpdateInput } from "@formbricks/types/responses";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {

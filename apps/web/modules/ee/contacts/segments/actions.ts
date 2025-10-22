@@ -1,5 +1,9 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { getOrganization } from "@/lib/organization/service";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -26,10 +30,6 @@ import {
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 
 const checkAdvancedTargetingPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);

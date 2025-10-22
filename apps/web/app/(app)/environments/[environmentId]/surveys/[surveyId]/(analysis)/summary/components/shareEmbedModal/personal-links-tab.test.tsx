@@ -1,9 +1,9 @@
-import { generatePersonalLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { generatePersonalLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { PersonalLinksTab } from "./personal-links-tab";
 
 // Mock dependencies

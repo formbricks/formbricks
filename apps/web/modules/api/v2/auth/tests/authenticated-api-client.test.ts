@@ -1,5 +1,5 @@
-import { logApiRequest } from "@/modules/api/v2/lib/utils";
 import { describe, expect, test, vi } from "vitest";
+import { logApiRequest } from "@/modules/api/v2/lib/utils";
 import { apiWrapper } from "../api-wrapper";
 import { authenticatedApiClient } from "../authenticated-api-client";
 

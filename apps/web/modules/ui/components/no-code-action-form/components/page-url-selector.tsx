@@ -1,19 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { testURLmatch } from "@/lib/utils/url";
-import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
-import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { TFnType, useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -31,6 +17,20 @@ import {
   TActionClassInput,
   TActionClassPageUrlRule,
 } from "@formbricks/types/action-classes";
+import { cn } from "@/lib/cn";
+import { testURLmatch } from "@/lib/utils/url";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+import { TabToggle } from "@/modules/ui/components/tab-toggle";
 
 const getRuleLabel = (rule: TActionClassPageUrlRule, t: TFnType): string => {
   switch (rule) {

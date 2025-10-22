@@ -1,3 +1,8 @@
+import { PipelineTriggers, Webhook } from "@prisma/client";
+import { headers } from "next/headers";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -12,11 +17,6 @@ import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
-import { PipelineTriggers, Webhook } from "@prisma/client";
-import { headers } from "next/headers";
-import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {

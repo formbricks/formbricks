@@ -1,4 +1,3 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
@@ -13,6 +12,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
 

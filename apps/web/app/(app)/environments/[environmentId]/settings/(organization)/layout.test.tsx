@@ -1,10 +1,10 @@
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Session, getServerSession } from "next-auth";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
 import OrganizationSettingsLayout from "./layout";
 
 // Mock dependencies

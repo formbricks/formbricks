@@ -1,6 +1,6 @@
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 
 vi.mock("@/modules/ui/components/badge", () => ({
   Badge: ({ text }) => <div data-testid="mock-badge">{text}</div>,

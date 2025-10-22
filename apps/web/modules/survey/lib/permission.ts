@@ -1,6 +1,8 @@
+import { Organization } from "@prisma/client";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { IS_FORMBRICKS_CLOUD, PROJECT_FEATURE_KEYS } from "@/lib/constants";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 /**
  * Checks if the organization has spam protection enabled.
@@ -19,4 +21,11 @@ export const checkSpamProtectionPermission = async (organizationId: string): Pro
   if (!isSpamProtectionEnabled) {
     throw new OperationNotAllowedError("Spam protection is not enabled for this organization");
   }
+};
+
+export const getExternalUrlsPermission = async (
+  billingPlan: Organization["billing"]["plan"]
+): Promise<boolean> => {
+  if (IS_FORMBRICKS_CLOUD) return billingPlan !== PROJECT_FEATURE_KEYS.FREE;
+  return true;
 };

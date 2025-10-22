@@ -1,8 +1,8 @@
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { cleanup } from "@testing-library/react";
 import { redirect } from "next/navigation";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { ProjectSettingsLayout } from "./layout";
 
 vi.mock("next/navigation", () => ({

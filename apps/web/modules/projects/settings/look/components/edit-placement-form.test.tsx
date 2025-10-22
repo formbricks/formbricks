@@ -1,10 +1,10 @@
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Project } from "@prisma/client";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { EditPlacementForm } from "./edit-placement-form";
 
 const baseProject: Project = {

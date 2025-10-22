@@ -34,6 +34,7 @@ interface MultipleChoiceQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const MultipleChoiceQuestionForm = ({
@@ -46,6 +47,7 @@ export const MultipleChoiceQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: MultipleChoiceQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -195,6 +197,7 @@ export const MultipleChoiceQuestionForm = ({
 
   // Auto animate
   const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -209,6 +212,8 @@ export const MultipleChoiceQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -227,6 +232,8 @@ export const MultipleChoiceQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

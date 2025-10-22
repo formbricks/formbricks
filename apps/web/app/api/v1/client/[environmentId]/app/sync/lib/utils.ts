@@ -1,6 +1,6 @@
-import { parseRecallInfo } from "@/lib/utils/recall";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { parseRecallInfo } from "@/lib/utils/recall";
 
 export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes): TSurvey => {
   const surveyTemp = structuredClone(survey);

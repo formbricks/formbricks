@@ -1,10 +1,10 @@
+import { ChevronDownIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { ChevronDownIcon } from "lucide-react";
 
 interface IAddVariablesDropdown {
   addVariable: (variable: string) => void;

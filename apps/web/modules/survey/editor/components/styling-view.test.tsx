@@ -1,4 +1,3 @@
-import { defaultStyling } from "@/lib/styling/constants";
 import { Project } from "@prisma/client";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -6,6 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { defaultStyling } from "@/lib/styling/constants";
 // Import actual components
 import { StylingView } from "./styling-view";
 

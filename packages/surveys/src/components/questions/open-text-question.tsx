@@ -1,6 +1,7 @@
 import { type RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { ZEmail, ZUrl } from "@formbricks/types/common";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
@@ -54,7 +55,6 @@ export function OpenTextQuestion({
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
-
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -80,7 +80,29 @@ export function OpenTextQuestion({
       return;
     }
 
-    // at this point, validity is clean
+    if (value && value.trim() !== "") {
+      if (question.inputType === "email") {
+        if (!ZEmail.safeParse(value).success) {
+          input?.setCustomValidity(t("errors.please_enter_a_valid_email_address"));
+          input?.reportValidity();
+          return;
+        }
+      } else if (question.inputType === "url") {
+        if (!ZUrl.safeParse(value).success) {
+          input?.setCustomValidity(t("errors.please_enter_a_valid_url"));
+          input?.reportValidity();
+          return;
+        }
+      } else if (question.inputType === "phone") {
+        const phoneRegex = /^[+]?[\d\s\-()]{7,}$/;
+        if (!phoneRegex.test(value)) {
+          input?.setCustomValidity(t("errors.please_enter_a_valid_phone_number"));
+          input?.reportValidity();
+          return;
+        }
+      }
+    }
+
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
     onSubmit({ [question.id]: value }, updatedTtc);
@@ -116,12 +138,20 @@ export function OpenTextQuestion({
               value={value ? value : ""}
               type={question.inputType}
               onInput={(e) => {
-                handleInputChange(e.currentTarget.value);
+                const input = e.currentTarget;
+                handleInputChange(input.value);
+                input.setCustomValidity("");
               }}
               className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
               pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
               title={
-                question.inputType === "phone" ? t("errors.please_enter_a_valid_phone_number") : undefined
+                question.inputType === "phone"
+                  ? t("errors.please_enter_a_valid_phone_number")
+                  : question.inputType === "email"
+                    ? t("errors.please_enter_a_valid_email_address")
+                    : question.inputType === "url"
+                      ? t("errors.please_enter_a_valid_url")
+                      : undefined
               }
               minLength={question.inputType === "text" ? question.charLimit?.min : undefined}
               maxLength={

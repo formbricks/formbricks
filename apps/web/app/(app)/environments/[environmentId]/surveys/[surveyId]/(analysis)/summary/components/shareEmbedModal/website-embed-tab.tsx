@@ -1,12 +1,12 @@
 "use client";
 
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { Button } from "@/modules/ui/components/button";
-import { CodeBlock } from "@/modules/ui/components/code-block";
 import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
+import { CodeBlock } from "@/modules/ui/components/code-block";
 
 interface WebsiteEmbedTabProps {
   surveyUrl: string;

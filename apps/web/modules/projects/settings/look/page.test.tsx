@@ -1,8 +1,8 @@
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/project";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganization } from "@formbricks/types/organizations";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/project";
 import { EditLogo } from "./components/edit-logo";
 import { ThemeStyling } from "./components/theme-styling";
 import { ProjectLookSettingsPage } from "./page";

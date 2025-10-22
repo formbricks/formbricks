@@ -1,9 +1,9 @@
-import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
-import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
+import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { DeleteTeam } from "./delete-team";
 
 vi.mock("@/modules/ui/components/label", () => ({

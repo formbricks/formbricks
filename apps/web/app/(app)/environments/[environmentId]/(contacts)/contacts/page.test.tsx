@@ -1,5 +1,5 @@
-import { ContactsPage } from "@/modules/ee/contacts/page";
 import { describe, expect, test, vi } from "vitest";
+import { ContactsPage } from "@/modules/ee/contacts/page";
 import Page from "./page";
 
 // Mock the actual ContactsPage component

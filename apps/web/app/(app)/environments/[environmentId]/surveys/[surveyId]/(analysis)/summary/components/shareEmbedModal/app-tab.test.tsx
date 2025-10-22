@@ -1,5 +1,3 @@
-import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/environment-context";
-import { SurveyContextWrapper } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -8,6 +6,8 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
 import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { SurveyContextWrapper } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import { AppTab } from "./app-tab";
 
 // Mock Next.js Link component

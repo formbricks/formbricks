@@ -1,6 +1,6 @@
-import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { ProjectConfigNavigation } from "./project-config-navigation";
 
 vi.mock("@/modules/ui/components/secondary-navigation", () => ({

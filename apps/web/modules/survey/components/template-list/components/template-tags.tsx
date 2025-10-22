@@ -1,12 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { TFnType, useTranslate } from "@tolgee/react";
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
+import { cn } from "@/lib/cn";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {

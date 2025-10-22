@@ -1,9 +1,9 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { SurveyLoading } from "@/modules/survey/list/components/survey-loading";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
 
 export const SurveyListLoading = () => {
   const { t } = useTranslate();
