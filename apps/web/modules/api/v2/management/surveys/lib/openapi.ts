@@ -1,9 +1,9 @@
-import { managementServer } from "@/modules/api/v2/management/lib/openapi";
-import { getPersonalizedSurveyLink } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/openapi";
-import { ZGetSurveysFilter, ZSurveyInput } from "@/modules/api/v2/management/surveys/types/surveys";
 import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
+import { managementServer } from "@/modules/api/v2/management/lib/openapi";
+import { getPersonalizedSurveyLink } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/openapi";
+import { ZGetSurveysFilter, ZSurveyInput } from "@/modules/api/v2/management/surveys/types/surveys";
 
 export const getSurveysEndpoint: ZodOpenApiOperationObject = {
   operationId: "getSurveys",

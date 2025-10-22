@@ -1,6 +1,6 @@
-import { getSurveysBySegmentId } from "@/lib/survey/service";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
+import { getSurveysBySegmentId } from "@/lib/survey/service";
 import { SegmentTableDataRow } from "./segment-table-data-row";
 
 type TSegmentTableDataRowProps = {

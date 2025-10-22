@@ -1,10 +1,10 @@
-import { TagError } from "@/modules/projects/settings/types/tag";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
+import { TagError } from "@/modules/projects/settings/types/tag";
 import { deleteTag, mergeTags, updateTagName } from "./tag";
 
 const baseTag: TTag = {

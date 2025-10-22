@@ -1,9 +1,9 @@
 "use client";
 
-import { Skeleton } from "@/modules/ui/components/skeleton";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { TEnvironment } from "@formbricks/types/environment";
+import { Skeleton } from "@/modules/ui/components/skeleton";
 
 type EmptySpaceFillerProps = {
   type: "table" | "response" | "event" | "linkResponse" | "tag" | "summary";

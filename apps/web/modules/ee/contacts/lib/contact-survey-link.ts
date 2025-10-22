@@ -1,12 +1,12 @@
+import jwt from "jsonwebtoken";
+import { logger } from "@formbricks/logger";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import jwt from "jsonwebtoken";
-import { logger } from "@formbricks/logger";
-import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 // Creates an encrypted personalized survey link for a contact
 export const getContactSurveyLink = async (

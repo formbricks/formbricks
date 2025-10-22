@@ -1,10 +1,10 @@
-import { ZWebhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Prisma, Webhook } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { ZWebhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 export const getWebhook = async (webhookId: string) => {
   try {

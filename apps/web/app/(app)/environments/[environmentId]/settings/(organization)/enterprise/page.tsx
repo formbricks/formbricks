@@ -1,3 +1,6 @@
+import { CheckIcon } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
@@ -6,9 +9,6 @@ import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { CheckIcon } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 
 const Page = async (props) => {
   const params = await props.params;

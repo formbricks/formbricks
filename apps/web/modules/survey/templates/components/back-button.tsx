@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/modules/ui/components/button";
 
 interface BackButtonProps {
   path?: string;

@@ -1,6 +1,6 @@
-import { cn } from "@/modules/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import React, { forwardRef } from "react";
+import { cn } from "@/modules/ui/lib/utils";
 
 const H1 = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>((props, ref) => {
   return (

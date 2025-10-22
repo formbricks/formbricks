@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { TSegment } from "@formbricks/types/segment";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { TSegment } from "@formbricks/types/segment";
 
 interface SegmentActivityTabProps {
   environmentId: string;

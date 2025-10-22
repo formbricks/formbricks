@@ -1,5 +1,8 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -11,9 +14,6 @@ import {
   updateOrganizationEmailLogoUrl,
 } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmailCustomizationPreviewEmail } from "@/modules/email";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const checkWhiteLabelPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);

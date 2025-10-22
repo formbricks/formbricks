@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { logger } from "@formbricks/logger";
+import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -14,9 +17,6 @@ import {
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { z } from "zod";
-import { logger } from "@formbricks/logger";
-import { OrganizationAccessType } from "@formbricks/types/api-key";
 
 export const GET = async (
   request: Request,

@@ -1,3 +1,7 @@
+import { TFnType } from "@tolgee/react";
+import Image from "next/image";
+import { redirect } from "next/navigation";
+import { TIntegrationType } from "@formbricks/types/integration";
 import { getWebhookCountBySource } from "@/app/(app)/environments/[environmentId]/project/integrations/lib/webhook";
 import ActivePiecesLogo from "@/images/activepieces.webp";
 import AirtableLogo from "@/images/airtableLogo.svg";
@@ -16,10 +20,6 @@ import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { TFnType } from "@tolgee/react";
-import Image from "next/image";
-import { redirect } from "next/navigation";
-import { TIntegrationType } from "@formbricks/types/integration";
 
 const getStatusText = (count: number, t: TFnType, type: string) => {
   if (count === 1) return `1 ${type}`;

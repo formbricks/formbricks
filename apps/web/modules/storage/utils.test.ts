@@ -1,3 +1,8 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { StorageErrorCode } from "@formbricks/storage";
+import { TResponseData } from "@formbricks/types/responses";
+import { ZAllowedFileExtension } from "@formbricks/types/storage";
+import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   isAllowedFileExtension,
   isValidFileTypeForExtension,
@@ -6,11 +11,6 @@ import {
   validateFileUploads,
   validateSingleFile,
 } from "@/modules/storage/utils";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { StorageErrorCode } from "@formbricks/storage";
-import { TResponseData } from "@formbricks/types/responses";
-import { ZAllowedFileExtension } from "@formbricks/types/storage";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 // Mock the getOriginalFileNameFromUrl function
 const mockGetOriginalFileNameFromUrl = vi.hoisted(() => vi.fn());

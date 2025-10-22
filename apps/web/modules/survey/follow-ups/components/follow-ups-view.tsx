@@ -1,15 +1,15 @@
 "use client";
 
-import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
-import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
-import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { LockIcon, MailIcon } from "lucide-react";
 import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
+import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
+import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
+import { Button } from "@/modules/ui/components/button";
 
 interface FollowUpsViewProps {
   localSurvey: TSurvey;

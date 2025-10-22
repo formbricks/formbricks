@@ -1,8 +1,8 @@
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { processResponseData } from "@/lib/response";
 import { useTranslation } from "react-i18next";
 import { type TResponseData } from "@formbricks/types/responses";
 import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { processResponseData } from "@/lib/response";
 
 interface ResponseErrorComponentProps {
   questions: TSurveyQuestion[];

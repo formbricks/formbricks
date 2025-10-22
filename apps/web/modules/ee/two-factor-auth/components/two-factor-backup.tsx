@@ -1,9 +1,9 @@
 "use client";
 
-import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import { UseFormReturn } from "react-hook-form";
+import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 
 interface TwoFactorBackupProps {
   form: UseFormReturn<

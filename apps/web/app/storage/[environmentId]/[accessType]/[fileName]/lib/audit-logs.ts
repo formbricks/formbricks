@@ -1,7 +1,7 @@
+import { logger } from "@formbricks/logger";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { logger } from "@formbricks/logger";
 
 const getOrgId = async (environmentId: string): Promise<string> => {
   try {

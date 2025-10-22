@@ -1,9 +1,9 @@
+import { NextRequest } from "next/server";
+import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { hasOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/utils";
-import { NextRequest } from "next/server";
-import { OrganizationAccessType } from "@formbricks/types/api-key";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({

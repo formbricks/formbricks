@@ -1,3 +1,5 @@
+import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
+import { ZWebhook } from "@formbricks/database/zod/webhooks";
 import { managementServer } from "@/modules/api/v2/management/lib/openapi";
 import {
   deleteWebhookEndpoint,
@@ -6,8 +8,6 @@ import {
 } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/openapi";
 import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
-import { ZWebhook } from "@formbricks/database/zod/webhooks";
 
 export const getWebhooksEndpoint: ZodOpenApiOperationObject = {
   operationId: "getWebhooks",

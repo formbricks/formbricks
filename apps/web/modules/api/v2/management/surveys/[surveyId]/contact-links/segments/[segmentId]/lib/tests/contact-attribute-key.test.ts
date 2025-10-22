@@ -1,6 +1,6 @@
-import { getContactAttributeKeys } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { getContactAttributeKeys } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key";
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({

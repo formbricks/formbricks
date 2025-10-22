@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { Terminal } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { Terminal } from "lucide-react";
 
 interface CodeActionFormProps {
   form: any;

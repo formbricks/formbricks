@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogBody,
@@ -6,7 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useEffect, useState } from "react";
 
 interface ModalWithTabsProps {
   open: boolean;

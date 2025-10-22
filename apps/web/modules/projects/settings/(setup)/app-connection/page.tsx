@@ -1,5 +1,6 @@
 "use server";
 
+import Link from "next/link";
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -13,7 +14,6 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import Link from "next/link";
 import { ActionSettingsCard } from "../components/action-settings-card";
 
 export const AppConnectionPage = async ({ params }: { params: Promise<{ environmentId: string }> }) => {

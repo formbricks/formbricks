@@ -1,8 +1,8 @@
-import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 
 export const getProjectsByOrganizationId = reactCache(
   async (organizationId: string): Promise<TOrganizationProject[]> => {

@@ -1,9 +1,9 @@
+import { Result, ok } from "@formbricks/types/error-handlers";
 import {
   fetchEnvironmentId,
   fetchEnvironmentIdFromSurveyIds,
 } from "@/modules/api/v2/management/lib/services";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { Result, ok } from "@formbricks/types/error-handlers";
 
 export const getEnvironmentId = async (
   id: string,

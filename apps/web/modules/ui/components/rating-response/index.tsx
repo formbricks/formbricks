@@ -1,5 +1,5 @@
-import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import { StarIcon } from "lucide-react";
+import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 
 interface RatingResponseProps {
   scale?: "number" | "star" | "smiley";

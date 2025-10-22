@@ -1,5 +1,11 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { PlusCircleIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createOrganizationAction } from "@/modules/organization/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -14,12 +20,6 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { PlusCircleIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 
 interface CreateOrganizationModalProps {
   open: boolean;

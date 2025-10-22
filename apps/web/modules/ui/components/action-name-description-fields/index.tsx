@@ -1,8 +1,8 @@
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import { Control } from "react-hook-form";
 import { TActionClassInput } from "@formbricks/types/action-classes";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 
 interface ActionNameDescriptionFieldsProps {
   control: Control<TActionClassInput>;

@@ -1,5 +1,9 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { AuthenticationError } from "@formbricks/types/errors";
+import { ZUserEmail, ZUserName } from "@formbricks/types/user";
 import { INVITE_DISABLED } from "@/lib/constants";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -7,10 +11,6 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { inviteUser } from "@/modules/setup/organization/[organizationId]/invite/lib/invite";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { AuthenticationError } from "@formbricks/types/errors";
-import { ZUserEmail, ZUserName } from "@formbricks/types/user";
 
 const ZInviteOrganizationMemberAction = z.object({
   email: ZUserEmail,

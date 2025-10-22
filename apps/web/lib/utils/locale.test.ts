@@ -1,6 +1,6 @@
-import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
 import * as nextHeaders from "next/headers";
 import { describe, expect, test, vi } from "vitest";
+import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
 import { findMatchingLocale } from "./locale";
 
 // Mock the Next.js headers function

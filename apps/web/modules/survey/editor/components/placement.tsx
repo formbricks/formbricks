@@ -1,11 +1,11 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
+import { TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { Label } from "@/modules/ui/components/label";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { useTranslate } from "@tolgee/react";
-import { TPlacement } from "@formbricks/types/common";
 
 interface TPlacementProps {
   currentPlacement: TPlacement;

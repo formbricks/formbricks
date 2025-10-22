@@ -1,6 +1,3 @@
-import { getSurvey } from "@/lib/survey/service";
-import { validateInputs } from "@/lib/utils/validate";
-import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -29,6 +26,9 @@ import {
   ZSegmentFilters,
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
+import { getSurvey } from "@/lib/survey/service";
+import { validateInputs } from "@/lib/utils/validate";
+import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {

@@ -1,14 +1,5 @@
 "use client";
 
-import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
-import { FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
-import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
-import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { Small } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
@@ -18,6 +9,15 @@ import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
+import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
+import { Small } from "@/modules/ui/components/typography";
 
 interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;

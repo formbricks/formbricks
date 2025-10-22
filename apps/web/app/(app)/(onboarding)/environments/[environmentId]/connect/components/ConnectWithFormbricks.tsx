@@ -1,13 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProjectConfigChannel } from "@formbricks/types/project";
+import { cn } from "@/lib/cn";
+import { Button } from "@/modules/ui/components/button";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
