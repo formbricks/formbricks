@@ -11,7 +11,7 @@ import {
   SettingsIcon,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
@@ -34,6 +34,17 @@ interface OrganizationBreadcrumbProps {
   isOwnerOrManager: boolean;
 }
 
+const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
+  // Match /settings/{settingId} or /settings/{settingId}/... but exclude account settings
+  // Exclude paths with /(account)/
+  if (pathname.includes("/(account)/")) {
+    return false;
+  }
+  // Check if path matches /settings/{settingId} (with optional trailing path)
+  const pattern = new RegExp(`/settings/${settingId}(?:/|$)`);
+  return pattern.test(pathname);
+};
+
 export const OrganizationBreadcrumb = ({
   currentOrganizationId,
   organizations,
@@ -51,6 +62,10 @@ export const OrganizationBreadcrumb = ({
   const [isLoading, setIsLoading] = useState(false);
   const currentOrganization = organizations.find((org) => org.id === currentOrganizationId);
 
+  useEffect(() => {
+    setIsLoading(false);
+  }, [pathname]);
+
   if (!currentOrganization) {
     const errorMessage = `Organization not found for organization id: ${currentOrganizationId}`;
     logger.error(errorMessage);
@@ -66,6 +81,12 @@ export const OrganizationBreadcrumb = ({
 
   // Hide organization dropdown for single org setups (on-premise)
   const showOrganizationDropdown = isMultiOrgEnabled || organizations.length > 1;
+
+  const handleSettingChange = (href: string) => {
+    setIsLoading(true);
+    setIsOrganizationDropdownOpen(false);
+    router.push(href);
+  };
 
   const organizationSettings = [
     {
@@ -156,9 +177,9 @@ export const OrganizationBreadcrumb = ({
                 return setting.hidden ? null : (
                   <DropdownMenuCheckboxItem
                     key={setting.id}
-                    checked={pathname.includes(setting.id)}
+                    checked={isActiveOrganizationSetting(pathname, setting.id)}
                     hidden={setting.hidden}
-                    onClick={() => router.push(setting.href)}
+                    onClick={() => handleSettingChange(setting.href)}
                     className="cursor-pointer">
                     {setting.label}
                   </DropdownMenuCheckboxItem>
