@@ -151,9 +151,6 @@ importers:
       '@formbricks/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@fortedigital/nextjs-cache-handler':
-        specifier: 1.2.0
-        version: 1.2.0(next@15.5.6(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)
       '@hookform/resolvers':
         specifier: 5.0.1
         version: 5.0.1(react-hook-form@7.56.2(react@19.1.0))
@@ -343,9 +340,6 @@ importers:
       lodash:
         specifier: 4.17.21
         version: 4.17.21
-      lru-cache:
-        specifier: 11.1.0
-        version: 11.1.0
       lucide-react:
         specifier: 0.507.0
         version: 0.507.0(react@19.1.0)
@@ -458,9 +452,6 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../../packages/config-eslint
-      '@neshca/cache-handler':
-        specifier: 1.9.0
-        version: 1.9.0(next@15.5.6(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)
       '@testing-library/jest-dom':
         specifier: 6.6.3
         version: 6.6.3
@@ -1989,12 +1980,6 @@ packages:
   '@formkit/auto-animate@0.8.2':
     resolution: {integrity: sha512-SwPWfeRa5veb1hOIBMdzI+73te5puUBHmqqaF1Bu7FjvxlYSz/kJcZKSa9Cg60zL0uRNeJL2SbRxV6Jp6Q1nFQ==}
 
-  '@fortedigital/nextjs-cache-handler@1.2.0':
-    resolution: {integrity: sha512-dHu7+D6yVHI5ii1/DgNSZM9wVPk8uKAB0zrRoNNbZq6hggpRRwAExV4J6bSGOd26RN6ZnfYaGLBmdb0gLpeBQg==}
-    peerDependencies:
-      next: '>=13.5.1'
-      redis: '>=4.6'
-
   '@gar/promisify@1.1.3':
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
 
@@ -2446,14 +2431,8 @@ packages:
   '@neoconfetti/react@1.0.0':
     resolution: {integrity: sha512-klcSooChXXOzIm+SE5IISIAn3bYzYfPjbX7D7HoqZL84oAfgREeSg5vSIaSFH+DaGzzvImTyWe1OyrJ67vik4A==}
 
-  '@neshca/cache-handler@1.9.0':
-    resolution: {integrity: sha512-dh0x4pdjDKvPRfZF5DZb8TtOUkbBfeTodOUdQsHDuv0oiuqQ3p7GLx38f6bPn8Sa4he8HsWo+rM4S20ZRqr7pA==}
-    peerDependencies:
-      next: '>= 13.5.1 < 15'
-      redis: '>= 4.6'
-
-  '@next/env@15.5.6':
-    resolution: {integrity: sha512-3qBGRW+sCGzgbpc5TS1a0p7eNxnOarGVQhZxfvTdnV0gFI61lX7QNtQ4V1TSREctXzYn5NetbUsLvyqwLFJM6Q==}
+  '@next/env@15.5.2':
+    resolution: {integrity: sha512-Qe06ew4zt12LeO6N7j8/nULSOe3fMXE4dM6xgpBQNvdzyK1sv5y4oAP3bq4LamrvGCZtmRYnW8URFCeX5nFgGg==}
 
   '@next/eslint-plugin-next@15.3.2':
     resolution: {integrity: sha512-ijVRTXBgnHT33aWnDtmlG+LJD+5vhc9AKTJPquGG5NKXjpKNjc62woIhFtrAcWdBobt8kqjCoaJ0q6sDQoX7aQ==}
@@ -12475,16 +12454,6 @@ snapshots:
 
   '@formkit/auto-animate@0.8.2': {}
 
-  '@fortedigital/nextjs-cache-handler@1.2.0(next@15.5.6(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)':
-    dependencies:
-      '@neshca/cache-handler': 1.9.0(next@15.5.6(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)
-      cluster-key-slot: 1.1.2
-      lru-cache: 11.1.0
-      next: 15.5.6(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      redis: 4.7.0
-    optionalDependencies:
-      '@rollup/rollup-linux-x64-gnu': 4.46.1
-
   '@gar/promisify@1.1.3':
     optional: true
 
@@ -13014,14 +12983,7 @@ snapshots:
 
   '@neoconfetti/react@1.0.0': {}
 
-  '@neshca/cache-handler@1.9.0(next@15.5.6(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(redis@4.7.0)':
-    dependencies:
-      cluster-key-slot: 1.1.2
-      lru-cache: 10.4.3
-      next: 15.5.6(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      redis: 4.7.0
-
-  '@next/env@15.5.6': {}
+  '@next/env@15.5.2': {}
 
   '@next/eslint-plugin-next@15.3.2':
     dependencies:

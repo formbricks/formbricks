@@ -34,7 +34,6 @@
     "@formbricks/surveys": "workspace:*",
     "@formbricks/storage": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@fortedigital/nextjs-cache-handler": "1.2.0",
     "@hookform/resolvers": "5.0.1",
     "@intercom/messenger-js-sdk": "0.0.14",
     "@json2csv/node": "7.0.6",
@@ -98,7 +97,6 @@
     "jsonwebtoken": "9.0.2",
     "lexical": "0.36.2",
     "lodash": "4.17.21",
-    "lru-cache": "11.1.0",
     "lucide-react": "0.507.0",
     "markdown-it": "14.1.0",
     "mime-types": "3.0.1",
@@ -138,7 +136,6 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@neshca/cache-handler": "1.9.0",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.3.0",
     "@tolgee/cli": "2.10.2",
