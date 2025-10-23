@@ -10,6 +10,9 @@ vi.mock("@/lib/constants", async () => {
     IS_FORMBRICKS_CLOUD: true,
     PROJECT_FEATURE_KEYS: {
       FREE: "free",
+      STARTUP: "startup",
+      SCALE: "scale",
+      ENTERPRISE: "enterprise",
     },
   };
 });
@@ -24,8 +27,18 @@ describe("getSurveyFollowUpsPermission", () => {
     expect(result).toBe(false);
   });
 
-  test("should return true for non-free plan on Formbricks Cloud", async () => {
+  test("should return false for startup plan on Formbricks Cloud", async () => {
     const result = await getSurveyFollowUpsPermission("startup" as TOrganizationBillingPlan);
+    expect(result).toBe(false);
+  });
+
+  test("should return false for scale plan on Formbricks Cloud", async () => {
+    const result = await getSurveyFollowUpsPermission("scale" as TOrganizationBillingPlan);
+    expect(result).toBe(false);
+  });
+
+  test("should return true for enterprise plan on Formbricks Cloud", async () => {
+    const result = await getSurveyFollowUpsPermission("enterprise" as TOrganizationBillingPlan);
     expect(result).toBe(true);
   });
 

@@ -52,7 +52,6 @@ export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
       t("environments.settings.billing.7500_contacts"),
       t("environments.settings.billing.3_projects"),
       t("environments.settings.billing.remove_branding"),
-      t("environments.settings.billing.email_follow_ups"),
       t("environments.settings.billing.attribute_based_targeting"),
     ],
   };
@@ -69,6 +68,7 @@ export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
     },
     mainFeatures: [
       t("environments.settings.billing.everything_in_startup"),
+      t("environments.settings.billing.email_follow_ups"),
       t("environments.settings.billing.custom_response_limit"),
       t("environments.settings.billing.custom_contacts_limit"),
       t("environments.settings.billing.custom_project_limit"),
