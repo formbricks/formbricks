@@ -200,7 +200,7 @@ export const OrganizationBreadcrumb = ({
           )}
           {currentEnvironmentId && (
             <div>
-              <DropdownMenuSeparator />
+              {showOrganizationDropdown && <DropdownMenuSeparator />}
               <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
                 <SettingsIcon className="mr-2 inline h-4 w-4" />
                 {t("common.organization_settings")}
