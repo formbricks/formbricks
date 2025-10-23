@@ -9,9 +9,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 interface TopControlBarProps {
   environments: TEnvironment[];
   currentOrganizationId: string;
-  organizations: { id: string; name: string }[];
   currentProjectId: string;
-  projects: { id: string; name: string }[];
   isMultiOrgEnabled: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
@@ -24,9 +22,7 @@ interface TopControlBarProps {
 export const TopControlBar = ({
   environments,
   currentOrganizationId,
-  organizations,
   currentProjectId,
-  projects,
   isMultiOrgEnabled,
   organizationProjectsLimit,
   isFormbricksCloud,
@@ -46,9 +42,7 @@ export const TopControlBar = ({
         currentEnvironmentId={environment.id}
         environments={environments}
         currentOrganizationId={currentOrganizationId}
-        organizations={organizations}
         currentProjectId={currentProjectId}
-        projects={projects}
         isMultiOrgEnabled={isMultiOrgEnabled}
         organizationProjectsLimit={organizationProjectsLimit}
         isFormbricksCloud={isFormbricksCloud}
