@@ -28,7 +28,6 @@ import { useOrganization } from "../context/environment-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
-  // Removed: organizations prop (lazy-loaded)
   isMultiOrgEnabled: boolean;
   currentEnvironmentId?: string;
   isFormbricksCloud: boolean;

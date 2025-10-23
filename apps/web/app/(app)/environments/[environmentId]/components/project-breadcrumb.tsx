@@ -23,7 +23,6 @@ import { useProject } from "../context/environment-context";
 
 interface ProjectBreadcrumbProps {
   currentProjectId: string;
-  // Removed: projects prop (lazy-loaded)
   isOwnerOrManager: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;

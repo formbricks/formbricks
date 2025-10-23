@@ -10,8 +10,6 @@ interface ProjectAndOrgSwitchProps {
   currentProjectId?: string;
   currentEnvironmentId?: string;
   environments: { id: string; type: string }[];
-  // Removed: organizations prop (lazy-loaded)
-  // Removed: projects prop (lazy-loaded)
   isMultiOrgEnabled: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;

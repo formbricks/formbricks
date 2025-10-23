@@ -10,8 +10,6 @@ interface TopControlBarProps {
   environments: TEnvironment[];
   currentOrganizationId: string;
   currentProjectId: string;
-  // Removed: organizations prop (lazy-loaded)
-  // Removed: projects prop (lazy-loaded)
   isMultiOrgEnabled: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
