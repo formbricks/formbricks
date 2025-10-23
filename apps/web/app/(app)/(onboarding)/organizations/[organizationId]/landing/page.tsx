@@ -37,6 +37,7 @@ const Page = async (props) => {
             {/* we only need to render organization breadcrumb on this page, organizations/projects are lazy-loaded */}
             <ProjectAndOrgSwitch
               currentOrganizationId={organization.id}
+              currentOrganizationName={organization.name}
               isMultiOrgEnabled={isMultiOrgEnabled}
               organizationProjectsLimit={0}
               isFormbricksCloud={IS_FORMBRICKS_CLOUD}

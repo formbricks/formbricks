@@ -23,6 +23,7 @@ import { useProject } from "../context/environment-context";
 
 interface ProjectBreadcrumbProps {
   currentProjectId: string;
+  currentProjectName?: string; // Optional: pass directly if context not available
   isOwnerOrManager: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
@@ -35,6 +36,7 @@ interface ProjectBreadcrumbProps {
 
 export const ProjectBreadcrumb = ({
   currentProjectId,
+  currentProjectName,
   isOwnerOrManager,
   organizationProjectsLimit,
   isFormbricksCloud,
@@ -55,8 +57,10 @@ export const ProjectBreadcrumb = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const pathname = usePathname();
 
-  // Get current project from context
+  // Get current project name from context OR prop
+  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
   const { project: currentProject } = useProject();
+  const projectName = currentProject?.name || currentProjectName || "";
 
   // Lazy-load projects when dropdown opens
   useEffect(() => {
@@ -176,7 +180,7 @@ export const ProjectBreadcrumb = ({
           asChild>
           <div className="flex items-center gap-1">
             <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
-            <span>{currentProject.name}</span>
+            <span>{projectName}</span>
             {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isProjectDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
@@ -215,7 +219,7 @@ export const ProjectBreadcrumb = ({
                 {projects.map((proj) => (
                   <DropdownMenuCheckboxItem
                     key={proj.id}
-                    checked={proj.id === currentProject.id}
+                    checked={proj.id === currentProjectId}
                     onClick={() => handleProjectChange(proj.id)}
                     className="cursor-pointer">
                     <div className="flex items-center gap-2">

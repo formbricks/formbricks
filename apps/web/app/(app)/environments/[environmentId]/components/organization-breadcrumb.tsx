@@ -28,6 +28,7 @@ import { useOrganization } from "../context/environment-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
+  currentOrganizationName?: string; // Optional: pass directly if context not available
   isMultiOrgEnabled: boolean;
   currentEnvironmentId?: string;
   isFormbricksCloud: boolean;
@@ -37,6 +38,7 @@ interface OrganizationBreadcrumbProps {
 
 export const OrganizationBreadcrumb = ({
   currentOrganizationId,
+  currentOrganizationName,
   isMultiOrgEnabled,
   currentEnvironmentId,
   isFormbricksCloud,
@@ -53,8 +55,10 @@ export const OrganizationBreadcrumb = ({
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Get current organization name from context
+  // Get current organization name from context OR prop
+  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
   const { organization: currentOrganization } = useOrganization();
+  const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   // Lazy-load organizations when dropdown opens
   useEffect(() => {
@@ -135,7 +139,7 @@ export const OrganizationBreadcrumb = ({
           asChild>
           <div className="flex items-center gap-1">
             <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
-            <span>{currentOrganization.name}</span>
+            <span>{organizationName}</span>
             {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isOrganizationDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
@@ -175,7 +179,7 @@ export const OrganizationBreadcrumb = ({
                     {organizations.map((org) => (
                       <DropdownMenuCheckboxItem
                         key={org.id}
-                        checked={org.id === currentOrganization.id}
+                        checked={org.id === currentOrganizationId}
                         onClick={() => handleOrganizationChange(org.id)}
                         className="cursor-pointer">
                         {org.name}

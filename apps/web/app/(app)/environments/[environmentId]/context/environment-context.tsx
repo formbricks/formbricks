@@ -25,7 +25,7 @@ export const useEnvironment = () => {
 export const useProject = () => {
   const context = useContext(EnvironmentContext);
   if (!context) {
-    throw new Error("useProject must be used within an EnvironmentProvider");
+    return { project: null };
   }
   return { project: context.project };
 };
@@ -33,7 +33,7 @@ export const useProject = () => {
 export const useOrganization = () => {
   const context = useContext(EnvironmentContext);
   if (!context) {
-    throw new Error("useOrganization must be used within an EnvironmentProvider");
+    return { organization: null };
   }
   return { organization: context.organization };
 };

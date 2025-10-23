@@ -7,7 +7,9 @@ import { Breadcrumb, BreadcrumbList } from "@/modules/ui/components/breadcrumb";
 
 interface ProjectAndOrgSwitchProps {
   currentOrganizationId: string;
+  currentOrganizationName?: string; // Optional: for pages without context
   currentProjectId?: string;
+  currentProjectName?: string; // Optional: for pages without context
   currentEnvironmentId?: string;
   environments: { id: string; type: string }[];
   isMultiOrgEnabled: boolean;
@@ -21,7 +23,9 @@ interface ProjectAndOrgSwitchProps {
 
 export const ProjectAndOrgSwitch = ({
   currentOrganizationId,
+  currentOrganizationName,
   currentProjectId,
+  currentProjectName,
   currentEnvironmentId,
   environments,
   isMultiOrgEnabled,
@@ -40,6 +44,7 @@ export const ProjectAndOrgSwitch = ({
       <BreadcrumbList className="gap-0">
         <OrganizationBreadcrumb
           currentOrganizationId={currentOrganizationId}
+          currentOrganizationName={currentOrganizationName}
           currentEnvironmentId={currentEnvironmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isFormbricksCloud={isFormbricksCloud}
@@ -49,6 +54,7 @@ export const ProjectAndOrgSwitch = ({
         {currentProjectId && currentEnvironmentId && (
           <ProjectBreadcrumb
             currentProjectId={currentProjectId}
+            currentProjectName={currentProjectName}
             currentOrganizationId={currentOrganizationId}
             currentEnvironmentId={currentEnvironmentId}
             isOwnerOrManager={isOwnerOrManager}
