@@ -82,11 +82,6 @@
       "user_successfully_created": "Utilisateur créé avec succès",
       "user_successfully_created_info": "Nous avons vérifié s'il existait un compte associé à {email}. Si aucun n'existait, nous en avons créé un pour vous. Si un compte existait déjà, aucune modification n'a été apportée. Veuillez vous connecter ci-dessous pour continuer."
     },
-    "testimonial_1": "Nous mesurons la clarté de nos documents et apprenons des abandons, le tout sur une seule plateforme. Excellent produit, équipe très réactive !",
-    "testimonial_all_features_included": "Toutes les fonctionnalités incluses",
-    "testimonial_free_and_open_source": "Libre et open-source",
-    "testimonial_no_credit_card_required": "Aucune carte de crédit requise",
-    "testimonial_title": "Transformez les insights clients en expériences irrésistibles.",
     "verification-requested": {
       "invalid_email_address": "Adresse e-mail invalide",
       "invalid_token": "Jeton non valide ☹️",

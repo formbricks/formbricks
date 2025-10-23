@@ -82,11 +82,6 @@
       "user_successfully_created": "用户已成功创建",
       "user_successfully_created_info": "我们已检查与 {email} 相关联的账户。如果没有，我们已为您创建一个。如果已有账户，则未作任何更改。请在下面登录以继续。"
     },
-    "testimonial_1": "我们 测量 文档的 清晰度， 并 通过 一个 平台 学习 客户 流失。 很棒的 产品， 反应 灵敏的 团队！",
-    "testimonial_all_features_included": "包括 所有 功能",
-    "testimonial_free_and_open_source": "免费 开源",
-    "testimonial_no_credit_card_required": "无需信用卡",
-    "testimonial_title": "将 客户 洞察 转化 为 无法 抗拒 的 体验",
     "verification-requested": {
       "invalid_email_address": "无效 的 电子 邮件 地址",
       "invalid_token": "无效的 token ☹️",

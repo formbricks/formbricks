@@ -37,6 +37,9 @@ export default defineConfig({
         "**/__mocks__/**", // Jest-style mock directories
         "**/playwright/**", // Playwright E2E test files
 
+        // TSX files (covered by E2E tests)
+        "**/*.tsx", // All TSX/React component files
+
         // Next.js specific files
         "**/route.{ts,tsx}", // Next.js API routes
         "**/middleware.ts", // Next.js middleware
@@ -90,8 +93,6 @@ export default defineConfig({
         "app/api/v1/integrations/**", // Integration APIs
 
         // Specific components
-        "packages/surveys/src/components/general/smileys.tsx", // Smiley components
-        "modules/analysis/components/SingleResponseCard/components/Smileys.tsx", // Analysis smiley components
         "modules/auth/lib/mock-data.ts", // Mock data for authentication
         "packages/js-core/src/index.ts", // JS Core index file
 
