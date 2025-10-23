@@ -37,7 +37,7 @@ export const getFormattedDateTimeString = (date: Date): string => {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false,
+    hourCycle: "h23",
   };
 
   return new Intl.DateTimeFormat("en-CA", options).format(date).replace(",", "");
