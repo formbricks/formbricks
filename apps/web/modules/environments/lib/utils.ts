@@ -250,9 +250,15 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
  * Fetches all data required for environment layout rendering.
  * Consolidates multiple queries and eliminates duplicates.
  * Does NOT fetch switcher data (organizations/projects lists) - those are lazy-loaded.
+ *
+ * Note: userId is included in cache key to make it explicit that results are user-specific,
+ * even though React.cache() is per-request and doesn't leak across users.
  */
 export const getEnvironmentLayoutData = reactCache(
-  async (environmentId: string): Promise<TEnvironmentLayoutData> => {
+  async (environmentId: string, userId: string): Promise<TEnvironmentLayoutData> => {
+    validateInputs([environmentId, ZId]);
+    validateInputs([userId, ZId]);
+
     const t = await getTranslate();
     const session = await getServerSession(authOptions);
 
@@ -260,10 +266,15 @@ export const getEnvironmentLayoutData = reactCache(
       throw new Error(t("common.session_not_found"));
     }
 
+    // Verify userId matches session (safety check)
+    if (session.user.id !== userId) {
+      throw new Error("User ID mismatch with session");
+    }
+
     // Fetch user and combined environment data in parallel
     const [user, relationData] = await Promise.all([
-      getUser(session.user.id), // 1 DB query
-      getEnvironmentWithRelations(environmentId, session.user.id), // 1 DB query (combined)
+      getUser(userId), // 1 DB query
+      getEnvironmentWithRelations(environmentId, userId), // 1 DB query (combined)
     ]);
 
     if (!user) {
@@ -275,7 +286,7 @@ export const getEnvironmentLayoutData = reactCache(
     }
 
     // Authorization check (2 DB queries)
-    const hasAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
+    const hasAccess = await hasUserEnvironmentAccess(userId, environmentId);
     if (!hasAccess) {
       throw new AuthorizationError(t("common.not_authorized"));
     }
@@ -290,7 +301,7 @@ export const getEnvironmentLayoutData = reactCache(
     // Fetch remaining data in parallel (1 DB query, no query for license/access check)
     const [isAccessControlAllowed, projectPermission, license] = await Promise.all([
       getAccessControlPermission(organization.billing.plan), // No DB query (logic only)
-      getProjectPermissionByUserId(session.user.id, environment.projectId), // 1 DB query
+      getProjectPermissionByUserId(userId, environment.projectId), // 1 DB query
       getEnterpriseLicense(), // Externally cached
     ]);
 
