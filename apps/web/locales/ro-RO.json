@@ -82,11 +82,6 @@
       "user_successfully_created": "Utilizator creat cu succes",
       "user_successfully_created_info": "Am verificat pentru un cont asociat cu {email}. Dacă nu a existat niciunul, am creat unul pentru tine. Dacă un cont deja exista, nu s-au făcut modificări. Vă rugăm să vă conectați mai jos pentru a continua."
     },
-    "testimonial_1": "\"Măsurăm claritatea documentațiilor noastre și învățăm din greșeli în folosirea platformei. Produs grozav, echipă foarte receptivă!\"",
-    "testimonial_all_features_included": "Toate funcționalitățile incluse",
-    "testimonial_free_and_open_source": "Gratuit și open-source",
-    "testimonial_no_credit_card_required": "Nu este necesar niciun card de credit",
-    "testimonial_title": "Transformați informațiile despre clienți în experiențe irezistibile.",
     "verification-requested": {
       "invalid_email_address": "Adresa de email invalidă",
       "invalid_token": "Token invalid ☹️",

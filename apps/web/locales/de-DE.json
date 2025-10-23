@@ -82,11 +82,6 @@
       "user_successfully_created": "Benutzer erfolgreich erstellt",
       "user_successfully_created_info": "Wir haben nach einem Konto gesucht, das mit {email} verknüpft ist. Wenn keines existierte, haben wir eines für Dich erstellt. Wenn bereits ein Konto existierte, wurden keine Änderungen vorgenommen. Bitte melde Dich unten an, um fortzufahren."
     },
-    "testimonial_1": "Als open-source Firma ist uns Datenschutz extrem wichtig! Formbricks bietet die perfekte Mischung aus modernster Technologie und solidem Datenschutz.",
-    "testimonial_all_features_included": "Alle Funktionen enthalten",
-    "testimonial_free_and_open_source": "Kostenlos und Open Source",
-    "testimonial_no_credit_card_required": "Keine Kreditkarte erforderlich",
-    "testimonial_title": "Erschaffe einzigartige Kundenerlebnisse",
     "verification-requested": {
       "invalid_email_address": "Ungültige E-Mail-Adresse",
       "invalid_token": "Ungültiges Token ☹️",

@@ -82,11 +82,6 @@
       "user_successfully_created": "ユーザーの作成に成功しました",
       "user_successfully_created_info": "入力されたメールアドレス ({email}) に関連するアカウントをチェックしました。アカウントが存在しない場合、作成されました。すでに存在する場合、変更はありません。続行するには、以下のログインフォームからログインしてください。"
     },
-    "testimonial_1": "ドキュメントの明確さを測定し、解約から学ぶことが、すべてこのプラットフォーム一つで可能です。素晴らしい製品で、チームの対応も非常に良いです！",
-    "testimonial_all_features_included": "すべての機能が含まれています",
-    "testimonial_free_and_open_source": "無料でオープンソース",
-    "testimonial_no_credit_card_required": "クレジットカードは不要です",
-    "testimonial_title": "顧客の洞察を魅力的な体験に変えましょう。",
     "verification-requested": {
       "invalid_email_address": "無効なメールアドレスです",
       "invalid_token": "無効なトークンです ☹️",

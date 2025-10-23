@@ -65,11 +65,6 @@ checksums:
     auth/signup/title: 96addc349f834eaa5d14c786d5478b1c
     auth/signup_without_verification_success/user_successfully_created: ff849ebedc5dacb36493d7894f16edc7
     auth/signup_without_verification_success/user_successfully_created_info: 60687ad06a83c96dfd7dbb5521768166
-    auth/testimonial_1: ba0e1cd4e51fd32a2bb16eec8e09612e
-    auth/testimonial_all_features_included: a6b5f3a7966a1f176f1473be66adbe18
-    auth/testimonial_free_and_open_source: c89931b98979e9d49ed91faa5be123d7
-    auth/testimonial_no_credit_card_required: 2090aa4171dc0b60735069f89b592883
-    auth/testimonial_title: dff1b567296ba4cc97fcc476fdd45963
     auth/verification-requested/invalid_email_address: b2d9f25626f2d15c7c63e0281bccc247
     auth/verification-requested/invalid_token: 9008919416c117067e95efda0024655d
     auth/verification-requested/new_email_verification_success: d76f50ad638163a1cb964a191bcf7176

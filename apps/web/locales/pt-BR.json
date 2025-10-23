@@ -82,11 +82,6 @@
       "user_successfully_created": "Usuário criado com sucesso",
       "user_successfully_created_info": "Verificamos se há uma conta associada a {email}. Se não existia, criamos uma para você. Se uma conta já existia, nenhuma alteração foi feita. Por favor, faça login abaixo para continuar."
     },
-    "testimonial_1": "Mediamos a clareza dos nossos documentos e aprendemos com a rotatividade tudo em uma única plataforma. Ótimo produto, equipe muito atenciosa!",
-    "testimonial_all_features_included": "Todas as funcionalidades incluídas",
-    "testimonial_free_and_open_source": "Grátis e de código aberto",
-    "testimonial_no_credit_card_required": "Sem necessidade de cartão de crédito",
-    "testimonial_title": "Transforme insights dos clientes em experiências irresistíveis.",
     "verification-requested": {
       "invalid_email_address": "Endereço de email inválido",
       "invalid_token": "Token inválido ☹️",
