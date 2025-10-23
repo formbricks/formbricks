@@ -33,7 +33,14 @@ export const PricingCard = ({
 }: PricingCardProps) => {
   const { t } = useTranslate();
   const [loading, setLoading] = useState(false);
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+
+  const displayPrice = (() => {
+    if (plan.id === projectFeatureKeys.CUSTOM) {
+      return plan.price.monthly;
+    }
+    return planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly;
+  })();
 
   const isCurrentPlan = useMemo(() => {
     if (organization.billing.plan === projectFeatureKeys.FREE && plan.id === projectFeatureKeys.FREE) {
@@ -94,7 +101,7 @@ export const PricingCard = ({
         <Button
           loading={loading}
           onClick={() => {
-            setUpgradeModalOpen(true);
+            setContactModalOpen(true);
           }}
           className="flex justify-center">
           {t("environments.settings.billing.switch_plan")}
@@ -148,11 +155,7 @@ export const PricingCard = ({
                 plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
-              {plan.id !== projectFeatureKeys.CUSTOM
-                ? planPeriod === "monthly"
-                  ? plan.price.monthly
-                  : plan.price.yearly
-                : plan.price.monthly}
+              {displayPrice}
             </p>
             {plan.id !== projectFeatureKeys.CUSTOM && (
               <div className="text-sm leading-5">
@@ -200,28 +203,13 @@ export const PricingCard = ({
       </div>
 
       <ConfirmationModal
-        title={t("environments.settings.billing.switch_plan")}
-        buttonText={t("common.confirm")}
-        onConfirm={async () => {
-          setLoading(true);
-          await onUpgrade();
-          setLoading(false);
-          setUpgradeModalOpen(false);
-        }}
-        open={upgradeModalOpen}
-        setOpen={setUpgradeModalOpen}
-        body={t("environments.settings.billing.switch_plan_confirmation_text", {
-          plan: plan.name,
-          price: planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly,
-          period:
-            planPeriod === "monthly"
-              ? t("environments.settings.billing.per_month")
-              : t("environments.settings.billing.per_year"),
-        })}
+        title="Please reach out to us"
+        open={contactModalOpen}
+        setOpen={setContactModalOpen}
+        onConfirm={() => setContactModalOpen(false)}
+        buttonText="Close"
         buttonVariant="default"
-        buttonLoading={loading}
-        closeOnOutsideClick={false}
-        hideCloseButton
+        body="To switch your billing rhythm, please reach out to hola@formbricks.com"
       />
     </div>
   );

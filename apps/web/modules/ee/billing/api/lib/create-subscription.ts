@@ -46,6 +46,7 @@ export const createSubscription = async (
       billing_address_collection: "required",
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
+      customer_update: { name: "auto" },
       payment_method_data: { allow_redisplay: "always" },
     });
 
