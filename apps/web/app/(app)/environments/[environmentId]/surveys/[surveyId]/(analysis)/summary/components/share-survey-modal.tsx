@@ -1,7 +1,6 @@
 "use client";
 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useTranslate } from "@tolgee/react";
 import {
   Code2Icon,
   LinkIcon,
@@ -13,6 +12,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -69,7 +69,7 @@ export const ShareSurveyModal = ({
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
   const [showView, setShowView] = useState<ModalView>(modalView);
   const { email } = user;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const linkTabs: {
     id: ShareViaType | ShareSettingsType;
     type: LinkTabsType;

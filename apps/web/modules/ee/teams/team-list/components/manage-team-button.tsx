@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -10,7 +10,7 @@ interface ManageTeamButtonProps {
 }
 
 export const ManageTeamButton = ({ onClick, disabled }: ManageTeamButtonProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <TooltipRenderer

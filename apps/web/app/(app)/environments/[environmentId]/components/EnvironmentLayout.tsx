@@ -13,6 +13,7 @@ import {
   getOrganizationByEnvironmentId,
 } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import {
   getAccessControlPermission,
@@ -21,7 +22,6 @@ import {
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
-import { getTranslate } from "@/tolgee/server";
 
 interface EnvironmentLayoutProps {
   environmentId: string;

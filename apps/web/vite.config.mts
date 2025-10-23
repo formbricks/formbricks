@@ -15,7 +15,7 @@ export default defineConfig({
       provider: "v8", // Use V8 as the coverage provider
       reporter: ["text", "html", "lcov"], // Generate text summary and HTML reports
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
-      include: ["app/**/*.ts", "modules/**/*.ts", "lib/**/*.ts"],
+      include: ["app/**/*.ts", "modules/**/*.ts", "lib/**/*.ts", "lingodotdev/**/*.ts"],
       exclude: [
         // Build and configuration files
         "**/.next/**", // Next.js build output

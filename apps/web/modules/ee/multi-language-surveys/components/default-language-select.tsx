@@ -1,7 +1,7 @@
 "use client";
 
 import { Language } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { DefaultTag } from "@/modules/ui/components/default-tag";
 import { Label } from "@/modules/ui/components/label";
@@ -29,7 +29,7 @@ export function DefaultLanguageSelect({
   setConfirmationModalInfo,
   locale,
 }: DefaultLanguageSelectProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="space-y-2">
       <Label>{t("environments.surveys.edit.1_choose_the_default_language_for_this_survey")}</Label>

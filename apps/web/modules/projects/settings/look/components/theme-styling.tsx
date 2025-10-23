@@ -2,12 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { previewSurvey } from "@/app/lib/templates";
@@ -48,7 +48,7 @@ export const ThemeStyling = ({
   isReadOnly,
   isStorageConfigured = true,
 }: ThemeStylingProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const form = useForm<TProjectStyling>({

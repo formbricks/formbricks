@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { Label } from "@/modules/ui/components/label";
@@ -24,7 +24,7 @@ export const Placement = ({
   setClickOutsideClose,
   clickOutsideClose,
 }: TPlacementProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const placements = [
     { name: t("common.bottom_right"), value: "bottomRight", disabled: false },
     { name: t("common.top_right"), value: "topRight", disabled: false },

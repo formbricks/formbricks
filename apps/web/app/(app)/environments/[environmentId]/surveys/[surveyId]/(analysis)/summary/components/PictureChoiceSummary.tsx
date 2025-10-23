@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -30,7 +30,7 @@ interface PictureChoiceSummaryProps {
 
 export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: PictureChoiceSummaryProps) => {
   const results = questionSummary.choices;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

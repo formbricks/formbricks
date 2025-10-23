@@ -1,4 +1,4 @@
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import type { TSurveySummary } from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 
@@ -7,7 +7,7 @@ interface QuotasSummaryProps {
 }
 
 export const QuotasSummary = ({ quotas }: QuotasSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

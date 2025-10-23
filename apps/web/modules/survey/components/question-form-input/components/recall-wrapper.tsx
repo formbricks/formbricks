@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { PencilIcon } from "lucide-react";
 import React, { JSX, ReactNode, useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
@@ -49,7 +49,7 @@ export const RecallWrapper = ({
   isRecallAllowed,
   onAddFallback,
 }: RecallWrapperProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(

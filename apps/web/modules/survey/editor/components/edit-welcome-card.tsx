@@ -1,10 +1,10 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
@@ -36,7 +36,8 @@ export const EditWelcomeCard = ({
   locale,
   isStorageConfigured = true,
 }: EditWelcomeCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
+
   const [firstRender, setFirstRender] = useState(true);
 
   const path = usePathname();

@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
@@ -39,7 +39,7 @@ export const EndScreenForm = ({
   isStorageConfigured,
   isExternalUrlsAllowed,
 }: EndScreenFormProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 

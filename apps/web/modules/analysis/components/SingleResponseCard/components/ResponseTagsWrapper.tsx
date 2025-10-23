@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TTag } from "@formbricks/types/tags";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TagError } from "@/modules/projects/settings/types/tag";
@@ -33,7 +33,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   updateFetchedResponses,
   isReadOnly,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = React.useState(false);

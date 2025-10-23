@@ -1,8 +1,8 @@
 "use client";
 
 import { ActionClass } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
 import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
@@ -21,7 +21,7 @@ export const SavedActionsTab = ({
   setLocalSurvey,
   setOpen,
 }: SavedActionsTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const availableActions = actionClasses.filter(
     (actionClass) => !localSurvey.triggers.some((trigger) => trigger.actionClass.id === actionClass.id)
   );

@@ -1,8 +1,8 @@
 "use client";
 
-import { T, useTranslate } from "@tolgee/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
+import { Trans, useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
@@ -25,7 +25,7 @@ export const DeleteAccountModal = ({
   isFormbricksCloud,
   organizationsWithSingleOwner,
 }: DeleteAccountModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
@@ -77,7 +77,10 @@ export const DeleteAccountModal = ({
           </li>
           {organizationsWithSingleOwner.length > 0 && (
             <li>
-              <T keyName="environments.settings.profile.organizations_delete_message" params={{ b: <b /> }} />
+              <Trans
+                i18nKey="environments.settings.profile.organizations_delete_message"
+                components={{ b: <b /> }}
+              />
             </li>
           )}
           {organizationsWithSingleOwner.length > 0 && (

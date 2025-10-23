@@ -6,8 +6,8 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getTranslate } from "@/tolgee/server";
 
 const ConfigLayout = async (props) => {
   const params = await props.params;

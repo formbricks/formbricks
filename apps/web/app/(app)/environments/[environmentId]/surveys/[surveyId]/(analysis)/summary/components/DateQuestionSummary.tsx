@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -25,7 +25,7 @@ export const DateQuestionSummary = ({
   survey,
   locale,
 }: DateQuestionSummary) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [visibleResponses, setVisibleResponses] = useState(10);
 
   const handleLoadMore = () => {

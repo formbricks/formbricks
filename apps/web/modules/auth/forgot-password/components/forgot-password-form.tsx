@@ -1,11 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
@@ -20,7 +20,7 @@ type TForgotPasswordForm = z.infer<typeof ZForgotPasswordForm>;
 
 export const ForgotPasswordForm = () => {
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const form = useForm<TForgotPasswordForm>({
     defaultValues: {
       email: "",

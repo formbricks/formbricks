@@ -1,4 +1,4 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import {
   TI18nString,
   TSurvey,
@@ -75,7 +75,7 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
   }
 };
 
-export const getPlaceHolderById = (id: string, t: TFnType) => {
+export const getPlaceHolderById = (id: string, t: TFunction) => {
   switch (id) {
     case "headline":
       return t("environments.surveys.edit.your_question_here_recall_information_with");
