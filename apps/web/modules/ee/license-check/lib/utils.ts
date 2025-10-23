@@ -111,9 +111,7 @@ export const getIsSpamProtectionEnabled = async (
 
   if (IS_FORMBRICKS_CLOUD) {
     return (
-      license.active &&
-      !!license.features?.spamProtection &&
-      (billingPlan === PROJECT_FEATURE_KEYS.SCALE || billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
+      license.active && !!license.features?.spamProtection && billingPlan === PROJECT_FEATURE_KEYS.CUSTOM
     );
   }
 
@@ -122,11 +120,7 @@ export const getIsSpamProtectionEnabled = async (
 
 const featureFlagFallback = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
   const license = await getEnterpriseLicense();
-  if (IS_FORMBRICKS_CLOUD)
-    return (
-      license.active &&
-      (billingPlan === PROJECT_FEATURE_KEYS.SCALE || billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
-    );
+  if (IS_FORMBRICKS_CLOUD) return license.active && billingPlan === PROJECT_FEATURE_KEYS.CUSTOM;
   else if (!IS_FORMBRICKS_CLOUD) return license.active;
   return false;
 };
