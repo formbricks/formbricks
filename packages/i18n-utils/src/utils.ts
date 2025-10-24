@@ -5,6 +5,7 @@ export interface TIso639Language {
     "de-DE": string;
     "pt-BR": string;
     "fr-FR": string;
+    "nl-NL"?: string;
     "zh-Hant-TW": string;
     "pt-PT": string;
     "ro-RO": string;
