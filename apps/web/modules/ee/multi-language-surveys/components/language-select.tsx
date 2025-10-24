@@ -46,8 +46,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
   // Most ISO entries don't ship with every locale translation, so fall back to
   // English to keep the dropdown readable for locales such as Dutch that were
   // added recently.
-  const getLabelForLocale = (item: TIso639Language) =>
-    item.label[locale] ?? item.label["en-US"];
+  const getLabelForLocale = (item: TIso639Language) => item.label[locale] ?? item.label["en-US"];
 
   const filteredItems = items.filter((item) =>
     getLabelForLocale(item).toLowerCase().includes(searchTerm.toLowerCase())
