@@ -28,6 +28,7 @@ interface ContactInfoQuestionProps {
   autoFocusEnabled: boolean;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards?: boolean;
 }
 
 export function ContactInfoQuestion({
