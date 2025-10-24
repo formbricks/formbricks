@@ -43,8 +43,11 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
     setIsOpen(false);
   };
 
+  const getLabelForLocale = (item: TIso639Language) =>
+    item.label[locale] ?? item.label["en-US"];
+
   const filteredItems = items.filter((item) =>
-    item.label[locale].toLowerCase().includes(searchTerm.toLowerCase())
+    getLabelForLocale(item).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Focus the input when the dropdown is opened
@@ -61,7 +64,9 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         disabled={disabled}
         onClick={toggleDropdown}
         variant="ghost">
-        <span className="mr-2">{selectedOption?.label[locale] ?? t("common.select")}</span>
+        <span className="mr-2">
+          {selectedOption ? getLabelForLocale(selectedOption) : t("common.select")}
+        </span>
         <ChevronDown className="h-4 w-4" />
       </Button>
       <div
@@ -84,7 +89,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
               onClick={() => {
                 handleOptionSelect(item);
               }}>
-              {item.label[locale]}
+              {getLabelForLocale(item)}
             </button>
           ))}
         </div>

@@ -211,7 +211,7 @@ vi.mock("@/lib/constants", () => ({
   SESSION_MAX_AGE: 1000,
   MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT: 100,
   MAX_OTHER_OPTION_LENGTH: 250,
-  AVAILABLE_LOCALES: ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"],
+  AVAILABLE_LOCALES: ["en-US", "de-DE", "pt-BR", "fr-FR", "nl-NL", "zh-Hant-TW", "pt-PT"],
   DEFAULT_LOCALE: "en-US",
   BREVO_API_KEY: "mock-brevo-api-key",
   ITEMS_PER_PAGE: 30,
