@@ -170,6 +170,7 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "de-DE",
   "pt-BR",
   "fr-FR",
+  "nl-NL",
   "zh-Hant-TW",
   "pt-PT",
   "ro-RO",
