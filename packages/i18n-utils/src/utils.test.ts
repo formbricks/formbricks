@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-
 import { getLanguageLabel } from "./utils";
 
 describe("getLanguageLabel", () => {

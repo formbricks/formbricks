@@ -122,10 +122,7 @@ describe("Auth Utils", () => {
     test("should generate different hashes for same password", async () => {
       // Hash twice in parallel so the test doesn't incur two full bcrypt rounds sequentially.
       // Running them concurrently keeps the assertion meaningful while avoiding unnecessary timeouts.
-      const [hash1, hash2] = await Promise.all([
-        hashPassword(password),
-        hashPassword(password),
-      ]);
+      const [hash1, hash2] = await Promise.all([hashPassword(password), hashPassword(password)]);
 
       expect(hash1).not.toBe(hash2);
       expect(await verifyPassword(password, hash1)).toBe(true);
