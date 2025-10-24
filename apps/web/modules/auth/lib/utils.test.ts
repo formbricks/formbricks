@@ -118,6 +118,7 @@ describe("Auth Utils", () => {
       expect(isValid).toBe(false);
     });
 
+    // Bcrypt with a cost factor of 12 can outlive Vitest's 5s default when CI hosts are busy.
     test("should generate different hashes for same password", async () => {
       // Hash twice in parallel so the test doesn't incur two full bcrypt rounds sequentially.
       // Running them concurrently keeps the assertion meaningful while avoiding unnecessary timeouts.
@@ -126,7 +127,7 @@ describe("Auth Utils", () => {
       expect(hash1).not.toBe(hash2);
       expect(await verifyPassword(password, hash1)).toBe(true);
       expect(await verifyPassword(password, hash2)).toBe(true);
-    });
+    }, 15000);
 
     test("should hash complex passwords correctly", async () => {
       const complexPassword = "MyC0mpl3x!P@ssw0rd#2024$%^&*()";
