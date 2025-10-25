@@ -93,6 +93,7 @@ export const mapResponsesToTableData = (
       ? t("environments.surveys.responses.completed")
       : t("environments.surveys.responses.not_completed"),
     responseId: response.id,
+    singleUseId: response.singleUseId,
     tags: response.tags,
     variables: survey.variables.reduce(
       (acc, curr) => {
