@@ -117,6 +117,10 @@ export function WelcomeCard({
 
   useEffect(() => {
     const handleEnter = (e: KeyboardEvent) => {
+       // Check if the event target is inside the editor
+    if ((e.target as HTMLElement)?.closest(".editor")) {
+        return;
+      }
       if (e.key === "Enter") {
         handleSubmit();
       }
