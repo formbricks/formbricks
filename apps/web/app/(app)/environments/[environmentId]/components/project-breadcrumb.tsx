@@ -3,7 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
@@ -59,12 +59,8 @@ export const ProjectBreadcrumb = ({
   const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [pathname]);
 
   const projectSettings = [
     {
@@ -115,8 +111,9 @@ export const ProjectBreadcrumb = ({
 
   const handleProjectChange = (projectId: string) => {
     if (projectId === currentProjectId) return;
-    setIsLoading(true);
-    router.push(`/projects/${projectId}/`);
+    startTransition(() => {
+      router.push(`/projects/${projectId}/`);
+    });
   };
 
   const handleAddProject = () => {
@@ -128,8 +125,9 @@ export const ProjectBreadcrumb = ({
   };
 
   const handleProjectSettingsNavigation = (settingId: string) => {
-    setIsLoading(true);
-    router.push(`/environments/${currentEnvironmentId}/project/${settingId}`);
+    startTransition(() => {
+      router.push(`/environments/${currentEnvironmentId}/project/${settingId}`);
+    });
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
@@ -169,7 +167,7 @@ export const ProjectBreadcrumb = ({
           <div className="flex items-center gap-1">
             <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{currentProject.name}</span>
-            {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+            {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isProjectDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (

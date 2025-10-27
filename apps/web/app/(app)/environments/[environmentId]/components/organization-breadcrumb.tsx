@@ -10,7 +10,7 @@ import {
   SettingsIcon,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
@@ -59,12 +59,8 @@ export const OrganizationBreadcrumb = ({
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const currentOrganization = organizations.find((org) => org.id === currentOrganizationId);
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [pathname]);
 
   if (!currentOrganization) {
     const errorMessage = `Organization not found for organization id: ${currentOrganizationId}`;
@@ -75,17 +71,19 @@ export const OrganizationBreadcrumb = ({
 
   const handleOrganizationChange = (organizationId: string) => {
     if (organizationId === currentOrganizationId) return;
-    setIsLoading(true);
-    router.push(`/organizations/${organizationId}/`);
+    startTransition(() => {
+      router.push(`/organizations/${organizationId}/`);
+    });
   };
 
   // Hide organization dropdown for single org setups (on-premise)
   const showOrganizationDropdown = isMultiOrgEnabled || organizations.length > 1;
 
   const handleSettingChange = (href: string) => {
-    setIsLoading(true);
-    setIsOrganizationDropdownOpen(false);
-    router.push(href);
+    startTransition(() => {
+      setIsOrganizationDropdownOpen(false);
+      router.push(href);
+    });
   };
 
   const organizationSettings = [
@@ -129,7 +127,7 @@ export const OrganizationBreadcrumb = ({
           <div className="flex items-center gap-1">
             <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{currentOrganization.name}</span>
-            {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+            {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isOrganizationDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
