@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { type JSX, useCallback } from "react";
+import { type JSX } from "preact";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { type TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
 import type {
@@ -693,6 +693,7 @@ export function Survey({
             responseData={responseData}
             variablesData={currentVariables}
             isPreviewMode={isPreviewMode}
+            fullSizeCards={fullSizeCards}
           />
         );
       } else if (questionIdx >= localSurvey.questions.length) {
@@ -713,6 +714,7 @@ export function Survey({
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
+              fullSizeCards={fullSizeCards}
             />
           );
         }
@@ -741,6 +743,7 @@ export function Survey({
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               onOpenExternalURL={onOpenExternalURL}
               dir={dir}
+              fullSizeCards={fullSizeCards}
             />
           )
         );

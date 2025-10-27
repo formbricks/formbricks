@@ -24,6 +24,7 @@ interface WelcomeCardProps {
   isCurrent: boolean;
   responseData: TResponseData;
   variablesData: TResponseVariables;
+  fullSizeCards: boolean;
   isPreviewMode?: boolean;
 }
 
@@ -77,6 +78,7 @@ export function WelcomeCard({
   isCurrent,
   responseData,
   variablesData,
+  fullSizeCards,
   isPreviewMode = false,
 }: WelcomeCardProps) {
   const { t } = useTranslation();
@@ -139,7 +141,7 @@ export function WelcomeCard({
   }, [isCurrent, isPreviewMode]);
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <div>
         {fileUrl ? (
           <img
