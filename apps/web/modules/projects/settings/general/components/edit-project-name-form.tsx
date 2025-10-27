@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TProject, ZProject } from "@formbricks/types/project";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -31,7 +31,7 @@ const ZProjectNameInput = ZProject.pick({ name: true });
 type TEditProjectName = z.infer<typeof ZProjectNameInput>;
 
 export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, isReadOnly }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const form = useForm<TEditProjectName>({
     defaultValues: {

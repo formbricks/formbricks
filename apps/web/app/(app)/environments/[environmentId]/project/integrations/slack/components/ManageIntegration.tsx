@@ -1,9 +1,9 @@
 "use client";
 
-import { T, useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { Trans, useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TUserLocale } from "@formbricks/types/user";
@@ -39,7 +39,7 @@ export const ManageIntegration = ({
   handleSlackAuthorization,
   locale,
 }: ManageIntegrationProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
   let integrationArray: TIntegrationSlackConfigData[] = [];
@@ -76,9 +76,9 @@ export const ManageIntegration = ({
       {showReconnectButton && (
         <div className="mb-4 flex w-full items-center justify-between space-x-4">
           <p className="text-amber-700">
-            <T
-              keyName="environments.integrations.slack.slack_reconnect_button_description"
-              params={{ b: <b /> }}
+            <Trans
+              i18nKey="environments.integrations.slack.slack_reconnect_button_description"
+              components={{ b: <b /> }}
             />
           </p>
           <Button onClick={handleSlackAuthorization} variant="secondary">

@@ -30,6 +30,7 @@ interface FileUploadQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  fullSizeCards: boolean;
 }
 
 export function FileUploadQuestion({
@@ -47,6 +48,7 @@ export function FileUploadQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  fullSizeCards,
 }: Readonly<FileUploadQuestionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -55,7 +57,7 @@ export function FileUploadQuestion({
   const isCurrent = question.id === currentQuestionId;
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

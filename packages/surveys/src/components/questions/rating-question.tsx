@@ -39,6 +39,7 @@ interface RatingQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards: boolean;
 }
 
 export function RatingQuestion({
@@ -55,6 +56,7 @@ export function RatingQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
@@ -113,7 +115,7 @@ export function RatingQuestion({
   };
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

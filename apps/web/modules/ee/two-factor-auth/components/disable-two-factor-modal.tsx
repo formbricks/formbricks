@@ -1,11 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -53,7 +53,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
     },
     resolver: zodResolver(ZDisableTwoFactorFormState),
   });
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [backupCodeInputVisible, setBackupCodeInputVisible] = useState(false);
 
   const onSubmit: SubmitHandler<TDisableTwoFactorFormState> = async (data) => {

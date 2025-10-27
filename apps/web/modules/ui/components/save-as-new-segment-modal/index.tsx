@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@/modules/ui/components/button";
@@ -53,7 +53,7 @@ export const SaveAsNewSegmentModal = ({
   } = useForm<SaveAsNewSegmentModalForm>();
 
   const [isLoading, setIsLoading] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleReset = () => {
     setValue("title", "");
     setValue("description", "");

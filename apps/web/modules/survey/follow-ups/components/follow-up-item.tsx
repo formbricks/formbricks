@@ -1,9 +1,9 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { CopyIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -35,7 +35,7 @@ export const FollowUpItem = ({
   setLocalSurvey,
   locale,
 }: FollowUpItemProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
 

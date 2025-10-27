@@ -1,4 +1,4 @@
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -29,7 +29,7 @@ export const EditPublicSurveyAlertDialog = ({
   primaryButtonText,
   secondaryButtonText,
 }: EditPublicSurveyAlertDialogProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const actions = [] as Array<{
     label?: string;
     onClick: () => void | Promise<void>;

@@ -2,10 +2,10 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { CheckIcon, SparklesIcon } from "lucide-react";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -30,7 +30,7 @@ export const FormStylingSettings = ({
   setOpen,
   form,
 }: FormStylingSettingsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const brandColor = form.watch("brandColor.light") || COLOR_DEFAULTS.brandColor;
   const background = form.watch("background");
   const highlightBorderColor = form.watch("highlightBorderColor");

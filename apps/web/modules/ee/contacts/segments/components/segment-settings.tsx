@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { FilterIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -36,7 +36,7 @@ export function SegmentSettings({
   isReadOnly,
 }: TSegmentSettingsTabProps) {
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegment);
 

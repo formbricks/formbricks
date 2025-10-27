@@ -16,7 +16,6 @@ import {
   hiddenFieldsDefault,
 } from "./survey-builder";
 
-// Mock the TFnType from @tolgee/react
 const mockT = (props: any): string => (typeof props === "string" ? props : props.key);
 
 describe("Survey Builder", () => {

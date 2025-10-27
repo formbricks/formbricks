@@ -25,6 +25,7 @@ interface CTAQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
+  fullSizeCards: boolean;
 }
 
 export function CTAQuestion({
@@ -41,6 +42,7 @@ export function CTAQuestion({
   currentQuestionId,
   isBackButtonHidden,
   onOpenExternalURL,
+  fullSizeCards,
 }: Readonly<CTAQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -49,7 +51,7 @@ export function CTAQuestion({
 
   return (
     <div key={question.id}>
-      <ScrollableContainer>
+      <ScrollableContainer fullSizeCards={fullSizeCards}>
         <div>
           {isMediaAvailable ? (
             <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />

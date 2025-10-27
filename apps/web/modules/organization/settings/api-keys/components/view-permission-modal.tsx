@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import {
   TApiKeyUpdateInput,
@@ -64,7 +64,7 @@ export const ViewPermissionModal = ({
     return false;
   };
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
 
   const getProjectName = (environmentId: string) => {

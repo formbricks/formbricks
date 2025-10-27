@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -25,7 +25,7 @@ interface NPSSummaryProps {
 }
 
 export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {

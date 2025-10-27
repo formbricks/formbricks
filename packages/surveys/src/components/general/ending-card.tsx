@@ -24,6 +24,7 @@ interface EndingCardProps {
   variablesData: TResponseVariables;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   isPreviewMode: boolean;
+  fullSizeCards: boolean;
 }
 
 export function EndingCard({
@@ -38,6 +39,7 @@ export function EndingCard({
   variablesData,
   onOpenExternalURL,
   isPreviewMode,
+  fullSizeCards,
 }: EndingCardProps) {
   const { t } = useTranslation();
   const media =
@@ -112,7 +114,7 @@ export function EndingCard({
   }, [isCurrent]);
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>

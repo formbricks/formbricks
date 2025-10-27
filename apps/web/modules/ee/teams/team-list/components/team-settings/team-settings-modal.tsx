@@ -1,12 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -67,7 +67,7 @@ export const TeamSettingsModal = ({
   membershipRole,
   currentUserId,
 }: TeamSettingsModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const { isOwner, isManager, isMember } = getAccessFlags(membershipRole);
 

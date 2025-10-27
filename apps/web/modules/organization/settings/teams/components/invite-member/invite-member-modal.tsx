@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import {
@@ -41,7 +41,7 @@ export const InviteMemberModal = ({
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const tabs = {
     individual: (

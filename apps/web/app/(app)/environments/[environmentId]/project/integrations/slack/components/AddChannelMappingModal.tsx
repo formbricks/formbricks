@@ -1,12 +1,12 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CircleHelpIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationSlack,
@@ -54,7 +54,7 @@ export const AddChannelMappingModal = ({
   selectedIntegration,
 }: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
