@@ -14,6 +14,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
@@ -77,20 +78,21 @@ export const OrganizationBreadcrumb = ({
     if (isOrganizationDropdownOpen && organizations.length === 0 && !isLoadingOrganizations) {
       setIsLoadingOrganizations(true);
       setLoadError(null); // Clear any previous errors
-      getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId })
-        .then((result) => {
-          if (result?.data) {
-            // Sort organizations by name
-            const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
-            setOrganizations(sorted);
-          }
-        })
-        .catch((error) => {
-          logger.error("Failed to load organizations:", error);
+      getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
+        if (result?.data) {
+          // Sort organizations by name
+          const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
+          setOrganizations(sorted);
+        } else {
+          // Handle server errors or validation errors
+          const errorMessage = getFormattedErrorMessage(result);
+          const error = new Error(errorMessage);
+          logger.error(error, "Failed to load organizations");
           Sentry.captureException(error);
-          setLoadError(t("common.failed_to_load_organizations"));
-        })
-        .finally(() => setIsLoadingOrganizations(false));
+          setLoadError(errorMessage || t("common.failed_to_load_organizations"));
+        }
+        setIsLoadingOrganizations(false);
+      });
     }
   }, [isOrganizationDropdownOpen, currentOrganizationId, organizations.length, isLoadingOrganizations, t]);
 

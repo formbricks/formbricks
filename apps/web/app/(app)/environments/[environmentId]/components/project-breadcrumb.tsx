@@ -7,6 +7,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getProjectsForSwitcherAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
@@ -78,20 +79,21 @@ export const ProjectBreadcrumb = ({
     if (isProjectDropdownOpen && projects.length === 0 && !isLoadingProjects) {
       setIsLoadingProjects(true);
       setLoadError(null); // Clear any previous errors
-      getProjectsForSwitcherAction({ organizationId: currentOrganizationId })
-        .then((result) => {
-          if (result?.data) {
-            // Sort projects by name
-            const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
-            setProjects(sorted);
-          }
-        })
-        .catch((error) => {
-          logger.error("Failed to load projects:", error);
+      getProjectsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
+        if (result?.data) {
+          // Sort projects by name
+          const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
+          setProjects(sorted);
+        } else {
+          // Handle server errors or validation errors
+          const errorMessage = getFormattedErrorMessage(result);
+          const error = new Error(errorMessage);
+          logger.error(error, "Failed to load projects");
           Sentry.captureException(error);
-          setLoadError(t("common.failed_to_load_projects"));
-        })
-        .finally(() => setIsLoadingProjects(false));
+          setLoadError(errorMessage || t("common.failed_to_load_projects"));
+        }
+        setIsLoadingProjects(false);
+      });
     }
   }, [isProjectDropdownOpen, currentOrganizationId, projects.length, isLoadingProjects, t]);
 
