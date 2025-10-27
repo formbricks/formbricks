@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group"
 import { Switch } from "@/modules/ui/components/switch";
 
 export const ProjectLookSettingsLoading = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const placements = [
     { name: t("common.bottom_right"), value: "bottomRight", disabled: false },

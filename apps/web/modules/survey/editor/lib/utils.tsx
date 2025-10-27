@@ -1,4 +1,4 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -95,7 +95,7 @@ export const formatTextWithSlashes = (
   });
 };
 
-const getQuestionIconMapping = (t: TFnType) =>
+const getQuestionIconMapping = (t: TFunction) =>
   getQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
@@ -106,7 +106,7 @@ const getQuestionIconMapping = (t: TFnType) =>
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
-  t: TFnType,
+  t: TFunction,
   currQuestionIdx?: number // Optional in case of quotas
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
@@ -225,7 +225,7 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
   return modifiedSurvey;
 };
 
-export const getActionObjectiveOptions = (t: TFnType): TComboboxOption[] => [
+export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] => [
   { label: t("environments.surveys.edit.calculate"), value: "calculate" },
   { label: t("environments.surveys.edit.require_answer"), value: "requireAnswer" },
   { label: t("environments.surveys.edit.jump_to_question"), value: "jumpToQuestion" },
@@ -237,7 +237,7 @@ export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean =
 
 export const getQuestionOperatorOptions = (
   question: TSurveyQuestion,
-  t: TFnType,
+  t: TFunction,
   condition?: TSingleCondition
 ): TComboboxOption[] => {
   let options: TLogicRuleOption;
@@ -262,7 +262,7 @@ export const getQuestionOperatorOptions = (
 
 export const getDefaultOperatorForQuestion = (
   question: TSurveyQuestion,
-  t: TFnType
+  t: TFunction
 ): TSurveyLogicConditionsOperator => {
   const options = getQuestionOperatorOptions(question, t);
 
@@ -284,7 +284,7 @@ export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurv
 export const getConditionOperatorOptions = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
-  t: TFnType
+  t: TFunction
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
     const variables = localSurvey.variables ?? [];
@@ -313,7 +313,7 @@ export const getConditionOperatorOptions = (
 export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
-  t: TFnType,
+  t: TFunction,
   questionIdx?: number
 ): {
   show?: boolean;
@@ -918,7 +918,7 @@ export const getActionTargetOptions = (
   action: TSurveyLogicAction,
   localSurvey: TSurvey,
   currQuestionIdx: number,
-  t: TFnType
+  t: TFunction
 ): TComboboxOption[] => {
   let questions = localSurvey.questions.filter((_, idx) => idx > currQuestionIdx);
 
@@ -966,7 +966,7 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
 };
 
 export const getActionOperatorOptions = (
-  t: TFnType,
+  t: TFunction,
   variableType?: TSurveyVariable["type"]
 ): TComboboxOption[] => {
   if (variableType === "number") {
@@ -1011,7 +1011,7 @@ export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
   questionIdx: number,
-  t: TFnType
+  t: TFunction
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
@@ -1427,7 +1427,7 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
-export const getSurveyFollowUpActionDefaultBody = (t: TFnType): string => {
+export const getSurveyFollowUpActionDefaultBody = (t: TFunction): string => {
   return t("templates.follow_ups_modal_action_body")
     .replaceAll(/[\u200B-\u200D\uFEFF]/g, "")
     .trim();

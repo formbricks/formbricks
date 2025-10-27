@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import DOMPurify from "dompurify";
 import { CopyIcon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
@@ -21,7 +21,7 @@ interface EmailTabProps {
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [activeTab, setActiveTab] = useState("preview");
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const emailHtml = useMemo(() => {
     if (!emailHtmlPreview) return "";

@@ -48,7 +48,6 @@
       "duplicate_files": "The following files are already uploaded: {duplicateNames}. Duplicate files are not allowed.",
       "file_size_exceeded": "The following file(s) exceed the maximum size of {maxSizeInMB} MB and were removed: {fileNames}",
       "file_size_exceeded_alert": "File should be less than {maxSizeInMB} MB",
-      "native_upload_failed": "Error uploading native file.",
       "no_valid_file_types_selected": "No valid file types selected. Please select a valid file type.",
       "only_one_file_can_be_uploaded_at_a_time": "Only one file can be uploaded at a time.",
       "upload_failed": "Upload failed! Please try again.",

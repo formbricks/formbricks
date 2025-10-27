@@ -1,5 +1,6 @@
 import { getSurveys } from "@/lib/survey/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
 import { WebhookRowData } from "@/modules/integrations/webhooks/components/webhook-row-data";
@@ -9,7 +10,6 @@ import { getWebhooks } from "@/modules/integrations/webhooks/lib/webhook";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 
 export const WebhooksPage = async (props) => {
   const params = await props.params;

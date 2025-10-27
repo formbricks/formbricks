@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { LanguagesIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
@@ -48,7 +48,7 @@ export const SingleResponseCardHeader = ({
     ? getContactIdentifier(response.contact, response.contactAttributes)
     : null;
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const environmentId = survey.environmentId;
   const canResponseBeDeleted = response.finished
     ? true

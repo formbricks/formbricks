@@ -1,10 +1,10 @@
 "use client";
 
 import { Environment, Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
@@ -68,7 +68,7 @@ export const PreviewSurvey = ({
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");

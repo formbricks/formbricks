@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import {
   TShuffleOption,
   TSurveyCTAQuestion,
@@ -21,10 +21,10 @@ import {
 import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 
-const getDefaultButtonLabel = (label: string | undefined, t: TFnType) =>
+const getDefaultButtonLabel = (label: string | undefined, t: TFunction) =>
   createI18nString(label || t("common.next"), []);
 
-const getDefaultBackButtonLabel = (label: string | undefined, t: TFnType) =>
+const getDefaultBackButtonLabel = (label: string | undefined, t: TFunction) =>
   createI18nString(label || t("common.back"), []);
 
 export const buildMultipleChoiceQuestion = ({
@@ -54,7 +54,7 @@ export const buildMultipleChoiceQuestion = ({
   required?: boolean;
   logic?: TSurveyLogic[];
   containsOther?: boolean;
-  t: TFnType;
+  t: TFunction;
 }): TSurveyMultipleChoiceQuestion => {
   return {
     id: id ?? createId(),
@@ -97,7 +97,7 @@ export const buildOpenTextQuestion = ({
   logic?: TSurveyLogic[];
   inputType: TSurveyOpenTextQuestionInputType;
   longAnswer?: boolean;
-  t: TFnType;
+  t: TFunction;
 }): TSurveyOpenTextQuestion => {
   return {
     id: id ?? createId(),
@@ -145,7 +145,7 @@ export const buildRatingQuestion = ({
   required?: boolean;
   logic?: TSurveyLogic[];
   isColorCodingEnabled?: boolean;
-  t: TFnType;
+  t: TFunction;
 }): TSurveyRatingQuestion => {
   return {
     id: id ?? createId(),
@@ -188,7 +188,7 @@ export const buildNPSQuestion = ({
   required?: boolean;
   logic?: TSurveyLogic[];
   isColorCodingEnabled?: boolean;
-  t: TFnType;
+  t: TFunction;
 }): TSurveyNPSQuestion => {
   return {
     id: id ?? createId(),
@@ -224,7 +224,7 @@ export const buildConsentQuestion = ({
   required?: boolean;
   logic?: TSurveyLogic[];
   label: string;
-  t: TFnType;
+  t: TFunction;
 }): TSurveyConsentQuestion => {
   return {
     id: id ?? createId(),
@@ -262,7 +262,7 @@ export const buildCTAQuestion = ({
   logic?: TSurveyLogic[];
   dismissButtonLabel?: string;
   buttonUrl?: string;
-  t: TFnType;
+  t: TFunction;
 }): TSurveyCTAQuestion => {
   return {
     id: id ?? createId(),
@@ -343,7 +343,7 @@ export const createChoiceJumpLogic = (
   ],
 });
 
-export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFnType): TSurveyEndScreenCard => {
+export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFunction): TSurveyEndScreenCard => {
   const languageCodes = extractLanguageCodes(languages);
   return {
     id: createId(),
@@ -360,7 +360,7 @@ export const hiddenFieldsDefault: TSurveyHiddenFields = {
   fieldIds: [],
 };
 
-export const getDefaultWelcomeCard = (t: TFnType): TSurveyWelcomeCard => {
+export const getDefaultWelcomeCard = (t: TFunction): TSurveyWelcomeCard => {
   return {
     enabled: false,
     headline: createI18nString(t("templates.default_welcome_card_headline"), []),
@@ -371,7 +371,7 @@ export const getDefaultWelcomeCard = (t: TFnType): TSurveyWelcomeCard => {
   };
 };
 
-export const getDefaultSurveyPreset = (t: TFnType): TTemplate["preset"] => {
+export const getDefaultSurveyPreset = (t: TFunction): TTemplate["preset"] => {
   return {
     name: "New Survey",
     welcomeCard: getDefaultWelcomeCard(t),
@@ -397,7 +397,7 @@ export const buildSurvey = (
     endings?: TSurveyEnding[];
     hiddenFields?: TSurveyHiddenFields;
   },
-  t: TFnType
+  t: TFunction
 ): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return {

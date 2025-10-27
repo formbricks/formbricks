@@ -1,6 +1,6 @@
+import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { SignIn } from "@/modules/auth/verify/components/sign-in";
-import { getTranslate } from "@/tolgee/server";
 
 export const VerifyPage = async ({ searchParams }) => {
   const t = await getTranslate();

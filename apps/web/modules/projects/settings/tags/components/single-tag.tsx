@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TTag } from "@formbricks/types/tags";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -39,7 +39,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
   environmentTags,
   isReadOnly = false,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [updateTagError, setUpdateTagError] = useState(false);
   const [isMergingTags, setIsMergingTags] = useState(false);

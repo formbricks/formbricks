@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TabContainer } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/tab-container";
 import {
   LinkTabsType,
@@ -41,7 +41,7 @@ interface ShareViewProps {
 }
 
 export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isLargeScreen, setIsLargeScreen] = useState(true);
 
   useEffect(() => {
