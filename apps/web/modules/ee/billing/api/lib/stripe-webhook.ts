@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import { STRIPE_API_VERSION } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { handleCheckoutSessionCompleted } from "@/modules/ee/billing/api/lib/checkout-session-completed";
+import { handleInvoiceFinalized } from "@/modules/ee/billing/api/lib/invoice-finalized";
 import { handleSubscriptionDeleted } from "@/modules/ee/billing/api/lib/subscription-deleted";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
@@ -24,6 +25,8 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
 
   if (event.type === "checkout.session.completed") {
     await handleCheckoutSessionCompleted(event);
+  } else if (event.type === "invoice.finalized") {
+    await handleInvoiceFinalized(event);
   } else if (event.type === "customer.subscription.deleted") {
     await handleSubscriptionDeleted(event);
   }
