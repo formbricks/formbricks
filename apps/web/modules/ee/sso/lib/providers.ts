@@ -14,6 +14,7 @@ import {
   OIDC_CLIENT_SECRET,
   OIDC_DISPLAY_NAME,
   OIDC_ISSUER,
+  OIDC_ISSUER_INTERNAL,
   OIDC_SIGNING_ALGORITHM,
   WEBAPP_URL,
 } from "@/lib/constants";
@@ -39,7 +40,11 @@ export const getSSOProviders = () => [
     type: "oauth" as const,
     clientId: OIDC_CLIENT_ID || "",
     clientSecret: OIDC_CLIENT_SECRET || "",
-    wellKnown: `${OIDC_ISSUER}/.well-known/openid-configuration`,
+    // Use OIDC_ISSUER_INTERNAL for server-side token validation if set,
+    // otherwise fall back to OIDC_ISSUER (maintains backward compatibility)
+    wellKnown: `${OIDC_ISSUER_INTERNAL || OIDC_ISSUER}/.well-known/openid-configuration`,
+    // Use regular OIDC_ISSUER for authorization (browser redirects)
+    issuer: OIDC_ISSUER,
     authorization: { params: { scope: "openid email profile" } },
     idToken: true,
     client: {

@@ -52,6 +52,7 @@ export const env = createEnv({
     OIDC_CLIENT_SECRET: z.string().optional(),
     OIDC_DISPLAY_NAME: z.string().optional(),
     OIDC_ISSUER: z.string().optional(),
+    OIDC_ISSUER_INTERNAL: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
     OPENTELEMETRY_LISTENER_URL: z.string().optional(),
     REDIS_URL:
@@ -182,6 +183,7 @@ export const env = createEnv({
     OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET,
     OIDC_DISPLAY_NAME: process.env.OIDC_DISPLAY_NAME,
     OIDC_ISSUER: process.env.OIDC_ISSUER,
+    OIDC_ISSUER_INTERNAL: process.env.OIDC_ISSUER_INTERNAL,
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
     REDIS_URL: process.env.REDIS_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
