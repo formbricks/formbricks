@@ -7,9 +7,9 @@ import { getResponsesByContactId } from "@/lib/response/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTranslate } from "@/tolgee/server";
 import { ResponseTimeline } from "./response-timeline";
 
 interface ResponseSectionProps {

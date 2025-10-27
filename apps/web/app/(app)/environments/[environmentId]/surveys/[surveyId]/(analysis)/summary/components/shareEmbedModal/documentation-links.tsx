@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 
 interface DocumentationLinksProps {
@@ -12,7 +12,7 @@ interface DocumentationLinksProps {
 }
 
 export const DocumentationLinks = ({ links }: DocumentationLinksProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="flex w-full flex-col space-y-2">

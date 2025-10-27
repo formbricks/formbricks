@@ -1,9 +1,9 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { JSX, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
@@ -44,7 +44,7 @@ export const OpenQuestionForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: OpenQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const questionTypes = [
     { value: "text", label: t("common.text"), icon: <MessageSquareTextIcon className="h-4 w-4" /> },
     { value: "email", label: t("common.email"), icon: <MailIcon className="h-4 w-4" /> },

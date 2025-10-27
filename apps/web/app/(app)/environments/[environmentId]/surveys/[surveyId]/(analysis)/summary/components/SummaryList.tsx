@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TI18nString, TSurveyQuestionId, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -43,7 +43,7 @@ interface SummaryListProps {
 
 export const SummaryList = ({ summary, environment, responseCount, survey, locale }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const setFilter = (
     questionId: TSurveyQuestionId,
     label: TI18nString,

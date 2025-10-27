@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TConditionGroup, TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { createSharedConditionsFactory } from "@/modules/survey/editor/lib/shared-conditions-factory";
 import { getDefaultOperatorForQuestion } from "@/modules/survey/editor/lib/utils";
@@ -25,7 +25,7 @@ export function LogicEditorConditions({
   updateQuestion,
   depth = 0,
 }: LogicEditorConditionsProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const { config, callbacks } = createSharedConditionsFactory(
     {

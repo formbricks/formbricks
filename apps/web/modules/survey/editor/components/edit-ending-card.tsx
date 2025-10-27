@@ -4,10 +4,10 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TSurvey,
@@ -64,7 +64,7 @@ export const EditEndingCard = ({
   quotas,
   isExternalUrlsAllowed,
 }: EditEndingCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const endingCard = useMemo(
     () => localSurvey.endings[endingCardIndex],

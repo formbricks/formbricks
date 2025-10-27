@@ -1,4 +1,4 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { TSurvey, TSurveyQuestionId, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const convertFloatToNDecimal = (num: number, N: number = 2) => {
@@ -14,7 +14,7 @@ export const constructToastMessage = (
   filterValue: string,
   survey: TSurvey,
   questionId: TSurveyQuestionId,
-  t: TFnType,
+  t: TFunction,
   filterComboBoxValue?: string | string[]
 ) => {
   const questionIdx = survey.questions.findIndex((question) => question.id === questionId);

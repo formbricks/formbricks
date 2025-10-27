@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@/lib/utils/video-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
@@ -26,7 +26,7 @@ export const VideoSettings = ({
   videoUrl,
   setVideoUrlTemp,
 }: VideoSettingsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isYoutubeLink, setIsYoutubeLink] = useState(checkForYoutubeUrl(uploadedVideoUrl));
   const [isYoutubePrivacyModeEnabled, setIsYoutubePrivacyModeEnabled] = useState(
     checkForYoutubePrivacyMode(uploadedVideoUrl)

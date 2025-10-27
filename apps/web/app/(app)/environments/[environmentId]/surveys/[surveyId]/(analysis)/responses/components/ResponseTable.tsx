@@ -15,9 +15,9 @@ import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Sentry from "@sentry/nextjs";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
@@ -74,7 +74,7 @@ export const ResponseTable = ({
   isQuotasAllowed,
   quotas,
 }: ResponseTableProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);

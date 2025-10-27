@@ -2,8 +2,8 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -60,7 +60,7 @@ export const QuestionOptionChoice = ({
   locale,
   isStorageConfigured,
 }: ChoiceProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const isSpecialChoice = choice.id === "other" || choice.id === "none";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,

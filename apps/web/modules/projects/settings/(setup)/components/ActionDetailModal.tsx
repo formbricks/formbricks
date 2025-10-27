@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
@@ -31,7 +31,7 @@ export const ActionDetailModal = ({
   otherEnvActionClasses,
   otherEnvironment,
 }: ActionDetailModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const tabs = [
     {
       title: t("common.activity"),

@@ -1,7 +1,6 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { useTranslate } from "@tolgee/react";
 import {
   BuildingIcon,
   ChevronDownIcon,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
@@ -54,7 +54,7 @@ export const OrganizationBreadcrumb = ({
   isMember,
   isOwnerOrManager,
 }: OrganizationBreadcrumbProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const pathname = usePathname();

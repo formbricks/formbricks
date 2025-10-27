@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { AccessTable } from "@/modules/ee/teams/project-teams/components/access-table";
 import { ManageTeam } from "@/modules/ee/teams/project-teams/components/manage-team";
@@ -13,7 +13,7 @@ interface AccessViewProps {
 }
 
 export const AccessView = ({ teams, environmentId, isOwnerOrManager }: AccessViewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <>
       <SettingsCard

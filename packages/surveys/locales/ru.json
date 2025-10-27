@@ -48,7 +48,6 @@
       "duplicate_files": "Следующие файлы уже загружены: {duplicateNames}. Дублирующие файлы не допускаются.",
       "file_size_exceeded": "Следующие файлы превышают максимальный размер {maxSizeInMB} МБ и были удалены: {fileNames}",
       "file_size_exceeded_alert": "Файл должен быть меньше {maxSizeInMB} МБ",
-      "native_upload_failed": "Ошибка загрузки исходного файла.",
       "no_valid_file_types_selected": "Не выбраны допустимые типы файлов. Пожалуйста, выберите допустимый тип файла.",
       "only_one_file_can_be_uploaded_at_a_time": "Можно загрузить только один файл за раз.",
       "upload_failed": "Ошибка загрузки! Пожалуйста, попробуйте снова.",
