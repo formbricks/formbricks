@@ -42,7 +42,7 @@ interface NavigationProps {
   environment: TEnvironment;
   user: TUser;
   organization: TOrganization;
-  projects: { id: string; name: string }[];
+  project: { id: string; name: string };
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
@@ -52,7 +52,7 @@ export const MainNavigation = ({
   environment,
   organization,
   user,
-  projects,
+  project,
   membershipRole,
   isFormbricksCloud,
   isDevelopment,
@@ -65,7 +65,6 @@ export const MainNavigation = ({
   const [latestVersion, setLatestVersion] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
-  const project = projects.find((project) => project.id === environment.projectId);
   const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
 
   const isOwnerOrManager = isManager || isOwner;
