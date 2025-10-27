@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/preact";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { getXMSurveyDefault, getXMTemplates } from "./xm-templates";
 
@@ -14,7 +14,7 @@ describe("xm-templates", () => {
   });
 
   test("getXMSurveyDefault returns default survey template", () => {
-    const tMock = vi.fn((key) => key) as TFnType;
+    const tMock = vi.fn((key) => key) as TFunction;
     const result = getXMSurveyDefault(tMock);
 
     expect(result).toEqual({
@@ -29,7 +29,7 @@ describe("xm-templates", () => {
   });
 
   test("getXMTemplates returns all templates", () => {
-    const tMock = vi.fn((key) => key) as TFnType;
+    const tMock = vi.fn((key) => key) as TFunction;
     const result = getXMTemplates(tMock);
 
     expect(result).toHaveLength(6);
@@ -44,7 +44,7 @@ describe("xm-templates", () => {
   test("getXMTemplates handles errors gracefully", async () => {
     const tMock = vi.fn(() => {
       throw new Error("Test error");
-    }) as TFnType;
+    }) as TFunction;
 
     const result = getXMTemplates(tMock);
 

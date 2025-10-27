@@ -1,8 +1,8 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   TActionNumberVariableCalculateOperator,
   TActionObjective,
@@ -50,7 +50,7 @@ export function LogicEditorActions({
   questionIdx,
 }: LogicEditorActions) {
   const actions = logicItem.actions;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
     actionIdx: number,

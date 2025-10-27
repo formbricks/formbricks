@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 
@@ -18,7 +18,7 @@ interface TwoFactorBackupProps {
 }
 
 export const TwoFactorBackup = ({ form }: TwoFactorBackupProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="mb-2 transition-all duration-500 ease-in-out">

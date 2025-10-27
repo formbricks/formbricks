@@ -6,11 +6,11 @@ import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboardin
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
 import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
 import { getUserProjects } from "@/lib/project/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
-import { getTranslate } from "@/tolgee/server";
 
 interface ProjectSettingsPageProps {
   params: Promise<{

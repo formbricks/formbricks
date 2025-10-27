@@ -2,10 +2,10 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -27,7 +27,7 @@ export const ResponseOptionsCard = ({
   responseCount,
   isSpamProtectionAllowed,
 }: ResponseOptionsCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);

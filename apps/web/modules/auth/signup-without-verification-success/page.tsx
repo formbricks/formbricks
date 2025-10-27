@@ -1,7 +1,7 @@
 import { getEmailFromEmailToken } from "@/lib/jwt";
+import { getTranslate } from "@/lingodotdev/server";
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
-import { T, getTranslate } from "@/tolgee/server";
 
 export const SignupWithoutVerificationSuccessPage = async ({ searchParams }) => {
   const t = await getTranslate();
@@ -14,10 +14,7 @@ export const SignupWithoutVerificationSuccessPage = async ({ searchParams }) => 
         {t("auth.signup_without_verification_success.user_successfully_created")}
       </h1>
       <p className="text-center text-sm">
-        <T
-          keyName="auth.signup_without_verification_success.user_successfully_created_info"
-          params={{ email, span: <span /> }}
-        />
+        <span>{t("auth.signup_without_verification_success.user_successfully_created_info", { email })}</span>
       </p>
       <hr className="my-4" />
       <BackToLoginButton />

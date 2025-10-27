@@ -1,11 +1,12 @@
 "use client";
 
 import { Language } from "@prisma/client";
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import type { TProject } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
@@ -36,7 +37,7 @@ const checkIfDuplicateExists = (arr: string[]) => {
   return new Set(arr).size !== arr.length;
 };
 
-const validateLanguages = (languages: Language[], t: TFnType) => {
+const validateLanguages = (languages: Language[], t: TFunction) => {
   const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
   const languageAliases = languages
     .filter((language) => language.alias)
@@ -82,7 +83,7 @@ export function EditLanguage({
   environmentId,
   isFormbricksCloud,
 }: EditLanguageProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [languages, setLanguages] = useState<Language[]>(project.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
@@ -286,7 +287,7 @@ const EditSaveButtons: React.FC<{
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
-  t: TFnType;
+  t: TFunction;
 }> = ({ isEditing, onEdit, onSave, onCancel, disabled, t }) =>
   isEditing ? (
     <div className="flex gap-4">

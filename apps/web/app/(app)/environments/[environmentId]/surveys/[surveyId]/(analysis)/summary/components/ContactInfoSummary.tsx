@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyQuestionSummaryContactInfo } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -23,7 +23,7 @@ export const ContactInfoSummary = ({
   survey,
   locale,
 }: ContactInfoSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />

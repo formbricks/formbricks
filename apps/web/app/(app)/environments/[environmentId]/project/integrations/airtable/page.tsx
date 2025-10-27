@@ -7,11 +7,11 @@ import { getAirtableTables } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { getIntegrations } from "@/lib/integration/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 
 const Page = async (props) => {
   const params = await props.params;

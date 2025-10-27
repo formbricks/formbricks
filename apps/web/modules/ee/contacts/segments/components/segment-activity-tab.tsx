@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -15,7 +15,7 @@ interface SegmentActivityTabProps {
 }
 
 export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const activeSurveys = currentSegment?.activeSurveys;
   const inactiveSurveys = currentSegment?.inactiveSurveys;
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { LockIcon, MailIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -32,7 +32,7 @@ export const FollowUpsView = ({
   teamMemberDetails,
   locale,
 }: FollowUpsViewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
 
   const surveyFollowUps: TSurveyFollowUp[] = localSurvey.followUps.filter((f) => !f.deleted);

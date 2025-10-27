@@ -1,9 +1,9 @@
 "use client";
 
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { Variants, motion } from "framer-motion";
 import { Fragment, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
@@ -55,7 +55,7 @@ export const ThemeStylingPreviewSurvey = ({
   const [previewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { projectOverwrites } = survey || {};
 
   const previewScreenVariants: Variants = {

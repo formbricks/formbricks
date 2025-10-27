@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -39,7 +39,7 @@ export const MembersInfo = ({
   isUserManagementDisabledFromUi,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const getMembershipBadge = (member: TMember | TInvite) => {
     if (isInvitee(member)) {

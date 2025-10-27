@@ -34,6 +34,7 @@ interface RankingQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  fullSizeCards: boolean;
 }
 
 export function RankingQuestion({
@@ -50,6 +51,7 @@ export function RankingQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  fullSizeCards,
 }: Readonly<RankingQuestionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -156,7 +158,7 @@ export function RankingQuestion({
   };
 
   return (
-    <ScrollableContainer ref={scrollableRef}>
+    <ScrollableContainer ref={scrollableRef} fullSizeCards={fullSizeCards}>
       <form onSubmit={handleSubmit} className="fb-w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline

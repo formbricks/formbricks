@@ -18,8 +18,8 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
 import { getQuestionResponseMapping } from "@/lib/responses";
+import { getTranslate } from "@/lingodotdev/server";
 import { renderEmailResponseValue } from "@/modules/email/emails/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 
 const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";

@@ -1,4 +1,4 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -455,7 +455,7 @@ describe("validation.validateSurveyQuestionsInBatch", () => {
 });
 
 describe("validation.isSurveyValid", () => {
-  const mockT: TFnType = ((key: string) => key) as TFnType;
+  const mockT: TFunction = ((key: string) => key) as TFunction;
   let baseSurvey: TSurvey;
 
   beforeEach(() => {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { TI18nString, TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getTextContent, isValidHTML } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
@@ -61,7 +61,7 @@ export function LocalizedEditor({
   autoFocus,
   isExternalUrlsAllowed,
 }: Readonly<LocalizedEditorProps>) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const isInComplete = useMemo(
     () => checkIfValueIsIncomplete(id, isInvalid, localSurvey.languages, value),

@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
@@ -34,7 +34,7 @@ export const ManageIntegration = ({
   setSelectedIntegration,
   locale,
 }: ManageIntegrationProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   let integrationArray: TIntegrationGoogleSheetsConfigData[] = [];
   if (googleSheetIntegration?.config.data) {

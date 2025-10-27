@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import DOMpurify from "isomorphic-dompurify";
 import {
   ArrowDownIcon,
@@ -16,6 +15,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -94,7 +94,7 @@ export const FollowUpModal = ({
   setLocalSurvey,
   locale,
 }: AddFollowUpModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);

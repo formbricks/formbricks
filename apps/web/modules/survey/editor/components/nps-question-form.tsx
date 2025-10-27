@@ -1,9 +1,9 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -38,7 +38,7 @@ export const NPSQuestionForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: NPSQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [parent] = useAutoAnimate();
 

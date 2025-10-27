@@ -2,8 +2,8 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { FileDigitIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -27,7 +27,7 @@ export const SurveyVariablesCard = ({
   quotas,
 }: SurveyVariablesCardProps) => {
   const open = activeQuestionId === variablesCardId;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
   const setOpenState = (state: boolean) => {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 
 interface EmailChangeSignInProps {
@@ -10,7 +10,7 @@ interface EmailChangeSignInProps {
 }
 
 export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [status, setStatus] = useState<"success" | "error" | "loading">("loading");
 
   useEffect(() => {

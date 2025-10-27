@@ -1,10 +1,10 @@
 "use client";
 
 import { SurveyType } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
@@ -27,7 +27,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   ContentRef,
   onBackgroundLoaded,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
   const [authorDetailsForUnsplash, setAuthorDetailsForUnsplash] = useState({ authorName: "", authorURL: "" });

@@ -6,10 +6,10 @@ import { getEnvironment } from "@/lib/environment/service";
 import { getProjectByEnvironmentId, getUserProjects } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
-import { getTranslate } from "@/tolgee/server";
 
 interface XMTemplatePageProps {
   params: Promise<{

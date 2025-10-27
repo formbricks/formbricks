@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -30,7 +30,7 @@ const passwordInputProps = {
 };
 
 export const ResetPasswordForm = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
@@ -41,7 +41,7 @@ export const PricingTable = ({
   stripePriceLookupKeys,
   hasBillingRights,
 }: PricingTableProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>(
     organization.billing.period ?? "monthly"
   );
