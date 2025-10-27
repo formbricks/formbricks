@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import DatePicker from "react-date-picker";
-import { DatePickerProps } from "react-date-picker";
+import DatePicker, { DatePickerProps } from "react-date-picker";
 import { useTranslation } from "react-i18next";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -31,6 +30,7 @@ interface DateQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  fullSizeCards: boolean;
 }
 
 function CalendarIcon() {
@@ -95,6 +95,7 @@ export function DateQuestion({
   ttc,
   currentQuestionId,
   isBackButtonHidden,
+  fullSizeCards,
 }: Readonly<DateQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
@@ -137,7 +138,7 @@ export function DateQuestion({
   }, [selectedDate]);
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {
