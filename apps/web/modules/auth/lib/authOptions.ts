@@ -31,6 +31,7 @@ import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import { createBrevoCustomer } from "./brevo";
 
 export const authOptions: NextAuthOptions = {
+  debug: true,
   providers: [
     CredentialsProvider({
       id: "credentials",
