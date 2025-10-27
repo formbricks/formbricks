@@ -45,7 +45,7 @@ interface QuestionConditionalProps {
   isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function QuestionConditional({
@@ -68,7 +68,7 @@ export function QuestionConditional({
   isBackButtonHidden,
   onOpenExternalURL,
   dir,
-  fullSizeCards = false,
+  fullSizeCards,
 }: QuestionConditionalProps) {
   const getResponseValueForRankingQuestion = (
     value: string[],

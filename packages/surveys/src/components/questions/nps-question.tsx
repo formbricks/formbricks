@@ -26,7 +26,7 @@ interface NPSQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function NPSQuestion({
@@ -43,6 +43,7 @@ export function NPSQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<NPSQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
@@ -71,7 +72,7 @@ export function NPSQuestion({
   };
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

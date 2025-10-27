@@ -26,7 +26,7 @@ interface MultipleChoiceMultiProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function MultipleChoiceMultiQuestion({

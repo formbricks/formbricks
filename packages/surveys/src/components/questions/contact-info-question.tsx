@@ -28,7 +28,7 @@ interface ContactInfoQuestionProps {
   autoFocusEnabled: boolean;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function ContactInfoQuestion({
@@ -46,6 +46,7 @@ export function ContactInfoQuestion({
   autoFocusEnabled,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<ContactInfoQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -118,7 +119,7 @@ export function ContactInfoQuestion({
   );
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline

@@ -25,7 +25,7 @@ interface CTAQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function CTAQuestion({

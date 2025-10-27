@@ -30,7 +30,7 @@ interface DateQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 function CalendarIcon() {

@@ -29,7 +29,7 @@ interface CalQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function CalQuestion({

@@ -29,7 +29,7 @@ interface MatrixQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function MatrixQuestion({

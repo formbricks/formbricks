@@ -25,7 +25,7 @@ interface ConsentQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function ConsentQuestion({

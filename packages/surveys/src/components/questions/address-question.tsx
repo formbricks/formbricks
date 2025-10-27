@@ -28,7 +28,7 @@ interface AddressQuestionProps {
   autoFocusEnabled: boolean;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export function AddressQuestion({

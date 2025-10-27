@@ -692,6 +692,7 @@ export function Survey({
             isCurrent={offset === 0}
             responseData={responseData}
             variablesData={currentVariables}
+            fullSizeCards={fullSizeCards}
           />
         );
       } else if (questionIdx >= localSurvey.questions.length) {
@@ -712,6 +713,7 @@ export function Survey({
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
+              fullSizeCards={fullSizeCards}
             />
           );
         }

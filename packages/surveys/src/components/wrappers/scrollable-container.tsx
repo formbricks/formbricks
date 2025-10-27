@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface ScrollableContainerProps {
   children: JSX.Element;
-  fullSizeCards?: boolean;
+  fullSizeCards: boolean;
 }
 
 export interface ScrollableContainerHandle {
@@ -62,6 +62,15 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
       checkScroll();
     }, [children]);
 
+    let maxHeight: string;
+    if (fullSizeCards) {
+      maxHeight = "calc(100vh - 6rem)";
+    } else if (isSurveyPreview) {
+      maxHeight = "42dvh";
+    } else {
+      maxHeight = "60dvh";
+    }
+
     return (
       <div className="fb-relative">
         {!isAtTop && (
@@ -70,7 +79,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
         <div
           ref={containerRef}
           style={{
-            maxHeight: fullSizeCards ? "calc(100vh - 4rem)" : isSurveyPreview ? "42dvh" : "60dvh",
+            maxHeight,
           }}
           className={cn("fb-overflow-auto fb-px-4 fb-bg-survey-bg")}>
           {children}
