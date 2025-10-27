@@ -75,8 +75,8 @@ export const ProjectBreadcrumb = ({
 
   // Lazy-load projects when dropdown opens
   useEffect(() => {
-    // Only fetch when dropdown opened for first time
-    if (isProjectDropdownOpen && projects.length === 0 && !isLoadingProjects) {
+    // Only fetch when dropdown opened for first time (and no error state)
+    if (isProjectDropdownOpen && projects.length === 0 && !isLoadingProjects && !loadError) {
       setIsLoadingProjects(true);
       setLoadError(null); // Clear any previous errors
       getProjectsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
@@ -95,7 +95,7 @@ export const ProjectBreadcrumb = ({
         setIsLoadingProjects(false);
       });
     }
-  }, [isProjectDropdownOpen, currentOrganizationId, projects.length, isLoadingProjects, t]);
+  }, [isProjectDropdownOpen, currentOrganizationId, projects.length, isLoadingProjects, loadError, t]);
 
   const projectSettings = [
     {

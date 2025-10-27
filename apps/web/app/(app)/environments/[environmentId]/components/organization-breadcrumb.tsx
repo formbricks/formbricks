@@ -74,8 +74,8 @@ export const OrganizationBreadcrumb = ({
 
   // Lazy-load organizations when dropdown opens
   useEffect(() => {
-    // Only fetch when dropdown opened for first time
-    if (isOrganizationDropdownOpen && organizations.length === 0 && !isLoadingOrganizations) {
+    // Only fetch when dropdown opened for first time (and no error state)
+    if (isOrganizationDropdownOpen && organizations.length === 0 && !isLoadingOrganizations && !loadError) {
       setIsLoadingOrganizations(true);
       setLoadError(null); // Clear any previous errors
       getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
@@ -94,7 +94,14 @@ export const OrganizationBreadcrumb = ({
         setIsLoadingOrganizations(false);
       });
     }
-  }, [isOrganizationDropdownOpen, currentOrganizationId, organizations.length, isLoadingOrganizations, t]);
+  }, [
+    isOrganizationDropdownOpen,
+    currentOrganizationId,
+    organizations.length,
+    isLoadingOrganizations,
+    loadError,
+    t,
+  ]);
 
   if (!currentOrganization) {
     const errorMessage = `Organization not found for organization id: ${currentOrganizationId}`;
