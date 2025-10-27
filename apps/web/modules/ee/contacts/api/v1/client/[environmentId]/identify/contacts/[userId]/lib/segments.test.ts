@@ -1,21 +1,23 @@
-import {
-  getPersonSegmentIds,
-  getSegments,
-} from "@/modules/ee/contacts/api/v1/client/[environmentId]/user/lib/segments";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
+import {
+  getPersonSegmentIds,
+  getSegments,
+} from "@/modules/ee/contacts/api/v1/client/[environmentId]/user/lib/segments";
+import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
 // Mock the cache functions
-vi.mock("@/modules/cache/lib/withCache", () => ({
-  withCache: vi.fn((fn) => fn), // Just execute the function without caching for tests
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    withCache: vi.fn(async (fn) => await fn()), // Just execute the function without caching for tests
+  },
 }));
 
-vi.mock("@/modules/cache/lib/cacheKeys", () => ({
+vi.mock("@formbricks/cache", () => ({
   createCacheKey: {
     environment: {
       segments: vi.fn((environmentId) => `segments-${environmentId}`),

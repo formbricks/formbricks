@@ -1,11 +1,11 @@
 "use client";
 
-import { convertDateTimeStringShort } from "@/lib/time";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
-import { Label } from "@/modules/ui/components/label";
 import { Webhook } from "@prisma/client";
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { convertDateTimeStringShort } from "@/lib/time";
+import { Label } from "@/modules/ui/components/label";
 
 interface ActivityTabProps {
   webhook: Webhook;
@@ -23,7 +23,7 @@ const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): stri
   }
 };
 
-const convertTriggerIdToName = (triggerId: string, t: TFnType): string => {
+const convertTriggerIdToName = (triggerId: string, t: TFunction): string => {
   switch (triggerId) {
     case "responseCreated":
       return t("environments.integrations.webhooks.response_created");
@@ -37,7 +37,7 @@ const convertTriggerIdToName = (triggerId: string, t: TFnType): string => {
 };
 
 export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
@@ -50,8 +50,8 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
           <Label className="text-slate-500">
             {t("environments.integrations.webhooks.created_by_third_party")}
           </Label>
-          <p className="text-sm text-slate-900">
-            {webhook.source === "user" ? "No" : capitalizeFirstLetter(webhook.source)}
+          <p className="text-sm capitalize text-slate-900">
+            {webhook.source === "user" ? "No" : webhook.source}
           </p>
         </div>
 

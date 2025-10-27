@@ -1,8 +1,8 @@
-import { surveyIdSchema } from "@/modules/api/v2/management/surveys/[surveyId]/types/survey";
-import { ZSurveyInput } from "@/modules/api/v2/management/surveys/types/surveys";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
+import { surveyIdSchema } from "@/modules/api/v2/management/surveys/[surveyId]/types/survey";
+import { ZSurveyInput } from "@/modules/api/v2/management/surveys/types/surveys";
 
 export const getSurveyEndpoint: ZodOpenApiOperationObject = {
   operationId: "getSurvey",

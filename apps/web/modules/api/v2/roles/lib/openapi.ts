@@ -1,6 +1,6 @@
-import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZRoles } from "@formbricks/database/zod/roles";
+import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 
 export const getRolesEndpoint: ZodOpenApiOperationObject = {
   operationId: "getRoles",

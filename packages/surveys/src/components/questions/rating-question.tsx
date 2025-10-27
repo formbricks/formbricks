@@ -1,3 +1,7 @@
+import { useEffect, useState } from "preact/hooks";
+import type { JSX } from "react";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -6,10 +10,6 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "preact/hooks";
-import type { JSX } from "react";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import {
   ConfusedFace,
   FrowningFace,
@@ -38,6 +38,8 @@ interface RatingQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards: boolean;
 }
 
 export function RatingQuestion({
@@ -53,6 +55,8 @@ export function RatingQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  dir = "auto",
+  fullSizeCards,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
@@ -111,179 +115,183 @@ export function RatingQuestion({
   };
 
   return (
-    <form
-      key={question.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-        setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
-      }}
-      className="fb-w-full">
-      <ScrollableContainer>
-        <div>
-          {isMediaAvailable ? (
-            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-          ) : null}
-          <Headline
-            headline={getLocalizedValue(question.headline, languageCode)}
-            questionId={question.id}
-            required={question.required}
-          />
-          <Subheader
-            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
-            questionId={question.id}
-          />
-          <div className="fb-mb-4 fb-mt-6 fb-flex fb-items-center fb-justify-center">
-            <fieldset className="fb-w-full">
-              <legend className="fb-sr-only">Choices</legend>
-              <div className="fb-flex fb-w-full">
-                {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
-                  <span
-                    key={number}
-                    onMouseOver={() => {
-                      setHoveredNumber(number);
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredNumber(0);
-                    }}
-                    className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
-                    {question.scale === "number" ? (
-                      <label
-                        tabIndex={isCurrent ? 0 : -1}
-                        onKeyDown={(e) => {
-                          // Accessibility: if spacebar was pressed pass this down to the input
-                          if (e.key === " ") {
-                            e.preventDefault();
-                            document.getElementById(number.toString())?.click();
-                            document.getElementById(number.toString())?.focus();
-                          }
-                        }}
-                        className={cn(
-                          value === number
-                            ? "fb-bg-accent-selected-bg fb-border-border-highlight fb-z-10 fb-border"
-                            : "fb-border-border",
-                          a.length === number ? "fb-rounded-r-custom fb-border-r" : "",
-                          number === 1 ? "fb-rounded-l-custom" : "",
-                          hoveredNumber === number ? "fb-bg-accent-bg" : "",
-                          question.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
-                          "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
-                        )}>
-                        {question.isColorCodingEnabled ? (
-                          <div
-                            className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
+      <form
+        key={question.id}
+        onSubmit={(e) => {
+          e.preventDefault();
+          const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+          setTtc(updatedTtcObj);
+          onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
+        }}
+        className="fb-w-full">
+        {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+        <Headline
+          headline={getLocalizedValue(question.headline, languageCode)}
+          questionId={question.id}
+          required={question.required}
+        />
+        <Subheader
+          subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+          questionId={question.id}
+        />
+        <div className="fb-mb-4 fb-mt-6 fb-flex fb-items-center fb-justify-center">
+          <fieldset className="fb-w-full">
+            <legend className="fb-sr-only">Choices</legend>
+            <div className="fb-flex fb-w-full">
+              {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
+                <span
+                  key={number}
+                  onMouseOver={() => {
+                    setHoveredNumber(number);
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredNumber(0);
+                  }}
+                  className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
+                  {question.scale === "number" ? (
+                    <label
+                      tabIndex={isCurrent ? 0 : -1}
+                      onKeyDown={(e) => {
+                        // Accessibility: if spacebar was pressed pass this down to the input
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          document.getElementById(number.toString())?.click();
+                          document.getElementById(number.toString())?.focus();
+                        }
+                      }}
+                      className={cn(
+                        value === number
+                          ? "fb-bg-accent-selected-bg fb-border-border-highlight fb-z-10 fb-border"
+                          : "fb-border-border",
+                        a.length === number
+                          ? dir === "rtl"
+                            ? "fb-rounded-l-custom fb-border-l"
+                            : "fb-rounded-r-custom fb-border-r"
+                          : "",
+                        number === 1
+                          ? dir === "rtl"
+                            ? "fb-rounded-r-custom fb-border-r"
+                            : "fb-rounded-l-custom fb-border-l"
+                          : "",
+                        hoveredNumber === number ? "fb-bg-accent-bg" : "",
+                        question.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
+                        "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
+                      )}>
+                      {question.isColorCodingEnabled ? (
+                        <div
+                          className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
+                        />
+                      ) : null}
+                      <HiddenRadioInput number={number} id={number.toString()} />
+                      {number}
+                    </label>
+                  ) : question.scale === "star" ? (
+                    <label
+                      tabIndex={isCurrent ? 0 : -1}
+                      onKeyDown={(e) => {
+                        // Accessibility: if spacebar was pressed pass this down to the input
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          document.getElementById(number.toString())?.click();
+                          document.getElementById(number.toString())?.focus();
+                        }
+                      }}
+                      className={cn(
+                        number <= hoveredNumber || number <= value!
+                          ? "fb-text-amber-400"
+                          : "fb-text-[#8696AC]",
+                        hoveredNumber === number ? "fb-text-amber-400" : "",
+                        "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
+                      )}
+                      onFocus={() => {
+                        setHoveredNumber(number);
+                      }}
+                      onBlur={() => {
+                        setHoveredNumber(0);
+                      }}>
+                      <HiddenRadioInput number={number} id={number.toString()} />
+                      <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                          <path
+                            fillRule="evenodd"
+                            d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
                           />
-                        ) : null}
-                        <HiddenRadioInput number={number} id={number.toString()} />
-                        {number}
-                      </label>
-                    ) : question.scale === "star" ? (
-                      <label
-                        tabIndex={isCurrent ? 0 : -1}
-                        onKeyDown={(e) => {
-                          // Accessibility: if spacebar was pressed pass this down to the input
-                          if (e.key === " ") {
-                            e.preventDefault();
-                            document.getElementById(number.toString())?.click();
-                            document.getElementById(number.toString())?.focus();
-                          }
-                        }}
-                        className={cn(
-                          number <= hoveredNumber || number <= value!
-                            ? "fb-text-amber-400"
-                            : "fb-text-[#8696AC]",
-                          hoveredNumber === number ? "fb-text-amber-400" : "",
-                          "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
-                        )}
-                        onFocus={() => {
-                          setHoveredNumber(number);
-                        }}
-                        onBlur={() => {
-                          setHoveredNumber(0);
-                        }}>
-                        <HiddenRadioInput number={number} id={number.toString()} />
-                        <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                              fillRule="evenodd"
-                              d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                            />
-                          </svg>
-                        </div>
-                      </label>
-                    ) : (
-                      <label
-                        tabIndex={isCurrent ? 0 : -1}
-                        className={cn(
-                          "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-w-full fb-cursor-pointer fb-justify-center",
-                          value === number || hoveredNumber === number
-                            ? "fb-stroke-rating-selected fb-text-rating-selected"
-                            : "fb-stroke-heading fb-text-heading focus:fb-border-accent-bg focus:fb-border-2 focus:fb-outline-none"
-                        )}
-                        onKeyDown={(e) => {
-                          // Accessibility: if spacebar was pressed pass this down to the input
-                          if (e.key === " ") {
-                            e.preventDefault();
-                            document.getElementById(number.toString())?.click();
-                            document.getElementById(number.toString())?.focus();
-                          }
-                        }}
-                        onFocus={() => {
-                          setHoveredNumber(number);
-                        }}
-                        onBlur={() => {
-                          setHoveredNumber(0);
-                        }}>
-                        <HiddenRadioInput number={number} id={number.toString()} />
-                        <div className={cn("fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain")}>
-                          <RatingSmiley
-                            active={value === number || hoveredNumber === number}
-                            idx={i}
-                            range={question.range}
-                            addColors={question.isColorCodingEnabled}
-                          />
-                        </div>
-                      </label>
-                    )}
-                  </span>
-                ))}
-              </div>
-              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
-                <p className="fb-w-1/2 fb-text-left" dir="auto">
-                  {getLocalizedValue(question.lowerLabel, languageCode)}
-                </p>
-                <p className="fb-w-1/2 fb-text-right" dir="auto">
-                  {getLocalizedValue(question.upperLabel, languageCode)}
-                </p>
-              </div>
-            </fieldset>
-          </div>
+                        </svg>
+                      </div>
+                    </label>
+                  ) : (
+                    <label
+                      tabIndex={isCurrent ? 0 : -1}
+                      className={cn(
+                        "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-w-full fb-cursor-pointer fb-justify-center",
+                        value === number || hoveredNumber === number
+                          ? "fb-stroke-rating-selected fb-text-rating-selected"
+                          : "fb-stroke-heading fb-text-heading focus:fb-border-accent-bg focus:fb-border-2 focus:fb-outline-none"
+                      )}
+                      onKeyDown={(e) => {
+                        // Accessibility: if spacebar was pressed pass this down to the input
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          document.getElementById(number.toString())?.click();
+                          document.getElementById(number.toString())?.focus();
+                        }
+                      }}
+                      onFocus={() => {
+                        setHoveredNumber(number);
+                      }}
+                      onBlur={() => {
+                        setHoveredNumber(0);
+                      }}>
+                      <HiddenRadioInput number={number} id={number.toString()} />
+                      <div className={cn("fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain")}>
+                        <RatingSmiley
+                          active={value === number || hoveredNumber === number}
+                          idx={i}
+                          range={question.range}
+                          addColors={question.isColorCodingEnabled}
+                        />
+                      </div>
+                    </label>
+                  )}
+                </span>
+              ))}
+            </div>
+            <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-gap-8">
+              <p className="fb-max-w-[50%]" dir="auto">
+                {getLocalizedValue(question.lowerLabel, languageCode)}
+              </p>
+              <p className="fb-max-w-[50%]" dir="auto">
+                {getLocalizedValue(question.upperLabel, languageCode)}
+              </p>
+            </div>
+          </fieldset>
         </div>
-      </ScrollableContainer>
-      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        {question.required ? (
-          <div></div>
-        ) : (
-          <SubmitButton
-            tabIndex={isCurrent ? 0 : -1}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
-          />
-        )}
-        <div />
-        {!isFirstQuestion && !isBackButtonHidden && (
-          <BackButton
-            tabIndex={isCurrent ? 0 : -1}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedTtcObj);
-              onBack();
-            }}
-          />
-        )}
-      </div>
-    </form>
+        <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
+          {question.required ? (
+            <div></div>
+          ) : (
+            <SubmitButton
+              tabIndex={isCurrent ? 0 : -1}
+              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              isLastQuestion={isLastQuestion}
+            />
+          )}
+          <div />
+          {!isFirstQuestion && !isBackButtonHidden && (
+            <BackButton
+              tabIndex={isCurrent ? 0 : -1}
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              onClick={() => {
+                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedTtcObj);
+                onBack();
+              }}
+            />
+          )}
+        </div>
+      </form>
+    </ScrollableContainer>
   );
 }
 

@@ -1,15 +1,14 @@
 "use client";
 
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
+import { type JSX } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { type JSX, useState } from "react";
-import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface CTAQuestionFormProps {
   localSurvey: TSurvey;
@@ -21,6 +20,8 @@ interface CTAQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const CTAQuestionForm = ({
@@ -33,8 +34,10 @@ export const CTAQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: CTAQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const options = [
     {
       value: "internal",
@@ -42,10 +45,9 @@ export const CTAQuestionForm = ({
     },
     { value: "external", label: t("environments.surveys.edit.button_to_link_to_external_url") },
   ];
-  const [firstRender, setFirstRender] = useState(true);
-  const [parent] = useAutoAnimate();
+
   return (
-    <form ref={parent}>
+    <form>
       <QuestionFormInput
         id="headline"
         value={question.headline}
@@ -57,32 +59,46 @@ export const CTAQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div className="mt-3">
-        <Label htmlFor="subheader">{t("common.description")}</Label>
-        <div className="mt-2">
-          <LocalizedEditor
-            id="subheader"
-            value={question.html}
-            localSurvey={localSurvey}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            firstRender={firstRender}
-            setFirstRender={setFirstRender}
-            questionIdx={questionIdx}
-            locale={locale}
-          />
-        </div>
+        <QuestionFormInput
+          id="subheader"
+          value={question.subheader}
+          label={t("common.description")}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          isInvalid={isInvalid}
+          updateQuestion={updateQuestion}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          locale={locale}
+          isStorageConfigured={isStorageConfigured}
+          isExternalUrlsAllowed={isExternalUrlsAllowed}
+        />
       </div>
       <div className="mt-3">
-        <OptionsSwitch
-          options={options}
-          currentOption={question.buttonExternal ? "external" : "internal"}
-          handleOptionChange={(e) => updateQuestion(questionIdx, { buttonExternal: e === "external" })}
-        />
+        <TooltipRenderer
+          shouldRender={!isExternalUrlsAllowed && !question.buttonExternal}
+          tooltipContent={t("environments.surveys.edit.external_urls_paywall_tooltip")}>
+          <OptionsSwitch
+            options={options.map((opt) => ({
+              ...opt,
+              disabled: opt.value === "external" && !isExternalUrlsAllowed && !question.buttonExternal,
+            }))}
+            currentOption={question.buttonExternal ? "external" : "internal"}
+            handleOptionChange={(e) => {
+              const canSwitchToExternal =
+                e !== "external" || isExternalUrlsAllowed || question.buttonExternal;
+              if (canSwitchToExternal) {
+                updateQuestion(questionIdx, { buttonExternal: e === "external" });
+              }
+            }}
+          />
+        </TooltipRenderer>
       </div>
 
       <div className="mt-2 flex justify-between gap-8">
@@ -101,6 +117,7 @@ export const CTAQuestionForm = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           )}
           <QuestionFormInput
@@ -116,6 +133,7 @@ export const CTAQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       </div>
@@ -149,6 +167,7 @@ export const CTAQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       )}

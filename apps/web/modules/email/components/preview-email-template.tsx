@@ -1,10 +1,3 @@
-import { cn } from "@/lib/cn";
-import { WEBAPP_URL } from "@/lib/constants";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { COLOR_DEFAULTS } from "@/lib/styling/constants";
-import { isLight, mixColor } from "@/lib/utils/colors";
-import { parseRecallInfo } from "@/lib/utils/recall";
-import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import {
   Column,
   Container,
@@ -17,10 +10,17 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { WEBAPP_URL } from "@/lib/constants";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { isLight, mixColor } from "@/lib/utils/colors";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 import { QuestionHeader } from "./email-question-header";
 
@@ -29,7 +29,7 @@ interface PreviewEmailTemplateProps {
   surveyUrl: string;
   styling: TSurveyStyling;
   locale: string;
-  t: TFnType;
+  t: TFunction;
 }
 
 export const getPreviewEmailTemplateHtml = async (
@@ -37,7 +37,7 @@ export const getPreviewEmailTemplateHtml = async (
   surveyUrl: string,
   styling: TSurveyStyling,
   locale: string,
-  t: TFnType
+  t: TFunction
 ): Promise<string> => {
   return render(
     <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} t={t} />,
@@ -60,11 +60,7 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
     );
   }
   if (scale === "number") {
-    return (
-      <Text className="m-0 h-[44px] text-center text-[14px] leading-[44px]">
-        {i + 1}
-      </Text>
-    );
+    return <Text className="m-0 h-[44px] text-center text-[14px] leading-[44px]">{i + 1}</Text>;
   }
   if (scale === "star") {
     return <Text className="m-auto text-3xl">⭐</Text>;
@@ -98,16 +94,7 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Consent:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
-          <Container className="text-question-color m-0 text-sm font-normal leading-6">
-            <div
-              className="m-0 p-0"
-              dangerouslySetInnerHTML={{
-                __html: getLocalizedValue(firstQuestion.html, defaultLanguageCode) || "",
-              }}
-            />
-          </Container>
-
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="border-input-border-color bg-input-color rounded-custom m-0 mt-4 block w-full max-w-none border border-solid p-4 font-medium text-slate-800">
             <Text className="text-question-color m-0 inline-block">
               {getLocalizedValue(firstQuestion.label, defaultLanguageCode)}
@@ -185,16 +172,7 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
-          <Container className="text-question-color ml-0 mt-2 text-sm font-normal leading-6">
-            <div
-              className="m-0 p-0"
-              dangerouslySetInnerHTML={{
-                __html: getLocalizedValue(firstQuestion.html, defaultLanguageCode) || "",
-              }}
-            />
-          </Container>
-
+          <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
           <Container className="mx-0 mt-4 max-w-none">
             {!firstQuestion.required && (
               <EmailButton
@@ -232,8 +210,8 @@ export async function PreviewEmailTemplate({
                           { "rounded-l-lg border-l": i === 0 },
                           { "rounded-r-lg": i === firstQuestion.range - 1 },
                           firstQuestion.isColorCodingEnabled &&
-                          firstQuestion.scale === "number" &&
-                          `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
+                            firstQuestion.scale === "number" &&
+                            `border border-t-[6px] border-t-${getRatingNumberOptionColor(firstQuestion.range, i + 1)}`,
                           firstQuestion.scale === "star" && "border-transparent"
                         )}
                         href={`${urlWithPrefilling}${firstQuestion.id}=${(i + 1).toString()}`}
@@ -321,17 +299,17 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
-          <Section className="mx-0">
+          <Section className="mx-0 mt-4">
             {firstQuestion.choices.map((choice) =>
               firstQuestion.allowMulti ? (
                 <Img
-                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
+                  className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
                   key={choice.id}
                   src={choice.imageUrl}
                 />
               ) : (
                 <Link
-                  className="rounded-custom mb-1 mr-1 inline-block h-[140px] w-[220px]"
+                  className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.id}`}
                   key={choice.id}
                   target="_blank">
@@ -384,8 +362,8 @@ export async function PreviewEmailTemplate({
                   return (
                     <Column
                       className="text-question-color max-w-40 break-words px-4 py-2 text-center"
-                      key={getLocalizedValue(column, "default")}>
-                      {getLocalizedValue(column, "default")}
+                      key={column.id}>
+                      {getLocalizedValue(column.label, "default")}
                     </Column>
                   );
                 })}
@@ -394,15 +372,13 @@ export async function PreviewEmailTemplate({
                 return (
                   <Row
                     className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-custom`}
-                    key={getLocalizedValue(row, "default")}>
+                    key={row.id}>
                     <Column className="w-40 break-words px-4 py-2">
-                      {getLocalizedValue(row, "default")}
+                      {getLocalizedValue(row.label, "default")}
                     </Column>
-                    {firstQuestion.columns.map((_) => {
+                    {firstQuestion.columns.map((column) => {
                       return (
-                        <Column
-                          className="text-question-color px-4 py-2"
-                          key={getLocalizedValue(_, "default")}>
+                        <Column className="text-question-color px-4 py-2" key={column.id}>
                           <Section className="bg-card-bg-color h-4 w-4 rounded-full p-2 outline" />
                         </Column>
                       );

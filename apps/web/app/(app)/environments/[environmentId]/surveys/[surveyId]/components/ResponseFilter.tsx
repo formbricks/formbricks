@@ -1,27 +1,31 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
   SelectedFilterValue,
+  TResponseStatus,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
-import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import { Button } from "@/modules/ui/components/button";
-import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import clsx from "clsx";
-import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
-import { useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages";
+  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages" | "Quotas";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
@@ -32,11 +36,8 @@ interface ResponseFilterProps {
 }
 
 export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
-  const { t } = useTranslate();
-  const params = useParams();
+  const { t } = useTranslation();
   const [parent] = useAutoAnimate();
-  const sharingKey = params.sharingKey as string;
-  const isSharingPage = !!sharingKey;
 
   const { selectedFilter, setSelectedFilter, selectedOptions, setSelectedOptions } = useResponseFilter();
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -46,29 +47,25 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
       if (isOpen) {
-        const surveyFilterData = isSharingPage
-          ? await getSurveyFilterDataBySurveySharingKeyAction({
-              sharingKey,
-              environmentId: survey.environmentId,
-            })
-          : await getSurveyFilterDataAction({ surveyId: survey.id });
+        const surveyFilterData = await getSurveyFilterDataAction({ surveyId: survey.id });
 
         if (!surveyFilterData?.data) return;
 
-        const { attributes, meta, environmentTags, hiddenFields } = surveyFilterData.data;
+        const { attributes, meta, environmentTags, hiddenFields, quotas } = surveyFilterData.data;
         const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
           survey,
           environmentTags,
           attributes,
           meta,
-          hiddenFields
+          hiddenFields,
+          quotas
         );
         setSelectedOptions({ questionFilterOptions, questionOptions });
       }
     };
 
     handleInitialData();
-  }, [isOpen, isSharingPage, setSelectedOptions, sharingKey, survey]);
+  }, [isOpen, setSelectedOptions, survey]);
 
   const handleOnChangeQuestionComboBoxValue = (value: QuestionOption, index: number) => {
     if (filterValue.filter[index].questionType) {
@@ -82,7 +79,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           )?.filterOptions[0],
         },
       };
-      setFilterValue({ filter: [...filterValue.filter], onlyComplete: filterValue.onlyComplete });
+      setFilterValue({ filter: [...filterValue.filter], responseStatus: filterValue.responseStatus });
     } else {
       // Update the existing value at the specified index
       filterValue.filter[index].questionType = value;
@@ -103,7 +100,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
         // keep the filter if questionType is selected and filterComboBoxValue is selected
         return s.questionType.hasOwnProperty("label") && s.filterType.filterComboBoxValue?.length;
       }),
-      onlyComplete: filterValue.onlyComplete,
+      responseStatus: filterValue.responseStatus,
     });
   };
 
@@ -130,8 +127,8 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   };
 
   const handleClearAllFilters = () => {
-    setFilterValue((filterValue) => ({ ...filterValue, filter: [] }));
-    setSelectedFilter((selectedFilters) => ({ ...selectedFilters, filter: [] }));
+    setFilterValue((filterValue) => ({ ...filterValue, filter: [], responseStatus: "all" }));
+    setSelectedFilter((selectedFilters) => ({ ...selectedFilters, filter: [], responseStatus: "all" }));
     setIsOpen(false);
   };
 
@@ -168,8 +165,8 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     setFilterValue({ ...filterValue });
   };
 
-  const handleCheckOnlyComplete = (checked: boolean) => {
-    setFilterValue({ ...filterValue, onlyComplete: checked });
+  const handleResponseStatusChange = (responseStatus: TResponseStatus) => {
+    setFilterValue({ ...filterValue, responseStatus });
   };
 
   // remove the filter which has already been selected
@@ -213,8 +210,9 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
-        <div className="mb-8 flex flex-wrap items-start justify-between">
+        className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]"
+        onOpenAutoFocus={(event) => event.preventDefault()}>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-2">
           <p className="text-slate800 hidden text-lg font-semibold sm:block">
             {t("environments.surveys.summary.show_all_responses_that_match")}
           </p>
@@ -222,16 +220,24 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
             {t("environments.surveys.summary.show_all_responses_where")}
           </p>
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-normal text-slate-600">
-              {t("environments.surveys.summary.only_completed")}
-            </label>
-            <Checkbox
-              className={clsx("rounded-md", filterValue.onlyComplete && "bg-black text-white")}
-              checked={filterValue.onlyComplete}
-              onCheckedChange={(checked) => {
-                typeof checked === "boolean" && handleCheckOnlyComplete(checked);
+            <Select
+              onValueChange={(val) => {
+                handleResponseStatusChange(val as TResponseStatus);
               }}
-            />
+              defaultValue={filterValue.responseStatus}>
+              <SelectTrigger className="w-full bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="all">
+                  {t("environments.surveys.filter.complete_and_partial_responses")}
+                </SelectItem>
+                <SelectItem value="complete">
+                  {t("environments.surveys.filter.complete_responses")}
+                </SelectItem>
+                <SelectItem value="partial">{t("environments.surveys.filter.partial_responses")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -241,9 +247,9 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
               <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
                 <div
                   className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
-                  key={`${s.questionType.id}-${i}`}>
+                  key={`${s.questionType.id}-${i}-${s.questionType.label}`}>
                   <QuestionsComboBox
-                    key={`${s.questionType.label}-${i}`}
+                    key={`${s.questionType.label}-${i}-${s.questionType.id}`}
                     options={questionComboBoxOptions}
                     selected={s.questionType}
                     onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
@@ -271,6 +277,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
                         ? s?.questionType?.questionType
                         : s?.questionType?.type
                     }
+                    fieldId={s?.questionType?.id}
                     handleRemoveMultiSelect={(value) => handleRemoveMultiSelect(value, i)}
                     onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
                     onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}

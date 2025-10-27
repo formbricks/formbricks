@@ -1,21 +1,21 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { validateInputs } from "@/lib/utils/validate";
+import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 import {
   getActionClass,
   getApiKey,
   getContact,
-  getDocument,
   getEnvironment,
-  getInsight,
   getIntegration,
   getInvite,
   getLanguage,
   getProject,
+  getQuota,
   getResponse,
-  getResponseNote,
   getSegment,
   getSurvey,
   getTag,
@@ -56,9 +56,7 @@ vi.mock("@formbricks/database", () => ({
     response: {
       findUnique: vi.fn(),
     },
-    responseNote: {
-      findUnique: vi.fn(),
-    },
+
     survey: {
       findUnique: vi.fn(),
     },
@@ -83,7 +81,14 @@ vi.mock("@formbricks/database", () => ({
     segment: {
       findUnique: vi.fn(),
     },
+    surveyQuota: {
+      findUnique: vi.fn(),
+    },
   },
+}));
+
+vi.mock("@/modules/ee/quotas/lib/quotas", () => ({
+  getQuota: vi.fn(),
 }));
 
 describe("Service Functions", () => {
@@ -319,33 +324,6 @@ describe("Service Functions", () => {
     });
   });
 
-  describe("getResponseNote", () => {
-    const responseNoteId = "note123";
-
-    test("returns the response note when found", async () => {
-      const mockResponseNote = { responseId: "resp123" };
-      vi.mocked(prisma.responseNote.findUnique).mockResolvedValue(mockResponseNote);
-
-      const result = await getResponseNote(responseNoteId);
-      expect(prisma.responseNote.findUnique).toHaveBeenCalledWith({
-        where: { id: responseNoteId },
-        select: { responseId: true },
-      });
-      expect(result).toEqual(mockResponseNote);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.responseNote.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getResponseNote(responseNoteId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
   describe("getSurvey", () => {
     const surveyId = "survey123";
 
@@ -419,6 +397,30 @@ describe("Service Functions", () => {
     });
   });
 
+  describe("getQuota", () => {
+    const quotaId = "quota123";
+
+    test("returns surveyId when found (delegates to getQuotaService)", async () => {
+      const mockQuota = { surveyId: "survey123" } as TSurveyQuota;
+      vi.mocked(getQuotaService).mockResolvedValue(mockQuota);
+
+      const result = await getQuota(quotaId);
+      expect(validateInputs).toHaveBeenCalled();
+      expect(getQuotaService).toHaveBeenCalledWith(quotaId);
+      expect(result).toEqual(mockQuota);
+    });
+
+    test("throws DatabaseError when underlying service fails", async () => {
+      vi.mocked(getQuotaService).mockRejectedValue(new DatabaseError("error"));
+      await expect(getQuota(quotaId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("throws ResourceNotFoundError when quota not found", async () => {
+      vi.mocked(getQuotaService).mockRejectedValue(new ResourceNotFoundError("Quota", quotaId));
+      await expect(getQuota(quotaId)).rejects.toThrow(ResourceNotFoundError);
+    });
+  });
+
   describe("getTeam", () => {
     const teamId = "team123";
 
@@ -444,62 +446,6 @@ describe("Service Functions", () => {
       );
 
       await expect(getTeam(teamId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getInsight", () => {
-    const insightId = "insight123";
-
-    test("returns the insight when found", async () => {
-      const mockInsight = { environmentId: "env123" };
-      vi.mocked(prisma.insight.findUnique).mockResolvedValue(mockInsight);
-
-      const result = await getInsight(insightId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.insight.findUnique).toHaveBeenCalledWith({
-        where: { id: insightId },
-        select: { environmentId: true },
-      });
-      expect(result).toEqual(mockInsight);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.insight.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getInsight(insightId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getDocument", () => {
-    const documentId = "doc123";
-
-    test("returns the document when found", async () => {
-      const mockDocument = { environmentId: "env123" };
-      vi.mocked(prisma.document.findUnique).mockResolvedValue(mockDocument);
-
-      const result = await getDocument(documentId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.document.findUnique).toHaveBeenCalledWith({
-        where: { id: documentId },
-        select: { environmentId: true },
-      });
-      expect(result).toEqual(mockDocument);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.document.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getDocument(documentId)).rejects.toThrow(DatabaseError);
     });
   });
 

@@ -1,5 +1,8 @@
 "use server";
 
+import { z } from "zod";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
 import { updateUser } from "@/lib/user/service";
@@ -8,9 +11,6 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createProject } from "@/modules/projects/settings/lib/project";
-import { z } from "zod";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { TUserNotificationSettings } from "@formbricks/types/user";
 
 const ZCreateOrganizationAction = z.object({
   organizationName: z.string().min(1, "Organization name must be at least 1 character long"),
@@ -36,7 +36,7 @@ export const createOrganizationAction = authenticatedActionClient.schema(ZCreate
         accepted: true,
       });
 
-      const project = await createProject(newOrganization.id, {
+      await createProject(newOrganization.id, {
         name: "My Project",
       });
 
@@ -45,10 +45,7 @@ export const createOrganizationAction = authenticatedActionClient.schema(ZCreate
         alert: {
           ...ctx.user.notificationSettings?.alert,
         },
-        weeklySummary: {
-          ...ctx.user.notificationSettings?.weeklySummary,
-          [project.id]: true,
-        },
+
         unsubscribedOrganizationIds: Array.from(
           new Set([...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id]) // NOSONAR // We want to check for empty strings too
         ),

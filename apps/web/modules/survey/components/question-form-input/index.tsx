@@ -1,8 +1,24 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { debounce } from "lodash";
+import { ImagePlusIcon, TrashIcon } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyQuestion,
+  TSurveyQuestionChoice,
+  TSurveyQuestionTypeEnum,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
 import { Button } from "@/modules/ui/components/button";
@@ -10,20 +26,6 @@ import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { debounce } from "lodash";
-import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { RefObject, useCallback, useMemo, useRef, useState } from "react";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
-  TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import {
   determineImageUploaderVisibility,
   getChoiceLabel,
@@ -50,11 +52,15 @@ interface QuestionFormInputProps {
   label: string;
   maxLength?: number;
   placeholder?: string;
-  ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   locale: TUserLocale;
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
+  isStorageConfigured: boolean;
+  autoFocus?: boolean;
+  firstRender?: boolean;
+  setFirstRender?: (value: boolean) => void;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const QuestionFormInput = ({
@@ -76,8 +82,13 @@ export const QuestionFormInput = ({
   className,
   locale,
   onKeyDown,
+  isStorageConfigured = true,
+  autoFocus,
+  firstRender: externalFirstRender,
+  setFirstRender: externalSetFirstRender,
+  isExternalUrlsAllowed,
 }: QuestionFormInputProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
@@ -85,6 +96,10 @@ export const QuestionFormInput = ({
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
+  const inputId = useMemo(() => {
+    return isChoice || isMatrixLabelColumn || isMatrixLabelRow ? id.split("-")[0] : id;
+  }, [id, isChoice, isMatrixLabelColumn, isMatrixLabelRow]);
+
   const isEndingCard = questionIdx >= localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
@@ -104,8 +119,8 @@ export const QuestionFormInput = ({
     [localSurvey.languages]
   );
   const isTranslationIncomplete = useMemo(
-    () => isValueIncomplete(id, isInvalid, surveyLanguageCodes, value),
-    [value, id, isInvalid, surveyLanguageCodes]
+    () => isValueIncomplete(inputId, isInvalid, surveyLanguageCodes, value),
+    [value, inputId, isInvalid, surveyLanguageCodes]
   );
 
   const elementText = useMemo((): TI18nString => {
@@ -129,9 +144,9 @@ export const QuestionFormInput = ({
       (question &&
         (id.includes(".")
           ? // Handle nested properties
-          (question[id.split(".")[0] as keyof TSurveyQuestion] as any)?.[id.split(".")[1]]
+            (question[id.split(".")[0] as keyof TSurveyQuestion] as any)?.[id.split(".")[1]]
           : // Original behavior
-          (question[id as keyof TSurveyQuestion] as TI18nString))) ||
+            (question[id as keyof TSurveyQuestion] as TI18nString))) ||
       createI18nString("", surveyLanguageCodes)
     );
   }, [
@@ -269,13 +284,133 @@ export const QuestionFormInput = ({
   const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
 
   const [animationParent] = useAutoAnimate();
+  const [internalFirstRender, setInternalFirstRender] = useState(true);
 
-  const renderRemoveDescriptionButton = useMemo(() => {
-    if (id !== "subheader") return false;
-    return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
+  // Use external firstRender state if provided, otherwise use internal state
+  const firstRender = externalFirstRender ?? internalFirstRender;
+  const setFirstRender = externalSetFirstRender ?? setInternalFirstRender;
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endingCard?.type, id, question?.subheader]);
+  const renderRemoveDescriptionButton = () => {
+    if (
+      question &&
+      (question.type === TSurveyQuestionTypeEnum.CTA || question.type === TSurveyQuestionTypeEnum.Consent)
+    ) {
+      return false;
+    }
+
+    if (id === "subheader") {
+      return !!question?.subheader || (endingCard?.type === "endScreen" && !!endingCard?.subheader);
+    }
+
+    return false;
+  };
+
+  const useRichTextEditor = id === "headline" || id === "subheader" || id === "html";
+
+  // For rich text editor fields, we need either updateQuestion or updateSurvey
+  if (useRichTextEditor && !updateQuestion && !updateSurvey) {
+    throw new Error("Either updateQuestion or updateSurvey must be provided");
+  }
+
+  if (useRichTextEditor) {
+    return (
+      <div className="w-full">
+        {label && (
+          <div className="mb-2 mt-3">
+            <Label htmlFor={id}>{label}</Label>
+          </div>
+        )}
+        <div className="flex flex-col gap-4" ref={animationParent}>
+          {showImageUploader && id === "headline" && (
+            <FileInput
+              id="question-image"
+              allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
+              environmentId={localSurvey.environmentId}
+              onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
+                if (url) {
+                  const update =
+                    fileType === "video"
+                      ? { videoUrl: url[0], imageUrl: "" }
+                      : { imageUrl: url[0], videoUrl: "" };
+                  if ((isWelcomeCard || isEndingCard) && updateSurvey) {
+                    updateSurvey(update);
+                  } else if (updateQuestion) {
+                    updateQuestion(questionIdx, update);
+                  }
+                }
+              }}
+              fileUrl={getFileUrl()}
+              videoUrl={getVideoUrl()}
+              isVideoAllowed={true}
+              maxSizeInMB={5}
+              isStorageConfigured={isStorageConfigured}
+            />
+          )}
+
+          <div className="flex w-full items-start gap-2">
+            <div className="flex-1">
+              <LocalizedEditor
+                key={`${questionId}-${id}-${selectedLanguageCode}`}
+                id={id}
+                value={value}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                isInvalid={isInvalid}
+                updateQuestion={(isWelcomeCard || isEndingCard ? updateSurvey : updateQuestion)!}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                firstRender={firstRender}
+                setFirstRender={setFirstRender}
+                locale={locale}
+                questionId={questionId}
+                isCard={isWelcomeCard || isEndingCard}
+                autoFocus={autoFocus}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
+              />
+            </div>
+
+            {id === "headline" && !isWelcomeCard && (
+              <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Toggle image uploader"
+                  data-testid="toggle-image-uploader-button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowImageUploader((prev) => !prev);
+                  }}>
+                  <ImagePlusIcon />
+                </Button>
+              </TooltipRenderer>
+            )}
+
+            {id === "subheader" && renderRemoveDescriptionButton() && (
+              <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Remove description"
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    if (updateSurvey) {
+                      updateSurvey({ subheader: undefined });
+                    }
+
+                    if (updateQuestion) {
+                      updateQuestion(questionIdx, { subheader: undefined });
+                    }
+                  }}>
+                  <TrashIcon />
+                </Button>
+              </TooltipRenderer>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -341,6 +476,8 @@ export const QuestionFormInput = ({
                         fileUrl={getFileUrl()}
                         videoUrl={getVideoUrl()}
                         isVideoAllowed={true}
+                        maxSizeInMB={5}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     )}
 
@@ -351,8 +488,9 @@ export const QuestionFormInput = ({
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${localSurvey.languages?.length > 1 ? "pr-24" : ""
-                            }`}
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
+                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          }`}
                           dir="auto"
                           key={highlightedJSX.toString()}>
                           {highlightedJSX}
@@ -379,8 +517,9 @@ export const QuestionFormInput = ({
                           maxLength={maxLength}
                           ref={inputRef}
                           onBlur={onBlur}
-                          className={`absolute top-0 text-black caret-black ${localSurvey.languages?.length > 1 ? "pr-24" : ""
-                            } ${className}`}
+                          className={`absolute top-0 text-black caret-black ${
+                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          } ${className}`}
                           isInvalid={
                             isInvalid &&
                             text[usedLanguageCode]?.trim() === "" &&
@@ -401,6 +540,7 @@ export const QuestionFormInput = ({
                               variant="secondary"
                               size="icon"
                               aria-label="Toggle image uploader"
+                              data-testid="toggle-image-uploader-button"
                               className="ml-2"
                               onClick={(e) => {
                                 e.preventDefault();
@@ -410,7 +550,7 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                        {renderRemoveDescriptionButton ? (
+                        {renderRemoveDescriptionButton() ? (
                           <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
                             <Button
                               variant="secondary"
@@ -419,11 +559,13 @@ export const QuestionFormInput = ({
                               className="ml-2"
                               onClick={(e) => {
                                 e.preventDefault();
-                                if (updateQuestion) {
-                                  updateQuestion(questionIdx, { subheader: undefined });
-                                }
+
                                 if (updateSurvey) {
                                   updateSurvey({ subheader: undefined });
+                                }
+
+                                if (updateQuestion) {
+                                  updateQuestion(questionIdx, { subheader: undefined });
                                 }
                               }}>
                               <TrashIcon />

@@ -1,11 +1,3 @@
-import { replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-import { Input } from "@/modules/ui/components/input";
-import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import {
   CalendarDaysIcon,
   ContactIcon,
@@ -22,6 +14,7 @@ import {
   StarIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TSurvey,
   TSurveyHiddenFields,
@@ -29,6 +22,14 @@ import {
   TSurveyQuestionId,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys/types";
+import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
 
 const questionIconMapping = {
   openText: MessageSquareTextIcon,
@@ -62,6 +63,7 @@ export const RecallItemSelect = ({
   selectedLanguageCode,
 }: RecallItemSelectProps) => {
   const [searchValue, setSearchValue] = useState("");
+  const { t } = useTranslation();
   const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
     return (
       question.type === "fileUpload" ||
@@ -128,7 +130,7 @@ export const RecallItemSelect = ({
       });
 
     return filteredQuestions;
-  }, [localSurvey.questions, questionId, recallItemIds]);
+  }, [localSurvey.questions, questionId, recallItemIds, selectedLanguageCode]);
 
   const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
     return [...surveyQuestionRecallItems, ...hiddenFieldRecallItems, ...variableRecallItems].filter(
@@ -140,11 +142,6 @@ export const RecallItemSelect = ({
       }
     );
   }, [surveyQuestionRecallItems, hiddenFieldRecallItems, variableRecallItems, searchValue]);
-
-  // function to modify headline (recallInfo to corresponding headline)
-  const getRecallLabel = (label: string): string => {
-    return replaceRecallInfoWithUnderline(label);
-  };
 
   const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
@@ -162,60 +159,66 @@ export const RecallItemSelect = ({
   };
 
   return (
-    <>
-      <DropdownMenu defaultOpen={true} modal={false}>
-        <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-          <div className="flex h-0 w-full items-center justify-between overflow-hidden" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-96 bg-slate-50 text-slate-700" align="start" side="bottom">
-          <p className="m-2 text-sm font-medium">Recall Information from...</p>
-          <Input
-            id="recallItemSearchInput"
-            placeholder="Search options"
-            className="mb-1 w-full bg-white"
-            onChange={(e) => setSearchValue(e.target.value)}
-            autoFocus={true}
-            value={searchValue}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowDown") {
-                document.getElementById("recallItem-0")?.focus();
-              }
-            }}
-          />
-          <div className="max-h-72 overflow-y-auto overflow-x-hidden">
-            {filteredRecallItems.map((recallItem, index) => {
-              const IconComponent = getRecallItemIcon(recallItem);
-              return (
-                <DropdownMenuItem
-                  id={"recallItem-" + index}
-                  key={recallItem.id}
-                  title={recallItem.label}
-                  onSelect={() => {
-                    addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
-                    setShowRecallItemSelect(false);
-                  }}
-                  autoFocus={false}
-                  className="flex w-full cursor-pointer items-center rounded-md p-2 focus:bg-slate-200 focus:outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowUp" && index === 0) {
-                      document.getElementById("recallItemSearchInput")?.focus();
-                    } else if (e.key === "ArrowDown" && index === filteredRecallItems.length - 1) {
-                      document.getElementById("recallItemSearchInput")?.focus();
-                    }
-                  }}>
-                  <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
-                  <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                    {getRecallLabel(recallItem.label)}
-                  </p>
-                </DropdownMenuItem>
-              );
-            })}
-            {filteredRecallItems.length === 0 && (
-              <p className="p-2 text-sm font-medium text-slate-700">No recall items found 🤷</p>
-            )}
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+    <DropdownMenu defaultOpen={true} modal={true}>
+      <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
+        <div className="flex w-full items-center justify-between overflow-hidden" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="flex w-96 flex-col gap-2 bg-slate-50 p-3 text-xs text-slate-700"
+        align="start"
+        side="bottom"
+        data-recall-dropdown>
+        <p className="font-medium">{t("environments.surveys.edit.recall_information_from")}</p>
+        <Input
+          id="recallItemSearchInput"
+          placeholder="Search options"
+          className="w-full bg-white"
+          onChange={(e) => setSearchValue(e.target.value)}
+          autoFocus={true}
+          value={searchValue}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown") {
+              document.getElementById("recallItem-0")?.focus();
+            }
+          }}
+        />
+        <div className="max-h-72 overflow-y-auto overflow-x-hidden">
+          {filteredRecallItems.map((recallItem, index) => {
+            const IconComponent = getRecallItemIcon(recallItem);
+            return (
+              <DropdownMenuItem
+                id={"recallItem-" + index}
+                key={recallItem.id}
+                title={recallItem.type}
+                onSelect={() => {
+                  addRecallItem({ id: recallItem.id, label: recallItem.label, type: recallItem.type });
+                  setShowRecallItemSelect(false);
+                }}
+                autoFocus={false}
+                className="flex w-full cursor-pointer items-center rounded-md p-2 focus:bg-slate-200 focus:outline-none"
+                onKeyDown={(e) => {
+                  if (
+                    (e.key === "ArrowUp" && index === 0) ||
+                    (e.key === "ArrowDown" && index === filteredRecallItems.length - 1)
+                  ) {
+                    e.preventDefault();
+                    document.getElementById("recallItemSearchInput")?.focus();
+                  }
+                }}>
+                <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
+                <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                  {getTextContentWithRecallTruncated(recallItem.label)}
+                </p>
+              </DropdownMenuItem>
+            );
+          })}
+          {filteredRecallItems.length === 0 && (
+            <p className="p-2 text-sm font-medium text-slate-700">
+              {t("environments.surveys.edit.no_recall_items_found")}
+            </p>
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

@@ -2,7 +2,11 @@ import { createId } from "@paralleldrive/cuid2";
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
+import { fileURLToPath } from "node:url";
 import { logger } from "@formbricks/logger";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -13,7 +17,7 @@ const migrationsDir = path.resolve(__dirname, "../../migration");
 
 async function createMigration(): Promise<void> {
   // Log the full path to verify directory location
-  logger.info(migrationsDir, "Migrations Directory Full Path");
+  logger.info({ migrationsDir }, "Migrations Directory Full Path");
 
   // Check if migrations directory exists, create if not
   const hasAccess = await fs
@@ -23,7 +27,7 @@ async function createMigration(): Promise<void> {
 
   if (!hasAccess) {
     await fs.mkdir(migrationsDir, { recursive: true });
-    logger.info(`Created migrations directory: ${migrationsDir}`);
+    logger.info({ migrationsDir }, `Created migrations directory`);
   }
 
   const migrationNameSpaced = await promptForMigrationName();
@@ -56,11 +60,11 @@ async function createMigration(): Promise<void> {
 
   // Create the migration directory
   await fs.mkdir(fullMigrationPath, { recursive: true });
-  logger.info(fullMigrationPath, "Created migration directory");
+  logger.info({ fullMigrationPath }, "Created migration directory");
 
   // Create the migration file
   await fs.writeFile(filePath, getTemplateContent(migrationFunctionName, migrationNameTimestamped));
-  logger.info(filePath, "New migration created");
+  logger.info({ filePath }, "New migration created");
 }
 
 function promptForMigrationName(): Promise<string> {

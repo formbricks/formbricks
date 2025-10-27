@@ -21,7 +21,6 @@ extends: [
 ]
 ```
 
-
 2. **React Configuration** (for React applications):
 
 ```javascript
@@ -33,7 +32,6 @@ extends: [
 "@vercel/style-guide/eslint/next"
 ]
 ```
-
 
 3. **Next.js Configuration** (for Next.js applications):
 
@@ -47,31 +45,34 @@ extends: [
 ]
 ```
 
-
 ### Key Conventions
 
 1. **TypeScript Usage**
+
    - Strict TypeScript checking enabled
    - Explicit type annotations when necessary
    - Proper interface and type naming (prefix with T for types, I for interfaces when helpful)
    - No use of `any` type unless absolutely necessary
 
 2. **Imports/Exports**
+
    - Follow strict import ordering:
      1. Mocks (for testing)
      2. Server-only imports
      3. Third-party modules
      4. Internal `@formbricks/*` modules
-     5. Local aliases (`~/*)
+     5. Local aliases (`~/*`)
      6. Relative imports
 
 3. **Error Handling**
+
    - Use typed error responses
    - Proper error propagation
    - Consistent error message formatting
    - Implement error boundaries in React components
 
 4. **Async/Await**
+
    - Prefer async/await over raw promises
    - Proper error handling in async functions
    - Use Promise.all for parallel operations
@@ -99,9 +100,183 @@ arrowParens: "always"
 }
 ```
 
-## Swift
-Will be added upon release of the native iOS SDK.
+## Swift (iOS SDK)
 
-## Kotlin
-Will be added upon release of the native Android SDK.
+Our iOS SDK follows Swift best practices.
 
+### Swift Configuration
+
+The iOS SDK requires the following:
+
+- **Swift Version**: 5.7+
+- **Platform**: iOS 16.6+
+- **Package Manager**: Swift Package Manager and CocoaPods support
+- **ARC**: Automatic Reference Counting enabled
+
+**Package.swift Configuration:**
+
+```swift
+// swift-tools-version:5.7
+platforms: [
+  .iOS(.v16)
+],
+```
+
+**CocoaPods Configuration:**
+
+```ruby
+s.platform = :ios, "16.6"
+s.swift_version = "5.7"
+s.requires_arc = true
+```
+
+### Key Conventions
+
+1. **Access Control Strategy**
+
+   - `public`: SDK public API surface only
+   - `internal`: Internal SDK communication and shared components
+   - `private`: Implementation details within specific classes
+   - Strategic use of `private(set)` for read-only public properties
+
+2. **Architecture Patterns**
+
+   - **Singleton Pattern**: Main SDK class (`Formbricks`) with static interface
+   - **Manager Pattern**: Specialized managers (`UserManager`, `SurveyManager`, `PresentSurveyManager`)
+   - **Builder Pattern**: Configuration objects (`FormbricksConfig.Builder`)
+   - **Protocol-Oriented Programming**: Service protocols for dependency injection and testing
+
+3. **Error Handling**
+
+   - Custom error enums with descriptive cases (`FormbricksSDKErrorType`)
+   - Error types conform to `LocalizedError` protocol
+   - Structured error propagation with completion handlers
+   - Defensive programming with guard statements and early returns
+
+4. **Naming Conventions**
+
+   - Classes: PascalCase (`FormbricksConfig`, `UserManager`)
+   - Properties/Methods: camelCase (`environmentId`, `setUserId`)
+   - Constants: camelCase with descriptive names
+   - Protocol names: Descriptive with "Protocol" suffix (`FormbricksServiceProtocol`)
+
+5. **Code Organization**
+
+   - `// MARK:` comments for logical section separation
+   - Extensions for related functionality grouping
+   - Consistent file structure with models, managers, networking, and views
+
+6. **Model Design**
+
+   - Prefer `struct` for data models and value types
+   - Use `class` for reference types and managers
+   - Implement `Codable` for JSON serialization/deserialization
+   - Immutable properties where possible (`let` over `var`)
+
+7. **Security & Validation**
+
+   - HTTPS enforcement for all network requests
+   - URL validation before network operations
+   - Input validation with descriptive error messages
+   - Secure data handling practices
+
+8. **Asynchronous Operations**
+   - `OperationQueue` for network operations
+   - Completion handlers for async operations
+   - Network connectivity checking with `NWPathMonitor`
+   - Thread-safe operations with proper queue management
+
+### Code Formatting
+
+We follow standard Swift formatting conventions:
+
+**Key Formatting Rules:**
+
+```swift
+// Class definitions
+@objc(Formbricks) public class Formbricks: NSObject {
+
+// Property declarations with access control
+static internal var isInitialized: Bool = false
+private let userManager: UserManager
+
+// Method signatures with clear parameter labels
+@objc public static func setup(with config: FormbricksConfig, force: Bool = false)
+
+// Guard statements for early returns
+guard !isInitialized else {
+    let error = FormbricksSDKError(type: .sdkIsAlreadyInitialized)
+    Formbricks.logger?.error(error.message)
+    return
+}
+
+// Enum cases with descriptive names
+public enum FormbricksSDKErrorType: Int {
+    case sdkIsNotInitialized
+    case invalidAppUrl
+    case networkError
+}
+```
+
+## Kotlin (Android SDK)
+
+Our Android SDK codebase with Kotlin follows modern Android development practices and Kotlin conventions.
+
+### Key Conventions
+
+1. **Package Structure**
+
+   - Logical grouping by functionality (api, model, network, manager, webview)
+   - Clear separation of concerns across packages
+
+2. **Kotlin Language Features**
+
+   - **Object singletons** for stateless utilities and managers (`Formbricks`, `Logger`, `SDKError`)
+   - **Data classes** for models with automatic equals/hashCode/toString (`Survey`, `User`)
+   - **Sealed classes** for representing restricted hierarchies
+   - **Extension functions** for utility methods (`Guard.kt`, `DateExtensions.kt`)
+   - **Coroutines** for asynchronous operations with proper context switching
+
+3. **Error Handling**
+
+   - Centralized error definitions in `SDKError` object
+   - Use of `Result<T>` type for API responses
+   - Proper exception propagation with meaningful error messages
+   - Consistent error logging through centralized `Logger`
+
+4. **Android-Specific Patterns**
+
+   - `@Keep` annotations for ProGuard/R8 compatibility on public APIs
+   - Proper lifecycle management in fragments and view models
+   - Use of `FragmentManager` for UI components
+   - Network security configuration for HTTPS enforcement
+
+5. **Async/Await Pattern**
+
+   - Prefer coroutines with `suspend` functions over callbacks
+   - Use `withContext(Dispatchers.IO)` for network operations
+   - Implement retry logic with `delay()` for robust API calls
+   - Proper error handling in async functions
+
+6. **API and Network Layer**
+   - Retrofit for HTTP client with Gson converter
+   - OkHttp interceptors for logging and security
+   - Proper timeout configurations
+   - Result-based API responses with retry mechanisms
+
+### Code Formatting
+
+We use Android Studio's default Kotlin formatting
+
+### Data Modeling
+
+1. **Serialization**
+
+   - Kotlinx Serialization for modern JSON handling
+   - Gson annotations for backward compatibility: `@SerializedName`
+   - Consistent nullable and non-nullable field declarations
+
+2. **Data Classes**
+   - Immutable data structures where possible
+   - Proper use of nullable types (`String?`)
+   - Clear property naming and documentation

@@ -1,8 +1,8 @@
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
 import { updateAttributes } from "./attributes";
 
 vi.mock("@/lib/constants", () => ({

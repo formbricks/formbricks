@@ -1,3 +1,7 @@
+import { Organization } from "@prisma/client";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
@@ -5,10 +9,6 @@ import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/
 import { responses } from "@/app/lib/api/response";
 import { symmetricDecrypt } from "@/lib/crypto";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
-import { Organization } from "@prisma/client";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { logger } from "@formbricks/logger";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 vi.mock("@/lib/i18n/utils", () => ({
   getLocalizedValue: vi.fn().mockImplementation((value, language) => {
@@ -60,7 +60,6 @@ const mockSurvey: TSurvey = {
   displayOption: "displayOnce",
   recontactDays: null,
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   autoComplete: null,
@@ -68,7 +67,6 @@ const mockSurvey: TSurvey = {
   triggers: [],
   languages: [],
   pin: null,
-  resultShareKey: null,
   segment: null,
   styling: null,
   surveyClosedMessage: null,
@@ -84,7 +82,6 @@ const mockSurvey: TSurvey = {
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
   projectOverwrites: null,
-  runOnDate: null,
   showLanguageSwitch: false,
 };
 

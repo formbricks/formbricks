@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
@@ -10,18 +11,17 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslate } from "@tolgee/react";
-
-const placements = [
-  { name: "common.bottom_right", value: "bottomRight", disabled: false },
-  { name: "common.top_right", value: "topRight", disabled: false },
-  { name: "common.top_left", value: "topLeft", disabled: false },
-  { name: "common.bottom_left", value: "bottomLeft", disabled: false },
-  { name: "common.centered_modal", value: "center", disabled: false },
-];
 
 export const ProjectLookSettingsLoading = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
+
+  const placements = [
+    { name: t("common.bottom_right"), value: "bottomRight", disabled: false },
+    { name: t("common.top_right"), value: "topRight", disabled: false },
+    { name: t("common.top_left"), value: "topLeft", disabled: false },
+    { name: t("common.bottom_left"), value: "bottomLeft", disabled: false },
+    { name: t("common.centered_modal"), value: "center", disabled: false },
+  ];
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.project_configuration")}>
@@ -140,7 +140,7 @@ export const ProjectLookSettingsLoading = () => {
                     className={cn(
                       placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900"
                     )}>
-                    {t(placement.name)}
+                    {placement.name}
                   </Label>
                 </div>
               ))}

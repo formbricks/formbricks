@@ -1,18 +1,17 @@
 "use client";
 
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { Hand } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { Hand } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;
@@ -23,6 +22,7 @@ interface EditWelcomeCardProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const EditWelcomeCard = ({
@@ -34,10 +34,12 @@ export const EditWelcomeCard = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
 }: EditWelcomeCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const [firstRender, setFirstRender] = useState(true);
+
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
 
@@ -46,7 +48,6 @@ export const EditWelcomeCard = ({
   const setOpen = (e) => {
     if (e) {
       setActiveQuestionId("start");
-      setFirstRender(true);
     } else {
       setActiveQuestionId(null);
     }
@@ -121,6 +122,7 @@ export const EditWelcomeCard = ({
                   updateSurvey({ fileUrl: url[0] });
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
+                isStorageConfigured={isStorageConfigured}
               />
             </div>
             <div className="mt-3">
@@ -135,25 +137,27 @@ export const EditWelcomeCard = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                firstRender={firstRender}
+                setFirstRender={setFirstRender}
               />
             </div>
             <div className="mt-3">
-              <Label htmlFor="subheader">{t("environments.surveys.edit.welcome_message")}</Label>
-              <div className="mt-2">
-                <LocalizedEditor
-                  id="html"
-                  value={localSurvey.welcomeCard.html}
-                  localSurvey={localSurvey}
-                  isInvalid={isInvalid}
-                  updateQuestion={updateSurvey}
-                  selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  firstRender={firstRender}
-                  setFirstRender={setFirstRender}
-                  questionIdx={-1}
-                  locale={locale}
-                />
-              </div>
+              <QuestionFormInput
+                id="subheader"
+                value={localSurvey.welcomeCard.subheader}
+                label={t("environments.surveys.edit.welcome_message")}
+                localSurvey={localSurvey}
+                questionIdx={-1}
+                isInvalid={isInvalid}
+                updateSurvey={updateSurvey}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                firstRender={firstRender}
+                setFirstRender={setFirstRender}
+              />
             </div>
 
             <div className="mt-3 flex justify-between gap-8">
@@ -172,6 +176,9 @@ export const EditWelcomeCard = ({
                     setSelectedLanguageCode={setSelectedLanguageCode}
                     label={t("environments.surveys.edit.next_button_label")}
                     locale={locale}
+                    isStorageConfigured={isStorageConfigured}
+                    firstRender={firstRender}
+                    setFirstRender={setFirstRender}
                   />
                 </div>
               </div>

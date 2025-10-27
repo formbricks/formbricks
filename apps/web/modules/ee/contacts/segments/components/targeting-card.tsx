@@ -1,5 +1,20 @@
 "use client";
 
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import type {
+  TBaseFilter,
+  TSegment,
+  TSegmentCreateInput,
+  TSegmentUpdateInput,
+} from "@formbricks/types/segment";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
@@ -16,21 +31,6 @@ import { LoadSegmentModal } from "@/modules/ui/components/load-segment-modal";
 import { SaveAsNewSegmentModal } from "@/modules/ui/components/save-as-new-segment-modal";
 import { SegmentTitle } from "@/modules/ui/components/segment-title";
 import { TargetingIndicator } from "@/modules/ui/components/targeting-indicator";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import type {
-  TBaseFilter,
-  TSegment,
-  TSegmentCreateInput,
-  TSegmentUpdateInput,
-} from "@formbricks/types/segment";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 
@@ -51,7 +51,7 @@ export function TargetingCard({
   segments,
   initialSegment,
 }: TargetingCardProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);

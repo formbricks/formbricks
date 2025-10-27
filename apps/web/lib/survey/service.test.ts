@@ -1,11 +1,4 @@
 import { prisma } from "@/lib/__mocks__/database";
-import { getActionClasses } from "@/lib/actionClass/service";
-import {
-  getOrganizationByEnvironmentId,
-  subscribeOrganizationMembersToSurveyResponses,
-} from "@/lib/organization/service";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
-import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import { ActionClass, Prisma, Survey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
@@ -15,6 +8,13 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getActionClasses } from "@/lib/actionClass/service";
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "@/lib/organization/service";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
+import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import {
   mockActionClass,
   mockId,
@@ -28,7 +28,6 @@ import {
   createSurvey,
   getSurvey,
   getSurveyCount,
-  getSurveyIdByResultShareKey,
   getSurveys,
   getSurveysByActionClassId,
   getSurveysBySegmentId,
@@ -744,52 +743,6 @@ describe("Tests for createSurvey", () => {
       prisma.survey.create.mockRejectedValueOnce(mockError);
 
       await expect(createSurvey(mockEnvironmentId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
-    });
-  });
-});
-
-describe("Tests for getSurveyIdByResultShareKey", () => {
-  const mockResultShareKey = "share-key-123";
-
-  describe("Happy Path", () => {
-    test("returns survey ID when found", async () => {
-      prisma.survey.findFirst.mockResolvedValueOnce({
-        id: mockId,
-      } as Survey);
-
-      const result = await getSurveyIdByResultShareKey(mockResultShareKey);
-
-      expect(prisma.survey.findFirst).toHaveBeenCalledWith({
-        where: { resultShareKey: mockResultShareKey },
-        select: { id: true },
-      });
-      expect(result).toBe(mockId);
-    });
-
-    test("returns null when survey not found", async () => {
-      prisma.survey.findFirst.mockResolvedValueOnce(null);
-
-      const result = await getSurveyIdByResultShareKey(mockResultShareKey);
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe("Sad Path", () => {
-    test("throws DatabaseError on Prisma error", async () => {
-      const mockError = new Prisma.PrismaClientKnownRequestError("Database error", {
-        code: PrismaErrorType.UniqueConstraintViolation,
-        clientVersion: "1.0.0",
-      });
-      prisma.survey.findFirst.mockRejectedValueOnce(mockError);
-
-      await expect(getSurveyIdByResultShareKey(mockResultShareKey)).rejects.toThrow(DatabaseError);
-    });
-
-    test("throws error on unexpected error", async () => {
-      prisma.survey.findFirst.mockRejectedValueOnce(new Error("Unexpected error"));
-
-      await expect(getSurveyIdByResultShareKey(mockResultShareKey)).rejects.toThrow(Error);
     });
   });
 });

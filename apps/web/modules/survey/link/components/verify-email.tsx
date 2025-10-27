@@ -1,5 +1,15 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, MailIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { Toaster, toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -8,15 +18,6 @@ import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { StackedCardsContainer } from "@/modules/ui/components/stacked-cards-container";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { ArrowLeft, MailIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { Toaster, toast } from "react-hot-toast";
-import { z } from "zod";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface VerifyEmailProps {
   survey: TSurvey;
@@ -40,7 +41,7 @@ export const VerifyEmail = ({
   styling,
   locale,
 }: VerifyEmailProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
       email: "",
@@ -170,11 +171,11 @@ export const VerifyEmail = ({
         {!emailSent && showPreviewQuestions && (
           <div>
             <p className="text-2xl font-bold">{t("s.question_preview")}</p>
-            <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-8 text-slate-700">
+            <div className="mt-4 flex max-h-[50vh] w-full flex-col overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-4 text-slate-700">
               {localSurvey.questions.map((question, index) => (
                 <p
                   key={index}
-                  className="my-1 text-sm">{`${(index + 1).toString()}. ${getLocalizedValue(question.headline, languageCode)}`}</p>
+                  className="my-1 text-sm">{`${(index + 1).toString()}. ${getTextContent(getLocalizedValue(question.headline, languageCode))}`}</p>
               ))}
             </div>
             <Button variant="ghost" className="mt-6" onClick={handlePreviewClick}>

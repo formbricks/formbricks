@@ -1,18 +1,12 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
-import { Button } from "@/modules/ui/components/button";
-import { Input } from "@/modules/ui/components/input";
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { isEqual } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
 import {
@@ -23,6 +17,12 @@ import {
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 
@@ -41,6 +41,7 @@ interface SurveyMenuBarProps {
   isCxMode: boolean;
   locale: string;
   setIsCautionDialogOpen: (open: boolean) => void;
+  isStorageConfigured: boolean;
 }
 
 export const SurveyMenuBar = ({
@@ -57,8 +58,9 @@ export const SurveyMenuBar = ({
   isCxMode,
   locale,
   setIsCautionDialogOpen,
+  isStorageConfigured = true,
 }: SurveyMenuBarProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isLinkSurvey, setIsLinkSurvey] = useState(true);
@@ -214,7 +216,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
         setIsSurveySaving(false);
         return false;
@@ -247,6 +249,7 @@ export const SurveyMenuBar = ({
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
         toast.success(t("environments.surveys.edit.changes_saved"));
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
@@ -280,12 +283,12 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
         setIsSurveyPublishing(false);
         return;
       }
-      const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
+      const status = "inProgress";
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
@@ -330,6 +333,22 @@ export const SurveyMenuBar = ({
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+        {!isStorageConfigured && (
+          <div>
+            <Alert variant="warning" size="small">
+              <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
+              <AlertButton className="flex items-center justify-center">
+                <a
+                  className="flex h-full w-full items-center justify-center !bg-white"
+                  href="https://formbricks.com/docs/self-hosting/configuration/file-uploads"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  <span>{t("common.learn_more")}</span>
+                </a>
+              </AlertButton>
+            </Alert>
+          </div>
+        )}
         {responseCount > 0 && (
           <div>
             <Alert variant="warning" size="small">

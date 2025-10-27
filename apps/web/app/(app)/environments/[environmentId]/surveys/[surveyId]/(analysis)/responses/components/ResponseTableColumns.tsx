@@ -1,87 +1,101 @@
 "use client";
 
+import { ColumnDef } from "@tanstack/react-table";
+import { TFunction } from "i18next";
+import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
+import Link from "next/link";
+import { TResponseTableData } from "@formbricks/types/responses";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { processResponseData } from "@/lib/responses";
+import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { ColumnDef } from "@tanstack/react-table";
-import { TFnType } from "@tolgee/react";
-import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
-import Link from "next/link";
-import { TResponseTableData } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-
-const getAddressFieldLabel = (field: string, t: TFnType) => {
-  switch (field) {
-    case "addressLine1":
-      return t("environments.surveys.responses.address_line_1");
-    case "addressLine2":
-      return t("environments.surveys.responses.address_line_2");
-    case "city":
-      return t("environments.surveys.responses.city");
-    case "state":
-      return t("environments.surveys.responses.state_region");
-    case "zip":
-      return t("environments.surveys.responses.zip_post_code");
-    case "country":
-      return t("environments.surveys.responses.country");
-
-    default:
-      break;
-  }
-};
-
-const getContactInfoFieldLabel = (field: string, t: TFnType) => {
-  switch (field) {
-    case "firstName":
-      return t("environments.surveys.responses.first_name");
-    case "lastName":
-      return t("environments.surveys.responses.last_name");
-    case "email":
-      return t("environments.surveys.responses.email");
-    case "phone":
-      return t("environments.surveys.responses.phone");
-    case "company":
-      return t("environments.surveys.responses.company");
-    default:
-      break;
-  }
-};
+import { cn } from "@/modules/ui/lib/utils";
+import {
+  COLUMNS_ICON_MAP,
+  METADATA_FIELDS,
+  getAddressFieldLabel,
+  getContactInfoFieldLabel,
+  getMetadataFieldLabel,
+  getMetadataValue,
+} from "../lib/utils";
 
 const getQuestionColumnsData = (
   question: TSurveyQuestion,
   survey: TSurvey,
   isExpanded: boolean,
-  t: TFnType
+  t: TFunction
 ): ColumnDef<TResponseTableData>[] => {
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+  const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
+  const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
+
+  // Helper function to create consistent column headers
+  const createQuestionHeader = (questionType: string, headline: string, suffix?: string) => {
+    const title = suffix ? `${headline} - ${suffix}` : headline;
+    const QuestionHeader = () => (
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <span className="h-4 w-4">{QUESTIONS_ICON_MAP[questionType]}</span>
+          <span className="truncate">{title}</span>
+        </div>
+      </div>
+    );
+    QuestionHeader.displayName = "QuestionHeader";
+    return QuestionHeader;
+  };
+
+  // Helper function to get localized question headline
+  const getQuestionHeadline = (question: TSurveyQuestion, survey: TSurvey) => {
+    return getTextContent(
+      getLocalizedValue(recallToHeadline(question.headline, survey, false, "default"), "default")
+    );
+  };
+
+  // Helper function to render choice ID badges
+  const renderChoiceIdBadges = (choiceIds: string[], isExpanded: boolean) => {
+    if (choiceIds.length === 0) return null;
+
+    const containerClasses = cn("flex gap-x-1 w-full", isExpanded && "flex-wrap gap-y-1");
+
+    return (
+      <div className={containerClasses}>
+        {choiceIds.map((choiceId, index) => (
+          <IdBadge key={`${choiceId}-${index}`} id={choiceId} />
+        ))}
+      </div>
+    );
+  };
+
   switch (question.type) {
     case "matrix":
       return question.rows.map((matrixRow) => {
         return {
-          accessorKey: matrixRow.default,
+          accessorKey: "QUESTION_" + question.id + "_" + matrixRow.label.default,
           header: () => {
             return (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 overflow-hidden">
                   <span className="h-4 w-4">{QUESTIONS_ICON_MAP["matrix"]}</span>
                   <span className="truncate">
-                    {getLocalizedValue(question.headline, "default") +
+                    {getTextContent(getLocalizedValue(question.headline, "default")) +
                       " - " +
-                      getLocalizedValue(matrixRow, "default")}
+                      getLocalizedValue(matrixRow.label, "default")}
                   </span>
                 </div>
               </div>
             );
           },
           cell: ({ row }) => {
-            const responseValue = row.original.responseData[matrixRow.default];
+            const responseValue = row.original.responseData[matrixRow.label.default];
             if (typeof responseValue === "string") {
               return <p className="text-slate-900">{responseValue}</p>;
             }
@@ -90,10 +104,9 @@ const getQuestionColumnsData = (
       });
 
     case "address":
-      const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
       return addressFields.map((addressField) => {
         return {
-          accessorKey: addressField,
+          accessorKey: "QUESTION_" + question.id + "_" + addressField,
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -114,10 +127,9 @@ const getQuestionColumnsData = (
       });
 
     case "contactInfo":
-      const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
       return contactInfoFields.map((contactInfoField) => {
         return {
-          accessorKey: contactInfoField,
+          accessorKey: "QUESTION_" + question.id + "_" + contactInfoField,
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -137,18 +149,64 @@ const getQuestionColumnsData = (
         };
       });
 
+    case "multipleChoiceMulti":
+    case "multipleChoiceSingle":
+    case "ranking":
+    case "pictureSelection": {
+      const questionHeadline = getQuestionHeadline(question, survey);
+      return [
+        {
+          accessorKey: "QUESTION_" + question.id,
+          header: createQuestionHeader(question.type, questionHeadline),
+          cell: ({ row }) => {
+            const responseValue = row.original.responseData[question.id];
+            const language = row.original.language;
+            return (
+              <RenderResponse
+                question={question}
+                survey={survey}
+                responseData={responseValue}
+                language={language}
+                isExpanded={isExpanded}
+                showId={false}
+              />
+            );
+          },
+        },
+        {
+          accessorKey: "QUESTION_" + question.id + "optionIds",
+          header: createQuestionHeader(question.type, questionHeadline, t("common.option_id")),
+          cell: ({ row }) => {
+            const responseValue = row.original.responseData[question.id];
+            // Type guard to ensure responseValue is the correct type
+            if (typeof responseValue === "string" || Array.isArray(responseValue)) {
+              const choiceIds = extractChoiceIdsFromResponse(
+                responseValue,
+                question,
+                row.original.language || undefined
+              );
+              return renderChoiceIdBadges(choiceIds, isExpanded);
+            }
+            return null;
+          },
+        },
+      ];
+    }
+
     default:
       return [
         {
-          accessorKey: question.id,
+          accessorKey: "QUESTION_" + question.id,
           header: () => (
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 overflow-hidden">
                 <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
                 <span className="truncate">
-                  {getLocalizedValue(
-                    recallToHeadline(question.headline, survey, false, "default"),
-                    "default"
+                  {getTextContent(
+                    getLocalizedValue(
+                      recallToHeadline(question.headline, survey, false, "default"),
+                      "default"
+                    )
                   )}
                 </span>
               </div>
@@ -164,6 +222,7 @@ const getQuestionColumnsData = (
                 responseData={responseValue}
                 language={language}
                 isExpanded={isExpanded}
+                showId={false}
               />
             );
           },
@@ -172,11 +231,39 @@ const getQuestionColumnsData = (
   }
 };
 
+const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] => {
+  const metadataColumns: ColumnDef<TResponseTableData>[] = [];
+
+  METADATA_FIELDS.forEach((label) => {
+    const IconComponent = COLUMNS_ICON_MAP[label];
+
+    metadataColumns.push({
+      accessorKey: "METADATA_" + label,
+      header: () => (
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <span className="h-4 w-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
+          <span className="truncate">{getMetadataFieldLabel(label, t)}</span>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const value = getMetadataValue(row.original.meta, label);
+        if (value) {
+          return <div className="truncate text-slate-900">{value}</div>;
+        }
+        return null;
+      },
+    });
+  });
+
+  return metadataColumns;
+};
+
 export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isReadOnly: boolean,
-  t: TFnType
+  t: TFunction,
+  showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>
     getQuestionColumnsData(question, survey, isExpanded, t)
@@ -202,12 +289,13 @@ export const generateResponseTableColumns = (
             <TooltipTrigger>
               <CircleHelpIcon className="h-3 w-3 text-slate-500" strokeWidth={1.5} />
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="font-normal">
-              {t("environments.surveys.responses.how_to_identify_users")}
+            <TooltipContent side="bottom" className="space-x-1 font-normal">
+              <span>{t("environments.surveys.responses.how_to_identify_users")}</span>
               <Link
                 className="underline underline-offset-2 hover:text-slate-900"
                 href="https://formbricks.com/docs/app-surveys/user-identification"
-                target="_blank">
+                target="_blank"
+                rel="noopener noreferrer">
                 {t("common.app_survey")}
               </Link>
             </TooltipContent>
@@ -224,49 +312,49 @@ export const generateResponseTableColumns = (
     },
   };
 
+  const quotasColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "quota",
+    header: t("common.quota"),
+    cell: ({ row }) => {
+      const quotas = row.original.quotas;
+      const items = quotas?.map((quota) => ({ value: quota })) ?? [];
+      return <ResponseBadges items={items} showId={false} />;
+    },
+    size: 200,
+  };
+
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
     size: 200,
-    header: t("common.status"),
+    header: () => <div className="gap-x-1.5">{t("common.status")}</div>,
     cell: ({ row }) => {
       const status = row.original.status;
-      return <ResponseBadges items={[status]} />;
+      return <ResponseBadges items={[{ value: status }]} showId={false} />;
     },
   };
 
   const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
-    header: t("common.tags"),
+    header: () => <div className="gap-x-1.5">{t("common.tags")}</div>,
     cell: ({ row }) => {
       const tags = row.original.tags;
       if (Array.isArray(tags)) {
         const tagsArray = tags.map((tag) => tag.name);
         return (
           <ResponseBadges
-            items={tagsArray}
+            items={tagsArray.map((tag) => ({ value: tag }))}
             isExpanded={isExpanded}
             icon={<TagIcon className="h-4 w-4 text-slate-500" />}
+            showId={false}
           />
         );
       }
     },
   };
 
-  const notesColumn: ColumnDef<TResponseTableData> = {
-    accessorKey: "notes",
-    header: t("common.notes"),
-    cell: ({ row }) => {
-      const notes = row.original.notes;
-      if (Array.isArray(notes)) {
-        const notesArray = notes.map((note) => note.text);
-        return processResponseData(notesArray);
-      }
-    },
-  };
-
   const variableColumns: ColumnDef<TResponseTableData>[] = survey.variables.map((variable) => {
     return {
-      accessorKey: variable.id,
+      accessorKey: "VARIABLE_" + variable.id,
       header: () => (
         <div className="flex items-center space-x-2 overflow-hidden">
           <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
@@ -285,7 +373,7 @@ export const generateResponseTableColumns = (
   const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = survey.hiddenFields.fieldIds
     ? survey.hiddenFields.fieldIds.map((hiddenFieldId) => {
         return {
-          accessorKey: hiddenFieldId,
+          accessorKey: "HIDDEN_FIELD_" + hiddenFieldId,
           header: () => (
             <div className="flex items-center space-x-2 overflow-hidden">
               <span className="h-4 w-4">
@@ -304,6 +392,8 @@ export const generateResponseTableColumns = (
       })
     : [];
 
+  const metadataColumns = getMetadataColumnsData(t);
+
   const verifiedEmailColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "verifiedEmail",
     header: () => (
@@ -317,17 +407,17 @@ export const generateResponseTableColumns = (
   };
 
   // Combine the selection column with the dynamic question columns
-
   const baseColumns = [
     personColumn,
     dateColumn,
+    ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
     ...questionColumns,
     ...variableColumns,
     ...hiddenFieldColumns,
+    ...metadataColumns,
     tagsColumn,
-    notesColumn,
   ];
 
   return isReadOnly ? baseColumns : [getSelectionColumn(), ...baseColumns];

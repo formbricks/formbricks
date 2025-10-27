@@ -1,5 +1,10 @@
 "use server";
 
+import { OrganizationRole } from "@prisma/client";
+import { z } from "zod";
+import { ZId, ZUuid } from "@formbricks/types/common";
+import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
+import { ZOrganizationRole } from "@formbricks/types/memberships";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -17,11 +22,6 @@ import {
   getMembershipsByUserId,
   getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
-import { OrganizationRole } from "@prisma/client";
-import { z } from "zod";
-import { ZId, ZUuid } from "@formbricks/types/common";
-import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
-import { ZOrganizationRole } from "@formbricks/types/memberships";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "./lib/invite";
 
 const ZDeleteInviteAction = z.object({
@@ -188,9 +188,7 @@ export const resendInviteAction = authenticatedActionClient.schema(ZResendInvite
         parsedInput.inviteId,
         updatedInvite.email,
         invite?.creator?.name ?? "",
-        updatedInvite.name ?? "",
-        undefined,
-        ctx.user.locale
+        updatedInvite.name ?? ""
       );
       return updatedInvite;
     }
@@ -266,14 +264,7 @@ export const inviteUserAction = authenticatedActionClient.schema(ZInviteUserActi
       };
 
       if (inviteId) {
-        await sendInviteMemberEmail(
-          inviteId,
-          parsedInput.email,
-          ctx.user.name ?? "",
-          parsedInput.name ?? "",
-          false,
-          undefined
-        );
+        await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
       }
 
       return inviteId;

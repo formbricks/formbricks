@@ -1,33 +1,62 @@
-import { TopControlButtons } from "@/app/(app)/environments/[environmentId]/components/TopControlButtons";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+"use client";
+
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { ProjectAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/components/project-and-org-switch";
+import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { getAccessFlags } from "@/lib/membership/utils";
 
-interface SideBarProps {
-  environment: TEnvironment;
+interface TopControlBarProps {
   environments: TEnvironment[];
+  currentOrganizationId: string;
+  organizations: { id: string; name: string }[];
+  currentProjectId: string;
+  projects: { id: string; name: string }[];
+  isMultiOrgEnabled: boolean;
+  organizationProjectsLimit: number;
+  isFormbricksCloud: boolean;
+  isLicenseActive: boolean;
+  isOwnerOrManager: boolean;
+  isAccessControlAllowed: boolean;
   membershipRole?: TOrganizationRole;
-  projectPermission: TTeamPermission | null;
 }
 
 export const TopControlBar = ({
-  environment,
   environments,
+  currentOrganizationId,
+  organizations,
+  currentProjectId,
+  projects,
+  isMultiOrgEnabled,
+  organizationProjectsLimit,
+  isFormbricksCloud,
+  isLicenseActive,
+  isOwnerOrManager,
+  isAccessControlAllowed,
   membershipRole,
-  projectPermission,
-}: SideBarProps) => {
+}: TopControlBarProps) => {
+  const { isMember } = getAccessFlags(membershipRole);
+  const { environment } = useEnvironment();
+
   return (
-    <div className="fixed inset-0 top-0 z-30 flex h-14 w-full items-center justify-end bg-slate-50 px-6">
-      <div className="shadow-xs z-10">
-        <div className="flex w-fit items-center space-x-2 py-2">
-          <TopControlButtons
-            environment={environment}
-            environments={environments}
-            membershipRole={membershipRole}
-            projectPermission={projectPermission}
-          />
-        </div>
-      </div>
+    <div
+      className="flex h-14 w-full items-center justify-between bg-slate-50 px-6"
+      data-testid="fb__global-top-control-bar">
+      <ProjectAndOrgSwitch
+        currentEnvironmentId={environment.id}
+        environments={environments}
+        currentOrganizationId={currentOrganizationId}
+        organizations={organizations}
+        currentProjectId={currentProjectId}
+        projects={projects}
+        isMultiOrgEnabled={isMultiOrgEnabled}
+        organizationProjectsLimit={organizationProjectsLimit}
+        isFormbricksCloud={isFormbricksCloud}
+        isLicenseActive={isLicenseActive}
+        isOwnerOrManager={isOwnerOrManager}
+        isMember={isMember}
+        isAccessControlAllowed={isAccessControlAllowed}
+      />
     </div>
   );
 };

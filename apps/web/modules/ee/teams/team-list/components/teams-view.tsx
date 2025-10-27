@@ -1,18 +1,18 @@
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
 import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/project";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
 import { getMembersByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getTranslate } from "@/tolgee/server";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface TeamsViewProps {
   organizationId: string;
   membershipRole?: TOrganizationRole;
   currentUserId: string;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   environmentId: string;
 }
 
@@ -20,7 +20,7 @@ export const TeamsView = async ({
   organizationId,
   membershipRole,
   currentUserId,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   environmentId,
 }: TeamsViewProps) => {
   const t = await getTranslate();
@@ -52,7 +52,7 @@ export const TeamsView = async ({
     <SettingsCard
       title={t("environments.settings.teams.teams")}
       description={t("environments.settings.teams.teams_description")}>
-      {canDoRoleManagement ? (
+      {isAccessControlAllowed ? (
         <TeamsTable
           teams={teams}
           membershipRole={membershipRole}

@@ -1,18 +1,5 @@
 "use client";
 
-import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
-import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
-import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
-import { Button } from "@/modules/ui/components/button";
-import {
-  DataTableHeader,
-  DataTableSettingsModal,
-  DataTableToolbar,
-} from "@/modules/ui/components/data-table";
-import { Skeleton } from "@/modules/ui/components/skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 import {
   DndContext,
   type DragEndEvent,
@@ -28,29 +15,46 @@ import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Sentry from "@sentry/nextjs";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
+import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
+import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
+import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DataTableHeader,
+  DataTableSettingsModal,
+  DataTableToolbar,
+} from "@/modules/ui/components/data-table";
+import { Skeleton } from "@/modules/ui/components/skeleton";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 
 interface ResponseTableProps {
   data: TResponseTableData[];
   survey: TSurvey;
-  responses: TResponse[] | null;
+  responses: TResponseWithQuotas[] | null;
   environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
   isReadOnly: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
-  deleteResponses: (responseIds: string[]) => void;
-  updateResponse: (responseId: string, updatedResponse: TResponse) => void;
+  updateResponseList: (responseIds: string[]) => void;
+  updateResponse: (responseId: string, updatedResponse: TResponseWithQuotas) => void;
   isFetchingFirstPage: boolean;
   locale: TUserLocale;
+  isQuotasAllowed: boolean;
+  quotas: TSurveyQuota[];
 }
 
 export const ResponseTable = ({
@@ -63,12 +67,14 @@ export const ResponseTable = ({
   isReadOnly,
   fetchNextPage,
   hasMore,
-  deleteResponses,
+  updateResponseList,
   updateResponse,
   isFetchingFirstPage,
   locale,
+  isQuotasAllowed,
+  quotas,
 }: ResponseTableProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
@@ -78,8 +84,9 @@ export const ResponseTable = ({
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [parent] = useAutoAnimate();
 
+  const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn);
 
   // Save settings to localStorage when they change
   useEffect(() => {
@@ -106,6 +113,7 @@ export const ResponseTable = ({
     () => (isFetchingFirstPage ? Array(10).fill({}) : data),
     [data, isFetchingFirstPage]
   );
+
   const tableColumns = useMemo(
     () =>
       isFetchingFirstPage
@@ -178,8 +186,8 @@ export const ResponseTable = ({
     }
   };
 
-  const deleteResponse = async (responseId: string) => {
-    await deleteResponseAction({ responseId });
+  const deleteResponse = async (responseId: string, params?: { decrementQuotas?: boolean }) => {
+    await deleteResponseAction({ responseId, decrementQuotas: params?.decrementQuotas ?? false });
   };
 
   // Handle downloading selected responses
@@ -192,13 +200,7 @@ export const ResponseTable = ({
       });
 
       if (downloadResponse?.data) {
-        const link = document.createElement("a");
-        link.href = downloadResponse.data;
-        link.download = "";
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        downloadResponsesFile(downloadResponse.data.fileName, downloadResponse.data.fileContents, format);
       } else {
         toast.error(t("environments.surveys.responses.error_downloading_responses"));
       }
@@ -221,10 +223,11 @@ export const ResponseTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded ?? false}
           table={table}
-          deleteRowsAction={deleteResponses}
+          updateRowList={updateResponseList}
           type="response"
           deleteAction={deleteResponse}
           downloadRowsAction={downloadSelectedRows}
+          isQuotasAllowed={isQuotasAllowed}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">
@@ -299,7 +302,7 @@ export const ResponseTable = ({
             environmentTags={environmentTags}
             isReadOnly={isReadOnly}
             updateResponse={updateResponse}
-            deleteResponses={deleteResponses}
+            updateResponseList={updateResponseList}
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
             open={selectedResponse !== null}

@@ -1,0 +1,232 @@
+---
+description: Security best practices and guidelines for writing GitHub Actions and workflows
+globs: .github/workflows/*.yml,.github/workflows/*.yaml,.github/actions/*/action.yml,.github/actions/*/action.yaml
+---
+
+# GitHub Actions Security Best Practices
+
+## Required Security Measures
+
+### 1. Set Minimum GITHUB_TOKEN Permissions
+
+Always explicitly set the minimum required permissions for GITHUB_TOKEN:
+
+```yaml
+permissions:
+  contents: read
+  # Only add additional permissions if absolutely necessary:
+  # pull-requests: write  # for commenting on PRs
+  # issues: write         # for creating/updating issues
+  # checks: write         # for publishing check results
+```
+
+### 2. Add Harden-Runner as First Step
+
+For **every job** on `ubuntu-latest`, add Harden-Runner as the first step:
+
+```yaml
+- name: Harden the runner
+  uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+  with:
+    egress-policy: audit # or 'block' for stricter security
+```
+
+### 3. Pin Actions to Full Commit SHA
+
+**Always** pin third-party actions to their full commit SHA, not tags:
+
+```yaml
+# ❌ BAD - uses mutable tag
+- uses: actions/checkout@v4
+
+# ✅ GOOD - pinned to immutable commit SHA
+- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+```
+
+### 4. Secure Variable Handling
+
+Prevent command injection by properly quoting variables:
+
+```yaml
+# ❌ BAD - potential command injection
+run: echo "Processing ${{ inputs.user_input }}"
+
+# ✅ GOOD - properly quoted
+env:
+  USER_INPUT: ${{ inputs.user_input }}
+run: echo "Processing ${USER_INPUT}"
+```
+
+Use `${VARIABLE}` syntax in shell scripts instead of `$VARIABLE`.
+
+### 5. Environment Variables for Secrets
+
+Store sensitive data in environment variables, not inline:
+
+```yaml
+# ❌ BAD
+run: curl -H "Authorization: Bearer ${{ secrets.TOKEN }}" api.example.com
+
+# ✅ GOOD
+env:
+  API_TOKEN: ${{ secrets.TOKEN }}
+run: curl -H "Authorization: Bearer ${API_TOKEN}" api.example.com
+```
+
+## Workflow Structure Best Practices
+
+### Required Workflow Elements
+
+```yaml
+name: "Descriptive Workflow Name"
+
+on:
+  # Define specific triggers
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Always set explicit permissions
+permissions:
+  contents: read
+
+jobs:
+  job-name:
+    name: "Descriptive Job Name"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # tune per job; standardize repo-wide
+
+    # Set job-level permissions if different from workflow level
+    permissions:
+      contents: read
+
+    steps:
+      # Always start with Harden-Runner on ubuntu-latest
+      - name: Harden the runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      # Pin all actions to commit SHA
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+```
+
+### Input Validation for Actions
+
+For composite actions, always validate inputs:
+
+```yaml
+inputs:
+  user_input:
+    description: "User provided input"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate input
+      shell: bash
+      run: |
+        # Harden shell and validate input format/content before use
+        set -euo pipefail
+
+        USER_INPUT="${{ inputs.user_input }}"
+
+        if [[ ! "${USER_INPUT}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+          echo "❌ Invalid input format"
+          exit 1
+        fi
+```
+
+## Docker Security in Actions
+
+### Pin Docker Images to Digests
+
+```yaml
+# ❌ BAD - mutable tag
+container: node:18
+
+# ✅ GOOD - pinned to digest
+container: node:18@sha256:a1ba21bf0c92931d02a8416f0a54daad66cb36a85d6a37b82dfe1604c4c09cad
+```
+
+## Common Patterns
+
+### Secure File Operations
+
+```yaml
+- name: Process files securely
+  shell: bash
+  env:
+    FILE_PATH: ${{ inputs.file_path }}
+  run: |
+    set -euo pipefail  # Fail on errors, undefined vars, pipe failures
+
+    # Use absolute paths and validate
+    SAFE_PATH=$(realpath "${FILE_PATH}")
+    if [[ "$SAFE_PATH" != "${GITHUB_WORKSPACE}"/* ]]; then
+      echo "❌ Path outside workspace"
+      exit 1
+    fi
+```
+
+### Artifact Handling
+
+```yaml
+- name: Upload artifacts securely
+  uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+  with:
+    name: build-artifacts
+    path: |
+      dist/
+      !dist/**/*.log  # Exclude sensitive files
+    retention-days: 30
+```
+
+### GHCR authentication for pulls/scans
+
+```yaml
+# Minimal permissions required for GHCR pulls/scans
+permissions:
+  contents: read
+  packages: read
+
+steps:
+  - name: Log in to GitHub Container Registry
+    uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+    with:
+      registry: ghcr.io
+      username: ${{ github.actor }}
+      password: ${{ secrets.GITHUB_TOKEN }}
+```
+
+## Security Checklist
+
+- [ ] Minimum GITHUB_TOKEN permissions set
+- [ ] Harden-Runner added to all ubuntu-latest jobs
+- [ ] All third-party actions pinned to commit SHA
+- [ ] Input validation implemented for custom actions
+- [ ] Variables properly quoted in shell scripts
+- [ ] Secrets stored in environment variables
+- [ ] Docker images pinned to digests (if used)
+- [ ] Error handling with `set -euo pipefail`
+- [ ] File paths validated and sanitized
+- [ ] No sensitive data in logs or outputs
+- [ ] GHCR login performed before pulls/scans (packages: read)
+- [ ] Job timeouts configured (`timeout-minutes`)
+
+## Recommended Additional Workflows
+
+Consider adding these security-focused workflows to your repository:
+
+1. **CodeQL Analysis** - Static Application Security Testing (SAST)
+2. **Dependency Review** - Scan for vulnerable dependencies in PRs
+3. **Dependabot Configuration** - Automated dependency updates
+
+## Resources
+
+- [GitHub Security Hardening Guide](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
+- [Step Security Harden-Runner](https://github.com/step-security/harden-runner)
+- [Secure-Repo Best Practices](https://github.com/step-security/secure-repo)

@@ -1,12 +1,13 @@
 "use client";
 
+import { TFunction } from "i18next";
+import { InfoIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Label } from "@/modules/ui/components/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { TFnType, useTranslate } from "@tolgee/react";
-import { InfoIcon } from "lucide-react";
 
 export function LanguageLabels() {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="mb-2 grid w-full grid-cols-4 gap-4">
       <Label htmlFor="languagesId">{t("environments.project.languages.language")}</Label>
@@ -18,7 +19,7 @@ export function LanguageLabels() {
   );
 }
 
-function AliasTooltip({ t }: { t: TFnType }) {
+function AliasTooltip({ t }: Readonly<{ t: TFunction }>) {
   return (
     <TooltipProvider delayDuration={80}>
       <Tooltip>

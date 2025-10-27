@@ -1,7 +1,7 @@
+import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
+import { type TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
-import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
-import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
 const extractId = (text: string): string | null => {
@@ -12,7 +12,7 @@ const extractId = (text: string): string | null => {
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
 const extractFallbackValue = (text: string): string => {
-  const pattern = /fallback:(\S*)#/;
+  const pattern = /fallback:([^#]*)#/;
   const match = text.match(pattern);
   return match?.[1] ?? "";
 };
@@ -20,7 +20,7 @@ const extractFallbackValue = (text: string): string => {
 // Extracts the complete recall information (ID and fallback) from a headline string.
 const extractRecallInfo = (headline: string, id?: string): string | null => {
   const idPattern = id ?? "[A-Za-z0-9_-]+";
-  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
+  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
@@ -83,6 +83,18 @@ export const parseRecallInformation = (
     );
   }
   if (
+    question.subheader &&
+    question.subheader[languageCode].includes("recall:") &&
+    modifiedQuestion.subheader
+  ) {
+    modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
+      getLocalizedValue(modifiedQuestion.subheader, languageCode),
+      responseData,
+      variables
+    );
+  }
+  if (
+    (question.type === TSurveyQuestionTypeEnum.CTA || question.type === TSurveyQuestionTypeEnum.Consent) &&
     question.subheader &&
     question.subheader[languageCode].includes("recall:") &&
     modifiedQuestion.subheader

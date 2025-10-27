@@ -21,10 +21,10 @@ jobs:
     name: Validate Docker Build
     runs-on: ubuntu-latest
 
-    # Add PostgreSQL service container
+    # Add PostgreSQL and Redis service containers
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
@@ -38,43 +38,98 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      redis:
+        image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+        ports:
+          - 6379:6379
+
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
       - name: Checkout Repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Build Docker Image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        env:
+          GITHUB_SHA: ${{ github.sha }}
         with:
           context: .
           file: ./apps/web/Dockerfile
           push: false
           load: true
-          tags: formbricks-test:${{ github.sha }}
+          tags: formbricks-test:${{ env.GITHUB_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            redis_url=redis://localhost:6379
 
-      - name: Verify PostgreSQL Connection
+      - name: Verify and Initialize PostgreSQL
         run: |
           echo "Verifying PostgreSQL connection..."
           # Install PostgreSQL client to test connection
           sudo apt-get update && sudo apt-get install -y postgresql-client
 
-          # Test connection using psql
-          PGPASSWORD=test psql -h localhost -U test -d formbricks -c "\dt" || echo "Failed to connect to PostgreSQL"
+          # Test connection using psql with timeout and proper error handling
+          echo "Testing PostgreSQL connection with 30 second timeout..."
+          if timeout 30 bash -c 'until PGPASSWORD=test psql -h localhost -U test -d formbricks -c "\dt" >/dev/null 2>&1; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 2
+          done'; then
+            echo "✅ PostgreSQL connection successful"
+            PGPASSWORD=test psql -h localhost -U test -d formbricks -c "SELECT version();"
+
+            # Enable necessary extensions that might be required by migrations
+            echo "Enabling required PostgreSQL extensions..."
+            PGPASSWORD=test psql -h localhost -U test -d formbricks -c "CREATE EXTENSION IF NOT EXISTS vector;" || echo "Vector extension already exists or not available"
+
+          else
+            echo "❌ PostgreSQL connection failed after 30 seconds"
+            exit 1
+          fi
 
           # Show network configuration
           echo "Network configuration:"
-          ip addr show
           netstat -tulpn | grep 5432 || echo "No process listening on port 5432"
+
+      - name: Verify Redis/Valkey Connection
+        run: |
+          echo "Verifying Redis/Valkey connection..."
+          # Install Redis client to test connection
+          sudo apt-get update && sudo apt-get install -y redis-tools
+
+          # Test connection using redis-cli with timeout and proper error handling
+          echo "Testing Redis connection with 30 second timeout..."
+          if timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping >/dev/null 2>&1; do
+            echo "Waiting for Redis to be ready..."
+            sleep 2
+          done'; then
+            echo "✅ Redis connection successful"
+            redis-cli -h localhost -p 6379 info server | head -5
+          else
+            echo "❌ Redis connection failed after 30 seconds"
+            exit 1
+          fi
+
+          # Show network configuration for Redis
+          echo "Redis network configuration:"
+          netstat -tulpn | grep 6379 || echo "No process listening on port 6379"
 
       - name: Test Docker Image with Health Check
         shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           echo "🧪 Testing if the Docker image starts correctly..."
 
@@ -86,29 +141,13 @@ jobs:
             $DOCKER_RUN_ARGS \
             -p 3000:3000 \
             -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
-            -e ENCRYPTION_KEY="${{ secrets.DUMMY_ENCRYPTION_KEY }}" \
-            -d formbricks-test:${{ github.sha }}
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
+            -e REDIS_URL="redis://host.docker.internal:6379" \
+            -d "formbricks-test:$GITHUB_SHA"
 
-          # Give it more time to start up
-          echo "Waiting 45 seconds for application to start..."
-          sleep 45
-
-          # Check if the container is running
-          if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test)" != "true" ]; then
-            echo "❌ Container failed to start properly!"
-            docker logs formbricks-test
-            exit 1
-          else
-            echo "✅ Container started successfully!"
-          fi
-
-          # Try connecting to PostgreSQL from inside the container
-          echo "Testing PostgreSQL connection from inside container..."
-          docker exec formbricks-test sh -c 'apt-get update && apt-get install -y postgresql-client && PGPASSWORD=test psql -h host.docker.internal -U test -d formbricks -c "\dt" || echo "Failed to connect to PostgreSQL from container"'
-
-          # Try to access the health endpoint
-          echo "🏥 Testing /health endpoint..."
-          MAX_RETRIES=10
+          # Start health check polling immediately (every 5 seconds for up to 5 minutes)
+          echo "🏥 Polling /health endpoint every 5 seconds for up to 5 minutes..."
+          MAX_RETRIES=60  # 60 attempts × 5 seconds = 5 minutes
           RETRY_COUNT=0
           HEALTH_CHECK_SUCCESS=false
 
@@ -116,38 +155,32 @@ jobs:
 
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "Attempt $RETRY_COUNT of $MAX_RETRIES..."
-            
-            # Show container logs before each attempt to help debugging
-            if [ $RETRY_COUNT -gt 1 ]; then
-              echo "📋 Current container logs:"
-              docker logs --tail 20 formbricks-test
+
+            # Check if container is still running
+            if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test 2>/dev/null)" != "true" ]; then
+              echo "❌ Container stopped running after $((RETRY_COUNT * 5)) seconds!"
+              echo "📋 Container logs:"
+              docker logs formbricks-test
+              exit 1
             fi
-            
-            # Get detailed curl output for debugging
-            HTTP_OUTPUT=$(curl -v -s -m 30 http://localhost:3000/health 2>&1)
-            CURL_EXIT_CODE=$?
-            
-            echo "Curl exit code: $CURL_EXIT_CODE"
-            echo "Curl output: $HTTP_OUTPUT"
-            
-            if [ $CURL_EXIT_CODE -eq 0 ]; then
-              STATUS_CODE=$(echo "$HTTP_OUTPUT" | grep -oP "HTTP/\d(\.\d)? \K\d+")
-              echo "Status code detected: $STATUS_CODE"
-              
-              if [ "$STATUS_CODE" = "200" ]; then
-                echo "✅ Health check successful!"
-                HEALTH_CHECK_SUCCESS=true
-                break
-              else
-                echo "❌ Health check returned non-200 status code: $STATUS_CODE"
-              fi
-            else
-              echo "❌ Curl command failed with exit code: $CURL_EXIT_CODE"
+
+            # Show progress and diagnostic info every 12 attempts (1 minute intervals)
+            if [ $((RETRY_COUNT % 12)) -eq 0 ] || [ $RETRY_COUNT -eq 1 ]; then
+              echo "Health check attempt $RETRY_COUNT of $MAX_RETRIES ($(($RETRY_COUNT * 5)) seconds elapsed)..."
+              echo "📋 Recent container logs:"
+              docker logs --tail 10 formbricks-test
             fi
-            
-            echo "Waiting 15 seconds before next attempt..."
-            sleep 15
+
+            # Try health endpoint with shorter timeout for faster polling
+            # Use -f flag to make curl fail on HTTP error status codes (4xx, 5xx)
+            if curl -f -s -m 10 http://localhost:3000/health >/dev/null 2>&1; then
+              echo "✅ Health check successful after $((RETRY_COUNT * 5)) seconds!"
+              HEALTH_CHECK_SUCCESS=true
+              break
+            fi
+
+            # Wait 5 seconds before next attempt
+            sleep 5
           done
 
           # Show full container logs for debugging
@@ -160,7 +193,7 @@ jobs:
 
           # Exit with failure if health check did not succeed
           if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
-            echo "❌ Health check failed after $MAX_RETRIES attempts"
+            echo "❌ Health check failed after $((MAX_RETRIES * 5)) seconds (5 minutes)"
             exit 1
           fi
 

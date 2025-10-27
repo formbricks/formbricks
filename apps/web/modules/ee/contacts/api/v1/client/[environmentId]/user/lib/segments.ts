@@ -1,43 +1,41 @@
-import { validateInputs } from "@/lib/utils/validate";
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
-import { withCache } from "@/modules/cache/lib/withCache";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
+import { cache } from "@/lib/cache";
+import { validateInputs } from "@/lib/utils/validate";
+import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
-export const getSegments = reactCache((environmentId: string) =>
-  withCache(
-    async () => {
-      try {
-        const segments = await prisma.segment.findMany({
-          where: { environmentId },
-          // Include all necessary fields for evaluateSegment to work
-          select: {
-            id: true,
-            filters: true,
-          },
-        });
+export const getSegments = reactCache(
+  async (environmentId: string) =>
+    await cache.withCache(
+      async () => {
+        try {
+          const segments = await prisma.segment.findMany({
+            where: { environmentId },
+            // Include all necessary fields for evaluateSegment to work
+            select: {
+              id: true,
+              filters: true,
+            },
+          });
 
-        return segments || [];
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return segments || [];
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
-      }
-    },
-    {
-      key: createCacheKey.environment.segments(environmentId),
-      // This is a temporary fix for the invalidation issues, will be changed later with a proper solution
-      ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
-    }
-  )()
+      },
+      createCacheKey.environment.segments(environmentId),
+      60 * 1000 // 1 minutes in milliseconds
+    )
 );
 
 export const getPersonSegmentIds = async (

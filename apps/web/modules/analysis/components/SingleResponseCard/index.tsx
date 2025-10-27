@@ -1,19 +1,17 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { useTranslate } from "@tolgee/react";
-import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { deleteResponseAction, getResponseAction } from "./actions";
-import { ResponseNotes } from "./components/ResponseNote";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 import { SingleResponseCardBody } from "./components/SingleResponseCardBody";
 import { SingleResponseCardHeader } from "./components/SingleResponseCardHeader";
@@ -21,13 +19,12 @@ import { isValidValue } from "./util";
 
 interface SingleResponseCardProps {
   survey: TSurvey;
-  response: TResponse;
+  response: TResponseWithQuotas;
   user?: TUser;
-  pageType: "people" | "response";
   environmentTags: TTag[];
   environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
-  deleteResponses?: (responseIds: string[]) => void;
+  updateResponseList?: (responseIds: string[]) => void;
   isReadOnly: boolean;
   setSelectedResponseId?: (responseId: string | null) => void;
   locale: TUserLocale;
@@ -37,21 +34,21 @@ export const SingleResponseCard = ({
   survey,
   response,
   user,
-  pageType,
   environmentTags,
   environment,
   updateResponse,
-  deleteResponses,
+  updateResponseList,
   isReadOnly,
   setSelectedResponseId,
   locale,
 }: SingleResponseCardProps) => {
-  const { t } = useTranslate();
+  const hasQuotas = (response.quotas && response.quotas.length > 0) ?? false;
+  const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
+  const { t } = useTranslation();
   const environmentId = survey.environmentId;
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
 
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
@@ -92,8 +89,8 @@ export const SingleResponseCard = ({
       if (isReadOnly) {
         throw new Error(t("common.not_authorized"));
       }
-      await deleteResponseAction({ responseId: response.id });
-      deleteResponses?.([response.id]);
+      await deleteResponseAction({ responseId: response.id, decrementQuotas });
+      updateResponseList?.([response.id]);
       router.refresh();
       if (setSelectedResponseId) setSelectedResponseId(null);
       toast.success(t("environments.surveys.responses.response_deleted_successfully"));
@@ -113,17 +110,8 @@ export const SingleResponseCard = ({
   };
 
   return (
-    <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
-      <div
-        className={clsx(
-          "relative z-20 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all",
-          pageType === "response" &&
-            (isOpen
-              ? "w-3/4"
-              : user && response.notes.length
-                ? "w-[96.5%]"
-                : cn("w-full", user ? "group-hover:w-[96.5%]" : ""))
-        )}>
+    <div className="group relative">
+      <div className="relative z-20 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all">
         <SingleResponseCardHeader
           pageType="response"
           response={response}
@@ -150,22 +138,19 @@ export const SingleResponseCard = ({
         <DeleteDialog
           open={deleteDialogOpen}
           setOpen={setDeleteDialogOpen}
-          deleteWhat="response"
+          deleteWhat={t("common.response")}
           onDelete={handleDeleteResponse}
           isDeleting={isDeleting}
-        />
+          text={t("environments.surveys.responses.delete_response_confirmation")}>
+          {hasQuotas && (
+            <DecrementQuotasCheckbox
+              title={t("environments.surveys.responses.delete_response_quotas")}
+              checked={decrementQuotas}
+              onCheckedChange={setDecrementQuotas}
+            />
+          )}
+        </DeleteDialog>
       </div>
-      {user && pageType === "response" && (
-        <ResponseNotes
-          user={user}
-          responseId={response.id}
-          notes={response.notes}
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          updateFetchedResponses={updateFetchedResponses}
-          locale={locale}
-        />
-      )}
     </div>
   );
 };

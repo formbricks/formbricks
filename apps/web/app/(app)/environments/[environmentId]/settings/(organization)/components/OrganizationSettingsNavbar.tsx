@@ -1,10 +1,10 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import { useTranslation } from "react-i18next";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
-import { useTranslate } from "@tolgee/react";
-import { usePathname } from "next/navigation";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface OrganizationSettingsNavbarProps {
   environmentId?: string;
@@ -24,7 +24,7 @@ export const OrganizationSettingsNavbar = ({
   const pathname = usePathname();
   const { isMember, isOwner } = getAccessFlags(membershipRole);
   const isPricingDisabled = isMember;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const navigation = [
     {
@@ -35,24 +35,10 @@ export const OrganizationSettingsNavbar = ({
       hidden: false,
     },
     {
-      id: "billing",
-      label: t("common.billing"),
-      href: `/environments/${environmentId}/settings/billing`,
-      hidden: !isFormbricksCloud || loading,
-      current: pathname?.includes("/billing"),
-    },
-    {
       id: "teams",
       label: t("common.teams"),
       href: `/environments/${environmentId}/settings/teams`,
       current: pathname?.includes("/teams"),
-    },
-    {
-      id: "enterprise",
-      label: t("common.enterprise_license"),
-      href: `/environments/${environmentId}/settings/enterprise`,
-      hidden: isFormbricksCloud || isPricingDisabled,
-      current: pathname?.includes("/enterprise"),
     },
     {
       id: "api-keys",
@@ -60,6 +46,20 @@ export const OrganizationSettingsNavbar = ({
       href: `/environments/${environmentId}/settings/api-keys`,
       current: pathname?.includes("/api-keys"),
       hidden: !isOwner,
+    },
+    {
+      id: "billing",
+      label: t("common.billing"),
+      href: `/environments/${environmentId}/settings/billing`,
+      hidden: !isFormbricksCloud || loading,
+      current: pathname?.includes("/billing"),
+    },
+    {
+      id: "enterprise",
+      label: t("common.enterprise_license"),
+      href: `/environments/${environmentId}/settings/enterprise`,
+      hidden: isFormbricksCloud || isPricingDisabled,
+      current: pathname?.includes("/enterprise"),
     },
   ];
 

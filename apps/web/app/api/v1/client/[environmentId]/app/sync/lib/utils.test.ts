@@ -1,4 +1,3 @@
-import { parseRecallInfo } from "@/lib/utils/recall";
 import { describe, expect, test, vi } from "vitest";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TLanguage } from "@formbricks/types/project";
@@ -8,6 +7,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { parseRecallInfo } from "@/lib/utils/recall";
 import { replaceAttributeRecall } from "./utils";
 
 vi.mock("@/lib/utils/recall", () => ({
@@ -51,20 +51,18 @@ const baseSurvey: TSurvey = {
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
   projectOverwrites: null,
-  runOnDate: null,
   showLanguageSwitch: false,
   isBackButtonHidden: false,
   followUps: [],
   recaptcha: { enabled: false, threshold: 0.5 },
   displayOption: "displayOnce",
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   autoComplete: null,
   segment: null,
   pin: null,
-  resultShareKey: null,
+  metadata: {},
 };
 
 const attributes: TAttributes = {
@@ -105,7 +103,7 @@ describe("replaceAttributeRecall", () => {
       welcomeCard: {
         enabled: true,
         headline: { default: "Welcome, recall:name!" },
-        html: { default: "<p>Some content</p>" },
+        subheader: { default: "<p>Some content</p>" },
         buttonLabel: { default: "Start" },
         timeToFinish: false,
         showResponseCount: false,
@@ -209,7 +207,7 @@ describe("replaceAttributeRecall", () => {
       welcomeCard: {
         enabled: true,
         headline: { default: "Welcome!" },
-        html: { default: "<p>Some content</p>" },
+        subheader: { default: "<p>Some content</p>" },
         buttonLabel: { default: "Start" },
         timeToFinish: false,
         showResponseCount: false,

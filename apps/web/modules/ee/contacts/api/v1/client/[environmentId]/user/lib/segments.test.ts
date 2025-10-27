@@ -1,15 +1,17 @@
-import { validateInputs } from "@/lib/utils/validate";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
+import { validateInputs } from "@/lib/utils/validate";
+import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { getPersonSegmentIds, getSegments } from "./segments";
 
 // Mock the cache functions
-vi.mock("@/modules/cache/lib/withCache", () => ({
-  withCache: vi.fn((fn) => fn), // Just execute the function without caching for tests
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    withCache: vi.fn(async (fn) => await fn()), // Just execute the function without caching for tests
+  },
 }));
 
 vi.mock("@/lib/utils/validate", () => ({

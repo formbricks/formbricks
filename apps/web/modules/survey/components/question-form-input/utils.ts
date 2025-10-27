@@ -1,6 +1,4 @@
-import { createI18nString } from "@/lib/i18n/utils";
-import { isLabelValidForAllLanguages } from "@/lib/i18n/utils";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import {
   TI18nString,
   TSurvey,
@@ -8,6 +6,8 @@ import {
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestion,
 } from "@formbricks/types/surveys/types";
+import { createI18nString } from "@/lib/i18n/utils";
+import { isLabelValidForAllLanguages } from "@/lib/i18n/utils";
 
 // Function to get index for choice /rowLabel /columnLabel
 export const getIndex = (id: string, isChoice: boolean) => {
@@ -36,8 +36,8 @@ export const getMatrixLabel = (
   type: "row" | "column"
 ): TI18nString => {
   const matrixQuestion = question as TSurveyMatrixQuestion;
-  const labels = type === "row" ? matrixQuestion.rows : matrixQuestion.columns;
-  return labels[idx] || createI18nString("", surveyLanguageCodes);
+  const matrixFields = type === "row" ? matrixQuestion.rows : matrixQuestion.columns;
+  return matrixFields[idx]?.label || createI18nString("", surveyLanguageCodes);
 };
 
 export const getWelcomeCardText = (
@@ -75,7 +75,7 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
   }
 };
 
-export const getPlaceHolderById = (id: string, t: TFnType) => {
+export const getPlaceHolderById = (id: string, t: TFunction) => {
   switch (id) {
     case "headline":
       return t("environments.surveys.edit.your_question_here_recall_information_with");
@@ -94,6 +94,9 @@ export const isValueIncomplete = (
 ) => {
   // Define a list of IDs for which a default value needs to be checked.
   const labelIds = [
+    "row",
+    "column",
+    "choice",
     "label",
     "headline",
     "subheader",

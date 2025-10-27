@@ -1,14 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
-import { Badge } from "@/modules/ui/components/badge";
-import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
+import { cn } from "@/lib/cn";
+import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
 import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
 import { getCloudPricingData } from "../api/lib/constants";
 import { BillingSlider } from "./billing-slider";
@@ -21,15 +20,12 @@ interface PricingTableProps {
   responseCount: number;
   projectCount: number;
   stripePriceLookupKeys: {
-    STARTUP_MONTHLY: string;
-    STARTUP_YEARLY: string;
-    SCALE_MONTHLY: string;
-    SCALE_YEARLY: string;
+    STARTUP_MAY25_MONTHLY: string;
+    STARTUP_MAY25_YEARLY: string;
   };
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    SCALE: string;
     ENTERPRISE: string;
   };
   hasBillingRights: boolean;
@@ -45,7 +41,7 @@ export const PricingTable = ({
   stripePriceLookupKeys,
   hasBillingRights,
 }: PricingTableProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>(
     organization.billing.period ?? "monthly"
   );
@@ -102,35 +98,31 @@ export const PricingTable = ({
         throw new Error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (err) {
-      toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
+      }
     }
   };
 
   const onUpgrade = async (planId: string) => {
-    if (planId === "scale") {
-      await upgradePlan(
-        planPeriod === "monthly" ? stripePriceLookupKeys.SCALE_MONTHLY : stripePriceLookupKeys.SCALE_YEARLY
-      );
-      return;
-    }
-
     if (planId === "startup") {
       await upgradePlan(
         planPeriod === "monthly"
-          ? stripePriceLookupKeys.STARTUP_MONTHLY
-          : stripePriceLookupKeys.STARTUP_YEARLY
+          ? stripePriceLookupKeys.STARTUP_MAY25_MONTHLY
+          : stripePriceLookupKeys.STARTUP_MAY25_YEARLY
       );
       return;
     }
 
-    if (planId === "enterprise") {
-      window.location.href = "https://cal.com/johannes/license";
+    if (planId === "custom") {
+      window.location.href = "https://formbricks.com/custom-plan?source=billingView";
       return;
     }
 
     if (planId === "free") {
       toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
-      return;
     }
   };
 
@@ -148,7 +140,7 @@ export const PricingTable = ({
           <div className="flex w-full">
             <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
               {t("environments.settings.billing.current_plan")}:{" "}
-              {capitalizeFirstLetter(organization.billing.plan)}
+              <span className="capitalize">{organization.billing.plan}</span>
               {cancellingOn && (
                 <Badge
                   className="mx-2"
@@ -182,7 +174,7 @@ export const PricingTable = ({
             )}
           </div>
 
-          <div className="mt-2 flex flex-col rounded-xl border border-slate-200 bg-white py-4 capitalize shadow-sm dark:bg-slate-800">
+          <div className="mt-2 flex flex-col rounded-xl border border-slate-200 bg-white py-4 shadow-sm dark:bg-slate-800">
             <div
               className={cn(
                 "relative mx-8 mb-8 flex flex-col gap-4",
@@ -233,7 +225,7 @@ export const PricingTable = ({
 
             <div
               className={cn(
-                "relative mx-8 flex flex-col gap-4 pb-12",
+                "relative mx-8 flex flex-col gap-4 pb-6",
                 projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">{t("common.projects")}</p>
@@ -282,7 +274,7 @@ export const PricingTable = ({
                   </span>
                 </button>
               </div>
-              <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
+              <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-3">
                 <div
                   className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
                   aria-hidden="true"

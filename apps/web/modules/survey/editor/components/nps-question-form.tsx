@@ -1,15 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { PlusIcon } from "lucide-react";
+import { type JSX } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import type { JSX } from "react";
-import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;
@@ -21,6 +21,8 @@ interface NPSQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const NPSQuestionForm = ({
@@ -33,10 +35,11 @@ export const NPSQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: NPSQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-  // Auto animate
   const [parent] = useAutoAnimate();
 
   return (
@@ -52,6 +55,9 @@ export const NPSQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -69,6 +75,9 @@ export const NPSQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
@@ -84,7 +93,6 @@ export const NPSQuestionForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             {t("environments.surveys.edit.add_description")}
           </Button>
@@ -104,6 +112,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
         <div className="w-full">
@@ -118,6 +127,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       </div>
@@ -137,6 +147,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       )}

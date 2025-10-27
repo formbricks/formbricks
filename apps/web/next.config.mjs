@@ -16,11 +16,9 @@ const getHostname = (url) => {
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
-  cacheHandler: require.resolve("./cache-handler.js"),
-  cacheMaxMemorySize: 0, // disable default in-memory caching
   output: "standalone",
   poweredByHeader: false,
-  productionBrowserSourceMaps: false,
+  productionBrowserSourceMaps: true,
   serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
@@ -28,6 +26,12 @@ const nextConfig = {
   experimental: {},
   transpilePackages: ["@formbricks/database"],
   images: {
+    // Optimize image processing to reduce CPU time and prevent timeouts
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920], // Removed 3840 to avoid processing huge images
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Standard sizes for smaller images
+    formats: ["image/webp"], // WebP is faster to process and smaller than JPEG/PNG
+    minimumCacheTTL: 60, // Cache optimized images for at least 60 seconds
+    dangerouslyAllowSVG: true, // Allow SVG images
     remotePatterns: [
       {
         protocol: "https",
@@ -113,6 +117,9 @@ const nextConfig = {
     return config;
   },
   async headers() {
+    const isProduction = process.env.NODE_ENV === "production";
+    const scriptSrcUnsafeEval = isProduction ? "" : " 'unsafe-eval'";
+
     return [
       {
         // Apply X-Frame-Options to all routes except those starting with /s/ or /c/
@@ -161,8 +168,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' https://*.intercom.io https://*.intercomcdn.com https:; style-src 'self' 'unsafe-inline' https://*.intercomcdn.com https:; img-src 'self' blob: data: https://*.intercom.io https://*.intercomcdn.com data: https:; font-src 'self' data: https://*.intercomcdn.com https:; connect-src 'self' https://*.intercom.io wss://*.intercom.io https://*.intercomcdn.com https:; frame-src 'self' https://*.intercom.io https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'",
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https://*.intercom.io https://*.intercomcdn.com https:; style-src 'self' 'unsafe-inline' https://*.intercomcdn.com https:; img-src 'self' blob: data: http://localhost:9000 https://*.intercom.io https://*.intercomcdn.com https:; font-src 'self' data: https://*.intercomcdn.com https:; connect-src 'self' http://localhost:9000 https://*.intercom.io wss://*.intercom.io https://*.intercomcdn.com https:; frame-src 'self' https://*.intercom.io https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`,
           },
           {
             key: "Strict-Transport-Security",
@@ -422,23 +428,21 @@ nextConfig.images.remotePatterns.push({
 const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
-
-  org: "formbricks",
   project: "formbricks-cloud",
+  org: "formbricks",
 
-  // Only print logs for uploading source maps in CI
-  silent: true,
+  // Enable logging to debug sourcemap generation issues
+  silent: false,
 
   // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
+  disableLogger: false,
 };
 
-const exportConfig =
-  process.env.SENTRY_DSN && process.env.NODE_ENV === "production"
-    ? withSentryConfig(nextConfig, sentryOptions)
-    : nextConfig;
+// Always enable Sentry plugin to inject Debug IDs
+// Runtime Sentry reporting still depends on DSN being set via environment variables
+const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
 
 export default exportConfig;

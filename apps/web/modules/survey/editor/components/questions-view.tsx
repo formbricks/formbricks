@@ -1,5 +1,32 @@
 "use client";
 
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import { Language, Project } from "@prisma/client";
+import React, { SetStateAction, useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import {
+  TConditionGroup,
+  TSingleCondition,
+  TSurvey,
+  TSurveyLogic,
+  TSurveyLogicAction,
+  TSurveyQuestion,
+  TSurveyQuestionId,
+} from "@formbricks/types/surveys/types";
+import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -13,33 +40,7 @@ import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome
 import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
 import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
-import { findQuestionUsedInLogic } from "@/modules/survey/editor/lib/utils";
-import {
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  closestCorners,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createId } from "@paralleldrive/cuid2";
-import { Language, Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import React, { SetStateAction, useEffect, useMemo } from "react";
-import toast from "react-hot-toast";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import {
-  TConditionGroup,
-  TSingleCondition,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestionId,
-} from "@formbricks/types/surveys/types";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
-import { TUserLocale } from "@formbricks/types/user";
+import { findQuestionUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -60,11 +61,13 @@ interface QuestionsViewProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
-  plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
   responseCount: number;
   setIsCautionDialogOpen: (open: boolean) => void;
+  isStorageConfigured: boolean;
+  quotas: TSurveyQuota[];
+  isExternalUrlsAllowed: boolean;
 }
 
 export const QuestionsView = ({
@@ -80,13 +83,15 @@ export const QuestionsView = ({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
-  plan,
   isCxMode,
   locale,
   responseCount,
   setIsCautionDialogOpen,
+  isStorageConfigured = true,
+  quotas,
+  isExternalUrlsAllowed,
 }: QuestionsViewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();
@@ -267,9 +272,31 @@ export const QuestionsView = ({
 
     // checking if this question is used in logic of any other question
     const quesIdx = findQuestionUsedInLogic(localSurvey, questionId);
-
     if (quesIdx !== -1) {
       toast.error(t("environments.surveys.edit.question_used_in_logic", { questionIndex: quesIdx + 1 }));
+      return;
+    }
+
+    const recallQuestionIdx = isUsedInRecall(localSurvey, questionId);
+    if (recallQuestionIdx === localSurvey.questions.length) {
+      toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
+      return;
+    }
+    if (recallQuestionIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.question_used_in_recall", { questionIndex: recallQuestionIdx + 1 })
+      );
+      return;
+    }
+
+    const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { questionId }));
+    if (quotaIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.question_used_in_quota", {
+          questionIndex: questionIdx + 1,
+          quotaName: quotas[quotaIdx].name,
+        })
+      );
       return;
     }
 
@@ -439,6 +466,7 @@ export const QuestionsView = ({
             setSelectedLanguageCode={setSelectedLanguageCode}
             selectedLanguageCode={selectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       )}
@@ -466,6 +494,8 @@ export const QuestionsView = ({
           locale={locale}
           responseCount={responseCount}
           onAlertTrigger={() => setIsCautionDialogOpen(true)}
+          isStorageConfigured={isStorageConfigured}
+          isExternalUrlsAllowed={isExternalUrlsAllowed}
         />
       </DndContext>
 
@@ -490,10 +520,12 @@ export const QuestionsView = ({
                   isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   selectedLanguageCode={selectedLanguageCode}
-                  plan={plan}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
                   locale={locale}
+                  isStorageConfigured={isStorageConfigured}
+                  quotas={quotas}
+                  isExternalUrlsAllowed={isExternalUrlsAllowed}
                 />
               );
             })}
@@ -510,6 +542,7 @@ export const QuestionsView = ({
               setLocalSurvey={setLocalSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
+              quotas={quotas}
             />
 
             <SurveyVariablesCard
@@ -517,6 +550,7 @@ export const QuestionsView = ({
               setLocalSurvey={setLocalSurvey}
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
+              quotas={quotas}
             />
 
             <MultiLanguageCard

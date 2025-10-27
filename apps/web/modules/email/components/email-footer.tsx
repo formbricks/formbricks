@@ -1,10 +1,10 @@
 import { Text } from "@react-email/components";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import React from "react";
 
-export function EmailFooter({ t }: { t: TFnType }): React.JSX.Element {
+export function EmailFooter({ t }: { t: TFunction }): React.JSX.Element {
   return (
-    <Text>
+    <Text className="text-sm">
       {t("emails.email_footer_text_1")}
       <br />
       {t("emails.email_footer_text_2")}

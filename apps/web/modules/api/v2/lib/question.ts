@@ -1,11 +1,11 @@
-import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import {
   TSurveyQuestion,
   TSurveyQuestionChoice,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 
 /**
  * Helper function to check if a string value is a valid "other" option

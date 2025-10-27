@@ -1,5 +1,22 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Project } from "@prisma/client";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestion,
+  TSurveyQuestionId,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -24,22 +41,6 @@ import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/su
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
-import { useState } from "react";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyQuestion,
-  TSurveyQuestionId,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -62,6 +63,8 @@ interface QuestionCardProps {
   locale: TUserLocale;
   responseCount: number;
   onAlertTrigger: () => void;
+  isStorageConfigured: boolean;
+  isExternalUrlsAllowed: boolean;
 }
 
 export const QuestionCard = ({
@@ -85,11 +88,13 @@ export const QuestionCard = ({
   locale,
   responseCount,
   onAlertTrigger,
+  isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
   });
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
@@ -221,18 +226,17 @@ export const QuestionCard = ({
           aria-label="Toggle question details">
           <div>
             <div className="flex grow">
-              {/*  <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
-                {QUESTIONS_ICON_MAP[question.type]}
-              </div> */}
               <div className="flex grow flex-col justify-center" dir="auto">
                 <h3 className="text-sm font-semibold">
                   {recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
                     selectedLanguageCode
                   ]
                     ? formatTextWithSlashes(
-                        recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
-                          selectedLanguageCode
-                        ] ?? ""
+                        getTextContent(
+                          recallToHeadline(question.headline, localSurvey, true, selectedLanguageCode)[
+                            selectedLanguageCode
+                          ] ?? ""
+                        )
                       )
                     : getTSurveyQuestionTypeEnumName(question.type, t)}
                 </h3>
@@ -291,6 +295,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
@@ -298,11 +304,12 @@ export const QuestionCard = ({
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}
-              lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
@@ -310,11 +317,12 @@ export const QuestionCard = ({
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}
-              lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
@@ -327,6 +335,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
@@ -339,6 +349,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
@@ -351,6 +363,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
@@ -362,6 +376,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
@@ -373,6 +389,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
@@ -384,6 +402,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
@@ -397,6 +416,8 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
@@ -409,6 +430,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
@@ -420,6 +443,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
@@ -431,6 +456,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
@@ -438,11 +465,12 @@ export const QuestionCard = ({
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}
-              lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
@@ -455,6 +483,8 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : null}
           <div className="mt-4">
@@ -499,6 +529,7 @@ export const QuestionCard = ({
                           };
                           updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, 0);
                         }}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     )}
                     <div className="w-full">
@@ -529,6 +560,7 @@ export const QuestionCard = ({
                           );
                         }}
                         locale={locale}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     </div>
                   </div>
@@ -550,6 +582,7 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         locale={locale}
+                        isStorageConfigured={isStorageConfigured}
                       />
                     </div>
                   )}
@@ -559,6 +592,7 @@ export const QuestionCard = ({
                   questionIdx={questionIdx}
                   localSurvey={localSurvey}
                   updateQuestion={updateQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
                 />
               </Collapsible.CollapsibleContent>
             </Collapsible.Root>

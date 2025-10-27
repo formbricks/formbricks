@@ -1,8 +1,4 @@
 import "server-only";
-import { BILLING_LIMITS, ITEMS_PER_PAGE, PROJECT_FEATURE_KEYS } from "@/lib/constants";
-import { getProjects } from "@/lib/project/service";
-import { updateUser } from "@/lib/user/service";
-import { getBillingPeriodStartDate } from "@/lib/utils/billing";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -17,6 +13,10 @@ import {
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
+import { BILLING_LIMITS, ITEMS_PER_PAGE, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { getProjects } from "@/lib/project/service";
+import { updateUser } from "@/lib/user/service";
+import { getBillingPeriodStartDate } from "@/lib/utils/billing";
 import { validateInputs } from "../utils/validate";
 
 export const select: Prisma.OrganizationSelect = {
@@ -224,16 +224,8 @@ export const getMonthlyActiveOrganizationPeopleCount = reactCache(
   async (organizationId: string): Promise<number> => {
     validateInputs([organizationId, ZId]);
 
-    try {
-      // temporary solution until we have a better way to track active users
-      return 0;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
+    // temporary solution until we have a better way to track active users
+    return 0;
   }
 );
 
@@ -296,7 +288,7 @@ export const subscribeOrganizationMembersToSurveyResponses = async (
       return;
     }
 
-    const defaultSettings = { alert: {}, weeklySummary: {} };
+    const defaultSettings = { alert: {} };
     const updatedNotificationSettings: TUserNotificationSettings = {
       ...defaultSettings,
       ...surveyCreator.notificationSettings,

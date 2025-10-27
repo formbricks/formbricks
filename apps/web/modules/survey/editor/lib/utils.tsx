@@ -1,17 +1,15 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { isConditionGroup } from "@/lib/surveyLogic/utils";
-import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionTypes } from "@/modules/survey/lib/questions";
-import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TConditionGroup,
+  TI18nString,
   TLeftOperand,
   TRightOperand,
   TSingleCondition,
   TSurvey,
+  TSurveyEndings,
   TSurveyLogic,
   TSurveyLogicAction,
   TSurveyLogicActions,
@@ -20,7 +18,14 @@ import {
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
+  TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { isConditionGroup } from "@/lib/surveyLogic/utils";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
+import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
 export const MAX_STRING_LENGTH = 2000;
@@ -90,7 +95,7 @@ export const formatTextWithSlashes = (
   });
 };
 
-const getQuestionIconMapping = (t: TFnType) =>
+const getQuestionIconMapping = (t: TFunction) =>
   getQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
@@ -101,49 +106,65 @@ const getQuestionIconMapping = (t: TFnType) =>
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
-  currQuestionIdx: number,
-  t: TFnType
+  t: TFunction,
+  currQuestionIdx?: number // Optional in case of quotas
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   const variables = localSurvey.variables ?? [];
   const questions = localSurvey.questions;
 
   const groupedOptions: TComboboxGroupedOption[] = [];
-  const questionOptions = questions
-    .filter((_, idx) => idx <= currQuestionIdx)
-    .map((question) => {
+  const questionOptions: TComboboxOption[] = [];
+
+  questions
+    .filter((_, idx) => (typeof currQuestionIdx === "undefined" ? true : idx <= currQuestionIdx))
+    .forEach((question) => {
       if (question.type === TSurveyQuestionTypeEnum.Matrix) {
+        // Rows submenu
+        const questionHeadline = getTextContent(getLocalizedValue(question.headline, "default"));
         const rows = question.rows.map((row, rowIdx) => ({
           icon: getQuestionIconMapping(t)[question.type],
-          label: `${getLocalizedValue(row, "default")} (${getLocalizedValue(question.headline, "default")})`,
+          label: `${getLocalizedValue(row.label, "default")} (${questionHeadline})`,
           value: `${question.id}.${rowIdx}`,
           meta: {
             type: "question",
-            rowIdx: rowIdx,
+            rowIdx: rowIdx.toString(),
           },
         }));
 
-        const questionEntry = {
+        questionOptions.push({
           icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
+          label: questionHeadline,
           value: question.id,
           meta: {
             type: "question",
           },
-        };
-        return [questionEntry, ...rows];
+          children: [
+            {
+              label: t("environments.surveys.edit.matrix_rows", "Rows"),
+              value: `${question.id}-rows`,
+              children: rows,
+            },
+            {
+              label: t("environments.surveys.edit.matrix_all_fields", "All fields"),
+              value: question.id,
+              meta: {
+                type: "question",
+              },
+            },
+          ],
+        });
+      } else {
+        questionOptions.push({
+          icon: getQuestionIconMapping(t)[question.type],
+          label: getTextContent(getLocalizedValue(question.headline, "default")),
+          value: question.id,
+          meta: {
+            type: "question",
+          },
+        });
       }
-
-      return {
-        icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
-        value: question.id,
-        meta: {
-          type: "question",
-        },
-      };
-    })
-    .flat();
+    });
 
   const variableOptions = variables.map((variable) => {
     return {
@@ -204,7 +225,7 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
   return modifiedSurvey;
 };
 
-export const getActionObjectiveOptions = (t: TFnType): TComboboxOption[] => [
+export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] => [
   { label: t("environments.surveys.edit.calculate"), value: "calculate" },
   { label: t("environments.surveys.edit.require_answer"), value: "requireAnswer" },
   { label: t("environments.surveys.edit.jump_to_question"), value: "jumpToQuestion" },
@@ -214,9 +235,9 @@ export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean =
   return actions.some((action) => action.objective === "jumpToQuestion");
 };
 
-const getQuestionOperatorOptions = (
+export const getQuestionOperatorOptions = (
   question: TSurveyQuestion,
-  t: TFnType,
+  t: TFunction,
   condition?: TSingleCondition
 ): TComboboxOption[] => {
   let options: TLogicRuleOption;
@@ -241,17 +262,29 @@ const getQuestionOperatorOptions = (
 
 export const getDefaultOperatorForQuestion = (
   question: TSurveyQuestion,
-  t: TFnType
+  t: TFunction
 ): TSurveyLogicConditionsOperator => {
   const options = getQuestionOperatorOptions(question, t);
 
   return options[0].value.toString() as TSurveyLogicConditionsOperator;
 };
 
+export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurvey: TSurvey): string => {
+  if (condition.leftOperand.type === "question") {
+    const questionEntity = localSurvey.questions.find((q) => q.id === condition.leftOperand.value);
+    if (questionEntity && questionEntity.type === TSurveyQuestionTypeEnum.Matrix) {
+      if (condition.leftOperand?.meta?.row !== undefined) {
+        return `${condition.leftOperand.value}.${condition.leftOperand.meta.row}`;
+      }
+    }
+  }
+  return condition.leftOperand.value;
+};
+
 export const getConditionOperatorOptions = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
-  t: TFnType
+  t: TFunction
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
     const variables = localSurvey.variables ?? [];
@@ -280,8 +313,8 @@ export const getConditionOperatorOptions = (
 export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
-  questionIdx: number,
-  t: TFnType
+  t: TFunction,
+  questionIdx?: number
 ): {
   show?: boolean;
   showInput?: boolean;
@@ -306,7 +339,9 @@ export const getMatchValueProps = (
     return { show: false, options: [] };
   }
 
-  let questions = localSurvey.questions.filter((_, idx) => idx <= questionIdx);
+  let questions = localSurvey.questions.filter((_, idx) =>
+    typeof questionIdx === "undefined" ? true : idx <= questionIdx
+  );
   let variables = localSurvey.variables ?? [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
 
@@ -344,7 +379,7 @@ export const getMatchValueProps = (
       const questionOptions = allowedQuestions.map((question) => {
         return {
           icon: getQuestionIconMapping(t)[question.type],
-          label: getLocalizedValue(question.headline, "default"),
+          label: getTextContent(getLocalizedValue(question.headline, "default")),
           value: question.id,
           meta: {
             type: "question",
@@ -413,15 +448,27 @@ export const getMatchValueProps = (
       selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
       selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
     ) {
-      const choices = selectedQuestion.choices.map((choice) => {
-        return {
-          label: getLocalizedValue(choice.label, "default"),
-          value: choice.id,
-          meta: {
-            type: "static",
-          },
-        };
-      });
+      const operatorsToFilterNone = [
+        "includesOneOf",
+        "includesAllOf",
+        "doesNotIncludeOneOf",
+        "doesNotIncludeAllOf",
+      ];
+      const shouldFilterNone =
+        selectedQuestion.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
+        operatorsToFilterNone.includes(condition.operator);
+
+      const choices = selectedQuestion.choices
+        .filter((choice) => !shouldFilterNone || choice.id !== "none")
+        .map((choice) => {
+          return {
+            label: getLocalizedValue(choice.label, "default"),
+            value: choice.id,
+            meta: {
+              type: "static",
+            },
+          };
+        });
 
       return {
         show: true,
@@ -432,7 +479,7 @@ export const getMatchValueProps = (
       const choices = selectedQuestion.choices.map((choice, idx) => {
         return {
           imgSrc: choice.imageUrl,
-          label: `${t("environments.surveys.edit.picture_idx")} ${idx + 1}`,
+          label: `${t("common.picture")} ${idx + 1}`,
           value: choice.id,
           meta: {
             type: "static",
@@ -614,7 +661,7 @@ export const getMatchValueProps = (
     } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.Matrix) {
       const choices = selectedQuestion.columns.map((column, colIdx) => {
         return {
-          label: getLocalizedValue(column, "default"),
+          label: getLocalizedValue(column.label, "default"),
           value: colIdx.toString(),
           meta: {
             type: "static",
@@ -871,7 +918,7 @@ export const getActionTargetOptions = (
   action: TSurveyLogicAction,
   localSurvey: TSurvey,
   currQuestionIdx: number,
-  t: TFnType
+  t: TFunction
 ): TComboboxOption[] => {
   let questions = localSurvey.questions.filter((_, idx) => idx > currQuestionIdx);
 
@@ -882,7 +929,7 @@ export const getActionTargetOptions = (
   const questionOptions = questions.map((question) => {
     return {
       icon: getQuestionIconMapping(t)[question.type],
-      label: getLocalizedValue(question.headline, "default"),
+      label: getTextContent(getLocalizedValue(question.headline, "default")),
       value: question.id,
     };
   });
@@ -893,7 +940,8 @@ export const getActionTargetOptions = (
     return {
       label:
         ending.type === "endScreen"
-          ? getLocalizedValue(ending.headline, "default") || t("environments.surveys.edit.end_screen_card")
+          ? getTextContent(getLocalizedValue(ending.headline, "default")) ||
+            t("environments.surveys.edit.end_screen_card")
           : ending.label || t("environments.surveys.edit.redirect_thank_you_card"),
       value: ending.id,
     };
@@ -918,7 +966,7 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
 };
 
 export const getActionOperatorOptions = (
-  t: TFnType,
+  t: TFunction,
   variableType?: TSurveyVariable["type"]
 ): TComboboxOption[] => {
   if (variableType === "number") {
@@ -963,7 +1011,7 @@ export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
   questionIdx: number,
-  t: TFnType
+  t: TFunction
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
@@ -1000,7 +1048,7 @@ export const getActionValueOptions = (
     const questionOptions = allowedQuestions.map((question) => {
       return {
         icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
+        label: getTextContent(getLocalizedValue(question.headline, "default")),
         value: question.id,
         meta: {
           type: "question",
@@ -1058,7 +1106,7 @@ export const getActionValueOptions = (
     const questionOptions = allowedQuestions.map((question) => {
       return {
         icon: getQuestionIconMapping(t)[question.type],
-        label: getLocalizedValue(question.headline, "default"),
+        label: getTextContent(getLocalizedValue(question.headline, "default")),
         value: question.id,
         meta: {
           type: "question",
@@ -1177,6 +1225,117 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
   );
 };
 
+export const isUsedInQuota = (
+  quota: TSurveyQuota,
+  {
+    questionId,
+    hiddenFieldId,
+    variableId,
+    endingCardId,
+  }: {
+    questionId?: TSurveyQuestionId;
+    hiddenFieldId?: string;
+    variableId?: string;
+    endingCardId?: string;
+  }
+): boolean => {
+  if (questionId) {
+    return quota.logic.conditions.some(
+      (condition) =>
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "question", questionId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "question", questionId)
+    );
+  }
+
+  if (hiddenFieldId) {
+    return quota.logic.conditions.some(
+      (condition) =>
+        (condition.rightOperand &&
+          isUsedInRightOperand(condition.rightOperand, "hiddenField", hiddenFieldId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "hiddenField", hiddenFieldId)
+    );
+  }
+
+  if (variableId) {
+    return quota.logic.conditions.some(
+      (condition) =>
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "variable", variableId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "variable", variableId)
+    );
+  }
+
+  if (endingCardId) {
+    return quota.action === "endSurvey" && quota.endingCardId === endingCardId;
+  }
+
+  return false;
+};
+
+const checkTextForRecallPattern = (textObject: TI18nString | undefined, recallPattern: string): boolean => {
+  return textObject ? Object.values(textObject).some((text: string) => text.includes(recallPattern)) : false;
+};
+
+const checkWelcomeCardForRecall = (welcomeCard: TSurveyWelcomeCard, recallPattern: string): boolean => {
+  if (!welcomeCard.enabled) return false;
+
+  return (
+    checkTextForRecallPattern(welcomeCard.headline, recallPattern) ||
+    checkTextForRecallPattern(welcomeCard.subheader, recallPattern)
+  );
+};
+
+const checkQuestionForRecall = (question: TSurveyQuestion, recallPattern: string): boolean => {
+  // Check headline
+  if (Object.values(question.headline).some((text) => text.includes(recallPattern))) {
+    return true;
+  }
+
+  // Check subheader
+  if (checkTextForRecallPattern(question.subheader, recallPattern)) {
+    return true;
+  }
+
+  return false;
+};
+
+const checkEndingCardsForRecall = (endings: TSurveyEndings | undefined, recallPattern: string): boolean => {
+  if (!endings) return false;
+
+  return endings.some((ending) => {
+    if (ending.type === "endScreen") {
+      return (
+        checkTextForRecallPattern(ending.headline, recallPattern) ||
+        checkTextForRecallPattern(ending.subheader, recallPattern)
+      );
+    }
+    return false;
+  });
+};
+
+export const isUsedInRecall = (survey: TSurvey, id: string): number => {
+  const recallPattern = `#recall:${id}/fallback:`;
+
+  // Check welcome card
+  if (checkWelcomeCardForRecall(survey.welcomeCard, recallPattern)) {
+    return -2; // Special index for welcome card
+  }
+
+  // Check questions
+  const questionIndex = survey.questions.findIndex((question) =>
+    checkQuestionForRecall(question, recallPattern)
+  );
+  if (questionIndex !== -1) {
+    return questionIndex;
+  }
+
+  // Check ending cards
+  if (checkEndingCardsForRecall(survey.endings, recallPattern)) {
+    return survey.questions.length; // Special index for ending cards
+  }
+
+  return -1; // Not found
+};
+
 export const findOptionUsedInLogic = (
   survey: TSurvey,
   questionId: TSurveyQuestionId,
@@ -1268,8 +1427,10 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
-export const getSurveyFollowUpActionDefaultBody = (t: TFnType) => {
-  return t("templates.follow_ups_modal_action_body") as string;
+export const getSurveyFollowUpActionDefaultBody = (t: TFunction): string => {
+  return t("templates.follow_ups_modal_action_body")
+    .replaceAll(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
 };
 
 export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string): number => {

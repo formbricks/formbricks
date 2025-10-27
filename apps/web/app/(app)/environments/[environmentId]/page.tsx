@@ -1,7 +1,8 @@
+import { redirect } from "next/navigation";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { redirect } from "next/navigation";
 
 const EnvironmentPage = async (props) => {
   const params = await props.params;
@@ -11,7 +12,11 @@ const EnvironmentPage = async (props) => {
   const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   if (isBilling) {
-    return redirect(`/environments/${params.environmentId}/settings/billing`);
+    if (IS_FORMBRICKS_CLOUD) {
+      return redirect(`/environments/${params.environmentId}/settings/billing`);
+    } else {
+      return redirect(`/environments/${params.environmentId}/settings/enterprise`);
+    }
   }
 
   return redirect(`/environments/${params.environmentId}/surveys`);

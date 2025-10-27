@@ -1,16 +1,16 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Dropdown } from "@/modules/survey/editor/components/rating-type-dropdown";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
-import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;
@@ -22,6 +22,8 @@ interface RatingQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const RatingQuestionForm = ({
@@ -33,10 +35,13 @@ export const RatingQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: RatingQuestionFormProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -50,6 +55,9 @@ export const RatingQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -67,6 +75,9 @@ export const RatingQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
@@ -143,6 +154,7 @@ export const RatingQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
         <div className="flex-1">
@@ -158,6 +170,7 @@ export const RatingQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       </div>
@@ -177,6 +190,7 @@ export const RatingQuestionForm = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               locale={locale}
+              isStorageConfigured={isStorageConfigured}
             />
           </div>
         )}

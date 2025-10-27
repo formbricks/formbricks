@@ -1,3 +1,9 @@
+import { headers } from "next/headers";
+import { UAParser } from "ua-parser-js";
+import { logger } from "@formbricks/logger";
+import { ZId } from "@formbricks/types/common";
+import { InvalidInputError } from "@formbricks/types/errors";
+import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -6,13 +12,8 @@ import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { headers } from "next/headers";
-import { UAParser } from "ua-parser-js";
-import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
-import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse } from "@formbricks/types/responses";
-import { createResponse } from "./lib/response";
+import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
+import { createResponseWithQuotaEvaluation } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
 interface Context {
@@ -104,7 +105,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
-  let response: TResponse;
+  let response: TResponseWithQuotaFull;
   try {
     const meta: TResponseInputV2["meta"] = {
       source: responseInputData?.meta?.source,
@@ -118,7 +119,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       action: responseInputData?.meta?.action,
     };
 
-    response = await createResponse({
+    response = await createResponseWithQuotaEvaluation({
       ...responseInputData,
       meta,
     });
@@ -129,27 +130,35 @@ export const POST = async (request: Request, context: Context): Promise<Response
     logger.error({ error, url: request.url }, "Error creating response");
     return responses.internalServerErrorResponse(error.message);
   }
+  const { quotaFull, ...responseData } = response;
 
   sendToPipeline({
     event: "responseCreated",
     environmentId,
-    surveyId: response.surveyId,
-    response: response,
+    surveyId: responseData.surveyId,
+    response: responseData,
   });
 
-  if (responseInput.finished) {
+  if (responseData.finished) {
     sendToPipeline({
       event: "responseFinished",
       environmentId,
-      surveyId: response.surveyId,
-      response: response,
+      surveyId: responseData.surveyId,
+      response: responseData,
     });
   }
 
   await capturePosthogEnvironmentEvent(environmentId, "response created", {
-    surveyId: response.surveyId,
+    surveyId: responseData.surveyId,
     surveyType: survey.type,
   });
 
-  return responses.successResponse({ id: response.id }, true);
+  const quotaObj = createQuotaFullObject(quotaFull);
+
+  const responseDataWithQuota = {
+    id: responseData.id,
+    ...quotaObj,
+  };
+
+  return responses.successResponse(responseDataWithQuota, true);
 };

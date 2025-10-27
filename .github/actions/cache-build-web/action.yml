@@ -62,10 +62,12 @@ runs:
       shell: bash
 
     - name: Fill ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
+      env:
+        E2E_TESTING_MODE: ${{ inputs.e2e_testing_mode }}
       run: |
         RANDOM_KEY=$(openssl rand -hex 32)
         sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
-        echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> .env
+        echo "E2E_TESTING=$E2E_TESTING_MODE" >> .env
       shell: bash
 
     - run: |

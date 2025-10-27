@@ -1,16 +1,16 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { setupTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import { ZUserPassword } from "@formbricks/types/user";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 const ZConfirmPasswordFormState = z.object({
@@ -39,7 +39,7 @@ export const ConfirmPasswordForm = ({
     resolver: zodResolver(ZConfirmPasswordFormState),
   });
   const { handleSubmit } = form;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const onSubmit: SubmitHandler<TConfirmPasswordFormState> = async (data) => {
     const setupTwoFactorAuthResponse = await setupTwoFactorAuthAction({ password: data.password });
@@ -57,16 +57,8 @@ export const ConfirmPasswordForm = ({
 
   return (
     <FormProvider {...form}>
-      <div className="p-6">
-        <h1 className="text-lg font-semibold">
-          {t("environments.settings.profile.two_factor_authentication")}
-        </h1>
-        <h3 className="text-sm text-slate-700">
-          {t("environments.settings.profile.confirm_your_current_password_to_get_started")}
-        </h3>
-      </div>
-      <form className="flex flex-col space-y-10" onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-2 px-6">
+      <form className="flex flex-col space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <div className="flex flex-col gap-2">
           <label htmlFor="password" className="text-sm font-medium text-slate-700">
             {t("common.password")}
           </label>
@@ -95,7 +87,7 @@ export const ConfirmPasswordForm = ({
           />
         </div>
 
-        <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
+        <div className="flex w-full items-center justify-end space-x-2">
           <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
             {t("common.cancel")}
           </Button>

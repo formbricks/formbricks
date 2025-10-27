@@ -1,4 +1,10 @@
 {
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
   "javascript.updateImportsOnFileMove.enabled": "always",
   "sonarlint.connectedMode.project": {
     "connectionId": "formbricks",

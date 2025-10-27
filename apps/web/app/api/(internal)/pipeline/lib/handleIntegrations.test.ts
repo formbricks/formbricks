@@ -1,13 +1,3 @@
-import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
-import { writeData as airtableWriteData } from "@/lib/airtable/service";
-import { writeData as googleSheetWriteData } from "@/lib/googleSheet/service";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { writeData as writeNotionData } from "@/lib/notion/service";
-import { processResponseData } from "@/lib/responses";
-import { writeDataToSlack } from "@/lib/slack/service";
-import { getFormattedDateTimeString } from "@/lib/utils/datetime";
-import { parseRecallInfo } from "@/lib/utils/recall";
-import { truncateText } from "@/lib/utils/strings";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import {
@@ -39,6 +29,16 @@ import {
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
+import { writeData as airtableWriteData } from "@/lib/airtable/service";
+import { writeData as googleSheetWriteData } from "@/lib/googleSheet/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { writeData as writeNotionData } from "@/lib/notion/service";
+import { processResponseData } from "@/lib/responses";
+import { writeDataToSlack } from "@/lib/slack/service";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { truncateText } from "@/lib/utils/strings";
 import { handleIntegrations } from "./handleIntegrations";
 
 // Mock dependencies
@@ -90,7 +90,6 @@ const mockPipelineInput = {
     personAttributes: {},
     singleUseId: null,
     personId: "person1",
-    notes: [],
     tags: [],
     variables: {
       [variableId]: "Variable Value",
@@ -144,7 +143,6 @@ const mockSurvey = {
   segment: null,
   recontactDays: null,
   autoComplete: null,
-  closeOnDate: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   displayOption: "displayOnce",
@@ -152,7 +150,6 @@ const mockSurvey = {
   environmentId: "env1",
   singleUse: null,
   surveyClosedMessage: null,
-  resultShareKey: null,
   pin: null,
 } as unknown as TSurvey;
 

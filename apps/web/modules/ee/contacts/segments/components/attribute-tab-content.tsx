@@ -1,5 +1,5 @@
-import { useTranslate } from "@tolgee/react";
 import { FingerprintIcon, TagIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter } from "@formbricks/types/segment";
 import FilterButton from "./filter-button";
@@ -75,7 +75,7 @@ function AttributeTabContent({
   setOpen,
   handleAddFilter,
 }: AttributeTabContentProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="flex flex-col gap-2">

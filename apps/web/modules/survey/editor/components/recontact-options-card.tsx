@@ -1,16 +1,16 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface DisplayOption {
   id: "displayOnce" | "displayMultiple" | "respondMultiple" | "displaySome";
@@ -29,7 +29,7 @@ export const RecontactOptionsCard = ({
   setLocalSurvey,
   environmentId,
 }: RecontactOptionsCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const displayOptions: DisplayOption[] = useMemo(
     () => [
@@ -166,9 +166,9 @@ export const RecontactOptionsCard = ({
                     className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                   />
                   <div>
-                    <p className="font-semibold text-slate-700">{t(option.name)}</p>
+                    <p className="font-semibold text-slate-700">{option.name}</p>
 
-                    <p className="mt-2 text-xs font-normal text-slate-600">{t(option.description)}</p>
+                    <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                   </div>
                 </Label>
                 {option.id === "displaySome" && localSurvey.displayOption === "displaySome" && (

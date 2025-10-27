@@ -8,7 +8,8 @@
     "jsxImportSource": "preact",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "resolveJsonModule": true
   },
   "extends": "@formbricks/config-typescript/js-library.json",
   "include": ["src", "../types/surveys.d.ts"]

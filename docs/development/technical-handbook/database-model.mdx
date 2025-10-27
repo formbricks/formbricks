@@ -44,7 +44,7 @@ erDiagram
     Team ||--o{ TeamUser : "includes"
     Team ||--o{ ProjectTeam : "has access to"
 
-    Response ||--o{ ResponseNote : "has"
+
     Response ||--o{ TagsOnResponses : "tagged with"
 
     Tag ||--o{ TagsOnResponses : "applied to"
@@ -161,10 +161,7 @@ Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of 
 | ContactAttributeKey   | Defines available attribute types for contacts                         |
 | DataMigration         | Tracks the status of database schema migrations                        |
 | Display               | Records when and to whom surveys were shown                            |
-| Document              | Stores processed survey responses for analysis                         |
-| DocumentInsight       | Links analyzed documents to derived insights                           |
 | Environment           | Manages production/development environments within projects            |
-| Insight               | Contains analyzed patterns and information from responses              |
 | Integration           | Stores configuration for third-party service integrations              |
 | Invite                | Manages pending invitations to join organizations                      |
 | Language              | Defines supported languages for multi-lingual surveys                  |
@@ -173,9 +170,7 @@ Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of 
 | Project               | Groups related surveys and environments                                |
 | ProjectTeam           | Manages team access permissions to projects                            |
 | Response              | Stores survey responses and associated metadata                        |
-| ResponseNote          | Contains team member comments on survey responses                      |
 | Segment               | Defines groups of contacts based on attributes                         |
-| ShortUrl              | Maps shortened URLs to their full destinations                         |
 | Survey                | Stores survey configurations, questions, and display rules             |
 | SurveyAttributeFilter | Defines targeting rules for surveys based on contact attributes        |
 | SurveyFollowUp        | Configures automated actions based on survey responses                 |

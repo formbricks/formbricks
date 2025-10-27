@@ -1,31 +1,33 @@
 "use client";
 
-import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
-import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
-import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
 import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const BulkInviteTab = ({
   setOpen,
   onSubmit,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isFormbricksCloud,
+  isStorageConfigured,
 }: BulkInviteTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [csvFile, setCSVFile] = useState<File>();
 
   const onFileInputChange = (files: File[]) => {
@@ -48,7 +50,7 @@ export const BulkInviteTab = ({
       },
       complete: (results: ParseResult<{ name: string; email: string; role: string }>) => {
         const members = results.data.map((csv) => {
-          let orgRole = canDoRoleManagement ? csv.role.trim().toLowerCase() : "owner";
+          let orgRole = isAccessControlAllowed ? csv.role.trim().toLowerCase() : "owner";
           if (!isFormbricksCloud) {
             orgRole = orgRole === "billing" ? "owner" : orgRole;
           }
@@ -108,6 +110,7 @@ export const BulkInviteTab = ({
           name="bulk-invite"
           disabled={csvFile !== undefined}
           uploaderClassName="h-20 bg-white border border-slate-200"
+          isStorageConfigured={isStorageConfigured}
         />
 
         {csvFile && (
@@ -119,7 +122,7 @@ export const BulkInviteTab = ({
           </div>
         )}
 
-        {!canDoRoleManagement && (
+        {!isAccessControlAllowed && (
           <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50">
             <AlertDescription className="ml-2">
               <p className="text-sm">
@@ -132,25 +135,25 @@ export const BulkInviteTab = ({
       </div>
 
       <div className="flex justify-between">
-        <Button
-          size="default"
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setOpen(false);
-          }}>
-          {t("common.cancel")}
-        </Button>
+        <Link
+          download
+          href="/sample-csv/formbricks-organization-members-template.csv"
+          target="_blank"
+          rel="noopener noreferrer">
+          <Button variant="secondary" size="default">
+            {t("common.download")} CSV template
+          </Button>
+        </Link>
         <div className="flex space-x-2">
-          <Link
-            download
-            href="/sample-csv/formbricks-organization-members-template.csv"
-            target="_blank"
-            rel="noopener noreferrer">
-            <Button variant="secondary" size="default">
-              {t("common.download")} CSV template
-            </Button>
-          </Link>
+          <Button
+            size="default"
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setOpen(false);
+            }}>
+            {t("common.cancel")}
+          </Button>
           <Button onClick={onImport} size="default" disabled={!csvFile}>
             {t("common.import")}
           </Button>

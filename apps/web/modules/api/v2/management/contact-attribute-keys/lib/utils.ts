@@ -1,6 +1,6 @@
+import { Prisma } from "@prisma/client";
 import { TGetContactAttributeKeysFilter } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
-import { Prisma } from "@prisma/client";
 
 export const getContactAttributeKeysQuery = (
   environmentIds: string[],

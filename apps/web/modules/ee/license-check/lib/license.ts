@@ -1,17 +1,18 @@
-import { env } from "@/lib/env";
-import { hashString } from "@/lib/hashString";
-import { createCacheKey } from "@/modules/cache/lib/cacheKeys";
-import { getCache } from "@/modules/cache/lib/service";
-import {
-  TEnterpriseLicenseDetails,
-  TEnterpriseLicenseFeatures,
-} from "@/modules/ee/license-check/types/enterprise-license";
+import "server-only";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { z } from "zod";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { cache } from "@/lib/cache";
+import { env } from "@/lib/env";
+import { hashString } from "@/lib/hash-string";
+import {
+  TEnterpriseLicenseDetails,
+  TEnterpriseLicenseFeatures,
+} from "@/modules/ee/license-check/types/enterprise-license";
 
 // Configuration
 const CONFIG = {
@@ -35,7 +36,6 @@ type TPreviousResult = {
   active: boolean;
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
-  version: number; // For cache versioning
 };
 
 // Validation schemas
@@ -51,6 +51,9 @@ const LicenseFeaturesSchema = z.object({
   saml: z.boolean(),
   spamProtection: z.boolean(),
   auditLogs: z.boolean(),
+  multiLanguageSurveys: z.boolean(),
+  accessControl: z.boolean(),
+  quotas: z.boolean(),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -111,6 +114,9 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   saml: false,
   spamProtection: false,
   auditLogs: false,
+  multiLanguageSurveys: false,
+  accessControl: false,
+  quotas: false,
 };
 
 // Helper functions
@@ -136,28 +142,25 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
       active: false,
       lastChecked: new Date(0),
       features: DEFAULT_FEATURES,
-      version: 1,
     };
   }
 
   try {
-    const formbricksCache = await getCache();
-    const cachedData = await formbricksCache.get<TPreviousResult>(getCacheKeys().PREVIOUS_RESULT_CACHE_KEY);
-    if (cachedData) {
+    const result = await cache.get<TPreviousResult>(getCacheKeys().PREVIOUS_RESULT_CACHE_KEY);
+    if (result.ok && result.data) {
       return {
-        ...cachedData,
-        lastChecked: new Date(cachedData.lastChecked),
+        ...result.data,
+        lastChecked: new Date(result.data.lastChecked),
       };
     }
   } catch (error) {
-    logger.error("Failed to get previous result from cache", { error });
+    logger.error({ error }, "Failed to get previous result from cache");
   }
 
   return {
     active: false,
     lastChecked: new Date(0),
     features: DEFAULT_FEATURES,
-    version: 1,
   };
 };
 
@@ -165,38 +168,45 @@ const setPreviousResult = async (previousResult: TPreviousResult) => {
   if (typeof window !== "undefined") return;
 
   try {
-    const formbricksCache = await getCache();
-    await formbricksCache.set(
+    const result = await cache.set(
       getCacheKeys().PREVIOUS_RESULT_CACHE_KEY,
       previousResult,
       CONFIG.CACHE.PREVIOUS_RESULT_TTL_MS
     );
+    if (!result.ok) {
+      logger.warn({ error: result.error }, "Failed to cache previous result");
+    }
   } catch (error) {
-    logger.error("Failed to set previous result in cache", { error });
+    logger.error({ error }, "Failed to set previous result in cache");
   }
 };
 
 // Monitoring functions
 const trackFallbackUsage = (level: FallbackLevel) => {
-  logger.info(`Using license fallback level: ${level}`, {
-    fallbackLevel: level,
-    timestamp: new Date().toISOString(),
-  });
+  logger.info(
+    {
+      fallbackLevel: level,
+      timestamp: new Date().toISOString(),
+    },
+    `Using license fallback level: ${level}`
+  );
 };
 
 const trackApiError = (error: LicenseApiError) => {
-  logger.error(`License API error: ${error.message}`, {
-    status: error.status,
-    code: error.code,
-    timestamp: new Date().toISOString(),
-  });
+  logger.error(
+    {
+      status: error.status,
+      code: error.code,
+      timestamp: new Date().toISOString(),
+    },
+    `License API error: ${error.message}`
+  );
 };
 
 // Validation functions
 const validateFallback = (previousResult: TPreviousResult): boolean => {
   if (!previousResult.features) return false;
   if (previousResult.lastChecked.getTime() === new Date(0).getTime()) return false;
-  if (previousResult.version !== 1) return false; // Add version check
   return true;
 };
 
@@ -223,7 +233,6 @@ const handleInitialFailure = async (currentTime: Date) => {
     active: false,
     features: DEFAULT_FEATURES,
     lastChecked: currentTime,
-    version: 1,
   };
   await setPreviousResult(initialFailResult);
   return {
@@ -306,31 +315,19 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
 export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> => {
   if (!env.ENTERPRISE_LICENSE_KEY) return null;
 
-  try {
-    const formbricksCache = await getCache();
-    const cachedLicense = await formbricksCache.get<TEnterpriseLicenseDetails>(
-      getCacheKeys().FETCH_LICENSE_CACHE_KEY
-    );
-
-    if (cachedLicense) {
-      return cachedLicense;
-    }
-
-    const licenseDetails = await fetchLicenseFromServerInternal();
-
-    if (licenseDetails) {
-      await formbricksCache.set(
-        getCacheKeys().FETCH_LICENSE_CACHE_KEY,
-        licenseDetails,
-        CONFIG.CACHE.FETCH_LICENSE_TTL_MS
-      );
-    }
-    return licenseDetails;
-  } catch (error) {
-    logger.error("Failed to fetch license due to cache error", { error });
-    // Fallback to direct API call without cache
-    return fetchLicenseFromServerInternal();
+  // Skip license checks during build time - check before cache access
+  // eslint-disable-next-line turbo/no-undeclared-env-vars -- NEXT_PHASE is a next.js env variable
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return null;
   }
+
+  return await cache.withCache(
+    async () => {
+      return await fetchLicenseFromServerInternal();
+    },
+    getCacheKeys().FETCH_LICENSE_CACHE_KEY,
+    CONFIG.CACHE.FETCH_LICENSE_TTL_MS
+  );
 };
 
 export const getEnterpriseLicense = reactCache(
@@ -369,7 +366,6 @@ export const getEnterpriseLicense = reactCache(
           active: liveLicenseDetails.status === "active",
           features: liveLicenseDetails.features,
           lastChecked: currentTime,
-          version: 1,
         };
         await setPreviousResult(currentLicenseState);
         return {

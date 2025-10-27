@@ -1,0 +1,160 @@
+name: Update Package Version
+description: |
+  Safely updates package.json version with comprehensive validation and atomic operations.
+
+  Security Features:
+  - Path traversal protection
+  - SemVer validation with length limits
+  - Atomic file operations with backup/recovery
+  - JSON validation before applying changes
+
+  This action is designed to be secure by default and prevent common attack vectors.
+
+inputs:
+  version:
+    description: "Version to set in package.json (must be valid SemVer)"
+    required: true
+  package_path:
+    description: "Path to package.json file"
+    required: false
+    default: "./apps/web/package.json"
+
+outputs:
+  updated_version:
+    description: "The version that was actually set in package.json"
+    value: ${{ steps.update.outputs.updated_version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Update and verify package.json version
+      id: update
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        PACKAGE_PATH: ${{ inputs.package_path }}
+      run: |
+        set -euo pipefail
+
+        # Validate inputs
+        if [[ -z "$VERSION" ]]; then
+          echo "ERROR: version input is required"
+          exit 1
+        fi
+
+        # Security: Validate package_path to prevent path traversal attacks
+        # Only allow paths within the workspace and must end with package.json
+        if [[ "$PACKAGE_PATH" =~ \.\./|^/|^~ ]]; then
+          echo "ERROR: Invalid package path - path traversal detected: $PACKAGE_PATH"
+          echo "Package path must be relative to workspace root and cannot contain '../', start with '/', or '~'"
+          exit 1
+        fi
+
+        if [[ ! "$PACKAGE_PATH" =~ package\.json$ ]]; then
+          echo "ERROR: Package path must end with 'package.json': $PACKAGE_PATH"
+          exit 1
+        fi
+
+        # Resolve to absolute path within workspace for additional security
+        WORKSPACE_ROOT="${GITHUB_WORKSPACE:-$(pwd)}"
+
+        # Use realpath to resolve both paths and handle symlinks properly
+        WORKSPACE_ROOT=$(realpath "$WORKSPACE_ROOT")
+        RESOLVED_PATH=$(realpath "${WORKSPACE_ROOT}/${PACKAGE_PATH}")
+
+        # Ensure WORKSPACE_ROOT has a trailing slash for proper prefix matching
+        WORKSPACE_ROOT="${WORKSPACE_ROOT}/"
+
+        # Use shell string matching to ensure RESOLVED_PATH is within workspace
+        # This is more secure than regex and handles edge cases properly
+        if [[ "$RESOLVED_PATH" != "$WORKSPACE_ROOT"* ]]; then
+          echo "ERROR: Resolved path is outside workspace: $RESOLVED_PATH"
+          echo "Workspace root: $WORKSPACE_ROOT"
+          exit 1
+        fi
+
+        if [[ ! -f "$RESOLVED_PATH" ]]; then
+          echo "ERROR: package.json not found at: $RESOLVED_PATH"
+          exit 1
+        fi
+
+        # Use resolved path for operations
+        PACKAGE_PATH="$RESOLVED_PATH"
+
+        # Validate SemVer format with additional security checks
+        if [[ ${#VERSION} -gt 128 ]]; then
+          echo "ERROR: Version string too long (${#VERSION} chars, max 128): $VERSION"
+          exit 1
+        fi
+
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+          echo "ERROR: Invalid SemVer format: $VERSION"
+          echo "Expected format: MAJOR.MINOR.PATCH[-PRERELEASE]"
+          echo "Only alphanumeric characters, dots, and hyphens allowed in prerelease"
+          exit 1
+        fi
+
+        # Additional validation: Check for reasonable version component sizes
+        # Extract base version (MAJOR.MINOR.PATCH) without prerelease/build metadata
+        if [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          BASE_VERSION="${BASH_REMATCH[1]}"
+        else
+          echo "ERROR: Could not extract base version from: $VERSION"
+          exit 1
+        fi
+
+        # Split version components safely
+        IFS='.' read -ra VERSION_PARTS <<< "$BASE_VERSION"
+
+        # Validate component sizes (should have exactly 3 parts due to regex above)
+        if (( ${VERSION_PARTS[0]} > 999 || ${VERSION_PARTS[1]} > 999 || ${VERSION_PARTS[2]} > 999 )); then
+          echo "ERROR: Version components too large (max 999 each): $VERSION"
+          echo "Components: ${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
+          exit 1
+        fi
+
+        echo "Updating package.json version to: $VERSION"
+
+        # Create backup for atomic operations
+        BACKUP_PATH="${PACKAGE_PATH}.backup.$$"
+        cp "$PACKAGE_PATH" "$BACKUP_PATH"
+
+        # Use jq to safely update the version field with error handling
+        if ! jq --arg version "$VERSION" '.version = $version' "$PACKAGE_PATH" > "${PACKAGE_PATH}.tmp"; then
+          echo "ERROR: jq failed to process package.json"
+          rm -f "${PACKAGE_PATH}.tmp" "$BACKUP_PATH"
+          exit 1
+        fi
+
+        # Validate the generated JSON before applying changes
+        if ! jq empty "${PACKAGE_PATH}.tmp" 2>/dev/null; then
+          echo "ERROR: Generated invalid JSON"
+          rm -f "${PACKAGE_PATH}.tmp" "$BACKUP_PATH"
+          exit 1
+        fi
+
+        # Atomic move operation
+        if ! mv "${PACKAGE_PATH}.tmp" "$PACKAGE_PATH"; then
+          echo "ERROR: Failed to update package.json"
+          # Restore backup
+          mv "$BACKUP_PATH" "$PACKAGE_PATH"
+          exit 1
+        fi
+
+        # Verify the update was successful
+        UPDATED_VERSION=$(jq -r '.version' "$PACKAGE_PATH" 2>/dev/null)
+
+        if [[ "$UPDATED_VERSION" != "$VERSION" ]]; then
+          echo "ERROR: Version update failed!"
+          echo "Expected: $VERSION"
+          echo "Actual: $UPDATED_VERSION"
+          # Restore backup
+          mv "$BACKUP_PATH" "$PACKAGE_PATH"
+          exit 1
+        fi
+
+        # Clean up backup on success
+        rm -f "$BACKUP_PATH"
+
+        echo "SUCCESS: Updated package.json version to: $UPDATED_VERSION"
+        echo "updated_version=$UPDATED_VERSION" >> $GITHUB_OUTPUT

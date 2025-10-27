@@ -1,7 +1,8 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";
 
 export interface fallbacks {
@@ -19,6 +20,8 @@ export const extractId = (text: string): string | null => {
   }
 };
 
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // If there are multiple recall infos in a string extracts all recall question IDs from that string and construct an array out of it.
 export const extractIds = (text: string): string[] => {
   const pattern = /#recall:([A-Za-z0-9_-]+)/g;
@@ -28,26 +31,22 @@ export const extractIds = (text: string): string[] => {
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
 export const extractFallbackValue = (text: string): string => {
-  const pattern = /fallback:(\S*)#/;
+  const pattern = /fallback:([^#]*)#/;
   const match = text.match(pattern);
-  if (match && match[1]) {
-    return match[1];
-  } else {
-    return "";
-  }
+  return match?.[1] ?? "";
 };
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
 export const extractRecallInfo = (headline: string, id?: string): string | null => {
-  const idPattern = id ? id : "[A-Za-z0-9_-]+";
-  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
+  const idPattern = id ? escapeRegExp(id) : "[A-Za-z0-9_-]+";
+  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
 
 // Finds the recall information by a specific recall question ID within a text.
 export const findRecallInfoById = (text: string, id: string): string | null => {
-  const pattern = new RegExp(`#recall:${id}\\/fallback:(\\S*)#`, "g");
+  const pattern = new RegExp(`#recall:${escapeRegExp(id)}\\/fallback:([^#]*)#`, "g");
   const match = text.match(pattern);
   return match ? match[0] : null;
 };
@@ -61,7 +60,11 @@ const getRecallItemLabel = <T extends TSurvey>(
   if (isHiddenField) return recallItemId;
 
   const surveyQuestion = survey.questions.find((question) => question.id === recallItemId);
-  if (surveyQuestion) return surveyQuestion.headline[languageCode];
+  if (surveyQuestion) {
+    const headline = getLocalizedValue(surveyQuestion.headline, languageCode);
+    // Strip HTML tags to prevent raw HTML from showing in nested recalls
+    return headline ? getTextContent(headline) : headline;
+  }
 
   const variable = survey.variables?.find((variable) => variable.id === recallItemId);
   if (variable) return variable.name;
@@ -120,15 +123,15 @@ export const replaceRecallInfoWithUnderline = (label: string): string => {
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
 export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): TSurveyQuestion | null => {
-  const findRecalls = (text: string) => {
+  const doesTextHaveRecall = (text: string) => {
     const recalls = text.match(/#recall:[^ ]+/g);
-    return recalls && recalls.some((recall) => !extractFallbackValue(recall));
+    return recalls?.some((recall) => !extractFallbackValue(recall));
   };
 
   for (const question of survey.questions) {
     if (
-      findRecalls(getLocalizedValue(question.headline, language)) ||
-      (question.subheader && findRecalls(getLocalizedValue(question.subheader, language)))
+      doesTextHaveRecall(getLocalizedValue(question.headline, language)) ||
+      (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language)))
     ) {
       return question;
     }
@@ -183,7 +186,7 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
 // Constructs a fallbacks object from a text containing multiple recall and fallback patterns.
 export const getFallbackValues = (text: string): fallbacks => {
   if (!text.includes("#recall:")) return {};
-  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([\S*]+)#/g;
+  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/g;
   let match;
   const fallbacks: fallbacks = {};
 
@@ -267,4 +270,19 @@ export const parseRecallInfo = (
   }
 
   return modifiedText;
+};
+
+export const getTextContentWithRecallTruncated = (text: string, maxLength: number = 25): string => {
+  const cleanText = getTextContent(text).replaceAll(/\s+/g, " ").trim();
+
+  if (cleanText.length <= maxLength) {
+    return replaceRecallInfoWithUnderline(cleanText);
+  }
+
+  const recalledCleanText = replaceRecallInfoWithUnderline(cleanText);
+
+  const start = recalledCleanText.slice(0, 10);
+  const end = recalledCleanText.slice(-10);
+
+  return `${start}...${end}`;
 };

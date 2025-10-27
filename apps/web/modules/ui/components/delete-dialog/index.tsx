@@ -1,8 +1,17 @@
 "use client";
 
+import { CircleAlert, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
-import { Modal } from "@/modules/ui/components/modal";
-import { useTranslate } from "@tolgee/react";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -31,27 +40,50 @@ export const DeleteDialog = ({
   children,
   disabled,
 }: DeleteDialogProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
-    <Modal open={open} setOpen={setOpen} title={`${t("common.delete")} ${deleteWhat}`}>
-      <p>{text || t("common.are_you_sure_this_action_cannot_be_undone")}</p>
-      <div>{children}</div>
-      <div className="mt-4 space-x-2 text-right">
-        <Button
-          loading={isSaving}
-          variant="secondary"
-          onClick={() => {
-            if (useSaveInsteadOfCancel && onSave) {
-              onSave();
-            }
-            setOpen(false);
-          }}>
-          {useSaveInsteadOfCancel ? t("common.save") : t("common.cancel")}
-        </Button>
-        <Button variant="destructive" onClick={onDelete} loading={isDeleting} disabled={disabled}>
-          {t("common.delete")}
-        </Button>
-      </div>
-    </Modal>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <CircleAlert className="h-4 w-4" />
+            <div>
+              <DialogTitle>{`${t("common.delete")} ${deleteWhat}`}</DialogTitle>
+              <DialogDescription>
+                {t("environments.project.general.this_action_cannot_be_undone")}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <DialogBody>
+          <p>{text}</p>
+          {children && <div>{children}</div>}
+        </DialogBody>
+
+        <DialogFooter>
+          <Button
+            loading={isSaving}
+            variant="secondary"
+            onClick={() => {
+              if (useSaveInsteadOfCancel && onSave) {
+                onSave();
+              }
+              setOpen(false);
+            }}
+            disabled={isDeleting || isSaving}>
+            {useSaveInsteadOfCancel ? t("common.save") : t("common.cancel")}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={onDelete}
+            loading={isDeleting}
+            disabled={disabled || isDeleting || isSaving}>
+            <TrashIcon />
+            {t("common.delete")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

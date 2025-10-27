@@ -1,16 +1,16 @@
 "use client";
 
+import { PlusIcon } from "lucide-react";
+import { type JSX, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { type JSX, useEffect, useState } from "react";
-import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
@@ -22,6 +22,8 @@ interface CalQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const CalQuestionForm = ({
@@ -33,10 +35,12 @@ export const CalQuestionForm = ({
   setSelectedLanguageCode,
   isInvalid,
   locale,
+  isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: CalQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [isCalHostEnabled, setIsCalHostEnabled] = useState(!!question.calHost);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   useEffect(() => {
     if (!isCalHostEnabled) {
       updateQuestion(questionIdx, { calHost: undefined });
@@ -60,6 +64,9 @@ export const CalQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div>
         {question.subheader !== undefined && (
@@ -76,6 +83,9 @@ export const CalQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
@@ -91,7 +101,6 @@ export const CalQuestionForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             {t("environments.surveys.edit.add_description")}
           </Button>

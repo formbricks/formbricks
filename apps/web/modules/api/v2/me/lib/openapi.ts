@@ -1,6 +1,6 @@
-import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZApiKeyData } from "@formbricks/database/zod/api-keys";
+import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 
 export const getMeEndpoint: ZodOpenApiOperationObject = {
   operationId: "me",

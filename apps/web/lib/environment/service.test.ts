@@ -34,7 +34,6 @@ describe("Environment Service", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         appSetupCompleted: false,
-        widgetSetupCompleted: false,
       };
 
       vi.mocked(prisma.environment.findUnique).mockResolvedValue(mockEnvironment);
@@ -95,11 +94,9 @@ describe("Environment Service", () => {
         environments: [
           {
             ...mockEnvironments[0],
-            widgetSetupCompleted: false,
           },
           {
             ...mockEnvironments[1],
-            widgetSetupCompleted: true,
           },
         ],
       });
@@ -143,7 +140,6 @@ describe("Environment Service", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         appSetupCompleted: false,
-        widgetSetupCompleted: false,
       };
 
       vi.mocked(prisma.environment.update).mockResolvedValue(mockEnvironment);

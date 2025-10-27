@@ -1,5 +1,12 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import { PlusIcon } from "lucide-react";
+import { type JSX } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -7,13 +14,6 @@ import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import type { JSX } from "react";
-import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
@@ -24,6 +24,7 @@ interface PictureSelectionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const PictureSelectionForm = ({
@@ -35,10 +36,11 @@ export const PictureSelectionForm = ({
   setSelectedLanguageCode,
   isInvalid,
   locale,
+  isStorageConfigured = true,
 }: PictureSelectionFormProps): JSX.Element => {
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleChoiceDeletion = (choiceValue: string) => {
     // Filter out the deleted choice from the choices array
     const newChoices = question.choices?.filter((choice) => choice.id !== choiceValue) || [];
@@ -68,14 +70,14 @@ export const PictureSelectionForm = ({
       choices: updatedChoices,
     });
   };
-  // Auto animate
+
   const [parent] = useAutoAnimate();
   return (
     <form>
       <QuestionFormInput
         id="headline"
-        label={t("environments.surveys.edit.question") + "*"}
         value={question.headline}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -83,6 +85,8 @@ export const PictureSelectionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -99,6 +103,8 @@ export const PictureSelectionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
               />
             </div>
           </div>
@@ -137,6 +143,8 @@ export const PictureSelectionForm = ({
             onFileUpload={handleFileInputChanges}
             fileUrl={question?.choices?.map((choice) => choice.imageUrl)}
             multiple={true}
+            maxSizeInMB={5}
+            isStorageConfigured={isStorageConfigured}
           />
         </div>
       </div>

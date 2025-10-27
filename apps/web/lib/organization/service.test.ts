@@ -1,9 +1,9 @@
-import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
-import { updateUser } from "@/lib/user/service";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { updateUser } from "@/lib/user/service";
 import {
   createOrganization,
   getOrganization,
@@ -273,7 +273,6 @@ describe("Organization Service", () => {
         id: "user-123",
         notificationSettings: {
           alert: { "existing-survey-id": true },
-          weeklySummary: {},
           unsubscribedOrganizationIds: [], // User is subscribed to all organizations
         },
       } as any;
@@ -296,7 +295,7 @@ describe("Organization Service", () => {
             "existing-survey-id": true,
             "survey-123": true,
           },
-          weeklySummary: {},
+
           unsubscribedOrganizationIds: [],
         },
       });
@@ -307,7 +306,6 @@ describe("Organization Service", () => {
         id: "user-123",
         notificationSettings: {
           alert: { "existing-survey-id": true },
-          weeklySummary: {},
           unsubscribedOrganizationIds: ["org-123"], // User has unsubscribed from this organization
         },
       } as any;

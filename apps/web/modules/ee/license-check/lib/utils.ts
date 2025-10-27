@@ -1,4 +1,5 @@
 import "server-only";
+import { Organization } from "@prisma/client";
 import {
   AUDIT_LOG_ENABLED,
   IS_FORMBRICKS_CLOUD,
@@ -6,7 +7,6 @@ import {
   PROJECT_FEATURE_KEYS,
 } from "@/lib/constants";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
-import { Organization } from "@prisma/client";
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 
 // Helper function for feature permissions (e.g., removeBranding, whitelabel)
@@ -35,20 +35,6 @@ export const getWhiteLabelPermission = async (
   return getFeaturePermission(billingPlan, "whitelabel");
 };
 
-export const getRoleManagementPermission = async (
-  billingPlan: Organization["billing"]["plan"]
-): Promise<boolean> => {
-  const license = await getEnterpriseLicense();
-
-  if (IS_FORMBRICKS_CLOUD)
-    return (
-      license.active &&
-      (billingPlan === PROJECT_FEATURE_KEYS.SCALE || billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
-    );
-  else if (!IS_FORMBRICKS_CLOUD) return license.active;
-  return false;
-};
-
 export const getBiggerUploadFileSizePermission = async (
   billingPlan: Organization["billing"]["plan"]
 ): Promise<boolean> => {
@@ -59,25 +45,17 @@ export const getBiggerUploadFileSizePermission = async (
   return false;
 };
 
-export const getMultiLanguagePermission = async (
-  billingPlan: Organization["billing"]["plan"]
-): Promise<boolean> => {
-  const license = await getEnterpriseLicense();
-
-  if (IS_FORMBRICKS_CLOUD)
-    return (
-      license.active &&
-      (billingPlan === PROJECT_FEATURE_KEYS.SCALE || billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
-    );
-  else if (!IS_FORMBRICKS_CLOUD) return license.active;
-  return false;
-};
-
-// Helper function for simple boolean feature flags
 const getSpecificFeatureFlag = async (
   featureKey: keyof Pick<
     TEnterpriseLicenseFeatures,
-    "isMultiOrgEnabled" | "contacts" | "twoFactorAuth" | "sso" | "auditLogs"
+    | "isMultiOrgEnabled"
+    | "contacts"
+    | "twoFactorAuth"
+    | "sso"
+    | "auditLogs"
+    | "multiLanguageSurveys"
+    | "accessControl"
+    | "quotas"
   >
 ): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
@@ -99,6 +77,15 @@ export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
 
 export const getIsSsoEnabled = async (): Promise<boolean> => {
   return getSpecificFeatureFlag("sso");
+};
+
+export const getIsQuotasEnabled = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
+  const isEnabled = await getSpecificFeatureFlag("quotas");
+  // If the feature is enabled in the license, return true
+  if (isEnabled) return true;
+
+  // If the feature is not enabled in the license, check the fallback(Backwards compatibility)
+  return featureFlagFallback(billingPlan);
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
@@ -131,6 +118,39 @@ export const getIsSpamProtectionEnabled = async (
   }
 
   return license.active && !!license.features?.spamProtection;
+};
+
+const featureFlagFallback = async (billingPlan: Organization["billing"]["plan"]): Promise<boolean> => {
+  const license = await getEnterpriseLicense();
+  if (IS_FORMBRICKS_CLOUD)
+    return (
+      license.active &&
+      (billingPlan === PROJECT_FEATURE_KEYS.SCALE || billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
+    );
+  else if (!IS_FORMBRICKS_CLOUD) return license.active;
+  return false;
+};
+
+export const getMultiLanguagePermission = async (
+  billingPlan: Organization["billing"]["plan"]
+): Promise<boolean> => {
+  const isEnabled = await getSpecificFeatureFlag("multiLanguageSurveys");
+  // If the feature is enabled in the license, return true
+  if (isEnabled) return true;
+
+  // If the feature is not enabled in the license, check the fallback(Backwards compatibility)
+  return featureFlagFallback(billingPlan);
+};
+
+export const getAccessControlPermission = async (
+  billingPlan: Organization["billing"]["plan"]
+): Promise<boolean> => {
+  const isEnabled = await getSpecificFeatureFlag("accessControl");
+  // If the feature is enabled in the license, return true
+  if (isEnabled) return true;
+
+  // If the feature is not enabled in the license, check the fallback(Backwards compatibility)
+  return featureFlagFallback(billingPlan);
 };
 
 export const getOrganizationProjectsLimit = async (

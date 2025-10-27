@@ -1,5 +1,8 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
@@ -8,9 +11,6 @@ import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 
 interface MembersInfoProps {
   organization: TOrganization;
@@ -18,7 +18,7 @@ interface MembersInfoProps {
   invites: TInvite[];
   currentUserRole: TOrganizationRole;
   currentUserId: string;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isUserManagementDisabledFromUi: boolean;
 }
@@ -34,12 +34,12 @@ export const MembersInfo = ({
   currentUserRole,
   members,
   currentUserId,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isFormbricksCloud,
   isUserManagementDisabledFromUi,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const getMembershipBadge = (member: TMember | TInvite) => {
     if (isInvitee(member)) {
@@ -105,7 +105,7 @@ export const MembersInfo = ({
             <p className="w-full truncate"> {member.email}</p>
           </div>
 
-          {canDoRoleManagement && allMembers?.length > 0 && (
+          {isAccessControlAllowed && allMembers?.length > 0 && (
             <div className="ph-no-capture min-w-[100px]">
               <EditMembershipRole
                 currentUserRole={currentUserRole}

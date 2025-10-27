@@ -1,13 +1,15 @@
-import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 import { updateUser } from "./update-user";
 
 // Mock the cache functions
-vi.mock("@/modules/cache/lib/withCache", () => ({
-  withCache: vi.fn((fn) => fn), // Just execute the function without caching for tests
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    withCache: vi.fn(async (fn) => await fn()), // Just execute the function without caching for tests
+  },
 }));
 
 vi.mock("@/modules/ee/contacts/lib/attributes", () => ({

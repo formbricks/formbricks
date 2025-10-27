@@ -1,8 +1,3 @@
-import {
-  DateRange,
-  SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
@@ -14,6 +9,11 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
+import {
+  DateRange,
+  SelectedFilterValue,
+} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { generateQuestionAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
 
 describe("surveys", () => {
@@ -39,7 +39,7 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
       expect(result.questionOptions.length).toBeGreaterThan(0);
       expect(result.questionOptions[0].header).toBe(OptionsType.QUESTIONS);
@@ -62,7 +62,7 @@ describe("surveys", () => {
         { id: "tag1", name: "Tag 1", environmentId: "env1", createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      const result = generateQuestionAndFilterOptions(survey, tags, {}, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, tags, {}, {}, {}, []);
 
       const tagsHeader = result.questionOptions.find((opt) => opt.header === OptionsType.TAGS);
       expect(tagsHeader).toBeDefined();
@@ -85,7 +85,7 @@ describe("surveys", () => {
         role: ["admin", "user"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, attributes, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, attributes, {}, {}, []);
 
       const attributesHeader = result.questionOptions.find((opt) => opt.header === OptionsType.ATTRIBUTES);
       expect(attributesHeader).toBeDefined();
@@ -108,7 +108,7 @@ describe("surveys", () => {
         source: ["web", "mobile"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {}, []);
 
       const metaHeader = result.questionOptions.find((opt) => opt.header === OptionsType.META);
       expect(metaHeader).toBeDefined();
@@ -131,7 +131,7 @@ describe("surveys", () => {
         segment: ["free", "paid"],
       };
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, hiddenFields);
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, hiddenFields, []);
 
       const hiddenFieldsHeader = result.questionOptions.find(
         (opt) => opt.header === OptionsType.HIDDEN_FIELDS
@@ -153,7 +153,7 @@ describe("surveys", () => {
         languages: [{ language: { code: "en" } as unknown as TLanguage } as unknown as TSurveyLanguage],
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
       const othersHeader = result.questionOptions.find((opt) => opt.header === OptionsType.OTHERS);
       expect(othersHeader).toBeDefined();
@@ -223,13 +223,50 @@ describe("surveys", () => {
         status: "draft",
       } as unknown as TSurvey;
 
-      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {});
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, {}, {}, []);
 
       expect(result.questionFilterOptions.length).toBe(8);
       expect(result.questionFilterOptions.some((o) => o.id === "q1")).toBeTruthy();
       expect(result.questionFilterOptions.some((o) => o.id === "q2")).toBeTruthy();
       expect(result.questionFilterOptions.some((o) => o.id === "q7")).toBeTruthy();
       expect(result.questionFilterOptions.some((o) => o.id === "q8")).toBeTruthy();
+    });
+
+    test("should provide extended filter options for URL meta field", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        questions: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        environmentId: "env1",
+        status: "draft",
+      } as unknown as TSurvey;
+
+      const meta = {
+        url: ["https://example.com", "https://test.com"],
+        source: ["web", "mobile"],
+      };
+
+      const result = generateQuestionAndFilterOptions(survey, undefined, {}, meta, {}, []);
+
+      const urlFilterOption = result.questionFilterOptions.find((o) => o.id === "url");
+      const sourceFilterOption = result.questionFilterOptions.find((o) => o.id === "source");
+
+      expect(urlFilterOption).toBeDefined();
+      expect(urlFilterOption?.filterOptions).toEqual([
+        "Equals",
+        "Not equals",
+        "Contains",
+        "Does not contain",
+        "Starts with",
+        "Does not start with",
+        "Ends with",
+        "Does not end with",
+      ]);
+
+      expect(sourceFilterOption).toBeDefined();
+      expect(sourceFilterOption?.filterOptions).toEqual(["Equals", "Not equals"]);
     });
   });
 
@@ -320,7 +357,7 @@ describe("surveys", () => {
 
     test("should return empty filters when no selections", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [],
       };
 
@@ -331,7 +368,7 @@ describe("surveys", () => {
 
     test("should filter by completed responses", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: true,
+        responseStatus: "complete",
         filter: [],
       };
 
@@ -342,7 +379,7 @@ describe("surveys", () => {
 
     test("should filter by date range", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [],
       };
 
@@ -355,7 +392,7 @@ describe("surveys", () => {
 
     test("should filter by tags", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Tags", label: "Tag 1", id: "tag1" },
@@ -376,7 +413,7 @@ describe("surveys", () => {
 
     test("should filter by open text questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -397,7 +434,7 @@ describe("surveys", () => {
 
     test("should filter by address questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -418,7 +455,7 @@ describe("surveys", () => {
 
     test("should filter by contact info questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -439,7 +476,7 @@ describe("surveys", () => {
 
     test("should filter by ranking questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -460,7 +497,7 @@ describe("surveys", () => {
 
     test("should filter by multiple choice single questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -481,7 +518,7 @@ describe("surveys", () => {
 
     test("should filter by multiple choice multi questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -502,7 +539,7 @@ describe("surveys", () => {
 
     test("should filter by NPS questions with different operations", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -523,7 +560,7 @@ describe("surveys", () => {
 
     test("should filter by rating questions with less than operation", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -544,7 +581,7 @@ describe("surveys", () => {
 
     test("should filter by CTA questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -565,7 +602,7 @@ describe("surveys", () => {
 
     test("should filter by consent questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -586,7 +623,7 @@ describe("surveys", () => {
 
     test("should filter by picture selection questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -607,7 +644,7 @@ describe("surveys", () => {
 
     test("should filter by matrix questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: {
@@ -628,7 +665,7 @@ describe("surveys", () => {
 
     test("should filter by hidden fields", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Hidden Fields", label: "plan", id: "plan" },
@@ -644,7 +681,7 @@ describe("surveys", () => {
 
     test("should filter by attributes", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Attributes", label: "role", id: "role" },
@@ -660,7 +697,7 @@ describe("surveys", () => {
 
     test("should filter by other filters", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Other Filters", label: "Language", id: "language" },
@@ -676,7 +713,7 @@ describe("surveys", () => {
 
     test("should filter by meta fields", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: false,
+        responseStatus: "all",
         filter: [
           {
             questionType: { type: "Meta", label: "source", id: "source" },
@@ -692,7 +729,7 @@ describe("surveys", () => {
 
     test("should handle multiple filters together", () => {
       const selectedFilter: SelectedFilterValue = {
-        onlyComplete: true,
+        responseStatus: "complete",
         filter: [
           {
             questionType: {
@@ -716,6 +753,119 @@ describe("surveys", () => {
       expect(result.createdAt).toBeDefined();
       expect(result.data?.npsQ).toEqual({ op: "greaterThan", value: 7 });
       expect(result.tags?.applied).toContain("Tag 1");
+    });
+
+    test("should format URL meta filters with string operations", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "url", id: "url" },
+            filterType: { filterValue: "Contains", filterComboBoxValue: "example.com" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.url).toEqual({ op: "contains", value: "example.com" });
+    });
+
+    test("should format URL meta filters with all supported string operations", () => {
+      const testCases = [
+        { filterValue: "Equals", expected: { op: "equals", value: "https://example.com" } },
+        { filterValue: "Not equals", expected: { op: "notEquals", value: "https://example.com" } },
+        { filterValue: "Contains", expected: { op: "contains", value: "example.com" } },
+        { filterValue: "Does not contain", expected: { op: "doesNotContain", value: "test.com" } },
+        { filterValue: "Starts with", expected: { op: "startsWith", value: "https://" } },
+        { filterValue: "Does not start with", expected: { op: "doesNotStartWith", value: "http://" } },
+        { filterValue: "Ends with", expected: { op: "endsWith", value: ".com" } },
+        { filterValue: "Does not end with", expected: { op: "doesNotEndWith", value: ".org" } },
+      ];
+
+      testCases.forEach(({ filterValue, expected }) => {
+        const selectedFilter = {
+          responseStatus: "all",
+          filter: [
+            {
+              questionType: { type: "Meta", label: "url", id: "url" },
+              filterType: { filterValue, filterComboBoxValue: expected.value },
+            },
+          ],
+        } as any;
+
+        const result = getFormattedFilters(survey, selectedFilter, dateRange);
+        expect(result.meta?.url).toEqual(expected);
+      });
+    });
+
+    test("should handle URL meta filters with empty string values", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "url", id: "url" },
+            filterType: { filterValue: "Contains", filterComboBoxValue: "" },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.url).toBeUndefined();
+    });
+
+    test("should handle URL meta filters with whitespace-only values", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "url", id: "url" },
+            filterType: { filterValue: "Contains", filterComboBoxValue: "   " },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.url).toEqual({ op: "contains", value: "" });
+    });
+
+    test("should still handle existing meta filters with array values", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "source", id: "source" },
+            filterType: { filterValue: "Equals", filterComboBoxValue: ["google"] },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.source).toEqual({ op: "equals", value: "google" });
+    });
+
+    test("should handle mixed URL and traditional meta filters", () => {
+      const selectedFilter = {
+        responseStatus: "all",
+        filter: [
+          {
+            questionType: { type: "Meta", label: "url", id: "url" },
+            filterType: { filterValue: "Contains", filterComboBoxValue: "formbricks.com" },
+          },
+          {
+            questionType: { type: "Meta", label: "source", id: "source" },
+            filterType: { filterValue: "Equals", filterComboBoxValue: ["newsletter"] },
+          },
+        ],
+      } as any;
+
+      const result = getFormattedFilters(survey, selectedFilter, dateRange);
+
+      expect(result.meta?.url).toEqual({ op: "contains", value: "formbricks.com" });
+      expect(result.meta?.source).toEqual({ op: "equals", value: "newsletter" });
     });
   });
 

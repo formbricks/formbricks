@@ -1,13 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Input } from "@/modules/ui/components/input";
-import { Modal } from "@/modules/ui/components/modal";
-import { TabBar } from "@/modules/ui/components/tab-bar";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import React, { type JSX, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
@@ -15,6 +11,10 @@ import type {
   TSegmentAttributeFilter,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
+import { cn } from "@/lib/cn";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
+import { Input } from "@/modules/ui/components/input";
+import { TabBar } from "@/modules/ui/components/tab-bar";
 import AttributeTabContent from "./attribute-tab-content";
 import FilterButton from "./filter-button";
 
@@ -144,7 +144,7 @@ export function AddFilterModal({
 }: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const tabs: {
     id: string;
     label: string;
@@ -457,26 +457,31 @@ export function AddFilterModal({
   };
 
   return (
-    <Modal
-      className="sm:w-[650px] sm:max-w-full"
-      closeOnOutsideClick
-      hideCloseButton
-      open={open}
-      setOpen={setOpen}>
-      <div className="flex w-auto flex-col">
-        <Input
-          autoFocus
-          onChange={(e) => {
-            setSearchValue(e.target.value);
-          }}
-          placeholder="Browse filters..."
-        />
-        <TabBar activeId={activeTabId} className="bg-white" setActiveId={setActiveTabId} tabs={tabs} />
-      </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent width="narrow" disableCloseOnOutsideClick>
+        <DialogHeader>
+          <DialogTitle>{t("common.add_filter")}</DialogTitle>
+        </DialogHeader>
 
-      <div className={cn("mt-2 flex max-h-80 flex-col gap-1 overflow-y-auto")}>
-        <TabContent />
-      </div>
-    </Modal>
+        <DialogBody>
+          <div className="flex flex-col">
+            <div className="flex w-auto flex-col">
+              <Input
+                autoFocus
+                onChange={(e) => {
+                  setSearchValue(e.target.value);
+                }}
+                placeholder="Browse filters..."
+              />
+              <TabBar activeId={activeTabId} className="bg-white" setActiveId={setActiveTabId} tabs={tabs} />
+            </div>
+
+            <div className={cn("mt-2 flex flex-col gap-1 overflow-y-auto")}>
+              <TabContent />
+            </div>
+          </div>
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

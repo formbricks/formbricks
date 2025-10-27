@@ -122,18 +122,15 @@ export const mockUser: TUser = {
   name: "mock User",
   email: "test@unit.com",
   emailVerified: currentDate,
-  imageUrl: "https://www.google.com",
   createdAt: currentDate,
   updatedAt: currentDate,
   twoFactorEnabled: false,
   identityProvider: "google",
-  objective: "improve_user_retention",
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
+
     unsubscribedOrganizationIds: [],
   },
-  role: "other",
   locale: "en-US",
   lastLoginAt: new Date(),
   isActive: true,
@@ -143,7 +140,6 @@ export const mockPrismaPerson: Prisma.ContactGetPayload<{
   include: typeof selectContact;
 }> = {
   id: mockId,
-  userId: mockId,
   attributes: [
     {
       value: "de",
@@ -200,8 +196,6 @@ const baseSurveyProperties = {
   autoClose: 10,
   delay: 0,
   autoComplete: 7,
-  runOnDate: null,
-  closeOnDate: currentDate,
   redirectUrl: "https://github.com/formbricks/formbricks",
   recontactDays: 3,
   displayLimit: 3,
@@ -260,21 +254,20 @@ export const mockSyncSurveyOutput: SurveyMock = {
   pin: null,
   segment: null,
   segmentId: null,
-  resultShareKey: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
   ...baseSurveyProperties,
   followUps: [],
   variables: [],
   showLanguageSwitch: null,
-  thankYouCard: null,
-  verifyEmail: null,
+  metadata: {},
 };
 
 export const mockSurveyOutput: SurveyMock = {
   type: "link",
   status: "inProgress",
   displayOption: "respondMultiple",
+  metadata: {},
   triggers: [{ actionClass: mockActionClass }],
   projectOverwrites: null,
   recaptcha: null,
@@ -285,14 +278,11 @@ export const mockSurveyOutput: SurveyMock = {
   pin: null,
   segment: null,
   segmentId: null,
-  resultShareKey: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
   followUps: [],
   variables: [],
   showLanguageSwitch: null,
-  thankYouCard: null,
-  verifyEmail: null,
   ...baseSurveyProperties,
 };
 
@@ -315,12 +305,12 @@ export const updateSurveyInput: TSurvey = {
   createdBy: null,
   pin: null,
   recaptcha: null,
-  resultShareKey: null,
   segment: null,
   languages: [],
   showLanguageSwitch: null,
   variables: [],
   followUps: [],
+  metadata: {},
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

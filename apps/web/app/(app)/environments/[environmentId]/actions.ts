@@ -1,5 +1,9 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { ZProjectUpdateInput } from "@formbricks/types/project";
 import { getOrganization } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
@@ -8,14 +12,10 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
+  getAccessControlPermission,
   getOrganizationProjectsLimit,
-  getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { createProject } from "@/modules/projects/settings/lib/project";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZProjectUpdateInput } from "@formbricks/types/project";
 
 const ZCreateProjectAction = z.object({
   organizationId: ZId,
@@ -58,9 +58,9 @@ export const createProjectAction = authenticatedActionClient.schema(ZCreateProje
       }
 
       if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
-        const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
+        const isAccessControlAllowed = await getAccessControlPermission(organization.billing.plan);
 
-        if (!canDoRoleManagement) {
+        if (!isAccessControlAllowed) {
           throw new OperationNotAllowedError("You do not have permission to manage roles");
         }
       }
@@ -70,10 +70,6 @@ export const createProjectAction = authenticatedActionClient.schema(ZCreateProje
         ...user.notificationSettings,
         alert: {
           ...user.notificationSettings?.alert,
-        },
-        weeklySummary: {
-          ...user.notificationSettings?.weeklySummary,
-          [project.id]: true,
         },
       };
 

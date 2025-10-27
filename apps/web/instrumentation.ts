@@ -1,12 +1,13 @@
-import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 import * as Sentry from "@sentry/nextjs";
+import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 
 export const onRequestError = Sentry.captureRequestError;
 
-// instrumentation.ts
 export const register = async () => {
-  if (process.env.NEXT_RUNTIME === "nodejs" && PROMETHEUS_ENABLED) {
-    await import("./instrumentation-node");
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    if (PROMETHEUS_ENABLED) {
+      await import("./instrumentation-node");
+    }
   }
   if (process.env.NEXT_RUNTIME === "nodejs" && IS_PRODUCTION && SENTRY_DSN) {
     await import("./sentry.server.config");

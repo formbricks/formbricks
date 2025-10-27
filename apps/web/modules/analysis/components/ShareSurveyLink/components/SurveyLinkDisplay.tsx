@@ -1,24 +1,38 @@
+import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 
 interface SurveyLinkDisplayProps {
   surveyUrl: string;
+  enforceSurveyUrlWidth?: boolean;
 }
 
-export const SurveyLinkDisplay = ({ surveyUrl }: SurveyLinkDisplayProps) => {
+export const SurveyLinkDisplay = ({ surveyUrl, enforceSurveyUrlWidth = false }: SurveyLinkDisplayProps) => {
   return (
     <>
       {surveyUrl ? (
         <Input
           data-testid="survey-url-input"
-          autoFocus={true}
-          className="mt-2 w-full min-w-96 text-ellipsis rounded-lg border bg-white px-4 py-2 text-slate-800 caret-transparent"
+          className={cn(
+            "h-9 w-full text-ellipsis rounded-lg border bg-white px-3 py-1 text-slate-800 caret-transparent",
+            {
+              "min-w-96": enforceSurveyUrlWidth,
+            }
+          )}
           value={surveyUrl}
+          readOnly
+          aria-label="Survey URL"
         />
       ) : (
         //loading state
         <div
           data-testid="loading-div"
-          className="mt-2 h-10 w-full min-w-96 animate-pulse rounded-lg bg-slate-100 px-4 py-2 text-slate-800 caret-transparent"></div>
+          className={cn(
+            "h-9 w-full animate-pulse rounded-lg bg-slate-100 px-3 py-1 text-slate-800 caret-transparent",
+            {
+              "min-w-96": enforceSurveyUrlWidth,
+            }
+          )}
+        />
       )}
     </>
   );

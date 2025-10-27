@@ -1,3 +1,4 @@
+import { google } from "googleapis";
 import { responses } from "@/app/lib/api/response";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -6,7 +7,6 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
-import { google } from "googleapis";
 
 export const GET = async (req: Request) => {
   const url = req.url;
@@ -62,8 +62,11 @@ export const GET = async (req: Request) => {
   };
 
   const result = await createOrUpdateIntegration(environmentId, googleSheetIntegration);
-
   if (result) {
-    return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/google-sheets`);
+    return Response.redirect(
+      `${WEBAPP_URL}/environments/${environmentId}/project/integrations/google-sheets`
+    );
   }
+
+  return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");
 };

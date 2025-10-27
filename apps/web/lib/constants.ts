@@ -110,19 +110,11 @@ export const S3_REGION = env.S3_REGION;
 export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
 export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
 export const S3_FORCE_PATH_STYLE = env.S3_FORCE_PATH_STYLE === "1";
-export const UPLOADS_DIR = env.UPLOADS_DIR ?? "./uploads";
-export const MAX_SIZES = {
+export const MAX_FILE_UPLOAD_SIZES = {
   standard: 1024 * 1024 * 10, // 10MB
   big: 1024 * 1024 * 1024, // 1GB
 } as const;
-
-// Function to check if the necessary S3 configuration is set up
-export const isS3Configured = () => {
-  // This function checks if the S3 bucket name environment variable is defined.
-  // The AWS SDK automatically resolves credentials through a chain,
-  // so we do not need to explicitly check for AWS credentials like access key, secret key, or region.
-  return !!S3_BUCKET_NAME;
-};
+export const IS_STORAGE_CONFIGURED = Boolean(S3_BUCKET_NAME);
 
 // Colors for Survey Bg
 export const SURVEY_BG_COLORS = [
@@ -153,55 +145,13 @@ export const SURVEY_BG_COLORS = [
   "#CDFAD5",
 ];
 
-// Rate Limiting
-export const SIGNUP_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 30,
-};
-export const LOGIN_RATE_LIMIT = {
-  interval: 15 * 60, // 15 minutes
-  allowedPerInterval: 30,
-};
-
-export const CLIENT_SIDE_API_RATE_LIMIT = {
-  interval: 60, // 1 minute
-  allowedPerInterval: 100,
-};
-export const MANAGEMENT_API_RATE_LIMIT = {
-  interval: 60, // 1 minute
-  allowedPerInterval: 100,
-};
-
-export const SHARE_RATE_LIMIT = {
-  interval: 60 * 1, // 1 minutes
-  allowedPerInterval: 30,
-};
-export const FORGET_PASSWORD_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 5, // Limit to 5 requests per hour
-};
-export const RESET_PASSWORD_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 5, // Limit to 5 requests per hour
-};
-export const VERIFY_EMAIL_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 10, // Limit to 10 requests per hour
-};
-export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
-  interval: 60, // 1 minute
-  allowedPerInterval: 5,
-};
-
 export const DEBUG = env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const REDIS_URL = env.REDIS_URL;
-export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
-export const UNKEY_ROOT_KEY = env.UNKEY_ROOT_KEY;
 
 export const BREVO_API_KEY = env.BREVO_API_KEY;
 export const BREVO_LIST_ID = env.BREVO_LIST_ID;
@@ -215,7 +165,17 @@ export const STRIPE_API_VERSION = "2024-06-20";
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150;
 
 export const DEFAULT_LOCALE = "en-US";
-export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"];
+export const AVAILABLE_LOCALES: TUserLocale[] = [
+  "en-US",
+  "de-DE",
+  "pt-BR",
+  "fr-FR",
+  "zh-Hant-TW",
+  "pt-PT",
+  "ro-RO",
+  "ja-JP",
+  "zh-Hans-CN",
+];
 
 // Billing constants
 
@@ -233,8 +193,8 @@ export enum STRIPE_PROJECT_NAMES {
 }
 
 export enum STRIPE_PRICE_LOOKUP_KEYS {
-  STARTUP_MONTHLY = "formbricks_startup_monthly",
-  STARTUP_YEARLY = "formbricks_startup_yearly",
+  STARTUP_MAY25_MONTHLY = "STARTUP_MAY25_MONTHLY",
+  STARTUP_MAY25_YEARLY = "STARTUP_MAY25_YEARLY",
   SCALE_MONTHLY = "formbricks_scale_monthly",
   SCALE_YEARLY = "formbricks_scale_yearly",
 }
@@ -273,17 +233,33 @@ export const RECAPTCHA_SITE_KEY = env.RECAPTCHA_SITE_KEY;
 export const RECAPTCHA_SECRET_KEY = env.RECAPTCHA_SECRET_KEY;
 export const IS_RECAPTCHA_CONFIGURED = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_SECRET_KEY);
 
+// Use the app version for Sentry release (updated during build in production)
+// Fallback to environment variable if package.json is not accessible
+export const SENTRY_RELEASE = (() => {
+  if (process.env.NODE_ENV !== "production") {
+    return undefined;
+  }
+
+  // Try to read from package.json with proper error handling
+  try {
+    const pkg = require("../package.json");
+    return pkg.version === "0.0.0" ? undefined : `${pkg.version}`;
+  } catch {
+    // If package.json can't be read (e.g., in some deployment scenarios),
+    // return undefined and let Sentry work without release tracking
+    return undefined;
+  }
+})();
+export const SENTRY_ENVIRONMENT = env.SENTRY_ENVIRONMENT;
 export const SENTRY_DSN = env.SENTRY_DSN;
 
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
 
 export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? "manager";
 
-export const AUDIT_LOG_ENABLED =
-  env.AUDIT_LOG_ENABLED === "1" &&
-  env.REDIS_URL &&
-  env.REDIS_URL !== "" &&
-  env.ENCRYPTION_KEY &&
-  env.ENCRYPTION_KEY !== ""; // The audit log requires Redis to be configured
+export const AUDIT_LOG_ENABLED = env.AUDIT_LOG_ENABLED === "1";
 export const AUDIT_LOG_GET_USER_IP = env.AUDIT_LOG_GET_USER_IP === "1";
 export const SESSION_MAX_AGE = Number(env.SESSION_MAX_AGE) || 86400;
+
+// Control hash for constant-time password verification to prevent timing attacks. Used when user doesn't exist to maintain consistent verification timing
+export const CONTROL_HASH = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";

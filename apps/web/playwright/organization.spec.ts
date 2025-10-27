@@ -12,14 +12,10 @@ test.describe("Invite, accept and remove organization member", async () => {
 
   test("Invite organization member", async ({ page }) => {
     await test.step("Invite User", async () => {
-      const dropdownTrigger = page.locator("#userDropdownTrigger");
-      await expect(dropdownTrigger).toBeVisible();
-      await dropdownTrigger.click();
-
-      const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
-      await expect(dropdownInnerContentWrapper).toBeVisible();
-
-      await page.getByRole("link", { name: "Organization" }).click();
+      const organizationDropdownTrigger = page.locator("#organizationDropdownTrigger");
+      await expect(organizationDropdownTrigger).toBeVisible();
+      await organizationDropdownTrigger.click();
+      await page.getByRole("menuitemcheckbox", { name: "General" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
@@ -62,8 +58,8 @@ test.describe("Invite, accept and remove organization member", async () => {
       const inviteLinkText = await page.waitForSelector("#inviteLinkText");
       expect(inviteLinkText).toBeTruthy();
 
-      // invite link text is a paragraph, and we need the text inside it
-      const inviteLinkTextContent = await inviteLinkText.textContent();
+      // invite link text is an input element, so we need to get its value instead of textContent
+      const inviteLinkTextContent = await inviteLinkText.inputValue();
       expect(inviteLinkTextContent).toBeTruthy();
       // if (inviteLinkTextContent) {
       //   inviteLink = inviteLinkTextContent;
@@ -128,14 +124,10 @@ test.describe("Create, update and delete team", async () => {
   });
 
   test("Create and update team", async ({ page }) => {
-    const dropdownTrigger = page.locator("#userDropdownTrigger");
-    await expect(dropdownTrigger).toBeVisible();
-    await dropdownTrigger.click();
-
-    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
-    await expect(dropdownInnerContentWrapper).toBeVisible();
-
-    await page.getByRole("link", { name: "Organization" }).click();
+    const organizationDropdownTrigger = page.locator("#organizationDropdownTrigger");
+    await expect(organizationDropdownTrigger).toBeVisible();
+    await organizationDropdownTrigger.click();
+    await page.getByRole("menuitemcheckbox", { name: "General" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
     await page.waitForTimeout(2000);

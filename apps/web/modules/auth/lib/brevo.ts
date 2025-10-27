@@ -1,8 +1,8 @@
-import { BREVO_API_KEY, BREVO_LIST_ID } from "@/lib/constants";
-import { validateInputs } from "@/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TUserEmail, ZUserEmail } from "@formbricks/types/user";
+import { BREVO_API_KEY, BREVO_LIST_ID } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
 
 type BrevoCreateContact = {
   email?: string;
@@ -93,5 +93,30 @@ export const updateBrevoCustomer = async ({ id, email }: { id: string; email: TU
     }
   } catch (error) {
     logger.error(error, "Error updating user in Brevo");
+  }
+};
+
+export const deleteBrevoCustomerByEmail = async ({ email }: { email: TUserEmail }) => {
+  if (!BREVO_API_KEY) {
+    return;
+  }
+
+  const encodedEmail = encodeURIComponent(email.toLowerCase());
+
+  try {
+    const res = await fetch(`https://api.brevo.com/v3/contacts/${encodedEmail}?identifierType=email_id`, {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+        "api-key": BREVO_API_KEY,
+      },
+    });
+
+    if (res.status !== 204) {
+      const errorText = await res.text();
+      logger.error({ errorText }, "Error deleting user from Brevo");
+    }
+  } catch (error) {
+    logger.error(error, "Error deleting user from Brevo");
   }
 };

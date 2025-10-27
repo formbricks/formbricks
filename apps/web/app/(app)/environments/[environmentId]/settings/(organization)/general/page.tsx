@@ -1,13 +1,14 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { SettingsId } from "@/modules/ui/components/settings-id";
-import { getTranslate } from "@/tolgee/server";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
@@ -40,6 +41,13 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           activeId="general"
         />
       </PageHeader>
+      {!IS_STORAGE_CONFIGURED && (
+        <div className="max-w-4xl">
+          <Alert variant="warning">
+            <AlertDescription>{t("common.storage_not_configured")}</AlertDescription>
+          </Alert>
+        </div>
+      )}
       <SettingsCard
         title={t("environments.settings.general.organization_name")}
         description={t("environments.settings.general.organization_name_description")}>
@@ -57,6 +65,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         fbLogoUrl={FB_LOGO_URL}
         user={user}
+        isStorageConfigured={IS_STORAGE_CONFIGURED}
       />
       {isMultiOrgEnabled && (
         <SettingsCard
@@ -70,7 +79,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         </SettingsCard>
       )}
 
-      <SettingsId title={t("common.organization_id")} id={organization.id}></SettingsId>
+      <IdBadge id={organization.id} label={t("common.organization_id")} variant="column" />
     </PageContentWrapper>
   );
 };

@@ -1,5 +1,12 @@
 "use client";
 
+import { XIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -8,14 +15,14 @@ import { inviteUserAction, leaveOrganizationAction } from "@/modules/organizatio
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
-import { CustomDialog } from "@/modules/ui/components/custom-dialog";
-import { useTranslate } from "@tolgee/react";
-import { XIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 
 interface OrganizationActionsProps {
   role: TOrganizationRole;
@@ -24,11 +31,12 @@ interface OrganizationActionsProps {
   organization: TOrganization;
   teams: TOrganizationTeam[];
   isInviteDisabled: boolean;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
   isMultiOrgEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
+  isStorageConfigured: boolean;
 }
 
 export const OrganizationActions = ({
@@ -38,14 +46,15 @@ export const OrganizationActions = ({
   teams,
   isLeaveOrganizationDisabled,
   isInviteDisabled,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isFormbricksCloud,
   environmentId,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
+  isStorageConfigured,
 }: OrganizationActionsProps) => {
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
   const [isInviteMemberModalOpen, setInviteMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -147,27 +156,40 @@ export const OrganizationActions = ({
         setOpen={setInviteMemberModalOpen}
         onSubmit={handleAddMembers}
         membershipRole={membershipRole}
-        canDoRoleManagement={canDoRoleManagement}
+        isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}
         teams={teams}
+        isStorageConfigured={isStorageConfigured}
       />
 
-      <CustomDialog
-        open={isLeaveOrganizationModalOpen}
-        setOpen={setLeaveOrganizationModalOpen}
-        title={t("environments.settings.general.leave_organization_title")}
-        text={t("environments.settings.general.leave_organization_description")}
-        onOk={handleLeaveOrganization}
-        okBtnText={t("environments.settings.general.leave_organization_ok_btn_text")}
-        disabled={isLeaveOrganizationDisabled}
-        isLoading={loading}>
-        {isLeaveOrganizationDisabled && (
-          <p className="mt-2 text-sm text-red-700">
-            {t("environments.settings.general.cannot_leave_only_organization")}
-          </p>
-        )}
-      </CustomDialog>
+      <Dialog open={isLeaveOrganizationModalOpen} onOpenChange={setLeaveOrganizationModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("environments.settings.general.leave_organization_title")}</DialogTitle>
+            <DialogDescription>
+              {t("environments.settings.general.leave_organization_description")}
+            </DialogDescription>
+          </DialogHeader>
+          {isLeaveOrganizationDisabled && (
+            <p className="mt-2 text-sm text-red-700">
+              {t("environments.settings.general.cannot_leave_only_organization")}
+            </p>
+          )}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setLeaveOrganizationModalOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLeaveOrganization}
+              loading={loading}
+              disabled={isLeaveOrganizationDisabled}>
+              {t("environments.settings.general.leave_organization_ok_btn_text")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

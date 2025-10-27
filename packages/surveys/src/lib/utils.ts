@@ -1,8 +1,7 @@
-import { ApiResponse, ApiSuccessResponse } from "@/types/api";
-import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/common";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
 import {
   type TShuffleOption,
   type TSurveyLogic,
@@ -10,6 +9,7 @@ import {
   type TSurveyQuestion,
   type TSurveyQuestionChoice,
 } from "@formbricks/types/surveys/types";
+import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
@@ -51,8 +51,11 @@ export const getShuffledChoicesIds = (
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });
+  const noneOption = choices.find((choice) => {
+    return choice.id === "none";
+  });
 
-  const shuffledChoices = otherOption ? [...choices.filter((choice) => choice.id !== "other")] : [...choices];
+  const shuffledChoices = choices.filter((choice) => choice.id !== "other" && choice.id !== "none");
 
   if (shuffleOption === "all") {
     shuffle(shuffledChoices);
@@ -67,6 +70,9 @@ export const getShuffledChoicesIds = (
 
   if (otherOption) {
     shuffledChoices.push(otherOption);
+  }
+  if (noneOption) {
+    shuffledChoices.push(noneOption);
   }
 
   return shuffledChoices.map((choice) => choice.id);
@@ -177,3 +183,23 @@ export function isRTL(text: string): boolean {
   const rtlCharRegex = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
   return rtlCharRegex.test(text);
 }
+
+export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCode: string): boolean => {
+  if (survey.welcomeCard.enabled) {
+    const welcomeCardHeadline = survey.welcomeCard.headline?.[languageCode];
+    if (welcomeCardHeadline) {
+      return isRTL(welcomeCardHeadline);
+    }
+  }
+
+  for (const question of survey.questions) {
+    const questionHeadline = question.headline[languageCode];
+
+    // the first non-empty question headline is the survey direction
+    if (questionHeadline) {
+      return isRTL(questionHeadline);
+    }
+  }
+
+  return false;
+};

@@ -26,6 +26,10 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate a secure one
     CRON_SECRET:
 
+    # Redis URL for caching, rate limiting, and audit logging
+    # To use external Redis/Valkey: remove the redis service below and update this URL
+    REDIS_URL: redis://redis:6379
+
     # Set the minimum log level(debug, info, warn, error, fatal)
     # LOG_LEVEL: info
 
@@ -72,9 +76,6 @@ x-environment: &environment
     # Set the below to your Unsplash API Key for their Survey Backgrounds
     # UNSPLASH_ACCESS_KEY:
 
-    # Set the below to 0 to disable cron jobs
-    # DOCKER_CRON_ENABLED: 1
-
     # Set the below to your public domain (default is WEBAPP_URL)
     # PUBLIC_URL:
 
@@ -82,11 +83,10 @@ x-environment: &environment
     # SENTRY_DSN:
     # It's used for authentication when uploading source maps to Sentry, to make errors more readable.
     # SENTRY_AUTH_TOKEN:
+    # The SENTRY_ENVIRONMENT is used to identify the environment in Sentry.
+    # SENTRY_ENVIRONMENT:
 
     ################################################### OPTIONAL (STORAGE) ###################################################
-
-    # Set the below to set a custom Upload Directory
-    # UPLOADS_DIR:
 
     # Set S3 Storage configuration (required for the file upload in serverless environments like Vercel)
     # S3_ACCESS_KEY:
@@ -95,10 +95,10 @@ x-environment: &environment
     # S3_BUCKET_NAME:
 
     # Set a third party S3 compatible storage service endpoint like StorJ leave empty if you use Amazon S3
-    # S3_ENDPOINT_URL=
+    # S3_ENDPOINT_URL:
 
     # Force path style for S3 compatible storage (0 for disabled, 1 for enabled)
-    S3_FORCE_PATH_STYLE: 0
+    # S3_FORCE_PATH_STYLE: 0
 
     ############################################# OPTIONAL (OAUTH CONFIGURATION) #############################################
 
@@ -107,8 +107,8 @@ x-environment: &environment
     # TURNSTILE_SECRET_KEY:
 
     # Set the below keys to enable recaptcha V3 for survey responses bot protection(only available in the Enterprise Edition)
-    # RECAPTCHA_SITE_KEY=
-    # RECAPTCHA_SECRET_KEY=
+    # RECAPTCHA_SITE_KEY:
+    # RECAPTCHA_SECRET_KEY:
 
     # Set the below from GitHub if you want to enable GitHub OAuth
     # GITHUB_ID:
@@ -173,15 +173,9 @@ x-environment: &environment
     # Set the below to send OpenTelemetry data for tracing
     # OPENTELEMETRY_LISTENER_URL: http://localhost:4318/v1/traces
 
-    # Set the below to use Redis for Next Caching (default is In-Memory from Next Cache)
-    # REDIS_URL:
-
-    # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
-    # REDIS_HTTP_URL:
-
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 
-    # Set the below to 1 to enable audit logging. The audit log requires Redis to be configured with the REDIS_URL env variable.
+    # Set the below to 1 to enable audit logging.
     # AUDIT_LOG_ENABLED: 1
 
     # Set the below to get the ip address of the user from the request headers
@@ -190,16 +184,16 @@ x-environment: &environment
     ############################################# OPTIONAL (OTHER) #############################################
 
     # signup is disabled by default for self-hosted instances, users can only signup using an invite link, in order to allow signup from SSO(without invite), set the below to 1
-    # AUTH_SKIP_INVITE_FOR_SSO=1
+    # AUTH_SKIP_INVITE_FOR_SSO: 1
     # Set the below to automatically assign new users to a specific team, insert an existing team id
     # (Role Management is an Enterprise feature)
-    # AUTH_SSO_DEFAULT_TEAM_ID=
+    # AUTH_SSO_DEFAULT_TEAM_ID:
 
     # Configure the minimum role for user management from UI(owner, manager, disabled)
-    # USER_MANAGEMENT_MINIMUM_ROLE="manager"
+    # USER_MANAGEMENT_MINIMUM_ROLE: "manager"
 
     # Configure the maximum age for the session in seconds. Default is 86400 (24 hours)
-    # SESSION_MAX_AGE=86400
+    # SESSION_MAX_AGE: 86400
 
 services:
   postgres:
@@ -212,20 +206,31 @@ services:
       # Replace the below with your own secure password & Make sure the password matches the password field in DATABASE_URL above
       - POSTGRES_PASSWORD=postgres
 
+  # Redis/Valkey service for caching, rate limiting, and audit logging
+  # Remove this service if you want to use an external Redis/Valkey instance
+  redis:
+    restart: always
+    image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+    command: valkey-server --appendonly yes
+    volumes:
+      - redis:/data
+    ports:
+      - "6379:6379"
+
   formbricks:
     restart: always
     image: ghcr.io/formbricks/formbricks:latest
     depends_on:
       - postgres
+      - redis
     ports:
       - 3000:3000
     volumes:
-      - uploads:/home/nextjs/apps/web/uploads/
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
 
 volumes:
   postgres:
     driver: local
-  uploads:
+  redis:
     driver: local

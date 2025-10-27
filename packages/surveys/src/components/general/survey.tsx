@@ -1,3 +1,16 @@
+import { type JSX } from "preact";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { type TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
+import type {
+  TResponseData,
+  TResponseDataValue,
+  TResponseTtc,
+  TResponseUpdate,
+  TResponseVariables,
+} from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
+import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
 import { FormbricksBranding } from "@/components/general/formbricks-branding";
@@ -17,19 +30,6 @@ import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
 import { cn, getDefaultLanguageCode } from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { type JSX, useCallback } from "react";
-import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
-import { type TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
-import type {
-  TResponseData,
-  TResponseDataValue,
-  TResponseTtc,
-  TResponseUpdate,
-  TResponseVariables,
-} from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
-import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface VariableStackEntry {
   questionId: TSurveyQuestionId;
@@ -48,7 +48,6 @@ export function Survey({
   isBrandingEnabled,
   onDisplay,
   onResponse,
-  onFileUpload,
   onClose,
   onFinished,
   onRetry,
@@ -75,6 +74,8 @@ export function Survey({
   isWebEnvironment = true,
   getRecaptchaToken,
   isSpamProtectionEnabled,
+  dir = "auto",
+  setDir,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -97,6 +98,12 @@ export function Survey({
   }, [appUrl, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
 
   // Update the responseQueue to use the stored responseId
+
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
+  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
+
   const responseQueue = useMemo(() => {
     if (appUrl && environmentId && surveyState) {
       return new ResponseQueue(
@@ -119,6 +126,13 @@ export function Survey({
               getSetIsResponseSendingFinished((_prev) => {});
             }
           },
+          onQuotaFull: (quotaInfo) => {
+            if (quotaInfo.action === "endSurvey") {
+              setIsResponseSendingFinished(true);
+              setIsSurveyFinished(true);
+              setQuestionId(quotaInfo.endingCardId);
+            }
+          },
         },
         surveyState
       );
@@ -127,10 +141,15 @@ export function Survey({
     return null;
   }, [appUrl, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const originalQuestionRequiredStates = useMemo(() => {
+    return survey.questions.reduce<Record<string, boolean>>((acc, question) => {
+      acc[question.id] = question.required;
+      return acc;
+    }, {});
+  }, [survey.questions]);
 
-  const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
-  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
+  // state to keep track of the questions that were made required by each specific question's logic
+  const questionRequiredByMap = useRef<Record<string, string[]>>({});
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {
@@ -162,7 +181,7 @@ export function Survey({
     !getSetIsResponseSendingFinished
   );
   const [isSurveyFinished, setIsSurveyFinished] = useState(false);
-  const [selectedLanguage, setselectedLanguage] = useState(languageCode);
+  const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
@@ -188,7 +207,7 @@ export function Survey({
     return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;
   };
 
-  const onFileUploadApi = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
+  const onFileUpload = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
     if (isPreviewMode) {
       // return mock url since an url is required for the preview
       return `https://example.com/${file.name}`;
@@ -309,7 +328,7 @@ export function Survey({
   }, [getSetIsResponseSendingFinished]);
 
   useEffect(() => {
-    setselectedLanguage(languageCode);
+    setSelectedLanguage(languageCode);
   }, [languageCode]);
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -335,6 +354,28 @@ export function Survey({
         return question;
       }),
     }));
+  };
+
+  const revertRequiredChangesByQuestion = (questionId: string): void => {
+    const questionsToRevert = questionRequiredByMap.current[questionId] || [];
+
+    if (questionsToRevert.length > 0) {
+      setlocalSurvey((prevSurvey) => ({
+        ...prevSurvey,
+        questions: prevSurvey.questions.map((question) => {
+          if (questionsToRevert.includes(question.id)) {
+            return {
+              ...question,
+              required: originalQuestionRequiredStates[question.id] ?? question.required,
+            };
+          }
+          return question;
+        }),
+      }));
+
+      // remove the question from the map
+      delete questionRequiredByMap.current[questionId];
+    }
   };
 
   const pushVariableState = (currentQuestionId: TSurveyQuestionId) => {
@@ -405,8 +446,10 @@ export function Survey({
       firstJumpTarget = currentQuestion.logicFallback;
     }
 
-    // Make all collected questions required
     if (allRequiredQuestionIds.length > 0) {
+      // Track which questions are being made required by this question
+      questionRequiredByMap.current[currentQuestion.id] = allRequiredQuestionIds;
+
       makeQuestionsRequired(allRequiredQuestionIds);
     }
 
@@ -415,6 +458,18 @@ export function Survey({
 
     return { nextQuestionId, calculatedVariables: calculationResults };
   };
+
+  const getWebSurveyMeta = useCallback(() => {
+    if (!isWebEnvironment) return {};
+
+    const url = new URL(window.location.href);
+    const source = url.searchParams.get("source");
+
+    return {
+      url: url.href,
+      ...(source ? { source } : {}),
+    };
+  }, [isWebEnvironment]);
 
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
@@ -459,7 +514,7 @@ export function Survey({
           language:
             responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
           meta: {
-            ...(isWebEnvironment && { url: window.location.href }),
+            ...getWebSurveyMeta(),
             action,
           },
           variables: responseUpdate.variables,
@@ -482,9 +537,9 @@ export function Survey({
       contactId,
       userId,
       survey,
-      isWebEnvironment,
       action,
       hiddenFieldsRecord,
+      getWebSurveyMeta,
     ]
   );
 
@@ -569,6 +624,8 @@ export function Survey({
     }
     popVariableState();
     if (!prevQuestionId) throw new Error("Question not found");
+
+    revertRequiredChangesByQuestion(prevQuestionId);
     setQuestionId(prevQuestionId);
   };
 
@@ -624,7 +681,7 @@ export function Survey({
           <WelcomeCard
             key="start"
             headline={localSurvey.welcomeCard.headline}
-            html={localSurvey.welcomeCard.html}
+            subheader={localSurvey.welcomeCard.subheader}
             fileUrl={localSurvey.welcomeCard.fileUrl}
             buttonLabel={localSurvey.welcomeCard.buttonLabel}
             onSubmit={onSubmit}
@@ -635,6 +692,7 @@ export function Survey({
             isCurrent={offset === 0}
             responseData={responseData}
             variablesData={currentVariables}
+            fullSizeCards={fullSizeCards}
           />
         );
       } else if (questionIdx >= localSurvey.questions.length) {
@@ -655,6 +713,7 @@ export function Survey({
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
+              fullSizeCards={fullSizeCards}
             />
           );
         }
@@ -672,7 +731,7 @@ export function Survey({
               onBack={onBack}
               ttc={ttc}
               setTtc={setTtc}
-              onFileUpload={onFileUpload ?? onFileUploadApi}
+              onFileUpload={onFileUpload}
               isFirstQuestion={question.id === localSurvey.questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
@@ -682,11 +741,16 @@ export function Survey({
               currentQuestionId={questionId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               onOpenExternalURL={onOpenExternalURL}
+              dir={dir}
+              fullSizeCards={fullSizeCards}
             />
           )
         );
       }
     };
+
+    const isLanguageSwitchVisible = getShowLanguageSwitch(offset);
+    const isCloseButtonVisible = getShowSurveyCloseButton(offset);
 
     return (
       <AutoCloseWrapper
@@ -698,32 +762,60 @@ export function Survey({
         <div
           className={cn(
             "fb-no-scrollbar fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
-            cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
           )}>
-          <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2">
-            {getShowLanguageSwitch(offset) && (
-              <LanguageSwitch
-                surveyLanguages={localSurvey.languages}
-                setSelectedLanguageCode={setselectedLanguage}
-              />
-            )}
-            {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
-          </div>
-          <div
-            ref={contentRef}
-            className={cn(
-              loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-              fullSizeCards ? "" : "fb-my-auto"
-            )}>
-            {content()}
-          </div>
-          <div className="fb-space-y-4">
-            <div className="fb-px-4 space-y-2">
+          <div className={cn("fb-relative")}>
+            <div className="fb-flex fb-flex-col fb-w-full fb-items-end">
+              {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : null}
+
+              <div
+                className={cn(
+                  "fb-relative fb-w-full",
+                  isCloseButtonVisible || isLanguageSwitchVisible ? "fb-h-8" : "fb-h-5"
+                )}>
+                <div className={cn("fb-flex fb-items-center fb-justify-end fb-w-full")}>
+                  {isLanguageSwitchVisible && (
+                    <LanguageSwitch
+                      survey={localSurvey}
+                      surveyLanguages={localSurvey.languages}
+                      setSelectedLanguageCode={setSelectedLanguage}
+                      hoverColor={styling.inputColor?.light ?? "#f8fafc"}
+                      borderRadius={styling.roundness ?? 8}
+                      setDir={setDir}
+                      dir={dir}
+                    />
+                  )}
+                  {isLanguageSwitchVisible && isCloseButtonVisible && (
+                    <div aria-hidden="true" className="fb-h-5 fb-w-px fb-bg-slate-200 fb-z-[1001]" />
+                  )}
+
+                  {isCloseButtonVisible && (
+                    <SurveyCloseButton
+                      onClose={onClose}
+                      hoverColor={styling.inputColor?.light ?? "#f8fafc"}
+                      borderRadius={styling.roundness ?? 8}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            <div
+              ref={contentRef}
+              className={cn(
+                loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
+                fullSizeCards ? "" : "fb-my-auto"
+              )}>
+              {content()}
+            </div>
+
+            <div
+              className={cn(
+                "fb-flex fb-flex-col fb-justify-center fb-gap-2",
+                isCloseButtonVisible || isLanguageSwitchVisible ? "fb-p-2" : "fb-p-3"
+              )}>
               {isBrandingEnabled ? <FormbricksBranding /> : null}
               {isSpamProtectionEnabled ? <RecaptchaBranding /> : null}
             </div>
-            {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
           </div>
         </div>
       </AutoCloseWrapper>

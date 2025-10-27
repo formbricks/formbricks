@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       VERSION:
-        description: "The version of the Docker image to release, full image tag if image tag is v0.0.0 enter v0.0.0."
+        description: "The version of the Docker image to release (clean SemVer, e.g., 1.2.3)"
         required: true
         type: string
       REPOSITORY:
@@ -17,8 +17,8 @@ on:
         required: true
         type: choice
         options:
-          - stage
-          - prod
+          - staging
+          - production
   workflow_call:
     inputs:
       VERSION:
@@ -37,21 +37,27 @@ on:
 
 permissions:
   id-token: write
-  contents: write
+  contents: read
 
 jobs:
   helmfile-deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Tailscale
-        uses: tailscale/github-action@v3
+        uses: tailscale/github-action@84a3f23bb4d843bcf4da6cf824ec1be473daf4de # v3.2.3
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:github
+          args: --accept-routes
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@f24d7193d98baebaeacc7e2227925dd47cc267f5 # v4.2.0
@@ -65,9 +71,9 @@ jobs:
         env:
           AWS_REGION: eu-central-1
 
-      - uses: helmfile/helmfile-action@v2
-        name: Deploy Formbricks Cloud Prod
-        if: inputs.ENVIRONMENT == 'prod'
+      - uses: helmfile/helmfile-action@712000e3d4e28c72778ecc53857746082f555ef3 # v2.0.4
+        name: Deploy Formbricks Cloud Production
+        if: inputs.ENVIRONMENT == 'production'
         env:
           VERSION: ${{ inputs.VERSION }}
           REPOSITORY: ${{ inputs.REPOSITORY }}
@@ -83,9 +89,9 @@ jobs:
           helmfile-auto-init: "false"
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
-      - uses: helmfile/helmfile-action@v2
-        name: Deploy Formbricks Cloud Stage
-        if: inputs.ENVIRONMENT == 'stage'
+      - uses: helmfile/helmfile-action@712000e3d4e28c72778ecc53857746082f555ef3 # v2.0.4
+        name: Deploy Formbricks Cloud Staging
+        if: inputs.ENVIRONMENT == 'staging'
         env:
           VERSION: ${{ inputs.VERSION }}
           REPOSITORY: ${{ inputs.REPOSITORY }}
@@ -101,19 +107,20 @@ jobs:
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
       - name: Purge Cloudflare Cache
-        if: ${{ inputs.ENVIRONMENT == 'prod' || inputs.ENVIRONMENT == 'stage' }}
+        if: ${{ inputs.ENVIRONMENT == 'production' || inputs.ENVIRONMENT == 'staging' }}
         env:
           CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
         run: |
           # Set hostname based on environment
-          if [[ "${{ inputs.ENVIRONMENT }}" == "prod" ]]; then
+          if [[ "$ENVIRONMENT" == "production" ]]; then
             PURGE_HOST="app.formbricks.com"
           else
             PURGE_HOST="stage.app.formbricks.com"
           fi
 
-          echo "Purging Cloudflare cache for host: $PURGE_HOST (environment: ${{ inputs.ENVIRONMENT }}, zone: $CF_ZONE_ID)"
+          echo "Purging Cloudflare cache for host: $PURGE_HOST (environment: $ENVIRONMENT, zone: $CF_ZONE_ID)"
 
           # Prepare JSON payload for selective cache purge
           json_payload=$(cat << EOF

@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronDownIcon } from "lucide-react";
+import { TFilterOption } from "@formbricks/types/surveys/types";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import {
   DropdownMenu,
@@ -7,9 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon } from "lucide-react";
-import { TFilterOption } from "@formbricks/types/surveys/types";
 
 interface SurveyFilterDropdownProps {
   title: string;
@@ -30,7 +29,6 @@ export const SurveyFilterDropdown = ({
   isOpen,
   toggleDropdown,
 }: SurveyFilterDropdownProps) => {
-  const { t } = useTranslate();
   const triggerClasses = `surveyFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-none 
     ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : "hover:bg-slate-900"}`;
 
@@ -56,7 +54,7 @@ export const SurveyFilterDropdown = ({
                 checked={selectedOptions.includes(option.value)}
                 className={`bg-white ${selectedOptions.includes(option.value) ? "bg-brand-dark border-none" : ""}`}
               />
-              <p className="font-normal text-white">{t(option.label)}</p>
+              <p className="font-normal text-white">{option.label}</p>
             </div>
           </DropdownMenuItem>
         ))}

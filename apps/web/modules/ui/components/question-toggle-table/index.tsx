@@ -1,8 +1,6 @@
 "use client";
 
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Switch } from "@/modules/ui/components/switch";
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -10,6 +8,8 @@ import {
   TSurveyContactInfoQuestion,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Switch } from "@/modules/ui/components/switch";
 
 interface QuestionToggleTableProps {
   type: "address" | "contact";
@@ -30,6 +30,7 @@ interface QuestionToggleTableProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionToggleTable = ({
@@ -42,6 +43,7 @@ export const QuestionToggleTable = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured,
 }: QuestionToggleTableProps) => {
   const onShowToggle = (
     field: { id: string; show: boolean; required: boolean; placeholder: TI18nString },
@@ -69,7 +71,7 @@ export const QuestionToggleTable = ({
     });
   };
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <table className="mt-4 w-full table-fixed">
       <thead>
@@ -121,6 +123,7 @@ export const QuestionToggleTable = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
               />
             </td>
           </tr>

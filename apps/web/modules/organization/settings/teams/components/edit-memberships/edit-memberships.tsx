@@ -1,16 +1,16 @@
+import { TOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { MembersInfo } from "@/modules/organization/settings/teams/components/edit-memberships/members-info";
 import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
-import { getTranslate } from "@/tolgee/server";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 
 interface EditMembershipsProps {
   organization: TOrganization;
   currentUserId: string;
   role: TOrganizationRole;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isUserManagementDisabledFromUi: boolean;
 }
 
@@ -18,7 +18,7 @@ export const EditMemberships = async ({
   organization,
   currentUserId,
   role,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isUserManagementDisabledFromUi,
 }: EditMembershipsProps) => {
   const members = await getMembershipByOrganizationId(organization.id);
@@ -32,7 +32,9 @@ export const EditMemberships = async ({
           <div className="w-1/2 overflow-hidden">{t("common.full_name")}</div>
           <div className="w-1/2 overflow-hidden">{t("common.email")}</div>
 
-          {canDoRoleManagement && <div className="min-w-[100px] whitespace-nowrap">{t("common.role")}</div>}
+          {isAccessControlAllowed && (
+            <div className="min-w-[100px] whitespace-nowrap">{t("common.role")}</div>
+          )}
 
           <div className="min-w-[80px] whitespace-nowrap">{t("common.status")}</div>
 
@@ -48,7 +50,7 @@ export const EditMemberships = async ({
             invites={invites ?? []}
             members={members ?? []}
             currentUserRole={role}
-            canDoRoleManagement={canDoRoleManagement}
+            isAccessControlAllowed={isAccessControlAllowed}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
           />

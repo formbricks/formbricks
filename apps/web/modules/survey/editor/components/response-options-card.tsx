@@ -1,21 +1,18 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
+import { KeyboardEventHandler, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
-import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Slider } from "@/modules/ui/components/slider";
-import { Switch } from "@/modules/ui/components/switch";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { ArrowUpRight, CheckIcon } from "lucide-react";
-import Link from "next/link";
-import { KeyboardEventHandler, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
@@ -30,11 +27,9 @@ export const ResponseOptionsCard = ({
   responseCount,
   isSpamProtectionAllowed,
 }: ResponseOptionsCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
-  const [runOnDateToggle, setRunOnDateToggle] = useState(false);
-  const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
   const [recaptchaToggle, setRecaptchaToggle] = useState(localSurvey.recaptcha?.enabled ?? false);
@@ -47,43 +42,11 @@ export const ResponseOptionsCard = ({
     subheading: t("environments.surveys.edit.survey_completed_subheading"),
   });
 
-  const [singleUseMessage, setSingleUseMessage] = useState({
-    heading: t("environments.surveys.edit.survey_already_answered_heading"),
-    subheading: t("environments.surveys.edit.survey_already_answered_subheading"),
-  });
-
-  const [singleUseEncryption, setSingleUseEncryption] = useState(true);
-  const [runOnDate, setRunOnDate] = useState<Date | null>(null);
-  const [closeOnDate, setCloseOnDate] = useState<Date | null>(null);
   const [recaptchaThreshold, setRecaptchaThreshold] = useState<number>(localSurvey.recaptcha?.threshold ?? 0);
 
   const isPinProtectionEnabled = localSurvey.pin !== null;
 
   const [verifyProtectWithPinError, setVerifyProtectWithPinError] = useState<string | null>(null);
-
-  const handleRunOnDateToggle = () => {
-    if (runOnDateToggle) {
-      setRunOnDateToggle(false);
-      if (localSurvey.runOnDate) {
-        setRunOnDate(null);
-        setLocalSurvey({ ...localSurvey, runOnDate: null });
-      }
-    } else {
-      setRunOnDateToggle(true);
-    }
-  };
-
-  const handleCloseOnDateToggle = () => {
-    if (closeOnDateToggle) {
-      setCloseOnDateToggle(false);
-      if (localSurvey.closeOnDate) {
-        setCloseOnDate(null);
-        setLocalSurvey({ ...localSurvey, closeOnDate: null });
-      }
-    } else {
-      setCloseOnDateToggle(true);
-    }
-  };
 
   const handleProtectSurveyWithPinToggle = () => {
     setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : "1234" }));
@@ -134,18 +97,6 @@ export const ResponseOptionsCard = ({
     });
   };
 
-  const handleRunOnDateChange = (date: Date) => {
-    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
-    setRunOnDate(utcDate);
-    setLocalSurvey({ ...localSurvey, runOnDate: utcDate ?? null });
-  };
-
-  const handleCloseOnDateChange = (date: Date) => {
-    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
-    setCloseOnDate(utcDate);
-    setLocalSurvey({ ...localSurvey, closeOnDate: utcDate ?? null });
-  };
-
   const handleClosedSurveyMessageChange = ({
     heading,
     subheading,
@@ -154,60 +105,12 @@ export const ResponseOptionsCard = ({
     subheading?: string;
   }) => {
     const message = {
-      enabled: closeOnDateToggle,
       heading: heading ?? surveyClosedMessage.heading,
       subheading: subheading ?? surveyClosedMessage.subheading,
     };
 
     setSurveyClosedMessage(message);
     setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
-  };
-
-  const handleSingleUseSurveyToggle = () => {
-    if (!localSurvey.singleUse?.enabled) {
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: singleUseEncryption },
-      });
-    } else {
-      setLocalSurvey({ ...localSurvey, singleUse: { enabled: false, isEncrypted: false } });
-    }
-  };
-
-  const handleSingleUseSurveyMessageChange = ({
-    heading,
-    subheading,
-  }: {
-    heading?: string;
-    subheading?: string;
-  }) => {
-    const message = {
-      heading: heading ?? singleUseMessage.heading,
-      subheading: subheading ?? singleUseMessage.subheading,
-    };
-
-    const localSurveySingleUseEnabled = localSurvey.singleUse?.enabled ?? false;
-    setSingleUseMessage(message);
-    setLocalSurvey({
-      ...localSurvey,
-      singleUse: { enabled: localSurveySingleUseEnabled, ...message, isEncrypted: singleUseEncryption },
-    });
-  };
-
-  const hangleSingleUseEncryptionToggle = () => {
-    if (!singleUseEncryption) {
-      setSingleUseEncryption(true);
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: true },
-      });
-    } else {
-      setSingleUseEncryption(false);
-      setLocalSurvey({
-        ...localSurvey,
-        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: false },
-      });
-    }
   };
 
   const handleHideBackButtonToggle = () => {
@@ -222,31 +125,7 @@ export const ResponseOptionsCard = ({
       });
       setSurveyClosedMessageToggle(true);
     }
-
-    if (localSurvey.singleUse?.enabled) {
-      setSingleUseMessage({
-        heading: localSurvey.singleUse.heading ?? singleUseMessage.heading,
-        subheading: localSurvey.singleUse.subheading ?? singleUseMessage.subheading,
-      });
-      setSingleUseEncryption(localSurvey.singleUse.isEncrypted);
-    }
-
-    if (localSurvey.runOnDate) {
-      setRunOnDate(localSurvey.runOnDate);
-      setRunOnDateToggle(true);
-    }
-
-    if (localSurvey.closeOnDate) {
-      setCloseOnDate(localSurvey.closeOnDate);
-      setCloseOnDateToggle(true);
-    }
-  }, [
-    localSurvey,
-    singleUseMessage.heading,
-    singleUseMessage.subheading,
-    surveyClosedMessage.heading,
-    surveyClosedMessage.subheading,
-  ]);
+  }, [localSurvey, surveyClosedMessage.heading, surveyClosedMessage.subheading]);
 
   const toggleAutocomplete = () => {
     if (autoComplete) {
@@ -278,7 +157,10 @@ export const ResponseOptionsCard = ({
       toast.error(
         t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
           responseCount,
-        })
+        }),
+        {
+          id: "response-limit-error",
+        }
       );
       return;
     }
@@ -361,34 +243,6 @@ export const ResponseOptionsCard = ({
               </p>
             </label>
           </AdvancedOptionToggle>
-          {/* Run Survey on Date */}
-          <AdvancedOptionToggle
-            htmlId="runOnDate"
-            isChecked={runOnDateToggle}
-            onToggle={handleRunOnDateToggle}
-            title={t("environments.surveys.edit.release_survey_on_date")}
-            description={t(
-              "environments.surveys.edit.automatically_release_the_survey_at_the_beginning_of_the_day_utc"
-            )}
-            childBorder={true}>
-            <div className="p-4">
-              <DatePicker date={runOnDate} updateSurveyDate={handleRunOnDateChange} />
-            </div>
-          </AdvancedOptionToggle>
-          {/* Close Survey on Date */}
-          <AdvancedOptionToggle
-            htmlId="closeOnDate"
-            isChecked={closeOnDateToggle}
-            onToggle={handleCloseOnDateToggle}
-            title={t("environments.surveys.edit.close_survey_on_date")}
-            description={t(
-              "environments.surveys.edit.automatically_closes_the_survey_at_the_beginning_of_the_day_utc"
-            )}
-            childBorder={true}>
-            <div className="p-4">
-              <DatePicker date={closeOnDate} updateSurveyDate={handleCloseOnDateChange} />
-            </div>
-          </AdvancedOptionToggle>
 
           {/* recaptcha for spam protection */}
           {isSpamProtectionAllowed && (
@@ -468,80 +322,6 @@ export const ResponseOptionsCard = ({
                 </div>
               </AdvancedOptionToggle>
 
-              {/* Single User Survey Options */}
-              <AdvancedOptionToggle
-                htmlId="singleUserSurveyOptions"
-                isChecked={!!localSurvey.singleUse?.enabled}
-                onToggle={handleSingleUseSurveyToggle}
-                title={t("environments.surveys.edit.single_use_survey_links")}
-                description={t("environments.surveys.edit.single_use_survey_links_description")}
-                childBorder={true}>
-                <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <div className="row mb-2 flex cursor-default items-center space-x-2">
-                      <Label htmlFor="howItWorks">{t("environments.surveys.edit.how_it_works")}</Label>
-                    </div>
-                    <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
-                      <li className="text-sm text-slate-600">
-                        {t(
-                          "environments.surveys.edit.blocks_survey_if_the_survey_url_has_no_single_use_id_suid"
-                        )}
-                      </li>
-                      <li className="text-sm text-slate-600">
-                        {t(
-                          "environments.surveys.edit.blocks_survey_if_a_submission_with_the_single_use_id_suid_exists_already"
-                        )}
-                      </li>
-                      <li className="text-sm text-slate-600">
-                        <Link
-                          href="https://formbricks.com/docs/link-surveys/single-use-links"
-                          target="_blank"
-                          className="underline">
-                          {t("common.read_docs")} <ArrowUpRight className="inline" size={16} />
-                        </Link>
-                      </li>
-                    </ul>
-                    <Label htmlFor="headline">{t("environments.surveys.edit.link_used_message")}</Label>
-                    <Input
-                      autoFocus
-                      id="heading"
-                      className="mb-4 mt-2 bg-white"
-                      name="heading"
-                      value={singleUseMessage.heading}
-                      onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
-                    />
-
-                    <Label htmlFor="headline">{t("environments.surveys.edit.subheading")}</Label>
-                    <Input
-                      className="mb-4 mt-2 bg-white"
-                      id="subheading"
-                      name="subheading"
-                      value={singleUseMessage.subheading}
-                      onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
-                    />
-                    <Label htmlFor="headline">{t("environments.surveys.edit.url_encryption")}</Label>
-                    <div>
-                      <div className="mt-2 flex items-center space-x-1">
-                        <Switch
-                          id="encryption-switch"
-                          checked={singleUseEncryption}
-                          onCheckedChange={hangleSingleUseEncryptionToggle}
-                        />
-                        <Label htmlFor="encryption-label">
-                          <div className="ml-2">
-                            <p className="text-sm font-normal text-slate-600">
-                              {t(
-                                "environments.surveys.edit.enable_encryption_of_single_use_id_suid_in_survey_url"
-                              )}
-                            </p>
-                          </div>
-                        </Label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </AdvancedOptionToggle>
-
               {/* Verify Email Section */}
               <AdvancedOptionToggle
                 htmlId="verifyEmailBeforeSubmission"
@@ -560,6 +340,8 @@ export const ResponseOptionsCard = ({
                   />
                 </div>
               </AdvancedOptionToggle>
+
+              {/* Protect Survey with Pin */}
               <AdvancedOptionToggle
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}
@@ -582,6 +364,7 @@ export const ResponseOptionsCard = ({
                     defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
                     onKeyDown={handleSurveyPinInputKeyDown}
                     onChange={(e) => handleProtectSurveyPinChange(e.target.value)}
+                    maxLength={4}
                   />
                   {verifyProtectWithPinError && (
                     <p className="pt-1 text-sm text-red-700">{verifyProtectWithPinError}</p>

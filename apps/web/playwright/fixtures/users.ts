@@ -72,6 +72,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
           name: uname,
           email: userEmail,
           password: hashedPassword,
+          emailVerified: new Date(),
           locale: "en-US",
           memberships: {
             create: {
@@ -96,6 +97,24 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                               attributeKeys: {
                                 create: [
                                   {
+                                    name: "Email",
+                                    key: "email",
+                                    isUnique: true,
+                                    type: "default",
+                                  },
+                                  {
+                                    name: "First Name",
+                                    key: "firstName",
+                                    isUnique: false,
+                                    type: "default",
+                                  },
+                                  {
+                                    name: "Last Name",
+                                    key: "lastName",
+                                    isUnique: false,
+                                    type: "default",
+                                  },
+                                  {
                                     name: "userId",
                                     key: "userId",
                                     isUnique: true,
@@ -108,6 +127,24 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
                               type: "production",
                               attributeKeys: {
                                 create: [
+                                  {
+                                    name: "Email",
+                                    key: "email",
+                                    isUnique: true,
+                                    type: "default",
+                                  },
+                                  {
+                                    name: "First Name",
+                                    key: "firstName",
+                                    isUnique: false,
+                                    type: "default",
+                                  },
+                                  {
+                                    name: "Last Name",
+                                    key: "lastName",
+                                    isUnique: false,
+                                    type: "default",
+                                  },
                                   {
                                     name: "userId",
                                     key: "userId",

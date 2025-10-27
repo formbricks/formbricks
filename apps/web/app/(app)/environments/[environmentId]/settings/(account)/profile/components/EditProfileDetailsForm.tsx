@@ -1,5 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronDownIcon } from "lucide-react";
+import { useState } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { TUser, TUserUpdateInput, ZUser, ZUserEmail } from "@formbricks/types/user";
 import { PasswordConfirmationModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/password-confirmation-modal";
 import { appLanguages } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -14,15 +22,8 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon } from "lucide-react";
-import { useState } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import { TUser, TUserUpdateInput, ZUser, ZUserEmail } from "@formbricks/types/user";
-import { updateUserAction } from "../actions";
+import { Label } from "@/modules/ui/components/label";
+import { resetPasswordAction, updateUserAction } from "../actions";
 
 // Schema & types
 const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email: true }).extend({
@@ -30,14 +31,18 @@ const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email:
 });
 type TEditProfileNameForm = z.infer<typeof ZEditProfileNameFormSchema>;
 
+interface IEditProfileDetailsFormProps {
+  user: TUser;
+  isPasswordResetEnabled?: boolean;
+  emailVerificationDisabled: boolean;
+}
+
 export const EditProfileDetailsForm = ({
   user,
+  isPasswordResetEnabled,
   emailVerificationDisabled,
-}: {
-  user: TUser;
-  emailVerificationDisabled: boolean;
-}) => {
-  const { t } = useTranslate();
+}: IEditProfileDetailsFormProps) => {
+  const { t } = useTranslation();
 
   const form = useForm<TEditProfileNameForm>({
     defaultValues: {
@@ -50,6 +55,8 @@ export const EditProfileDetailsForm = ({
   });
 
   const { isSubmitting, isDirty } = form.formState;
+
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
@@ -90,6 +97,7 @@ export const EditProfileDetailsForm = ({
           redirectUrl: "/email-change-without-verification-success",
           redirect: true,
           callbackUrl: "/email-change-without-verification-success",
+          clearEnvironmentId: true,
         });
         return;
       }
@@ -119,6 +127,28 @@ export const EditProfileDetailsForm = ({
         toast.error(`${t("common.error")}: ${error.message}`);
       }
     }
+  };
+
+  const handleResetPassword = async () => {
+    setIsResettingPassword(true);
+
+    const result = await resetPasswordAction();
+    if (result?.data) {
+      toast.success(t("auth.forgot-password.email-sent.heading"));
+
+      await signOutWithAudit({
+        reason: "password_reset",
+        redirectUrl: "/auth/login",
+        redirect: true,
+        callbackUrl: "/auth/login",
+        clearEnvironmentId: true,
+      });
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage);
+    }
+
+    setIsResettingPassword(false);
   };
 
   return (
@@ -204,6 +234,26 @@ export const EditProfileDetailsForm = ({
               </FormItem>
             )}
           />
+
+          {isPasswordResetEnabled && (
+            <div className="mt-4 space-y-2">
+              <Label htmlFor="reset-password">{t("auth.forgot-password.reset_password")}</Label>
+              <p className="mt-1 text-sm text-slate-500">
+                {t("auth.forgot-password.reset_password_description")}
+              </p>
+              <div className="flex items-center justify-between gap-2">
+                <Input type="email" id="reset-password" defaultValue={user.email} disabled />
+                <Button
+                  onClick={handleResetPassword}
+                  loading={isResettingPassword}
+                  disabled={isResettingPassword}
+                  size="default"
+                  variant="secondary">
+                  {t("auth.forgot-password.reset_password")}
+                </Button>
+              </div>
+            </div>
+          )}
 
           <Button
             type="submit"

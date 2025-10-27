@@ -1,13 +1,14 @@
 "use client";
 
+import { InboxIcon } from "lucide-react";
+import type { JSX } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
-import { SettingsId } from "@/modules/ui/components/settings-id";
-import { useTranslate } from "@tolgee/react";
-import { InboxIcon } from "lucide-react";
-import type { JSX } from "react";
-import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;
@@ -22,7 +23,7 @@ export const QuestionSummaryHeader = ({
   showResponses = true,
   survey,
 }: HeadProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const questionType = getQuestionTypes(t).find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -30,7 +31,9 @@ export const QuestionSummaryHeader = ({
       <div className={"align-center flex justify-between gap-4"}>
         <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
           {formatTextWithSlashes(
-            recallToHeadline(questionSummary.question.headline, survey, true, "default")["default"],
+            getTextContent(
+              recallToHeadline(questionSummary.question.headline, survey, true, "default")["default"]
+            ),
             "@",
             ["text-lg"]
           )}
@@ -55,7 +58,7 @@ export const QuestionSummaryHeader = ({
           </div>
         )}
       </div>
-      <SettingsId title={t("common.question_id")} id={questionSummary.question.id}></SettingsId>
+      <IdBadge id={questionSummary.question.id} label={t("common.question_id")} />
     </div>
   );
 };

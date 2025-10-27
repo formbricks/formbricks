@@ -1,18 +1,18 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
+import { CopyIcon, Trash2Icon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { CopyPlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
-import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface FollowUpItemProps {
   followUp: TSurveyFollowUp;
@@ -35,7 +35,7 @@ export const FollowUpItem = ({
   setLocalSurvey,
   locale,
 }: FollowUpItemProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
 
@@ -44,8 +44,25 @@ export const FollowUpItem = ({
 
     if (!to) return true;
 
-    const matchedQuestion = localSurvey.questions.find((question) => question.id === to);
-    const matchedHiddenField = (localSurvey.hiddenFields?.fieldIds ?? []).find((fieldId) => fieldId === to);
+    const matchedQuestion = localSurvey.questions.find((question) => {
+      if (question.id !== to) {
+        return false;
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+        return question.inputType === "email";
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+        return question.email.show;
+      }
+
+      return false;
+    });
+
+    const matchedHiddenField = localSurvey.hiddenFields?.enabled
+      ? (localSurvey.hiddenFields.fieldIds ?? []).find((fieldId) => fieldId === to)
+      : undefined;
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
       if (teamMemberDetail.email === userEmail) {
@@ -65,26 +82,7 @@ export const FollowUpItem = ({
 
     const matchedEmail = updatedTeamMembers.find((detail) => detail.email === to);
 
-    if (!matchedQuestion && !matchedHiddenField && !matchedEmail) return true;
-
-    if (matchedQuestion) {
-      if (
-        ![TSurveyQuestionTypeEnum.OpenText, TSurveyQuestionTypeEnum.ContactInfo].includes(
-          matchedQuestion.type
-        )
-      ) {
-        return true;
-      }
-
-      if (
-        matchedQuestion.type === TSurveyQuestionTypeEnum.OpenText &&
-        matchedQuestion.inputType !== "email"
-      ) {
-        return true;
-      }
-    }
-
-    return false;
+    return !matchedQuestion && !matchedHiddenField && !matchedEmail;
   }, [
     followUp.action.properties,
     localSurvey.hiddenFields?.fieldIds,
@@ -156,7 +154,7 @@ export const FollowUpItem = ({
                 setDeleteFollowUpModalOpen(true);
               }}
               aria-label={t("common.delete")}>
-              <TrashIcon className="h-4 w-4 text-slate-500" />
+              <Trash2Icon className="h-4 w-4 text-slate-500" />
             </Button>
           </TooltipRenderer>
 
@@ -169,7 +167,7 @@ export const FollowUpItem = ({
                 duplicateFollowUp();
               }}
               aria-label={t("common.duplicate")}>
-              <CopyPlusIcon className="h-4 w-4 text-slate-500" />
+              <CopyIcon className="h-4 w-4 text-slate-500" />
             </Button>
           </TooltipRenderer>
         </div>
@@ -220,7 +218,7 @@ export const FollowUpItem = ({
             };
           });
         }}
-        text={t("environments.surveys.edit.follow_ups_delete_modal_text")}
+        body={t("environments.surveys.edit.follow_ups_delete_modal_text")}
         title={t("environments.surveys.edit.follow_ups_delete_modal_title")}
         buttonVariant="destructive"
       />

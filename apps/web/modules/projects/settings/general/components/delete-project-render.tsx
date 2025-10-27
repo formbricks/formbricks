@@ -1,5 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TProject } from "@formbricks/types/project";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { truncate } from "@/lib/utils/strings";
@@ -7,11 +12,6 @@ import { deleteProjectAction } from "@/modules/projects/settings/general/actions
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { TProject } from "@formbricks/types/project";
 
 interface DeleteProjectRenderProps {
   isDeleteDisabled: boolean;
@@ -26,7 +26,7 @@ export const DeleteProjectRender = ({
   currentProject,
   organizationProjects,
 }: DeleteProjectRenderProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

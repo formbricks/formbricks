@@ -1,7 +1,12 @@
 "use client";
 
+import { ChevronDownIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { capitalizeFirstLetter } from "@/lib/utils/strings";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -11,12 +16,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDownIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { updateInviteAction, updateMembershipAction } from "../actions";
 
 interface Role {
@@ -44,7 +43,7 @@ export function EditMembershipRole({
   isFormbricksCloud,
   isUserManagementDisabledFromUi,
 }: Role) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -104,7 +103,7 @@ export function EditMembershipRole({
             size="sm"
             variant="secondary"
             role="button-role">
-            <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
+            <span className="ml-1 capitalize">{memberRole}</span>
             <ChevronDownIcon className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -128,5 +127,5 @@ export function EditMembershipRole({
     );
   }
 
-  return <Badge size="tiny" type="gray" role="badge-role" text={capitalizeFirstLetter(memberRole)} />;
+  return <Badge size="tiny" type="gray" role="badge-role" text={memberRole} className="capitalize" />;
 }

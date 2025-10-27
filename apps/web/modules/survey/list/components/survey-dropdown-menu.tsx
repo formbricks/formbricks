@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  ArrowUpFromLineIcon,
+  CopyIcon,
+  EyeIcon,
+  LinkIcon,
+  MoreVertical,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
@@ -18,20 +33,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useTranslate } from "@tolgee/react";
-import {
-  ArrowUpFromLineIcon,
-  CopyIcon,
-  EyeIcon,
-  LinkIcon,
-  MoreVertical,
-  SquarePenIcon,
-  TrashIcon,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {
@@ -41,8 +42,8 @@ interface SurveyDropDownMenuProps {
   refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
-  duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
+  onSurveysCopied?: () => void;
 }
 
 export const SurveyDropDownMenu = ({
@@ -53,18 +54,34 @@ export const SurveyDropDownMenu = ({
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
-  duplicateSurvey,
+  onSurveysCopied,
 }: SurveyDropDownMenuProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+  const [newSingleUseId, setNewSingleUseId] = useState<string | undefined>(undefined);
 
   const router = useRouter();
 
   const surveyLink = useMemo(() => publicDomain + "/s/" + survey.id, [survey.id, publicDomain]);
+
+  // Pre-fetch single-use ID when dropdown opens to avoid async delay during clipboard operation
+  // This ensures Safari's clipboard API works by maintaining the user gesture context
+  useEffect(() => {
+    if (!isDropDownOpen) return;
+    const fetchNewId = async () => {
+      try {
+        const newId = await refreshSingleUseId();
+        setNewSingleUseId(newId ?? undefined);
+      } catch (error) {
+        logger.error(error);
+      }
+    };
+    fetchNewId();
+  }, [refreshSingleUseId, isDropDownOpen]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
@@ -72,7 +89,6 @@ export const SurveyDropDownMenu = ({
       await deleteSurveyAction({ surveyId });
       deleteSurvey(surveyId);
       toast.success(t("environments.surveys.survey_deleted_successfully"));
-      router.refresh();
     } catch (error) {
       toast.error(t("environments.surveys.error_deleting_survey"));
     } finally {
@@ -84,12 +100,11 @@ export const SurveyDropDownMenu = ({
     try {
       e.preventDefault();
       setIsDropDownOpen(false);
-      const newId = await refreshSingleUseId();
-      const copiedLink = copySurveyLink(surveyLink, newId);
+      const copiedLink = copySurveyLink(surveyLink, newSingleUseId);
       navigator.clipboard.writeText(copiedLink);
       toast.success(t("common.copied_to_clipboard"));
-      router.refresh();
     } catch (error) {
+      logger.error(error);
       toast.error(t("environments.surveys.summary.failed_to_copy_link"));
     }
   };
@@ -102,13 +117,14 @@ export const SurveyDropDownMenu = ({
         surveyId,
         targetEnvironmentId: environmentId,
       });
-      router.refresh();
 
       if (duplicatedSurveyResponse?.data) {
         const transformedDuplicatedSurvey = await getSurveyAction({
           surveyId: duplicatedSurveyResponse.data.id,
         });
-        if (transformedDuplicatedSurvey?.data) duplicateSurvey(transformedDuplicatedSurvey.data);
+        if (transformedDuplicatedSurvey?.data) {
+          onSurveysCopied?.();
+        }
         toast.success(t("environments.surveys.survey_duplicated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
@@ -203,16 +219,18 @@ export const SurveyDropDownMenu = ({
                     {t("common.preview_survey")}
                   </button>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <button
-                    type="button"
-                    data-testid="copy-link"
-                    className="flex w-full items-center"
-                    onClick={async (e) => handleCopyLink(e)}>
-                    <LinkIcon className="mr-2 h-4 w-4" />
-                    {t("common.copy_link")}
-                  </button>
-                </DropdownMenuItem>
+                {!survey.singleUse?.enabled && (
+                  <DropdownMenuItem>
+                    <button
+                      type="button"
+                      data-testid="copy-link"
+                      className="flex w-full items-center"
+                      onClick={async (e) => handleCopyLink(e)}>
+                      <LinkIcon className="mr-2 h-4 w-4" />
+                      {t("common.copy_link")}
+                    </button>
+                  </DropdownMenuItem>
+                )}
               </>
             )}
             {!isSurveyCreationDeletionDisabled && (

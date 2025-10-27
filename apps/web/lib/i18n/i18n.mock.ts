@@ -1,4 +1,3 @@
-import { mockSurveyLanguages } from "@/lib/survey/__mock__/survey.mock";
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -15,6 +14,7 @@ import {
   TSurveyRatingQuestion,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
+import { mockSurveyLanguages } from "@/lib/survey/__mock__/survey.mock";
 
 export const mockWelcomeCard: TSurveyWelcomeCard = {
   html: {
@@ -301,8 +301,6 @@ export const mockSurvey: TSurvey = {
   recontactDays: null,
   displayLimit: null,
   autoClose: null,
-  runOnDate: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   autoComplete: null,
@@ -316,7 +314,6 @@ export const mockSurvey: TSurvey = {
     isEncrypted: true,
   },
   pin: null,
-  resultShareKey: null,
   triggers: [],
   languages: mockSurveyLanguages,
   segment: null,
@@ -511,11 +508,3 @@ export const mockTranslatedEndings = [
     buttonLabel: { default: "Create your own Survey", de: "" },
   },
 ];
-
-export const mockLegacyThankYouCard = {
-  buttonLink: "https://formbricks.com",
-  enabled: true,
-  headline: "Thank you!",
-  subheader: "We appreciate your feedback.",
-  buttonLabel: "Create your own Survey",
-};

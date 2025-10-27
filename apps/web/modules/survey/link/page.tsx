@@ -1,14 +1,14 @@
-import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
-import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
-import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
+import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
+import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
+import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
+import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 
 interface LinkSurveyPageProps {
   params: Promise<{
@@ -25,12 +25,16 @@ interface LinkSurveyPageProps {
 
 export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Metadata> => {
   const params = await props.params;
+  const searchParams = await props.searchParams;
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
   }
 
-  return getMetadataForLinkSurvey(params.surveyId);
+  // Extract language code from URL params
+  const languageCode = typeof searchParams.lang === "string" ? searchParams.lang : undefined;
+
+  return getMetadataForLinkSurvey(params.surveyId, languageCode);
 };
 
 export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
@@ -60,23 +64,13 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   let singleUseId: string | undefined = undefined;
 
   if (isSingleUseSurvey) {
-    // check if the single use id is present for single use surveys
-    if (!suId) {
+    const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
+    if (!validatedSingleUseId) {
       const project = await getProjectByEnvironmentId(survey.environmentId);
       return <SurveyInactive status="link invalid" project={project ?? undefined} />;
     }
 
-    // if encryption is enabled, validate the single use id
-    let validatedSingleUseId: string | undefined = undefined;
-    if (isSingleUseSurveyEncrypted) {
-      validatedSingleUseId = validateSurveySingleUseId(suId);
-      if (!validatedSingleUseId) {
-        const project = await getProjectByEnvironmentId(survey.environmentId);
-        return <SurveyInactive status="link invalid" project={project ?? undefined} />;
-      }
-    }
-    // if encryption is disabled, use the suId as is
-    singleUseId = validatedSingleUseId ?? suId;
+    singleUseId = validatedSingleUseId;
   }
 
   let singleUseResponse;

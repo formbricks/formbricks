@@ -1,10 +1,10 @@
 "use client";
 
 import { SurveyType } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
@@ -27,7 +27,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   ContentRef,
   onBackgroundLoaded,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
   const [authorDetailsForUnsplash, setAuthorDetailsForUnsplash] = useState({ authorName: "", authorURL: "" });
@@ -67,7 +67,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     }
   }, [backgroundLoaded, onBackgroundLoaded]);
 
-  const baseClasses = "absolute inset-0 h-full w-full transition-opacity duration-500";
+  const baseClasses = "absolute inset-0 h-full w-full transition-opacity duration-500 bg-slate-200";
   const loadedClass = backgroundLoaded ? "opacity-100" : "opacity-0";
 
   const getFilterStyle = () => {
@@ -166,7 +166,8 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     return (
       <div
         ref={ContentRef}
-        className={`relative h-[90%] max-h-[42rem] w-[22rem] overflow-hidden rounded-[3rem] border-[6px] border-slate-400 ${getFilterStyle()}`}>
+        data-testid="mobile-preview-container"
+        className={`relative h-[90%] w-[45%] overflow-hidden rounded-[3rem] border-[6px] border-slate-400 ${getFilterStyle()}`}>
         {/* below element is use to create notch for the mobile device mockup   */}
         <div className="absolute left-1/2 right-1/2 top-2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
         {surveyType === "link" && renderBackground()}

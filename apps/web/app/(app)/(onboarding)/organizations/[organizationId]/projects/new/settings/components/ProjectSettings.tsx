@@ -1,5 +1,19 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import {
+  TProjectConfigChannel,
+  TProjectConfigIndustry,
+  TProjectMode,
+  TProjectUpdateInput,
+  ZProjectUpdateInput,
+} from "@formbricks/types/project";
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { previewSurvey } from "@/app/lib/templates";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
@@ -20,20 +34,6 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { SurveyInline } from "@/modules/ui/components/survey";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
-import {
-  TProjectConfigChannel,
-  TProjectConfigIndustry,
-  TProjectMode,
-  TProjectUpdateInput,
-  ZProjectUpdateInput,
-} from "@formbricks/types/project";
 
 interface ProjectSettingsProps {
   organizationId: string;
@@ -42,7 +42,7 @@ interface ProjectSettingsProps {
   industry: TProjectConfigIndustry;
   defaultBrandColor: string;
   organizationTeams: TOrganizationTeam[];
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   userProjectsCount: number;
 }
 
@@ -53,13 +53,13 @@ export const ProjectSettings = ({
   industry,
   defaultBrandColor,
   organizationTeams,
-  canDoRoleManagement = false,
+  isAccessControlAllowed = false,
   userProjectsCount,
 }: ProjectSettingsProps) => {
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const addProject = async (data: TProjectUpdateInput) => {
     try {
       const createProjectResponse = await createProjectAction({
@@ -174,7 +174,7 @@ export const ProjectSettings = ({
               )}
             />
 
-            {canDoRoleManagement && userProjectsCount > 0 && (
+            {isAccessControlAllowed && userProjectsCount > 0 && (
               <FormField
                 control={form.control}
                 name="teamIds"

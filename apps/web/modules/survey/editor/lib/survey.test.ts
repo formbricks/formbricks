@@ -1,12 +1,12 @@
-import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
-import { getSurvey } from "@/modules/survey/lib/survey";
 import { ActionClass, Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getActionClasses } from "@/modules/survey/lib/action-class";
+import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getSurvey } from "@/modules/survey/lib/survey";
 import { checkTriggersValidity, handleTriggerUpdates, updateSurvey } from "./survey";
 
 // Mock dependencies
@@ -89,8 +89,6 @@ describe("Survey Editor Library Tests", () => {
       hiddenFields: { enabled: false },
       delay: 0,
       autoComplete: null,
-      closeOnDate: null,
-      runOnDate: null,
       projectOverwrites: null,
       styling: null,
       showLanguageSwitch: false,
@@ -102,7 +100,6 @@ describe("Survey Editor Library Tests", () => {
       isSingleResponsePerEmailEnabled: false,
       isBackButtonHidden: false,
       pin: null,
-      resultShareKey: null,
       displayPercentage: null,
       languages: [
         {
@@ -427,45 +424,6 @@ describe("Survey Editor Library Tests", () => {
               },
             ],
           },
-        }),
-        select: expect.any(Object),
-      });
-    });
-
-    test("should handle scheduled status based on runOnDate", async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      const updatedSurvey: TSurvey = {
-        ...mockSurvey,
-        status: "completed",
-        runOnDate: tomorrow,
-      };
-
-      await updateSurvey(updatedSurvey);
-
-      expect(prisma.survey.update).toHaveBeenCalledWith({
-        where: { id: "survey123" },
-        data: expect.objectContaining({
-          status: "scheduled", // Should be changed to scheduled because runOnDate is in the future
-        }),
-        select: expect.any(Object),
-      });
-    });
-
-    test("should remove scheduled status when runOnDate is not set", async () => {
-      const updatedSurvey: TSurvey = {
-        ...mockSurvey,
-        status: "scheduled",
-        runOnDate: null,
-      };
-
-      await updateSurvey(updatedSurvey);
-
-      expect(prisma.survey.update).toHaveBeenCalledWith({
-        where: { id: "survey123" },
-        data: expect.objectContaining({
-          status: "inProgress", // Should be changed to inProgress because runOnDate is null
         }),
         select: expect.any(Object),
       });

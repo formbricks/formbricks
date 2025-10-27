@@ -1,8 +1,3 @@
-import { getDisplayCountBySurveyId } from "@/lib/display/service";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { getResponseCountBySurveyId } from "@/lib/response/service";
-import { getSurvey } from "@/lib/survey/service";
-import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -15,6 +10,12 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
+import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
+import { getDisplayCountBySurveyId } from "@/lib/display/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
+import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
 import {
   getQuestionSummary,
   getResponsesForSummary,
@@ -58,6 +59,11 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
+
+vi.mock("@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey", () => ({
+  getQuotasSummary: vi.fn(),
+}));
+
 vi.mock("./utils", () => ({
   convertFloatTo2Decimal: vi.fn((num) =>
     num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
@@ -85,7 +91,6 @@ const mockBaseSurvey: TSurvey = {
   segment: null,
   recontactDays: null,
   autoComplete: null,
-  closeOnDate: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   displayOption: "displayOnce",
@@ -93,13 +98,11 @@ const mockBaseSurvey: TSurvey = {
   environmentId: "env_123",
   singleUse: null,
   surveyClosedMessage: null,
-  resultShareKey: null,
   pin: null,
   createdBy: "user_123",
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
   projectOverwrites: null,
-  runOnDate: null,
   showLanguageSwitch: false,
   isBackButtonHidden: false,
   followUps: [],
@@ -139,6 +142,23 @@ const mockResponses = [
   },
 ] as any;
 
+const mockQuotas = [
+  {
+    id: "quota1",
+    name: "Quota 1",
+    limit: 10,
+    count: 5,
+    percentage: 50,
+  },
+  {
+    id: "quota2",
+    name: "Quota 2",
+    limit: 20,
+    count: 10,
+    percentage: 50,
+  },
+];
+
 describe("getSurveySummaryMeta", () => {
   beforeEach(() => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
@@ -147,7 +167,7 @@ describe("getSurveySummaryMeta", () => {
   });
 
   test("calculates meta correctly", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 10);
+    const meta = getSurveySummaryMeta(mockResponses, 10, mockQuotas);
     expect(meta.displayCount).toBe(10);
     expect(meta.totalResponses).toBe(3);
     expect(meta.startsPercentage).toBe(30);
@@ -156,16 +176,18 @@ describe("getSurveySummaryMeta", () => {
     expect(meta.dropOffCount).toBe(1);
     expect(meta.dropOffPercentage).toBe(33.33); // (1/3)*100
     expect(meta.ttcAverage).toBe(125); // (100+150)/2
+    expect(meta.quotasCompleted).toBe(0);
+    expect(meta.quotasCompletedPercentage).toBe(0);
   });
 
   test("handles zero display count", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 0);
+    const meta = getSurveySummaryMeta(mockResponses, 0, mockQuotas);
     expect(meta.startsPercentage).toBe(0);
     expect(meta.completedPercentage).toBe(0);
   });
 
   test("handles zero responses", () => {
-    const meta = getSurveySummaryMeta([], 10);
+    const meta = getSurveySummaryMeta([], 10, mockQuotas);
     expect(meta.totalResponses).toBe(0);
     expect(meta.completedResponses).toBe(0);
     expect(meta.dropOffCount).toBe(0);
@@ -703,6 +725,7 @@ describe("getSurveySummary", () => {
     // Default mocks for services
     vi.mocked(getSurvey).mockResolvedValue(mockBaseSurvey);
     vi.mocked(getResponseCountBySurveyId).mockResolvedValue(mockResponses.length);
+    vi.mocked(getQuotasSummary).mockResolvedValue(mockQuotas);
     // For getResponsesForSummary mock, we need to ensure it's correctly used by getSurveySummary
     // Since getSurveySummary calls getResponsesForSummary internally, we'll mock prisma.response.findMany
     // which is used by the actual implementation of getResponsesForSummary.
@@ -1328,8 +1351,17 @@ describe("Matrix question type tests", () => {
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Rate these aspects" },
       required: true,
-      rows: [{ default: "Speed" }, { default: "Quality" }, { default: "Price" }],
-      columns: [{ default: "Poor" }, { default: "Average" }, { default: "Good" }, { default: "Excellent" }],
+      rows: [
+        { id: "row-1", label: { default: "Speed" } },
+        { id: "row-2", label: { default: "Quality" } },
+        { id: "row-3", label: { default: "Price" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Poor" } },
+        { id: "col-2", label: { default: "Average" } },
+        { id: "col-3", label: { default: "Good" } },
+        { id: "col-4", label: { default: "Excellent" } },
+      ],
     };
 
     const survey = {
@@ -1411,15 +1443,15 @@ describe("Matrix question type tests", () => {
       headline: { default: "Rate these aspects", es: "Califica estos aspectos" },
       required: true,
       rows: [
-        { default: "Speed", es: "Velocidad" },
-        { default: "Quality", es: "Calidad" },
-        { default: "Price", es: "Precio" },
+        { id: "row-1", label: { default: "Speed", es: "Velocidad" } },
+        { id: "row-2", label: { default: "Quality", es: "Calidad" } },
+        { id: "row-3", label: { default: "Price", es: "Precio" } },
       ],
       columns: [
-        { default: "Poor", es: "Malo" },
-        { default: "Average", es: "Promedio" },
-        { default: "Good", es: "Bueno" },
-        { default: "Excellent", es: "Excelente" },
+        { id: "col-1", label: { default: "Poor", es: "Malo" } },
+        { id: "col-2", label: { default: "Average", es: "Promedio" } },
+        { id: "col-3", label: { default: "Good", es: "Bueno" } },
+        { id: "col-4", label: { default: "Excellent", es: "Excelente" } },
       ],
     };
 
@@ -1588,8 +1620,16 @@ describe("Matrix question type tests", () => {
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Rate these aspects" },
       required: true,
-      rows: [{ default: "Speed" }, { default: "Quality" }, { default: "Price" }],
-      columns: [{ default: "Poor" }, { default: "Average" }, { default: "Good" }],
+      rows: [
+        { id: "row-1", label: { default: "Speed" } },
+        { id: "row-2", label: { default: "Quality" } },
+        { id: "row-3", label: { default: "Price" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Poor" } },
+        { id: "col-2", label: { default: "Average" } },
+        { id: "col-3", label: { default: "Good" } },
+      ],
     };
 
     const survey = {
@@ -1722,8 +1762,16 @@ describe("Matrix question type tests", () => {
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Rate these aspects" },
       required: true,
-      rows: [{ default: "Speed" }, { default: "Quality" }, { default: "Price" }],
-      columns: [{ default: "Poor" }, { default: "Average" }, { default: "Good" }],
+      rows: [
+        { id: "row-1", label: { default: "Speed" } },
+        { id: "row-2", label: { default: "Quality" } },
+        { id: "row-3", label: { default: "Price" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Poor" } },
+        { id: "col-2", label: { default: "Average" } },
+        { id: "col-3", label: { default: "Good" } },
+      ],
     };
 
     const survey = {
@@ -1786,8 +1834,14 @@ describe("Matrix question type tests", () => {
       type: TSurveyQuestionTypeEnum.Matrix,
       headline: { default: "Rate these aspects" },
       required: true,
-      rows: [{ default: "Speed" }, { default: "Quality" }],
-      columns: [{ default: "Poor" }, { default: "Good" }],
+      rows: [
+        { id: "row-1", label: { default: "Speed" } },
+        { id: "row-2", label: { default: "Quality" } },
+      ],
+      columns: [
+        { id: "col-1", label: { default: "Poor" } },
+        { id: "col-2", label: { default: "Good" } },
+      ],
     };
 
     const survey = {
@@ -1850,12 +1904,12 @@ describe("Matrix question type tests", () => {
       headline: { default: "Rate these aspects", fr: "Évaluez ces aspects" },
       required: true,
       rows: [
-        { default: "Speed", fr: "Vitesse" },
-        { default: "Quality", fr: "Qualité" },
+        { id: "row-1", label: { default: "Speed", fr: "Vitesse" } },
+        { id: "row-2", label: { default: "Quality", fr: "Qualité" } },
       ],
       columns: [
-        { default: "Poor", fr: "Médiocre" },
-        { default: "Good", fr: "Bon" },
+        { id: "col-1", label: { default: "Poor", fr: "Médiocre" } },
+        { id: "col-2", label: { default: "Good", fr: "Bon" } },
       ],
     };
 

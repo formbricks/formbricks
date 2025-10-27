@@ -1,20 +1,20 @@
+import { CheckIcon } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
-import { CheckIcon } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 
 const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
   if (IS_FORMBRICKS_CLOUD) {
-    notFound();
+    return notFound();
   }
 
   const { isMember, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
@@ -22,7 +22,7 @@ const Page = async (props) => {
   const isPricingDisabled = isMember;
 
   if (isPricingDisabled) {
-    notFound();
+    return notFound();
   }
 
   const { active: isEnterpriseEdition } = await getEnterpriseLicense();

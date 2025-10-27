@@ -1,4 +1,10 @@
+import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSegment } from "@formbricks/types/segment";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
+import { QuotasCard } from "@/modules/ee/quotas/components/quotas-card";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { HowToSendCard } from "@/modules/survey/editor/components/how-to-send-card";
 import { RecontactOptionsCard } from "@/modules/survey/editor/components/recontact-options-card";
@@ -6,10 +12,6 @@ import { ResponseOptionsCard } from "@/modules/survey/editor/components/response
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
-import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SettingsViewProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
@@ -24,6 +26,8 @@ interface SettingsViewProps {
   isSpamProtectionAllowed: boolean;
   projectPermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
+  isQuotasAllowed: boolean;
+  quotas: TSurveyQuota[];
 }
 
 export const SettingsView = ({
@@ -37,8 +41,10 @@ export const SettingsView = ({
   membershipRole,
   isUserTargetingAllowed = false,
   isSpamProtectionAllowed,
+  isQuotasAllowed,
   projectPermission,
   isFormbricksCloud,
+  quotas,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -75,6 +81,13 @@ export const SettingsView = ({
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
         projectPermission={projectPermission}
+      />
+      <QuotasCard
+        localSurvey={localSurvey}
+        isQuotasAllowed={isQuotasAllowed}
+        isFormbricksCloud={isFormbricksCloud}
+        quotas={quotas}
+        hasResponses={responseCount > 0}
       />
 
       <ResponseOptionsCard

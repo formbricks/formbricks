@@ -1,0 +1,52 @@
+{
+  "name": "@formbricks/storage",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "homepage": "https://formbricks.com",
+  "description": "Storage Controller for Formbricks",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
+  },
+  "keywords": [
+    "Formbricks",
+    "storage",
+    "storage controller"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
+  "scripts": {
+    "clean": "rimraf .turbo node_modules coverage dist",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
+    "build": "tsc && vite build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "go": "vite build --watch --mode dev"
+  },
+  "author": "Formbricks <hola@formbricks.com>",
+  "dependencies": {
+    "@formbricks/logger": "workspace:*",
+    "@aws-sdk/client-s3": "3.879.0",
+    "@aws-sdk/s3-presigned-post": "3.879.0",
+    "@aws-sdk/s3-request-presigner": "3.879.0"
+  },
+  "devDependencies": {
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
+    "vite": "6.4.1",
+    "vite-plugin-dts": "4.5.3",
+    "vitest": "3.1.3",
+    "@vitest/coverage-v8": "3.1.3"
+  }
+}

@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "preact/hooks";
 import { type TPlacement } from "@formbricks/types/common";
+import { cn } from "@/lib/utils";
 
 interface SurveyContainerProps {
   mode: "modal" | "inline";
@@ -10,6 +10,7 @@ interface SurveyContainerProps {
   onClose?: () => void;
   clickOutside?: boolean;
   isOpen?: boolean;
+  dir?: "ltr" | "rtl" | "auto";
 }
 
 export function SurveyContainer({
@@ -20,6 +21,7 @@ export function SurveyContainer({
   onClose,
   clickOutside,
   isOpen = true,
+  dir = "auto",
 }: Readonly<SurveyContainerProps>) {
   const modalRef = useRef<HTMLDivElement>(null);
   const isCenter = placement === "center";
@@ -67,14 +69,14 @@ export function SurveyContainer({
 
   if (!isModal) {
     return (
-      <div id="fbjs" className="fb-formbricks-form" style={{ height: "100%", width: "100%" }}>
+      <div id="fbjs" className="fb-formbricks-form" style={{ height: "100%", width: "100%" }} dir={dir}>
         {children}
       </div>
     );
   }
 
   return (
-    <div id="fbjs" className="fb-formbricks-form">
+    <div id="fbjs" className="fb-formbricks-form" dir={dir}>
       <div
         aria-live="assertive"
         className={cn(

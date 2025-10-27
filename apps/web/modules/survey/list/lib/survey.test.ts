@@ -1,8 +1,3 @@
-import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
-import { validateInputs } from "@/lib/utils/validate";
-import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
-import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -11,6 +6,12 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { validateInputs } from "@/lib/utils/validate";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
+import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
+import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
 import { TProjectWithLanguages, TSurvey } from "../types/surveys";
 // Import the module to be tested
 import {
@@ -56,6 +57,10 @@ vi.mock("@paralleldrive/cuid2", () => ({
   createId: vi.fn(() => "new_cuid2_id"),
 }));
 
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsQuotasEnabled: vi.fn(),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: {
@@ -76,6 +81,12 @@ vi.mock("@formbricks/database", () => ({
     },
     actionClass: {
       findMany: vi.fn(),
+    },
+    surveyQuota: {
+      findMany: vi.fn(),
+    },
+    organization: {
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -361,7 +372,6 @@ describe("deleteSurvey", () => {
     environmentId,
     segment: null,
     type: "web" as any,
-    resultShareKey: "sharekey1",
     triggers: [{ actionClass: { id: "action_1" } }],
   };
 
@@ -467,7 +477,6 @@ describe("copySurveyToOtherEnvironment", () => {
       { actionClass: { id: "new_ac2", name: "No-Code Action", environmentId: targetEnvironmentId } },
     ],
     languages: [{ language: { code: "en" } }],
-    resultShareKey: null,
   };
 
   beforeEach(() => {
@@ -478,9 +487,16 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(getProjectWithLanguagesByEnvironmentId)
       .mockResolvedValueOnce(mockSourceProject)
       .mockResolvedValueOnce(mockTargetProject);
+    vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.surveyQuota.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+      billing: {
+        plan: "free",
+      },
+    } as any);
   });
 
   test("should copy survey to a different environment successfully", async () => {

@@ -16,7 +16,6 @@ export const env = createEnv({
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.string().url(),
     DEBUG: z.enum(["1", "0"]).optional(),
-    DOCKER_CRON_ENABLED: z.enum(["1", "0"]).optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
@@ -55,8 +54,10 @@ export const env = createEnv({
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
     OPENTELEMETRY_LISTENER_URL: z.string().optional(),
-    REDIS_URL: z.string().optional(),
-    REDIS_HTTP_URL: z.string().optional(),
+    REDIS_URL:
+      process.env.NODE_ENV === "test"
+        ? z.string().optional()
+        : z.string().url("REDIS_URL is required for caching, rate limiting, and audit logging"),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     POSTHOG_API_HOST: z.string().optional(),
     POSTHOG_API_KEY: z.string().optional(),
@@ -112,11 +113,10 @@ export const env = createEnv({
     TURNSTILE_SITE_KEY: z.string().optional(),
     RECAPTCHA_SITE_KEY: z.string().optional(),
     RECAPTCHA_SECRET_KEY: z.string().optional(),
-    UPLOADS_DIR: z.string().min(1).optional(),
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
-    UNKEY_ROOT_KEY: z.string().optional(),
+
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
     PROMETHEUS_EXPORTER_PORT: z.string().optional(),
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
@@ -127,6 +127,7 @@ export const env = createEnv({
       .string()
       .transform((val) => parseInt(val))
       .optional(),
+    SENTRY_ENVIRONMENT: z.string().optional(),
   },
 
   /*
@@ -147,7 +148,6 @@ export const env = createEnv({
     DEBUG: process.env.DEBUG,
     AUTH_DEFAULT_TEAM_ID: process.env.AUTH_SSO_DEFAULT_TEAM_ID,
     AUTH_SKIP_INVITE_FOR_SSO: process.env.AUTH_SKIP_INVITE_FOR_SSO,
-    DOCKER_CRON_ENABLED: process.env.DOCKER_CRON_ENABLED,
     E2E_TESTING: process.env.E2E_TESTING,
     EMAIL_AUTH_DISABLED: process.env.EMAIL_AUTH_DISABLED,
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
@@ -184,7 +184,6 @@ export const env = createEnv({
     OIDC_ISSUER: process.env.OIDC_ISSUER,
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
     REDIS_URL: process.env.REDIS_URL,
-    REDIS_HTTP_URL: process.env.REDIS_HTTP_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
@@ -213,11 +212,9 @@ export const env = createEnv({
     RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
     RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
     TERMS_URL: process.env.TERMS_URL,
-    UPLOADS_DIR: process.env.UPLOADS_DIR,
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
-    UNKEY_ROOT_KEY: process.env.UNKEY_ROOT_KEY,
     NODE_ENV: process.env.NODE_ENV,
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
@@ -225,5 +222,6 @@ export const env = createEnv({
     AUDIT_LOG_ENABLED: process.env.AUDIT_LOG_ENABLED,
     AUDIT_LOG_GET_USER_IP: process.env.AUDIT_LOG_GET_USER_IP,
     SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
+    SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
   },
 });

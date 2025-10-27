@@ -1,8 +1,3 @@
-import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getSurveys } from "@/lib/survey/service";
-import { anySurveyHasFilters } from "@/lib/survey/utils";
-import { diffInDays } from "@/lib/utils/datetime";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -11,6 +6,11 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getSurveys } from "@/lib/survey/service";
+import { anySurveyHasFilters } from "@/lib/survey/utils";
+import { diffInDays } from "@/lib/utils/datetime";
+import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { getSyncSurveys } from "./survey";
 
 vi.mock("@/lib/project/service", () => ({
@@ -80,7 +80,6 @@ const baseSurvey: TSurvey = {
   displayOption: "displayOnce",
   recontactDays: null,
   autoClose: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   autoComplete: null,
@@ -89,7 +88,6 @@ const baseSurvey: TSurvey = {
   singleUse: null,
   styling: null,
   pin: null,
-  resultShareKey: null,
   displayLimit: null,
   welcomeCard: { enabled: false } as TSurvey["welcomeCard"],
   endings: [],
@@ -101,12 +99,41 @@ const baseSurvey: TSurvey = {
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,
   projectOverwrites: null,
-  runOnDate: null,
   showLanguageSwitch: false,
   isBackButtonHidden: false,
   followUps: [],
   recaptcha: { enabled: false, threshold: 0.5 },
 };
+
+// Helper function to create mock display objects
+const createMockDisplay = (id: string, surveyId: string, contactId: string, createdAt?: Date) => ({
+  id,
+  createdAt: createdAt || new Date(),
+  updatedAt: new Date(),
+  surveyId,
+  contactId,
+  responseId: null,
+  status: null,
+});
+
+// Helper function to create mock response objects
+const createMockResponse = (id: string, surveyId: string, contactId: string, createdAt?: Date) => ({
+  id,
+  createdAt: createdAt || new Date(),
+  updatedAt: new Date(),
+  finished: false,
+  surveyId,
+  contactId,
+  endingId: null,
+  data: {},
+  variables: {},
+  ttc: {},
+  meta: {},
+  contactAttributes: null,
+  singleUseId: null,
+  language: null,
+  displayId: null,
+});
 
 describe("getSyncSurveys", () => {
   beforeEach(() => {
@@ -125,7 +152,7 @@ describe("getSyncSurveys", () => {
   test("should throw error if product not found", async () => {
     vi.mocked(getProjectByEnvironmentId).mockResolvedValue(null);
     await expect(getSyncSurveys(environmentId, contactId, contactAttributes, deviceType)).rejects.toThrow(
-      "Product not found"
+      "Project not found"
     );
   });
 
@@ -148,7 +175,7 @@ describe("getSyncSurveys", () => {
   test("should filter by displayOption 'displayOnce'", async () => {
     const surveys: TSurvey[] = [{ ...baseSurvey, id: "s1", displayOption: "displayOnce" }];
     vi.mocked(getSurveys).mockResolvedValue(surveys);
-    vi.mocked(prisma.display.findMany).mockResolvedValue([{ id: "d1", surveyId: "s1", contactId }]); // Already displayed
+    vi.mocked(prisma.display.findMany).mockResolvedValue([createMockDisplay("d1", "s1", contactId)]); // Already displayed
 
     const result = await getSyncSurveys(environmentId, contactId, contactAttributes, deviceType);
     expect(result).toEqual([]);
@@ -161,7 +188,7 @@ describe("getSyncSurveys", () => {
   test("should filter by displayOption 'displayMultiple'", async () => {
     const surveys: TSurvey[] = [{ ...baseSurvey, id: "s1", displayOption: "displayMultiple" }];
     vi.mocked(getSurveys).mockResolvedValue(surveys);
-    vi.mocked(prisma.response.findMany).mockResolvedValue([{ id: "r1", surveyId: "s1", contactId }]); // Already responded
+    vi.mocked(prisma.response.findMany).mockResolvedValue([createMockResponse("r1", "s1", contactId)]); // Already responded
 
     const result = await getSyncSurveys(environmentId, contactId, contactAttributes, deviceType);
     expect(result).toEqual([]);
@@ -175,19 +202,19 @@ describe("getSyncSurveys", () => {
     const surveys: TSurvey[] = [{ ...baseSurvey, id: "s1", displayOption: "displaySome", displayLimit: 2 }];
     vi.mocked(getSurveys).mockResolvedValue(surveys);
     vi.mocked(prisma.display.findMany).mockResolvedValue([
-      { id: "d1", surveyId: "s1", contactId },
-      { id: "d2", surveyId: "s1", contactId },
+      createMockDisplay("d1", "s1", contactId),
+      createMockDisplay("d2", "s1", contactId),
     ]); // Display limit reached
 
     const result = await getSyncSurveys(environmentId, contactId, contactAttributes, deviceType);
     expect(result).toEqual([]);
 
-    vi.mocked(prisma.display.findMany).mockResolvedValue([{ id: "d1", surveyId: "s1", contactId }]); // Within limit
+    vi.mocked(prisma.display.findMany).mockResolvedValue([createMockDisplay("d1", "s1", contactId)]); // Within limit
     const result2 = await getSyncSurveys(environmentId, contactId, contactAttributes, deviceType);
     expect(result2).toEqual(surveys);
 
     // Test with response already submitted
-    vi.mocked(prisma.response.findMany).mockResolvedValue([{ id: "r1", surveyId: "s1", contactId }]);
+    vi.mocked(prisma.response.findMany).mockResolvedValue([createMockResponse("r1", "s1", contactId)]);
     const result3 = await getSyncSurveys(environmentId, contactId, contactAttributes, deviceType);
     expect(result3).toEqual([]);
   });
@@ -195,8 +222,8 @@ describe("getSyncSurveys", () => {
   test("should not filter by displayOption 'respondMultiple'", async () => {
     const surveys: TSurvey[] = [{ ...baseSurvey, id: "s1", displayOption: "respondMultiple" }];
     vi.mocked(getSurveys).mockResolvedValue(surveys);
-    vi.mocked(prisma.display.findMany).mockResolvedValue([{ id: "d1", surveyId: "s1", contactId }]);
-    vi.mocked(prisma.response.findMany).mockResolvedValue([{ id: "r1", surveyId: "s1", contactId }]);
+    vi.mocked(prisma.display.findMany).mockResolvedValue([createMockDisplay("d1", "s1", contactId)]);
+    vi.mocked(prisma.response.findMany).mockResolvedValue([createMockResponse("r1", "s1", contactId)]);
 
     const result = await getSyncSurveys(environmentId, contactId, contactAttributes, deviceType);
     expect(result).toEqual(surveys);
@@ -207,7 +234,7 @@ describe("getSyncSurveys", () => {
     vi.mocked(getSurveys).mockResolvedValue(surveys);
     const displayDate = new Date();
     vi.mocked(prisma.display.findMany).mockResolvedValue([
-      { id: "d1", surveyId: "s2", contactId, createdAt: displayDate }, // Display for another survey
+      createMockDisplay("d1", "s2", contactId, displayDate), // Display for another survey
     ]);
 
     vi.mocked(diffInDays).mockReturnValue(5); // Not enough days passed (product.recontactDays = 10)

@@ -1,4 +1,3 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
@@ -13,6 +12,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
 
@@ -94,21 +94,48 @@ export const toggleGroupConnector = (group: TConditionGroup, resourceId: string)
   }
 };
 
-export const removeCondition = (group: TConditionGroup, resourceId: string) => {
-  for (let i = 0; i < group.conditions.length; i++) {
+export const removeCondition = (group: TConditionGroup, resourceId: string): boolean => {
+  for (let i = group.conditions.length - 1; i >= 0; i--) {
     const item = group.conditions[i];
 
     if (item.id === resourceId) {
       group.conditions.splice(i, 1);
-      return;
+      cleanupGroup(group);
+      return true;
     }
 
-    if (isConditionGroup(item)) {
-      removeCondition(item, resourceId);
+    if (isConditionGroup(item) && removeCondition(item, resourceId)) {
+      cleanupGroup(group);
+      return true;
     }
   }
 
-  deleteEmptyGroups(group);
+  return false;
+};
+
+const cleanupGroup = (group: TConditionGroup) => {
+  // Remove empty condition groups first
+  for (let i = group.conditions.length - 1; i >= 0; i--) {
+    const condition = group.conditions[i];
+    if (isConditionGroup(condition)) {
+      cleanupGroup(condition);
+
+      // Remove if empty after cleanup
+      if (condition.conditions.length === 0) {
+        group.conditions.splice(i, 1);
+      }
+    }
+  }
+
+  // Flatten if group has only one condition and it's a condition group
+  if (group.conditions.length === 1 && isConditionGroup(group.conditions[0])) {
+    group.connector = group.conditions[0].connector || "and";
+    group.conditions = group.conditions[0].conditions;
+  }
+};
+
+export const deleteEmptyGroups = (group: TConditionGroup) => {
+  cleanupGroup(group);
 };
 
 export const duplicateCondition = (group: TConditionGroup, resourceId: string) => {
@@ -126,18 +153,6 @@ export const duplicateCondition = (group: TConditionGroup, resourceId: string) =
 
     if (item.connector) {
       duplicateCondition(item, resourceId);
-    }
-  }
-};
-
-export const deleteEmptyGroups = (group: TConditionGroup) => {
-  for (let i = 0; i < group.conditions.length; i++) {
-    const resource = group.conditions[i];
-
-    if (isConditionGroup(resource) && resource.conditions.length === 0) {
-      group.conditions.splice(i, 1);
-    } else if (isConditionGroup(resource)) {
-      deleteEmptyGroups(resource);
     }
   }
 };
@@ -435,7 +450,7 @@ const evaluateSingleCondition = (
         return (
           Array.isArray(leftValue) &&
           Array.isArray(rightValue) &&
-          rightValue.some((v) => !leftValue.includes(v))
+          !rightValue.some((v) => leftValue.includes(v))
         );
       case "isAccepted":
         return leftValue === "accepted";
@@ -502,7 +517,11 @@ const getLeftOperandValue = (
       const responseValue = data[leftOperand.value];
 
       if (currentQuestion.type === "openText" && currentQuestion.inputType === "number") {
-        return Number(responseValue) || undefined;
+        if (responseValue === undefined) return undefined;
+        if (typeof responseValue === "string" && responseValue.trim() === "") return undefined;
+
+        const numberValue = typeof responseValue === "number" ? responseValue : Number(responseValue);
+        return isNaN(numberValue) ? undefined : numberValue;
       }
 
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
@@ -552,14 +571,14 @@ const getLeftOperandValue = (
           if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentQuestion.rows.length) {
             return undefined;
           }
-          const row = getLocalizedValue(currentQuestion.rows[rowIndex], selectedLanguage);
+          const row = getLocalizedValue(currentQuestion.rows[rowIndex].label, selectedLanguage);
 
           const rowValue = responseValue[row];
           if (rowValue === "") return "";
 
           if (rowValue) {
             const columnIndex = currentQuestion.columns.findIndex((column) => {
-              return getLocalizedValue(column, selectedLanguage) === rowValue;
+              return getLocalizedValue(column.label, selectedLanguage) === rowValue;
             });
             if (columnIndex === -1) return undefined;
             return columnIndex.toString();
@@ -670,8 +689,9 @@ const performCalculation = (
       if (typeof val === "number" || typeof val === "string") {
         if (variable.type === "number" && !isNaN(Number(val))) {
           operandValue = Number(val);
+        } else {
+          operandValue = val;
         }
-        operandValue = val;
       }
       break;
   }

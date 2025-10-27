@@ -1,11 +1,12 @@
 "use server";
 
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
+import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 
 export const getActionClass = reactCache(
   async (actionClassId: string): Promise<{ environmentId: string } | null> => {
@@ -184,28 +185,6 @@ export const getResponse = reactCache(async (responseId: string): Promise<{ surv
   }
 });
 
-export const getResponseNote = reactCache(
-  async (responseNoteId: string): Promise<{ responseId: string } | null> => {
-    try {
-      const responseNote = await prisma.responseNote.findUnique({
-        where: {
-          id: responseNoteId,
-        },
-        select: {
-          responseId: true,
-        },
-      });
-      return responseNote;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
-
 export const getSurvey = reactCache(async (surveyId: string): Promise<{ environmentId: string } | null> => {
   validateInputs([surveyId, ZId]);
   try {
@@ -262,6 +241,14 @@ export const getWebhook = async (id: string): Promise<{ environmentId: string } 
   }
 };
 
+export const getQuota = reactCache(async (quotaId: string): Promise<{ surveyId: string }> => {
+  validateInputs([quotaId, ZId]);
+
+  const quota = await getQuotaService(quotaId);
+
+  return { surveyId: quota.surveyId };
+});
+
 export const getTeam = reactCache(async (teamId: string): Promise<{ organizationId: string } | null> => {
   validateInputs([teamId, ZString]);
 
@@ -284,54 +271,6 @@ export const getTeam = reactCache(async (teamId: string): Promise<{ organization
     throw error;
   }
 });
-
-export const getInsight = reactCache(async (insightId: string): Promise<{ environmentId: string } | null> => {
-  validateInputs([insightId, ZId]);
-
-  try {
-    const insight = await prisma.insight.findUnique({
-      where: {
-        id: insightId,
-      },
-      select: {
-        environmentId: true,
-      },
-    });
-
-    return insight;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-});
-
-export const getDocument = reactCache(
-  async (documentId: string): Promise<{ environmentId: string } | null> => {
-    validateInputs([documentId, ZId]);
-
-    try {
-      const document = await prisma.document.findUnique({
-        where: {
-          id: documentId,
-        },
-        select: {
-          environmentId: true,
-        },
-      });
-
-      return document;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
 
 export const isProjectPartOfOrganization = async (
   organizationId: string,

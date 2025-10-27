@@ -5,21 +5,21 @@ import {
   mockEnvironmentId,
   mockResponse,
   mockResponseData,
-  mockResponseNote,
+  mockResponseWithQuotas,
   mockSingleUseId,
   mockSurveyId,
   mockSurveySummaryOutput,
   mockTags,
 } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
-import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import { Prisma } from "@prisma/client";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
+import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import {
   mockContactAttributeKey,
   mockOrganizationOutput,
@@ -30,8 +30,9 @@ import {
   getResponse,
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
-  getResponseDownloadUrl,
+  getResponseDownloadFile,
   getResponsesByEnvironmentId,
+  responseSelection,
   updateResponse,
 } from "../service";
 
@@ -56,7 +57,6 @@ beforeEach(() => {
 
   // mocking the person findFirst call as it is used in the transformPrismaPerson function
   prisma.contact.findFirst.mockResolvedValue(mockContact);
-  prisma.responseNote.findMany.mockResolvedValue([mockResponseNote]);
 
   prisma.response.findUnique.mockResolvedValue(mockResponse);
 
@@ -80,12 +80,12 @@ beforeEach(() => {
   prisma.response.findMany.mockResolvedValue([mockResponse]);
   prisma.response.delete.mockResolvedValue(mockResponse);
 
-  prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" });
+  prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" } as unknown as any);
 
   prisma.response.count.mockResolvedValue(1);
 
-  prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput);
-  prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput);
+  prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput as unknown as any);
+  prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput as unknown as any);
   prisma.project.findMany.mockResolvedValue([]);
   // @ts-expect-error
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
@@ -167,6 +167,7 @@ describe("Tests for getSurveySummary service", () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.findMany.mockResolvedValue([mockResponse]);
       prisma.contactAttributeKey.findMany.mockResolvedValueOnce([mockContactAttributeKey]);
+      prisma.surveyQuota.findMany.mockResolvedValue([]);
 
       const summary = await getSurveySummary(mockSurveyId);
       expect(summary).toEqual(mockSurveySummaryOutput);
@@ -207,34 +208,35 @@ describe("Tests for getResponseDownloadUrl service", () => {
     test("Returns a download URL for the csv response file", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.count.mockResolvedValue(1);
-      prisma.response.findMany.mockResolvedValue([mockResponse]);
+      prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
+      prisma.surveyQuota.findMany.mockResolvedValue([]);
 
-      const url = await getResponseDownloadUrl(mockSurveyId, "csv");
-      const fileExtension = url.split(".").pop();
+      const result = await getResponseDownloadFile(mockSurveyId, "csv");
+      const fileExtension = result.fileName.split(".").pop();
       expect(fileExtension).toEqual("csv");
     });
 
     test("Returns a download URL for the xlsx response file", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.count.mockResolvedValue(1);
-      prisma.response.findMany.mockResolvedValue([mockResponse]);
+      prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
 
-      const url = await getResponseDownloadUrl(mockSurveyId, "xlsx", { finished: true });
-      const fileExtension = url.split(".").pop();
+      const result = await getResponseDownloadFile(mockSurveyId, "xlsx", { finished: true });
+      const fileExtension = result.fileName.split(".").pop();
       expect(fileExtension).toEqual("xlsx");
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getResponseDownloadUrl, mockSurveyId, 123);
+    testInputValidation(getResponseDownloadFile, mockSurveyId, 123);
 
     test("Throws error if response file is of different format than expected", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.count.mockResolvedValue(1);
-      prisma.response.findMany.mockResolvedValue([mockResponse]);
+      prisma.response.findMany.mockResolvedValue([mockResponseWithQuotas]);
 
-      const url = await getResponseDownloadUrl(mockSurveyId, "csv", { finished: true });
-      const fileExtension = url.split(".").pop();
+      const result = await getResponseDownloadFile(mockSurveyId, "csv", { finished: true });
+      const fileExtension = result.fileName.split(".").pop();
       expect(fileExtension).not.toEqual("xlsx");
     });
 
@@ -247,7 +249,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prisma.response.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
+      await expect(getResponseDownloadFile(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
     });
 
     test("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponses fails", async () => {
@@ -261,7 +263,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
       prisma.response.count.mockResolvedValue(1);
       prisma.response.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
+      await expect(getResponseDownloadFile(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
     });
 
     test("Throws a generic Error for unexpected problems", async () => {
@@ -270,7 +272,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
       // error from getSurvey
       prisma.survey.findUnique.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getResponseDownloadUrl(mockSurveyId, "xlsx")).rejects.toThrow(Error);
+      await expect(getResponseDownloadFile(mockSurveyId, "xlsx")).rejects.toThrow(Error);
     });
   });
 });
@@ -361,9 +363,47 @@ describe("Tests for updateResponse Service", () => {
 });
 
 describe("Tests for deleteResponse service", () => {
+  type MockTx = {
+    response: {
+      delete: ReturnType<typeof vi.fn>;
+    };
+  };
+
+  let mockTx: MockTx;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockTx = {
+      response: {
+        delete: vi.fn(),
+      },
+    };
+    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+  });
+
   describe("Happy Path", () => {
     test("Successfully deletes a response based on its ID", async () => {
+      vi.mocked(mockTx.response.delete).mockResolvedValue({
+        ...mockResponse,
+        quotaLinks: mockResponseWithQuotas.quotaLinks,
+      });
       const response = await deleteResponse(mockResponse.id);
+      expect(mockTx.response.delete).toHaveBeenCalledWith({
+        where: { id: mockResponse.id },
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            where: { status: "screenedIn" },
+            include: {
+              quota: {
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
+        },
+      });
       expect(response).toEqual(expectedResponseWithoutPerson);
     });
   });
@@ -378,14 +418,14 @@ describe("Tests for deleteResponse service", () => {
         clientVersion: "0.0.1",
       });
 
-      prisma.response.delete.mockRejectedValue(errToThrow);
+      mockTx.response.delete.mockRejectedValue(errToThrow);
 
       await expect(deleteResponse(mockResponse.id)).rejects.toThrow(DatabaseError);
     });
 
     test("Throws a generic Error for any unhandled exception during deletion", async () => {
       const mockErrorMessage = "Mock error message";
-      prisma.response.delete.mockRejectedValue(new Error(mockErrorMessage));
+      mockTx.response.delete.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(deleteResponse(mockResponse.id)).rejects.toThrow(Error);
     });

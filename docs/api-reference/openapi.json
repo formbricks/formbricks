@@ -2340,6 +2340,50 @@
                   "name": "My Action from Postman",
                   "type": "code"
                 },
+                "properties": {
+                  "description": {
+                    "description": "Optional description of the action class",
+                    "type": "string"
+                  },
+                  "environmentId": {
+                    "description": "The environment ID where the action class will be created",
+                    "type": "string"
+                  },
+                  "key": {
+                    "description": "Required when type is 'code'. A unique identifier for the action. Not needed for 'noCode' type.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Name of the action class",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "noCodeConfig": {
+                    "description": "Configuration object required when type is 'noCode'. Defines the conditions for triggering the action. Not needed for 'code' type.",
+                    "example": {
+                      "elementSelector": {
+                        "cssSelector": ".button-class",
+                        "innerHtml": "Click me"
+                      },
+                      "type": "click",
+                      "urlFilters": [
+                        {
+                          "rule": "contains",
+                          "value": "https://www.google.com"
+                        }
+                      ]
+                    },
+                    "nullable": true,
+                    "type": "object"
+                  },
+                  "type": {
+                    "description": "Type of action class",
+                    "enum": ["code", "noCode"],
+                    "type": "string"
+                  }
+                },
+                "required": ["environmentId", "name", "type"],
                 "type": "object"
               }
             }
@@ -2417,8 +2461,11 @@
               "application/json": {
                 "example": {
                   "code": "bad_request",
-                  "details": {},
-                  "message": "Database error when creating an action for environment clurwouax000azffxt7n5unn3"
+                  "details": {
+                    "environmentId": "Required",
+                    "key": "Required"
+                  },
+                  "message": "Fields are missing or incorrectly formatted"
                 },
                 "schema": {
                   "type": "object"
@@ -2989,9 +3036,28 @@
               "schema": {
                 "example": {
                   "environmentId": "{{environmentId}}",
+                  "key": "my-custom-attribute",
                   "name": "My new Attribute",
-                  "type": "code"
+                  "type": "custom"
                 },
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "environmentId": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": ["custom"]
+                  }
+                },
+                "required": ["environmentId", "key", "name", "type"],
                 "type": "object"
               }
             }
@@ -3008,8 +3074,9 @@
                     "description": null,
                     "environmentId": "clurwouax000azffxt7n5unn3",
                     "id": "clvcapx7v0000xz1zskcgf5k0",
+                    "key": "my-custom-attribute",
                     "name": "My new Attribute",
-                    "type": "code",
+                    "type": "custom",
                     "updatedAt": "2024-04-23T11:21:38.155Z"
                   }
                 },
@@ -4067,6 +4134,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "appSetupCompleted": true,
                   "createdAt": "2024-04-09T04:53:29.577Z",
                   "id": "clurwouax000azffxt7n5unn3",
                   "product": {
@@ -4074,8 +4142,7 @@
                     "name": "My Product"
                   },
                   "type": "production",
-                  "updatedAt": "2024-04-09T14:14:49.256Z",
-                  "widgetSetupCompleted": true
+                  "updatedAt": "2024-04-09T14:14:49.256Z"
                 },
                 "schema": {
                   "type": "object"
@@ -4510,11 +4577,32 @@
             }
           },
           {
+            "description": "The ID of the survey to fetch responses for",
             "example": "{{surveyId}}",
             "in": "query",
             "name": "surveyId",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "description": "Number of items to return",
+            "example": "{{limit}}",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items to skip",
+            "example": "{{skip}}",
+            "in": "query",
+            "name": "skip",
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
             }
           }
         ],
@@ -4542,7 +4630,6 @@
                         "url": "https://postman.com",
                         "userAgent": {}
                       },
-                      "notes": [],
                       "person": {
                         "attributes": {
                           "Created From": "API",
@@ -4576,7 +4663,6 @@
                       "meta": {
                         "userAgent": {}
                       },
-                      "notes": [],
                       "person": {
                         "attributes": {
                           "Created From": "API",
@@ -4610,7 +4696,6 @@
                       "meta": {
                         "userAgent": {}
                       },
-                      "notes": [],
                       "person": {
                         "attributes": {
                           "Created From": "API",
@@ -4644,7 +4729,6 @@
                       "meta": {
                         "userAgent": {}
                       },
-                      "notes": [],
                       "person": {
                         "attributes": {
                           "Created From": "API",
@@ -4678,7 +4762,6 @@
                       "meta": {
                         "userAgent": {}
                       },
-                      "notes": [],
                       "person": {
                         "attributes": {
                           "Created From": "API",
@@ -4712,7 +4795,6 @@
                       "meta": {
                         "userAgent": {}
                       },
-                      "notes": [],
                       "person": {
                         "attributes": {
                           "Created From": "API",
@@ -4752,7 +4834,6 @@
                           "os": "Linux"
                         }
                       },
-                      "notes": [],
                       "person": null,
                       "personAttributes": null,
                       "singleUseId": null,
@@ -4781,7 +4862,6 @@
                           "os": "Linux"
                         }
                       },
-                      "notes": [],
                       "person": null,
                       "personAttributes": null,
                       "singleUseId": null,
@@ -4808,7 +4888,6 @@
                           "os": "Linux"
                         }
                       },
-                      "notes": [],
                       "person": null,
                       "personAttributes": null,
                       "singleUseId": null,
@@ -4837,7 +4916,6 @@
                           "os": "Linux"
                         }
                       },
-                      "notes": [],
                       "person": null,
                       "personAttributes": null,
                       "singleUseId": null,
@@ -4862,7 +4940,6 @@
                           "os": "Linux"
                         }
                       },
-                      "notes": [],
                       "person": null,
                       "personAttributes": null,
                       "singleUseId": null,
@@ -4981,7 +5058,6 @@
                       "url": "https://postman.com",
                       "userAgent": {}
                     },
-                    "notes": [],
                     "person": {
                       "attributes": {
                         "Created From": "API",
@@ -5162,7 +5238,6 @@
                       "url": "https://postman.com",
                       "userAgent": {}
                     },
-                    "notes": [],
                     "person": {
                       "attributes": {
                         "Created From": "API",
@@ -5337,7 +5412,6 @@
                       "url": "https://postman.com",
                       "userAgent": {}
                     },
-                    "notes": [],
                     "person": {
                       "attributes": {
                         "Created From": "API",
@@ -5531,7 +5605,6 @@
                       "url": "https://postman.com",
                       "userAgent": {}
                     },
-                    "notes": [],
                     "person": {
                       "attributes": {
                         "Created From": "API",
@@ -5669,7 +5742,7 @@
     },
     "/api/v1/management/storage": {
       "post": {
-        "description": "API endpoint for uploading public files. Uploaded files are public and accessible by anyone. This endpoint requires authentication. It accepts a JSON body with fileName, fileType, environmentId, and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading the file to S3 along with a local upload URL.",
+        "description": "API endpoint for uploading public files. Uploaded files are public and accessible by anyone. This endpoint requires authentication and enforces a hard limit of 5 MB for all uploads. It accepts a JSON body with fileName, fileType, environmentId, and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading the file to S3.",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -5726,8 +5799,15 @@
                 "example": {
                   "data": {
                     "fileUrl": "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/public/profile--fid--abc123.png",
-                    "localUrl": "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/public/profile.png",
-                    "signedUrl": "http://localhost:3000/api/v1/client/cm1ubebtj000614kqe4hs3c67/storage/public",
+                    "presignedFields": {
+                      "Policy": "base64EncodedPolicy",
+                      "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
+                      "X-Amz-Credential": "your-credential",
+                      "X-Amz-Date": "20250312T000000Z",
+                      "X-Amz-Signature": "your-signature",
+                      "key": "uploads/public/profile--fid--abc123.png"
+                    },
+                    "signedUrl": "https://s3.example.com/your-bucket",
                     "updatedFileName": "profile--fid--abc123.png"
                   }
                 },
@@ -5739,9 +5819,12 @@
                           "description": "URL where the uploaded file can be accessed.",
                           "type": "string"
                         },
-                        "localUrl": {
-                          "description": "URL for uploading the file to local storage.",
-                          "type": "string"
+                        "presignedFields": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "description": "Form fields to include in the multipart/form-data POST to S3.",
+                          "type": "object"
                         },
                         "signedUrl": {
                           "description": "Signed URL for uploading the file to S3.",
@@ -5759,7 +5842,7 @@
                 }
               }
             },
-            "description": "OK - Returns the signed URL, updated file name, and file URL."
+            "description": "OK - Returns the signed URL, presigned fields, updated file name, and file URL."
           },
           "400": {
             "content": {
@@ -5823,187 +5906,6 @@
         "tags": ["Management API - Storage"]
       }
     },
-    "/api/v1/management/storage/local": {
-      "post": {
-        "description": "Management API endpoint for uploading public files to local storage. This endpoint requires authentication. File metadata is provided via headers (X-File-Type, X-File-Name, X-Environment-ID, X-Signature, X-UUID, X-Timestamp) and the file is provided as a multipart/form-data file field named \"file\". The \"Content-Type\" header must be set to a valid MIME type.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "MIME type of the file. Must be a valid MIME type.",
-            "in": "header",
-            "name": "X-File-Type",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "URI encoded file name.",
-            "in": "header",
-            "name": "X-File-Name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "ID of the environment.",
-            "in": "header",
-            "name": "X-Environment-ID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Signature for verifying the request.",
-            "in": "header",
-            "name": "X-Signature",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Unique identifier for the signed upload.",
-            "in": "header",
-            "name": "X-UUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "Timestamp used for the signature.",
-            "in": "header",
-            "name": "X-Timestamp",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "properties": {
-                  "file": {
-                    "description": "The file to be uploaded as a valid file object (buffer).",
-                    "format": "binary",
-                    "type": "string"
-                  }
-                },
-                "required": ["file"],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "message": "File uploaded successfully"
-                  }
-                },
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {
-                        "message": {
-                          "description": "Success message.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK - File uploaded successfully."
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "fileType is required"
-                },
-                "schema": {
-                  "properties": {
-                    "error": {
-                      "description": "Detailed error message.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Bad Request - Missing required fields, invalid header values, or file issues."
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "Not authenticated"
-                },
-                "schema": {
-                  "properties": {
-                    "error": {
-                      "description": "Detailed error message.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Unauthorized - Authentication failed, invalid signature, or user not authorized."
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "error": "File upload failed"
-                },
-                "schema": {
-                  "properties": {
-                    "error": {
-                      "description": "Detailed error message.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Internal Server Error - File upload failed due to server error."
-          }
-        },
-        "servers": [
-          {
-            "description": "Formbricks API Server",
-            "url": "https://app.formbricks.com/api/v1"
-          }
-        ],
-        "summary": "Upload Public File to Local Storage",
-        "tags": ["Management API - Storage"]
-      }
-    },
     "/api/v1/management/surveys": {
       "get": {
         "description": "Fetches all existing surveys",
@@ -6027,7 +5929,6 @@
                     {
                       "autoClose": null,
                       "autoComplete": null,
-                      "closeOnDate": null,
                       "createdAt": "2024-08-05T11:08:27.042Z",
                       "createdBy": "clfv1zvij0000ru0gunwpy43a",
                       "delay": 0,
@@ -6082,19 +5983,19 @@
                             {
                               "id": "xpoxuu3sifk1ee8he67ctf5i",
                               "label": {
-                                "default": "Sun ☀️"
+                                "default": "Sun \u2600\ufe0f"
                               }
                             },
                             {
                               "id": "hnsovcdmxtcbly6tig1az3qc",
                               "label": {
-                                "default": "Ocean 🌊"
+                                "default": "Ocean \ud83c\udf0a"
                               }
                             },
                             {
                               "id": "kcnelzdxknvwo8fq20d3nrr5",
                               "label": {
-                                "default": "Palms 🌴"
+                                "default": "Palms \ud83c\udf34"
                               }
                             }
                           ],
@@ -6109,8 +6010,6 @@
                       ],
                       "recontactDays": null,
                       "redirectUrl": null,
-                      "resultShareKey": null,
-                      "runOnDate": null,
                       "segment": null,
                       "showLanguageSwitch": null,
                       "singleUse": {
@@ -6213,7 +6112,6 @@
                 "example": {
                   "autoClose": null,
                   "autoComplete": null,
-                  "closeOnDate": null,
                   "createdBy": null,
                   "delay": 0,
                   "displayLimit": null,
@@ -6266,19 +6164,19 @@
                         {
                           "id": "xpoxuu3sifk1ee8he67ctf5i",
                           "label": {
-                            "default": "Sun ☀️"
+                            "default": "Sun \u2600\ufe0f"
                           }
                         },
                         {
                           "id": "hnsovcdmxtcbly6tig1az3qc",
                           "label": {
-                            "default": "Ocean 🌊"
+                            "default": "Ocean \ud83c\udf0a"
                           }
                         },
                         {
                           "id": "kcnelzdxknvwo8fq20d3nrr5",
                           "label": {
-                            "default": "Palms 🌴"
+                            "default": "Palms \ud83c\udf34"
                           }
                         }
                       ],
@@ -6293,8 +6191,6 @@
                   ],
                   "recontactDays": null,
                   "redirectUrl": null,
-                  "resultShareKey": null,
-                  "runOnDate": null,
                   "segmentId": null,
                   "showLanguageSwitch": null,
                   "singleUse": {
@@ -6332,7 +6228,6 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
-                    "closeOnDate": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -6387,19 +6282,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun ☀️"
+                              "default": "Sun \u2600\ufe0f"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean 🌊"
+                              "default": "Ocean \ud83c\udf0a"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms 🌴"
+                              "default": "Palms \ud83c\udf34"
                             }
                           }
                         ],
@@ -6414,8 +6309,6 @@
                     ],
                     "recontactDays": null,
                     "redirectUrl": null,
-                    "resultShareKey": null,
-                    "runOnDate": null,
                     "segment": null,
                     "showLanguageSwitch": null,
                     "singleUse": {
@@ -6601,7 +6494,6 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
-                    "closeOnDate": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -6656,19 +6548,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun ☀️"
+                              "default": "Sun \u2600\ufe0f"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean 🌊"
+                              "default": "Ocean \ud83c\udf0a"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms 🌴"
+                              "default": "Palms \ud83c\udf34"
                             }
                           }
                         ],
@@ -6683,8 +6575,6 @@
                     ],
                     "recontactDays": null,
                     "redirectUrl": null,
-                    "resultShareKey": null,
-                    "runOnDate": null,
                     "segment": null,
                     "showLanguageSwitch": null,
                     "singleUse": {
@@ -6857,7 +6747,6 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
-                    "closeOnDate": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -6912,19 +6801,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun ☀️"
+                              "default": "Sun \u2600\ufe0f"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean 🌊"
+                              "default": "Ocean \ud83c\udf0a"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms 🌴"
+                              "default": "Palms \ud83c\udf34"
                             }
                           }
                         ],
@@ -6939,8 +6828,6 @@
                     ],
                     "recontactDays": null,
                     "redirectUrl": null,
-                    "resultShareKey": null,
-                    "runOnDate": null,
                     "segment": null,
                     "showLanguageSwitch": null,
                     "singleUse": {
@@ -7063,7 +6950,6 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
-                    "closeOnDate": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -7118,19 +7004,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun ☀️"
+                              "default": "Sun \u2600\ufe0f"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean 🌊"
+                              "default": "Ocean \ud83c\udf0a"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms 🌴"
+                              "default": "Palms \ud83c\udf34"
                             }
                           }
                         ],
@@ -7145,8 +7031,6 @@
                     ],
                     "recontactDays": null,
                     "redirectUrl": null,
-                    "resultShareKey": null,
-                    "runOnDate": null,
                     "segment": null,
                     "showLanguageSwitch": null,
                     "singleUse": {

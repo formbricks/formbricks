@@ -1,13 +1,14 @@
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { DeleteContactButton } from "@/modules/ee/contacts/[contactId]/components/delete-contact-button";
 import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 import { ResponseSection } from "./components/response-section";
 
 export const SingleContactPage = async (props: {
@@ -16,7 +17,7 @@ export const SingleContactPage = async (props: {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
 
   const [environmentTags, contact, contactAttributes] = await Promise.all([
     getTagsByEnvironmentId(params.environmentId),
@@ -28,12 +29,15 @@ export const SingleContactPage = async (props: {
     throw new Error(t("environments.contacts.contact_not_found"));
   }
 
+  const isQuotasAllowed = await getIsQuotasEnabled(organization.billing.plan);
+
   const getDeletePersonButton = () => {
     return (
       <DeleteContactButton
         environmentId={environment.id}
         contactId={params.contactId}
         isReadOnly={isReadOnly}
+        isQuotasAllowed={isQuotasAllowed}
       />
     );
   };

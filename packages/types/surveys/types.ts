@@ -1,11 +1,11 @@
-/* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
+import { ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
+import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import {
   FORBIDDEN_IDS,
@@ -31,7 +31,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: getZSafeUrl.optional(),
+  buttonLink: z.string().optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -40,7 +40,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: getZSafeUrl.optional(),
+  url: z.string().optional(),
   label: z.string().optional(),
 });
 
@@ -101,7 +101,7 @@ export const ZSurveyWelcomeCard = z
   .object({
     enabled: z.boolean(),
     headline: ZI18nString.optional(),
-    html: ZI18nString.optional(),
+    subheader: ZI18nString.optional(),
     fileUrl: z.string().optional(),
     buttonLabel: ZI18nString.optional(),
     timeToFinish: z.boolean().default(true),
@@ -227,6 +227,14 @@ export const ZSurveyRecaptcha = z
   .nullable();
 
 export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
+
+export const ZSurveyMetadata = z.object({
+  title: ZI18nString.optional(),
+  description: ZI18nString.optional(),
+  ogImage: z.string().url().optional(),
+});
+
+export type TSurveyMetadata = z.infer<typeof ZSurveyMetadata>;
 
 export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
@@ -381,16 +389,19 @@ export const ZSingleCondition = z
 
 export type TSingleCondition = z.infer<typeof ZSingleCondition>;
 
+export const ZConnector = z.enum(["and", "or"]);
+export type TConnector = z.infer<typeof ZConnector>;
+
 export interface TConditionGroup {
   id: string;
-  connector: "and" | "or";
+  connector: TConnector;
   conditions: (TSingleCondition | TConditionGroup)[];
 }
 
 const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
   z.object({
     id: ZId,
-    connector: z.enum(["and", "or"]),
+    connector: ZConnector,
     conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
   })
 );
@@ -543,7 +554,6 @@ export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
 
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Consent),
-  html: ZI18nString.optional(),
   label: ZI18nString,
 });
 
@@ -578,7 +588,6 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
-  html: ZI18nString.optional(),
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
@@ -632,10 +641,17 @@ export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
 
+export const ZSurveyMatrixQuestionChoice = z.object({
+  id: z.string(),
+  label: ZI18nString,
+});
+
+export type TSurveyMatrixQuestionChoice = z.infer<typeof ZSurveyMatrixQuestionChoice>;
+
 export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
-  rows: z.array(ZI18nString),
-  columns: z.array(ZI18nString),
+  rows: z.array(ZSurveyMatrixQuestionChoice),
+  columns: z.array(ZSurveyMatrixQuestionChoice),
   shuffleOption: ZShuffleOption.optional().default("none"),
 });
 
@@ -755,7 +771,7 @@ export const ZSurveyType = z.enum(["link", "app"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 
-export const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
+export const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
@@ -837,8 +853,6 @@ export const ZSurvey = z
     ),
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
-    runOnDate: z.date().nullable(),
-    closeOnDate: z.date().nullable(),
     projectOverwrites: ZSurveyProjectOverwrites.nullable(),
     styling: ZSurveyStyling.nullable(),
     showLanguageSwitch: z.boolean().nullable(),
@@ -849,10 +863,10 @@ export const ZSurvey = z
     recaptcha: ZSurveyRecaptcha.nullable(),
     isSingleResponsePerEmailEnabled: z.boolean(),
     isBackButtonHidden: z.boolean(),
-    pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
-    resultShareKey: z.string().nullable(),
+    pin: z.string().length(4, { message: "PIN must be a four digit number" }).nullish(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
+    metadata: ZSurveyMetadata,
   })
   .superRefine((survey, ctx) => {
     const { questions, languages, welcomeCard, endings, isBackButtonHidden } = survey;
@@ -874,10 +888,10 @@ export const ZSurvey = z
         }
       }
 
-      if (welcomeCard.html && welcomeCard.html.default.trim() !== "") {
+      if (welcomeCard.subheader && welcomeCard.subheader.default.trim() !== "") {
         multiLangIssue = validateCardFieldsForAllLanguages(
-          "welcomeCardHtml",
-          welcomeCard.html,
+          "welcomeCardSubheader",
+          welcomeCard.subheader,
           languages,
           "welcome"
         );
@@ -914,14 +928,7 @@ export const ZSurvey = z
       }
 
       const defaultLanguageCode = "default";
-      const initialFieldsToValidate = [
-        "html",
-        "buttonLabel",
-        "upperLabel",
-        "lowerLabel",
-        "label",
-        "placeholder",
-      ];
+      const initialFieldsToValidate = ["buttonLabel", "upperLabel", "lowerLabel", "label", "placeholder"];
 
       let fieldsToValidate =
         questionIndex === 0 || isBackButtonHidden
@@ -1035,13 +1042,22 @@ export const ZSurvey = z
         }
 
         if (question.buttonExternal) {
-          const parsedButtonUrl = z.string().url().safeParse(question.buttonUrl);
-          if (!parsedButtonUrl.success) {
+          if (!question.buttonUrl || question.buttonUrl.trim() === "") {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `Question ${String(questionIndex + 1)} has an invalid button URL`,
+              message: `Question ${String(questionIndex + 1)}: Button URL is required when external button is enabled`,
               path: ["questions", questionIndex, "buttonUrl"],
             });
+          } else {
+            const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
+            if (!parsedButtonUrl.success) {
+              const errorMessage = parsedButtonUrl.error.issues[0].message;
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Question ${String(questionIndex + 1)}: ${errorMessage}`,
+                path: ["questions", questionIndex, "buttonUrl"],
+              });
+            }
           }
         }
       }
@@ -1050,7 +1066,7 @@ export const ZSurvey = z
         question.rows.forEach((row, rowIndex) => {
           multiLangIssue = validateQuestionLabels(
             `Row ${String(rowIndex + 1)}`,
-            row,
+            row.label,
             languages,
             questionIndex,
             true
@@ -1063,7 +1079,7 @@ export const ZSurvey = z
         question.columns.forEach((column, columnIndex) => {
           multiLangIssue = validateQuestionLabels(
             `Column ${String(columnIndex + 1)}`,
-            column,
+            column.label,
             languages,
             questionIndex,
             true
@@ -1073,8 +1089,14 @@ export const ZSurvey = z
           }
         });
 
-        const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(question.rows, languages);
-        const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(question.columns, languages);
+        const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.rows.map((row) => row.label),
+          languages
+        );
+        const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(
+          question.columns.map((column) => column.label),
+          languages
+        );
 
         if (duplicateRowsLanguageCodes.length > 0) {
           const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
@@ -1252,16 +1274,42 @@ export const ZSurvey = z
           }
         }
 
-        if (ending.buttonLabel) {
-          const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
-            "endingCardButtonLabel",
-            ending.buttonLabel,
-            languages,
-            "end",
-            index
-          );
-          if (multiLangIssueInButtonLabel) {
-            ctx.addIssue(multiLangIssueInButtonLabel);
+        if (ending.buttonLabel !== undefined || ending.buttonLink !== undefined) {
+          if (!ending.buttonLabel) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
+              path: ["endings", index, "buttonLabel"],
+            });
+          } else {
+            const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
+              "endingCardButtonLabel",
+              ending.buttonLabel,
+              languages,
+              "end",
+              index
+            );
+            if (multiLangIssueInButtonLabel) {
+              ctx.addIssue(multiLangIssueInButtonLabel);
+            }
+          }
+
+          if (!ending.buttonLink || ending.buttonLink.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: Button link cannot be empty`,
+              path: ["endings", index, "buttonLink"],
+            });
+          } else {
+            const parsedButtonLink = getZSafeUrl.safeParse(ending.buttonLink);
+            if (!parsedButtonLink.success) {
+              const errorMessage = parsedButtonLink.error.issues[0].message;
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+                path: ["endings", index, "buttonLink"],
+              });
+            }
           }
         }
       }
@@ -1272,6 +1320,25 @@ export const ZSurvey = z
             message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
             path: ["endings", index, "label"],
           });
+        }
+
+        // Validate redirect URL
+        if (!ending.url || ending.url.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Ending card ${String(index + 1)}: Redirect URL cannot be empty`,
+            path: ["endings", index, "url"],
+          });
+        } else {
+          const parsedUrl = getZSafeUrl.safeParse(ending.url);
+          if (!parsedUrl.success) {
+            const errorMessage = parsedUrl.error.issues[0].message;
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+              path: ["endings", index, "url"],
+            });
+          }
         }
       }
     });
@@ -1291,7 +1358,7 @@ export const ZSurvey = z
                   }
 
                   if (q.type === TSurveyQuestionTypeEnum.ContactInfo) {
-                    return true;
+                    return q.email.show;
                   }
 
                   return false;
@@ -2367,7 +2434,11 @@ export const ZSurveyUpdateInput = ZSurvey.innerType()
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => undefined);
 
 // Helper function to make all properties of a Zod object schema optional
-const makeSchemaOptional = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
+const makeSchemaOptional = <T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>
+): z.ZodObject<{
+  [K in keyof T]: z.ZodOptional<T[K]>;
+}> => {
   return schema.extend(
     Object.fromEntries(Object.entries(schema.shape).map(([key, value]) => [key, value.optional()])) as {
       [K in keyof T]: z.ZodOptional<T[K]>;
@@ -2426,8 +2497,6 @@ export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateIn
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
-  runOnDate: TSurvey["runOnDate"];
-  closeOnDate: TSurvey["closeOnDate"];
 }
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
@@ -2781,6 +2850,8 @@ export const ZSurveySummary = z.object({
     dropOffCount: z.number(),
     dropOffPercentage: z.number(),
     ttcAverage: z.number(),
+    quotasCompleted: z.number(),
+    quotasCompletedPercentage: z.number(),
   }),
   dropOff: z.array(
     z.object({
@@ -2791,6 +2862,15 @@ export const ZSurveySummary = z.object({
       impressions: z.number(),
       dropOffCount: z.number(),
       dropOffPercentage: z.number(),
+    })
+  ),
+  quotas: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      limit: z.number(),
+      count: z.number(),
+      percentage: z.number(),
     })
   ),
   summary: z.array(z.union([ZSurveyQuestionSummary, ZSurveyQuestionSummaryHiddenFields])),

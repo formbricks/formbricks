@@ -1,10 +1,10 @@
+import { getServerSession } from "next-auth";
+import { notFound, redirect } from "next/navigation";
+import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { hasOrganizationAccess } from "@/lib/auth";
 import { getEnvironments } from "@/lib/environment/service";
 import { getProject } from "@/lib/project/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { notFound, redirect } from "next/navigation";
-import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
 export const GET = async (_: Request, context: { params: Promise<{ projectId: string }> }) => {
   const params = await context?.params;
@@ -21,5 +21,5 @@ export const GET = async (_: Request, context: { params: Promise<{ projectId: st
   const environments = await getEnvironments(project.id);
   const prodEnvironment = environments.find((e) => e.type === "production");
   if (!prodEnvironment) return notFound();
-  redirect(`/environments/${prodEnvironment.id}/`);
+  return redirect(`/environments/${prodEnvironment.id}/`);
 };

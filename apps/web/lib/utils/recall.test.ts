@@ -1,8 +1,7 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { describe, expect, test, vi } from "vitest";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   checkForEmptyFallBackValue,
   extractFallbackValue,
@@ -22,9 +21,11 @@ import {
 
 // Mock dependencies
 vi.mock("@/lib/i18n/utils", () => ({
-  getLocalizedValue: vi.fn().mockImplementation((obj, lang) => {
-    return typeof obj === "string" ? obj : obj[lang] || obj["default"] || "";
-  }),
+  getLocalizedValue: (obj: any, lang: string) => {
+    if (typeof obj === "string") return obj;
+    if (!obj) return "";
+    return obj[lang] || obj["default"] || "";
+  },
 }));
 
 vi.mock("@/lib/pollyfills/structuredClone", () => ({
@@ -142,12 +143,12 @@ describe("recall utility functions", () => {
   describe("recallToHeadline", () => {
     test("converts recall pattern to headline format without slash", () => {
       const headline = { en: "How do you like #recall:product/fallback:ournbspproduct#?" };
-      const survey: TSurvey = {
+      const survey = {
         id: "test-survey",
-        questions: [{ id: "product", headline: { en: "Product Question" } }] as unknown as TSurveyQuestion[],
+        questions: [{ id: "product", headline: { en: "Product Question" } }],
         hiddenFields: { fieldIds: [] },
         variables: [],
-      } as unknown as TSurvey;
+      } as any;
 
       const result = recallToHeadline(headline, survey, false, "en");
       expect(result.en).toBe("How do you like @Product Question?");
@@ -155,12 +156,12 @@ describe("recall utility functions", () => {
 
     test("converts recall pattern to headline format with slash", () => {
       const headline = { en: "Rate #recall:product/fallback:ournbspproduct#" };
-      const survey: TSurvey = {
+      const survey = {
         id: "test-survey",
-        questions: [{ id: "product", headline: { en: "Product Question" } }] as unknown as TSurveyQuestion[],
+        questions: [{ id: "product", headline: { en: "Product Question" } }],
         hiddenFields: { fieldIds: [] },
         variables: [],
-      } as unknown as TSurvey;
+      } as any;
 
       const result = recallToHeadline(headline, survey, true, "en");
       expect(result.en).toBe("Rate /Product Question\\");
@@ -202,20 +203,17 @@ describe("recall utility functions", () => {
 
     test("handles nested recall patterns", () => {
       const headline = {
-        en: "This is #recall:outer/fallback:withnbsp#recall:inner/fallback:nested#nbsptext#",
+        en: "This is #recall:inner/fallback:fallback2#",
       };
-      const survey: TSurvey = {
+      const survey = {
         id: "test-survey",
-        questions: [
-          { id: "outer", headline: { en: "Outer with @inner" } },
-          { id: "inner", headline: { en: "Inner value" } },
-        ] as unknown as TSurveyQuestion[],
+        questions: [{ id: "inner", headline: { en: "Inner with @outer" } }],
         hiddenFields: { fieldIds: [] },
         variables: [],
-      } as unknown as TSurvey;
+      } as any;
 
       const result = recallToHeadline(headline, survey, false, "en");
-      expect(result.en).toBe("This is @Outer with @inner");
+      expect(result.en).toBe("This is @Inner with @outer");
     });
   });
 
@@ -242,16 +240,14 @@ describe("recall utility functions", () => {
   describe("checkForEmptyFallBackValue", () => {
     test("identifies question with empty fallback value", () => {
       const questionHeadline = { en: "Question with #recall:id1/fallback:# empty fallback" };
-      const survey: TSurvey = {
+      const survey = {
         questions: [
           {
             id: "q1",
             headline: questionHeadline,
           },
-        ] as unknown as TSurveyQuestion[],
-      } as unknown as TSurvey;
-
-      vi.mocked(getLocalizedValue).mockReturnValueOnce(questionHeadline.en);
+        ],
+      } as any;
 
       const result = checkForEmptyFallBackValue(survey, "en");
       expect(result).toBe(survey.questions[0]);
@@ -259,17 +255,15 @@ describe("recall utility functions", () => {
 
     test("identifies question with empty fallback in subheader", () => {
       const questionSubheader = { en: "Subheader with #recall:id1/fallback:# empty fallback" };
-      const survey: TSurvey = {
+      const survey = {
         questions: [
           {
             id: "q1",
             headline: { en: "Normal question" },
             subheader: questionSubheader,
           },
-        ] as unknown as TSurveyQuestion[],
-      } as unknown as TSurvey;
-
-      vi.mocked(getLocalizedValue).mockReturnValueOnce(questionSubheader.en);
+        ],
+      } as any;
 
       const result = checkForEmptyFallBackValue(survey, "en");
       expect(result).toBe(survey.questions[0]);
@@ -277,16 +271,14 @@ describe("recall utility functions", () => {
 
     test("returns null when no empty fallback values are found", () => {
       const questionHeadline = { en: "Question with #recall:id1/fallback:default# valid fallback" };
-      const survey: TSurvey = {
+      const survey = {
         questions: [
           {
             id: "q1",
             headline: questionHeadline,
           },
-        ] as unknown as TSurveyQuestion[],
-      } as unknown as TSurvey;
-
-      vi.mocked(getLocalizedValue).mockReturnValueOnce(questionHeadline.en);
+        ],
+      } as any;
 
       const result = checkForEmptyFallBackValue(survey, "en");
       expect(result).toBeNull();

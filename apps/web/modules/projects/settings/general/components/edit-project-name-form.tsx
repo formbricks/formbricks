@@ -1,5 +1,12 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { TProject, ZProject } from "@formbricks/types/project";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -13,12 +20,6 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import { TProject, ZProject } from "@formbricks/types/project";
 
 interface EditProjectNameProps {
   project: TProject;
@@ -30,7 +31,8 @@ const ZProjectNameInput = ZProject.pick({ name: true });
 type TEditProjectName = z.infer<typeof ZProjectNameInput>;
 
 export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, isReadOnly }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
+  const router = useRouter();
   const form = useForm<TEditProjectName>({
     defaultValues: {
       name: project.name,
@@ -62,6 +64,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
       if (updatedProjectResponse?.data) {
         toast.success(t("environments.project.general.project_name_updated_successfully"));
         form.resetField("name", { defaultValue: updatedProjectResponse.data.name });
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
         toast.error(errorMessage);

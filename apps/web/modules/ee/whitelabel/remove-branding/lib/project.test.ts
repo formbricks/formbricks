@@ -1,7 +1,7 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ValidationError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import { TProjectUpdateBrandingInput } from "../types/project";
 import { updateProjectBranding } from "./project";
 
@@ -39,7 +39,7 @@ describe("updateProjectBranding", () => {
         inputBorderColor: { light: "#cbd5e1" },
         cardBackgroundColor: { light: "#ffffff" },
         cardBorderColor: { light: "#f8fafc" },
-        cardShadowColor: { light: "#000000" },
+
         isLogoHidden: false,
         isDarkModeEnabled: false,
         background: { bg: "#fff", bgType: "color" as const },

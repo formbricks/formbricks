@@ -1,15 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
 
 interface DeleteTeamProps {
   teamId: TTeam["id"];
@@ -18,7 +17,7 @@ interface DeleteTeamProps {
 }
 
 export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -42,15 +41,13 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
 
   return (
     <>
-      <div className="flex flex-col space-y-2">
-        <Label htmlFor="deleteTeamButton">{t("common.danger_zone")}</Label>
+      <div className="flex flex-row items-baseline space-x-2">
         <TooltipRenderer
           shouldRender={!isOwnerOrManager}
           tooltipContent={t("environments.settings.teams.team_deletion_not_allowed")}
           className="w-auto">
           <Button
             variant="destructive"
-            size="sm"
             type="button"
             id="deleteTeamButton"
             className="w-auto"

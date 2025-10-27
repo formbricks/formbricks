@@ -1,24 +1,22 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TTemplateFilter } from "@formbricks/types/templates";
+import { cn } from "@/lib/cn";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateFiltersProps {
   selectedFilter: TTemplateFilter[];
   setSelectedFilter: (filter: TTemplateFilter[]) => void;
   templateSearch?: string;
-  prefilledFilters: TTemplateFilter[];
 }
 
 export const TemplateFilters = ({
   selectedFilter,
   setSelectedFilter,
   templateSearch,
-  prefilledFilters,
 }: TemplateFiltersProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleFilterSelect = (filterValue: TTemplateFilter, index: number) => {
     // If the filter value at a particular index is null, it indicates that no filter has been chosen, therefore all results are displayed
     const newFilter = [...selectedFilter];
@@ -31,7 +29,6 @@ export const TemplateFilters = ({
   return (
     <div className="mb-6 gap-3">
       {allFilters.map((filters, index) => {
-        if (prefilledFilters[index] !== null) return;
         return (
           <div key={filters[0]?.value || index} className="mt-2 flex flex-wrap gap-1 last:border-r-0">
             <button
@@ -62,7 +59,7 @@ export const TemplateFilters = ({
                     : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
                   "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
                 )}>
-                {t(filter.label)}
+                {filter.label}
               </button>
             ))}
           </div>

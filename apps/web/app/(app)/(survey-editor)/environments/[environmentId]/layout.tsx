@@ -1,8 +1,7 @@
+import { redirect } from "next/navigation";
 import { getEnvironment } from "@/lib/environment/service";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
-import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { EnvironmentIdBaseLayout } from "@/modules/ui/components/environmentId-base-layout";
-import { redirect } from "next/navigation";
 
 const SurveyEditorEnvironmentLayout = async (props) => {
   const params = await props.params;
@@ -32,7 +31,6 @@ const SurveyEditorEnvironmentLayout = async (props) => {
       user={user}
       organization={organization}>
       <div className="flex h-screen flex-col">
-        <DevEnvironmentBanner environment={environment} />
         <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
       </div>
     </EnvironmentIdBaseLayout>

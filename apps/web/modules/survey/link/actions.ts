@@ -1,17 +1,27 @@
 "use server";
 
-import { actionClient } from "@/lib/utils/action-client";
-import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
-import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
-import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
-import { getSurveyWithMetadata, isSurveyResponsePresent } from "@/modules/survey/link/lib/data";
 import { z } from "zod";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { actionClient } from "@/lib/utils/action-client";
+import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
+import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
+import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
+import { getSurveyWithMetadata, isSurveyResponsePresent } from "@/modules/survey/link/lib/data";
 
 export const sendLinkSurveyEmailAction = actionClient
   .schema(ZLinkSurveyEmailData)
   .action(async ({ parsedInput }) => {
+    await applyIPRateLimit(rateLimitConfigs.actions.sendLinkSurveyEmail);
+
+    const survey = await getSurveyWithMetadata(parsedInput.surveyId);
+
+    if (!survey.isVerifyEmailEnabled) {
+      throw new InvalidInputError("EMAIL_VERIFICATION_NOT_ENABLED");
+    }
+
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
 

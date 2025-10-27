@@ -1,8 +1,8 @@
 import { environmentId, fileUploadQuestion, openTextQuestion, responseData } from "./__mocks__/utils.mock";
-import { deleteFile } from "@/lib/storage/service";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
+import { deleteFile } from "@/modules/storage/service";
 import { findAndDeleteUploadedFilesInResponse } from "../utils";
 
 vi.mock("@formbricks/logger", () => ({
@@ -11,7 +11,7 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/lib/storage/service", () => ({
+vi.mock("@/modules/storage/service", () => ({
   deleteFile: vi.fn(),
 }));
 
@@ -21,7 +21,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
   });
 
   test("delete files for file upload questions and return okVoid", async () => {
-    vi.mocked(deleteFile).mockResolvedValue({ success: true, message: "File deleted successfully" });
+    vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined });
 
     const result = await findAndDeleteUploadedFilesInResponse(responseData, [fileUploadQuestion]);
 
@@ -56,7 +56,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
   });
 
   test("process multiple file URLs", async () => {
-    vi.mocked(deleteFile).mockResolvedValue({ success: true, message: "File deleted successfully" });
+    vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined });
 
     const result = await findAndDeleteUploadedFilesInResponse(responseData, [fileUploadQuestion]);
 

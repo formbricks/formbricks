@@ -1,5 +1,35 @@
 "use client";
 
+import clsx from "clsx";
+import {
+  AirplayIcon,
+  ArrowUpFromDotIcon,
+  CheckIcon,
+  ChevronDown,
+  ChevronUp,
+  ContactIcon,
+  EyeOff,
+  FlagIcon,
+  GlobeIcon,
+  GridIcon,
+  HashIcon,
+  HomeIcon,
+  ImageIcon,
+  LanguagesIcon,
+  LinkIcon,
+  ListIcon,
+  ListOrderedIcon,
+  MessageSquareTextIcon,
+  MousePointerClickIcon,
+  PieChartIcon,
+  Rows3Icon,
+  SmartphoneIcon,
+  StarIcon,
+  User,
+} from "lucide-react";
+import { Fragment, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import {
@@ -11,32 +41,6 @@ import {
   CommandList,
 } from "@/modules/ui/components/command";
 import { NetPromoterScoreIcon } from "@/modules/ui/components/icons";
-import { useTranslate } from "@tolgee/react";
-import clsx from "clsx";
-import {
-  AirplayIcon,
-  CheckIcon,
-  ChevronDown,
-  ChevronUp,
-  ContactIcon,
-  EyeOff,
-  GlobeIcon,
-  GridIcon,
-  HashIcon,
-  HomeIcon,
-  ImageIcon,
-  LanguagesIcon,
-  ListIcon,
-  ListOrderedIcon,
-  MessageSquareTextIcon,
-  MousePointerClickIcon,
-  Rows3Icon,
-  SmartphoneIcon,
-  StarIcon,
-  User,
-} from "lucide-react";
-import { Fragment, useRef, useState } from "react";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export enum OptionsType {
   QUESTIONS = "Questions",
@@ -45,6 +49,7 @@ export enum OptionsType {
   OTHERS = "Other Filters",
   META = "Meta",
   HIDDEN_FIELDS = "Hidden Fields",
+  QUOTAS = "Quotas",
 }
 
 export type QuestionOption = {
@@ -89,14 +94,19 @@ const questionIcons = {
   device: SmartphoneIcon,
   os: AirplayIcon,
   browser: GlobeIcon,
-  source: GlobeIcon,
+  source: ArrowUpFromDotIcon,
   action: MousePointerClickIcon,
+  country: FlagIcon,
+  url: LinkIcon,
 
   // others
   Language: LanguagesIcon,
 
   // tags
   [OptionsType.TAGS]: HashIcon,
+
+  // quotas
+  [OptionsType.QUOTAS]: PieChartIcon,
 };
 
 const getIcon = (type: string) => {
@@ -117,6 +127,8 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
         return getIcon(label);
       } else if (type === OptionsType.TAGS) {
         return getIcon(OptionsType.TAGS);
+      } else if (type === OptionsType.QUOTAS) {
+        return getIcon(OptionsType.QUOTAS);
       }
     }
   };
@@ -128,14 +140,22 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
       return "bg-brand-dark";
     } else if (type === OptionsType.TAGS) {
       return "bg-indigo-500";
+    } else if (type === OptionsType.QUOTAS) {
+      return "bg-slate-500";
     } else {
       return "bg-amber-500";
     }
   };
+
+  const getLabelStyle = (): string | undefined => {
+    if (type !== OptionsType.META) return undefined;
+    return label === "os" || label === "url" ? "uppercase" : "capitalize";
+  };
+
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className="ml-3 truncate text-sm text-slate-600">
+      <p className={clsx("ml-3 truncate text-sm text-slate-600", getLabelStyle())}>
         {typeof label === "string" ? label : getLocalizedValue(label, "default")}
       </p>
     </div>
@@ -144,7 +164,7 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
 
 export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
   const [open, setOpen] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const commandRef = useRef(null);
   const [inputValue, setInputValue] = useState("");
   useClickOutside(commandRef, () => setOpen(false));
@@ -179,7 +199,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
       </button>
       <div className="relative mt-2 h-full">
         {open && (
-          <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
+          <div className="animate-in absolute top-0 z-50 w-full overflow-auto rounded-md bg-white outline-none">
             <CommandList>
               <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               {options?.map((data) => (

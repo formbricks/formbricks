@@ -1,15 +1,15 @@
 "use client";
 
-import { templates } from "@/app/lib/templates";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { ZProjectConfigChannel, ZProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
+import { templates } from "@/app/lib/templates";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
@@ -21,7 +21,6 @@ interface TemplateListProps {
   project: Project;
   templateSearch?: string;
   showFilters?: boolean;
-  prefilledFilters: TTemplateFilter[];
   onTemplateClick?: (template: TTemplate) => void;
   noPreview?: boolean; // single click to create survey
 }
@@ -32,15 +31,14 @@ export const TemplateList = ({
   environmentId,
   showFilters = true,
   templateSearch,
-  prefilledFilters,
   onTemplateClick = () => {},
   noPreview,
 }: TemplateListProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
+  const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>([null, null, null]);
   const surveyType: TSurveyType = useMemo(() => {
     if (project.config.channel) {
       if (project.config.channel === "website") {
@@ -111,7 +109,6 @@ export const TemplateList = ({
           selectedFilter={selectedFilter}
           setSelectedFilter={setSelectedFilter}
           templateSearch={templateSearch}
-          prefilledFilters={prefilledFilters}
         />
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

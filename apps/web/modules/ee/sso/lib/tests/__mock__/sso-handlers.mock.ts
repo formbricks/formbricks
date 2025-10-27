@@ -9,18 +9,15 @@ export const mockUser: TUser = {
   name: "Test User",
   notificationSettings: {
     alert: {},
-    weeklySummary: {},
+
     unsubscribedOrganizationIds: [],
   },
   emailVerified: new Date(),
-  imageUrl: "https://example.com/image.png",
   twoFactorEnabled: false,
   identityProvider: "google",
   locale: "en-US",
-  role: "other",
   createdAt: new Date(),
   updatedAt: new Date(),
-  objective: "improve_user_retention",
   lastLoginAt: new Date(),
   isActive: true,
 };

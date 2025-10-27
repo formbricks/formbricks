@@ -4,32 +4,35 @@ import {
   matchesAnyPattern,
 } from "./route-config";
 
-export const isLoginRoute = (url: string) =>
-  url === "/api/auth/callback/credentials" || url === "/auth/login";
+export enum AuthenticationMethod {
+  ApiKey = "apiKey",
+  Session = "session",
+  Both = "both",
+  None = "none",
+}
 
-export const isSignupRoute = (url: string) => url === "/auth/signup";
-
-export const isVerifyEmailRoute = (url: string) => url === "/auth/verify-email";
-
-export const isForgotPasswordRoute = (url: string) => url === "/auth/forgot-password";
-
-export const isClientSideApiRoute = (url: string): boolean => {
+export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; isRateLimited: boolean } => {
   // Open Graph image generation route is a client side API route but it should not be rate limited
-  if (url.includes("/api/v1/client/og")) return false;
+  if (url.includes("/api/v1/client/og")) return { isClientSideApi: true, isRateLimited: false };
 
-  if (url.includes("/api/v1/js/actions")) return true;
-  if (url.includes("/api/v1/client/storage")) return true;
   const regex = /^\/api\/v\d+\/client\//;
-  return regex.test(url);
+  return { isClientSideApi: regex.test(url), isRateLimited: true };
 };
 
-export const isManagementApiRoute = (url: string): boolean => {
+export const isManagementApiRoute = (
+  url: string
+): { isManagementApi: boolean; authenticationMethod: AuthenticationMethod } => {
+  if (url.includes("/api/v1/management/storage"))
+    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
+  if (url.includes("/api/v1/webhooks"))
+    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.ApiKey };
+
   const regex = /^\/api\/v\d+\/management\//;
-  return regex.test(url);
+  return { isManagementApi: regex.test(url), authenticationMethod: AuthenticationMethod.ApiKey };
 };
 
-export const isShareUrlRoute = (url: string): boolean => {
-  const regex = /\/share\/[A-Za-z0-9]+\/(?:summary|responses)/;
+export const isIntegrationRoute = (url: string): boolean => {
+  const regex = /^\/api\/v\d+\/integrations\//;
   return regex.test(url);
 };
 
@@ -69,7 +72,7 @@ export const isAdminDomainRoute = (url: string): boolean => {
     return false;
   }
 
-  // For non-public routes, allow them (includes known admin routes and unknown routes like pipeline, cron)
+  // For non-public routes, allow them (includes known admin routes and unknown routes like pipeline)
   return true;
 };
 

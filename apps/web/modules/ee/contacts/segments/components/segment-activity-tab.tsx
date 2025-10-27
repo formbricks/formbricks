@@ -1,9 +1,10 @@
 "use client";
 
-import { convertDateTimeStringShort } from "@/lib/time";
-import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
+import { convertDateTimeStringShort } from "@/lib/time";
+import { IdBadge } from "@/modules/ui/components/id-badge";
+import { Label } from "@/modules/ui/components/label";
 
 interface SegmentActivityTabProps {
   environmentId: string;
@@ -14,7 +15,7 @@ interface SegmentActivityTabProps {
 }
 
 export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const activeSurveys = currentSegment?.activeSurveys;
   const inactiveSurveys = currentSegment?.inactiveSurveys;
 
@@ -52,10 +53,7 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           </p>
         </div>
         <div>
-          <Label className="text-xs font-normal text-slate-500">
-            {t("environments.segments.segment_id")}
-          </Label>
-          <p className="text-xs text-slate-700">{currentSegment.id.toString()}</p>
+          <IdBadge id={currentSegment.id} label={t("environments.segments.segment_id")} variant="column" />
         </div>
       </div>
     </div>

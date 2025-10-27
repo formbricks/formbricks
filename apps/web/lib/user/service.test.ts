@@ -1,11 +1,11 @@
-import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
-import { IdentityProvider, Objective, Prisma, Role } from "@prisma/client";
+import { IdentityProvider, Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUserLocale, TUserUpdateInput } from "@formbricks/types/user";
+import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteUser, getUser, getUserByEmail, getUsersWithOrganization, updateUser } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -18,10 +18,6 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
     },
   },
-}));
-
-vi.mock("@/lib/fileValidation", () => ({
-  isValidImageFile: vi.fn(),
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -39,16 +35,13 @@ describe("User Service", () => {
     name: "Test User",
     email: "test@example.com",
     emailVerified: new Date(),
-    imageUrl: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    role: Role.project_manager,
     twoFactorEnabled: false,
     identityProvider: IdentityProvider.email,
-    objective: Objective.increase_conversion,
     notificationSettings: {
       alert: {},
-      weeklySummary: {},
+
       unsubscribedOrganizationIds: [],
     },
     locale: "en-US" as TUserLocale,
@@ -199,13 +192,6 @@ describe("User Service", () => {
       vi.mocked(prisma.user.update).mockRejectedValue(prismaError);
 
       await expect(updateUser("nonexistent", { name: "New Name" })).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("should throw InvalidInputError when invalid image URL is provided", async () => {
-      const { isValidImageFile } = await import("@/lib/fileValidation");
-      vi.mocked(isValidImageFile).mockReturnValue(false);
-
-      await expect(updateUser("user1", { imageUrl: "invalid-image-url" })).rejects.toThrow(InvalidInputError);
     });
   });
 

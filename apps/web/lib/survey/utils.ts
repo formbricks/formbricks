@@ -1,9 +1,9 @@
 import "server-only";
-import { isValidImageFile } from "@/lib/fileValidation";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { isValidImageFile } from "@/modules/storage/utils";
 
 export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
   surveyPrisma: any

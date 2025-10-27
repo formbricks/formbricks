@@ -1,5 +1,8 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -10,9 +13,6 @@ import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/util
 import { updateProjectBranding } from "@/modules/ee/whitelabel/remove-branding/lib/project";
 import { ZProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { getProject } from "@/modules/survey/editor/lib/project";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 
 const ZUpdateProjectAction = z.object({
   projectId: ZId,

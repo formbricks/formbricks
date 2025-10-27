@@ -1,12 +1,12 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { type JSXInternal } from "preact/src/jsx";
+import { useTranslation } from "react-i18next";
+import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { TAllowedFileExtension, type TUploadFileConfig, mimeTypes } from "@formbricks/types/storage";
 import { FILE_PICK_EVENT } from "@/lib/constants";
 import { getOriginalFileNameFromUrl } from "@/lib/storage";
 import { getMimeType, isFulfilled, isRejected } from "@/lib/utils";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useEffect, useMemo, useState } from "preact/hooks";
-import { type JSXInternal } from "preact/src/jsx";
-import { type TAllowedFileExtension } from "@formbricks/types/common";
-import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TUploadFileConfig } from "@formbricks/types/storage";
 
 interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
@@ -31,39 +31,79 @@ export function FileInput({
   allowMultipleFiles,
   htmlFor = "",
 }: Readonly<FileInputProps>) {
+  const { t } = useTranslation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [parent] = useAutoAnimate();
 
   // Helper function to filter duplicate files
-  const filterDuplicateFiles = <T extends { name: string }>(
-    files: T[],
-    checkAgainstSelected: boolean = true
-  ): {
-    filteredFiles: T[];
-    duplicateFiles: T[];
-  } => {
-    const existingFileNames = fileUrls ? fileUrls.map(getOriginalFileNameFromUrl) : [];
+  const filterDuplicateFiles = useCallback(
+    <T extends { name: string }>(
+      files: T[],
+      checkAgainstSelected: boolean = true
+    ): {
+      filteredFiles: T[];
+      duplicateFiles: T[];
+    } => {
+      const existingFileNames = fileUrls ? fileUrls.map(getOriginalFileNameFromUrl) : [];
 
-    const duplicateFiles = files.filter(
-      (file) =>
-        existingFileNames.includes(file.name) ||
-        (checkAgainstSelected && selectedFiles.some((selectedFile) => selectedFile.name === file.name))
-    );
+      const duplicateFiles = files.filter(
+        (file) =>
+          existingFileNames.includes(file.name) ||
+          (checkAgainstSelected && selectedFiles.some((selectedFile) => selectedFile.name === file.name))
+      );
 
-    const filteredFiles = files.filter(
-      (file) =>
-        !existingFileNames.includes(file.name) &&
-        (!checkAgainstSelected || !selectedFiles.some((selectedFile) => selectedFile.name === file.name))
-    );
+      const filteredFiles = files.filter(
+        (file) =>
+          !existingFileNames.includes(file.name) &&
+          (!checkAgainstSelected || !selectedFiles.some((selectedFile) => selectedFile.name === file.name))
+      );
 
-    if (duplicateFiles.length > 0) {
-      const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
-      alert(`The following files are already uploaded: ${duplicateNames}. Duplicate files are not allowed.`);
+      if (duplicateFiles.length > 0) {
+        const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
+        alert(t("errors.file_input.duplicate_files", { duplicateNames }));
+      }
+
+      return { filteredFiles, duplicateFiles };
+    },
+    [fileUrls, selectedFiles, t]
+  );
+
+  // Helper function to filter files by size
+  const filterFilesBySize = useCallback(
+    (files: { name: string; type: string; base64: string }[]) => {
+      if (!maxSizeInMB) return { validFiles: files, rejectedFiles: [] };
+
+      const validFiles: typeof files = [];
+      const rejectedFiles: string[] = [];
+
+      for (const file of files) {
+        const base64SizeInKB = (file.base64.length * 0.75) / 1024;
+        if (base64SizeInKB > maxSizeInMB * 1024) {
+          rejectedFiles.push(file.name);
+        } else {
+          validFiles.push(file);
+        }
+      }
+
+      return { validFiles, rejectedFiles };
+    },
+    [maxSizeInMB]
+  );
+
+  // Helper function to handle upload errors
+  const handleUploadErrors = useCallback((rejected: PromiseRejectedResult[]) => {
+    if (rejected.length === 0) return;
+
+    const reason = rejected[0].reason;
+    if (reason?.name === "FileTooLargeError") {
+      alert(reason.message);
+    } else if (reason?.name === "InvalidFileNameError") {
+      alert("Invalid file name. Please rename your file and try again.");
+    } else {
+      alert("Upload failed! Please try again.");
     }
-
-    return { filteredFiles, duplicateFiles };
-  };
+  }, []);
 
   // Listen for the native file-upload event dispatched via window.formbricksSurveys.onFilePick
   useEffect(() => {
@@ -75,53 +115,39 @@ export function FileInput({
       try {
         setIsUploading(true);
 
-        // Filter out files that exceed the maximum size
-        let filteredFiles: typeof filesFromNative = [];
-        const rejectedFiles: string[] = [];
+        // Filter files by size
+        const { validFiles, rejectedFiles } = filterFilesBySize(filesFromNative);
 
-        if (maxSizeInMB) {
-          for (const file of filesFromNative) {
-            // Calculate file size from base64 string
-            // Base64 size in bytes is roughly 3/4 of the string length
-            const base64SizeInKB = (file.base64.length * 0.75) / 1024;
+        // Check for duplicate files
+        const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(validFiles, false);
 
-            if (base64SizeInKB > maxSizeInMB * 1024) {
-              rejectedFiles.push(file.name);
-            } else {
-              filteredFiles.push(file);
-            }
-          }
-        } else {
-          // If no size limit is specified, use all files
-          filteredFiles.push(...filesFromNative);
-        }
-
-        // Check for duplicate files - native uploads don't need to check against selectedFiles
-        const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(filteredFiles, false);
-        filteredFiles = nonDuplicateFiles;
-
-        // Display alert for rejected files
+        // Show size rejection alert
         if (rejectedFiles.length > 0) {
           const fileNames = rejectedFiles.join(", ");
-          alert(
-            `The following file(s) exceed the maximum size of ${maxSizeInMB} MB and were removed: ${fileNames}`
-          );
+          alert(t("errors.file_input.file_size_exceeded", { fileNames, maxSizeInMB }));
         }
 
-        // If no files remain after filtering, exit early
-        if (filteredFiles.length === 0) {
-          return;
-        }
+        // Exit early if no files to upload
+        if (nonDuplicateFiles.length === 0) return;
 
-        const uploadedUrls = await Promise.all(
-          filteredFiles.map((file) => onFileUpload(file, { allowedFileExtensions, surveyId }))
+        // Upload files
+        const results = await Promise.allSettled(
+          nonDuplicateFiles.map((file) => onFileUpload(file, { allowedFileExtensions, surveyId }))
         );
 
-        // Update file URLs by appending the new URL
-        onUploadCallback(fileUrls ? [...fileUrls, ...uploadedUrls] : uploadedUrls);
+        const fulfilled = results.filter(isFulfilled).map((r) => r.value);
+        const rejected = results.filter(isRejected);
+
+        // Update file URLs on success
+        if (fulfilled.length) {
+          onUploadCallback(fileUrls ? [...fileUrls, ...fulfilled] : fulfilled);
+        }
+
+        // Handle upload errors
+        handleUploadErrors(rejected);
       } catch (err) {
         console.error(`Error uploading native file.`);
-        alert(`Upload failed! Please try again.`);
+        alert(t("errors.file_input.upload_failed"));
       } finally {
         setIsUploading(false);
       }
@@ -131,103 +157,129 @@ export function FileInput({
     return () => {
       window.removeEventListener(FILE_PICK_EVENT, handleNativeFileUpload as unknown as EventListener);
     };
-  }, [allowedFileExtensions, fileUrls, maxSizeInMB, onFileUpload, onUploadCallback, surveyId]);
+  }, [
+    allowedFileExtensions,
+    fileUrls,
+    maxSizeInMB,
+    onFileUpload,
+    onUploadCallback,
+    surveyId,
+    filterDuplicateFiles,
+    t,
+    filterFilesBySize,
+    handleUploadErrors,
+  ]);
+
+  const toBase64 = (file: File) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+    });
 
   const validateFileSize = async (file: File): Promise<boolean> => {
     if (maxSizeInMB) {
       const fileBuffer = await file.arrayBuffer();
       const bufferKB = fileBuffer.byteLength / 1024;
       if (bufferKB > maxSizeInMB * 1024) {
-        alert(`File should be less than ${maxSizeInMB.toString()} MB`);
+        alert(t("errors.file_input.file_size_exceeded_alert", { maxSizeInMB }));
         return false;
       }
     }
     return true;
   };
 
-  const handleFileSelection = async (files: FileList) => {
-    let fileArray = Array.from(files);
-
-    if (!allowMultipleFiles && fileArray.length > 1) {
-      alert("Only one file can be uploaded at a time.");
-      return;
-    }
-
-    if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
-      alert(`You can only upload a maximum of ${FILE_LIMIT.toString()} files.`);
-      return;
-    }
-
-    // Check for duplicate files
-    const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(fileArray);
-
-    if (nonDuplicateFiles.length === 0) {
-      return; // No non-duplicate files to process
-    }
-
-    fileArray = nonDuplicateFiles;
-
-    // filter out files that are not allowed
-    const validFiles = fileArray.filter((file) => {
-      const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
-      if (allowedFileExtensions) {
-        return allowedFileExtensions.includes(fileExtension);
+  // Helper function to validate file limits
+  const validateFileLimits = useCallback(
+    (fileArray: File[]) => {
+      if (!allowMultipleFiles && fileArray.length > 1) {
+        alert(t("errors.file_input.only_one_file_can_be_uploaded_at_a_time"));
+        return false;
       }
+
+      if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
+        alert(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
+        return false;
+      }
+
       return true;
-    });
+    },
+    [allowMultipleFiles, selectedFiles.length, t]
+  );
 
-    if (!validFiles.length) {
-      alert("No valid file types selected. Please select a valid file type.");
-      return;
-    }
+  // Helper function to validate file extensions
+  const validateFileExtensions = useCallback(
+    (files: File[]) => {
+      return files.filter((file) => {
+        const fileExtension = file.name.split(".").pop()?.toLowerCase() as TAllowedFileExtension;
+        if (!fileExtension || fileExtension === file.name.toLowerCase()) return false;
 
-    const filteredFiles: File[] = [];
+        if (allowedFileExtensions) {
+          return allowedFileExtensions.includes(fileExtension);
+        }
 
-    for (const validFile of validFiles) {
-      const isAllowed = await validateFileSize(validFile);
-      if (isAllowed) {
-        filteredFiles.push(validFile);
-      }
-    }
+        return Object.keys(mimeTypes).includes(fileExtension);
+      });
+    },
+    [allowedFileExtensions]
+  );
 
-    try {
-      setIsUploading(true);
-      const toBase64 = (file: File) =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => {
-            resolve(reader.result);
-          };
-          reader.onerror = reject;
-        });
-
-      const filePromises = filteredFiles.map(async (file) => {
+  // Helper function to convert files to base64 and upload
+  const processAndUploadFiles = useCallback(
+    async (files: File[]) => {
+      const filePromises = files.map(async (file) => {
         const base64 = await toBase64(file);
         return { name: file.name, type: file.type, base64: base64 as string };
       });
 
       const filesToUpload = await Promise.all(filePromises);
-      const uploadPromises = filesToUpload.map((file) => {
-        return onFileUpload(file, { allowedFileExtensions, surveyId });
-      });
+      const uploadPromises = filesToUpload.map((file) =>
+        onFileUpload(file, { allowedFileExtensions, surveyId })
+      );
 
       const uploadedFiles = await Promise.allSettled(uploadPromises);
-
       const rejectedFiles = uploadedFiles.filter(isRejected);
       const uploadedFilesUrl = uploadedFiles.filter(isFulfilled).map((url) => url.value);
 
-      setSelectedFiles((prevFiles) => [...prevFiles, ...filteredFiles]);
+      setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
       onUploadCallback(fileUrls ? [...fileUrls, ...uploadedFilesUrl] : uploadedFilesUrl);
 
-      if (rejectedFiles.length > 0) {
-        if (rejectedFiles[0].reason?.name === "FileTooLargeError") {
-          alert(rejectedFiles[0].reason.message);
-        }
+      handleUploadErrors(rejectedFiles);
+    },
+    [onFileUpload, allowedFileExtensions, surveyId, fileUrls, onUploadCallback, handleUploadErrors]
+  );
+
+  const handleFileSelection = async (files: FileList) => {
+    const fileArray = Array.from(files);
+
+    if (!validateFileLimits(fileArray)) return;
+
+    const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(fileArray);
+    if (nonDuplicateFiles.length === 0) return;
+
+    const validFiles = validateFileExtensions(nonDuplicateFiles);
+    if (!validFiles.length) {
+      alert(t("errors.file_input.no_valid_file_types_selected"));
+      return;
+    }
+
+    const sizeValidatedFiles: File[] = [];
+    for (const validFile of validFiles) {
+      const isAllowed = await validateFileSize(validFile);
+      if (isAllowed) {
+        sizeValidatedFiles.push(validFile);
       }
+    }
+
+    if (sizeValidatedFiles.length === 0) return;
+
+    try {
+      setIsUploading(true);
+      await processAndUploadFiles(sizeValidatedFiles);
     } catch (err: any) {
       console.error("error in uploading file: ", err);
-      alert("Upload failed! Please try again.");
+      alert(t("errors.file_input.upload_failed"));
     } finally {
       setIsUploading(false);
     }
@@ -282,13 +334,13 @@ export function FileInput({
           return (
             <div
               key={index}
-              aria-label={`You've successfully uploaded the file ${fileName}`}
+              aria-label={t("common.you_have_successfully_uploaded_the_file", { fileName })}
               tabIndex={0}
               className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
               <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
                 <button
                   type="button"
-                  aria-label={`Delete file ${fileName}`}
+                  aria-label={`${t("common.delete_file")} ${fileName}`}
                   className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -333,7 +385,7 @@ export function FileInput({
         {isUploading ? (
           <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
             <label htmlFor={uniqueHtmlFor} className="fb-text-subheading fb-text-sm fb-font-medium">
-              Uploading...
+              {t("common.uploading")}...
             </label>
           </div>
         ) : null}
@@ -343,7 +395,7 @@ export function FileInput({
             <button
               type="button"
               className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
-              aria-label="Upload files by clicking or dragging them here"
+              aria-label={t("common.upload_files_by_clicking_or_dragging_them_here")}
               onClick={() => document.getElementById(uniqueHtmlFor)?.click()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -359,11 +411,11 @@ export function FileInput({
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-              <label
+              <span
                 className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
                 id={`${uniqueHtmlFor}-label`}>
-                Click or drag to upload files.
-              </label>
+                {t("common.click_or_drag_to_upload_files")}
+              </span>
               <input
                 type="file"
                 id={uniqueHtmlFor}
@@ -377,7 +429,7 @@ export function FileInput({
                   }
                 }}
                 multiple={allowMultipleFiles}
-                aria-label="File upload"
+                aria-label={t("common.file_upload")}
                 aria-describedby={`${uniqueHtmlFor}-label`}
                 data-accept-multiple={allowMultipleFiles}
                 data-accept-extensions={mimeTypeForAllowedFileExtensions}

@@ -1,16 +1,19 @@
+import jwt from "jsonwebtoken";
+import { logger } from "@formbricks/logger";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import jwt from "jsonwebtoken";
-import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { getSurvey } from "@/modules/survey/lib/survey";
 
 // Creates an encrypted personalized survey link for a contact
-export const getContactSurveyLink = (
+export const getContactSurveyLink = async (
   contactId: string,
   surveyId: string,
   expirationDays?: number
-): Result<string, ApiErrorResponseV2> => {
+): Promise<Result<string, ApiErrorResponseV2>> => {
   if (!ENCRYPTION_KEY) {
     return err({
       type: "internal_server_error",
@@ -18,9 +21,26 @@ export const getContactSurveyLink = (
     });
   }
 
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    return err({
+      type: "not_found",
+      message: "Survey not found",
+      details: [{ field: "surveyId", issue: "not_found" }],
+    });
+  }
+
+  const { enabled: isSingleUseEnabled, isEncrypted: isSingleUseEncrypted } = survey.singleUse ?? {};
+
   // Encrypt the contact and survey IDs
   const encryptedContactId = symmetricEncrypt(contactId, ENCRYPTION_KEY);
   const encryptedSurveyId = symmetricEncrypt(surveyId, ENCRYPTION_KEY);
+
+  let singleUseId: string | undefined;
+
+  if (isSingleUseEnabled) {
+    singleUseId = generateSurveySingleUseId(isSingleUseEncrypted ?? false);
+  }
 
   // Create JWT payload with encrypted IDs
   const payload = {
@@ -42,7 +62,9 @@ export const getContactSurveyLink = (
   const token = jwt.sign(payload, ENCRYPTION_KEY, tokenOptions);
 
   // Return the personalized URL
-  return ok(`${getPublicDomain()}/c/${token}`);
+  return singleUseId
+    ? ok(`${getPublicDomain()}/c/${token}?suId=${singleUseId}`)
+    : ok(`${getPublicDomain()}/c/${token}`);
 };
 
 // Validates and decrypts a contact survey JWT token
@@ -58,7 +80,10 @@ export const verifyContactSurveyToken = (
 
   try {
     // Verify the token
-    const decoded = jwt.verify(token, ENCRYPTION_KEY) as { contactId: string; surveyId: string };
+    const decoded = jwt.verify(token, ENCRYPTION_KEY) as {
+      contactId: string;
+      surveyId: string;
+    };
 
     if (!decoded || !decoded.contactId || !decoded.surveyId) {
       throw err("Invalid token format");
@@ -73,11 +98,22 @@ export const verifyContactSurveyToken = (
       surveyId,
     });
   } catch (error) {
-    console.error("Error verifying contact survey token:", error);
+    logger.error("Error verifying contact survey token:", error);
+
+    // Check if the error is specifically a JWT expiration error
+    if (error instanceof jwt.TokenExpiredError) {
+      return err({
+        type: "bad_request",
+        message: "Survey link has expired",
+        details: [{ field: "token", issue: "token_expired" }],
+      });
+    }
+
+    // Handle other JWT errors or general validation errors
     return err({
       type: "bad_request",
-      message: "Invalid or expired survey token",
-      details: [{ field: "token", issue: "Invalid or expired survey token" }],
+      message: "Invalid survey token",
+      details: [{ field: "token", issue: "invalid_token" }],
     });
   }
 };

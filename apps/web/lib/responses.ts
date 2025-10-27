@@ -1,11 +1,12 @@
-import { parseRecallInfo } from "@/lib/utils/recall";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseDataValue } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
-import { getLocalizedValue } from "./i18n/utils";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { getLanguageCode, getLocalizedValue } from "./i18n/utils";
 
 // function to convert response value of type string | number | string[] or Record<string, string> to string | string[]
 export const convertResponseValue = (
-  answer: string | number | string[] | Record<string, string>,
+  answer: TResponseDataValue,
   question: TSurveyQuestion
 ): string | string[] => {
   switch (question.type) {
@@ -39,13 +40,17 @@ export const getQuestionResponseMapping = (
     response: string | string[];
     type: TSurveyQuestionType;
   }[] = [];
+  const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+
   for (const question of survey.questions) {
     const answer = response.data[question.id];
 
     questionResponseMapping.push({
-      question: parseRecallInfo(
-        getLocalizedValue(question.headline, response.language ?? "default"),
-        response.data
+      question: getTextContent(
+        parseRecallInfo(
+          getLocalizedValue(question.headline, responseLanguageCode ?? "default"),
+          response.data
+        )
       ),
       response: convertResponseValue(answer, question),
       type: question.type,
@@ -55,9 +60,7 @@ export const getQuestionResponseMapping = (
   return questionResponseMapping;
 };
 
-export const processResponseData = (
-  responseData: string | number | string[] | Record<string, string>
-): string => {
+export const processResponseData = (responseData: TResponseDataValue): string => {
   switch (typeof responseData) {
     case "string":
       return responseData;

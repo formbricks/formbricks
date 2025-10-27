@@ -1,7 +1,15 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
+import { TrashIcon } from "lucide-react";
+import React, { useCallback } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { extractRecallInfo } from "@/lib/utils/recall";
-import { findVariableUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -13,19 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import { TrashIcon } from "lucide-react";
-import React, { useCallback } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 
 interface SurveyVariablesCardItemProps {
   variable?: TSurveyVariable;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   mode: "create" | "edit";
+  quotas: TSurveyQuota[];
 }
 
 export const SurveyVariablesCardItem = ({
@@ -33,8 +35,9 @@ export const SurveyVariablesCardItem = ({
   localSurvey,
   setLocalSurvey,
   mode,
+  quotas,
 }: SurveyVariablesCardItemProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const form = useForm<TSurveyVariable>({
     defaultValues: variable ?? {
       id: createId(),
@@ -90,7 +93,44 @@ export const SurveyVariablesCardItem = ({
       );
       return;
     }
+    const recallQuestionIdx = isUsedInRecall(localSurvey, variableToDelete.id);
+    if (recallQuestionIdx === -2) {
+      toast.error(
+        t("environments.surveys.edit.variable_used_in_recall_welcome", { variable: variableToDelete.name })
+      );
+      return;
+    }
 
+    if (recallQuestionIdx === localSurvey.questions.length) {
+      toast.error(
+        t("environments.surveys.edit.variable_used_in_recall_ending_card", {
+          variable: variableToDelete.name,
+        })
+      );
+      return;
+    }
+
+    if (recallQuestionIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.variable_used_in_recall", {
+          variable: variableToDelete.name,
+          questionIndex: recallQuestionIdx + 1,
+        })
+      );
+      return;
+    }
+
+    const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { variableId: variableToDelete.id }));
+
+    if (quotaIdx !== -1) {
+      toast.error(
+        t("environments.surveys.edit.variable_is_used_in_quota_please_remove_it_from_quota_first", {
+          variableName: variableToDelete.name,
+          quotaName: quotas[quotaIdx].name,
+        })
+      );
+      return;
+    }
     // remove recall references
     questions.forEach((question) => {
       for (const [languageCode, headline] of Object.entries(question.headline)) {

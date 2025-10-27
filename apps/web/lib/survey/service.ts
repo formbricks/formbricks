@@ -1,8 +1,4 @@
 import "server-only";
-import {
-  getOrganizationByEnvironmentId,
-  subscribeOrganizationMembersToSurveyResponses,
-} from "@/lib/organization/service";
 import { ActionClass, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -11,6 +7,10 @@ import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "@/lib/organization/service";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
@@ -44,8 +44,6 @@ export const selectSurvey = {
   recontactDays: true,
   displayLimit: true,
   autoClose: true,
-  runOnDate: true,
-  closeOnDate: true,
   delay: true,
   displayPercentage: true,
   autoComplete: true,
@@ -58,9 +56,9 @@ export const selectSurvey = {
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
-  resultShareKey: true,
   showLanguageSwitch: true,
   recaptcha: true,
+  metadata: true,
   languages: {
     select: {
       default: true,
@@ -519,19 +517,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       type,
     };
 
-    // Remove scheduled status when runOnDate is not set
-    if (data.status === "scheduled" && data.runOnDate === null) {
-      data.status = "inProgress";
-    }
-    // Set scheduled status when runOnDate is set and in the future on completed surveys
-    if (
-      (data.status === "completed" || data.status === "paused" || data.status === "inProgress") &&
-      data.runOnDate &&
-      data.runOnDate > new Date()
-    ) {
-      data.status = "scheduled";
-    }
-
     delete data.createdBy;
     const prismaSurvey = await prisma.survey.update({
       where: { id: surveyId },
@@ -547,8 +532,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       };
     }
 
-    // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
-    // @ts-expect-error
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       displayPercentage: Number(prismaSurvey.displayPercentage) || null,
@@ -557,8 +540,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     return modifiedSurvey;
   } catch (error) {
+    logger.error(error, "Error updating survey");
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error updating survey");
       throw new DatabaseError(error.message);
     }
 
@@ -704,34 +687,6 @@ export const createSurvey = async (
     throw error;
   }
 };
-
-export const getSurveyIdByResultShareKey = reactCache(
-  async (resultShareKey: string): Promise<string | null> => {
-    try {
-      const survey = await prisma.survey.findFirst({
-        where: {
-          resultShareKey,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (!survey) {
-        return null;
-      }
-
-      return survey.id;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error getting survey id by result share key");
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
 
 export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: string): Promise<TSurvey> => {
   validateInputs([surveyId, ZId], [newSegmentId, ZId]);

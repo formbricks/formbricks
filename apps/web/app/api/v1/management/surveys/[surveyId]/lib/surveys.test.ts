@@ -1,9 +1,9 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import { deleteSurvey } from "./surveys";
 
 vi.mock("@/lib/utils/validate", () => ({
@@ -37,7 +37,6 @@ const mockDeletedSurveyAppPrivateSegment = {
   type: "app",
   segment: { id: segmentId, isPrivate: true },
   triggers: [{ actionClass: { id: actionClassId1 } }, { actionClass: { id: actionClassId2 } }],
-  resultShareKey: "shareKey123",
 };
 
 const mockDeletedSurveyLink = {
@@ -46,7 +45,6 @@ const mockDeletedSurveyLink = {
   type: "link",
   segment: null,
   triggers: [],
-  resultShareKey: null,
 };
 
 describe("deleteSurvey", () => {

@@ -1,22 +1,26 @@
-import { apiWrapper } from "@/modules/api/v2/auth/api-wrapper";
-import { authenticateRequest } from "@/modules/api/v2/auth/authenticate-request";
-import { checkRateLimitAndThrowError } from "@/modules/api/v2/lib/rate-limit";
-import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
-import { err, ok, okVoid } from "@formbricks/types/error-handlers";
+import { err, ok } from "@formbricks/types/error-handlers";
+import { apiWrapper } from "@/modules/api/v2/auth/api-wrapper";
+import { authenticateRequest } from "@/modules/api/v2/auth/authenticate-request";
+import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
 
 vi.mock("../authenticate-request", () => ({
   authenticateRequest: vi.fn(),
 }));
 
-vi.mock("@/modules/api/v2/lib/rate-limit", () => ({
-  checkRateLimitAndThrowError: vi.fn(),
+vi.mock("@/modules/core/rate-limit/rate-limit", () => ({
+  checkRateLimit: vi.fn(),
 }));
 
-vi.mock("@/modules/api/v2/lib/utils", () => ({
-  handleApiError: vi.fn(),
+vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
+  rateLimitConfigs: {
+    api: {
+      v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" },
+    },
+  },
 }));
 
 vi.mock("@/modules/api/v2/lib/utils", () => ({
@@ -24,20 +28,30 @@ vi.mock("@/modules/api/v2/lib/utils", () => ({
   handleApiError: vi.fn(),
 }));
 
+const mockAuthentication = {
+  type: "apiKey" as const,
+  environmentPermissions: [
+    {
+      environmentId: "env-id",
+      environmentType: "development" as const,
+      projectId: "project-id",
+      projectName: "Project Name",
+      permission: "manage" as const,
+    },
+  ],
+  apiKeyId: "hashed-api-key",
+  organizationId: "org-id",
+  organizationAccess: {} as any,
+} as any;
+
 describe("apiWrapper", () => {
   test("should handle request and return response", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
-    vi.mocked(checkRateLimitAndThrowError).mockResolvedValue(okVoid());
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
+    vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
     const handler = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
     const response = await apiWrapper({
@@ -74,13 +88,7 @@ describe("apiWrapper", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
 
     const bodySchema = z.object({ key: z.string() });
     const handler = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
@@ -107,14 +115,7 @@ describe("apiWrapper", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
-
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
     vi.mocked(handleApiError).mockResolvedValue(new Response("error", { status: 400 }));
 
     const bodySchema = z.object({ key: z.string() });
@@ -134,13 +135,7 @@ describe("apiWrapper", () => {
   test("should parse query schema correctly", async () => {
     const request = new Request("http://localhost?key=value");
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
 
     const querySchema = z.object({ key: z.string() });
     const handler = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
@@ -163,14 +158,7 @@ describe("apiWrapper", () => {
   test("should handle query schema errors", async () => {
     const request = new Request("http://localhost?foo%ZZ=abc");
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
-
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
     vi.mocked(handleApiError).mockResolvedValue(new Response("error", { status: 400 }));
 
     const querySchema = z.object({ key: z.string() });
@@ -190,13 +178,7 @@ describe("apiWrapper", () => {
   test("should parse params schema correctly", async () => {
     const request = new Request("http://localhost");
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
 
     const paramsSchema = z.object({ key: z.string() });
     const handler = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
@@ -220,14 +202,7 @@ describe("apiWrapper", () => {
   test("should handle no external params", async () => {
     const request = new Request("http://localhost");
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
-
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
     vi.mocked(handleApiError).mockResolvedValue(new Response("error", { status: 400 }));
 
     const paramsSchema = z.object({ key: z.string() });
@@ -248,14 +223,7 @@ describe("apiWrapper", () => {
   test("should handle params schema errors", async () => {
     const request = new Request("http://localhost");
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
-
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
     vi.mocked(handleApiError).mockResolvedValue(new Response("error", { status: 400 }));
 
     const paramsSchema = z.object({ key: z.string() });
@@ -273,21 +241,13 @@ describe("apiWrapper", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  test("should handle rate limit errors", async () => {
+  test("should handle rate limit exceeded", async () => {
     const request = new Request("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
 
-    vi.mocked(authenticateRequest).mockResolvedValue(
-      ok({
-        type: "apiKey",
-        environmentId: "env-id",
-        hashedApiKey: "hashed-api-key",
-      })
-    );
-    vi.mocked(checkRateLimitAndThrowError).mockResolvedValue(
-      err({ type: "rateLimitExceeded" } as unknown as ApiErrorResponseV2)
-    );
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
+    vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: false }));
     vi.mocked(handleApiError).mockImplementation(
       (_request: Request, _error: ApiErrorResponseV2): Response =>
         new Response("rate limit exceeded", { status: 429 })
@@ -301,5 +261,25 @@ describe("apiWrapper", () => {
 
     expect(response.status).toBe(429);
     expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("should handle rate limit check failure gracefully", async () => {
+    const request = new Request("http://localhost", {
+      headers: { "x-api-key": "valid-api-key" },
+    });
+
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
+    // When rate limiting fails (e.g., Redis connection issues), checkRateLimit fails open by returning allowed: true
+    vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
+
+    const handler = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
+    const response = await apiWrapper({
+      request,
+      handler,
+    });
+
+    // Should fail open for availability
+    expect(response.status).toBe(200);
+    expect(handler).toHaveBeenCalled();
   });
 });

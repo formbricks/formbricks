@@ -1,0 +1,319 @@
+name: Build and Push Docker Image
+description: |
+  Unified Docker build and push action for both ECR and GHCR registries.
+
+  Supports:
+  - ECR builds for Formbricks Cloud deployment
+  - GHCR builds for community self-hosting
+  - Automatic version resolution and tagging
+  - Conditional signing and deployment tags
+
+inputs:
+  registry_type:
+    description: "Registry type: 'ecr' or 'ghcr'"
+    required: true
+
+  # Version input
+  version:
+    description: "Explicit version (SemVer only, e.g., 1.2.3). If provided, this version is used directly. If empty, version is auto-generated from branch name."
+    required: false
+  experimental_mode:
+    description: "Enable experimental timestamped versions"
+    required: false
+    default: "false"
+
+  # ECR specific inputs
+  ecr_registry:
+    description: "ECR registry URL (required for ECR builds)"
+    required: false
+  ecr_repository:
+    description: "ECR repository name (required for ECR builds)"
+    required: false
+  ecr_region:
+    description: "ECR AWS region (required for ECR builds)"
+    required: false
+  aws_role_arn:
+    description: "AWS role ARN for ECR authentication (required for ECR builds)"
+    required: false
+
+  # GHCR specific inputs
+  ghcr_image_name:
+    description: "GHCR image name (required for GHCR builds)"
+    required: false
+
+  # Deployment options
+  deploy_production:
+    description: "Tag image for production deployment"
+    required: false
+    default: "false"
+  deploy_staging:
+    description: "Tag image for staging deployment"
+    required: false
+    default: "false"
+  is_prerelease:
+    description: "Whether this is a prerelease (auto-tags for staging/production)"
+    required: false
+    default: "false"
+  make_latest:
+    description: "Whether to tag as latest/production (from GitHub release 'Set as the latest release' option)"
+    required: false
+    default: "false"
+
+  # Build options
+  dockerfile:
+    description: "Path to Dockerfile"
+    required: false
+    default: "apps/web/Dockerfile"
+  context:
+    description: "Build context"
+    required: false
+    default: "."
+
+outputs:
+  image_tag:
+    description: "Resolved image tag used for the build"
+    value: ${{ steps.version.outputs.version }}
+  registry_tags:
+    description: "Complete registry tags that were pushed"
+    value: ${{ steps.build.outputs.tags }}
+  image_digest:
+    description: "Image digest from the build"
+    value: ${{ steps.build.outputs.digest }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate inputs
+      shell: bash
+      env:
+        REGISTRY_TYPE: ${{ inputs.registry_type }}
+        ECR_REGISTRY: ${{ inputs.ecr_registry }}
+        ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+        ECR_REGION: ${{ inputs.ecr_region }}
+        AWS_ROLE_ARN: ${{ inputs.aws_role_arn }}
+        GHCR_IMAGE_NAME: ${{ inputs.ghcr_image_name }}
+      run: |
+        set -euo pipefail
+
+        if [[ "$REGISTRY_TYPE" != "ecr" && "$REGISTRY_TYPE" != "ghcr" ]]; then
+          echo "ERROR: registry_type must be 'ecr' or 'ghcr', got: $REGISTRY_TYPE"
+          exit 1
+        fi
+
+        if [[ "$REGISTRY_TYPE" == "ecr" ]]; then
+          if [[ -z "$ECR_REGISTRY" || -z "$ECR_REPOSITORY" || -z "$ECR_REGION" || -z "$AWS_ROLE_ARN" ]]; then
+            echo "ERROR: ECR builds require ecr_registry, ecr_repository, ecr_region, and aws_role_arn"
+            exit 1
+          fi
+        fi
+
+        if [[ "$REGISTRY_TYPE" == "ghcr" ]]; then
+          if [[ -z "$GHCR_IMAGE_NAME" ]]; then
+            echo "ERROR: GHCR builds require ghcr_image_name"
+            exit 1
+          fi
+        fi
+
+        echo "SUCCESS: Input validation passed for $REGISTRY_TYPE build"
+
+    - name: Resolve Docker version
+      id: version
+      uses: ./.github/actions/resolve-docker-version
+      with:
+        version: ${{ inputs.version }}
+        current_branch: ${{ github.ref_name }}
+        experimental_mode: ${{ inputs.experimental_mode }}
+
+    - name: Update package.json version
+      uses: ./.github/actions/update-package-version
+      with:
+        version: ${{ steps.version.outputs.version }}
+
+    - name: Configure AWS credentials (ECR only)
+      if: ${{ inputs.registry_type == 'ecr' }}
+      uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.2.0
+      with:
+        role-to-assume: ${{ inputs.aws_role_arn }}
+        aws-region: ${{ inputs.ecr_region }}
+
+    - name: Log in to Amazon ECR (ECR only)
+      if: ${{ inputs.registry_type == 'ecr' }}
+      uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
+    - name: Set up Docker build tools
+      uses: ./.github/actions/docker-build-setup
+      with:
+        registry: ${{ inputs.registry_type == 'ghcr' && 'ghcr.io' || '' }}
+        setup_cosign: ${{ inputs.registry_type == 'ghcr' && 'true' || 'false' }}
+        skip_login_on_pr: ${{ inputs.registry_type == 'ghcr' && 'true' || 'false' }}
+
+    - name: Build ECR tag list
+      if: ${{ inputs.registry_type == 'ecr' }}
+      id: ecr-tags
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ steps.version.outputs.version }}
+        ECR_REGISTRY: ${{ inputs.ecr_registry }}
+        ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+        DEPLOY_PRODUCTION: ${{ inputs.deploy_production }}
+        DEPLOY_STAGING: ${{ inputs.deploy_staging }}
+        IS_PRERELEASE: ${{ inputs.is_prerelease }}
+        MAKE_LATEST: ${{ inputs.make_latest }}
+      run: |
+        set -euo pipefail
+
+        # Start with the base image tag
+        TAGS="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+        # Handle automatic tagging based on release type
+        if [[ "${IS_PRERELEASE}" == "true" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
+          echo "Adding staging tag for prerelease"
+        elif [[ "${IS_PRERELEASE}" == "false" && "${MAKE_LATEST}" == "true" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:production"
+          echo "Adding production tag for stable release marked as latest"
+        fi
+
+        # Handle manual deployment overrides
+        if [[ "${DEPLOY_PRODUCTION}" == "true" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:production"
+          echo "Adding production tag (manual override)"
+        fi
+        if [[ "${DEPLOY_STAGING}" == "true" ]]; then
+          TAGS="${TAGS}\n${ECR_REGISTRY}/${ECR_REPOSITORY}:staging"
+          echo "Adding staging tag (manual override)"
+        fi
+
+        echo "ECR tags generated:"
+        echo -e "${TAGS}"
+
+        {
+          echo "tags<<EOF"
+          echo -e "${TAGS}"
+          echo "EOF"
+        } >> "${GITHUB_OUTPUT}"
+
+    - name: Generate additional GHCR tags for releases
+      if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && (github.event_name == 'workflow_call' || github.event_name == 'release' || github.event_name == 'workflow_dispatch') }}
+      id: ghcr-extra-tags
+      shell: bash
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+        IMAGE_NAME: ${{ inputs.ghcr_image_name }}
+        IS_PRERELEASE: ${{ inputs.is_prerelease }}
+        MAKE_LATEST: ${{ inputs.make_latest }}
+      run: |
+        set -euo pipefail
+
+        # Start with base version tag
+        TAGS="ghcr.io/${IMAGE_NAME}:${VERSION}"
+
+        # For proper SemVer releases, add major.minor and major tags
+        if [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          # Extract major and minor versions
+          MAJOR=$(echo "${VERSION}" | cut -d. -f1)
+          MINOR=$(echo "${VERSION}" | cut -d. -f2)
+          
+          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:${MAJOR}.${MINOR}"
+          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:${MAJOR}"
+          
+          echo "Added SemVer tags: ${MAJOR}.${MINOR}, ${MAJOR}"
+        fi
+
+        # Add latest tag for stable releases marked as latest
+        if [[ "${IS_PRERELEASE}" == "false" && "${MAKE_LATEST}" == "true" ]]; then
+          TAGS="${TAGS}\nghcr.io/${IMAGE_NAME}:latest"
+          echo "Added latest tag for stable release marked as latest"
+        fi
+
+        echo "Generated GHCR tags:"
+        echo -e "${TAGS}"
+
+        # Debug: Show what will be passed to Docker build
+        echo "DEBUG: Tags for Docker build step:"
+        echo -e "${TAGS}"
+
+        {
+          echo "tags<<EOF"
+          echo -e "${TAGS}"
+          echo "EOF"
+        } >> "${GITHUB_OUTPUT}"
+
+    - name: Build GHCR metadata (experimental)
+      if: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' }}
+      id: ghcr-meta-experimental
+      uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
+      with:
+        images: ghcr.io/${{ inputs.ghcr_image_name }}
+        tags: |
+          type=ref,event=branch
+          type=raw,value=${{ steps.version.outputs.version }}
+
+    - name: Debug Docker build tags
+      shell: bash
+      run: |
+        echo "=== DEBUG: Docker Build Configuration ==="
+        echo "Registry Type: ${{ inputs.registry_type }}"
+        echo "Experimental Mode: ${{ inputs.experimental_mode }}"
+        echo "Event Name: ${{ github.event_name }}"
+        echo "Is Prerelease: ${{ inputs.is_prerelease }}"
+        echo "Make Latest: ${{ inputs.make_latest }}"
+        echo "Version: ${{ steps.version.outputs.version }}"
+
+        if [[ "${{ inputs.registry_type }}" == "ecr" ]]; then
+          echo "ECR Tags: ${{ steps.ecr-tags.outputs.tags }}"
+        elif [[ "${{ inputs.experimental_mode }}" == "true" ]]; then
+          echo "GHCR Experimental Tags: ${{ steps.ghcr-meta-experimental.outputs.tags }}"
+        else
+          echo "GHCR Extra Tags: ${{ steps.ghcr-extra-tags.outputs.tags }}"
+        fi
+
+    - name: Build and push Docker image
+      id: build
+      uses: depot/build-push-action@636daae76684e38c301daa0c5eca1c095b24e780 # v1.14.0
+      with:
+        project: tw0fqmsx3c
+        token: ${{ env.DEPOT_PROJECT_TOKEN }}
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile }}
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && steps.ghcr-extra-tags.outputs.tags) || (inputs.registry_type == 'ghcr' && format('ghcr.io/{0}:{1}', inputs.ghcr_image_name, steps.version.outputs.version)) || (inputs.registry_type == 'ecr' && format('{0}/{1}:{2}', inputs.ecr_registry, inputs.ecr_repository, steps.version.outputs.version)) }}
+        labels: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.labels || '' }}
+        secrets: |
+          database_url=${{ env.DUMMY_DATABASE_URL }}
+          encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}
+          redis_url=${{ env.DUMMY_REDIS_URL }}
+          sentry_auth_token=${{ env.SENTRY_AUTH_TOKEN }}
+      env:
+        DEPOT_PROJECT_TOKEN: ${{ env.DEPOT_PROJECT_TOKEN }}
+        DUMMY_DATABASE_URL: ${{ env.DUMMY_DATABASE_URL }}
+        DUMMY_ENCRYPTION_KEY: ${{ env.DUMMY_ENCRYPTION_KEY }}
+        DUMMY_REDIS_URL: ${{ env.DUMMY_REDIS_URL }}
+        SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
+
+    - name: Sign GHCR image (GHCR only)
+      if: ${{ inputs.registry_type == 'ghcr' && (github.event_name == 'workflow_call' || github.event_name == 'release' || github.event_name == 'workflow_dispatch') }}
+      shell: bash
+      env:
+        TAGS: ${{ inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags || steps.ghcr-extra-tags.outputs.tags }}
+        DIGEST: ${{ steps.build.outputs.digest }}
+      run: |
+        set -euo pipefail
+        echo "${TAGS}" | xargs -I {} cosign sign --yes "{}@${DIGEST}"
+
+    - name: Output build summary
+      shell: bash
+      env:
+        REGISTRY_TYPE: ${{ inputs.registry_type }}
+        IMAGE_TAG: ${{ steps.version.outputs.version }}
+        VERSION_SOURCE: ${{ steps.version.outputs.source }}
+      run: |
+        echo "SUCCESS: Built and pushed Docker image to $REGISTRY_TYPE"
+        echo "Image Tag: $IMAGE_TAG (source: $VERSION_SOURCE)"
+        if [[ "$REGISTRY_TYPE" == "ecr" ]]; then
+          echo "ECR Registry: ${{ inputs.ecr_registry }}"
+          echo "ECR Repository: ${{ inputs.ecr_repository }}"
+        else
+          echo "GHCR Image: ghcr.io/${{ inputs.ghcr_image_name }}"
+        fi

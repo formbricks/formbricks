@@ -1,11 +1,13 @@
 "use client";
 
+import { CheckCircle2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { TResponseWithQuotas } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
-import { useTranslate } from "@tolgee/react";
-import { CheckCircle2Icon } from "lucide-react";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { isValidValue } from "../util";
 import { HiddenFields } from "./HiddenFields";
 import { QuestionSkip } from "./QuestionSkip";
@@ -15,7 +17,7 @@ import { VerifiedEmail } from "./VerifiedEmail";
 
 interface SingleResponseCardBodyProps {
   survey: TSurvey;
-  response: TResponse;
+  response: TResponseWithQuotas;
   skippedQuestions: string[][];
 }
 
@@ -25,7 +27,7 @@ export const SingleResponseCardBody = ({
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
   const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
     // Updated regex to match content between #/ and \#
     const regex = /#\/(.*?)\\#/g;
@@ -76,13 +78,15 @@ export const SingleResponseCardBody = ({
             <div key={`${question.id}`}>
               {isValidValue(response.data[question.id]) ? (
                 <div>
-                  <p className="text-sm text-slate-500">
+                  <p className="mb-1 text-sm font-semibold text-slate-600">
                     {formatTextWithSlashes(
-                      parseRecallInfo(
-                        getLocalizedValue(question.headline, "default"),
-                        response.data,
-                        response.variables,
-                        true
+                      getTextContent(
+                        parseRecallInfo(
+                          getLocalizedValue(question.headline, "default"),
+                          response.data,
+                          response.variables,
+                          true
+                        )
                       )
                     )}
                   </p>
@@ -92,6 +96,7 @@ export const SingleResponseCardBody = ({
                       survey={survey}
                       responseData={response.data[question.id]}
                       language={response.language}
+                      showId={true}
                     />
                   </div>
                 </div>
@@ -116,9 +121,12 @@ export const SingleResponseCardBody = ({
       {survey.variables.length > 0 && (
         <ResponseVariables variables={survey.variables} variablesData={response.variables} />
       )}
-      {survey.hiddenFields.enabled && survey.hiddenFields.fieldIds && (
+      {survey.hiddenFields.fieldIds && (
         <HiddenFields hiddenFields={survey.hiddenFields} responseData={response.data} />
       )}
+
+      <ResponseCardQuotas quotas={response.quotas} />
+
       {response.finished && (
         <div className="mt-4 flex items-center">
           <CheckCircle2Icon className="h-6 w-6 text-slate-400" />

@@ -1,5 +1,5 @@
-import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { useState } from "react";
+import { ColorPicker } from "@/modules/ui/components/color-picker";
 
 interface ColorSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;
@@ -23,6 +23,7 @@ export const ColorSurveyBg = ({ handleBgChange, colors, background }: ColorSurve
         {colors.map((x) => {
           return (
             <button
+              type="button"
               className={`h-16 w-16 cursor-pointer rounded-lg border border-slate-300 ${
                 color === x ? "border-4 border-slate-500" : ""
               }`}

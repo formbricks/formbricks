@@ -1,6 +1,7 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "crypto";
+import { compare, hash } from "bcryptjs";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
 import { logger } from "@formbricks/logger";
-import { ENCRYPTION_KEY } from "./constants";
+import { ENCRYPTION_KEY } from "@/lib/constants";
 
 const ALGORITHM_V1 = "aes256";
 const ALGORITHM_V2 = "aes-256-gcm";
@@ -85,46 +86,58 @@ export function symmetricDecrypt(payload: string, key: string): string {
   try {
     return symmetricDecryptV2(payload, key);
   } catch (err) {
-    logger.warn(err, "AES-GCM decryption failed; refusing to fall back to insecure CBC");
+    logger.warn({ err }, "AES-GCM decryption failed; refusing to fall back to insecure CBC");
 
     throw err;
   }
 }
 
-export const getHash = (key: string): string => createHash("sha256").update(key).digest("hex");
-
-export const generateLocalSignedUrl = (
-  fileName: string,
-  environmentId: string,
-  fileType: string
-): { signature: string; uuid: string; timestamp: number } => {
-  const uuid = randomBytes(16).toString("hex");
-  const timestamp = Date.now();
-  const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
-  const signature = createHmac("sha256", ENCRYPTION_KEY).update(data).digest("hex");
-  return { signature, uuid, timestamp };
+/**
+ * General bcrypt hashing utility for secrets (passwords, API keys, etc.)
+ */
+export const hashSecret = async (secret: string, cost: number = 12): Promise<string> => {
+  return await hash(secret, cost);
 };
 
-export const validateLocalSignedUrl = (
-  uuid: string,
-  fileName: string,
-  environmentId: string,
-  fileType: string,
-  timestamp: number,
-  signature: string,
-  secret: string
-): boolean => {
-  const data = `${uuid}:${fileName}:${environmentId}:${fileType}:${timestamp}`;
-  const expectedSignature = createHmac("sha256", secret).update(data).digest("hex");
-
-  if (expectedSignature !== signature) {
+/**
+ * General bcrypt verification utility for secrets (passwords, API keys, etc.)
+ */
+export const verifySecret = async (secret: string, hashedSecret: string): Promise<boolean> => {
+  try {
+    const isValid = await compare(secret, hashedSecret);
+    return isValid;
+  } catch (error) {
+    // Log warning for debugging purposes, but don't throw to maintain security
+    logger.warn({ error }, "Secret verification failed due to invalid hash format");
+    // Return false for invalid hashes or other bcrypt errors
     return false;
   }
+};
 
-  // valid for 5 minutes
-  if (Date.now() - timestamp > 1000 * 60 * 5) {
-    return false;
+/**
+ * SHA-256 hashing utility (deterministic, for legacy support)
+ */
+export const hashSha256 = (input: string): string => {
+  return createHash("sha256").update(input).digest("hex");
+};
+
+/**
+ * Parse a v2 API key format: fbk_{secret}
+ * Returns null if the key doesn't match the expected format
+ */
+export const parseApiKeyV2 = (key: string): { secret: string } | null => {
+  // Check if it starts with fbk_
+  if (!key.startsWith("fbk_")) {
+    return null;
   }
 
-  return true;
+  const secret = key.slice(4); // Skip 'fbk_' prefix
+
+  // Validate that secret contains only allowed characters and is not empty
+  // Secrets are base64url-encoded and can contain underscores, hyphens, and alphanumeric chars
+  if (!secret || !/^[A-Za-z0-9_-]+$/.test(secret)) {
+    return null;
+  }
+
+  return { secret };
 };

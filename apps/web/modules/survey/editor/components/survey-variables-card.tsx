@@ -1,18 +1,20 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { SurveyVariablesCardItem } from "@/modules/survey/editor/components/survey-variables-card-item";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { FileDigitIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { SurveyVariablesCardItem } from "@/modules/survey/editor/components/survey-variables-card-item";
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (id: TSurveyQuestionId | null) => void;
+  quotas: TSurveyQuota[];
 }
 
 const variablesCardId = `fb-variables-${Date.now()}`;
@@ -22,9 +24,10 @@ export const SurveyVariablesCard = ({
   setLocalSurvey,
   activeQuestionId,
   setActiveQuestionId,
+  quotas,
 }: SurveyVariablesCardProps) => {
   const open = activeQuestionId === variablesCardId;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
   const setOpenState = (state: boolean) => {
@@ -72,6 +75,7 @@ export const SurveyVariablesCard = ({
                   variable={variable}
                   localSurvey={localSurvey}
                   setLocalSurvey={setLocalSurvey}
+                  quotas={quotas}
                 />
               ))
             ) : (
@@ -81,7 +85,12 @@ export const SurveyVariablesCard = ({
             )}
           </div>
 
-          <SurveyVariablesCardItem mode="create" localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+          <SurveyVariablesCardItem
+            mode="create"
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            quotas={quotas}
+          />
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
     </div>

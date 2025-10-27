@@ -12,6 +12,7 @@ interface AdvancedOptionToggleProps {
   childBorder?: boolean;
   customContainerClass?: string;
   disabled?: boolean;
+  childrenContainerClass?: string;
 }
 
 export const AdvancedOptionToggle = ({
@@ -24,6 +25,7 @@ export const AdvancedOptionToggle = ({
   childBorder,
   customContainerClass,
   disabled = false,
+  childrenContainerClass,
 }: AdvancedOptionToggleProps) => {
   return (
     <div className={cn("px-4 py-2", customContainerClass)}>
@@ -38,9 +40,11 @@ export const AdvancedOptionToggle = ({
       </div>
       {children && isChecked && (
         <div
-          className={`mt-4 flex w-full items-center space-x-1 rounded-lg ${
-            childBorder ? "border" : ""
-          } bg-slate-50`}>
+          className={cn(
+            "mt-4 flex w-full items-center space-x-1 overflow-hidden rounded-lg bg-slate-50",
+            childBorder && "border",
+            childrenContainerClass
+          )}>
           {children}
         </div>
       )}

@@ -1,14 +1,14 @@
 "use client";
 
-import { getOriginalFileNameFromUrl } from "@/lib/storage/utils";
-import { useTranslate } from "@tolgee/react";
 import { DownloadIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 
 interface FileUploadResponseProps {
   selected: string[];
 }
 export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   if (selected.length === 0) {
     return <div className="font-semibold text-slate-500">{t("common.skipped")}</div>;
   }

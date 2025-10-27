@@ -8,7 +8,6 @@ export const COLOR_DEFAULTS = {
   inputBorderColor: "#cbd5e1",
   cardBackgroundColor: "#ffffff",
   cardBorderColor: "#f8fafc",
-  cardShadowColor: "#000000",
   highlightBorderColor: "#64748b",
 } as const;
 
@@ -32,16 +31,9 @@ export const defaultStyling: TProjectStyling = {
   cardBorderColor: {
     light: COLOR_DEFAULTS.cardBorderColor,
   },
-  cardShadowColor: {
-    light: COLOR_DEFAULTS.cardShadowColor,
-  },
   isLogoHidden: false,
   highlightBorderColor: undefined,
   isDarkModeEnabled: false,
-  background: {
-    bg: "#fff",
-    bgType: "color",
-  },
   roundness: 8,
   cardArrangement: {
     linkSurveys: "straight",

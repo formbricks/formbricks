@@ -1,14 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { createI18nString } from "@/lib/i18n/utils";
-import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -18,6 +13,11 @@ import {
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
+import { createI18nString } from "@/lib/i18n/utils";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
@@ -39,6 +39,7 @@ interface ChoiceProps {
   ) => void;
   surveyLanguageCodes: string[];
   locale: TUserLocale;
+  isStorageConfigured: boolean;
 }
 
 export const QuestionOptionChoice = ({
@@ -57,12 +58,13 @@ export const QuestionOptionChoice = ({
   surveyLanguageCodes,
   updateQuestion,
   locale,
+  isStorageConfigured,
 }: ChoiceProps) => {
-  const { t } = useTranslate();
-  const isDragDisabled = choice.id === "other";
+  const { t } = useTranslation();
+  const isSpecialChoice = choice.id === "other" || choice.id === "none";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
-    disabled: isDragDisabled,
+    disabled: isSpecialChoice,
   });
 
   const style = {
@@ -70,10 +72,29 @@ export const QuestionOptionChoice = ({
     transform: CSS.Translate.toString(transform),
   };
 
+  const focusChoiceInput = (targetIdx: number) => {
+    const input = document.querySelector(`input[id="choice-${targetIdx}"]`) as HTMLInputElement;
+    input?.focus();
+  };
+
+  const addChoiceAndFocus = (idx: number) => {
+    addChoice(idx);
+    // Wait for DOM update before focusing the new input
+    setTimeout(() => focusChoiceInput(idx + 1), 0);
+  };
+
+  const getPlaceholder = () => {
+    if (choice.id === "other") return t("common.other");
+    if (choice.id === "none") return t("common.none_of_the_above");
+    return t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
+  };
+
+  const normalChoice = question.choices?.filter((c) => c.id !== "other" && c.id !== "none") || [];
+
   return (
     <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
-      <div className={cn(choice.id === "other" && "invisible")} {...listeners} {...attributes}>
+      <div className={cn(isSpecialChoice && "invisible")} {...listeners} {...attributes}>
         <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
       </div>
 
@@ -81,11 +102,7 @@ export const QuestionOptionChoice = ({
         <QuestionFormInput
           key={choice.id}
           id={`choice-${choiceIdx}`}
-          placeholder={
-            choice.id === "other"
-              ? t("common.other")
-              : t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 })
-          }
+          placeholder={getPlaceholder()}
           label={""}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
@@ -94,10 +111,37 @@ export const QuestionOptionChoice = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           isInvalid={
-            isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
+            isInvalid && !isLabelValidForAllLanguages(question.choices?.[choiceIdx]?.label, surveyLanguages)
           }
-          className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
+          className={`${isSpecialChoice ? "border border-dashed" : ""} mt-0`}
           locale={locale}
+          isStorageConfigured={isStorageConfigured}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && choice.id !== "other") {
+              e.preventDefault();
+              const lastChoiceIdx = question.choices?.findLastIndex((c) => c.id !== "other") ?? -1;
+
+              if (choiceIdx === lastChoiceIdx) {
+                addChoiceAndFocus(choiceIdx);
+              } else {
+                focusChoiceInput(choiceIdx + 1);
+              }
+            }
+
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              if (choiceIdx + 1 < (question.choices?.length ?? 0)) {
+                focusChoiceInput(choiceIdx + 1);
+              }
+            }
+
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              if (choiceIdx > 0) {
+                focusChoiceInput(choiceIdx - 1);
+              }
+            }
+          }}
         />
         {choice.id === "other" && (
           <QuestionFormInput
@@ -107,23 +151,23 @@ export const QuestionOptionChoice = ({
             label={""}
             questionIdx={questionIdx}
             value={
-              question.otherOptionPlaceholder
-                ? question.otherOptionPlaceholder
-                : createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
+              question.otherOptionPlaceholder ??
+              createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
             }
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             isInvalid={
-              isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
+              isInvalid && !isLabelValidForAllLanguages(question.choices?.[choiceIdx]?.label, surveyLanguages)
             }
             className="border border-dashed"
             locale={locale}
+            isStorageConfigured={isStorageConfigured}
           />
         )}
       </div>
       <div className="flex gap-2">
-        {question.choices && question.choices.length > 2 && (
+        {(normalChoice.length > 2 || isSpecialChoice) && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
             <Button
               variant="secondary"
@@ -137,7 +181,7 @@ export const QuestionOptionChoice = ({
             </Button>
           </TooltipRenderer>
         )}
-        {choice.id !== "other" && (
+        {!isSpecialChoice && (
           <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_choice_below")}>
             <Button
               variant="secondary"
@@ -145,7 +189,7 @@ export const QuestionOptionChoice = ({
               aria-label="Add choice below"
               onClick={(e) => {
                 e.preventDefault();
-                addChoice(choiceIdx);
+                addChoiceAndFocus(choiceIdx);
               }}>
               <PlusIcon />
             </Button>

@@ -1,23 +1,30 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { deleteContactAction } from "@/modules/ee/contacts/actions";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { useTranslate } from "@tolgee/react";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { deleteContactAction } from "@/modules/ee/contacts/actions";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 
 interface DeleteContactButtonProps {
   environmentId: string;
   contactId: string;
   isReadOnly: boolean;
+  isQuotasAllowed: boolean;
 }
 
-export const DeleteContactButton = ({ environmentId, contactId, isReadOnly }: DeleteContactButtonProps) => {
+export const DeleteContactButton = ({
+  environmentId,
+  contactId,
+  isReadOnly,
+  isQuotasAllowed,
+}: DeleteContactButtonProps) => {
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
 
@@ -48,18 +55,27 @@ export const DeleteContactButton = ({ environmentId, contactId, isReadOnly }: De
 
   return (
     <>
-      <button
+      <Button
+        variant="destructive"
+        size="icon"
         onClick={() => {
           setDeleteDialogOpen(true);
         }}>
-        <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-700" />
-      </button>
+        <TrashIcon />
+      </Button>
       <DeleteDialog
         open={deleteDialogOpen}
         setOpen={setDeleteDialogOpen}
         deleteWhat="person"
         onDelete={handleDeletePerson}
         isDeleting={isDeletingPerson}
+        text={
+          isQuotasAllowed
+            ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+                value: 1,
+              })
+            : t("environments.contacts.delete_contact_confirmation")
+        }
       />
     </>
   );

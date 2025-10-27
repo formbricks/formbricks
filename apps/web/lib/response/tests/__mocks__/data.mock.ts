@@ -1,19 +1,16 @@
-import { mockWelcomeCard } from "@/lib/i18n/i18n.mock";
 import { Prisma } from "@prisma/client";
 import { isAfter, isBefore, isSameDay } from "date-fns";
 import { TDisplay } from "@formbricks/types/displays";
+import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse, TResponseFilterCriteria, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { responseNoteSelect } from "../../../responseNote/service";
+import { mockWelcomeCard } from "@/lib/i18n/i18n.mock";
 import { responseSelection } from "../../service";
 import { constantsForTests } from "../constants";
 
 type ResponseMock = Prisma.ResponseGetPayload<{
   include: typeof responseSelection;
-}>;
-type ResponseNoteMock = Prisma.ResponseNoteGetPayload<{
-  include: typeof responseNoteSelect;
 }>;
 
 export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
@@ -31,25 +28,6 @@ export const mockMeta = {
     browser: constantsForTests.browser,
     os: constantsForTests.text,
     device: constantsForTests.text,
-  },
-};
-
-export const mockResponseNote: ResponseNoteMock = {
-  id: "clnndevho0mqrqp0fm2ozul8p",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  text: constantsForTests.text,
-  isEdited: constantsForTests.boolean,
-  isResolved: constantsForTests.boolean,
-  responseId: mockResponseId,
-  userId: mockUserId,
-  response: {
-    id: mockResponseId,
-    surveyId: mockSurveyId,
-  },
-  user: {
-    id: mockContactId,
-    name: constantsForTests.fullName,
   },
 };
 
@@ -94,13 +72,41 @@ export const mockResponse: ResponseMock = {
   createdAt: new Date(),
   finished: constantsForTests.boolean,
   meta: mockMeta,
-  notes: [mockResponseNote],
   tags: mockTags,
   personId: mockContactId,
   updatedAt: new Date(),
   language: "English",
   ttc: {},
   variables: {},
+};
+
+const mockSurveyQuota: TSurveyQuota = {
+  id: constantsForTests.uuid,
+  surveyId: mockSurveyId,
+  name: "Quota 1",
+  action: "endSurvey",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  countPartialSubmissions: false,
+  endingCardId: null,
+  limit: 1,
+  logic: {
+    connector: "and",
+    conditions: [],
+  },
+};
+
+type mockResponseWithQuotas = ResponseMock & {
+  quotaLinks: { quota: TSurveyQuota }[];
+};
+
+export const mockResponseWithQuotas: mockResponseWithQuotas = {
+  ...mockResponse,
+  quotaLinks: [
+    {
+      quota: mockSurveyQuota,
+    },
+  ],
 };
 
 const getMockTags = (tags: string[]): { tag: TTag }[] => {
@@ -142,7 +148,6 @@ export const mockResponses: ResponseMock[] = [
     },
     language: null,
     tags: getMockTags(["tag1", "tag3"]),
-    notes: [],
     endingId: null,
     displayId: null,
   },
@@ -169,7 +174,6 @@ export const mockResponses: ResponseMock[] = [
     person: null,
     language: null,
     tags: getMockTags(["tag1", "tag2"]),
-    notes: [],
   },
   {
     id: "clsk7b15p001fk8iu04qpvo2f",
@@ -192,7 +196,6 @@ export const mockResponses: ResponseMock[] = [
     personId: mockContactId,
     person: null,
     tags: getMockTags(["tag2", "tag3"]),
-    notes: [],
     language: null,
   },
   {
@@ -216,7 +219,6 @@ export const mockResponses: ResponseMock[] = [
     personId: mockContactId,
     person: null,
     tags: getMockTags(["tag1", "tag4"]),
-    notes: [],
     language: null,
   },
   {
@@ -240,7 +242,6 @@ export const mockResponses: ResponseMock[] = [
     personId: mockContactId,
     person: null,
     tags: getMockTags(["tag4", "tag5"]),
-    notes: [],
     language: null,
   },
 ];
@@ -387,9 +388,12 @@ export const mockSurveySummaryOutput = {
     dropOffPercentage: 0,
     dropOffCount: 0,
     startsPercentage: 0,
+    quotasCompleted: 0,
+    quotasCompletedPercentage: 0,
     totalResponses: 1,
     ttcAverage: 0,
   },
+  quotas: [],
   summary: [
     {
       question: {
@@ -505,8 +509,6 @@ export const mockSurvey: TSurvey = {
   recontactDays: null,
   displayLimit: null,
   autoClose: null,
-  runOnDate: null,
-  closeOnDate: null,
   delay: 0,
   displayPercentage: null,
   autoComplete: null,
@@ -520,7 +522,6 @@ export const mockSurvey: TSurvey = {
     isEncrypted: true,
   },
   pin: null,
-  resultShareKey: null,
   triggers: [],
   languages: [],
   segment: [],

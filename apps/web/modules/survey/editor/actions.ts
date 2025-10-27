@@ -1,5 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -14,14 +19,11 @@ import {
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
+import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { z } from "zod";
-import { ZActionClassInput } from "@formbricks/types/action-classes";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
 import { getProject } from "./lib/project";
 
 /**
@@ -81,9 +83,15 @@ export const updateSurveyAction = authenticatedActionClient.schema(ZSurvey).acti
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.surveyId = parsedInput.id;
       const oldObject = await getSurvey(parsedInput.id);
+
+      // Check external URLs permission (with grandfathering)
+      await checkExternalUrlsPermission(organizationId, parsedInput, oldObject);
       const result = await updateSurvey(parsedInput);
       ctx.auditLoggingCtx.oldObject = oldObject;
       ctx.auditLoggingCtx.newObject = result;
+
+      revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
+
       return result;
     }
   )

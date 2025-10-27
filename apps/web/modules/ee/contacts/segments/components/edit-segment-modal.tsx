@@ -1,11 +1,19 @@
 "use client";
 
-import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
-import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
-import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { SegmentActivityTab } from "./segment-activity-tab";
 
 interface EditSegmentModalProps {
@@ -29,7 +37,9 @@ export const EditSegmentModal = ({
   isContactsEnabled,
   isReadOnly,
 }: EditSegmentModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState(0);
+
   const SettingsTab = () => {
     if (isContactsEnabled) {
       return (
@@ -58,17 +68,42 @@ export const EditSegmentModal = ({
     },
   ];
 
+  const handleTabClick = (index: number) => {
+    setActiveTab(index);
+  };
+
+  useEffect(() => {
+    if (!open) {
+      setActiveTab(0);
+    }
+  }, [open]);
+
   return (
-    <>
-      <ModalWithTabs
-        open={open}
-        setOpen={setOpen}
-        tabs={tabs}
-        icon={<UsersIcon className="h-5 w-5" />}
-        label={currentSegment.title}
-        description={currentSegment.description || ""}
-        closeOnOutsideClick={false}
-      />
-    </>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent disableCloseOnOutsideClick>
+        <DialogHeader>
+          <UsersIcon />
+          <DialogTitle>{currentSegment.title}</DialogTitle>
+          <DialogDescription>{currentSegment.description ?? ""}</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="flex h-full w-full items-center justify-center space-x-2 border-b border-slate-200 px-6">
+            {tabs.map((tab, index) => (
+              <button
+                key={tab.title}
+                className={`mr-4 px-1 pb-3 focus:outline-none ${
+                  activeTab === index
+                    ? "border-brand-dark border-b-2 font-semibold text-slate-900"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+                onClick={() => handleTabClick(index)}>
+                {tab.title}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1 pt-4">{tabs[activeTab].children}</div>
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 };

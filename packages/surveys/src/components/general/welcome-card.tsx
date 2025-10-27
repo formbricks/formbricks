@@ -1,18 +1,19 @@
+import { useEffect } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
+import { type TI18nString } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
-import { useEffect } from "preact/hooks";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
-import { type TI18nString } from "@formbricks/types/surveys/types";
 import { Headline } from "./headline";
-import { HtmlBody } from "./html-body";
+import { Subheader } from "./subheader";
 
 interface WelcomeCardProps {
   headline?: TI18nString;
-  html?: TI18nString;
+  subheader?: TI18nString;
   fileUrl?: string;
   buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -23,6 +24,7 @@ interface WelcomeCardProps {
   isCurrent: boolean;
   responseData: TResponseData;
   variablesData: TResponseVariables;
+  fullSizeCards: boolean;
 }
 
 function TimerIcon() {
@@ -64,7 +66,7 @@ function UsersIcon() {
 
 export function WelcomeCard({
   headline,
-  html,
+  subheader,
   fileUrl,
   buttonLabel,
   onSubmit,
@@ -75,7 +77,10 @@ export function WelcomeCard({
   isCurrent,
   responseData,
   variablesData,
+  fullSizeCards,
 }: WelcomeCardProps) {
+  const { t } = useTranslation();
+
   const calculateTimeToComplete = () => {
     let totalCards = survey.questions.length;
     if (survey.endings.length > 0) totalCards += 1;
@@ -86,7 +91,7 @@ export function WelcomeCard({
     const timeInSeconds = (survey.questions.length / idx) * 15; //15 seconds per question.
     if (timeInSeconds > 360) {
       // If it's more than 6 minutes
-      return "6+ minutes";
+      return t("common.x_plus_minutes", { count: 6 });
     }
     // Calculate minutes, if there are any seconds left, add a minute
     const minutes = Math.floor(timeInSeconds / 60);
@@ -96,13 +101,13 @@ export function WelcomeCard({
       // If there are any seconds left, we'll need to round up to the next minute
       if (minutes === 0) {
         // If less than 1 minute, return 'less than 1 minute'
-        return "less than 1 minute";
+        return t("common.less_than_x_minutes", { count: 1 });
       }
       // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
-      return `less than ${(minutes + 1).toString()} minutes`;
+      return t("common.less_than_x_minutes", { count: minutes + 1 });
     }
     // If there are no remaining seconds, just return the number of minutes
-    return `${minutes.toString()} minutes`;
+    return t("common.x_minutes", { count: minutes });
   };
 
   const timeToFinish = survey.welcomeCard.timeToFinish;
@@ -133,73 +138,81 @@ export function WelcomeCard({
   }, [isCurrent]);
 
   return (
-    <div>
-      <ScrollableContainer>
-        <div>
-          {fileUrl ? (
-            <img
-              src={fileUrl}
-              className="fb-mb-8 fb-max-h-96 fb-w-1/4 fb-rounded-lg fb-object-contain"
-              alt="Company Logo"
-            />
-          ) : null}
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
+      <div>
+        {fileUrl ? (
+          <img
+            src={fileUrl}
+            className="fb-mb-8 fb-max-h-96 fb-w-1/4 fb-object-contain"
+            alt={t("common.company_logo")}
+          />
+        ) : null}
 
-          <Headline
-            headline={replaceRecallInfo(
-              getLocalizedValue(headline, languageCode),
-              responseData,
-              variablesData
-            )}
-            questionId="welcomeCard"
-          />
-          <HtmlBody
-            htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), responseData, variablesData)}
-            questionId="welcomeCard"
-          />
-        </div>
-      </ScrollableContainer>
-      <div className="fb-mx-6 fb-mt-4 fb-flex fb-gap-4 fb-py-4">
-        <SubmitButton
-          buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
-          isLastQuestion={false}
-          focus={isCurrent ? autoFocusEnabled : false}
-          tabIndex={isCurrent ? 0 : -1}
-          onClick={handleSubmit}
-          type="button"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-            }
-          }}
+        <Headline
+          headline={replaceRecallInfo(getLocalizedValue(headline, languageCode), responseData, variablesData)}
+          questionId="welcomeCard"
         />
+        <Subheader
+          subheader={replaceRecallInfo(
+            getLocalizedValue(subheader, languageCode),
+            responseData,
+            variablesData
+          )}
+          questionId="welcomeCard"
+        />
+        <div className="fb-mt-4 fb-flex fb-gap-4 fb-pt-4">
+          <SubmitButton
+            buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
+            isLastQuestion={false}
+            focus={isCurrent ? autoFocusEnabled : false}
+            tabIndex={isCurrent ? 0 : -1}
+            onClick={handleSubmit}
+            type="button"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+              }
+            }}
+          />
+        </div>
+        {timeToFinish && !showResponseCount ? (
+          <div
+            className="fb-items-center fb-text-subheading fb-my-4 fb-flex"
+            data-testid="fb__surveys__welcome-card__time-display">
+            <TimerIcon />
+            <p className="fb-pt-1 fb-text-xs">
+              <span>
+                {t("common.takes")} {calculateTimeToComplete()}{" "}
+              </span>
+            </p>
+          </div>
+        ) : null}
+        {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
+          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
+            <UsersIcon />
+            <p className="fb-pt-1 fb-text-xs">
+              <span data-testid="fb__surveys__welcome-card__response-count">
+                {t("common.people_responded", { count: responseCount })}
+              </span>
+            </p>
+          </div>
+        ) : null}
+        {timeToFinish && showResponseCount ? (
+          <div className="fb-items-center fb-text-subheading fb-my-4 fb-flex">
+            <TimerIcon />
+            <p className="fb-pt-1 fb-text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
+              <span>
+                {t("common.takes")} {calculateTimeToComplete()}{" "}
+              </span>
+              <span data-testid="fb__surveys__welcome-card__response-count">
+                {responseCount && responseCount > 3
+                  ? `⋅ ${t("common.people_responded", { count: responseCount })}`
+                  : ""}
+              </span>
+            </p>
+          </div>
+        ) : null}
       </div>
-      {timeToFinish && !showResponseCount ? (
-        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
-          <TimerIcon />
-          <p className="fb-pt-1 fb-text-xs">
-            <span> Takes {calculateTimeToComplete()} </span>
-          </p>
-        </div>
-      ) : null}
-      {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
-          <UsersIcon />
-          <p className="fb-pt-1 fb-text-xs">
-            <span>{`${responseCount.toString()} people responded`}</span>
-          </p>
-        </div>
-      ) : null}
-      {timeToFinish && showResponseCount ? (
-        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
-          <TimerIcon />
-          <p className="fb-pt-1 fb-text-xs">
-            <span> Takes {calculateTimeToComplete()} </span>
-            <span>
-              {responseCount && responseCount > 3 ? `⋅ ${responseCount.toString()} people responded` : ""}
-            </span>
-          </p>
-        </div>
-      ) : null}
-    </div>
+    </ScrollableContainer>
   );
 }

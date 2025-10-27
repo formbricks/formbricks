@@ -1,8 +1,13 @@
 "use client";
 
-import { handleFileUpload } from "@/app/lib/fileUpload";
+import { Project } from "@prisma/client";
+import Image from "next/image";
+import { ChangeEvent, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
+import { handleFileUpload } from "@/modules/storage/file-upload";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -10,20 +15,17 @@ import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { ChangeEvent, useRef, useState } from "react";
-import toast from "react-hot-toast";
+import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 
 interface EditLogoProps {
   project: Project;
   environmentId: string;
   isReadOnly: boolean;
+  isStorageConfigured: boolean;
 }
 
-export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) => {
-  const { t } = useTranslate();
+export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigured }: EditLogoProps) => {
+  const { t } = useTranslation();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(project.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(project.logo?.bgColor || undefined);
   const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!project.logo?.bgColor);
@@ -49,6 +51,10 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
   };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!isStorageConfigured) {
+      showStorageNotConfiguredToast();
+      return;
+    }
     const file = event.target.files?.[0];
     if (file) await handleImageUpload(file);
     setIsEditing(true);
@@ -145,6 +151,8 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
               setIsEditing(true);
             }}
             disabled={isReadOnly}
+            maxSizeInMB={5}
+            isStorageConfigured={isStorageConfigured}
           />
         )}
 
@@ -160,7 +168,16 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
         {isEditing && logoUrl && (
           <>
             <div className="flex gap-2">
-              <Button onClick={() => fileInputRef.current?.click()} variant="secondary" size="sm">
+              <Button
+                onClick={() => {
+                  if (!isStorageConfigured) {
+                    showStorageNotConfiguredToast();
+                    return;
+                  }
+                  fileInputRef.current?.click();
+                }}
+                variant="secondary"
+                size="sm">
                 {t("environments.project.look.replace_logo")}
               </Button>
               <Button
@@ -179,6 +196,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
               description={t("environments.project.look.add_background_color_description")}
               childBorder
               customContainerClass="p-0"
+              childrenContainerClass="overflow-visible"
               disabled={!isEditing}>
               {isBgColorEnabled && (
                 <div className="px-2">

@@ -1,7 +1,5 @@
 // extend this object in order to add more validation rules
-import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { ZSegmentFilters } from "@formbricks/types/segment";
@@ -23,7 +21,9 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { findLanguageCodesForDuplicateLabels } from "@formbricks/types/surveys/validation";
+import { findLanguageCodesForDuplicateLabels, getTextContent } from "@formbricks/types/surveys/validation";
+import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
 // Utility function to check if label is valid for all required languages
 export const isLabelValidForAllLanguages = (
@@ -35,7 +35,7 @@ export const isLabelValidForAllLanguages = (
   });
   const languageCodes = extractLanguageCodes(filteredLanguages);
   const languages = languageCodes.length === 0 ? ["default"] : languageCodes;
-  return languages.every((language) => label && label[language] && label[language].trim() !== "");
+  return languages.every((language) => label?.[language] && getTextContent(label[language]).length > 0);
 };
 
 // Validation logic for multiple choice questions
@@ -61,14 +61,20 @@ const handleI18nCheckForMatrixLabels = (
 ): boolean => {
   const rowsAndColumns = [...question.rows, ...question.columns];
 
-  const invalidRowsLangCodes = findLanguageCodesForDuplicateLabels(question.rows, languages);
-  const invalidColumnsLangCodes = findLanguageCodesForDuplicateLabels(question.columns, languages);
+  const invalidRowsLangCodes = findLanguageCodesForDuplicateLabels(
+    question.rows.map((row) => row.label),
+    languages
+  );
+  const invalidColumnsLangCodes = findLanguageCodesForDuplicateLabels(
+    question.columns.map((column) => column.label),
+    languages
+  );
 
   if (invalidRowsLangCodes.length > 0 || invalidColumnsLangCodes.length > 0) {
     return false;
   }
 
-  return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
+  return rowsAndColumns.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
 };
 
 const handleI18nCheckForContactAndAddressFields = (
@@ -139,7 +145,7 @@ export const validationRules = {
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
     //question specific fields
-    let fieldsToValidate = ["html", "buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
+    let fieldsToValidate = ["buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
 
     // Remove backButtonLabel from validation if it is the first question
     if (isFirstQuestion) {
@@ -204,7 +210,7 @@ const isContentValid = (content: Record<string, string> | undefined, surveyLangu
 };
 
 export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TSurveyLanguage[]): boolean => {
-  return isContentValid(card.headline, surveyLanguages) && isContentValid(card.html, surveyLanguages);
+  return isContentValid(card.headline, surveyLanguages) && isContentValid(card.subheader, surveyLanguages);
 };
 
 export const isEndingCardValid = (
@@ -232,7 +238,12 @@ export const isEndingCardValid = (
   }
 };
 
-export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: TFnType) => {
+export const isSurveyValid = (
+  survey: TSurvey,
+  selectedLanguageCode: string,
+  t: TFunction,
+  responseCount?: number
+) => {
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
   if (questionWithEmptyFallback) {
     toast.error(t("environments.surveys.edit.fallback_missing"));
@@ -248,6 +259,26 @@ export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: 
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
         t("environments.surveys.edit.invalid_targeting");
       toast.error(errMsg);
+      return false;
+    }
+  }
+
+  // Response limit validation
+  if (survey.autoComplete !== null && responseCount !== undefined) {
+    if (survey.autoComplete === 0) {
+      toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
+      return false;
+    }
+
+    if (survey.autoComplete <= responseCount) {
+      toast.error(
+        t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
+          responseCount,
+        }),
+        {
+          id: "response-limit-error",
+        }
+      );
       return false;
     }
   }

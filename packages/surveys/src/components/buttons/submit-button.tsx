@@ -1,5 +1,6 @@
 import { ButtonHTMLAttributes, useRef } from "preact/compat";
-import { useCallback, useEffect } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel?: string;
@@ -18,18 +19,36 @@ export function SubmitButton({
   ...props
 }: SubmitButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // throttle the button submit to prevent multiple submissions
+  // works by setting a timeout to reset the isProcessing state
+  // TODO: Refactor
+  useEffect(() => {
+    if (isProcessing) {
+      const timer = setTimeout(() => {
+        setIsProcessing(false);
+      }, 300);
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [isProcessing]);
+  const { t } = useTranslation();
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled) {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled && !isProcessing) {
         event.preventDefault();
+        setIsProcessing(true);
         const button = buttonRef.current;
         if (button) {
           button.click();
         }
       }
     },
-    [disabled]
+    [disabled, isProcessing]
   );
 
   useEffect(() => {
@@ -53,10 +72,10 @@ export function SubmitButton({
       type={type}
       tabIndex={tabIndex}
       autoFocus={focus}
-      className="fb-bg-brand fb-border-submit-button-border fb-text-on-brand focus:fb-ring-focus fb-rounded-custom fb-flex fb-items-center fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2"
+      className="fb-bg-brand fb-border-submit-button-border fb-text-on-brand focus:fb-ring-focus fb-rounded-custom fb-flex fb-items-center fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-mb-1"
       onClick={onClick}
       disabled={disabled}>
-      {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
+      {buttonLabel || (isLastQuestion ? t("common.finish") : t("common.next"))}
     </button>
   );
 }

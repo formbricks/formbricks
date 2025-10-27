@@ -1,10 +1,4 @@
 import "server-only";
-import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
-import { validateInputs } from "@/lib/utils/validate";
-import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
-import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
-import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -13,6 +7,15 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { validateInputs } from "@/lib/utils/validate";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
+import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
+import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
+import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
 
 export const surveySelect: Prisma.SurveySelect = {
   id: true,
@@ -193,7 +196,6 @@ export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
           },
         },
         type: true,
-        resultShareKey: true,
         triggers: {
           select: {
             actionClass: {
@@ -285,15 +287,20 @@ export const copySurveyToOtherEnvironment = async (
     const isSameEnvironment = environmentId === targetEnvironmentId;
 
     // Fetch required resources
-    const [existingEnvironment, existingProject, existingSurvey] = await Promise.all([
-      doesEnvironmentExist(environmentId),
-      getProjectWithLanguagesByEnvironmentId(environmentId),
-      getExistingSurvey(surveyId),
-    ]);
+    const [existingEnvironment, existingProject, existingSurvey, existingQuotas, organization] =
+      await Promise.all([
+        doesEnvironmentExist(environmentId),
+        getProjectWithLanguagesByEnvironmentId(environmentId),
+        getExistingSurvey(surveyId),
+        getQuotas(surveyId),
+        getOrganizationByEnvironmentId(environmentId),
+      ]);
 
     if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
     if (!existingProject) throw new ResourceNotFoundError("Project", environmentId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
+
+    const isQuotasAllowed = await getIsQuotasEnabled(organization?.billing.plan);
 
     let targetEnvironment: string | null = null;
     let targetProject: TProjectWithLanguages | null = null;
@@ -489,6 +496,21 @@ export const copySurveyToOtherEnvironment = async (
           })),
         },
       },
+      quotas: {
+        createMany: {
+          data:
+            isQuotasAllowed && existingQuotas.length > 0
+              ? existingQuotas.map((quota) => ({
+                  name: quota.name,
+                  logic: quota.logic,
+                  limit: quota.limit,
+                  action: quota.action,
+                  endingCardId: quota.endingCardId,
+                  countPartialSubmissions: quota.countPartialSubmissions,
+                }))
+              : [],
+        },
+      },
     };
 
     // Handle segment
@@ -558,7 +580,6 @@ export const copySurveyToOtherEnvironment = async (
             },
           },
         },
-        resultShareKey: true,
       },
     });
 

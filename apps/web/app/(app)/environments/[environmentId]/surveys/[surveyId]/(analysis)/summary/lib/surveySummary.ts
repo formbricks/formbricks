@@ -1,11 +1,4 @@
 import "server-only";
-import { RESPONSES_PER_PAGE } from "@/lib/constants";
-import { getDisplayCountBySurveyId } from "@/lib/display/service";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { buildWhereClause } from "@/lib/response/utils";
-import { getSurvey } from "@/lib/survey/service";
-import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
@@ -40,6 +33,15 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getQuotasSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
+import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { getDisplayCountBySurveyId } from "@/lib/display/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { buildWhereClause } from "@/lib/response/utils";
+import { getSurvey } from "@/lib/survey/service";
+import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
+import { validateInputs } from "@/lib/utils/validate";
 import { convertFloatTo2Decimal } from "./utils";
 
 interface TSurveySummaryResponse {
@@ -55,7 +57,8 @@ interface TSurveySummaryResponse {
 
 export const getSurveySummaryMeta = (
   responses: TSurveySummaryResponse[],
-  displayCount: number
+  displayCount: number,
+  quotas: TSurveySummary["quotas"]
 ): TSurveySummary["meta"] => {
   const completedResponses = responses.filter((response) => response.finished).length;
 
@@ -75,6 +78,9 @@ export const getSurveySummaryMeta = (
   const dropOffPercentage = responseCount > 0 ? (dropOffCount / responseCount) * 100 : 0;
   const ttcAverage = ttcResponseCount > 0 ? ttcSum / ttcResponseCount : 0;
 
+  const quotasCompleted = quotas.filter((quota) => quota.count >= quota.limit).length;
+  const quotasCompletedPercentage = quotas.length > 0 ? (quotasCompleted / quotas.length) * 100 : 0;
+
   return {
     displayCount: displayCount || 0,
     totalResponses: responseCount,
@@ -84,6 +90,8 @@ export const getSurveySummaryMeta = (
     dropOffCount,
     dropOffPercentage: convertFloatTo2Decimal(dropOffPercentage),
     ttcAverage: convertFloatTo2Decimal(ttcAverage),
+    quotasCompleted,
+    quotasCompletedPercentage,
   };
 };
 
@@ -252,7 +260,7 @@ export const getSurveySummaryDropOff = (
     return {
       questionId: question.id,
       questionType: question.type,
-      headline: getLocalizedValue(question.headline, "default"),
+      headline: getTextContent(getLocalizedValue(question.headline, "default")),
       ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
       impressions: impressionsArr[index] || 0,
       dropOffCount: dropOffArr[index] || 0,
@@ -338,19 +346,22 @@ export const getQuestionSummary = async (
       case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
       case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
         let values: TSurveyQuestionSummaryMultipleChoice["choices"] = [];
-        // check last choice is others or not
-        const lastChoice = question.choices[question.choices.length - 1];
-        const isOthersEnabled = lastChoice.id === "other";
 
-        const questionChoices = question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
-        if (isOthersEnabled) {
-          questionChoices.pop();
-        }
+        const otherOption = question.choices.find((choice) => choice.id === "other");
+        const noneOption = question.choices.find((choice) => choice.id === "none");
+
+        const questionChoices = question.choices
+          .filter((choice) => choice.id !== "other" && choice.id !== "none")
+          .map((choice) => getLocalizedValue(choice.label, "default"));
 
         const choiceCountMap = questionChoices.reduce((acc: Record<string, number>, choice) => {
           acc[choice] = 0;
           return acc;
         }, {});
+
+        // Track "none" count separately
+        const noneLabel = noneOption ? getLocalizedValue(noneOption.label, "default") : null;
+        let noneCount = 0;
 
         const otherValues: TSurveyQuestionSummaryMultipleChoice["choices"][number]["others"] = [];
         let totalSelectionCount = 0;
@@ -371,7 +382,9 @@ export const getQuestionSummary = async (
                 totalSelectionCount++;
                 if (questionChoices.includes(value)) {
                   choiceCountMap[value]++;
-                } else if (isOthersEnabled) {
+                } else if (noneLabel && value === noneLabel) {
+                  noneCount++;
+                } else if (otherOption) {
                   otherValues.push({
                     value,
                     contact: response.contact,
@@ -389,7 +402,9 @@ export const getQuestionSummary = async (
               totalSelectionCount++;
               if (questionChoices.includes(answer)) {
                 choiceCountMap[answer]++;
-              } else if (isOthersEnabled) {
+              } else if (noneLabel && answer === noneLabel) {
+                noneCount++;
+              } else if (otherOption) {
                 otherValues.push({
                   value: answer,
                   contact: response.contact,
@@ -414,9 +429,9 @@ export const getQuestionSummary = async (
           });
         });
 
-        if (isOthersEnabled) {
+        if (otherOption) {
           values.push({
-            value: getLocalizedValue(lastChoice.label, "default") || "Other",
+            value: getLocalizedValue(otherOption.label, "default") || "Other",
             count: otherValues.length,
             percentage:
               totalResponseCount > 0
@@ -425,6 +440,17 @@ export const getQuestionSummary = async (
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
+
+        // Add "none" option at the end if it exists
+        if (noneOption && noneLabel) {
+          values.push({
+            value: noneLabel,
+            count: noneCount,
+            percentage:
+              totalResponseCount > 0 ? convertFloatTo2Decimal((noneCount / totalResponseCount) * 100) : 0,
+          });
+        }
+
         summary.push({
           type: question.type,
           question,
@@ -736,8 +762,8 @@ export const getQuestionSummary = async (
         break;
       }
       case TSurveyQuestionTypeEnum.Matrix: {
-        const rows = question.rows.map((row) => getLocalizedValue(row, "default"));
-        const columns = question.columns.map((column) => getLocalizedValue(column, "default"));
+        const rows = question.rows.map((row) => getLocalizedValue(row.label, "default"));
+        const columns = question.columns.map((column) => getLocalizedValue(column.label, "default"));
         let totalResponseCount = 0;
 
         // Initialize count object
@@ -755,13 +781,15 @@ export const getQuestionSummary = async (
           if (selectedResponses) {
             totalResponseCount++;
             question.rows.forEach((row) => {
-              const localizedRow = getLocalizedValue(row, responseLanguageCode);
+              const localizedRow = getLocalizedValue(row.label, responseLanguageCode);
               const colValue = question.columns.find((column) => {
-                return getLocalizedValue(column, responseLanguageCode) === selectedResponses[localizedRow];
+                return (
+                  getLocalizedValue(column.label, responseLanguageCode) === selectedResponses[localizedRow]
+                );
               });
-              const colValueInDefaultLanguage = getLocalizedValue(colValue, "default");
+              const colValueInDefaultLanguage = getLocalizedValue(colValue?.label, "default");
               if (colValueInDefaultLanguage && columns.includes(colValueInDefaultLanguage)) {
-                countMap[getLocalizedValue(row, "default")][colValueInDefaultLanguage] += 1;
+                countMap[getLocalizedValue(row.label, "default")][colValueInDefaultLanguage] += 1;
               }
             });
           }
@@ -932,18 +960,26 @@ export const getSurveySummary = reactCache(
 
       const responseIds = hasFilter ? responses.map((response) => response.id) : [];
 
-      const displayCount = await getDisplayCountBySurveyId(surveyId, {
-        createdAt: filterCriteria?.createdAt,
-        ...(hasFilter && { responseIds }),
-      });
+      const [displayCount, quotas] = await Promise.all([
+        getDisplayCountBySurveyId(surveyId, {
+          createdAt: filterCriteria?.createdAt,
+          ...(hasFilter && { responseIds }),
+        }),
+        getQuotasSummary(surveyId),
+      ]);
 
       const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
       const [meta, questionWiseSummary] = await Promise.all([
-        getSurveySummaryMeta(responses, displayCount),
+        getSurveySummaryMeta(responses, displayCount, quotas),
         getQuestionSummary(survey, responses, dropOff),
       ]);
 
-      return { meta, dropOff, summary: questionWiseSummary };
+      return {
+        meta,
+        dropOff,
+        summary: questionWiseSummary,
+        quotas,
+      };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

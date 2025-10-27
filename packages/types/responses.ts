@@ -1,14 +1,12 @@
 import { z } from "zod";
 import { ZId } from "./common";
+import { ZSurveyQuota } from "./quota";
 import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
-export const ZResponseDataValue = z.union([
-  z.string(),
-  z.number(),
-  z.array(z.string()),
-  z.record(z.string()),
-]);
+export const ZResponseDataValue = z
+  .union([z.string(), z.number(), z.array(z.string()), z.record(z.string())])
+  .optional();
 
 export const ZResponseFilterCondition = z.enum([
   "accepted",
@@ -31,6 +29,12 @@ export const ZResponseFilterCondition = z.enum([
   "isEmpty",
   "isNotEmpty",
   "isAnyOf",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "doesNotStartWith",
+  "endsWith",
+  "doesNotEndWith",
 ]);
 
 export type TResponseDataValue = z.infer<typeof ZResponseDataValue>;
@@ -149,8 +153,50 @@ const ZResponseFilterCriteriaIsAnyOf = z.object({
   value: z.record(z.string(), z.array(z.string())),
 });
 
+const ZResponseFilterCriteriaContains = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.contains),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaDoesNotContain = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.doesNotContain),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaStartsWith = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.startsWith),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaDoesNotStartWith = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.doesNotStartWith),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaEndsWith = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.endsWith),
+  value: z.string(),
+});
+
+const ZResponseFilterCriteriaDoesNotEndWith = z.object({
+  op: z.literal(ZResponseFilterCondition.Values.doesNotEndWith),
+  value: z.string(),
+});
+
 const ZResponseFilterCriteriaFilledOut = z.object({
   op: z.literal("filledOut"),
+});
+
+const ZQuotasFilterCriteriaScreenedIn = z.object({
+  op: z.literal("screenedIn"),
+});
+
+const ZQuotasFilterCriteriaScreenedOut = z.object({
+  op: z.literal("screenedOut"),
+});
+
+const ZQuotasFilterCriteriaScreenedOutNotInQuota = z.object({
+  op: z.literal("screenedOutNotInQuota"),
 });
 
 export const ZResponseFilterCriteria = z.object({
@@ -217,10 +263,27 @@ export const ZResponseFilterCriteria = z.object({
 
   meta: z
     .record(
-      z.object({
-        op: z.enum(["equals", "notEquals"]),
-        value: z.union([z.string(), z.number()]),
-      })
+      z.union([
+        ZResponseFilterCriteriaDataEquals,
+        ZResponseFilterCriteriaDataNotEquals,
+        ZResponseFilterCriteriaContains,
+        ZResponseFilterCriteriaDoesNotContain,
+        ZResponseFilterCriteriaStartsWith,
+        ZResponseFilterCriteriaDoesNotStartWith,
+        ZResponseFilterCriteriaEndsWith,
+        ZResponseFilterCriteriaDoesNotEndWith,
+      ])
+    )
+    .optional(),
+
+  quotas: z
+    .record(
+      ZId,
+      z.union([
+        ZQuotasFilterCriteriaScreenedIn,
+        ZQuotasFilterCriteriaScreenedOut,
+        ZQuotasFilterCriteriaScreenedOutNotInQuota,
+      ])
     )
     .optional(),
 });
@@ -233,25 +296,6 @@ export const ZResponseContact = z.object({
 export type TResponseContact = z.infer<typeof ZResponseContact>;
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
-
-export const ZResponseNoteUser = z.object({
-  id: z.string().cuid2(),
-  name: z.string().nullable(),
-});
-
-export type TResponseNoteUser = z.infer<typeof ZResponseNoteUser>;
-
-export const ZResponseNote = z.object({
-  updatedAt: z.date(),
-  createdAt: z.date(),
-  id: z.string(),
-  text: z.string(),
-  user: ZResponseNoteUser,
-  isResolved: z.boolean(),
-  isEdited: z.boolean(),
-});
-
-export type TResponseNote = z.infer<typeof ZResponseNote>;
 
 export const ZResponseMeta = z.object({
   source: z.string().optional(),
@@ -282,7 +326,6 @@ export const ZResponse = z.object({
   data: ZResponseData,
   variables: ZResponseVariables,
   ttc: ZResponseTtc.optional(),
-  notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
   meta: ZResponseMeta,
   singleUseId: z.string().nullable(),
@@ -370,12 +413,19 @@ export const ZResponseTableData = z.object({
   status: z.string(),
   verifiedEmail: z.string(),
   tags: z.array(ZTag),
-  notes: z.array(ZResponseNote),
   language: z.string().nullable(),
   responseData: ZResponseData,
   variables: z.record(z.union([z.string(), z.number()])),
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
+  meta: ZResponseMeta,
+  quotas: z.array(z.string()).optional(),
 });
 
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;
+
+export const ZResponseWithQuotas = ZResponse.extend({
+  quotas: z.array(ZSurveyQuota.pick({ id: true, name: true })).optional(),
+});
+
+export type TResponseWithQuotas = z.infer<typeof ZResponseWithQuotas>;

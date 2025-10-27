@@ -1,9 +1,9 @@
 "use client";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon, ClockIcon, PauseIcon, PencilIcon } from "lucide-react";
+import { CheckIcon, PauseIcon, PencilIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface SurveyStatusIndicatorProps {
   status: TSurvey["status"];
@@ -11,7 +11,7 @@ interface SurveyStatusIndicatorProps {
 }
 
 export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicatorProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   if (tooltip) {
     return (
       <TooltipProvider>
@@ -22,11 +22,6 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
                 <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
                 <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
               </span>
-            )}
-            {status === "scheduled" && (
-              <div className="rounded-full bg-slate-300 p-1">
-                <ClockIcon className="h-3 w-3 text-slate-600" />
-              </div>
             )}
             {status === "paused" && (
               <div className="rounded-full bg-slate-300 p-1">
@@ -53,13 +48,6 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
                     <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
                     <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
                   </span>
-                </>
-              ) : status === "scheduled" ? (
-                <>
-                  <span className="text-slate-800">{t("common.survey_scheduled")}</span>
-                  <div className="rounded-full bg-slate-300 p-1">
-                    <ClockIcon className="h-3 w-3 text-slate-600" />
-                  </div>
                 </>
               ) : status === "paused" ? (
                 <>
@@ -89,11 +77,6 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
             <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
             <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
           </span>
-        )}
-        {status === "scheduled" && (
-          <div className="rounded-full bg-slate-300 p-1">
-            <ClockIcon className="h-3 w-3 text-slate-600" />
-          </div>
         )}
         {status === "paused" && (
           <div className="rounded-full bg-slate-300 p-1">

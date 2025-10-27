@@ -1,16 +1,16 @@
 "use client";
 
+import { Environment, Project } from "@prisma/client";
+import { Variants, motion } from "framer-motion";
+import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
-import { Environment, Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { Variants, motion } from "framer-motion";
-import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { Modal } from "./components/modal";
 import { TabOption } from "./components/tab-option";
 
@@ -68,7 +68,7 @@ export const PreviewSurvey = ({
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
@@ -118,8 +118,6 @@ export const PreviewSurvey = ({
   const placement = surveyPlacement || project.placement;
   const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
   const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
-
-  const widgetSetupCompleted = appSetupCompleted;
 
   const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
     // allow style overwrite is disabled from the project
@@ -211,7 +209,7 @@ export const PreviewSurvey = ({
   };
 
   if (!previewType) {
-    previewType = widgetSetupCompleted ? "modal" : "fullwidth";
+    previewType = appSetupCompleted ? "modal" : "fullwidth";
 
     if (!questionId) {
       return <></>;
@@ -243,7 +241,7 @@ export const PreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
@@ -289,7 +287,7 @@ export const PreviewSurvey = ({
                       <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                     )}
                   </div>
-                  <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
+                  <div className="z-10 w-full rounded-lg border border-transparent">
                     <SurveyInline
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}

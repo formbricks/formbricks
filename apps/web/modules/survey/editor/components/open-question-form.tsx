@@ -1,5 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
+import { JSX, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  TSurvey,
+  TSurveyOpenTextQuestion,
+  TSurveyOpenTextQuestionInputType,
+} from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -7,16 +17,6 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
-import { JSX, useEffect, useState } from "react";
-import {
-  TSurvey,
-  TSurveyOpenTextQuestion,
-  TSurveyOpenTextQuestionInputType,
-} from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -28,6 +28,8 @@ interface OpenQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const OpenQuestionForm = ({
@@ -39,8 +41,10 @@ export const OpenQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: OpenQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const questionTypes = [
     { value: "text", label: t("common.text"), icon: <MessageSquareTextIcon className="h-4 w-4" /> },
     { value: "email", label: t("common.email"), icon: <MailIcon className="h-4 w-4" /> },
@@ -77,21 +81,24 @@ export const OpenQuestionForm = ({
     } else {
       setIsCharLimitEnabled(false);
     }
-  }, []);
+  }, [question?.charLimit?.max, question?.charLimit?.min]);
 
   return (
     <form>
       <QuestionFormInput
         id="headline"
         value={question.headline}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        label={t("environments.surveys.edit.question") + "*"}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -101,14 +108,17 @@ export const OpenQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                label={t("common.description")}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
@@ -145,6 +155,7 @@ export const OpenQuestionForm = ({
           setSelectedLanguageCode={setSelectedLanguageCode}
           label={t("common.placeholder")}
           locale={locale}
+          isStorageConfigured={isStorageConfigured}
         />
       </div>
 

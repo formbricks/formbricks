@@ -1,8 +1,8 @@
-import { type InviteWithCreator } from "@/modules/auth/invite/types/invites";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { type InviteWithCreator } from "@/modules/auth/invite/types/invites";
 import { deleteInvite, getInvite } from "./invite";
 
 vi.mock("@formbricks/database", () => ({

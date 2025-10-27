@@ -11,15 +11,19 @@ import {
   TResponseContact,
   TResponseFilterCriteria,
   TResponseUpdateInput,
+  TResponseWithQuotas,
   ZResponseFilterCriteria,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
+import { deleteFile } from "@/modules/storage/service";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
+import { ITEMS_PER_PAGE } from "../constants";
 import { deleteDisplay } from "../display/service";
-import { getResponseNotes } from "../responseNote/service";
-import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
@@ -72,22 +76,6 @@ export const responseSelection = {
       },
     },
   },
-  notes: {
-    select: {
-      id: true,
-      createdAt: true,
-      updatedAt: true,
-      text: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      isResolved: true,
-      isEdited: true,
-    },
-  },
 } satisfies Prisma.ResponseSelect;
 
 export const getResponseContact = (
@@ -103,7 +91,7 @@ export const getResponseContact = (
 };
 
 export const getResponsesByContactId = reactCache(
-  async (contactId: string, page?: number): Promise<TResponse[] | null> => {
+  async (contactId: string, page?: number): Promise<TResponseWithQuotas[]> => {
     validateInputs([contactId, ZId], [page, ZOptionalNumber]);
 
     try {
@@ -111,7 +99,22 @@ export const getResponsesByContactId = reactCache(
         where: {
           contactId,
         },
-        select: responseSelection,
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            where: {
+              status: "screenedIn",
+            },
+            include: {
+              quota: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
         take: page ? ITEMS_PER_PAGE : undefined,
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         orderBy: {
@@ -119,15 +122,10 @@ export const getResponsesByContactId = reactCache(
         },
       });
 
-      if (!responsePrisma) {
-        throw new ResourceNotFoundError("Response from ContactId", contactId);
-      }
-
-      let responses: TResponse[] = [];
+      let responses: TResponseWithQuotas[] = [];
 
       await Promise.all(
         responsePrisma.map(async (response) => {
-          const responseNotes = await getResponseNotes(response.id);
           const responseContact: TResponseContact = {
             id: response.contact?.id as string,
             userId: response.contact?.attributes.find((attribute) => attribute.attributeKey.key === "userId")
@@ -137,8 +135,9 @@ export const getResponsesByContactId = reactCache(
           responses.push({
             ...response,
             contact: responseContact,
-            notes: responseNotes,
+
             tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            quotas: response.quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
           });
         })
       );
@@ -259,7 +258,7 @@ export const getResponses = reactCache(
     offset?: number,
     filterCriteria?: TResponseFilterCriteria,
     cursor?: string
-  ): Promise<TResponse[]> => {
+  ): Promise<TResponseWithQuotas[]> => {
     validateInputs(
       [surveyId, ZId],
       [limit, ZOptionalNumber],
@@ -286,7 +285,22 @@ export const getResponses = reactCache(
 
       const responses = await prisma.response.findMany({
         where: whereClause,
-        select: responseSelection,
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            where: {
+              status: "screenedIn",
+            },
+            include: {
+              quota: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: [
           {
             createdAt: "desc",
@@ -299,12 +313,14 @@ export const getResponses = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TResponse[] = await Promise.all(
+      const transformedResponses: TResponseWithQuotas[] = await Promise.all(
         responses.map((responsePrisma) => {
+          const { quotaLinks, ...response } = responsePrisma;
           return {
-            ...responsePrisma,
+            ...response,
             contact: getResponseContact(responsePrisma),
             tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            quotas: quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
           };
         })
       );
@@ -320,11 +336,11 @@ export const getResponses = reactCache(
   }
 );
 
-export const getResponseDownloadUrl = async (
+export const getResponseDownloadFile = async (
   surveyId: string,
   format: "csv" | "xlsx",
   filterCriteria?: TResponseFilterCriteria
-): Promise<string> => {
+): Promise<{ fileContents: string; fileName: string }> => {
   validateInputs([surveyId, ZId], [format, ZString], [filterCriteria, ZResponseFilterCriteria.optional()]);
   try {
     const survey = await getSurvey(surveyId);
@@ -333,9 +349,6 @@ export const getResponseDownloadUrl = async (
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const environmentId = survey.environmentId;
-
-    const accessType = "private";
     const batchSize = 3000;
 
     // Use cursor-based pagination instead of count + offset to avoid expensive queries
@@ -360,11 +373,24 @@ export const getResponseDownloadUrl = async (
       responses
     );
 
+    const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
+    if (!organizationId) {
+      throw new Error("Organization ID not found");
+    }
+
+    const organizationBilling = await getOrganizationBilling(organizationId);
+
+    if (!organizationBilling) {
+      throw new Error("Organization billing not found");
+    }
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+
     const headers = [
       "No.",
       "Response ID",
       "Timestamp",
       "Finished",
+      ...(isQuotasAllowed ? ["Quotas"] : []),
       "Survey ID",
       "Formbricks ID (internal)",
       "User ID",
@@ -380,21 +406,29 @@ export const getResponseDownloadUrl = async (
     if (survey.isVerifyEmailEnabled) {
       headers.push("Verified Email");
     }
-    const jsonData = getResponsesJson(survey, responses, questions, userAttributes, hiddenFields);
+    const jsonData = getResponsesJson(
+      survey,
+      responses,
+      questions,
+      userAttributes,
+      hiddenFields,
+      isQuotasAllowed
+    );
 
     const fileName = getResponsesFileName(survey?.name || "", format);
-    let fileBuffer: Buffer;
+    let fileContents: string;
 
     if (format === "xlsx") {
-      fileBuffer = convertToXlsxBuffer(headers, jsonData);
+      const buffer = convertToXlsxBuffer(headers, jsonData);
+      fileContents = buffer.toString("base64");
     } else {
-      const csvFile = await convertToCsv(headers, jsonData);
-      fileBuffer = Buffer.from(csvFile);
+      fileContents = await convertToCsv(headers, jsonData);
     }
 
-    await putFile(fileName, fileBuffer, accessType, environmentId);
-
-    return `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`;
+    return {
+      fileContents,
+      fileName,
+    };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -448,12 +482,14 @@ export const getResponsesByEnvironmentId = reactCache(
 
 export const updateResponse = async (
   responseId: string,
-  responseInput: TResponseUpdateInput
+  responseInput: TResponseUpdateInput,
+  tx?: Prisma.TransactionClient
 ): Promise<TResponse> => {
   validateInputs([responseId, ZId], [responseInput, ZResponseUpdateInput]);
   try {
+    const prismaClient = tx ?? prisma;
     // use direct prisma call to avoid cache issues
-    const currentResponse = await prisma.response.findUnique({
+    const currentResponse = await prismaClient.response.findUnique({
       where: {
         id: responseId,
       },
@@ -480,7 +516,7 @@ export const updateResponse = async (
       ...responseInput.variables,
     };
 
-    const responsePrisma = await prisma.response.update({
+    const responsePrisma = await prismaClient.response.update({
       where: {
         id: responseId,
       },
@@ -540,41 +576,61 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
   await Promise.all(deletionPromises);
 };
 
-export const deleteResponse = async (responseId: string): Promise<TResponse> => {
+export const deleteResponse = async (
+  responseId: string,
+  decrementQuotas: boolean = false
+): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
-    const responsePrisma = await prisma.response.delete({
-      where: {
-        id: responseId,
-      },
-      select: responseSelection,
+    const txResponse = await prisma.$transaction(async (tx) => {
+      const responsePrisma = await tx.response.delete({
+        where: {
+          id: responseId,
+        },
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            where: {
+              status: "screenedIn",
+            },
+            include: {
+              quota: {
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const { quotaLinks, ...responseWithoutQuotas } = responsePrisma;
+
+      const response: TResponse = {
+        ...responseWithoutQuotas,
+        contact: getResponseContact(responsePrisma),
+        tags: responseWithoutQuotas.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      };
+
+      if (response.displayId) {
+        await deleteDisplay(response.displayId, tx);
+      }
+
+      if (decrementQuotas) {
+        const quotaIds = quotaLinks?.map((link) => link.quota.id) ?? [];
+        await reduceQuotaLimits(quotaIds, tx);
+      }
+
+      return response;
     });
 
-    const responseNotes = await getResponseNotes(responsePrisma.id);
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: getResponseContact(responsePrisma),
-      notes: responseNotes,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    if (response.displayId) {
-      deleteDisplay(response.displayId);
-    }
-    const survey = await getSurvey(response.surveyId);
+    const survey = await getSurvey(txResponse.surveyId);
 
     if (survey) {
-      await findAndDeleteUploadedFilesInResponse(
-        {
-          ...responsePrisma,
-          contact: getResponseContact(responsePrisma),
-          tags: responsePrisma.tags.map((tag) => tag.tag),
-        },
-        survey
-      );
+      await findAndDeleteUploadedFilesInResponse(txResponse, survey);
     }
 
-    return response;
+    return txResponse;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

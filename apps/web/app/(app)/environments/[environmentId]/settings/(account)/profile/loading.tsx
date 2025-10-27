@@ -1,13 +1,13 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const cards = [
     {
       title: t("environments.settings.profile.personal_information"),
@@ -18,11 +18,6 @@ const Loading = () => {
         { classes: "h-4 w-28" },
         { classes: "h-6 w-64" },
       ],
-    },
-    {
-      title: t("common.avatar"),
-      description: t("environments.settings.profile.organization_identification"),
-      skeletonLines: [{ classes: "h-10 w-10" }, { classes: "h-8 w-24" }],
     },
     {
       title: t("environments.settings.profile.delete_account"),

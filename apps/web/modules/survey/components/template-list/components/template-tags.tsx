@@ -1,12 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
+import { cn } from "@/lib/cn";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {
@@ -33,14 +34,14 @@ export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => 
   }
 };
 
-const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFnType): string | undefined => {
+const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFunction): string | undefined => {
   if (!channels) return undefined;
   const getLabel = (channelValue: NonNullabeChannel) =>
     getChannelMapping(t).find((channel) => channel.value === channelValue)?.label;
   const labels = channels
     .map((channel) => {
       const label = getLabel(channel);
-      if (label) return t(label);
+      if (label) return label;
       return undefined;
     })
     .filter((label): label is string => !!label)
@@ -65,7 +66,7 @@ const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFnType): s
 };
 
 export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const roleBasedStyling = useMemo(() => getRoleBasedStyling(template.role), [template.role]);
 
   const roleTag = useMemo(
@@ -78,12 +79,12 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
     // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
     if (selectedFilter[1] !== null) {
       const industry = getIndustryMapping(t).find((industry) => industry.value === selectedFilter[1]);
-      if (industry) return t(industry.label);
+      if (industry) return industry.label;
     }
     if (!industries || industries.length === 0) return undefined;
     return industries.length > 1
       ? t("environments.surveys.templates.multiple_industries")
-      : t(getIndustryMapping(t).find((industry) => industry.value === industries[0])?.label ?? "");
+      : getIndustryMapping(t).find((industry) => industry.value === industries[0])?.label;
   };
 
   const industryTag = useMemo(
@@ -93,7 +94,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{t(roleTag ?? "")}</div>
+      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
       {industryTag && (
         <div
           className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>

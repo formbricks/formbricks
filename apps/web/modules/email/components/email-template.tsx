@@ -1,7 +1,7 @@
-import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import React from "react";
+import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@/lib/constants";
 
 const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
@@ -9,7 +9,7 @@ const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=emai
 interface EmailTemplateProps {
   readonly children: React.ReactNode;
   readonly logoUrl?: string;
-  readonly t: TFnType;
+  readonly t: TFunction;
 }
 
 export async function EmailTemplate({
@@ -23,7 +23,7 @@ export async function EmailTemplate({
     <Html>
       <Tailwind>
         <Body
-          className="m-0 h-full w-full justify-center bg-slate-50 p-6 text-center text-base font-medium text-slate-800"
+          className="m-0 h-full w-full justify-center bg-slate-50 p-6 text-center text-sm text-slate-800"
           style={{
             fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
@@ -47,24 +47,32 @@ export async function EmailTemplate({
 
           <Section className="mt-4 text-center text-sm">
             <Link
-              className="m-0 font-normal text-slate-500"
+              className="m-0 text-sm font-normal text-slate-500"
               href="https://formbricks.com/?utm_source=email_header&utm_medium=email"
               target="_blank"
               rel="noopener noreferrer">
               {t("emails.email_template_text_1")}
             </Link>
             {IMPRINT_ADDRESS && (
-              <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
+              <Text className="m-0 text-sm font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
             )}
-            <Text className="m-0 font-normal text-slate-500 opacity-50">
+            <Text className="m-0 text-sm font-normal text-slate-500 opacity-50">
               {IMPRINT_URL && (
-                <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
+                <Link
+                  href={IMPRINT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-slate-500">
                   {t("emails.imprint")}
                 </Link>
               )}
               {IMPRINT_URL && PRIVACY_URL && " • "}
               {PRIVACY_URL && (
-                <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
+                <Link
+                  href={PRIVACY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-slate-500">
                   {t("emails.privacy_policy")}
                 </Link>
               )}

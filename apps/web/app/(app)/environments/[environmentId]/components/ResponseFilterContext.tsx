@@ -1,12 +1,12 @@
 "use client";
 
+import React, { createContext, useCallback, useContext, useState } from "react";
 import {
   QuestionOption,
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { getTodayDate } from "@/app/lib/surveys/surveys";
-import React, { createContext, useCallback, useContext, useState } from "react";
 
 export interface FilterValue {
   questionType: Partial<QuestionOption>;
@@ -16,9 +16,11 @@ export interface FilterValue {
   };
 }
 
+export type TResponseStatus = "all" | "complete" | "partial";
+
 export interface SelectedFilterValue {
   filter: FilterValue[];
-  onlyComplete: boolean;
+  responseStatus: TResponseStatus;
 }
 
 interface SelectedFilterOptions {
@@ -47,7 +49,7 @@ const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => 
   // state holds the filter selected value
   const [selectedFilter, setSelectedFilter] = useState<SelectedFilterValue>({
     filter: [],
-    onlyComplete: false,
+    responseStatus: "all",
   });
   // state holds all the options of the responses fetched
   const [selectedOptions, setSelectedOptions] = useState<SelectedFilterOptions>({
@@ -67,7 +69,7 @@ const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => 
     });
     setSelectedFilter({
       filter: [],
-      onlyComplete: false,
+      responseStatus: "all",
     });
   }, []);
 

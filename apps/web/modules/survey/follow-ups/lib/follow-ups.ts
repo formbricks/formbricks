@@ -1,11 +1,3 @@
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getResponse } from "@/lib/response/service";
-import { getSurvey } from "@/lib/survey/service";
-import { rateLimit } from "@/lib/utils/rate-limit";
-import { validateInputs } from "@/lib/utils/validate";
-import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
-import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
-import { FollowUpResult, FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { z } from "zod";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { logger } from "@formbricks/logger";
@@ -15,11 +7,15 @@ import { ValidationError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-
-const limiter = rateLimit({
-  interval: 60 * 60, // 1 hour
-  allowedPerInterval: 50, // max 50 calls per org per hour
-});
+import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getResponse } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
+import { validateInputs } from "@/lib/utils/validate";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { FollowUpResult, FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 
 const evaluateFollowUp = async (
   followUp: TSurveyFollowUp,
@@ -144,7 +140,9 @@ const evaluateFollowUp = async (
  */
 export const sendFollowUpsForResponse = async (
   responseId: string
-): Promise<Result<FollowUpResult[], { code: FollowUpSendError; message: string; meta?: any }>> => {
+): Promise<
+  Result<FollowUpResult[], { code: FollowUpSendError; message: string; meta?: Record<string, string> }>
+> => {
   try {
     validateInputs([responseId, ZId]);
     // Get the response first to get the survey ID
@@ -189,7 +187,7 @@ export const sendFollowUpsForResponse = async (
 
     // Check rate limit
     try {
-      await limiter(organization.id);
+      await applyRateLimit(rateLimitConfigs.actions.surveyFollowUp, organization.id);
     } catch {
       return err({
         code: FollowUpSendError.RATE_LIMIT_EXCEEDED,

@@ -1,5 +1,10 @@
 "use client";
 
+import { PencilIcon } from "lucide-react";
+import React, { JSX, ReactNode, useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   extractId,
@@ -14,11 +19,6 @@ import {
 import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
 import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
-import { PencilIcon } from "lucide-react";
-import React, { JSX, ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
-import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
 interface RecallWrapperRenderProps {
   value: string;
@@ -49,7 +49,7 @@ export const RecallWrapper = ({
   isRecallAllowed,
   onAddFallback,
 }: RecallWrapperProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
@@ -61,11 +61,18 @@ export const RecallWrapper = ({
 
   const [internalValue, setInternalValue] = useState<string>(headlineToRecall(value, recallItems, fallbacks));
   const [renderedText, setRenderedText] = useState<JSX.Element[]>([]);
-  const fallbackInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setInternalValue(headlineToRecall(value, recallItems, fallbacks));
   }, [value, recallItems, fallbacks]);
+
+  // Update recall items when value changes
+  useEffect(() => {
+    if (value?.includes("#recall:")) {
+      const newRecallItems = getRecallItems(value, localSurvey, usedLanguageCode);
+      setRecallItems(newRecallItems);
+    }
+  }, [value, localSurvey, usedLanguageCode]);
 
   const checkForRecallSymbol = useCallback((str: string) => {
     // Get cursor position by finding last character
@@ -175,12 +182,6 @@ export const RecallWrapper = ({
   );
 
   useEffect(() => {
-    if (showFallbackInput && fallbackInputRef.current) {
-      fallbackInputRef.current.focus();
-    }
-  }, [showFallbackInput]);
-
-  useEffect(() => {
     const recallItemLabels = recallItems.flatMap((recallItem) => {
       if (!recallItem.label.includes("#recall:")) {
         return [recallItem.label];
@@ -251,20 +252,6 @@ export const RecallWrapper = ({
         isRecallSelectVisible: showRecallItemSelect,
         children: (
           <div>
-            {internalValue?.includes("recall:") && (
-              <Button
-                variant="ghost"
-                type="button"
-                className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowFallbackInput(true);
-                }}>
-                {t("environments.surveys.edit.edit_recall")}
-                <PencilIcon className="h-3 w-3" />
-              </Button>
-            )}
-
             {showRecallItemSelect && (
               <RecallItemSelect
                 localSurvey={localSurvey}
@@ -277,13 +264,23 @@ export const RecallWrapper = ({
               />
             )}
 
-            {showFallbackInput && recallItems.length > 0 && (
+            {recallItems.length > 0 && (
               <FallbackInput
                 filteredRecallItems={recallItems}
                 fallbacks={fallbacks}
                 setFallbacks={setFallbacks}
-                fallbackInputRef={fallbackInputRef as React.RefObject<HTMLInputElement>}
                 addFallback={addFallback}
+                open={showFallbackInput}
+                setOpen={setShowFallbackInput}
+                triggerButton={
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200">
+                    {t("environments.surveys.edit.edit_recall")}
+                    <PencilIcon className="h-3 w-3" />
+                  </Button>
+                }
               />
             )}
           </div>

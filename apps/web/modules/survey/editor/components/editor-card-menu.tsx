@@ -1,5 +1,17 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
+import { Project } from "@prisma/client";
+import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
 import {
   getCXQuestionNameMap,
   getQuestionDefaults,
@@ -18,18 +30,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
-import { useState } from "react";
-import {
-  TSurvey,
-  TSurveyEndScreenCard,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
 
 interface EditorCardMenuProps {
   survey: TSurvey;
@@ -60,7 +60,7 @@ export const EditorCardMenu = ({
   cardType,
   isCxMode = false,
 }: EditorCardMenuProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(() => {
@@ -310,7 +310,7 @@ export const EditorCardMenu = ({
         open={logicWarningModal}
         setOpen={setLogicWarningModal}
         title={t("environments.surveys.edit.logic_error_warning")}
-        text={t("environments.surveys.edit.logic_error_warning_text")}
+        body={t("environments.surveys.edit.logic_error_warning_text")}
         buttonText={t("environments.surveys.edit.change_anyway")}
         onConfirm={onConfirm}
       />

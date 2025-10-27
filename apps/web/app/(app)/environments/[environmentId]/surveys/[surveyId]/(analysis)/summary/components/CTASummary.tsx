@@ -1,9 +1,9 @@
 "use client";
 
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -13,7 +13,7 @@ interface CTASummaryProps {
 }
 
 export const CTASummary = ({ questionSummary, survey }: CTASummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

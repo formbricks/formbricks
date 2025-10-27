@@ -1,22 +1,22 @@
+import { Suspense } from "react";
+import { TOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { EditMemberships } from "@/modules/organization/settings/teams/components/edit-memberships";
 import { OrganizationActions } from "@/modules/organization/settings/teams/components/edit-memberships/organization-actions";
 import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
-import { getTranslate } from "@/tolgee/server";
-import { Suspense } from "react";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 
 interface MembersViewProps {
   membershipRole?: TOrganizationRole;
   organization: TOrganization;
   currentUserId: string;
   environmentId: string;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isUserManagementDisabledFromUi: boolean;
 }
 
@@ -35,7 +35,7 @@ export const MembersView = async ({
   organization,
   currentUserId,
   environmentId,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isUserManagementDisabledFromUi,
 }: MembersViewProps) => {
   const t = await getTranslate();
@@ -47,7 +47,7 @@ export const MembersView = async ({
 
   let teams: TOrganizationTeam[] = [];
 
-  if (canDoRoleManagement) {
+  if (isAccessControlAllowed) {
     teams = (await getTeamsByOrganizationId(organization.id)) ?? [];
   }
 
@@ -62,8 +62,9 @@ export const MembersView = async ({
           role={membershipRole}
           isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
           isInviteDisabled={INVITE_DISABLED}
-          canDoRoleManagement={canDoRoleManagement}
+          isAccessControlAllowed={isAccessControlAllowed}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          isStorageConfigured={IS_STORAGE_CONFIGURED}
           environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
           teams={teams}
@@ -74,7 +75,7 @@ export const MembersView = async ({
       {membershipRole && (
         <Suspense fallback={<MembersLoading />}>
           <EditMemberships
-            canDoRoleManagement={canDoRoleManagement}
+            isAccessControlAllowed={isAccessControlAllowed}
             organization={organization}
             currentUserId={currentUserId}
             role={membershipRole}

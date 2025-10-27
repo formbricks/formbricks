@@ -1,15 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { PlusIcon } from "lucide-react";
+import { type JSX, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { type JSX, useEffect } from "react";
-import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface ContactInfoQuestionFormProps {
   localSurvey: TSurvey;
@@ -21,6 +21,8 @@ interface ContactInfoQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const ContactInfoQuestionForm = ({
@@ -32,8 +34,10 @@ export const ContactInfoQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: ContactInfoQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
   const fields = [
@@ -80,7 +84,6 @@ export const ContactInfoQuestionForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.firstName, question.lastName, question.email, question.phone, question.company]);
 
-  // Auto animate
   const [parent] = useAutoAnimate();
 
   return (
@@ -96,6 +99,9 @@ export const ContactInfoQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -113,6 +119,9 @@ export const ContactInfoQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
@@ -143,6 +152,7 @@ export const ContactInfoQuestionForm = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           locale={locale}
+          isStorageConfigured={isStorageConfigured}
         />
       </div>
     </form>

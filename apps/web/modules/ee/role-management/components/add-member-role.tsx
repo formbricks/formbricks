@@ -1,5 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
+import { type Control, Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -11,27 +15,23 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Muted, P } from "@/modules/ui/components/typography";
-import { useTranslate } from "@tolgee/react";
-import { useMemo } from "react";
-import { type Control, Controller } from "react-hook-form";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {
   control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;
-  canDoRoleManagement: boolean;
+  isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
 }
 
 export function AddMemberRole({
   control,
-  canDoRoleManagement,
+  isAccessControlAllowed,
   isFormbricksCloud,
   membershipRole,
 }: AddMemberRoleProps) {
   const { isMember, isOwner } = getAccessFlags(membershipRole);
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const roles = useMemo(() => {
     let rolesArray = ["member"];
@@ -62,8 +62,8 @@ export function AddMemberRole({
         <div className="flex flex-col space-y-2">
           <Label>{t("common.role_organization")}</Label>
           <Select
-            defaultValue={canDoRoleManagement ? "member" : "owner"}
-            disabled={!canDoRoleManagement}
+            defaultValue={isAccessControlAllowed ? "member" : "owner"}
+            disabled={!isAccessControlAllowed}
             onValueChange={(v) => {
               onChange(v as TOrganizationRole);
             }}

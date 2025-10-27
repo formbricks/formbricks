@@ -1,5 +1,5 @@
 .react-calendar__navigation button {
-  margin: 1% !important ;
+  margin: 1% !important;
   border-radius: 6%;
 }
 
@@ -23,17 +23,20 @@
 .react-calendar__month-view__days__day--weekend {
   color: var(--fb-brand) !important;
 }
+
 .react-calendar__tile:disabled {
   background-color: var(--slate-100) !important;
   color: var(--slate-400) !important;
   cursor: not-allowed !important;
   pointer-events: none !important;
+  opacity: 0.5 !important;
 }
 
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
   background-color: var(--slate-200) !important;
   color: var(--slate-900) !important;
+  text-decoration: underline !important;
 }
 
 .react-calendar__tile--now {

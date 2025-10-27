@@ -4,12 +4,14 @@ interface UploadImageSurveyBgProps {
   environmentId: string;
   handleBgChange: (url: string, bgType: string) => void;
   background: string;
+  isStorageConfigured: boolean;
 }
 
 export const UploadImageSurveyBg = ({
   environmentId,
   handleBgChange,
   background,
+  isStorageConfigured = true,
 }: UploadImageSurveyBgProps) => {
   return (
     <div className="mt-2 w-full">
@@ -26,7 +28,8 @@ export const UploadImageSurveyBg = ({
             }
           }}
           fileUrl={background}
-          maxSizeInMB={2}
+          maxSizeInMB={5}
+          isStorageConfigured={isStorageConfigured}
         />
       </div>
     </div>

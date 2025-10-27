@@ -1,19 +1,19 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Environment } from "@prisma/client";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSegment } from "@formbricks/types/segment";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { cn } from "@/lib/cn";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Environment } from "@prisma/client";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
@@ -24,7 +24,7 @@ interface HowToSendCardProps {
 export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);
@@ -122,7 +122,17 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
-        <div className="p-3">
+        <div className="space-y-3 p-3">
+          {localSurvey.status === "inProgress" && (
+            <Alert variant="warning" className="mb-3">
+              <AlertTitle>{t("environments.surveys.edit.change_survey_type")}</AlertTitle>
+              <AlertDescription>
+                {t(
+                  "environments.surveys.edit.changing_survey_type_will_remove_existing_distribution_channels"
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
           <RadioGroup
             defaultValue="app"
             value={localSurvey.type}

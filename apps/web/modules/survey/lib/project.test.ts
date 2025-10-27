@@ -51,7 +51,6 @@ const mockProjectPrisma = {
   segment: null,
   surveyClosedMessage: null,
   singleUseId: null,
-  verifyEmail: null,
   productOverwrites: null,
   brandColor: null,
   highlightBorderColor: null,

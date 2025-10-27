@@ -1,19 +1,22 @@
 "use client";
 
+import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import { PlusIcon } from "lucide-react";
+import { type JSX, useCallback } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
+import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
-import { PlusIcon, TrashIcon } from "lucide-react";
-import type { JSX } from "react";
-import toast from "react-hot-toast";
-import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
@@ -25,6 +28,8 @@ interface MatrixQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
+  isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const MatrixQuestionForm = ({
@@ -36,17 +41,30 @@ export const MatrixQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   locale,
+  isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
+
+  const focusItem = (targetIdx: number, type: "row" | "column") => {
+    const input = document.querySelector(`input[id="${type}-${targetIdx}"]`) as HTMLInputElement;
+    if (input) input.focus();
+  };
+
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
-      const updatedRows = [...question.rows, createI18nString("", languageCodes)];
+      const updatedRows = [...question.rows, { id: createId(), label: createI18nString("", languageCodes) }];
       updateQuestion(questionIdx, { rows: updatedRows });
+      setTimeout(() => focusItem(updatedRows.length - 1, type), 0);
     } else {
-      const updatedColumns = [...question.columns, createI18nString("", languageCodes)];
+      const updatedColumns = [
+        ...question.columns,
+        { id: createId(), label: createI18nString("", languageCodes) },
+      ];
       updateQuestion(questionIdx, { columns: updatedColumns });
+      setTimeout(() => focusItem(updatedColumns.length - 1, type), 0);
     }
   };
 
@@ -79,6 +97,7 @@ export const MatrixQuestionForm = ({
     }
 
     const updatedLabels = labels.filter((_, idx) => idx !== index);
+
     if (type === "row") {
       updateQuestion(questionIdx, { rows: updatedLabels });
     } else {
@@ -91,9 +110,9 @@ export const MatrixQuestionForm = ({
 
     // Update the label at the given index, or add a new label if index is undefined
     if (index !== undefined) {
-      labels[index] = matrixLabel;
+      labels[index].label = matrixLabel;
     } else {
-      labels.push(matrixLabel);
+      labels.push({ id: createId(), label: matrixLabel });
     }
     if (type === "row") {
       updateQuestion(questionIdx, { rows: labels });
@@ -102,12 +121,53 @@ export const MatrixQuestionForm = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, type: "row" | "column") => {
+  const handleKeyDown = (e: React.KeyboardEvent, type: "row" | "column", currentIndex: number) => {
+    const items = type === "row" ? question.rows : question.columns;
+
     if (e.key === "Enter") {
       e.preventDefault();
-      handleAddLabel(type);
+      if (currentIndex === items.length - 1) {
+        handleAddLabel(type);
+      } else {
+        focusItem(currentIndex + 1, type);
+      }
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (currentIndex + 1 < items.length) {
+        focusItem(currentIndex + 1, type);
+      }
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (currentIndex > 0) {
+        focusItem(currentIndex - 1, type);
+      }
     }
   };
+
+  const handleMatrixDragEnd = useCallback(
+    (type: "row" | "column", event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (!active || !over || active.id === over.id) return;
+
+      const items = type === "row" ? [...question.rows] : [...question.columns];
+      const activeIndex = items.findIndex((item) => item.id === active.id);
+      const overIndex = items.findIndex((item) => item.id === over.id);
+
+      if (activeIndex === -1 || overIndex === -1) return;
+
+      const movedItem = items[activeIndex];
+      items.splice(activeIndex, 1);
+      items.splice(overIndex, 0, movedItem);
+
+      updateQuestion(questionIdx, type === "row" ? { rows: items } : { columns: items });
+    },
+    [questionIdx, updateQuestion, question.rows, question.columns]
+  );
 
   const shuffleOptionsTypes = {
     none: {
@@ -126,8 +186,8 @@ export const MatrixQuestionForm = ({
       show: true,
     },
   };
-  /// Auto animate
   const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -141,6 +201,9 @@ export const MatrixQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
+        isStorageConfigured={isStorageConfigured}
+        autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -157,6 +220,9 @@ export const MatrixQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
+                isStorageConfigured={isStorageConfigured}
+                autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>
@@ -181,44 +247,40 @@ export const MatrixQuestionForm = ({
         <div>
           {/* Rows section */}
           <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
-          <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.rows.map((row, index) => (
-              <div className="flex items-center" key={`${row}-${index}`}>
-                <QuestionFormInput
-                  id={`row-${index}`}
-                  label={""}
-                  localSurvey={localSurvey}
-                  questionIdx={questionIdx}
-                  value={question.rows[index]}
-                  updateMatrixLabel={updateMatrixLabel}
-                  selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  isInvalid={
-                    isInvalid && !isLabelValidForAllLanguages(question.rows[index], localSurvey.languages)
-                  }
-                  locale={locale}
-                  onKeyDown={(e) => handleKeyDown(e, "row")}
-                />
-                {question.rows.length > 2 && (
-                  <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="ml-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDeleteLabel("row", index);
-                      }}>
-                      <TrashIcon />
-                    </Button>
-                  </TooltipRenderer>
-                )}
-              </div>
-            ))}
+          <div className="mt-2">
+            <DndContext id="matrix-rows" onDragEnd={(e) => handleMatrixDragEnd("row", e)}>
+              <SortableContext items={question.rows} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-2" ref={parent}>
+                  {question.rows.map((row, index) => (
+                    <MatrixSortableItem
+                      key={row.id}
+                      choice={row}
+                      index={index}
+                      type="row"
+                      localSurvey={localSurvey}
+                      question={question}
+                      questionIdx={questionIdx}
+                      updateMatrixLabel={updateMatrixLabel}
+                      onDelete={(index) => handleDeleteLabel("row", index)}
+                      onKeyDown={(e) => handleKeyDown(e, "row", index)}
+                      canDelete={question.rows.length > 2}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
+                      isInvalid={
+                        isInvalid &&
+                        !isLabelValidForAllLanguages(question.rows[index].label, localSurvey.languages)
+                      }
+                      locale={locale}
+                      isStorageConfigured={isStorageConfigured}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
             <Button
               variant="secondary"
               size="sm"
-              className="w-fit"
+              className="mt-2 w-fit"
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("row");
@@ -231,44 +293,40 @@ export const MatrixQuestionForm = ({
         <div>
           {/* Columns section */}
           <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
-          <div className="mt-2 flex flex-col gap-2" ref={parent}>
-            {question.columns.map((column, index) => (
-              <div className="flex items-center" key={`${column}-${index}`}>
-                <QuestionFormInput
-                  id={`column-${index}`}
-                  label={""}
-                  localSurvey={localSurvey}
-                  questionIdx={questionIdx}
-                  value={question.columns[index]}
-                  updateMatrixLabel={updateMatrixLabel}
-                  selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  isInvalid={
-                    isInvalid && !isLabelValidForAllLanguages(question.columns[index], localSurvey.languages)
-                  }
-                  locale={locale}
-                  onKeyDown={(e) => handleKeyDown(e, "column")}
-                />
-                {question.columns.length > 2 && (
-                  <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="ml-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDeleteLabel("column", index);
-                      }}>
-                      <TrashIcon />
-                    </Button>
-                  </TooltipRenderer>
-                )}
-              </div>
-            ))}
+          <div className="mt-2">
+            <DndContext id="matrix-columns" onDragEnd={(e) => handleMatrixDragEnd("column", e)}>
+              <SortableContext items={question.columns} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-2" ref={parent}>
+                  {question.columns.map((column, index) => (
+                    <MatrixSortableItem
+                      key={column.id}
+                      choice={column}
+                      index={index}
+                      type="column"
+                      localSurvey={localSurvey}
+                      question={question}
+                      questionIdx={questionIdx}
+                      updateMatrixLabel={updateMatrixLabel}
+                      onDelete={(index) => handleDeleteLabel("column", index)}
+                      onKeyDown={(e) => handleKeyDown(e, "column", index)}
+                      canDelete={question.columns.length > 2}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
+                      isInvalid={
+                        isInvalid &&
+                        !isLabelValidForAllLanguages(question.columns[index].label, localSurvey.languages)
+                      }
+                      locale={locale}
+                      isStorageConfigured={isStorageConfigured}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
             <Button
               variant="secondary"
               size="sm"
-              className="w-fit"
+              className="mt-2 w-fit"
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("column");

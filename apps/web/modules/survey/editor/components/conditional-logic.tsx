@@ -1,5 +1,19 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createId } from "@paralleldrive/cuid2";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CopyIcon,
+  EllipsisVerticalIcon,
+  PlusIcon,
+  SplitIcon,
+  TrashIcon,
+} from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { duplicateLogicItem } from "@/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
@@ -15,20 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Label } from "@/modules/ui/components/label";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CopyIcon,
-  EllipsisVerticalIcon,
-  PlusIcon,
-  SplitIcon,
-  TrashIcon,
-} from "lucide-react";
-import { useMemo } from "react";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface ConditionalLogicProps {
   localSurvey: TSurvey;
@@ -43,7 +43,7 @@ export function ConditionalLogic({
   questionIdx,
   updateQuestion,
 }: ConditionalLogicProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const transformedSurvey = useMemo(() => {
     let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default");
     modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default");
@@ -117,6 +117,12 @@ export function ConditionalLogic({
   };
   const [parent] = useAutoAnimate();
 
+  useEffect(() => {
+    if (question.logic?.length === 0 && question.logicFallback) {
+      updateQuestion(questionIdx, { logicFallback: undefined });
+    }
+  }, [question.logic, questionIdx, question.logicFallback, updateQuestion]);
+
   return (
     <div className="mt-4" ref={parent}>
       <Label className="flex gap-2">
@@ -129,7 +135,7 @@ export function ConditionalLogic({
           {question.logic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}
-              className="flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              className="relative flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <LogicEditor
                 localSurvey={transformedSurvey}
                 logicItem={logicItem}
@@ -140,43 +146,50 @@ export function ConditionalLogic({
                 isLast={logicItemIdx === (question.logic ?? []).length - 1}
               />
 
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      duplicateLogic(logicItemIdx);
-                    }}
-                    icon={<CopyIcon className="h-4 w-4" />}>
-                    {t("common.duplicate")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    disabled={logicItemIdx === 0}
-                    onClick={() => {
-                      moveLogic(logicItemIdx, logicItemIdx - 1);
-                    }}
-                    icon={<ArrowUpIcon className="h-4 w-4" />}>
-                    {t("common.move_up")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    disabled={logicItemIdx === (question.logic ?? []).length - 1}
-                    onClick={() => {
-                      moveLogic(logicItemIdx, logicItemIdx + 1);
-                    }}
-                    icon={<ArrowDownIcon className="h-4 w-4" />}>
-                    {t("common.move_down")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      handleRemoveLogic(logicItemIdx);
-                    }}
-                    icon={<TrashIcon className="h-4 w-4" />}>
-                    {t("common.remove")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {logicItem.conditions.conditions.length > 1 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger id={`logic-item-${logicItem.id}-dropdown`} asChild>
+                    <Button
+                      variant="secondary"
+                      aria-label="More options"
+                      className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-md">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="mt-10">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        duplicateLogic(logicItemIdx);
+                      }}
+                      icon={<CopyIcon className="h-4 w-4" />}>
+                      {t("common.duplicate")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={logicItemIdx === 0}
+                      onClick={() => {
+                        moveLogic(logicItemIdx, logicItemIdx - 1);
+                      }}
+                      icon={<ArrowUpIcon className="h-4 w-4" />}>
+                      {t("common.move_up")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={logicItemIdx === (question.logic ?? []).length - 1}
+                      onClick={() => {
+                        moveLogic(logicItemIdx, logicItemIdx + 1);
+                      }}
+                      icon={<ArrowDownIcon className="h-4 w-4" />}>
+                      {t("common.move_down")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        handleRemoveLogic(logicItemIdx);
+                      }}
+                      icon={<TrashIcon className="h-4 w-4" />}>
+                      {t("common.remove")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           ))}
         </div>

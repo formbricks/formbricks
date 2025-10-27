@@ -1,6 +1,6 @@
 import { toast } from "react-hot-toast";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { convertHeicToJpegAction } from "./actions";
 import { checkForYoutubePrivacyMode, getAllowedFiles } from "./utils";
 
@@ -51,7 +51,7 @@ describe("File Input Utils", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("test.txt");
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Unsupported file types: test.doc"));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Unsupported file type."));
     });
 
     test("should filter out files exceeding size limit", async () => {
@@ -64,7 +64,7 @@ describe("File Input Utils", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("small.txt");
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Files exceeding size limit (5 MB)"));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("File exceeds 5 MB size limit."));
     });
 
     test("should convert HEIC files to JPEG", async () => {

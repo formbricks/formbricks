@@ -1,10 +1,10 @@
-import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { z } from "zod";
 import { ZEnvironment } from "@formbricks/types/environment";
 import { ZMembership } from "@formbricks/types/memberships";
 import { ZOrganization } from "@formbricks/types/organizations";
 import { ZProject } from "@formbricks/types/project";
 import { ZUser } from "@formbricks/types/user";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 
 export const ZEnvironmentAuth = z.object({
   environment: ZEnvironment,

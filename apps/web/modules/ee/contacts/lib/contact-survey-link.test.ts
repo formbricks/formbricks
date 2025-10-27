@@ -1,8 +1,11 @@
+import jwt from "jsonwebtoken";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import * as crypto from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import jwt from "jsonwebtoken";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
+import { getSurvey } from "@/modules/survey/lib/survey";
 import * as contactSurveyLink from "./contact-survey-link";
 
 // Mock all modules needed (this gets hoisted to the top of the file)
@@ -10,6 +13,12 @@ vi.mock("jsonwebtoken", () => ({
   default: {
     sign: vi.fn(),
     verify: vi.fn(),
+    TokenExpiredError: class TokenExpiredError extends Error {
+      constructor(message: string) {
+        super(message);
+        this.name = "TokenExpiredError";
+      }
+    },
   },
 }));
 
@@ -27,12 +36,22 @@ vi.mock("@/lib/crypto", () => ({
   symmetricDecrypt: vi.fn(),
 }));
 
+vi.mock("@/modules/survey/lib/survey", () => ({
+  getSurvey: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/single-use-surveys", () => ({
+  generateSurveySingleUseId: vi.fn(),
+}));
+
 describe("Contact Survey Link", () => {
   const mockContactId = "contact-123";
   const mockSurveyId = "survey-456";
   const mockToken = "mock.jwt.token";
   const mockEncryptedContactId = "encrypted-contact-id";
   const mockEncryptedSurveyId = "encrypted-survey-id";
+  const mockedGetSurvey = vi.mocked(getSurvey);
+  const mockedGenerateSurveySingleUseId = vi.mocked(generateSurveySingleUseId);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,11 +73,17 @@ describe("Contact Survey Link", () => {
       contactId: mockEncryptedContactId,
       surveyId: mockEncryptedSurveyId,
     } as any);
+
+    mockedGetSurvey.mockResolvedValue({
+      id: mockSurveyId,
+      singleUse: { enabled: false, isEncrypted: false },
+    } as TSurvey);
+    mockedGenerateSurveySingleUseId.mockReturnValue("single-use-id");
   });
 
   describe("getContactSurveyLink", () => {
-    test("creates a survey link with encrypted contact and survey IDs", () => {
-      const result = contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId);
+    test("creates a survey link with encrypted contact and survey IDs", async () => {
+      const result = await contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId);
 
       // Verify encryption was called for both IDs
       expect(crypto.symmetricEncrypt).toHaveBeenCalledWith(mockContactId, ENCRYPTION_KEY);
@@ -79,11 +104,13 @@ describe("Contact Survey Link", () => {
         ok: true,
         data: `${getPublicDomain()}/c/${mockToken}`,
       });
+
+      expect(mockedGenerateSurveySingleUseId).not.toHaveBeenCalled();
     });
 
-    test("adds expiration to the token when expirationDays is provided", () => {
+    test("adds expiration to the token when expirationDays is provided", async () => {
       const expirationDays = 7;
-      contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId, expirationDays);
+      await contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId, expirationDays);
 
       // Verify JWT sign was called with expiration
       expect(jwt.sign).toHaveBeenCalledWith(
@@ -96,7 +123,55 @@ describe("Contact Survey Link", () => {
       );
     });
 
-    test("throws an error when ENCRYPTION_KEY is not available", async () => {
+    test("returns a not_found error when survey does not exist", async () => {
+      mockedGetSurvey.mockResolvedValue(null as unknown as TSurvey);
+
+      const result = await contactSurveyLink.getContactSurveyLink(mockContactId, "unfound-survey-id");
+
+      expect(result).toEqual({
+        ok: false,
+        error: {
+          type: "not_found",
+          message: "Survey not found",
+          details: [{ field: "surveyId", issue: "not_found" }],
+        },
+      });
+      expect(mockedGetSurvey).toHaveBeenCalledWith("unfound-survey-id");
+    });
+
+    test("creates a link with unencrypted single use ID when enabled", async () => {
+      mockedGetSurvey.mockResolvedValue({
+        id: mockSurveyId,
+        singleUse: { enabled: true, isEncrypted: false },
+      } as TSurvey);
+      mockedGenerateSurveySingleUseId.mockReturnValue("suId-unencrypted");
+
+      const result = await contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId);
+
+      expect(mockedGenerateSurveySingleUseId).toHaveBeenCalledWith(false);
+      expect(result).toEqual({
+        ok: true,
+        data: `${getPublicDomain()}/c/${mockToken}?suId=suId-unencrypted`,
+      });
+    });
+
+    test("creates a link with encrypted single use ID when enabled and encrypted", async () => {
+      mockedGetSurvey.mockResolvedValue({
+        id: mockSurveyId,
+        singleUse: { enabled: true, isEncrypted: true },
+      } as TSurvey);
+      mockedGenerateSurveySingleUseId.mockReturnValue("suId-encrypted");
+
+      const result = await contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId);
+
+      expect(mockedGenerateSurveySingleUseId).toHaveBeenCalledWith(true);
+      expect(result).toEqual({
+        ok: true,
+        data: `${getPublicDomain()}/c/${mockToken}?suId=suId-encrypted`,
+      });
+    });
+
+    test("returns an error when ENCRYPTION_KEY is not available", async () => {
       // Reset modules so the new mock is used by the module under test
       vi.resetModules();
       // Re‑mock constants to simulate missing ENCRYPTION_KEY
@@ -107,7 +182,7 @@ describe("Contact Survey Link", () => {
       // Re‑import the modules so they pick up the new mock
       const { getContactSurveyLink } = await import("./contact-survey-link");
 
-      const result = getContactSurveyLink(mockContactId, mockSurveyId);
+      const result = await getContactSurveyLink(mockContactId, mockSurveyId);
       expect(result).toEqual({
         ok: false,
         error: {
@@ -135,7 +210,7 @@ describe("Contact Survey Link", () => {
       });
     });
 
-    test("throws an error when token verification fails", () => {
+    test("returns an error when token verification fails", () => {
       vi.mocked(jwt.verify).mockImplementation(() => {
         throw new Error("Token verification failed");
       });
@@ -145,13 +220,13 @@ describe("Contact Survey Link", () => {
       if (!result.ok) {
         expect(result.error).toEqual({
           type: "bad_request",
-          message: "Invalid or expired survey token",
-          details: [{ field: "token", issue: "Invalid or expired survey token" }],
+          message: "Invalid survey token",
+          details: [{ field: "token", issue: "invalid_token" }],
         });
       }
     });
 
-    test("throws an error when token has invalid format", () => {
+    test("returns an error when token has invalid format", () => {
       // Mock JWT.verify to return an incomplete payload
       vi.mocked(jwt.verify).mockReturnValue({
         // Missing surveyId
@@ -166,13 +241,13 @@ describe("Contact Survey Link", () => {
       if (!result.ok) {
         expect(result.error).toEqual({
           type: "bad_request",
-          message: "Invalid or expired survey token",
-          details: [{ field: "token", issue: "Invalid or expired survey token" }],
+          message: "Invalid survey token",
+          details: [{ field: "token", issue: "invalid_token" }],
         });
       }
     });
 
-    test("throws an error when ENCRYPTION_KEY is not available", async () => {
+    test("returns an error when ENCRYPTION_KEY is not available", async () => {
       vi.resetModules();
       vi.doMock("@/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,

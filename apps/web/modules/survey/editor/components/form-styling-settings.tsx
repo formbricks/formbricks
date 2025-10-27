@@ -1,19 +1,19 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon, SparklesIcon } from "lucide-react";
+import React from "react";
+import { UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { mixColor } from "@/lib/utils/colors";
 import { Button } from "@/modules/ui/components/button";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon, SparklesIcon } from "lucide-react";
-import React from "react";
-import { UseFormReturn } from "react-hook-form";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
 type FormStylingSettingsProps = {
   open: boolean;
@@ -30,7 +30,7 @@ export const FormStylingSettings = ({
   setOpen,
   form,
 }: FormStylingSettingsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const brandColor = form.watch("brandColor.light") || COLOR_DEFAULTS.brandColor;
   const background = form.watch("background");
   const highlightBorderColor = form.watch("highlightBorderColor");
@@ -40,7 +40,7 @@ export const FormStylingSettings = ({
   const setInputBorderColor = (color: string) => form.setValue("inputBorderColor.light", color);
   const setCardBackgroundColor = (color: string) => form.setValue("cardBackgroundColor.light", color);
   const setCardBorderColor = (color: string) => form.setValue("cardBorderColor.light", color);
-  const setCardShadowColor = (color: string) => form.setValue("cardShadowColor.light", color);
+
   const setBackgroundColor = (color: string) => {
     form.setValue("background", {
       bg: color,
@@ -59,7 +59,6 @@ export const FormStylingSettings = ({
 
     setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.97));
     setCardBorderColor(mixColor(brandColor, "#ffffff", 0.8));
-    setCardShadowColor(brandColor);
 
     if (!background || background?.bgType === "color") {
       setBackgroundColor(mixColor(brandColor, "#ffffff", 0.855));

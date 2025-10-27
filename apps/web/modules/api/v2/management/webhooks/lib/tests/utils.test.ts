@@ -1,6 +1,6 @@
+import { describe, expect, test, vi } from "vitest";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetWebhooksFilter } from "@/modules/api/v2/management/webhooks/types/webhooks";
-import { describe, expect, test, vi } from "vitest";
 import { getWebhooksQuery } from "../utils";
 
 vi.mock("@/modules/api/v2/management/lib/utils", () => ({

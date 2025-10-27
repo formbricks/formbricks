@@ -1,18 +1,17 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
-import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { SettingsId } from "@/modules/ui/components/settings-id";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getTranslate } from "@/tolgee/server";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
-import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
@@ -32,6 +31,8 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     throw new Error(t("common.user_not_found"));
   }
 
+  const isPasswordResetEnabled = !PASSWORD_RESET_DISABLED && user.identityProvider === "email";
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>
@@ -42,18 +43,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           <SettingsCard
             title={t("environments.settings.profile.personal_information")}
             description={t("environments.settings.profile.update_personal_info")}>
-            <EditProfileDetailsForm emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED} user={user} />
-          </SettingsCard>
-          <SettingsCard
-            title={t("common.avatar")}
-            description={t("environments.settings.profile.organization_identification")}>
-            {user && (
-              <EditProfileAvatarForm
-                session={session}
-                environmentId={environmentId}
-                imageUrl={user.imageUrl}
-              />
-            )}
+            <EditProfileDetailsForm
+              user={user}
+              emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
+              isPasswordResetEnabled={isPasswordResetEnabled}
+            />
           </SettingsCard>
           {user.identityProvider === "email" && (
             <SettingsCard
@@ -97,7 +91,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
               isMultiOrgEnabled={isMultiOrgEnabled}
             />
           </SettingsCard>
-          <SettingsId title={t("common.profile")} id={user.id}></SettingsId>
+          <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />
         </div>
       )}
     </PageContentWrapper>

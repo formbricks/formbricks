@@ -1,5 +1,10 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { ZProjectUpdateInput } from "@formbricks/types/project";
+import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getOrganization } from "@/lib/organization/service";
 import { getProject } from "@/lib/project/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -9,10 +14,6 @@ import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateProject } from "@/modules/projects/settings/lib/project";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZProjectUpdateInput } from "@formbricks/types/project";
 
 const ZUpdateProjectAction = z.object({
   projectId: ZId,
@@ -79,3 +80,24 @@ export const updateProjectAction = authenticatedActionClient.schema(ZUpdateProje
     }
   )
 );
+
+const ZGetTeamsByOrganizationIdAction = z.object({
+  organizationId: ZId,
+});
+
+export const getTeamsByOrganizationIdAction = authenticatedActionClient
+  .schema(ZGetTeamsByOrganizationIdAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+    const teams = await getTeamsByOrganizationId(parsedInput.organizationId);
+    return teams;
+  });

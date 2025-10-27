@@ -1,9 +1,9 @@
-import * as fileValidation from "@/lib/fileValidation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import * as fileValidation from "@/modules/storage/utils";
 import { anySurveyHasFilters, checkForInvalidImagesInQuestions, transformPrismaSurvey } from "./utils";
 
 describe("transformPrismaSurvey", () => {

@@ -1,14 +1,14 @@
 import "server-only";
-import { isValidImageFile } from "@/lib/fileValidation";
-import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
+import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { validateInputs } from "../utils/validate";
 
 const responseSelection = {
@@ -16,13 +16,10 @@ const responseSelection = {
   name: true,
   email: true,
   emailVerified: true,
-  imageUrl: true,
   createdAt: true,
   updatedAt: true,
-  role: true,
   twoFactorEnabled: true,
   identityProvider: true,
-  objective: true,
   notificationSettings: true,
   locale: true,
   lastLoginAt: true,
@@ -78,7 +75,6 @@ export const getUserByEmail = reactCache(async (email: string): Promise<TUser | 
 // function to update a user's user
 export const updateUser = async (personId: string, data: TUserUpdateInput): Promise<TUser> => {
   validateInputs([personId, ZId], [data, ZUserUpdateInput.partial()]);
-  if (data.imageUrl && !isValidImageFile(data.imageUrl)) throw new InvalidInputError("Invalid image file");
 
   try {
     const updatedUser = await prisma.user.update({
@@ -133,6 +129,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
     }
 
     const deletedUser = await deleteUserById(id);
+    await deleteBrevoCustomerByEmail({ email: deletedUser.email });
 
     return deletedUser;
   } catch (error) {

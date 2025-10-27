@@ -1,7 +1,12 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
 import { getOrganization } from "@/lib/organization/service";
-import { getResponseDownloadUrl, getResponseFilteringValues } from "@/lib/response/service";
+import { getResponseDownloadFile, getResponseFilteringValues } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -9,14 +14,12 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZResponseFilterCriteria } from "@formbricks/types/responses";
-import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
+import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 const ZGetResponsesDownloadUrlAction = z.object({
   surveyId: ZId,
@@ -43,7 +46,11 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
       ],
     });
 
-    return getResponseDownloadUrl(parsedInput.surveyId, parsedInput.format, parsedInput.filterCriteria);
+    return await getResponseDownloadFile(
+      parsedInput.surveyId,
+      parsedInput.format,
+      parsedInput.filterCriteria
+    );
   });
 
 const ZGetSurveyFilterDataAction = z.object({
@@ -59,9 +66,11 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
     }
 
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId: organizationId,
       access: [
         {
           type: "organization",
@@ -75,12 +84,20 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       ],
     });
 
-    const [tags, { contactAttributes: attributes, meta, hiddenFields }] = await Promise.all([
+    const organizationBilling = await getOrganizationBilling(organizationId);
+    if (!organizationBilling) {
+      throw new ResourceNotFoundError("Organization", organizationId);
+    }
+
+    const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
+
+    const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas = []] = await Promise.all([
       getTagsByEnvironmentId(survey.environmentId),
       getResponseFilteringValues(parsedInput.surveyId),
+      isQuotasAllowed ? getQuotas(parsedInput.surveyId) : [],
     ]);
 
-    return { environmentTags: tags, attributes, meta, hiddenFields };
+    return { environmentTags: tags, attributes, meta, hiddenFields, quotas };
   });
 
 /**

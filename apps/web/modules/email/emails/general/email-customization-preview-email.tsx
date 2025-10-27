@@ -1,6 +1,6 @@
-import { getTranslate } from "@/tolgee/server";
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
+import { getTranslate } from "@/lingodotdev/server";
 import { EmailTemplate } from "../../components/email-template";
 
 interface EmailCustomizationPreviewEmailProps {
@@ -16,10 +16,8 @@ export async function EmailCustomizationPreviewEmail({
   return (
     <EmailTemplate logoUrl={logoUrl} t={t}>
       <Container>
-        <Heading className="text-xl">
-          {t("emails.email_customization_preview_email_heading", { userName })}
-        </Heading>
-        <Text className="font-normal">{t("emails.email_customization_preview_email_text")}</Text>
+        <Heading>{t("emails.email_customization_preview_email_heading", { userName })}</Heading>
+        <Text className="text-sm">{t("emails.email_customization_preview_email_text")}</Text>
       </Container>
     </EmailTemplate>
   );

@@ -6,12 +6,12 @@ import {
   mockProjectId,
   mockUpdatedLanguage,
 } from "./__mocks__/data.mock";
-import { getProject } from "@/lib/project/service";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { TProject } from "@formbricks/types/project";
+import { getProject } from "@/lib/project/service";
 import { createLanguage, deleteLanguage, updateLanguage } from "../service";
 
 vi.mock("@formbricks/database", () => ({

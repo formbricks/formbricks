@@ -1,24 +1,21 @@
 import { z } from "zod";
 
-const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
-
-export const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"]);
-
-export type TUserLocale = z.infer<typeof ZUserLocale>;
-export const ZUserObjective = z.enum([
-  "increase_conversion",
-  "improve_user_retention",
-  "increase_user_adoption",
-  "sharpen_marketing_messaging",
-  "support_sales",
-  "other",
+export const ZUserLocale = z.enum([
+  "en-US",
+  "de-DE",
+  "pt-BR",
+  "fr-FR",
+  "zh-Hant-TW",
+  "pt-PT",
+  "ro-RO",
+  "ja-JP",
+  "zh-Hans-CN",
 ]);
 
-export type TUserObjective = z.infer<typeof ZUserObjective>;
+export type TUserLocale = z.infer<typeof ZUserLocale>;
 
 export const ZUserNotificationSettings = z.object({
   alert: z.record(z.boolean()),
-  weeklySummary: z.record(z.boolean()),
   unsubscribedOrganizationIds: z.array(z.string()).optional(),
 });
 
@@ -34,7 +31,7 @@ export type TUserEmail = z.infer<typeof ZUserEmail>;
 
 export const ZUserPassword = z
   .string()
-  .min(8)
+  .min(8, { message: "Password must be at least 8 characters long" })
   .max(128, { message: "Password must be 128 characters or less" })
   .regex(/^(?=.*[A-Z])(?=.*\d).*$/);
 
@@ -49,13 +46,10 @@ export const ZUser = z.object({
   name: ZUserName,
   email: ZUserEmail,
   emailVerified: z.date().nullable(),
-  imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
   identityProvider: ZUserIdentityProvider,
   createdAt: z.date(),
   updatedAt: z.date(),
-  role: ZRole.nullable(),
-  objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
   locale: ZUserLocale,
   lastLoginAt: z.date().nullable(),
@@ -69,9 +63,6 @@ export const ZUserUpdateInput = z.object({
   email: ZUserEmail.optional(),
   emailVerified: z.date().nullish(),
   password: ZUserPassword.optional(),
-  role: ZRole.optional(),
-  objective: ZUserObjective.nullish(),
-  imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
   locale: ZUserLocale.optional(),
   lastLoginAt: z.date().nullish(),
@@ -85,11 +76,19 @@ export const ZUserCreateInput = z.object({
   email: ZUserEmail,
   password: ZUserPassword.optional(),
   emailVerified: z.date().optional(),
-  role: ZRole.optional(),
-  objective: ZUserObjective.nullish(),
   identityProvider: ZUserIdentityProvider.optional(),
   identityProviderAccountId: z.string().optional(),
   locale: ZUserLocale.optional(),
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
+
+export const ZUserPersonalInfoUpdateInput = ZUserUpdateInput.pick({
+  name: true,
+  email: true,
+  locale: true,
+}).extend({
+  password: ZUserPassword.optional(),
+});
+
+export type TUserPersonalInfoUpdateInput = z.infer<typeof ZUserPersonalInfoUpdateInput>;

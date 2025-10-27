@@ -1,24 +1,23 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
-import { responses } from "@/app/lib/api/response";
-import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { handleDeleteFile } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/delete-file";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
-import { authOptions } from "@/modules/auth/lib/authOptions";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
-import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getServerSession } from "next-auth";
 import { type NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { ZStorageRetrievalParams } from "@formbricks/types/storage";
-import { getFile } from "./lib/get-file";
+import { TAccessType, ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { authorizePrivateDownload } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/auth";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { deleteFile, getSignedUrlForDownload } from "@/modules/storage/service";
+import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
+import { logFileDeletion } from "./lib/audit-logs";
 
 export const GET = async (
   request: NextRequest,
-  props: { params: Promise<{ environmentId: string; accessType: string; fileName: string }> }
+  props: { params: Promise<{ environmentId: string; accessType: TAccessType; fileName: string }> }
 ): Promise<Response> => {
   const params = await props.params;
-  const paramValidation = ZStorageRetrievalParams.safeParse(params);
+  const paramValidation = ZDownloadFileRequest.safeParse(params);
 
   if (!paramValidation.success) {
     return responses.badRequestResponse(
@@ -28,36 +27,35 @@ export const GET = async (
     );
   }
 
-  const { environmentId, accessType, fileName: fileNameOG } = params;
+  const { environmentId, accessType, fileName } = paramValidation.data;
 
-  const fileName = decodeURIComponent(fileNameOG);
-
-  if (accessType === "public") {
-    return await getFile(environmentId, accessType, fileName);
-  }
-
-  // if the user is authenticated via the session
-
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    // check for api key auth
-    const res = await authenticateRequest(request);
-
-    if (!res) {
-      return responses.notAuthenticatedResponse();
+  // check auth
+  if (accessType === "private") {
+    const authResult = await authorizePrivateDownload(request, environmentId, "GET");
+    if (!authResult.ok) {
+      return authResult.error.unauthorized
+        ? responses.unauthorizedResponse()
+        : responses.notAuthenticatedResponse();
     }
-
-    return await getFile(environmentId, accessType, fileName);
   }
 
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  const signedUrlResult = await getSignedUrlForDownload(fileName, environmentId, accessType);
 
-  if (!isUserAuthorized) {
-    return responses.unauthorizedResponse();
+  if (!signedUrlResult.ok) {
+    const errorResponse = getErrorResponseFromStorageError(signedUrlResult.error, { fileName });
+    return errorResponse;
   }
 
-  return await getFile(environmentId, accessType, fileName);
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: signedUrlResult.data,
+      "Cache-Control":
+        accessType === "private"
+          ? "no-store, no-cache, must-revalidate"
+          : "public, max-age=300, s-maxage=300, stale-while-revalidate=300",
+    },
+  });
 };
 
 export const DELETE = async (
@@ -65,157 +63,78 @@ export const DELETE = async (
   props: { params: Promise<{ environmentId: string; accessType: string; fileName: string }> }
 ): Promise<Response> => {
   const params = await props.params;
-
-  const getOrgId = async (environmentId: string): Promise<string> => {
-    try {
-      return await getOrganizationIdFromEnvironmentId(environmentId);
-    } catch (error) {
-      logger.error("Failed to get organization ID for environment", { error });
-      return UNKNOWN_DATA;
-    }
-  };
-
-  const logFileDeletion = async ({
-    accessType,
-    userId,
-    status = "failure",
-    failureReason,
-    oldObject,
-  }: {
-    accessType?: string;
-    userId?: string;
-    status?: TAuditStatus;
-    failureReason?: string;
-    oldObject?: Record<string, unknown>;
-  }) => {
-    try {
-      const organizationId = await getOrgId(environmentId);
-
-      await queueAuditEvent({
-        action: "deleted",
-        targetType: "file",
-        userId: userId || UNKNOWN_DATA, // NOSONAR // We want to check for empty user IDs too
-        userType: "user",
-        targetId: `${environmentId}:${accessType}`, // Generic target identifier
-        organizationId,
-        status,
-        newObject: {
-          environmentId,
-          accessType,
-          ...(failureReason && { failureReason }),
-        },
-        oldObject,
-        apiUrl: request.url,
-      });
-    } catch (auditError) {
-      logger.error("Failed to log file deletion audit event:", auditError);
-    }
-  };
-
-  // Validation
-  if (!params.fileName) {
-    await logFileDeletion({
-      failureReason: "fileName parameter missing",
-    });
-    return responses.badRequestResponse("Fields are missing or incorrectly formatted", {
-      fileName: "fileName is required",
-    });
-  }
-
-  const { environmentId, accessType, fileName } = params;
-
-  // Security check: If fileName contains the same properties from the route, ensure they match
-  // This is to prevent a user from deleting a file from a different environment
-  const [fileEnvironmentId, fileAccessType, file] = fileName.split("/");
-  if (fileEnvironmentId !== environmentId) {
-    await logFileDeletion({
-      failureReason: "Environment ID mismatch between route and fileName",
-      accessType,
-    });
-    return responses.badRequestResponse("Environment ID mismatch", {
-      message: "The environment ID in the fileName does not match the route environment ID",
-    });
-  }
-
-  if (fileAccessType !== accessType) {
-    await logFileDeletion({
-      failureReason: "Access type mismatch between route and fileName",
-      accessType,
-    });
-    return responses.badRequestResponse("Access type mismatch", {
-      message: "The access type in the fileName does not match the route access type",
-    });
-  }
-
-  const paramValidation = ZStorageRetrievalParams.safeParse({ fileName: file, environmentId, accessType });
-
+  const paramValidation = ZDeleteFileRequest.safeParse(params);
   if (!paramValidation.success) {
+    const errorDetails = transformErrorToDetails(paramValidation.error);
+
     await logFileDeletion({
       failureReason: "Parameter validation failed",
-      accessType,
+      environmentId: params.environmentId,
+      apiUrl: request.url,
     });
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(paramValidation.error),
-      true
-    );
+
+    return responses.badRequestResponse("Fields are missing or incorrectly formatted", errorDetails, true);
   }
 
-  const {
-    environmentId: validEnvId,
-    accessType: validAccessType,
-    fileName: validFileName,
-  } = paramValidation.data;
+  const { environmentId, accessType, fileName } = paramValidation.data;
 
-  // Authentication
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
+
+  const authResult = await authorizePrivateDownload(request, environmentId, "DELETE");
+
+  if (!authResult.ok) {
     await logFileDeletion({
-      failureReason: "User not authenticated",
-      accessType: validAccessType,
+      failureReason: authResult.error.unauthorized
+        ? "User not authorized to access environment"
+        : "User not authenticated",
+      accessType,
+      environmentId,
+      apiUrl: request.url,
     });
-    return responses.notAuthenticatedResponse();
+
+    return authResult.error.unauthorized
+      ? responses.unauthorizedResponse()
+      : responses.notAuthenticatedResponse();
   }
 
-  // Authorization
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, validEnvId);
-  if (!isUserAuthorized) {
-    await logFileDeletion({
-      failureReason: "User not authorized to access environment",
-      accessType: validAccessType,
-      userId: session.user.id,
-    });
-    return responses.unauthorizedResponse();
-  }
-
-  try {
-    const deleteResult = await handleDeleteFile(validEnvId, validAccessType, validFileName);
-    const isSuccess = deleteResult.status === 200;
-    let failureReason = "File deletion failed";
-
-    if (!isSuccess) {
-      try {
-        const responseBody = await deleteResult.json();
-        failureReason = responseBody.message || failureReason; // NOSONAR // We want to check for empty messages too
-      } catch (error) {
-        logger.error("Failed to parse file delete error response body", { error });
+  if (authResult.ok) {
+    try {
+      if (authResult.data.authType === "apiKey") {
+        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.apiKeyId);
+      } else {
+        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
       }
+    } catch (error) {
+      return responses.tooManyRequestsResponse(error.message);
     }
-
-    await logFileDeletion({
-      status: isSuccess ? "success" : "failure",
-      failureReason: isSuccess ? undefined : failureReason,
-      accessType: validAccessType,
-      userId: session.user.id,
-    });
-
-    return deleteResult;
-  } catch (error) {
-    await logFileDeletion({
-      failureReason: error instanceof Error ? error.message : "Unexpected error during file deletion",
-      accessType: validAccessType,
-      userId: session.user.id,
-    });
-    throw error;
   }
+
+  const deleteResult = await deleteFile(environmentId, accessType, decodeURIComponent(fileName));
+
+  const isSuccess = deleteResult.ok;
+
+  if (!isSuccess) {
+    logger.error({ error: deleteResult.error }, "Error deleting file");
+
+    await logFileDeletion({
+      failureReason: deleteResult.error.code,
+      accessType,
+      userId: session?.user?.id,
+      environmentId,
+      apiUrl: request.url,
+    });
+
+    const errorResponse = getErrorResponseFromStorageError(deleteResult.error, { fileName });
+    return errorResponse;
+  }
+
+  await logFileDeletion({
+    status: "success",
+    accessType,
+    userId: session?.user?.id,
+    environmentId,
+    apiUrl: request.url,
+  });
+
+  return responses.successResponse("File deleted successfully");
 };

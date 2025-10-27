@@ -1,11 +1,11 @@
-import { getEnabledLanguages } from "@/lib/i18n/utils";
-import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
-import { Button } from "@/modules/ui/components/button";
 import { Languages } from "lucide-react";
 import { useRef, useState } from "react";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { getEnabledLanguages } from "@/lib/i18n/utils";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import { Button } from "@/modules/ui/components/button";
 
 interface LanguageDropdownProps {
   survey: TSurvey;
@@ -30,7 +30,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
             {enabledLanguages.map((surveyLanguage) => (
               <button
                 key={surveyLanguage.language.code}
-                className="rounded-md p-2 hover:cursor-pointer hover:bg-slate-700"
+                className="w-full rounded-md p-2 text-start hover:cursor-pointer hover:bg-slate-700"
                 onClick={() => {
                   setLanguage(surveyLanguage.language.code);
                   setShowLanguageSelect(false);

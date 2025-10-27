@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { PROJECT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@/lib/constants";
@@ -6,11 +7,10 @@ import {
   getMonthlyOrganizationResponseCount,
 } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
-import { notFound } from "next/navigation";
 import { PricingTable } from "./components/pricing-table";
 
 export const PricingPage = async (props) => {

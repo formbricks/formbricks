@@ -1,10 +1,10 @@
 "use client";
 
-import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
-import { Badge } from "@/modules/ui/components/multi-select/badge";
 import { Command as CommandPrimitive } from "cmdk";
 import { X } from "lucide-react";
 import * as React from "react";
+import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
+import { Badge } from "@/modules/ui/components/multi-select/badge";
 
 interface TOption<T> {
   value: T;
@@ -129,7 +129,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       {open && selectableOptions.length > 0 && !disabled && (
         <div className="relative mt-2">
           <CommandList>
-            <div className="text-popover-foreground animate-in absolute top-0 z-10 max-h-32 w-full rounded-md border bg-white shadow-md outline-none">
+            <div className="text-popover-foreground animate-in absolute top-0 z-10 max-h-32 w-full overflow-auto rounded-md border bg-white shadow-md outline-none">
               <CommandGroup className="h-full overflow-auto">
                 {selectableOptions.map((option) => (
                   <CommandItem

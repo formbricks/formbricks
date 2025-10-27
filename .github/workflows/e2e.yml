@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 60
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a
         env:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
@@ -41,27 +41,23 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U testuser"
+          --health-cmd="pg_isready -U postgres"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
       valkey:
-        image: valkey/valkey:8.1.1
+        image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
         ports:
           - 6379:6379
-        options: >-
-          --entrypoint "valkey-server"
-          --health-cmd="valkey-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
-          egress-policy: allow
+          egress-policy: audit
           allowed-endpoints: |
             ee.formbricks.com:443
+            registry-1.docker.io:443
+            docker.io:443
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: ./.github/actions/dangerous-git-checkout
@@ -89,9 +85,71 @@ jobs:
           sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
+          sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
           echo "" >> .env
           echo "E2E_TESTING=1" >> .env
+          echo "S3_REGION=us-east-1" >> .env
+          echo "S3_BUCKET_NAME=formbricks-e2e" >> .env
+          echo "S3_ENDPOINT_URL=http://localhost:9000" >> .env
+          echo "S3_ACCESS_KEY=devminio" >> .env
+          echo "S3_SECRET_KEY=devminio123" >> .env
+          echo "S3_FORCE_PATH_STYLE=1" >> .env
         shell: bash
+
+      - name: Install MinIO client (mc)
+        run: |
+          set -euo pipefail
+          MC_VERSION="RELEASE.2025-08-13T08-35-41Z"
+          MC_BASE="https://dl.min.io/client/mc/release/linux-amd64/archive"
+          MC_BIN="mc.${MC_VERSION}"
+          MC_SUM="${MC_BIN}.sha256sum"
+
+          curl -fsSL "${MC_BASE}/${MC_BIN}" -o "${MC_BIN}"
+          curl -fsSL "${MC_BASE}/${MC_SUM}" -o "${MC_SUM}"
+
+          sha256sum -c "${MC_SUM}"
+
+          chmod +x "${MC_BIN}"
+          sudo mv "${MC_BIN}" /usr/local/bin/mc
+
+      - name: Start MinIO Server
+        run: |
+          set -euo pipefail
+          
+          # Start MinIO server in background
+          docker run -d \
+            --name minio-server \
+            -p 9000:9000 \
+            -p 9001:9001 \
+            -e MINIO_ROOT_USER=devminio \
+            -e MINIO_ROOT_PASSWORD=devminio123 \
+            minio/minio:RELEASE.2025-09-07T16-13-09Z \
+            server /data --console-address :9001
+          
+          echo "MinIO server started"
+
+      - name: Wait for MinIO and create S3 bucket
+        run: |
+          set -euo pipefail
+
+          echo "Waiting for MinIO to be ready..."
+          ready=0
+          for i in {1..60}; do
+            if curl -fsS http://localhost:9000/minio/health/live >/dev/null; then
+              echo "MinIO is up after ${i} seconds"
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::MinIO did not become ready within 60 seconds"
+            exit 1
+          fi
+
+          mc alias set local http://localhost:9000 devminio devminio123
+          mc mb --ignore-existing local/formbricks-e2e
 
       - name: Build App
         run: |
@@ -102,6 +160,18 @@ jobs:
           # pnpm prisma migrate deploy
           pnpm db:migrate:dev
 
+      - name: Run Rate Limiter Load Tests
+        run: |
+          echo "Running rate limiter load tests with Redis/Valkey..."
+          cd apps/web && pnpm vitest run modules/core/rate-limit/rate-limit-load.test.ts
+        shell: bash
+
+      - name: Run Cache Integration Tests
+        run: |
+          echo "Running cache integration tests with Redis/Valkey..."
+          cd packages/cache && pnpm vitest run src/cache-integration.test.ts
+        shell: bash
+
       - name: Check for Enterprise License
         run: |
           LICENSE_KEY=$(grep '^ENTERPRISE_LICENSE_KEY=' .env | cut -d'=' -f2-)
@@ -110,6 +180,12 @@ jobs:
             exit 1
           fi
           echo "License key length: ${#LICENSE_KEY}"
+
+      - name: Disable rate limiting for E2E tests
+        run: |
+          echo "RATE_LIMITING_DISABLED=1" >> .env
+          echo "Rate limiting disabled for E2E tests"
+        shell: bash
 
       - name: Run App
         run: |
@@ -152,11 +228,14 @@ jobs:
         if: env.AZURE_ENABLED == 'true'
         env:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
+          CI: true
         run: |
           pnpm test-e2e:azure
 
       - name: Run E2E Tests (Local)
         if: env.AZURE_ENABLED == 'false'
+        env:
+          CI: true
         run: |
           pnpm test:e2e
 

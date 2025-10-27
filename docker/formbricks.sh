@@ -61,8 +61,8 @@ install_formbricks() {
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks Quickstart directory at ./formbricks."
 
-  # Ask the user for their domain name
-  echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
+  # Ask the user for their domain name (recommend surveys subdomain)
+  echo "🔗 Please enter your app domain (e.g., surveys.example.com). 🚨 Do NOT enter the protocol (http/https):"
   read domain_name
 
   echo "🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]"
@@ -96,7 +96,7 @@ install_formbricks() {
       if [[ -z $hsts_enabled ]]; then
         hsts_enabled="y"
       fi
-      
+
     else
       echo "❌ Ports 80 & 443 are not open. We can't help you in providing the SSL certificate."
       https_setup="n"
@@ -145,7 +145,7 @@ install_formbricks() {
     acme:
       email: $email_address
       storage: acme.json
-      caServer: "https://acme-v01.api.letsencrypt.org/directory"
+      caServer: "https://acme-v02.api.letsencrypt.org/directory"
       tlsChallenge: {}"
   else
     certResolver=""
@@ -157,8 +157,14 @@ entryPoints:
   web:
     address: ":80"
     $http_redirection
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
   websecure:
     address: ":443"
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
     http:
       tls:
         $certResolver
@@ -235,9 +241,8 @@ EOT
     echo -n "Enter your SMTP username: "
     read smtp_user
 
-    echo -n "Enter your SMTP password: "
-    read smtp_password
-    
+    read -s -p "Enter your SMTP password: " smtp_password; echo "***"
+
     echo -n "Enable Authenticated SMTP? Enter 1 for yes and 0 for no(default is 1): "
     read smtp_authenticated
 
@@ -255,8 +260,59 @@ EOT
     smtp_secure_enabled=0
   fi
 
+  # Prompt for file upload setup
+  echo ""
+  echo "📁 Do you want to configure file uploads?"
+  echo "   If you skip this, the following features will be disabled:"
+  echo "   - Adding images to surveys (e.g., in questions or as background)"
+  echo "   - 'File Upload' and 'Picture Selection' question types"
+  echo "   - Project logos"
+  echo "   - Custom organization logo in emails"
+  read -p "Configure file uploads now? [Y/n] " configure_uploads
+  configure_uploads=$(echo "$configure_uploads" | tr '[:upper:]' '[:lower:]')
+  if [[ -z $configure_uploads ]]; then configure_uploads="y"; fi
+
+  if [[ $configure_uploads == "y" ]]; then
+    # Storage choice: External S3 vs bundled MinIO
+    read -p "🗄️  Do you want to use an external S3-compatible storage (AWS S3/DO Spaces/etc.)? [y/N] " use_external_s3
+    use_external_s3=$(echo "$use_external_s3" | tr '[:upper:]' '[:lower:]')
+    if [[ -z $use_external_s3 ]]; then use_external_s3="n"; fi
+
+    if [[ $use_external_s3 == "y" ]]; then
+      echo "🔧 Enter S3 configuration (leave Endpoint empty for AWS S3):"
+      read -p "   S3 Access Key: " ext_s3_access_key
+      read -s -p "   S3 Secret Key: " ext_s3_secret_key; echo "***"
+      read -p "   S3 Region (e.g., us-east-1): " ext_s3_region
+      read -p "   S3 Bucket Name: " ext_s3_bucket
+      read -p "   S3 Endpoint URL (leave empty if you are using AWS S3, otherwise please enter the endpoint URL of the third party S3 compatible storage service): " ext_s3_endpoint
+      
+      minio_storage="n"
+    else
+      minio_storage="y"
+      default_files_domain="files.$domain_name"
+      read -p "🔗 Enter the files subdomain for object storage (e.g., $default_files_domain): " files_domain
+      if [[ -z $files_domain ]]; then files_domain="$default_files_domain"; fi
+
+      echo "🔑 Generating MinIO credentials..."
+      minio_root_user="formbricks-$(openssl rand -hex 4)"
+      minio_root_password=$(openssl rand -base64 20)
+      minio_service_user="formbricks-service-$(openssl rand -hex 4)"
+      minio_service_password=$(openssl rand -base64 20)
+      minio_bucket_name="formbricks-uploads"
+      minio_policy_name="formbricks-policy"
+      
+      echo "✅ MinIO will be configured with:"
+      echo "   S3 Access Key (least privilege): $minio_service_user"
+      echo "   Bucket: $minio_bucket_name"
+    fi
+  else
+    minio_storage="n"
+    use_external_s3="n"
+    echo "⚠️ File uploads are disabled. Proceeding without S3/MinIO configuration."
+  fi
+
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
-  curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+  curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
 
   echo "🚙 Updating docker-compose.yml with your custom inputs..."
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
@@ -268,9 +324,9 @@ EOT
   encryption_key=$(openssl rand -hex 32) && sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $encryption_key/" docker-compose.yml
   echo "🚗 ENCRYPTION_KEY updated successfully!"
 
-  cron_secret=$(openssl rand -hex 32) && sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $cron_secret/" docker-compose.yml
+  cron_secret=$(openssl rand -hex 32) && sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $cron_secret/" docker-compose.yml	
   echo "🚗 CRON_SECRET updated successfully!"
-
+  
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml
     sed -i "s|# MAIL_FROM_NAME:|MAIL_FROM_NAME: \"$mail_from_name\"|" docker-compose.yml
@@ -282,53 +338,336 @@ EOT
     sed -i "s|# SMTP_AUTHENTICATED:|SMTP_AUTHENTICATED: $smtp_authenticated|" docker-compose.yml
   fi
 
+  if [[ $use_external_s3 == "y" ]]; then
+    echo "🚗 Configuring external S3..."
+    sed -i "s|# S3_ACCESS_KEY:|S3_ACCESS_KEY: \"$ext_s3_access_key\"|" docker-compose.yml
+    sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$ext_s3_secret_key\"|" docker-compose.yml
+    sed -i "s|# S3_REGION:|S3_REGION: \"$ext_s3_region\"|" docker-compose.yml
+    sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$ext_s3_bucket\"|" docker-compose.yml
+    if [[ -n $ext_s3_endpoint ]]; then
+      sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"$ext_s3_endpoint\"|" docker-compose.yml
+      # Ensure S3_FORCE_PATH_STYLE is enabled for S3-compatible endpoints
+      sed -E -i 's|^([[:space:]]*)#?[[:space:]]*S3_FORCE_PATH_STYLE:[[:space:]]*.*$|\1S3_FORCE_PATH_STYLE: 1|' docker-compose.yml
+    else
+      # Comment out S3_FORCE_PATH_STYLE for native AWS S3
+      sed -E -i 's|^([[:space:]]*)#?[[:space:]]*S3_FORCE_PATH_STYLE:[[:space:]]*.*$|\1# S3_FORCE_PATH_STYLE:|' docker-compose.yml
+    fi
+    echo "🚗 External S3 configuration updated successfully!"
+  elif [[ $minio_storage == "y" ]]; then
+    echo "🚗 Configuring bundled MinIO..."
+    sed -i "s|# S3_ACCESS_KEY:|S3_ACCESS_KEY: \"$minio_service_user\"|" docker-compose.yml
+    sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$minio_service_password\"|" docker-compose.yml
+    sed -i "s|# S3_REGION:|S3_REGION: \"us-east-1\"|" docker-compose.yml
+    sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$minio_bucket_name\"|" docker-compose.yml
+    if [[ $https_setup == "y" ]]; then
+      sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"https://$files_domain\"|" docker-compose.yml
+    else
+      sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"http://$files_domain\"|" docker-compose.yml
+    fi
+    # Ensure S3_FORCE_PATH_STYLE is enabled for MinIO
+    sed -E -i 's|^([[:space:]]*)#?[[:space:]]*S3_FORCE_PATH_STYLE:[[:space:]]*.*$|\1S3_FORCE_PATH_STYLE: 1|' docker-compose.yml
+    echo "🚗 MinIO S3 configuration updated successfully!"
+  fi
+
+  # SUPER SIMPLE: Use multiple simple operations instead of complex AWK
+
+  # Step 1: Add Traefik labels to formbricks service
   awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '
 /formbricks:/,/^ *$/ {
-    if ($0 ~ /depends_on:/) {
-        inserting_labels=1
-    }
-    if (inserting_labels && ($0 ~ /ports:/)) {
+    if ($0 ~ /<<: \*environment$/) {
         print "    labels:"
-        print "      - \"traefik.enable=true\"  # Enable Traefik for this service"
-        print "      - \"traefik.http.routers.formbricks.rule=Host(`" domain_name "`)\"  # Use your actual domain or IP"
-        print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\"  # Use the websecure entrypoint (port 443 with TLS)"
-        print "      - \"traefik.http.routers.formbricks.tls=true\"  # Enable TLS"
-        print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\"  # Specify the certResolver"
-        print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\"  # Forward traffic to Formbricks on port 3000"
+        print "      - \"traefik.enable=true\""
+        print "      - \"traefik.http.routers.formbricks.rule=Host(`" domain_name "`)\""
+        print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.formbricks.tls=true\""
+        print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\""
+        print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\""
         if (hsts_enabled == "y") {
-            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\"  # Set HSTS (HTTP Strict Transport Security) max-age to 1 year (31536000 seconds)"
-            print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\"  # Ensure the HSTS header is always included in responses"
-            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsPreload=true\"  # Allow the domain to be preloaded in browser HSTS preload list"
-            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsIncludeSubdomains=true\"  # Apply HSTS policy to all subdomains as well"
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\""
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\""
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsPreload=true\""
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsIncludeSubdomains=true\""
         } else {
-            print "      - \"traefik.http.routers.formbricks_http.entrypoints=web\"  # Use the web entrypoint (port 80)"
-            print "      - \"traefik.http.routers.formbricks_http.rule=Host(`" domain_name "`)\"  # Use your actual domain or IP"
+            print "      - \"traefik.http.routers.formbricks_http.entrypoints=web\""
+            print "      - \"traefik.http.routers.formbricks_http.rule=Host(`" domain_name "`)\""
         }
-        inserting_labels=0
+        print $0
+    } else {
+        print $0
     }
-    print
     next
 }
-/^volumes:/ {
-    print "  traefik:"
-    print "    image: \"traefik:v2.7\""
-    print "    restart: always"
-    print "    container_name: \"traefik\""
-    print "    depends_on:"
-    print "      - formbricks"
-    print "    ports:"
-    print "      - \"80:80\""
-    print "      - \"443:443\""
-    print "      - \"8080:8080\""
-    print "    volumes:"
-    print "      - ./traefik.yaml:/traefik.yaml"
-    print "      - ./traefik-dynamic.yaml:/traefik-dynamic.yaml"
-    print "      - ./acme.json:/acme.json"
-    print "      - /var/run/docker.sock:/var/run/docker.sock:ro"
-    print ""
-}
-1
+{ print }
 ' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
+
+  # Step 2: Ensure formbricks waits for minio-init to complete successfully (mapping depends_on)
+  if [[ $minio_storage == "y" ]]; then
+    # Remove any existing simple depends_on list and replace with mapping
+    awk '
+      BEGIN{in_fb=0; removing=0}
+      /^  formbricks:/ {in_fb=1}
+      in_fb && /^    depends_on:/ {removing=1; next}
+      in_fb && removing && /^    [A-Za-z0-9_-]+:/ {removing=0}
+      /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:/ {in_fb=0}
+      { if(!removing) print }
+    ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+
+    awk '
+      BEGIN{in_fb=0; inserted=0}
+      /^  formbricks:/ {in_fb=1}
+      /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:/ {in_fb=0}
+      {
+        print
+        if (in_fb && !inserted && $0 ~ /^    image:/) {
+          print "    depends_on:"
+          print "      postgres:"
+          print "        condition: service_started"
+          print "      minio-init:"
+          print "        condition: service_completed_successfully"
+          inserted=1
+        }
+      }
+    ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+  fi
+
+  # Step 3: Build service snippets and inject them BEFORE the volumes section (non-destructive: skip if service exists)
+  services_snippet_file="services_snippet.yml"
+  : > "$services_snippet_file"
+
+  insert_traefik="y"
+  if grep -q "^  traefik:" docker-compose.yml; then insert_traefik="n"; fi
+
+  if [[ $minio_storage == "y" ]]; then
+    insert_minio="y"; insert_minio_init="y"
+    if grep -q "^  minio:" docker-compose.yml; then insert_minio="n"; fi
+    if grep -q "^  minio-init:" docker-compose.yml; then insert_minio_init="n"; fi
+
+    if [[ $insert_minio == "y" ]]; then
+      cat >> "$services_snippet_file" << EOF
+
+  minio:
+    restart: always
+    image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: "$minio_root_user"
+      MINIO_ROOT_PASSWORD: "$minio_root_password"
+    volumes:
+      - minio-data:/data
+    labels:
+      - "traefik.enable=true"
+      # S3 API on files subdomain
+      - "traefik.http.routers.minio-s3.rule=Host(\`$files_domain\`)"
+      - "traefik.http.routers.minio-s3.entrypoints=websecure"
+      - "traefik.http.routers.minio-s3.tls=true"
+      - "traefik.http.routers.minio-s3.tls.certresolver=default"
+      - "traefik.http.routers.minio-s3.service=minio-s3"
+      - "traefik.http.services.minio-s3.loadbalancer.server.port=9000"
+      # CORS and rate limit (adjust origins if needed)
+      - "traefik.http.routers.minio-s3.middlewares=minio-cors,minio-ratelimit"
+      - "traefik.http.middlewares.minio-cors.headers.accesscontrolallowmethods=GET,PUT,POST,DELETE,HEAD,OPTIONS"
+      - "traefik.http.middlewares.minio-cors.headers.accesscontrolallowheaders=*"
+      - "traefik.http.middlewares.minio-cors.headers.accesscontrolalloworiginlist=https://$domain_name"
+      - "traefik.http.middlewares.minio-cors.headers.accesscontrolmaxage=100"
+      - "traefik.http.middlewares.minio-cors.headers.addvaryheader=true"
+      - "traefik.http.middlewares.minio-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.minio-ratelimit.ratelimit.burst=200"
+EOF
+    fi
+
+    if [[ $insert_minio_init == "y" ]]; then
+      cat >> "$services_snippet_file" << EOF
+  minio-init:
+    image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: "$minio_root_user"
+      MINIO_ROOT_PASSWORD: "$minio_root_password"
+      MINIO_SERVICE_USER: "$minio_service_user"
+      MINIO_SERVICE_PASSWORD: "$minio_service_password"
+      MINIO_BUCKET_NAME: "$minio_bucket_name"
+    entrypoint: ["/bin/sh", "/tmp/minio-init.sh"]
+    volumes:
+      - ./minio-init.sh:/tmp/minio-init.sh:ro
+EOF
+    fi
+
+    if [[ $insert_traefik == "y" ]]; then
+      cat >> "$services_snippet_file" << EOF
+  traefik:
+    image: "traefik:v2.11.29"
+    restart: always
+    container_name: "traefik"
+    depends_on:
+      - formbricks
+      - minio
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik.yaml:/traefik.yaml
+      - ./traefik-dynamic.yaml:/traefik-dynamic.yaml
+      - ./acme.json:/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+EOF
+    fi
+
+    # Downgrade MinIO router to plain HTTP when HTTPS is not configured
+    if [[ $https_setup != "y" ]]; then
+      sed -i 's/traefik.http.routers.minio-s3.entrypoints=websecure/traefik.http.routers.minio-s3.entrypoints=web/' "$services_snippet_file"
+      sed -i '/traefik.http.routers.minio-s3.tls=true/d' "$services_snippet_file"
+      sed -i '/traefik.http.routers.minio-s3.tls.certresolver=default/d' "$services_snippet_file"
+      sed -i "s|accesscontrolalloworiginlist=https://$domain_name|accesscontrolalloworiginlist=http://$domain_name|" "$services_snippet_file"
+    fi
+  else
+    if [[ $insert_traefik == "y" ]]; then
+      cat > "$services_snippet_file" << EOF
+
+  traefik:
+    image: "traefik:v2.11.29"
+    restart: always
+    container_name: "traefik"
+    depends_on:
+      - formbricks
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik.yaml:/traefik.yaml
+      - ./traefik-dynamic.yaml:/traefik-dynamic.yaml
+      - ./acme.json:/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+EOF
+    else
+      : > "$services_snippet_file"
+    fi
+  fi
+
+  awk '
+  {
+    print
+    if ($0 ~ /^services:$/ && !inserted) {
+      while ((getline line < "services_snippet.yml") > 0) print line
+      close("services_snippet.yml")
+      inserted = 1
+    }
+  }
+  ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+
+  rm -f "$services_snippet_file"
+
+  # Ensure required volumes exist without removing user-defined volumes
+  if grep -q '^volumes:' docker-compose.yml; then
+    # Ensure postgres
+    if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="postgres:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+      awk '
+        /^volumes:/ { print; invol=1; next }
+        invol && /^[^[:space:]]/ { if(!added){ print "  postgres:"; print "    driver: local"; added=1 } ; invol=0 }
+        { print }
+        END { if (invol && !added) { print "  postgres:"; print "    driver: local" } }
+      ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+    fi
+    # Ensure redis
+    if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="redis:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+      awk '
+        /^volumes:/ { print; invol=1; next }
+        invol && /^[^[:space:]]/ { if(!added){ print "  redis:"; print "    driver: local"; added=1 } ; invol=0 }
+        { print }
+        END { if (invol && !added) { print "  redis:"; print "    driver: local" } }
+      ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+    fi
+    # Ensure minio-data if needed
+    if [[ $minio_storage == "y" ]]; then
+      if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="minio-data:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+        awk '
+          /^volumes:/ { print; invol=1; next }
+          invol && /^[^[:space:]]/ { if(!added){ print "  minio-data:"; print "    driver: local"; added=1 } ; invol=0 }
+          { print }
+          END { if (invol && !added) { print "  minio-data:"; print "    driver: local" } }
+        ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+      fi
+    fi
+  else
+    {
+      echo ""
+      echo "volumes:"
+      echo "  postgres:"
+      echo "    driver: local"
+      echo "  redis:"
+      echo "    driver: local"
+      if [[ $minio_storage == "y" ]]; then
+        echo "  minio-data:"
+        echo "    driver: local"
+      fi
+    } >> docker-compose.yml
+  fi
+
+  # Create minio-init script outside heredoc to avoid variable expansion issues
+  if [[ $minio_storage == "y" ]]; then
+    cat > minio-init.sh << 'MINIO_SCRIPT_EOF'
+#!/bin/sh
+echo '⏳ Waiting for MinIO to be ready...'
+attempts=0
+max_attempts=30
+until mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1 \
+  && mc ls minio >/dev/null 2>&1; do
+  attempts=$((attempts + 1))
+  if [ $attempts -ge $max_attempts ]; then
+    printf '❌ Failed to connect to MinIO after %s attempts\n' $max_attempts
+    exit 1
+  fi
+  printf '...still waiting attempt %s/%s\n' $attempts $max_attempts
+  sleep 2
+done
+echo '🔗 MinIO reachable; alias configured.'
+
+echo '🪣 Creating bucket (idempotent)...';
+mc mb minio/$MINIO_BUCKET_NAME --ignore-existing;
+
+echo '📄 Creating JSON policy file...';
+cat > /tmp/formbricks-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+      "Resource": ["arn:aws:s3:::$MINIO_BUCKET_NAME/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::$MINIO_BUCKET_NAME"]
+    }
+  ]
+}
+EOF
+
+echo '🔒 Creating policy (idempotent)...';
+if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
+  mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json || mc admin policy add minio formbricks-policy /tmp/formbricks-policy.json;
+  echo 'Policy created successfully.';
+else
+  echo 'Policy already exists, skipping creation.';
+fi
+
+echo '👤 Creating service user (idempotent)...';
+if ! mc admin user info minio "$MINIO_SERVICE_USER" >/dev/null 2>&1; then
+  mc admin user add minio "$MINIO_SERVICE_USER" "$MINIO_SERVICE_PASSWORD";
+  echo 'User created successfully.';
+else
+  echo 'User already exists, skipping creation.';
+fi
+
+echo '🔗 Attaching policy to user (idempotent)...';
+mc admin policy attach minio formbricks-policy --user "$MINIO_SERVICE_USER" || echo 'Policy already attached or attachment failed (non-fatal).';
+
+echo '✅ MinIO setup complete!';
+exit 0;
+MINIO_SCRIPT_EOF
+    chmod +x minio-init.sh
+  fi
 
   newgrp docker <<END
 
@@ -338,6 +677,14 @@ echo "🔗 To edit more variables and deeper config, go to the formbricks/docker
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""
+
+if [[ $minio_storage == "y" ]]; then
+    echo "🗄️  MinIO Storage Setup Complete:"
+    echo "   • Access Key: $minio_service_user (least privilege)"
+    echo "   • Bucket: $minio_bucket_name (✅ created and secured)"
+    echo ""
+fi
+
 echo "🎉 All done! Please setup your Formbricks instance by visiting your domain at https://$domain_name. You can check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'"
 
 END
@@ -389,6 +736,40 @@ get_logs() {
   sudo docker compose logs
 }
 
+cleanup_minio_init() {
+  echo "🧹 Cleaning up MinIO init service and references..."
+  cd formbricks
+
+  # Remove minio-init service block from docker-compose.yml
+  awk '
+    BEGIN{skip=0}
+    /^services:[[:space:]]*$/ { print; next }
+    /^  minio-init:/          { skip=1; next }
+    /^  [A-Za-z0-9_-]+:/      { if (skip) skip=0 }
+    { if (!skip) print }
+  ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
+
+  # Remove list-style "- minio-init" lines under depends_on (if any)
+  if sed --version >/dev/null 2>&1; then
+    sed -E -i '/^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/d' docker-compose.yml
+  else
+    sed -E -i '' '/^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/d' docker-compose.yml
+  fi
+
+  # Remove the minio-init mapping and its condition line (mapping style depends_on)
+  if sed --version >/dev/null 2>&1; then
+    sed -i '/^[[:space:]]*minio-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
+  else
+    sed -i '' '/^[[:space:]]*minio-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
+  fi
+
+  # Remove any stopped minio-init container and restart without orphans
+  docker compose rm -f -s minio-init >/dev/null 2>&1 || true
+  docker compose up -d --remove-orphans
+
+  echo "✅ MinIO init cleanup complete."
+}
+
 case "$1" in
 install)
   install_formbricks
@@ -405,6 +786,9 @@ restart)
 logs)
   get_logs
   ;;
+  cleanup-minio-init)
+    cleanup_minio_init
+    ;;
 uninstall)
   uninstall_formbricks
   ;;

@@ -1,15 +1,17 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { TriangleAlertIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TUserLocale } from "@formbricks/types/user";
 
 interface PendingDowngradeBannerProps {
   lastChecked: Date;
   active: boolean;
   isPendingDowngrade: boolean;
   environmentId: string;
+  locale: TUserLocale;
 }
 
 export const PendingDowngradeBanner = ({
@@ -17,15 +19,20 @@ export const PendingDowngradeBanner = ({
   active,
   isPendingDowngrade,
   environmentId,
+  locale,
 }: PendingDowngradeBannerProps) => {
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const isLastCheckedWithin72Hours = lastChecked
     ? new Date().getTime() - lastChecked.getTime() < threeDaysInMillis
     : false;
 
   const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);
-  const formattedDate = `${scheduledDowngradeDate.getMonth() + 1}/${scheduledDowngradeDate.getDate()}/${scheduledDowngradeDate.getFullYear()}`;
+  const formattedDate = scheduledDowngradeDate.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const [show, setShow] = useState(true);
 
@@ -47,8 +54,7 @@ export const PendingDowngradeBanner = ({
                     <p className="mt-1 text-sm text-slate-500">
                       {t(
                         "common.we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable"
-                      )}
-                      .{" "}
+                      )}{" "}
                       {isLastCheckedWithin72Hours
                         ? t("common.you_will_be_downgraded_to_the_community_edition_on_date", {
                             date: formattedDate,
