@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import {
   TShuffleOption,
   TSurveyMatrixQuestion,
@@ -43,7 +43,7 @@ export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
   updateQuestion,
   shuffleOptionsTypes,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <Select
       defaultValue={shuffleOption}

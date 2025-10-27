@@ -1,11 +1,11 @@
 "use client";
 
 import { ActionClass } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ActionNameDescriptionFields } from "@/modules/ui/components/action-name-description-fields";
@@ -36,7 +36,7 @@ export const CreateNewActionTab = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),

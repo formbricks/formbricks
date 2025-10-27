@@ -6,9 +6,9 @@ import { IS_POSTHOG_CONFIGURED } from "@/lib/constants";
 import { canUserAccessOrganization } from "@/lib/organization/auth";
 import { getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
-import { getTranslate } from "@/tolgee/server";
 
 const ProjectOnboardingLayout = async (props) => {
   const params = await props.params;

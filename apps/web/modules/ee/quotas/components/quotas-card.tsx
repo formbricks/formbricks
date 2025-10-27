@@ -2,11 +2,12 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { CheckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -39,7 +40,7 @@ const AddQuotaButton = ({
 }: {
   setIsQuotaModalOpen: (open: boolean) => void;
   setActiveQuota: (quota: TSurveyQuota | null) => void;
-  t: TFnType;
+  t: TFunction;
   hasResponses: boolean;
   setOpenCreateQuotaConfirmationModal: (open: boolean) => void;
 }) => {
@@ -67,7 +68,7 @@ export const QuotasCard = ({
   quotas,
   hasResponses,
 }: QuotasCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [activeQuota, setActiveQuota] = useState<TSurveyQuota | null>(null);

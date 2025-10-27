@@ -1,8 +1,8 @@
 "use client";
 
 import { PipelineTriggers } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface TriggerCheckboxGroupProps {
@@ -16,7 +16,7 @@ export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
   onCheckboxChange,
   allowChanges,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const triggers: {
     title: string;

@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { convertDateString, timeSince } from "@/lib/time";
@@ -30,7 +30,7 @@ export const SurveyCard = ({
   locale,
   onSurveysCopied,
 }: SurveyCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const surveyStatusLabel = (() => {
     switch (survey.status) {
       case "inProgress":

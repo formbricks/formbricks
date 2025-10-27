@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { ActivityIcon, ShoppingCartIcon, SmileIcon, StarIcon, ThumbsUpIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TProject } from "@formbricks/types/project";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
@@ -23,7 +23,7 @@ interface XMTemplateListProps {
 
 export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListProps) => {
   const [activeTemplateId, setActiveTemplateId] = useState<number | null>(null);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const createSurvey = async (activeTemplate: TXMTemplate) => {

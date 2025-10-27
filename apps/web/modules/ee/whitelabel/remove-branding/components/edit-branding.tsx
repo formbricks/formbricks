@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectBrandingAction } from "@/modules/ee/whitelabel/remove-branding/actions";
 import { TProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
@@ -17,7 +17,7 @@ interface EditBrandingProps {
 }
 
 export const EditBranding = ({ type, isEnabled, projectId, isReadOnly }: EditBrandingProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(isEnabled);
   const [updatingBranding, setUpdatingBranding] = useState(false);
 

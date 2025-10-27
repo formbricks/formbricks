@@ -1,9 +1,10 @@
 // utils.test.ts
+// Pull in the mocked implementations to configure them in tests
 import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TEnvironment } from "@formbricks/types/environment";
-import { AuthorizationError, DatabaseError } from "@formbricks/types/errors";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
@@ -24,7 +25,6 @@ import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 // Pull in the mocked implementations to configure them in tests
-import { getTranslate } from "@/tolgee/server";
 import {
   environmentIdLayoutChecks,
   getEnvironmentAuth,
@@ -33,8 +33,8 @@ import {
 } from "./utils";
 
 // Mock all external dependencies
-vi.mock("@/tolgee/server", () => ({
-  getTranslate: vi.fn(),
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(() => (key: string) => key),
 }));
 
 vi.mock("next-auth", () => ({
@@ -114,7 +114,6 @@ describe("utils.ts", () => {
     vi.clearAllMocks();
 
     // Provide default mocks for successful scenario
-    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as any); // Mock translation function
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user123" } });
     vi.mocked(getEnvironment).mockResolvedValue({ id: "env123" } as TEnvironment);
     vi.mocked(getProjectByEnvironmentId).mockResolvedValue({ id: "proj123" } as TProject);

@@ -1,11 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZProject } from "@formbricks/types/project";
 import { TOrganizationTeam } from "@/app/(app)/(onboarding)/types/onboarding";
@@ -53,7 +53,7 @@ export const CreateProjectModal = ({
   organizationId,
   isAccessControlAllowed,
 }: CreateProjectModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const [organizationTeams, setOrganizationTeams] = useState<TOrganizationTeam[]>([]);

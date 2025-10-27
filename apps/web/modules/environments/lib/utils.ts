@@ -18,12 +18,12 @@ import {
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
 import { validateInputs } from "@/lib/utils/validate";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { getTranslate } from "@/tolgee/server";
 import { TEnvironmentAuth, TEnvironmentLayoutData } from "../types/environment-auth";
 
 /**

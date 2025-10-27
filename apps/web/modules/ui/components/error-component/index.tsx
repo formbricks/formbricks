@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { XCircleIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ErrorComponentProps {
   /** Pre-translated title text. If not provided, uses default error title */
@@ -11,7 +11,7 @@ interface ErrorComponentProps {
 }
 
 export const ErrorComponent: React.FC<ErrorComponentProps> = ({ title, description }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="rounded-lg bg-red-50 p-4">

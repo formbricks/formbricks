@@ -17,9 +17,9 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getTranslate } from "@/lingodotdev/server";
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 
 export const metadata: Metadata = {
   title: "Sign up",

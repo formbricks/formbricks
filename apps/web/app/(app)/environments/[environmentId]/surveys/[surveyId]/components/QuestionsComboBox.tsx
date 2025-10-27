@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import {
   AirplayIcon,
@@ -29,6 +28,7 @@ import {
   User,
 } from "lucide-react";
 import { Fragment, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
@@ -164,7 +164,7 @@ export const SelectedCommandItem = ({ label, questionType, type }: Partial<Quest
 
 export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
   const [open, setOpen] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const commandRef = useRef(null);
   const [inputValue, setInputValue] = useState("");
   useClickOutside(commandRef, () => setOpen(false));

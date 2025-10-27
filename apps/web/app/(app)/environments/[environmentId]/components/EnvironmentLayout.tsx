@@ -2,11 +2,11 @@ import { MainNavigation } from "@/app/(app)/environments/[environmentId]/compone
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getAccessFlags } from "@/lib/membership/utils";
+import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import { TEnvironmentLayoutData } from "@/modules/environments/types/environment-auth";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
-import { getTranslate } from "@/tolgee/server";
 
 interface EnvironmentLayoutProps {
   layoutData: TEnvironmentLayoutData;

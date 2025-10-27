@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { TUserProject } from "@/modules/survey/list/types/projects";
@@ -93,7 +93,7 @@ function EnvironmentCheckboxGroup({ project, form, projectIndex }: EnvironmentCh
 }
 
 export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: CopySurveyFormProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const filteredProjects = defaultProjects.map((project) => ({
     ...project,

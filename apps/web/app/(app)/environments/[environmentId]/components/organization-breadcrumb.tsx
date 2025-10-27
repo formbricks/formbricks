@@ -1,7 +1,6 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { useTranslate } from "@tolgee/react";
 import {
   BuildingIcon,
   ChevronDownIcon,
@@ -11,7 +10,8 @@ import {
   SettingsIcon,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
@@ -36,6 +36,17 @@ interface OrganizationBreadcrumbProps {
   isOwnerOrManager: boolean;
 }
 
+const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
+  // Match /settings/{settingId} or /settings/{settingId}/... but exclude account settings
+  // Exclude paths with /(account)/
+  if (pathname.includes("/(account)/")) {
+    return false;
+  }
+  // Check if path matches /settings/{settingId} (with optional trailing path)
+  const pattern = new RegExp(`/settings/${settingId}(?:/|$)`);
+  return pattern.test(pathname);
+};
+
 export const OrganizationBreadcrumb = ({
   currentOrganizationId,
   currentOrganizationName,
@@ -45,12 +56,12 @@ export const OrganizationBreadcrumb = ({
   isMember,
   isOwnerOrManager,
 }: OrganizationBreadcrumbProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -92,12 +103,20 @@ export const OrganizationBreadcrumb = ({
 
   const handleOrganizationChange = (organizationId: string) => {
     if (organizationId === currentOrganizationId) return;
-    setIsLoading(true);
-    router.push(`/organizations/${organizationId}/`);
+    startTransition(() => {
+      router.push(`/organizations/${organizationId}/`);
+    });
   };
 
   // Hide organization dropdown for single org setups (on-premise)
   const showOrganizationDropdown = isMultiOrgEnabled || organizations.length > 1;
+
+  const handleSettingChange = (href: string) => {
+    startTransition(() => {
+      setIsOrganizationDropdownOpen(false);
+      router.push(href);
+    });
+  };
 
   const organizationSettings = [
     {
@@ -140,7 +159,7 @@ export const OrganizationBreadcrumb = ({
           <div className="flex items-center gap-1">
             <BuildingIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{organizationName}</span>
-            {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+            {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isOrganizationDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
@@ -210,9 +229,9 @@ export const OrganizationBreadcrumb = ({
                 return setting.hidden ? null : (
                   <DropdownMenuCheckboxItem
                     key={setting.id}
-                    checked={pathname.includes(setting.id)}
+                    checked={isActiveOrganizationSetting(pathname, setting.id)}
                     hidden={setting.hidden}
-                    onClick={() => router.push(setting.href)}
+                    onClick={() => handleSettingChange(setting.href)}
                     className="cursor-pointer">
                     {setting.label}
                   </DropdownMenuCheckboxItem>

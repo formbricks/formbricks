@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -21,7 +21,7 @@ interface ShareInviteModalProps {
 }
 
 export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
