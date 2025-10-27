@@ -82,11 +82,6 @@
       "user_successfully_created": "使用者建立成功",
       "user_successfully_created_info": "我們已檢查與 {email} 相關聯的帳戶。如果不存在，我們已為您建立一個。如果帳戶已存在，則未進行任何更改。請在下方登入以繼續。"
     },
-    "testimonial_1": "我們在同一個平台上測量文件的清晰度，並從客戶流失中學習。很棒的產品，團隊反應非常迅速！",
-    "testimonial_all_features_included": "包含所有功能",
-    "testimonial_free_and_open_source": "免費且開源",
-    "testimonial_no_credit_card_required": "無需信用卡",
-    "testimonial_title": "將客戶洞察轉化為無法抗拒的體驗。",
     "verification-requested": {
       "invalid_email_address": "無效的電子郵件地址",
       "invalid_token": "無效的權杖 ☹️",
@@ -1542,7 +1537,6 @@
         "recontact_options": "重新聯絡選項",
         "redirect_thank_you_card": "重新導向感謝卡片",
         "redirect_to_url": "重新導向至網址",
-        "redirect_to_url_not_available_on_free_plan": "重新導向至網址在免費方案中不可用",
         "remove_description": "移除描述",
         "remove_translations": "移除翻譯",
         "require_answer": "要求回答",

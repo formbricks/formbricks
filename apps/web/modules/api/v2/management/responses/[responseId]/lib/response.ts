@@ -41,21 +41,7 @@ export const getResponseForPipeline = async (
       where: {
         id: responseId,
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        displayId: true,
-        finished: true,
-        data: true,
-        meta: true,
-        ttc: true,
-        variables: true,
-        contactAttributes: true,
-        singleUseId: true,
-        language: true,
-        endingId: true,
+      include: {
         contact: {
           select: {
             id: true,

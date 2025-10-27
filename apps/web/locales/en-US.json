@@ -82,11 +82,6 @@
       "user_successfully_created": "User successfully created",
       "user_successfully_created_info": "We’ve checked for an account associated with {email}. If none existed, we’ve created one for you. If an account already existed, no changes were made. Please log in below to continue."
     },
-    "testimonial_1": "We measure the clarity of our docs and learn from churn all on one platform. Great product, very responsive team!",
-    "testimonial_all_features_included": "All features included",
-    "testimonial_free_and_open_source": "Free and open-source",
-    "testimonial_no_credit_card_required": "No credit card required",
-    "testimonial_title": "Turn customer insights into irresistible experiences.",
     "verification-requested": {
       "invalid_email_address": "Invalid email address",
       "invalid_token": "Invalid token ☹️",
@@ -1542,7 +1537,6 @@
         "recontact_options": "Recontact Options",
         "redirect_thank_you_card": "Redirect thank you card",
         "redirect_to_url": "Redirect to Url",
-        "redirect_to_url_not_available_on_free_plan": "Redirect To Url is not available on free plan",
         "remove_description": "Remove description",
         "remove_translations": "Remove translations",
         "require_answer": "Require Answer",
