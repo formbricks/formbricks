@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { H4 } from "@/modules/ui/components/typography";
 
@@ -17,7 +17,7 @@ interface DocumentationLinksSectionProps {
 }
 
 export const DocumentationLinksSection = ({ title, links }: DocumentationLinksSectionProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="flex w-full flex-col space-y-3">

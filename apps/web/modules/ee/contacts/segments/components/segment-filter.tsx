@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -12,6 +11,7 @@ import {
   Users2Icon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
@@ -94,7 +94,7 @@ function SegmentFilterItemConnector({
   filterId: string;
   viewOnly?: boolean;
 }) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const updateLocalSurvey = (newConnector: TSegmentConnector) => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
@@ -145,7 +145,7 @@ function SegmentFilterItemContextMenu({
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
 }) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
@@ -218,7 +218,7 @@ function AttributeSegmentFilter({
   viewOnly,
 }: TAttributeSegmentFilterProps) {
   const { contactAttributeKey } = resource.root;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
   const [valueError, setValueError] = useState("");
@@ -406,7 +406,7 @@ function PersonSegmentFilter({
 }: TPersonSegmentFilterProps) {
   const { personIdentifier } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [valueError, setValueError] = useState("");
 
   // when the operator changes, we need to check if the value is valid
@@ -692,7 +692,7 @@ function DeviceFilter({
   viewOnly,
 }: TDeviceFilterProps) {
   const { value } = resource;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator);
   const operatorArr = DEVICE_OPERATORS.map((operator) => ({
     id: operator,
@@ -800,7 +800,7 @@ export function SegmentFilter({
   onMoveFilter,
   viewOnly = false,
 }: TSegmentFilterProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const updateFilterValueInSegment = (filterId: string, newValue: string | number) => {
     const updatedSegment = structuredClone(segment);

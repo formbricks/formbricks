@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, CircleHelpIcon, Code2Icon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ export const EnvironmentBreadcrumb = ({
   environments: { id: string; type: string }[];
   currentEnvironment: { id: string; type: string };
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isEnvironmentDropdownOpen, setIsEnvironmentDropdownOpen] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);

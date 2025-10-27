@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString, TSurvey, TSurveyMetadata } from "@formbricks/types/surveys/types";
 import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
@@ -42,7 +42,7 @@ interface LinkSettingsFormData {
 }
 
 export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: LinkSettingsTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { survey } = useSurvey();
   const enabledLanguages = getEnabledLanguages(survey.languages);
   const hasMultipleLanguages = enabledLanguages.length > 1;

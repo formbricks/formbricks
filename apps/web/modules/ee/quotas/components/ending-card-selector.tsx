@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { HandshakeIcon, Undo2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TSurveyEndings } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import {
@@ -21,7 +21,7 @@ interface EndingCardSelectorProps {
 
 export const EndingCardSelector = ({ endings, value, onChange }: EndingCardSelectorProps) => {
   const availableEndings = endings;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const endingCards = availableEndings.filter((ending) => ending.type === "endScreen");
   const redirectToUrls = availableEndings.filter((ending) => ending.type === "redirectToUrl");
 

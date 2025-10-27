@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -42,7 +42,7 @@ export const MultipleChoiceSummary = ({
   survey,
   setFilter,
 }: MultipleChoiceSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
   const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array

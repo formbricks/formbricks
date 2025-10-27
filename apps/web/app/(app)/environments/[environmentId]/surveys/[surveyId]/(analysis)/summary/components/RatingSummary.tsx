@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -28,7 +28,7 @@ interface RatingSummaryProps {
 }
 
 export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;

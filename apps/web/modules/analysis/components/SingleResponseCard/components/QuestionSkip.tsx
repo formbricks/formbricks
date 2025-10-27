@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -24,7 +24,7 @@ export const QuestionSkip = ({
   isFirstQuestionAnswered,
   responseData,
 }: QuestionSkipProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div>
       {skippedQuestions && (

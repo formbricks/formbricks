@@ -1,8 +1,8 @@
 "use client";
 
 import { Webhook } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { type JSX, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
@@ -24,7 +24,7 @@ export const WebhookTable = ({
   isReadOnly,
 }: WebhookTableProps) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [activeWebhook, setActiveWebhook] = useState<Webhook>({
     environmentId: environment.id,
     id: "",

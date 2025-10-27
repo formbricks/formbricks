@@ -1,6 +1,6 @@
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
-import { getTranslate } from "@/tolgee/server";
+import { getTranslate } from "@/lingodotdev/server";
 import { EmailTemplate } from "../../components/email-template";
 
 interface EmbedSurveyPreviewEmailProps {

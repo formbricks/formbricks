@@ -2,10 +2,10 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Input } from "@/modules/ui/components/input";
@@ -29,7 +29,7 @@ export const RecontactOptionsCard = ({
   setLocalSurvey,
   environmentId,
 }: RecontactOptionsCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const displayOptions: DisplayOption[] = useMemo(
     () => [

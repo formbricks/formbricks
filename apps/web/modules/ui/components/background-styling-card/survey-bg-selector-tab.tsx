@@ -1,8 +1,8 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AnimatedSurveyBg } from "@/modules/survey/editor/components/animated-survey-bg";
 import { ColorSurveyBg } from "@/modules/survey/editor/components/color-survey-bg";
 import { UploadImageSurveyBg } from "@/modules/survey/editor/components/image-survey-bg";
@@ -29,7 +29,7 @@ export const SurveyBgSelectorTab = ({
   isStorageConfigured = true,
 }: SurveyBgSelectorTabProps) => {
   const [activeTab, setActiveTab] = useState(bgType || "color");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [parent] = useAutoAnimate();
   const [colorBackground, setColorBackground] = useState(bg);
   const [animationBackground, setAnimationBackground] = useState(bg);

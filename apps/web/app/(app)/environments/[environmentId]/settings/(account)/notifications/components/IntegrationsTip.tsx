@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { SlackIcon } from "@/modules/ui/components/icons";
 
 interface IntegrationsTipProps {
@@ -8,7 +8,7 @@ interface IntegrationsTipProps {
 }
 
 export const IntegrationsTip = ({ environmentId }: IntegrationsTipProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div>
       <div className="flex max-w-4xl items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">

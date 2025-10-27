@@ -1,12 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   TProjectConfigChannel,
   TProjectConfigIndustry,
@@ -59,7 +59,7 @@ export const ProjectSettings = ({
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const addProject = async (data: TProjectUpdateInput) => {
     try {
       const createProjectResponse = await createProjectAction({
