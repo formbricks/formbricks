@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { Control, Controller, UseFormSetValue } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -30,7 +30,7 @@ export const BaseSelectDropdown = ({
   setValue,
   defaultValue,
 }: BaseSelectProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="flex w-full flex-col">
       <Label htmlFor="base">{t("environments.integrations.airtable.airtable_base")}</Label>

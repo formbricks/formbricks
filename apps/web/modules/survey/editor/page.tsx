@@ -6,6 +6,7 @@ import {
   SURVEY_BG_COLORS,
   UNSPLASH_ACCESS_KEY,
 } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
@@ -26,7 +27,6 @@ import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/proje
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
-import { getTranslate } from "@/tolgee/server";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
 

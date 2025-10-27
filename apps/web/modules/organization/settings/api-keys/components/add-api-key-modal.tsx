@@ -1,11 +1,11 @@
 "use client";
 
 import { ApiKeyPermission } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
@@ -66,7 +66,7 @@ export const AddApiKeyModal = ({
   projects,
   isCreatingAPIKey,
 }: AddApiKeyModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { register, getValues, handleSubmit, reset, watch } = useForm<{ label: string }>();
   const apiKeyLabel = watch("label");
   const defaultOrganizationAccess: TOrganizationAccess = {

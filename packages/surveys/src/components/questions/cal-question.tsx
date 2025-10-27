@@ -29,6 +29,7 @@ interface CalQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  fullSizeCards: boolean;
 }
 
 export function CalQuestion({
@@ -44,6 +45,7 @@ export function CalQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  fullSizeCards,
 }: Readonly<CalQuestionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -60,7 +62,7 @@ export function CalQuestion({
   }, [onChange, onSubmit, question.id, setTtc, startTime, ttc]);
 
   return (
-    <ScrollableContainer ref={scrollableRef}>
+    <ScrollableContainer ref={scrollableRef} fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

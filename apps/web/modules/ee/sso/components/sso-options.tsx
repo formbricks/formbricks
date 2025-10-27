@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { AzureButton } from "./azure-button";
 import { GithubButton } from "./github-button";
@@ -34,7 +34,7 @@ export const SSOOptions = ({
   samlProduct,
   source,
 }: SSOOptionsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [lastLoggedInWith, setLastLoggedInWith] = useState("");
 
   useEffect(() => {

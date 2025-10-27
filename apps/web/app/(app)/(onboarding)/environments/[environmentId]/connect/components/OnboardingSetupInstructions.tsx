@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
@@ -29,7 +29,7 @@ export const OnboardingSetupInstructions = ({
   channel,
   appSetupCompleted,
 }: OnboardingSetupInstructionsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">

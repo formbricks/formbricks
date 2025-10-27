@@ -24,6 +24,7 @@ interface WelcomeCardProps {
   isCurrent: boolean;
   responseData: TResponseData;
   variablesData: TResponseVariables;
+  fullSizeCards: boolean;
 }
 
 function TimerIcon() {
@@ -76,6 +77,7 @@ export function WelcomeCard({
   isCurrent,
   responseData,
   variablesData,
+  fullSizeCards,
 }: WelcomeCardProps) {
   const { t } = useTranslation();
 
@@ -136,7 +138,7 @@ export function WelcomeCard({
   }, [isCurrent]);
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <div>
         {fileUrl ? (
           <img

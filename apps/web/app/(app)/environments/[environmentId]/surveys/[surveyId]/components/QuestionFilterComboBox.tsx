@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -53,7 +53,7 @@ export const QuestionFilterComboBox = ({
   const [open, setOpen] = useState(false);
   const commandRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   useClickOutside(commandRef, () => setOpen(false));
 

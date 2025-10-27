@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FacebookIcon } from "@/modules/ui/components/icons/facebook-icon";
@@ -17,7 +17,7 @@ interface SocialMediaTabProps {
 }
 
 export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surveyTitle }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const socialMediaPlatforms = useMemo(() => {
     const shareText = surveyTitle;

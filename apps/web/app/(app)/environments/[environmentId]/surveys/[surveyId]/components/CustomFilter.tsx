@@ -1,7 +1,6 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { TFnType, useTranslate } from "@tolgee/react";
 import {
   differenceInDays,
   endOfMonth,
@@ -17,9 +16,11 @@ import {
   subQuarters,
   subYears,
 } from "date-fns";
+import { TFunction } from "i18next";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DateRange,
@@ -48,7 +49,7 @@ enum FilterDownload {
   FILTER = "common.filter",
 }
 
-const getFilterDropDownLabels = (t: TFnType) => ({
+const getFilterDropDownLabels = (t: TFunction) => ({
   ALL_TIME: t("environments.surveys.summary.all_time"),
   LAST_7_DAYS: t("environments.surveys.summary.last_7_days"),
   LAST_30_DAYS: t("environments.surveys.summary.last_30_days"),
@@ -66,7 +67,7 @@ interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getDateRangeLabel = (from: Date, to: Date, t: TFnType) => {
+const getDateRangeLabel = (from: Date, to: Date, t: TFunction) => {
   const dateRanges = [
     {
       label: getFilterDropDownLabels(t).LAST_7_DAYS,
@@ -125,7 +126,7 @@ const getDateRangeLabel = (from: Date, to: Date, t: TFnType) => {
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
     dateRange.from && dateRange.to

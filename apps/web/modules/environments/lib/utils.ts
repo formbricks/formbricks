@@ -8,10 +8,10 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { getTranslate } from "@/tolgee/server";
 import { TEnvironmentAuth } from "../types/environment-auth";
 
 /**

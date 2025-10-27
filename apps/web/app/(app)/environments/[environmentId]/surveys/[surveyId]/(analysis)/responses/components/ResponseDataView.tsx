@@ -1,7 +1,8 @@
 "use client";
 
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
@@ -87,7 +88,7 @@ export const extractResponseData = (response: TResponseWithQuotas, survey: TSurv
 export const mapResponsesToTableData = (
   responses: TResponseWithQuotas[],
   survey: TSurvey,
-  t: TFnType
+  t: TFunction
 ): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),
@@ -128,7 +129,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   isQuotasAllowed,
   quotas,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = React.useState<string | null>(null);
   const setSelectedResponseIdTransition = React.useCallback((id: string | null) => {
     React.startTransition(() => setSelectedResponseId(id));

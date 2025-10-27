@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -25,7 +25,7 @@ interface ConsentSummaryProps {
 }
 
 export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const summaryItems = [
     {
       title: t("common.accepted"),

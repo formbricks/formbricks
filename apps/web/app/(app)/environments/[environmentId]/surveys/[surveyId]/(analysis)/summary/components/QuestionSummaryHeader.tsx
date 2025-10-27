@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import type { JSX } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -23,7 +23,7 @@ export const QuestionSummaryHeader = ({
   showResponses = true,
   survey,
 }: HeadProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const questionType = getQuestionTypes(t).find((type) => type.id === questionSummary.question.type);
 
   return (
