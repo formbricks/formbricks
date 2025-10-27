@@ -270,24 +270,21 @@ export const getEnvironmentLayoutData = reactCache(
       throw new Error("User ID mismatch with session");
     }
 
-    // Fetch user and combined environment data in parallel
-    const [user, relationData] = await Promise.all([
-      getUser(userId), // 1 DB query
-      getEnvironmentWithRelations(environmentId, userId), // 1 DB query (combined)
-    ]);
-
+    // Get user first (lightweight query needed for subsequent checks)
+    const user = await getUser(userId); // 1 DB query
     if (!user) {
       throw new Error(t("common.user_not_found"));
     }
 
-    if (!relationData) {
-      throw new Error(t("common.environment_not_found"));
-    }
-
-    // Authorization check (2 DB queries)
+    // Authorization check before expensive data fetching
     const hasAccess = await hasUserEnvironmentAccess(userId, environmentId);
     if (!hasAccess) {
       throw new AuthorizationError(t("common.not_authorized"));
+    }
+
+    const relationData = await getEnvironmentWithRelations(environmentId, userId);
+    if (!relationData) {
+      throw new Error(t("common.environment_not_found"));
     }
 
     const { environment, project, organization, environments, membership } = relationData;
@@ -297,14 +294,14 @@ export const getEnvironmentLayoutData = reactCache(
       throw new Error(t("common.membership_not_found"));
     }
 
-    // Fetch remaining data in parallel (1 DB query, no query for license/access check)
+    // Fetch remaining data in parallel
     const [isAccessControlAllowed, projectPermission, license] = await Promise.all([
       getAccessControlPermission(organization.billing.plan), // No DB query (logic only)
       getProjectPermissionByUserId(userId, environment.projectId), // 1 DB query
       getEnterpriseLicense(), // Externally cached
     ]);
 
-    // Conditional queries for Formbricks Cloud (2 additional DB queries)
+    // Conditional queries for Formbricks Cloud
     let peopleCount = 0;
     let responseCount = 0;
     if (IS_FORMBRICKS_CLOUD) {

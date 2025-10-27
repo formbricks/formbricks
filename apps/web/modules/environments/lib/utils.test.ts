@@ -362,13 +362,9 @@ describe("utils.ts", () => {
       await expect(getEnvironmentWithRelations("env123", "user123")).rejects.toThrow();
     });
 
-    test("validates environment ID input", async () => {
-      await expect(getEnvironmentWithRelations("", "user123")).rejects.toThrow();
-    });
-
-    test("validates user ID input", async () => {
-      await expect(getEnvironmentWithRelations("env123", "")).rejects.toThrow();
-    });
+    // Note: Input validation for environmentId and userId is handled by
+    // getEnvironmentLayoutData (the parent function), not here.
+    // See getEnvironmentLayoutData tests for validation coverage.
   });
 
   describe("getEnvironmentLayoutData", () => {
@@ -528,10 +524,12 @@ describe("utils.ts", () => {
       );
     });
 
-    test("fetches user and environment data in parallel", async () => {
+    test("fetches user before auth check, then environment data after authorization", async () => {
       await getEnvironmentLayoutData("env123", "user123");
 
+      // User is fetched first (needed for auth check)
       expect(getUser).toHaveBeenCalledWith("user123");
+      // Environment data is fetched after authorization passes
       expect(prisma.environment.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "env123" },
