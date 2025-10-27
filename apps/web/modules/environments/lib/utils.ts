@@ -120,11 +120,10 @@ export const environmentIdLayoutChecks = async (environmentId: string) => {
  * Fetches environment with related project, organization, environments, and current user's membership
  * in a single optimized database query.
  * Returns data with proper types matching TEnvironment, TProject, TOrganization.
+ *
+ * Note: Validation is handled by parent function (getEnvironmentLayoutData)
  */
 export const getEnvironmentWithRelations = reactCache(async (environmentId: string, userId: string) => {
-  validateInputs([environmentId, ZId]);
-  validateInputs([userId, ZId]);
-
   try {
     const data = await prisma.environment.findUnique({
       where: { id: environmentId },
