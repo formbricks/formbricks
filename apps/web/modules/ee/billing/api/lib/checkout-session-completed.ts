@@ -17,10 +17,19 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
   if (!organization)
     throw new ResourceNotFoundError("Organization not found", checkoutSession.metadata.organizationId);
 
-  // Retrieve subscription to get billing interval
-  const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string);
-  const interval = subscription.items.data[0].price.recurring?.interval;
-  const period = interval === "year" ? "yearly" : "monthly";
+  // Retrieve subscription to get billing interval with expanded price data
+  const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string, {
+    expand: ["items.data.price"],
+  });
+
+  // Defensively check subscription items and default to monthly if missing
+  let period: "monthly" | "yearly" = "monthly";
+
+  if (subscription.items?.data && subscription.items.data.length > 0) {
+    const firstItem = subscription.items.data[0];
+    const interval = firstItem.price?.recurring?.interval;
+    period = interval === "year" ? "yearly" : "monthly";
+  }
 
   // Update organization with Startup plan and hardcoded limits
   await updateOrganization(checkoutSession.metadata.organizationId, {
