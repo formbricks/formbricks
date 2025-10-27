@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { BILLING_LIMITS, PROJECT_FEATURE_KEYS, STRIPE_API_VERSION } from "@/lib/constants";
 import { env } from "@/lib/env";
@@ -17,12 +18,10 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
   if (!organization)
     throw new ResourceNotFoundError("Organization not found", checkoutSession.metadata.organizationId);
 
-  // Retrieve subscription to get billing interval with expanded price data
   const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string, {
     expand: ["items.data.price"],
   });
 
-  // Defensively check subscription items and default to monthly if missing
   let period: "monthly" | "yearly" = "monthly";
 
   if (subscription.items?.data && subscription.items.data.length > 0) {
@@ -31,7 +30,6 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     period = interval === "year" ? "yearly" : "monthly";
   }
 
-  // Update organization with Startup plan and hardcoded limits
   await updateOrganization(checkoutSession.metadata.organizationId, {
     billing: {
       ...organization.billing,
@@ -49,7 +47,16 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     },
   });
 
-  // Update customer metadata in Stripe
+  logger.info(
+    {
+      organizationId: checkoutSession.metadata.organizationId,
+      plan: PROJECT_FEATURE_KEYS.STARTUP,
+      period,
+      checkoutSessionId: checkoutSession.id,
+    },
+    "Subscription activated"
+  );
+
   const stripeCustomer = await stripe.customers.retrieve(checkoutSession.customer as string);
   if (stripeCustomer && !stripeCustomer.deleted) {
     await stripe.customers.update(stripeCustomer.id, {
