@@ -200,6 +200,7 @@
     "edit": "Modifier",
     "email": "Email",
     "ending_card": "Carte de fin",
+    "enter_url": "Saisir l'URL",
     "enterprise_license": "Licence d'entreprise",
     "environment_not_found": "Environnement non trouvé",
     "environment_notice": "Vous êtes actuellement dans l'environnement {environment}.",
@@ -209,6 +210,8 @@
     "error_rate_limit_description": "Nombre maximal de demandes atteint. Veuillez réessayer plus tard.",
     "error_rate_limit_title": "Limite de Taux Dépassée",
     "expand_rows": "Développer les lignes",
+    "failed_to_load_organizations": "Échec du chargement des organisations",
+    "failed_to_load_projects": "Échec du chargement des projets",
     "finish": "Terminer",
     "follow_these": "Suivez ceci",
     "formbricks_version": "Version de Formbricks",
@@ -355,6 +358,7 @@
     "segments": "Segments",
     "select": "Sélectionner",
     "select_all": "Sélectionner tout",
+    "select_filter": "Sélectionner un filtre",
     "select_survey": "Sélectionner l'enquête",
     "select_teams": "Sélectionner les équipes",
     "selected": "Sélectionné",
@@ -886,7 +890,6 @@
         "team_settings_description": "Vous pouvez consulter la liste des équipes qui ont accès à ce projet."
       }
     },
-    "projects_environments_organizations_not_found": "Projets, environnements ou organisations non trouvés",
     "segments": {
       "add_filter_below": "Ajouter un filtre ci-dessous",
       "add_your_first_filter_to_get_started": "Ajoutez votre premier filtre pour commencer.",
@@ -1661,6 +1664,8 @@
       "responses": {
         "address_line_1": "Ligne d'adresse 1",
         "address_line_2": "Ligne d'adresse 2",
+        "an_error_occurred_adding_the_tag": "Une erreur est survenue lors de l'ajout de l'étiquette",
+        "an_error_occurred_creating_the_tag": "Une erreur est survenue lors de la création de l'étiquette",
         "an_error_occurred_deleting_the_tag": "Une erreur est survenue lors de la suppression de l'étiquette.",
         "browser": "Navigateur",
         "bulk_delete_response_quotas": "Les réponses font partie des quotas pour ce sondage. Comment voulez-vous gérer les quotas ?",
@@ -1877,7 +1882,6 @@
         "setup_integrations": "Configurer les intégrations",
         "share_survey": "Partager l'enquête",
         "show_all_responses_that_match": "Afficher toutes les réponses correspondantes",
-        "show_all_responses_where": "Afficher toutes les réponses où...",
         "starts": "Commence",
         "starts_tooltip": "Nombre de fois que l'enquête a été commencée.",
         "survey_reset_successfully": "Réinitialisation du sondage réussie ! {responseCount} réponses et {displayCount} affichages ont été supprimés.",

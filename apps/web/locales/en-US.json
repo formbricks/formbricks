@@ -200,6 +200,7 @@
     "edit": "Edit",
     "email": "Email",
     "ending_card": "Ending card",
+    "enter_url": "Enter URL",
     "enterprise_license": "Enterprise License",
     "environment_not_found": "Environment not found",
     "environment_notice": "You're currently in the {environment} environment.",
@@ -209,6 +210,8 @@
     "error_rate_limit_description": "Maximum number of requests reached. Please try again later.",
     "error_rate_limit_title": "Rate Limit Exceeded",
     "expand_rows": "Expand rows",
+    "failed_to_load_organizations": "Failed to load organizations",
+    "failed_to_load_projects": "Failed to load projects",
     "finish": "Finish",
     "follow_these": "Follow these",
     "formbricks_version": "Formbricks Version",
@@ -355,6 +358,7 @@
     "segments": "Segments",
     "select": "Select",
     "select_all": "Select all",
+    "select_filter": "Select filter",
     "select_survey": "Select Survey",
     "select_teams": "Select teams",
     "selected": "Selected",
@@ -886,7 +890,6 @@
         "team_settings_description": "See which teams can access this project."
       }
     },
-    "projects_environments_organizations_not_found": "Projects, environments or organizations not found",
     "segments": {
       "add_filter_below": "Add filter below",
       "add_your_first_filter_to_get_started": "Add your first filter to get started",
@@ -1661,6 +1664,8 @@
       "responses": {
         "address_line_1": "Address Line 1",
         "address_line_2": "Address Line 2",
+        "an_error_occurred_adding_the_tag": "An error occurred adding the tag",
+        "an_error_occurred_creating_the_tag": "An error occurred creating the tag",
         "an_error_occurred_deleting_the_tag": "An error occurred deleting the tag",
         "browser": "Browser",
         "bulk_delete_response_quotas": "The responses are part of quotas for this survey. How do you want to handle the quotas?",
@@ -1877,7 +1882,6 @@
         "setup_integrations": "Setup integrations",
         "share_survey": "Share survey",
         "show_all_responses_that_match": "Show all responses that match",
-        "show_all_responses_where": "Show all responses where...",
         "starts": "Starts",
         "starts_tooltip": "Number of times the survey has been started.",
         "survey_reset_successfully": "Survey reset successfully! {responseCount} responses and {displayCount} displays were deleted.",

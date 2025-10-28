@@ -200,6 +200,7 @@
     "edit": "编辑",
     "email": "邮箱",
     "ending_card": "结尾卡片",
+    "enter_url": "输入 URL",
     "enterprise_license": "企业 许可证",
     "environment_not_found": "环境 未找到",
     "environment_notice": "你 目前 位于 {environment} 环境。",
@@ -209,6 +210,8 @@
     "error_rate_limit_description": "请求 达到 最大 上限 ， 请 稍后 再试 。",
     "error_rate_limit_title": "速率 限制 超过",
     "expand_rows": "展开 行",
+    "failed_to_load_organizations": "加载组织失败",
+    "failed_to_load_projects": "加载项目失败",
     "finish": "完成",
     "follow_these": "遵循 这些",
     "formbricks_version": "Formbricks 版本",
@@ -355,6 +358,7 @@
     "segments": "细分",
     "select": "选择",
     "select_all": "选择 全部",
+    "select_filter": "选择过滤器",
     "select_survey": "选择 调查",
     "select_teams": "选择 团队",
     "selected": "已选择",
@@ -886,7 +890,6 @@
         "team_settings_description": "查看 哪些 团队 可以 访问 该 项目。"
       }
     },
-    "projects_environments_organizations_not_found": "项目 、 环境 或 组织 未 找到",
     "segments": {
       "add_filter_below": "在下方添加 过滤器",
       "add_your_first_filter_to_get_started": "添加 您 的 第一个 过滤器 以 开始",
@@ -1661,6 +1664,8 @@
       "responses": {
         "address_line_1": "地址 第1行",
         "address_line_2": "地址 第2行",
+        "an_error_occurred_adding_the_tag": "添加标签时发生错误",
+        "an_error_occurred_creating_the_tag": "创建标签时发生错误",
         "an_error_occurred_deleting_the_tag": "删除 标签 时发生错误",
         "browser": "浏览器",
         "bulk_delete_response_quotas": "这些 响应是 此 调查配额 的一部分。 您 希望 如何 处理 这些 配额？",
@@ -1877,7 +1882,6 @@
         "setup_integrations": "设置 集成",
         "share_survey": "分享 问卷调查",
         "show_all_responses_that_match": "显示所有匹配的响应",
-        "show_all_responses_where": "显示所有的响应，条件为...",
         "starts": "开始",
         "starts_tooltip": "调查 被 开始 的 次数",
         "survey_reset_successfully": "调查已重置成功！{responseCount} 个 反馈 和 {displayCount} 个 显示 已删除。",

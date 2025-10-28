@@ -200,6 +200,7 @@
     "edit": "Editare",
     "email": "Email",
     "ending_card": "Cardul de finalizare",
+    "enter_url": "Introduceți URL-ul",
     "enterprise_license": "Licență Întreprindere",
     "environment_not_found": "Mediul nu a fost găsit",
     "environment_notice": "Te afli în prezent în mediul {environment}",
@@ -209,6 +210,8 @@
     "error_rate_limit_description": "Numărul maxim de cereri atins. Vă rugăm să încercați din nou mai târziu.",
     "error_rate_limit_title": "Limită de cereri depășită",
     "expand_rows": "Extinde rândurile",
+    "failed_to_load_organizations": "Nu s-a reușit încărcarea organizațiilor",
+    "failed_to_load_projects": "Nu s-a reușit încărcarea proiectelor",
     "finish": "Finalizează",
     "follow_these": "Urmați acestea",
     "formbricks_version": "Versiunea Formbricks",
@@ -355,6 +358,7 @@
     "segments": "Segment",
     "select": "Selectați",
     "select_all": "Selectați toate",
+    "select_filter": "Selectați filtrul",
     "select_survey": "Selectați chestionar",
     "select_teams": "Selectați echipele",
     "selected": "Selectat",
@@ -886,7 +890,6 @@
         "team_settings_description": "Vezi care echipe pot accesa acest proiect."
       }
     },
-    "projects_environments_organizations_not_found": "Proiecte, medii sau organizații nu găsite",
     "segments": {
       "add_filter_below": "Adăugați un filtru mai jos",
       "add_your_first_filter_to_get_started": "Adăugați primul dvs. filtru pentru a începe",
@@ -1661,6 +1664,8 @@
       "responses": {
         "address_line_1": "Adresă Linie 1",
         "address_line_2": "Adresă Linie 2",
+        "an_error_occurred_adding_the_tag": "A apărut o eroare la adăugarea etichetei",
+        "an_error_occurred_creating_the_tag": "A apărut o eroare la crearea etichetei",
         "an_error_occurred_deleting_the_tag": "A apărut o eroare la ștergerea etichetei",
         "browser": "Browser",
         "bulk_delete_response_quotas": "Răspunsurile fac parte din cotele pentru acest sondaj. Cum doriți să gestionați cotele?",
@@ -1877,7 +1882,6 @@
         "setup_integrations": "Configurare integrare",
         "share_survey": "Distribuie chestionarul",
         "show_all_responses_that_match": "Afișează toate răspunsurile care corespund",
-        "show_all_responses_where": "Afișează toate răspunsurile unde...",
         "starts": "Începuturi",
         "starts_tooltip": "Număr de ori când sondajul a fost început.",
         "survey_reset_successfully": "Resetarea chestionarului realizată cu succes! Au fost șterse {responseCount} răspunsuri și {displayCount} afișări.",

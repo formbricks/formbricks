@@ -32,16 +32,20 @@ export const ZResponseInput = ZResponse.pick({
   variables: true,
   ttc: true,
   meta: true,
-}).partial({
-  displayId: true,
-  singleUseId: true,
-  endingId: true,
-  language: true,
-  variables: true,
-  ttc: true,
-  meta: true,
-  createdAt: true,
-  updatedAt: true,
-});
+})
+  .partial({
+    displayId: true,
+    singleUseId: true,
+    endingId: true,
+    language: true,
+    variables: true,
+    ttc: true,
+    meta: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    userId: z.string().optional(),
+  });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;

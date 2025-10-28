@@ -3,9 +3,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import { getProjectsForSwitcherAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
@@ -18,10 +20,11 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
+import { useProject } from "../context/environment-context";
 
 interface ProjectBreadcrumbProps {
   currentProjectId: string;
-  projects: { id: string; name: string }[];
+  currentProjectName?: string; // Optional: pass directly if context not available
   isOwnerOrManager: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
@@ -44,7 +47,7 @@ const isActiveProjectSetting = (pathname: string, settingId: string): boolean =>
 
 export const ProjectBreadcrumb = ({
   currentProjectId,
-  projects,
+  currentProjectName,
   isOwnerOrManager,
   organizationProjectsLimit,
   isFormbricksCloud,
@@ -59,8 +62,40 @@ export const ProjectBreadcrumb = ({
   const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
+
+  // Get current project name from context OR prop
+  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
+  const { project: currentProject } = useProject();
+  const projectName = currentProject?.name || currentProjectName || "";
+
+  // Lazy-load projects when dropdown opens
+  useEffect(() => {
+    // Only fetch when dropdown opened for first time (and no error state)
+    if (isProjectDropdownOpen && projects.length === 0 && !isLoadingProjects && !loadError) {
+      setIsLoadingProjects(true);
+      setLoadError(null); // Clear any previous errors
+      getProjectsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
+        if (result?.data) {
+          // Sort projects by name
+          const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
+          setProjects(sorted);
+        } else {
+          // Handle server errors or validation errors
+          const errorMessage = getFormattedErrorMessage(result);
+          const error = new Error(errorMessage);
+          logger.error(error, "Failed to load projects");
+          Sentry.captureException(error);
+          setLoadError(errorMessage || t("common.failed_to_load_projects"));
+        }
+        setIsLoadingProjects(false);
+      });
+    }
+  }, [isProjectDropdownOpen, currentOrganizationId, projects.length, isLoadingProjects, loadError, t]);
 
   const projectSettings = [
     {
@@ -99,8 +134,6 @@ export const ProjectBreadcrumb = ({
       href: `/environments/${currentEnvironmentId}/project/tags`,
     },
   ];
-
-  const currentProject = projects.find((project) => project.id === currentProjectId);
 
   if (!currentProject) {
     const errorMessage = `Project not found for project id: ${currentProjectId}`;
@@ -166,7 +199,7 @@ export const ProjectBreadcrumb = ({
           asChild>
           <div className="flex items-center gap-1">
             <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
-            <span>{currentProject.name}</span>
+            <span>{projectName}</span>
             {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isProjectDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
@@ -181,26 +214,48 @@ export const ProjectBreadcrumb = ({
             <FolderOpenIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
             {t("common.choose_project")}
           </div>
-          <DropdownMenuGroup>
-            {projects.map((proj) => (
-              <DropdownMenuCheckboxItem
-                key={proj.id}
-                checked={proj.id === currentProject.id}
-                onClick={() => handleProjectChange(proj.id)}
-                className="cursor-pointer">
-                <div className="flex items-center gap-2">
-                  <span>{proj.name}</span>
-                </div>
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuGroup>
-          {isOwnerOrManager && (
-            <DropdownMenuCheckboxItem
-              onClick={handleAddProject}
-              className="w-full cursor-pointer justify-between">
-              <span>{t("common.add_new_project")}</span>
-              <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
-            </DropdownMenuCheckboxItem>
+          {isLoadingProjects && (
+            <div className="flex items-center justify-center py-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          )}
+          {!isLoadingProjects && loadError && (
+            <div className="px-2 py-4">
+              <p className="mb-2 text-sm text-red-600">{loadError}</p>
+              <button
+                onClick={() => {
+                  setLoadError(null);
+                  setProjects([]);
+                }}
+                className="text-xs text-slate-600 underline hover:text-slate-800">
+                {t("common.try_again")}
+              </button>
+            </div>
+          )}
+          {!isLoadingProjects && !loadError && (
+            <>
+              <DropdownMenuGroup>
+                {projects.map((proj) => (
+                  <DropdownMenuCheckboxItem
+                    key={proj.id}
+                    checked={proj.id === currentProjectId}
+                    onClick={() => handleProjectChange(proj.id)}
+                    className="cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <span>{proj.name}</span>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuGroup>
+              {isOwnerOrManager && (
+                <DropdownMenuCheckboxItem
+                  onClick={handleAddProject}
+                  className="w-full cursor-pointer justify-between">
+                  <span>{t("common.add_new_project")}</span>
+                  <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                </DropdownMenuCheckboxItem>
+              )}
+            </>
           )}
           <DropdownMenuGroup>
             <DropdownMenuSeparator />

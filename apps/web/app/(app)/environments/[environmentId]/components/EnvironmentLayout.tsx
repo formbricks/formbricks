@@ -1,103 +1,48 @@
-import type { Session } from "next-auth";
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import { getOrganizationsByUserId } from "@/app/(app)/environments/[environmentId]/lib/organization";
-import { getProjectsByUserId } from "@/app/(app)/environments/[environmentId]/lib/project";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getEnvironment, getEnvironments } from "@/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
-import {
-  getMonthlyActiveOrganizationPeopleCount,
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@/lib/organization/service";
-import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
-import {
-  getAccessControlPermission,
-  getOrganizationProjectsLimit,
-} from "@/modules/ee/license-check/lib/utils";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { TEnvironmentLayoutData } from "@/modules/environments/types/environment-auth";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
 
 interface EnvironmentLayoutProps {
-  environmentId: string;
-  session: Session;
+  layoutData: TEnvironmentLayoutData;
   children?: React.ReactNode;
 }
 
-export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
+export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLayoutProps) => {
   const t = await getTranslate();
-  const [user, environment, organizations, organization] = await Promise.all([
-    getUser(session.user.id),
-    getEnvironment(environmentId),
-    getOrganizationsByUserId(session.user.id),
-    getOrganizationByEnvironmentId(environmentId),
-  ]);
 
-  if (!user) {
-    throw new Error(t("common.user_not_found"));
-  }
+  // Destructure all data from props (NO database queries)
+  const {
+    user,
+    environment,
+    organization,
+    membership,
+    project, // Current project details
+    environments, // All project environments (for environment switcher)
+    isAccessControlAllowed,
+    projectPermission,
+    license,
+    peopleCount,
+    responseCount,
+  } = layoutData;
 
-  if (!organization) {
-    throw new Error(t("common.organization_not_found"));
-  }
+  // Calculate derived values (no queries)
+  const { isMember, isOwner, isManager } = getAccessFlags(membership.role);
 
-  if (!environment) {
-    throw new Error(t("common.environment_not_found"));
-  }
+  const { features, lastChecked, isPendingDowngrade, active } = license;
+  const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
+  const isOwnerOrManager = isOwner || isManager;
 
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  if (!currentUserMembership) {
-    throw new Error(t("common.membership_not_found"));
-  }
-  const membershipRole = currentUserMembership?.role;
-
-  const [projects, environments, isAccessControlAllowed] = await Promise.all([
-    getProjectsByUserId(user.id, currentUserMembership),
-    getEnvironments(environment.projectId),
-    getAccessControlPermission(organization.billing.plan),
-  ]);
-
-  if (!projects || !environments || !organizations) {
-    throw new Error(t("environments.projects_environments_organizations_not_found"));
-  }
-
-  const { isMember } = getAccessFlags(membershipRole);
-
-  const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
-
-  const projectPermission = await getProjectPermissionByUserId(session.user.id, environment.projectId);
-
+  // Validate that project permission exists for members
   if (isMember && !projectPermission) {
     throw new Error(t("common.project_permission_not_found"));
   }
-
-  const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
-
-  let peopleCount = 0;
-  let responseCount = 0;
-
-  if (IS_FORMBRICKS_CLOUD) {
-    [peopleCount, responseCount] = await Promise.all([
-      getMonthlyActiveOrganizationPeopleCount(organization.id),
-      getMonthlyOrganizationResponseCount(organization.id),
-    ]);
-  }
-
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
-
-  // Find the current project from the projects array
-  const project = projects.find((p) => p.id === environment.projectId);
-  if (!project) {
-    throw new Error(t("common.project_not_found"));
-  }
-
-  const { isManager, isOwner } = getAccessFlags(membershipRole);
-  const isOwnerOrManager = isManager || isOwner;
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -122,26 +67,24 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
         <MainNavigation
           environment={environment}
           organization={organization}
-          projects={projects}
           user={user}
+          project={{ id: project.id, name: project.name }}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           isDevelopment={IS_DEVELOPMENT}
-          membershipRole={membershipRole}
+          membershipRole={membership.role}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar
             environments={environments}
             currentOrganizationId={organization.id}
-            organizations={organizations}
             currentProjectId={project.id}
-            projects={projects}
             isMultiOrgEnabled={isMultiOrgEnabled}
             organizationProjectsLimit={organizationProjectsLimit}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isLicenseActive={active}
             isOwnerOrManager={isOwnerOrManager}
             isAccessControlAllowed={isAccessControlAllowed}
-            membershipRole={membershipRole}
+            membershipRole={membership.role}
           />
           <div className="flex-1 overflow-y-auto">{children}</div>
         </div>

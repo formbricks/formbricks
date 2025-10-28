@@ -692,6 +692,7 @@ export function Survey({
             isCurrent={offset === 0}
             responseData={responseData}
             variablesData={currentVariables}
+            isPreviewMode={isPreviewMode}
             fullSizeCards={fullSizeCards}
           />
         );

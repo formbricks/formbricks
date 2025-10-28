@@ -4,7 +4,6 @@ import { ProjectAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/co
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -24,8 +23,6 @@ const Page = async (props) => {
   const user = await getUser(session.user.id);
   if (!user) return notFound();
 
-  const organizations = await getOrganizationsByUserId(session.user.id);
-
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
@@ -37,11 +34,10 @@ const Page = async (props) => {
       <div className="flex-1">
         <div className="flex h-full flex-col">
           <div className="p-6">
-            {/* we only need to render organization breadcrumb on this page, so we pass some default value without actually calculating them to ProjectAndOrgSwitch component  */}
+            {/* we only need to render organization breadcrumb on this page, organizations/projects are lazy-loaded */}
             <ProjectAndOrgSwitch
               currentOrganizationId={organization.id}
-              organizations={organizations}
-              projects={[]}
+              currentOrganizationName={organization.name}
               isMultiOrgEnabled={isMultiOrgEnabled}
               organizationProjectsLimit={0}
               isFormbricksCloud={IS_FORMBRICKS_CLOUD}

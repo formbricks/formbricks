@@ -25,6 +25,7 @@ interface WelcomeCardProps {
   responseData: TResponseData;
   variablesData: TResponseVariables;
   fullSizeCards: boolean;
+  isPreviewMode?: boolean;
 }
 
 function TimerIcon() {
@@ -78,6 +79,7 @@ export function WelcomeCard({
   responseData,
   variablesData,
   fullSizeCards,
+  isPreviewMode = false,
 }: WelcomeCardProps) {
   const { t } = useTranslation();
 
@@ -124,7 +126,8 @@ export function WelcomeCard({
       }
     };
 
-    if (isCurrent && survey.type === "link") {
+    // Only attach listener when current, link type, and NOT in preview mode
+    if (isCurrent && survey.type === "link" && !isPreviewMode) {
       document.addEventListener("keydown", handleEnter);
     } else {
       document.removeEventListener("keydown", handleEnter);
@@ -134,8 +137,8 @@ export function WelcomeCard({
       document.removeEventListener("keydown", handleEnter);
     };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only want to run this effect when isCurrent changes
-  }, [isCurrent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only want to run this effect when isCurrent or isPreviewMode changes
+  }, [isCurrent, isPreviewMode]);
 
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>

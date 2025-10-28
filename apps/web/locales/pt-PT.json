@@ -200,6 +200,7 @@
     "edit": "Editar",
     "email": "Email",
     "ending_card": "Cartão de encerramento",
+    "enter_url": "Introduzir URL",
     "enterprise_license": "Licença Enterprise",
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Está atualmente no ambiente {environment}.",
@@ -209,6 +210,8 @@
     "error_rate_limit_description": "Número máximo de pedidos alcançado. Por favor, tente novamente mais tarde.",
     "error_rate_limit_title": "Limite de Taxa Excedido",
     "expand_rows": "Expandir linhas",
+    "failed_to_load_organizations": "Falha ao carregar organizações",
+    "failed_to_load_projects": "Falha ao carregar projetos",
     "finish": "Concluir",
     "follow_these": "Siga estes",
     "formbricks_version": "Versão do Formbricks",
@@ -355,6 +358,7 @@
     "segments": "Segmentos",
     "select": "Selecionar",
     "select_all": "Selecionar tudo",
+    "select_filter": "Selecionar filtro",
     "select_survey": "Selecionar Inquérito",
     "select_teams": "Selecionar equipas",
     "selected": "Selecionado",
@@ -886,7 +890,6 @@
         "team_settings_description": "Veja quais equipas podem aceder a este projeto."
       }
     },
-    "projects_environments_organizations_not_found": "Projetos, ambientes ou organizações não encontrados",
     "segments": {
       "add_filter_below": "Adicionar filtro abaixo",
       "add_your_first_filter_to_get_started": "Adicione o seu primeiro filtro para começar",
@@ -1661,6 +1664,8 @@
       "responses": {
         "address_line_1": "Endereço Linha 1",
         "address_line_2": "Endereço Linha 2",
+        "an_error_occurred_adding_the_tag": "Ocorreu um erro ao adicionar a etiqueta",
+        "an_error_occurred_creating_the_tag": "Ocorreu um erro ao criar a etiqueta",
         "an_error_occurred_deleting_the_tag": "Ocorreu um erro ao eliminar a etiqueta",
         "browser": "Navegador",
         "bulk_delete_response_quotas": "As respostas são parte das quotas deste inquérito. Como deseja gerir as quotas?",
@@ -1877,7 +1882,6 @@
         "setup_integrations": "Configurar integrações",
         "share_survey": "Partilhar inquérito",
         "show_all_responses_that_match": "Mostrar todas as respostas que correspondem",
-        "show_all_responses_where": "Mostrar todas as respostas onde...",
         "starts": "Começa",
         "starts_tooltip": "Número de vezes que o inquérito foi iniciado.",
         "survey_reset_successfully": "Inquérito reiniciado com sucesso! {responseCount} respostas e {displayCount} exibições foram eliminadas.",

@@ -5006,7 +5006,7 @@
         "tags": ["Management API - Response"]
       },
       "post": {
-        "description": "Create a user response using the management API",
+        "description": "Create a user response using the management API. This will trigger the response pipeline, including webhooks, integrations, follow-up emails, and other configured actions.",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -5543,7 +5543,7 @@
         "tags": ["Management API - Response"]
       },
       "put": {
-        "description": "Update an existing user response with new data",
+        "description": "Update an existing user response with new data. This will trigger the response pipeline, including webhooks, integrations, follow-up emails (if the response is marked as finished), and other configured actions.",
         "parameters": [
           {
             "example": "{{apiKey}}",

@@ -122,12 +122,11 @@ export const ResponsePage = ({
   useEffect(() => {
     setPage(1);
     setHasMore(true);
-    setResponses([]);
   }, [filters]);
 
   return (
     <>
-      <div className="flex gap-1.5">
+      <div className="flex h-9 gap-1.5">
         <CustomFilter survey={surveyMemoized} />
       </div>
       <ResponseDataView

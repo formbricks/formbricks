@@ -200,6 +200,7 @@
     "edit": "Bearbeiten",
     "email": "E-Mail",
     "ending_card": "Abschluss-Karte",
+    "enter_url": "URL eingeben",
     "enterprise_license": "Enterprise Lizenz",
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
@@ -209,6 +210,8 @@
     "error_rate_limit_description": "Maximale Anzahl an Anfragen erreicht. Bitte später erneut versuchen.",
     "error_rate_limit_title": "Rate Limit Überschritten",
     "expand_rows": "Zeilen erweitern",
+    "failed_to_load_organizations": "Fehler beim Laden der Organisationen",
+    "failed_to_load_projects": "Fehler beim Laden der Projekte",
     "finish": "Fertigstellen",
     "follow_these": "Folge diesen",
     "formbricks_version": "Formbricks Version",
@@ -355,6 +358,7 @@
     "segments": "Segmente",
     "select": "Auswählen",
     "select_all": "Alles auswählen",
+    "select_filter": "Filter auswählen",
     "select_survey": "Umfrage auswählen",
     "select_teams": "Teams auswählen",
     "selected": "Ausgewählt",
@@ -886,7 +890,6 @@
         "team_settings_description": "Teams und ihre Mitglieder können auf dieses Projekt und seine Umfragen zugreifen. Organisationsbesitzer und Manager können diesen Zugriff gewähren."
       }
     },
-    "projects_environments_organizations_not_found": "Projekte, Umgebungen oder Organisationen nicht gefunden",
     "segments": {
       "add_filter_below": "Filter unten hinzufügen",
       "add_your_first_filter_to_get_started": "Füge deinen ersten Filter hinzu, um loszulegen",
@@ -1661,6 +1664,8 @@
       "responses": {
         "address_line_1": "Adresszeile 1",
         "address_line_2": "Adresszeile 2",
+        "an_error_occurred_adding_the_tag": "Beim Hinzufügen des Tags ist ein Fehler aufgetreten",
+        "an_error_occurred_creating_the_tag": "Beim Erstellen des Tags ist ein Fehler aufgetreten",
         "an_error_occurred_deleting_the_tag": "Beim Löschen des Tags ist ein Fehler aufgetreten",
         "browser": "Browser",
         "bulk_delete_response_quotas": "Die Antworten sind Teil der Quoten für diese Umfrage. Wie möchten Sie die Quoten verwalten?",
@@ -1877,7 +1882,6 @@
         "setup_integrations": "Integrationen einrichten",
         "share_survey": "Umfrage teilen",
         "show_all_responses_that_match": "Zeige alle Antworten, die übereinstimmen",
-        "show_all_responses_where": "Zeige alle Antworten, bei denen...",
         "starts": "Startet",
         "starts_tooltip": "So oft wurde die Umfrage gestartet.",
         "survey_reset_successfully": "Umfrage erfolgreich zurückgesetzt! {responseCount} Antworten und {displayCount} Anzeigen wurden gelöscht.",
