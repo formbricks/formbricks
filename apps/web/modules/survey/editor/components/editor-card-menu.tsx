@@ -2,9 +2,9 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -60,7 +60,7 @@ export const EditorCardMenu = ({
   cardType,
   isCxMode = false,
 }: EditorCardMenuProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(() => {

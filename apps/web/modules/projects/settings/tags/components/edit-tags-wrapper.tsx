@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
 import { SingleTag } from "@/modules/projects/settings/tags/components/single-tag";
@@ -15,7 +15,7 @@ interface EditTagsWrapperProps {
 }
 
 export const EditTagsWrapper: React.FC<EditTagsWrapperProps> = (props) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { environment, environmentTags, environmentTagsCount, isReadOnly } = props;
   return (
     <div className="">

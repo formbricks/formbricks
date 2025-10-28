@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -42,7 +42,7 @@ export const MultipleChoiceSummary = ({
   survey,
   setFilter,
 }: MultipleChoiceSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
   const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array
@@ -86,7 +86,7 @@ export const MultipleChoiceSummary = ({
         }
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
-        {results.map((result, resultsIdx) => {
+        {results.map((result) => {
           const choiceId = getChoiceIdByValue(result.value, questionSummary.question);
           return (
             <Fragment key={result.value}>
@@ -107,7 +107,7 @@ export const MultipleChoiceSummary = ({
                 <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
                   <div className="mr-8 flex w-full justify-between space-x-2 sm:justify-normal">
                     <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
-                      {results.length - resultsIdx} - {result.value}
+                      {result.value}
                     </p>
                     {choiceId && <IdBadge id={choiceId} />}
                   </div>

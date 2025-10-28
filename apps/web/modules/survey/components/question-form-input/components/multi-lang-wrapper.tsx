@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { ReactNode, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TI18nString, TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
@@ -36,7 +36,7 @@ export const MultiLangWrapper = ({
   render,
   onChange,
 }: MultiLangWrapperProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";

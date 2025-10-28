@@ -4,9 +4,9 @@ import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[en
 import { getEnvironment } from "@/lib/environment/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
-import { getTranslate } from "@/tolgee/server";
 
 interface ConnectPageProps {
   params: Promise<{

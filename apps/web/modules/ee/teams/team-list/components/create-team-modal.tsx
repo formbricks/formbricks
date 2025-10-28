@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -29,7 +29,7 @@ interface CreateTeamModalProps {
 export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: CreateTeamModalProps) => {
   const [teamName, setTeamName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const handleTeamCreation = async (e) => {

@@ -1,9 +1,9 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import React, { type JSX, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
@@ -144,7 +144,7 @@ export function AddFilterModal({
 }: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const tabs: {
     id: string;
     label: string;

@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CirclePlayIcon, CopyIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { updateSingleUseLinksAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
@@ -36,7 +36,7 @@ export const AnonymousLinksTab = ({
 }: AnonymousLinksTabProps) => {
   const surveyUrlWithCustomSuid = `${surveyUrl}?suId=CUSTOM-ID`;
   const router = useRouter();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const [isMultiUseLink, setIsMultiUseLink] = useState(!survey.singleUse?.enabled);
   const [isSingleUseLink, setIsSingleUseLink] = useState(survey.singleUse?.enabled ?? false);

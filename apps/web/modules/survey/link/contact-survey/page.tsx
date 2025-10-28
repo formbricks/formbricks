@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
@@ -8,7 +9,6 @@ import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
 import { getBasicSurveyMetadata } from "@/modules/survey/link/lib/metadata-utils";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
-import { getTranslate } from "@/tolgee/server";
 
 interface ContactSurveyPageProps {
   params: Promise<{

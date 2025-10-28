@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
 import { TResponseTableData } from "@formbricks/types/responses";
@@ -32,7 +32,7 @@ const getQuestionColumnsData = (
   question: TSurveyQuestion,
   survey: TSurvey,
   isExpanded: boolean,
-  t: TFnType
+  t: TFunction
 ): ColumnDef<TResponseTableData>[] => {
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
@@ -231,7 +231,7 @@ const getQuestionColumnsData = (
   }
 };
 
-const getMetadataColumnsData = (t: TFnType): ColumnDef<TResponseTableData>[] => {
+const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] => {
   const metadataColumns: ColumnDef<TResponseTableData>[] = [];
 
   METADATA_FIELDS.forEach((label) => {
@@ -262,7 +262,7 @@ export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isReadOnly: boolean,
-  t: TFnType,
+  t: TFunction,
   showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>
@@ -309,6 +309,14 @@ export const generateResponseTableColumns = (
         ? getContactIdentifier(row.original.person, row.original.contactAttributes)
         : t("common.anonymous");
       return <p className="truncate text-slate-900">{personId}</p>;
+    },
+  };
+
+  const singleUseIdColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "singleUseId",
+    header: () => <div className="gap-x-1.5">{t("environments.surveys.responses.single_use_id")}</div>,
+    cell: ({ row }) => {
+      return <p className="truncate text-slate-900">{row.original.singleUseId}</p>;
     },
   };
 
@@ -409,6 +417,7 @@ export const generateResponseTableColumns = (
   // Combine the selection column with the dynamic question columns
   const baseColumns = [
     personColumn,
+    singleUseIdColumn,
     dateColumn,
     ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,

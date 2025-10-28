@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys/types";
 import { CasualCardArrangementIcon } from "@/modules/ui/components/icons/casual-card-arrangement-icon";
@@ -21,7 +21,7 @@ export const CardArrangementTabs = ({
   setActiveCardArrangement,
   disabled = false,
 }: CardArrangementTabsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleCardArrangementChange = (arrangement: TCardArrangementOptions) => {
     if (disabled) return;
     setActiveCardArrangement(arrangement, surveyType);

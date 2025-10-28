@@ -1,4 +1,4 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 
 export type TPricingPlan = {
   id: string;
@@ -14,7 +14,7 @@ export type TPricingPlan = {
   href?: string;
 };
 
-export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
+export const getCloudPricingData = (t: TFunction): { plans: TPricingPlan[] } => {
   const freePlan: TPricingPlan = {
     id: "free",
     name: t("environments.settings.billing.free"),
@@ -57,7 +57,7 @@ export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
   };
 
   const customPlan: TPricingPlan = {
-    id: "enterprise",
+    id: "custom",
     name: t("environments.settings.billing.custom"),
     featured: false,
     CTA: t("common.request_pricing"),

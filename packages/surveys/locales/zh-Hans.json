@@ -48,7 +48,6 @@
       "duplicate_files": "以下文件已上传：{duplicateNames}。不允许重复文件。",
       "file_size_exceeded": "以下文件超过了最大大小 {maxSizeInMB} MB，已被移除：{fileNames}",
       "file_size_exceeded_alert": "文件应小于 {maxSizeInMB} MB",
-      "native_upload_failed": "上传原始文件时出错。",
       "no_valid_file_types_selected": "未选择有效的文件类型。请选择有效的文件类型。",
       "only_one_file_can_be_uploaded_at_a_time": "一次只能上传一个文件。",
       "upload_failed": "上传失败！请重试。",

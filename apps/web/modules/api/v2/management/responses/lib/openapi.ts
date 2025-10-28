@@ -32,7 +32,8 @@ export const getResponsesEndpoint: ZodOpenApiOperationObject = {
 export const createResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "createResponse",
   summary: "Create a response",
-  description: "Creates a response in the database.",
+  description:
+    "Creates a response in the database. This will trigger the response pipeline, including webhooks, integrations, follow-up emails, and other configured actions.",
   tags: ["Management API - Responses"],
   requestBody: {
     required: true,

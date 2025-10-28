@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TProject } from "@formbricks/types/project";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -26,7 +26,7 @@ export const DeleteProjectRender = ({
   currentProject,
   organizationProjects,
 }: DeleteProjectRenderProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

@@ -6,12 +6,12 @@ import { WEBAPP_URL } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { getUser, updateUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
 import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
-import { getTranslate } from "@/tolgee/server";
 import { ContentLayout } from "./components/content-layout";
 
 interface InvitePageProps {

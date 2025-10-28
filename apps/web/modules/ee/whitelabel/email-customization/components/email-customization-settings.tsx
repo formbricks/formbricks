@@ -1,11 +1,11 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { RepeatIcon, Trash2Icon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
@@ -48,7 +48,7 @@ export const EmailCustomizationSettings = ({
   fbLogoUrl,
   isStorageConfigured,
 }: EmailCustomizationSettingsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || fbLogoUrl);

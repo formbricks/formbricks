@@ -1,12 +1,12 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
 
 const Loading = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.summary")} />

@@ -6,11 +6,11 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { gethasNoOrganizations } from "@/lib/instance/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
-import { getTranslate } from "@/tolgee/server";
 import { CreateOrganization } from "./components/create-organization";
 
 export const metadata: Metadata = {

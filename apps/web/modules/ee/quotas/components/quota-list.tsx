@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CopyIcon, Trash2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -15,7 +15,7 @@ interface QuotaListProps {
 }
 
 export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: QuotaListProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-3">

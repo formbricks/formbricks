@@ -1,10 +1,10 @@
 "use client";
 
 import { ApiKeyPermission } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -29,7 +29,7 @@ interface EditAPIKeysProps {
 }
 
 export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, projects }: EditAPIKeysProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
   const [isDeleteKeyModalOpen, setIsDeleteKeyModalOpen] = useState(false);
   const [apiKeysLocal, setApiKeysLocal] =

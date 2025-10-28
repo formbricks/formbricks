@@ -1,9 +1,9 @@
 "use client";
 
 import { Webhook } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { WebhookIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { WebhookOverviewTab } from "@/modules/integrations/webhooks/components/webhook-overview-tab";
 import { WebhookSettingsTab } from "@/modules/integrations/webhooks/components/webhook-settings-tab";
@@ -25,7 +25,7 @@ interface WebhookModalProps {
 }
 
 export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: WebhookModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
 
   const tabs = [

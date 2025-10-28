@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -56,7 +56,7 @@ export const AddIntegrationModal = ({
   googleSheetIntegration,
   selectedIntegration,
 }: AddIntegrationModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",
