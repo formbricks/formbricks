@@ -19,7 +19,7 @@ interface PricingCardProps {
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    ENTERPRISE: string;
+    CUSTOM: string;
   };
 }
 
@@ -33,17 +33,21 @@ export const PricingCard = ({
 }: PricingCardProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+
+  const displayPrice = (() => {
+    if (plan.id === projectFeatureKeys.CUSTOM) {
+      return plan.price.monthly;
+    }
+    return planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly;
+  })();
 
   const isCurrentPlan = useMemo(() => {
     if (organization.billing.plan === projectFeatureKeys.FREE && plan.id === projectFeatureKeys.FREE) {
       return true;
     }
 
-    if (
-      organization.billing.plan === projectFeatureKeys.ENTERPRISE &&
-      plan.id === projectFeatureKeys.ENTERPRISE
-    ) {
+    if (organization.billing.plan === projectFeatureKeys.CUSTOM && plan.id === projectFeatureKeys.CUSTOM) {
       return true;
     }
 
@@ -53,7 +57,7 @@ export const PricingCard = ({
     organization.billing.plan,
     plan.id,
     planPeriod,
-    projectFeatureKeys.ENTERPRISE,
+    projectFeatureKeys.CUSTOM,
     projectFeatureKeys.FREE,
   ]);
 
@@ -62,7 +66,7 @@ export const PricingCard = ({
       return null;
     }
 
-    if (plan.id === projectFeatureKeys.ENTERPRISE) {
+    if (plan.id === projectFeatureKeys.CUSTOM) {
       return (
         <Button
           variant="outline"
@@ -97,7 +101,7 @@ export const PricingCard = ({
         <Button
           loading={loading}
           onClick={() => {
-            setUpgradeModalOpen(true);
+            setContactModalOpen(true);
           }}
           className="flex justify-center">
           {t("environments.settings.billing.switch_plan")}
@@ -115,7 +119,7 @@ export const PricingCard = ({
     plan.featured,
     plan.href,
     plan.id,
-    projectFeatureKeys.ENTERPRISE,
+    projectFeatureKeys.CUSTOM,
     projectFeatureKeys.FREE,
     projectFeatureKeys.STARTUP,
     t,
@@ -151,13 +155,9 @@ export const PricingCard = ({
                 plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
-              {plan.id !== projectFeatureKeys.ENTERPRISE
-                ? planPeriod === "monthly"
-                  ? plan.price.monthly
-                  : plan.price.yearly
-                : plan.price.monthly}
+              {displayPrice}
             </p>
-            {plan.id !== projectFeatureKeys.ENTERPRISE && (
+            {plan.id !== projectFeatureKeys.CUSTOM && (
               <div className="text-sm leading-5">
                 <p className={plan.featured ? "text-slate-700" : "text-slate-600"}>
                   / {planPeriod === "monthly" ? "Month" : "Year"}
@@ -203,28 +203,13 @@ export const PricingCard = ({
       </div>
 
       <ConfirmationModal
-        title={t("environments.settings.billing.switch_plan")}
-        buttonText={t("common.confirm")}
-        onConfirm={async () => {
-          setLoading(true);
-          await onUpgrade();
-          setLoading(false);
-          setUpgradeModalOpen(false);
-        }}
-        open={upgradeModalOpen}
-        setOpen={setUpgradeModalOpen}
-        body={t("environments.settings.billing.switch_plan_confirmation_text", {
-          plan: plan.name,
-          price: planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly,
-          period:
-            planPeriod === "monthly"
-              ? t("environments.settings.billing.per_month")
-              : t("environments.settings.billing.per_year"),
-        })}
+        title="Please reach out to us"
+        open={contactModalOpen}
+        setOpen={setContactModalOpen}
+        onConfirm={() => setContactModalOpen(false)}
+        buttonText="Close"
         buttonVariant="default"
-        buttonLoading={loading}
-        closeOnOutsideClick={false}
-        hideCloseButton
+        body="To switch your billing rhythm, please reach out to hola@formbricks.com"
       />
     </div>
   );

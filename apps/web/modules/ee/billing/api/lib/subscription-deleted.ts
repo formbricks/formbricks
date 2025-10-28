@@ -30,4 +30,12 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
       period: "monthly",
     },
   });
+
+  logger.info(
+    {
+      organizationId,
+      subscriptionId: stripeSubscriptionObject.id,
+    },
+    "Subscription cancelled - downgraded to FREE plan"
+  );
 };
