@@ -4,7 +4,7 @@ import { Project } from "@prisma/client";
 import { isEqual } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
@@ -67,6 +67,7 @@ export const SurveyMenuBar = ({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
+  const isSuccessfullySavedRef = useRef(false);
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -78,9 +79,21 @@ export const SurveyMenuBar = ({
     setIsLinkSurvey(localSurvey.type === "link");
   }, [localSurvey.type]);
 
+  // Reset the successfully saved flag when survey prop updates (page refresh complete)
+  useEffect(() => {
+    if (isSuccessfullySavedRef.current) {
+      isSuccessfullySavedRef.current = false;
+    }
+  }, [survey]);
+
   useEffect(() => {
     const warningText = t("environments.surveys.edit.unsaved_changes_warning");
     const handleWindowClose = (e: BeforeUnloadEvent) => {
+      // Skip warning if we just successfully saved
+      if (isSuccessfullySavedRef.current) {
+        return;
+      }
+
       if (!isEqual(localSurvey, survey)) {
         e.preventDefault();
         return (e.returnValue = warningText);
@@ -249,6 +262,8 @@ export const SurveyMenuBar = ({
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
         toast.success(t("environments.surveys.edit.changes_saved"));
+        // Set flag to prevent beforeunload warning during router.refresh()
+        isSuccessfullySavedRef.current = true;
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
@@ -298,6 +313,8 @@ export const SurveyMenuBar = ({
         segment,
       });
       setIsSurveyPublishing(false);
+      // Set flag to prevent beforeunload warning during navigation
+      isSuccessfullySavedRef.current = true;
       router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
       console.error(error);
