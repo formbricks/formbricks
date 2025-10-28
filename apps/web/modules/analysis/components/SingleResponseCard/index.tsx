@@ -49,37 +49,49 @@ export const SingleResponseCard = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const skippedQuestions: string[][] = useMemo(() => {
-    const result: string[][] = [];
-    let temp: string[] = [];
+    const flushTemp = (temp: string[], result: string[][], shouldReverse = false) => {
+      if (temp.length > 0) {
+        if (shouldReverse) temp.reverse();
+        result.push([...temp]);
+        temp.length = 0;
+      }
+    };
 
-    if (response.finished) {
+    const processFinishedResponse = () => {
+      const result: string[][] = [];
+      let temp: string[] = [];
+
       for (const question of survey.questions) {
-        if (!isValidValue(response.data[question.id])) {
+        if (isValidValue(response.data[question.id])) {
+          flushTemp(temp, result);
+        } else {
           temp.push(question.id);
-        } else if (temp.length > 0) {
-          result.push([...temp]);
-          temp = [];
         }
       }
-    } else {
+      flushTemp(temp, result);
+      return result;
+    };
+
+    const processUnfinishedResponse = () => {
+      const result: string[][] = [];
+      let temp: string[] = [];
+
       for (let index = survey.questions.length - 1; index >= 0; index--) {
         const question = survey.questions[index];
-        if (
-          !response.data[question.id] &&
-          (result.length === 0 || (result.length > 0 && !isValidValue(response.data[question.id])))
-        ) {
+        const hasNoData = !response.data[question.id];
+        const shouldSkip = hasNoData && (result.length === 0 || !isValidValue(response.data[question.id]));
+
+        if (shouldSkip) {
           temp.push(question.id);
-        } else if (temp.length > 0) {
-          temp.reverse();
-          result.push([...temp]);
-          temp = [];
+        } else {
+          flushTemp(temp, result, true);
         }
       }
-    }
-    if (temp.length > 0) {
-      result.push(temp);
-    }
-    return result;
+      flushTemp(temp, result);
+      return result;
+    };
+
+    return response.finished ? processFinishedResponse() : processUnfinishedResponse();
   }, [response.id, response.finished, response.data, survey.questions]);
 
   const handleDeleteResponse = async () => {

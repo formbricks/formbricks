@@ -28,28 +28,27 @@ interface ResponseDataViewProps {
   quotas: TSurveyQuota[];
 }
 
-// Export for testing
-export const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
-  const addressKeys = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
+// Helper function to format array values to record with specified keys
+const formatArrayToRecord = (responseValue: TResponseDataValue, keys: string[]): Record<string, string> => {
   if (!Array.isArray(responseValue)) return {};
   const result: Record<string, string> = {};
   for (let index = 0; index < responseValue.length; index++) {
     const curr = responseValue[index];
-    result[addressKeys[index]] = (curr as string) || "";
+    result[keys[index]] = curr || "";
   }
   return result;
 };
 
 // Export for testing
+export const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
+  const addressKeys = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
+  return formatArrayToRecord(responseValue, addressKeys);
+};
+
+// Export for testing
 export const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
-  const addressKeys = ["firstName", "lastName", "email", "phone", "company"];
-  if (!Array.isArray(responseValue)) return {};
-  const result: Record<string, string> = {};
-  for (let index = 0; index < responseValue.length; index++) {
-    const curr = responseValue[index];
-    result[addressKeys[index]] = (curr as string) || "";
-  }
-  return result;
+  const contactInfoKeys = ["firstName", "lastName", "email", "phone", "company"];
+  return formatArrayToRecord(responseValue, contactInfoKeys);
 };
 
 // Export for testing
@@ -85,7 +84,7 @@ export const extractResponseData = (response: TResponseWithQuotas, survey: TSurv
 };
 
 // Export for testing
-export const mapResponsesToTableData = (
+const mapResponsesToTableData = (
   responses: TResponseWithQuotas[],
   survey: TSurvey,
   t: TFunction

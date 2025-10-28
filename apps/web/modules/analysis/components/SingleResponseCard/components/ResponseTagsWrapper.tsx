@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
 import { TTag } from "@formbricks/types/tags";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TagError } from "@/modules/projects/settings/types/tag";
 import { Button } from "@/modules/ui/components/button";
 import { Tag } from "@/modules/ui/components/tag";
@@ -41,16 +43,16 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const [isLoadingTagOperation, setIsLoadingTagOperation] = useState(false);
 
   const onDelete = async (tagId: string) => {
-    try {
-      setIsLoadingTagOperation(true);
-      await deleteTagOnResponseAction({ responseId, tagId });
+    setIsLoadingTagOperation(true);
+    const deleteTagResponse = await deleteTagOnResponseAction({ responseId, tagId });
+    if (deleteTagResponse?.data) {
       updateFetchedResponses();
-    } catch (e) {
+    } else {
+      const errorMessage = getFormattedErrorMessage(deleteTagResponse);
+      logger.error({ errorMessage }, "Error deleting tag");
       toast.error(t("environments.surveys.responses.an_error_occurred_deleting_the_tag"));
-      console.error("Error deleting tag:", e);
-    } finally {
-      setIsLoadingTagOperation(false);
     }
+    setIsLoadingTagOperation(false);
   };
 
   useEffect(() => {
@@ -65,41 +67,40 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const handleCreateTag = async (tagName: string) => {
     setIsLoadingTagOperation(true);
-    try {
-      const newTagResponse = await createTagAction({ environmentId, tagName });
+    const newTagResponse = await createTagAction({ environmentId, tagName });
 
-      if (!newTagResponse?.data) {
+    if (!newTagResponse?.data) {
+      toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
+      return;
+    }
+
+    if (!newTagResponse.data.ok) {
+      const errorMessage = newTagResponse.data.error;
+      if (errorMessage?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
+        toast.error(t("environments.surveys.responses.tag_already_exists"), {
+          duration: 2000,
+          icon: <SettingsIcon className="h-5 w-5 text-orange-500" />,
+        });
+      } else {
         toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
-        return;
       }
+      return;
+    }
 
-      if (!newTagResponse.data.ok) {
-        const errorMessage = newTagResponse.data.error;
-        if (errorMessage?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
-          toast.error(t("environments.surveys.responses.tag_already_exists"), {
-            duration: 2000,
-            icon: <SettingsIcon className="h-5 w-5 text-orange-500" />,
-          });
-        } else {
-          toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
-        }
-        return;
-      }
-
-      const newTag = newTagResponse.data.data;
-      await createTagToResponseAction({ responseId, tagId: newTag.id });
-
+    const newTag = newTagResponse.data.data;
+    const createTagToResponseResponse = await createTagToResponseAction({ responseId, tagId: newTag.id });
+    if (createTagToResponseResponse?.data) {
       setTagsState((prevTags) => [...prevTags, { tagId: newTag.id, tagName: newTag.name }]);
       setTagIdToHighlight(newTag.id);
       updateFetchedResponses();
       setSearchValue("");
       setOpen(false);
-    } catch (error) {
-      toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
-      console.error("Error creating tag:", error);
-    } finally {
-      setIsLoadingTagOperation(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(createTagToResponseResponse);
+      logger.error({ errorMessage });
+      toast.error(errorMessage);
     }
+    setIsLoadingTagOperation(false);
   };
 
   const handleAddTag = async (tagId: string) => {

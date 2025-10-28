@@ -118,6 +118,31 @@ export const QuestionFilterComboBox = ({
   };
   const ChevronIcon = open ? ChevronUp : ChevronDown;
 
+  // Helper to filter out a specific value from the array
+  const getFilteredValues = (valueToRemove: string): string[] => {
+    if (!Array.isArray(filterComboBoxValue)) return [];
+    return filterComboBoxValue.filter((i) => i !== valueToRemove);
+  };
+
+  // Handle removal of a multi-select tag
+  const handleRemoveTag = (e: React.MouseEvent, valueToRemove: string) => {
+    e.stopPropagation();
+    const filteredValues = getFilteredValues(valueToRemove);
+    handleRemoveMultiSelect(filteredValues);
+  };
+
+  // Render a single multi-select tag
+  const renderTag = (value: string, index: number) => (
+    <button
+      key={`${value}-${index}`}
+      type="button"
+      onClick={(e) => handleRemoveTag(e, value)}
+      className="flex items-center gap-1 whitespace-nowrap rounded bg-slate-100 px-2 py-1 text-sm text-slate-600 hover:bg-slate-200">
+      {value}
+      <X className="h-3 w-3" />
+    </button>
+  );
+
   // Render multi-select tags
   const renderMultiSelectTags = () => {
     if (!Array.isArray(filterComboBoxValue) || filterComboBoxValue.length === 0) {
@@ -126,21 +151,26 @@ export const QuestionFilterComboBox = ({
 
     return (
       <div className="no-scrollbar flex grow gap-2 overflow-auto">
-        {filterComboBoxValue.map((o, index) => (
-          <button
-            key={`${o}-${index}`}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o));
-            }}
-            className="flex items-center gap-1 whitespace-nowrap rounded bg-slate-100 px-2 py-1 text-sm text-slate-600 hover:bg-slate-200">
-            {o}
-            <X className="h-3 w-3" />
-          </button>
-        ))}
+        {filterComboBoxValue.map((value, index) => renderTag(value, index))}
       </div>
     );
+  };
+
+  // Render the appropriate content based on filterComboBoxValue state
+  const renderComboBoxContent = () => {
+    if (!filterComboBoxValue || filterComboBoxValue.length === 0) {
+      return (
+        <p className={clsx("text-sm", isComboBoxDisabled ? "text-slate-300" : "text-slate-400")}>
+          {t("common.select")}...
+        </p>
+      );
+    }
+
+    if (Array.isArray(filterComboBoxValue)) {
+      return renderMultiSelectTags();
+    }
+
+    return <p className="truncate text-sm text-slate-600">{filterComboBoxValue}</p>;
   };
 
   return (
@@ -209,17 +239,7 @@ export const QuestionFilterComboBox = ({
                 handleOpenDropdown();
               }
             }}>
-            <div className="min-w-0 flex-1">
-              {!filterComboBoxValue || filterComboBoxValue.length === 0 ? (
-                <p className={clsx("text-sm", isComboBoxDisabled ? "text-slate-300" : "text-slate-400")}>
-                  {t("common.select")}...
-                </p>
-              ) : Array.isArray(filterComboBoxValue) ? (
-                renderMultiSelectTags()
-              ) : (
-                <p className="truncate text-sm text-slate-600">{filterComboBoxValue}</p>
-              )}
-            </div>
+            <div className="min-w-0 flex-1">{renderComboBoxContent()}</div>
 
             <Button
               onClick={(e) => {

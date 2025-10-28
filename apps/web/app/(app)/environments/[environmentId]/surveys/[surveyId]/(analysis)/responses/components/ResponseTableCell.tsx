@@ -22,7 +22,7 @@ const ResponseTableCellComponent = ({
   // Function to handle cell click
   const handleCellClick = () => {
     if (cell.column.id !== "select") {
-      setSelectedResponseId(row.id as string);
+      setSelectedResponseId(row.id);
     }
   };
 

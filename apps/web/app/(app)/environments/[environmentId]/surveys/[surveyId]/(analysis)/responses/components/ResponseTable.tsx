@@ -39,6 +39,12 @@ import {
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 
+const SkeletonCell = () => (
+  <Skeleton className="w-full">
+    <div className="h-6"></div>
+  </Skeleton>
+);
+
 interface ResponseTableProps {
   data: TResponseTableData[];
   survey: TSurvey;
@@ -131,11 +137,7 @@ export const ResponseTable = ({
       isFetchingFirstPage
         ? columns.map((column) => ({
             ...column,
-            cell: () => (
-              <Skeleton className="w-full">
-                <div className="h-6"></div>
-              </Skeleton>
-            ),
+            cell: SkeletonCell,
           }))
         : columns,
     [columns, isFetchingFirstPage]
@@ -259,7 +261,7 @@ export const ResponseTable = ({
                   </TableRow>
                 ))}
               </TableHeader>
-
+              {/* disable auto animation if there are more than 200 responses for performance optimizations  */}
               <TableBody ref={responses && responses.length > 200 ? undefined : parent}>
                 {table.getRowModel().rows.map((row) => (
                   <TableRow
