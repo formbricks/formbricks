@@ -1,10 +1,10 @@
 "use client";
 
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { TSurveySingleUse } from "@formbricks/types/surveys/types";
 import footerLogo from "../lib/footerlogo.svg";
 
@@ -14,7 +14,7 @@ interface SurveyLinkUsedProps {
 }
 
 export const SurveyLinkUsed = ({ singleUseMessage, project }: SurveyLinkUsedProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const defaultHeading = t("s.survey_already_answered_heading");
   const defaultSubheading = t("s.survey_already_answered_subheading");
   return (

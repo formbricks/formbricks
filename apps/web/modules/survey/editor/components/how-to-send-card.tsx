@@ -3,9 +3,9 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Environment } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
@@ -24,7 +24,7 @@ interface HowToSendCardProps {
 export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);

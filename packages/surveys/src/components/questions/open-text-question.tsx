@@ -29,6 +29,7 @@ interface OpenTextQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards: boolean;
 }
 
 export function OpenTextQuestion({
@@ -46,6 +47,7 @@ export function OpenTextQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<OpenTextQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [currentLength, setCurrentLength] = useState(value.length || 0);
@@ -109,7 +111,7 @@ export function OpenTextQuestion({
   const computedDir = !value ? dir : "auto";
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form key={question.id} onSubmit={handleOnSubmit} className="fb-w-full">
         {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
         <Headline

@@ -1,9 +1,9 @@
+import { getTranslate } from "@/lingodotdev/server";
 import { AccessView } from "@/modules/ee/teams/project-teams/components/access-view";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 import { getTeamsByProjectId } from "./lib/team";
 
 export const ProjectTeams = async (props: { params: Promise<{ environmentId: string }> }) => {

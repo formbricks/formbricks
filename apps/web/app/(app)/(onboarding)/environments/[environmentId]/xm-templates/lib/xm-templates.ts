@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { logger } from "@formbricks/logger";
 import { TXMTemplate } from "@formbricks/types/templates";
 import {
@@ -10,7 +10,7 @@ import {
   getDefaultEndingCard,
 } from "@/app/lib/survey-builder";
 
-export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
+export const getXMSurveyDefault = (t: TFunction): TXMTemplate => {
   try {
     return {
       name: "",
@@ -26,7 +26,7 @@ export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
   }
 };
 
-const npsSurvey = (t: TFnType): TXMTemplate => {
+const npsSurvey = (t: TFunction): TXMTemplate => {
   return {
     ...getXMSurveyDefault(t),
     name: t("templates.nps_survey_name"),
@@ -55,7 +55,7 @@ const npsSurvey = (t: TFnType): TXMTemplate => {
   };
 };
 
-const starRatingSurvey = (t: TFnType): TXMTemplate => {
+const starRatingSurvey = (t: TFunction): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
   const defaultSurvey = getXMSurveyDefault(t);
 
@@ -153,7 +153,7 @@ const starRatingSurvey = (t: TFnType): TXMTemplate => {
   };
 };
 
-const csatSurvey = (t: TFnType): TXMTemplate => {
+const csatSurvey = (t: TFunction): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
   const defaultSurvey = getXMSurveyDefault(t);
 
@@ -247,7 +247,7 @@ const csatSurvey = (t: TFnType): TXMTemplate => {
   };
 };
 
-const cessSurvey = (t: TFnType): TXMTemplate => {
+const cessSurvey = (t: TFunction): TXMTemplate => {
   return {
     ...getXMSurveyDefault(t),
     name: t("templates.cess_survey_name"),
@@ -272,7 +272,7 @@ const cessSurvey = (t: TFnType): TXMTemplate => {
   };
 };
 
-const smileysRatingSurvey = (t: TFnType): TXMTemplate => {
+const smileysRatingSurvey = (t: TFunction): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
   const defaultSurvey = getXMSurveyDefault(t);
 
@@ -370,7 +370,7 @@ const smileysRatingSurvey = (t: TFnType): TXMTemplate => {
   };
 };
 
-const enpsSurvey = (t: TFnType): TXMTemplate => {
+const enpsSurvey = (t: TFunction): TXMTemplate => {
   return {
     ...getXMSurveyDefault(t),
     name: t("templates.enps_survey_name"),
@@ -399,7 +399,7 @@ const enpsSurvey = (t: TFnType): TXMTemplate => {
   };
 };
 
-export const getXMTemplates = (t: TFnType): TXMTemplate[] => {
+export const getXMTemplates = (t: TFunction): TXMTemplate[] => {
   try {
     return [
       npsSurvey(t),

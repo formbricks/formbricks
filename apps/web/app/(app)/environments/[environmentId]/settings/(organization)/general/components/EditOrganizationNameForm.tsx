@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
@@ -32,7 +32,7 @@ const ZEditOrganizationNameFormSchema = ZOrganization.pick({ name: true });
 type EditOrganizationNameForm = z.infer<typeof ZEditOrganizationNameFormSchema>;
 
 export const EditOrganizationNameForm = ({ organization, membershipRole }: EditOrganizationNameProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const form = useForm<EditOrganizationNameForm>({
     defaultValues: {
       name: organization.name,

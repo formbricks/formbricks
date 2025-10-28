@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -30,7 +30,7 @@ export const ResponseTimeline = ({
   locale,
   projectPermission,
 }: ResponseTimelineProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [sortedResponses, setSortedResponses] = useState(responses);
   const toggleSortResponses = () => {
     setSortedResponses([...sortedResponses].reverse());

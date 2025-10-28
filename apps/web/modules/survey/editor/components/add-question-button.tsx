@@ -4,9 +4,9 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import {
   getCXQuestionTypes,
@@ -22,7 +22,7 @@ interface AddQuestionButtonProps {
 }
 
 export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestionButtonProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [hoveredQuestionId, setHoveredQuestionId] = useState<string | null>(null);
   const availableQuestionTypes = isCxMode ? getCXQuestionTypes(t) : getQuestionTypes(t);

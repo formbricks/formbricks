@@ -1,4 +1,4 @@
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface DecrementQuotasCheckboxProps {
@@ -12,7 +12,7 @@ export const DecrementQuotasCheckbox = ({
   checked,
   onCheckedChange,
 }: DecrementQuotasCheckboxProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const handleCheckedChange = (checked: boolean) => {
     onCheckedChange(checked);

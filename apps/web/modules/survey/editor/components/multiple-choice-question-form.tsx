@@ -4,10 +4,10 @@ import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TShuffleOption,
@@ -49,7 +49,7 @@ export const MultipleChoiceQuestionForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: MultipleChoiceQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);

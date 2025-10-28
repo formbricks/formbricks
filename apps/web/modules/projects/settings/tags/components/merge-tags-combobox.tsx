@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -24,7 +24,7 @@ type Tag = {
 };
 
 export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 

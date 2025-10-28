@@ -4,9 +4,13 @@ import { getUserLocale } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
-export async function getLocale() {
+export const getLocale = async (): Promise<string> => {
   const session = await getServerSession(authOptions);
-  let locale = session ? await getUserLocale(session.user?.id) : await findMatchingLocale();
-  locale = locale ? locale : DEFAULT_LOCALE;
-  return locale;
-}
+  let locale: string | undefined;
+  if (session?.user?.id) {
+    locale = await getUserLocale(session.user.id);
+  } else {
+    locale = await findMatchingLocale();
+  }
+  return locale ?? DEFAULT_LOCALE;
+};

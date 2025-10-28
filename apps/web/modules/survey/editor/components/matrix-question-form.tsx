@@ -4,10 +4,10 @@ import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -45,7 +45,7 @@ export const MatrixQuestionForm = ({
   isExternalUrlsAllowed,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const focusItem = (targetIdx: number, type: "row" | "column") => {
     const input = document.querySelector(`input[id="${type}-${targetIdx}"]`) as HTMLInputElement;

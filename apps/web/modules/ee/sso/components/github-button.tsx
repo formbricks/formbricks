@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { signIn } from "next-auth/react";
+import { useTranslation } from "react-i18next";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -14,7 +14,7 @@ interface GithubButtonProps {
 }
 
 export const GithubButton = ({ inviteUrl, lastUsed, source }: GithubButtonProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleLogin = async () => {
     if (typeof window !== "undefined") {
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Github");

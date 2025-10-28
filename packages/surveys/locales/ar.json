@@ -48,7 +48,6 @@
       "duplicate_files": "الملفات التالية تم تحميلها بالفعل: {duplicateNames}. لا يُسمح بالملفات المكررة.",
       "file_size_exceeded": "الملف (الملفات) التالية تتجاوز الحجم الأقصى البالغ {maxSizeInMB} ميجابايت وتم إزالتها: {fileNames}",
       "file_size_exceeded_alert": "يجب أن يكون حجم الملف أقل من {maxSizeInMB} ميجابايت",
-      "native_upload_failed": "خطأ في تحميل الملف الأصلي.",
       "no_valid_file_types_selected": "لم يتم اختيار أنواع ملفات صالحة. يرجى اختيار نوع ملف صالح.",
       "only_one_file_can_be_uploaded_at_a_time": "يمكن تحميل ملف واحد فقط في المرة الواحدة.",
       "upload_failed": "فشل التحميل! يرجى المحاولة مرة أخرى.",

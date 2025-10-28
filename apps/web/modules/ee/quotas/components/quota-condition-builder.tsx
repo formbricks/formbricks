@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useCallback, useMemo } from "react";
 import { FieldErrors } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuotaInput, TSurveyQuotaLogic } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -26,7 +26,7 @@ export const QuotaConditionBuilder = ({
   onChange,
   quotaErrors,
 }: QuotaConditionBuilderProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   // Convert quota conditions to generic format
   const genericConditions = useMemo(() => quotaConditionsToGeneric(conditions), [conditions]);

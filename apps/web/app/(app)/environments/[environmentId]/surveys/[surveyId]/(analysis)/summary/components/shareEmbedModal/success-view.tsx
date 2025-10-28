@@ -1,7 +1,7 @@
-import { useTranslate } from "@tolgee/react";
 import { BellRing, BlocksIcon, Share2Icon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
@@ -30,7 +30,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({
   handleEmbedViewWithTab,
   isReadOnly,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const environmentId = survey.environmentId;
   return (
     <div className="flex h-full max-w-full flex-col overflow-hidden">

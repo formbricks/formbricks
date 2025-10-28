@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { CircleAlert, TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -40,7 +40,7 @@ export const DeleteDialog = ({
   children,
   disabled,
 }: DeleteDialogProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
