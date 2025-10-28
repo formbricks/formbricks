@@ -312,6 +312,14 @@ export const generateResponseTableColumns = (
     },
   };
 
+  const singleUseIdColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "singleUseId",
+    header: () => <div className="gap-x-1.5">{t("environments.surveys.responses.single_use_id")}</div>,
+    cell: ({ row }) => {
+      return <p className="truncate text-slate-900">{row.original.singleUseId}</p>;
+    },
+  };
+
   const quotasColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "quota",
     header: t("common.quota"),
@@ -409,6 +417,7 @@ export const generateResponseTableColumns = (
   // Combine the selection column with the dynamic question columns
   const baseColumns = [
     personColumn,
+    singleUseIdColumn,
     dateColumn,
     ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,
