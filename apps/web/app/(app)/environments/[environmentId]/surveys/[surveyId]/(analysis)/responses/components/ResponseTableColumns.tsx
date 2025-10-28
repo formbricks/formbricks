@@ -314,7 +314,7 @@ export const generateResponseTableColumns = (
 
   const singleUseIdColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "singleUseId",
-    header: () => t("environments.surveys.responses.single_use_id"),
+    header: () => <div className="gap-x-1.5">{t("environments.surveys.responses.single_use_id")}</div>,
     cell: ({ row }) => {
       return <p className="truncate text-slate-900">{row.original.singleUseId}</p>;
     },
