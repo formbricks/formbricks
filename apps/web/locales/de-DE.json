@@ -209,6 +209,8 @@
     "error_rate_limit_description": "Maximale Anzahl an Anfragen erreicht. Bitte später erneut versuchen.",
     "error_rate_limit_title": "Rate Limit Überschritten",
     "expand_rows": "Zeilen erweitern",
+    "failed_to_load_organizations": "Fehler beim Laden der Organisationen",
+    "failed_to_load_projects": "Fehler beim Laden der Projekte",
     "finish": "Fertigstellen",
     "follow_these": "Folge diesen",
     "formbricks_version": "Formbricks Version",
@@ -886,7 +888,6 @@
         "team_settings_description": "Teams und ihre Mitglieder können auf dieses Projekt und seine Umfragen zugreifen. Organisationsbesitzer und Manager können diesen Zugriff gewähren."
       }
     },
-    "projects_environments_organizations_not_found": "Projekte, Umgebungen oder Organisationen nicht gefunden",
     "segments": {
       "add_filter_below": "Filter unten hinzufügen",
       "add_your_first_filter_to_get_started": "Füge deinen ersten Filter hinzu, um loszulegen",

@@ -182,6 +182,8 @@ checksums:
     common/error_rate_limit_description: 37791a33a947204662ee9c6544e90f51
     common/error_rate_limit_title: 23ac9419e267e610e1bfd38e1dc35dc0
     common/expand_rows: b6e06327cb8718dfd6651720843e4dad
+    common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
+    common/failed_to_load_projects: 0bba9f9b2b38c189706a486a1bb134c3
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/follow_these: 3a730b242bb17a3f95e01bf0dae86885
     common/formbricks_version: d9967c797f3e49ca0cae78bc0ebd19cb
@@ -821,7 +823,6 @@ checksums:
     environments/project/teams/permission: cc2ed7274bd8267f9e0a10b079584d8b
     environments/project/teams/team_name: d1a5f99dbf503ca53f06b3a98b511d02
     environments/project/teams/team_settings_description: da32d77993f5c5c7547cdf3e1d3fc7d5
-    environments/projects_environments_organizations_not_found: 9d450087c4035083f93bda9aa1889c43
     environments/segments/add_filter_below: be9b9c51d4d61903e782fb37931d8905
     environments/segments/add_your_first_filter_to_get_started: 365f9fc1600e2e44e2502e9ad9fde46a
     environments/segments/cannot_delete_segment_used_in_surveys: 134200217852566d6743245006737093

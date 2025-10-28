@@ -209,6 +209,8 @@
     "error_rate_limit_description": "Numărul maxim de cereri atins. Vă rugăm să încercați din nou mai târziu.",
     "error_rate_limit_title": "Limită de cereri depășită",
     "expand_rows": "Extinde rândurile",
+    "failed_to_load_organizations": "Nu s-a reușit încărcarea organizațiilor",
+    "failed_to_load_projects": "Nu s-a reușit încărcarea proiectelor",
     "finish": "Finalizează",
     "follow_these": "Urmați acestea",
     "formbricks_version": "Versiunea Formbricks",
@@ -886,7 +888,6 @@
         "team_settings_description": "Vezi care echipe pot accesa acest proiect."
       }
     },
-    "projects_environments_organizations_not_found": "Proiecte, medii sau organizații nu găsite",
     "segments": {
       "add_filter_below": "Adăugați un filtru mai jos",
       "add_your_first_filter_to_get_started": "Adăugați primul dvs. filtru pentru a începe",

@@ -209,6 +209,8 @@
     "error_rate_limit_description": "已達 到最大 請求 次數。請 稍後 再試。",
     "error_rate_limit_title": "限流超過",
     "expand_rows": "展開列",
+    "failed_to_load_organizations": "無法載入組織",
+    "failed_to_load_projects": "無法載入專案",
     "finish": "完成",
     "follow_these": "按照這些步驟",
     "formbricks_version": "Formbricks 版本",
@@ -886,7 +888,6 @@
         "team_settings_description": "查看哪些團隊可以存取此專案。"
       }
     },
-    "projects_environments_organizations_not_found": "找不到專案、環境或組織",
     "segments": {
       "add_filter_below": "在下方新增篩選器",
       "add_your_first_filter_to_get_started": "新增您的第一個篩選器以開始使用",

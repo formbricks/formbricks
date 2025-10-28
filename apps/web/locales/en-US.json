@@ -209,6 +209,8 @@
     "error_rate_limit_description": "Maximum number of requests reached. Please try again later.",
     "error_rate_limit_title": "Rate Limit Exceeded",
     "expand_rows": "Expand rows",
+    "failed_to_load_organizations": "Failed to load organizations",
+    "failed_to_load_projects": "Failed to load projects",
     "finish": "Finish",
     "follow_these": "Follow these",
     "formbricks_version": "Formbricks Version",
@@ -886,7 +888,6 @@
         "team_settings_description": "See which teams can access this project."
       }
     },
-    "projects_environments_organizations_not_found": "Projects, environments or organizations not found",
     "segments": {
       "add_filter_below": "Add filter below",
       "add_your_first_filter_to_get_started": "Add your first filter to get started",

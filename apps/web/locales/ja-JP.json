@@ -209,6 +209,8 @@
     "error_rate_limit_description": "リクエストの最大数に達しました。後でもう一度試してください。",
     "error_rate_limit_title": "レート制限を超えました",
     "expand_rows": "行を展開",
+    "failed_to_load_organizations": "組織の読み込みに失敗しました",
+    "failed_to_load_projects": "プロジェクトの読み込みに失敗しました",
     "finish": "完了",
     "follow_these": "こちらの手順に従って",
     "formbricks_version": "Formbricksバージョン",
@@ -886,7 +888,6 @@
         "team_settings_description": "このプロジェクトにアクセスできるチームを確認します。"
       }
     },
-    "projects_environments_organizations_not_found": "プロジェクト、環境、または組織が見つかりません",
     "segments": {
       "add_filter_below": "下にフィルターを追加",
       "add_your_first_filter_to_get_started": "まず最初のフィルターを追加してください",

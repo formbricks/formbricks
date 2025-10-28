@@ -209,6 +209,8 @@
     "error_rate_limit_description": "Número máximo de requisições atingido. Por favor, tente novamente mais tarde.",
     "error_rate_limit_title": "Limite de Taxa Excedido",
     "expand_rows": "Expandir linhas",
+    "failed_to_load_organizations": "Falha ao carregar organizações",
+    "failed_to_load_projects": "Falha ao carregar projetos",
     "finish": "Terminar",
     "follow_these": "Siga esses",
     "formbricks_version": "Versão do Formbricks",
@@ -886,7 +888,6 @@
         "team_settings_description": "As equipes e seus membros podem acessar este projeto e suas pesquisas. Proprietários e gerentes da organização podem conceder esse acesso."
       }
     },
-    "projects_environments_organizations_not_found": "Projetos, ambientes ou organizações não encontrados",
     "segments": {
       "add_filter_below": "Adicionar filtro abaixo",
       "add_your_first_filter_to_get_started": "Adicione seu primeiro filtro para começar",
