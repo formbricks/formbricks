@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -38,7 +38,7 @@ export const UploadContactsAttributeCombobox = ({
   setOpen,
   currentKey,
 }: ITagsComboboxProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   useEffect(() => {
     // reset search value and value when closing the combobox
     if (!open) {
@@ -92,7 +92,7 @@ export const UploadContactsAttributeCombobox = ({
               }}
             />
           </div>
-          <CommandList>
+          <CommandList className="border-0">
             <CommandGroup>
               {keys.map((tag) => {
                 return (

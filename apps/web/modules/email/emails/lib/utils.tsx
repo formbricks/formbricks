@@ -1,5 +1,5 @@
 import { Column, Container, Img, Link, Row, Text } from "@react-email/components";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import { FileIcon } from "lucide-react";
 import { TSurveyQuestionType, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
@@ -7,7 +7,7 @@ import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 export const renderEmailResponseValue = async (
   response: string | string[],
   questionType: TSurveyQuestionType,
-  t: TFnType,
+  t: TFunction,
   overrideFileUploadResponse = false
 ): Promise<React.JSX.Element> => {
   switch (questionType) {

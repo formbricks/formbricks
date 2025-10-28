@@ -29,6 +29,7 @@ interface PictureSelectionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards: boolean;
 }
 
 export function PictureSelectionQuestion({
@@ -45,6 +46,7 @@ export function PictureSelectionQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<PictureSelectionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -101,7 +103,7 @@ export function PictureSelectionQuestion({
   const questionChoices = question.choices;
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

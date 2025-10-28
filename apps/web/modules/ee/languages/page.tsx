@@ -1,13 +1,13 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { EditLanguage } from "@/modules/ee/multi-language-surveys/components/edit-language";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
 
 export const LanguagesPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;

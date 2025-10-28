@@ -25,6 +25,7 @@ interface ConsentQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards: boolean;
 }
 
 export function ConsentQuestion({
@@ -42,6 +43,7 @@ export function ConsentQuestion({
   autoFocusEnabled,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<ConsentQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -60,7 +62,7 @@ export function ConsentQuestion({
   );
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZUserPassword } from "@formbricks/types/user";
 import { Button } from "@/modules/ui/components/button";
@@ -39,7 +39,7 @@ export const PasswordConfirmationModal = ({
   newEmail,
   onConfirm,
 }: PasswordConfirmationModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(PasswordConfirmationSchema),

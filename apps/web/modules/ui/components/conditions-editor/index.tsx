@@ -1,9 +1,9 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import { FieldErrors } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { TSurveyQuotaInput } from "@formbricks/types/quota";
 import { Button } from "@/modules/ui/components/button";
 import { isConditionGroup } from "@/modules/ui/components/conditions-editor/lib/utils";
@@ -44,7 +44,7 @@ export function ConditionsEditor({
   depth = 0,
   quotaErrors,
 }: Readonly<ConditionsEditorProps>) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
   const handleLeftOperandChange = (condition: TGenericCondition, value: string, option?: TComboboxOption) => {

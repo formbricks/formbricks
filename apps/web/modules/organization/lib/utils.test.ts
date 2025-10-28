@@ -23,7 +23,7 @@ vi.mock("@/lib/organization/service", () => ({
 vi.mock("@/modules/auth/lib/authOptions", () => ({
   authOptions: {},
 }));
-vi.mock("@/tolgee/server", () => ({
+vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(() => Promise.resolve((k: string) => k)),
 }));
 vi.mock("next-auth", () => ({

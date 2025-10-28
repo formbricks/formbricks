@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { Loader2, UsersIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -140,7 +140,7 @@ export const LoadSegmentModal = ({
   const handleResetState = () => {
     setOpen(false);
   };
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (

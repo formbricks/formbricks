@@ -1,12 +1,12 @@
 "use client";
 
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { defaultStyling } from "@/lib/styling/constants";
@@ -54,7 +54,7 @@ export const StylingView = ({
   isCxMode,
   isStorageConfigured = true,
 }: StylingViewProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const form = useForm<TSurveyStyling>({
     defaultValues: { ...defaultStyling, ...project.styling, ...localSurvey.styling },

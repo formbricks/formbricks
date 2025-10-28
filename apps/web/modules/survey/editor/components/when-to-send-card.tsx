@@ -3,9 +3,9 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ActionClass, OrganizationRole } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
@@ -34,7 +34,7 @@ export const WhenToSendCard = ({
   membershipRole,
   projectPermission,
 }: WhenToSendCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [actionClasses, setActionClasses] = useState<ActionClass[]>(propActionClasses);

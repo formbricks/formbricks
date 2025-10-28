@@ -1,10 +1,11 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
-import { AlertCircleIcon, SettingsIcon } from "lucide-react";
+import { SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
 import { TTag } from "@formbricks/types/tags";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TagError } from "@/modules/projects/settings/types/tag";
@@ -33,20 +34,25 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   updateFetchedResponses,
   isReadOnly,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = React.useState(false);
   const [tagsState, setTagsState] = useState(tags);
   const [tagIdToHighlight, setTagIdToHighlight] = useState("");
+  const [isLoadingTagOperation, setIsLoadingTagOperation] = useState(false);
 
   const onDelete = async (tagId: string) => {
-    try {
-      await deleteTagOnResponseAction({ responseId, tagId });
+    setIsLoadingTagOperation(true);
+    const deleteTagResponse = await deleteTagOnResponseAction({ responseId, tagId });
+    if (deleteTagResponse?.data) {
       updateFetchedResponses();
-    } catch (e) {
+    } else {
+      const errorMessage = getFormattedErrorMessage(deleteTagResponse);
+      logger.error({ errorMessage }, "Error deleting tag");
       toast.error(t("environments.surveys.responses.an_error_occurred_deleting_the_tag"));
     }
+    setIsLoadingTagOperation(false);
   };
 
   useEffect(() => {
@@ -60,72 +66,70 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   }, [tagIdToHighlight]);
 
   const handleCreateTag = async (tagName: string) => {
-    setOpen(false);
+    setIsLoadingTagOperation(true);
+    const newTagResponse = await createTagAction({ environmentId, tagName });
 
-    const createTagResponse = await createTagAction({
-      environmentId,
-      tagName: tagName?.trim() ?? "",
-    });
+    if (!newTagResponse?.data) {
+      toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
+      return;
+    }
 
-    if (createTagResponse?.data?.ok) {
-      const tag = createTagResponse.data.data;
-      setTagsState((prevTags) => [
-        ...prevTags,
-        {
-          tagId: tag.id,
-          tagName: tag.name,
-        },
-      ]);
-
-      const createTagToResponseActionResponse = await createTagToResponseAction({
-        responseId,
-        tagId: tag.id,
-      });
-
-      if (createTagToResponseActionResponse?.data) {
-        updateFetchedResponses();
-        setSearchValue("");
+    if (!newTagResponse.data.ok) {
+      const errorMessage = newTagResponse.data.error;
+      if (errorMessage?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
+        toast.error(t("environments.surveys.responses.tag_already_exists"), {
+          duration: 2000,
+          icon: <SettingsIcon className="h-5 w-5 text-orange-500" />,
+        });
       } else {
-        const errorMessage = getFormattedErrorMessage(createTagToResponseActionResponse);
-        toast.error(errorMessage);
+        toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
       }
-
       return;
     }
 
-    if (
-      createTagResponse?.data?.ok === false &&
-      createTagResponse?.data?.error?.code === TagError.TAG_NAME_ALREADY_EXISTS
-    ) {
-      toast.error(t("environments.surveys.responses.tag_already_exists"), {
-        duration: 2000,
-        icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
-      });
-
+    const newTag = newTagResponse.data.data;
+    const createTagToResponseResponse = await createTagToResponseAction({ responseId, tagId: newTag.id });
+    if (createTagToResponseResponse?.data) {
+      setTagsState((prevTags) => [...prevTags, { tagId: newTag.id, tagName: newTag.name }]);
+      setTagIdToHighlight(newTag.id);
+      updateFetchedResponses();
       setSearchValue("");
-      return;
+      setOpen(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(createTagToResponseResponse);
+      logger.error({ errorMessage });
+      toast.error(errorMessage);
     }
+    setIsLoadingTagOperation(false);
+  };
 
-    const errorMessage = getFormattedErrorMessage(createTagResponse);
-    toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
-      duration: 2000,
-    });
-    setSearchValue("");
+  const handleAddTag = async (tagId: string) => {
+    setIsLoadingTagOperation(true);
+    setTagsState((prevTags) => [
+      ...prevTags,
+      {
+        tagId,
+        tagName: environmentTags?.find((tag) => tag.id === tagId)?.name ?? "",
+      },
+    ]);
+
+    try {
+      await createTagToResponseAction({ responseId, tagId });
+      updateFetchedResponses();
+      setSearchValue("");
+      setOpen(false);
+    } catch (error) {
+      toast.error(t("environments.surveys.responses.an_error_occurred_adding_the_tag"));
+      console.error("Error adding tag:", error);
+      // Revert the tag if the action failed
+      setTagsState((prevTags) => prevTags.filter((tag) => tag.tagId !== tagId));
+    } finally {
+      setIsLoadingTagOperation(false);
+    }
   };
 
   return (
-    <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-4">
-      {!isReadOnly && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="cursor-pointer p-0"
-          onClick={() => {
-            router.push(`/environments/${environmentId}/project/tags`);
-          }}>
-          <SettingsIcon className="h-5 w-5 text-slate-500 hover:text-slate-600" />
-        </Button>
-      )}
+    <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-6 py-3">
       <div className="flex flex-wrap items-center gap-2">
         {tagsState?.map((tag) => (
           <Tag
@@ -136,37 +140,35 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             tags={tagsState}
             setTagsState={setTagsState}
             highlight={tagIdToHighlight === tag.tagId}
-            allowDelete={!isReadOnly}
+            allowDelete={!isReadOnly && !isLoadingTagOperation}
           />
         ))}
 
         {!isReadOnly && (
           <TagsCombobox
-            open={open}
+            open={open && !isLoadingTagOperation}
             setOpen={setOpen}
             searchValue={searchValue}
             setSearchValue={setSearchValue}
             tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name })) ?? []}
             currentTags={tagsState.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
             createTag={handleCreateTag}
-            addTag={(tagId) => {
-              setTagsState((prevTags) => [
-                ...prevTags,
-                {
-                  tagId,
-                  tagName: environmentTags?.find((tag) => tag.id === tagId)?.name ?? "",
-                },
-              ]);
-
-              createTagToResponseAction({ responseId, tagId }).then(() => {
-                updateFetchedResponses();
-                setSearchValue("");
-                setOpen(false);
-              });
-            }}
+            addTag={handleAddTag}
           />
         )}
       </div>
+
+      {!isReadOnly && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex-shrink-0"
+          onClick={() => {
+            router.push(`/environments/${environmentId}/project/tags`);
+          }}>
+          <SettingsIcon className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 };

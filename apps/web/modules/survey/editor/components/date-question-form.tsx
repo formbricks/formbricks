@@ -1,9 +1,9 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -53,7 +53,7 @@ export const DateQuestionForm = ({
   isExternalUrlsAllowed,
 }: IDateQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
   return (

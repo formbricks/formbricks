@@ -2,12 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
 import { PieChart, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import {
   TSurveyQuota,
@@ -77,7 +77,7 @@ export const QuotaModal = ({
 }: QuotaModalProps) => {
   const router = useRouter();
   const isEditing = !!quota;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [openConfirmationModal, setOpenConfirmationModal] = useState(false);
   const [openConfirmChangesInInclusionCriteria, setOpenConfirmChangesInInclusionCriteria] = useState(false);
   const defaultValues = useMemo(() => {

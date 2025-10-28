@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -27,7 +27,7 @@ export const ConfirmDeleteSegmentModal = ({
   segment,
   setOpen,
 }: ConfirmDeleteSegmentModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleDelete = async () => {
     await onDelete();
   };

@@ -1,6 +1,6 @@
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
-import { getTranslate } from "@/tolgee/server";
+import { getTranslate } from "@/lingodotdev/server";
 import { SegmentTableDataRowContainer } from "./segment-table-data-row-container";
 
 type TSegmentTableProps = {

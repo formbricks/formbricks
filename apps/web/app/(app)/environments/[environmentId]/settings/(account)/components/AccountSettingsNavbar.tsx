@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface AccountSettingsNavbarProps {
@@ -12,7 +12,7 @@ interface AccountSettingsNavbarProps {
 
 export const AccountSettingsNavbar = ({ environmentId, activeId, loading }: AccountSettingsNavbarProps) => {
   const pathname = usePathname();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const navigation = [
     {
       id: "profile",

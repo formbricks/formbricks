@@ -1,9 +1,9 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
@@ -49,7 +49,7 @@ export const SurveysList = ({
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 

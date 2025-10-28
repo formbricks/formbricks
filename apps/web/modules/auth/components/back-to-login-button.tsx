@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";
-import { getTranslate } from "@/tolgee/server";
 
 export const BackToLoginButton = async () => {
   const t = await getTranslate();

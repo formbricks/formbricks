@@ -1,12 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
@@ -73,7 +73,7 @@ export const SignupForm = ({
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const inviteToken = searchParams?.get("inviteToken");
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string>();

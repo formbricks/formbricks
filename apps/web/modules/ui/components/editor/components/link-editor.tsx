@@ -2,10 +2,10 @@
 
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useTranslate } from "@tolgee/react";
 import type { LexicalEditor, RangeSelection } from "lexical";
 import { $getSelection, $isRangeSelection } from "lexical";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { isStringUrl } from "@/lib/utils/url";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -60,7 +60,7 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
   const [error, setError] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   useEffect(() => {
     if (open) {
       setError("");

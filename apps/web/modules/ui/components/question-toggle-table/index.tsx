@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -71,7 +71,7 @@ export const QuestionToggleTable = ({
     });
   };
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <table className="mt-4 w-full table-fixed">
       <thead>

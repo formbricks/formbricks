@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { Copy, SquareArrowOutUpRight } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
@@ -30,7 +30,7 @@ export const ShareSurveyLink = ({
   enforceSurveyUrlWidth = false,
   isReadOnly,
 }: ShareSurveyLinkProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const handleLanguageChange = (language: string) => {
     const url = getSurveyUrl(survey, publicDomain, language);

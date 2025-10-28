@@ -1,10 +1,10 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -75,7 +75,7 @@ export const PersonalLinksTab = ({
   isContactsEnabled,
   isFormbricksCloud,
 }: PersonalLinksTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const form = useForm<PersonalLinksFormData>({
     defaultValues: {

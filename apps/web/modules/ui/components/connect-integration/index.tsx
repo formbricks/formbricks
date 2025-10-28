@@ -1,11 +1,11 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TIntegrationType } from "@formbricks/types/integration";
 import { Button } from "@/modules/ui/components/button";
 import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
@@ -24,7 +24,7 @@ export const ConnectIntegration = ({
   handleAuthorization,
   integrationLogoSrc,
 }: ConnectIntegrationProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isConnecting, setIsConnecting] = useState(false);
   const searchParams = useSearchParams();
   const integrationDetails = getIntegrationDetails(integrationType, t);

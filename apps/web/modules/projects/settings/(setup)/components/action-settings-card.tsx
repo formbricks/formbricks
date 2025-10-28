@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TUserLocale } from "@formbricks/types/user";
@@ -29,7 +29,7 @@ export const ActionSettingsCard = ({
   isReadOnly,
   locale,
 }: ActionSettingsCardProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   return (
     <>
