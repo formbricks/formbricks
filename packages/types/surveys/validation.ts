@@ -299,22 +299,28 @@ const findJumpToQuestionActions = (actions: TSurveyLogicAction[]): TActionJumpTo
   return actions.filter((action): action is TActionJumpToQuestion => action.objective === "jumpToQuestion");
 };
 
-// function to validate hidden field or question id
+// function to validate hidden field or question id or element id
 export const validateId = (
-  type: "Hidden field" | "Question",
+  type: "Hidden field" | "Question" | "Element",
   field: string,
   existingQuestionIds: string[],
   existingEndingCardIds: string[],
-  existingHiddenFieldIds: string[]
+  existingHiddenFieldIds: string[],
+  existingElementIds?: string[]
 ): string | null => {
   if (field.trim() === "") {
     return `Please enter a ${type} Id.`;
   }
 
-  const combinedIds = [...existingQuestionIds, ...existingHiddenFieldIds, ...existingEndingCardIds];
+  const combinedIds = [
+    ...existingQuestionIds,
+    ...existingHiddenFieldIds,
+    ...existingEndingCardIds,
+    ...(existingElementIds ?? []),
+  ];
 
   if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
-    return `${type} ID already exists in questions or hidden fields.`;
+    return `${type} ID already exists in questions, hidden fields, or elements.`;
   }
 
   if (FORBIDDEN_IDS.includes(field)) {
