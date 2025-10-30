@@ -1,9 +1,9 @@
 import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
-  TI18nString,
   TSurvey,
   TSurveyConsentQuestion,
   TSurveyEndScreenCard,

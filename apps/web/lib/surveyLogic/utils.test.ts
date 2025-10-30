@@ -1,13 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import {
-  TConditionGroup,
-  TSingleCondition,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
+import { TSurveyLogic, TSurveyLogicAction, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
   createGroupFromResource,

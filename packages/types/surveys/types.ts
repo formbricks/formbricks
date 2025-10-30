@@ -1,9 +1,9 @@
-/* eslint-disable import/no-cycle -- Required for circular dependency between types, blocks, and elements */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
+import { type TI18nString, ZI18nString } from "../i18n";
 import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
 import { ZAllowedFileExtension } from "../storage";
@@ -13,6 +13,15 @@ import { findBlocksWithCyclicLogic } from "./blocks-validation";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "./elements";
 import { validateElementLabels } from "./elements-validation";
 import {
+  type TConditionGroup,
+  type TSingleCondition,
+  type TSurveyLogicConditionsOperator,
+  ZActionNumberVariableCalculateOperator,
+  ZActionTextVariableCalculateOperator,
+  ZConditionGroup,
+  ZDynamicLogicFieldValue,
+} from "./logic";
+import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
@@ -21,12 +30,6 @@ import {
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "./validation";
-
-export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj, {
-  message: "Object must have a 'default' key",
-});
-
-export type TI18nString = z.infer<typeof ZI18nString>;
 
 const ZSurveyEndingBase = z.object({
   id: z.string().cuid2(),
@@ -256,161 +259,12 @@ export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
 
 export type TSurveyQuestionChoice = z.infer<typeof ZSurveyQuestionChoice>;
 
-// Logic types
-export const ZSurveyLogicConditionsOperator = z.enum([
-  "equals",
-  "doesNotEqual",
-  "contains",
-  "doesNotContain",
-  "startsWith",
-  "doesNotStartWith",
-  "endsWith",
-  "doesNotEndWith",
-  "isSubmitted",
-  "isSkipped",
-  "isGreaterThan",
-  "isLessThan",
-  "isGreaterThanOrEqual",
-  "isLessThanOrEqual",
-  "equalsOneOf",
-  "includesAllOf",
-  "includesOneOf",
-  "doesNotIncludeOneOf",
-  "doesNotIncludeAllOf",
-  "isClicked",
-  "isAccepted",
-  "isBefore",
-  "isAfter",
-  "isBooked",
-  "isPartiallySubmitted",
-  "isCompletelySubmitted",
-  "isSet",
-  "isNotSet",
-  "isEmpty",
-  "isNotEmpty",
-  "isAnyOf",
-]);
-
-const operatorsWithoutRightOperand = [
-  ZSurveyLogicConditionsOperator.Enum.isSubmitted,
-  ZSurveyLogicConditionsOperator.Enum.isSkipped,
-  ZSurveyLogicConditionsOperator.Enum.isClicked,
-  ZSurveyLogicConditionsOperator.Enum.isAccepted,
-  ZSurveyLogicConditionsOperator.Enum.isBooked,
-  ZSurveyLogicConditionsOperator.Enum.isPartiallySubmitted,
-  ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
-  ZSurveyLogicConditionsOperator.Enum.isSet,
-  ZSurveyLogicConditionsOperator.Enum.isNotSet,
-  ZSurveyLogicConditionsOperator.Enum.isEmpty,
-  ZSurveyLogicConditionsOperator.Enum.isNotEmpty,
-] as const;
-
+// Actions for question logic
 export const ZDynamicLogicField = z.enum(["question", "variable", "hiddenField"]);
 export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQuestion"]);
-export const ZActionTextVariableCalculateOperator = z.enum(["assign", "concat"], {
-  message: "Conditional Logic: Invalid operator for a text variable",
-});
-export const ZActionNumberVariableCalculateOperator = z.enum(
-  ["add", "subtract", "multiply", "divide", "assign"],
-  { message: "Conditional Logic: Invalid operator for a number variable" }
-);
 
-const ZDynamicQuestion = z.object({
-  type: z.literal("question"),
-  value: z.string().min(1, "Conditional Logic: Question id cannot be empty"),
-  meta: z.record(z.string()).optional(),
-});
-
-const ZDynamicVariable = z.object({
-  type: z.literal("variable"),
-  value: z
-    .string()
-    .cuid2({ message: "Conditional Logic: Variable id must be a valid cuid" })
-    .min(1, "Conditional Logic: Variable id cannot be empty"),
-});
-
-const ZDynamicHiddenField = z.object({
-  type: z.literal("hiddenField"),
-  value: z.string().min(1, "Conditional Logic: Hidden field id cannot be empty"),
-});
-
-const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDynamicHiddenField], {
-  message: "Conditional Logic: Invalid dynamic field value",
-});
-
-export type TSurveyLogicConditionsOperator = z.infer<typeof ZSurveyLogicConditionsOperator>;
 export type TDynamicLogicField = z.infer<typeof ZDynamicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
-export type TActionTextVariableCalculateOperator = z.infer<typeof ZActionTextVariableCalculateOperator>;
-export type TActionNumberVariableCalculateOperator = z.infer<typeof ZActionNumberVariableCalculateOperator>;
-
-// Conditions
-const ZLeftOperand = ZDynamicLogicFieldValue;
-export type TLeftOperand = z.infer<typeof ZLeftOperand>;
-
-export const ZRightOperandStatic = z.object({
-  type: z.literal("static"),
-  value: z.union([z.string(), z.number(), z.array(z.string())]),
-});
-
-export const ZRightOperand = z.union([ZRightOperandStatic, ZDynamicLogicFieldValue]);
-export type TRightOperand = z.infer<typeof ZRightOperand>;
-
-export const ZSingleCondition = z
-  .object({
-    id: ZId,
-    leftOperand: ZLeftOperand,
-    operator: ZSurveyLogicConditionsOperator,
-    rightOperand: ZRightOperand.optional(),
-  })
-  .and(
-    z.object({
-      connector: z.undefined(),
-    })
-  )
-  .superRefine((val, ctx) => {
-    if (
-      !operatorsWithoutRightOperand.includes(val.operator as (typeof operatorsWithoutRightOperand)[number])
-    ) {
-      if (val.rightOperand === undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Conditional Logic: right operand is required for operator "${val.operator}"`,
-          path: ["rightOperand"],
-        });
-      } else if (val.rightOperand.type === "static" && val.rightOperand.value === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Conditional Logic: right operand value cannot be empty for operator "${val.operator}"`,
-        });
-      }
-    } else if (val.rightOperand !== undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Conditional Logic: right operand should not be present for operator "${val.operator}"`,
-        path: ["rightOperand"],
-      });
-    }
-  });
-
-export type TSingleCondition = z.infer<typeof ZSingleCondition>;
-
-export const ZConnector = z.enum(["and", "or"]);
-export type TConnector = z.infer<typeof ZConnector>;
-
-export interface TConditionGroup {
-  id: string;
-  connector: TConnector;
-  conditions: (TSingleCondition | TConditionGroup)[];
-}
-
-const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
-  z.object({
-    id: ZId,
-    connector: ZConnector,
-    conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
-  })
-);
 
 // Actions
 export const ZActionVariableValueType = z.union([z.literal("static"), ZDynamicLogicField]);

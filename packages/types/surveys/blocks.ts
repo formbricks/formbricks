@@ -1,15 +1,12 @@
-/* eslint-disable import/no-cycle -- Required for circular dependency between types, blocks, and elements */
 import { z } from "zod";
 import { ZId } from "../common";
+import { ZI18nString } from "../i18n";
 import { ZSurveyElementId, ZSurveyElements } from "./elements";
-import type { TSurveyLogicConditionsOperator } from "./types";
 import {
   ZActionNumberVariableCalculateOperator,
   ZActionTextVariableCalculateOperator,
-  ZConnector,
-  ZI18nString,
-  ZSurveyLogicConditionsOperator,
-} from "./types";
+  ZConditionGroup,
+} from "./logic";
 
 // Block ID - CUID (system-generated, NOT user-editable)
 export const ZSurveyBlockId = z.string().cuid2();
@@ -39,85 +36,6 @@ const ZDynamicHiddenField = z.object({
 const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDynamicHiddenField], {
   message: "Conditional Logic: Invalid dynamic field value",
 });
-
-const ZLeftOperand = ZDynamicLogicFieldValue;
-export type TLeftOperand = z.infer<typeof ZLeftOperand>;
-
-export const ZRightOperandStatic = z.object({
-  type: z.literal("static"),
-  value: z.union([z.string(), z.number(), z.array(z.string())]),
-});
-
-export const ZRightOperand = z.union([ZRightOperandStatic, ZDynamicLogicFieldValue]);
-export type TRightOperand = z.infer<typeof ZRightOperand>;
-
-const operatorsWithoutRightOperand: readonly TSurveyLogicConditionsOperator[] = [
-  ZSurveyLogicConditionsOperator.Enum.isSubmitted,
-  ZSurveyLogicConditionsOperator.Enum.isSkipped,
-  ZSurveyLogicConditionsOperator.Enum.isClicked,
-  ZSurveyLogicConditionsOperator.Enum.isAccepted,
-  ZSurveyLogicConditionsOperator.Enum.isBooked,
-  ZSurveyLogicConditionsOperator.Enum.isPartiallySubmitted,
-  ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
-  ZSurveyLogicConditionsOperator.Enum.isSet,
-  ZSurveyLogicConditionsOperator.Enum.isNotSet,
-  ZSurveyLogicConditionsOperator.Enum.isEmpty,
-  ZSurveyLogicConditionsOperator.Enum.isNotEmpty,
-];
-
-export const ZSingleCondition = z
-  .object({
-    id: ZId,
-    leftOperand: ZLeftOperand,
-    operator: ZSurveyLogicConditionsOperator,
-    rightOperand: ZRightOperand.optional(),
-  })
-  .and(
-    z.object({
-      connector: z.undefined(),
-    })
-  )
-  .superRefine((val, ctx) => {
-    if (!operatorsWithoutRightOperand.includes(val.operator)) {
-      if (val.rightOperand === undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-
-          message: `Conditional Logic: right operand is required for operator "${val.operator}"`,
-          path: ["rightOperand"],
-        });
-      } else if (val.rightOperand.type === "static" && val.rightOperand.value === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-
-          message: `Conditional Logic: right operand value cannot be empty for operator "${val.operator}"`,
-        });
-      }
-    } else if (val.rightOperand !== undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-
-        message: `Conditional Logic: right operand should not be present for operator "${val.operator}"`,
-        path: ["rightOperand"],
-      });
-    }
-  });
-
-export type TSingleCondition = z.infer<typeof ZSingleCondition>;
-
-export interface TConditionGroup {
-  id: string;
-  connector: z.infer<typeof ZConnector>;
-  conditions: (TSingleCondition | TConditionGroup)[];
-}
-
-const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
-  z.object({
-    id: ZId,
-    connector: ZConnector,
-    conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
-  })
-);
 
 // Block Logic - Actions
 const ZActionCalculateBase = z.object({

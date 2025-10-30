@@ -1,10 +1,9 @@
 import { parse } from "node-html-parser";
 import { z } from "zod";
+import type { TI18nString } from "../i18n";
+import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
   TActionJumpToQuestion,
-  TConditionGroup,
-  TI18nString,
-  TSingleCondition,
   TSurveyLanguage,
   TSurveyLogicAction,
   TSurveyQuestion,

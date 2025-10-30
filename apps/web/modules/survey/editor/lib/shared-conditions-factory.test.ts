@@ -4,10 +4,9 @@ import { TSurveyQuotaLogic } from "@formbricks/types/quota";
 import {
   TConditionGroup,
   TSingleCondition,
-  TSurvey,
   TSurveyLogicConditionsOperator,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+} from "@formbricks/types/surveys/logic";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
   ConditionsUpdateCallbacks,
   SharedConditionsFactoryParams,

@@ -8,8 +8,8 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TI18nString } from "@formbricks/types/i18n";
 import {
-  TI18nString,
   TShuffleOption,
   TSurvey,
   TSurveyMultipleChoiceQuestion,

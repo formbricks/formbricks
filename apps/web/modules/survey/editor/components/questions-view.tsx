@@ -16,9 +16,8 @@ import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
-  TConditionGroup,
-  TSingleCondition,
   TSurvey,
   TSurveyLogic,
   TSurveyLogicAction,

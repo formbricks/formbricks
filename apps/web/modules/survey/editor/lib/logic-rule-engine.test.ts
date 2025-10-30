@@ -1,6 +1,7 @@
-import { TFunction } from "react-i18next";
+import { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
-import { TSurveyQuestionTypeEnum, ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/types";
+import { ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
 // Mock the translation function

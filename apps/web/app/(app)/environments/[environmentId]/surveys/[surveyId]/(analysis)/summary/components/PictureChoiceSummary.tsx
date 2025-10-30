@@ -3,8 +3,8 @@
 import { InboxIcon } from "lucide-react";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
+import { type TI18nString } from "@formbricks/types/i18n";
 import {
-  TI18nString,
   TSurvey,
   TSurveyQuestionId,
   TSurveyQuestionSummaryPictureSelection,

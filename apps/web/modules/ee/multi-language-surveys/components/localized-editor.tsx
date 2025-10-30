@@ -3,7 +3,8 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { TI18nString, TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
+import type { TI18nString } from "@formbricks/types/i18n";
+import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getTextContent, isValidHTML } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { md } from "@/lib/markdownIt";

@@ -1,7 +1,6 @@
-/* eslint-disable import/no-cycle -- Required for circular dependency between types, blocks, and elements */
 import { z } from "zod";
+import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
-import { ZI18nString } from "./types";
 import { FORBIDDEN_IDS } from "./validation";
 
 // Element Type Enum (same as question types)

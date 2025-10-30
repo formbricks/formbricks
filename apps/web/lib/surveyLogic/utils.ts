@@ -1,11 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   TActionCalculate,
   TActionObjective,
-  TConditionGroup,
-  TSingleCondition,
   TSurveyLogic,
   TSurveyLogicAction,
   TSurveyQuestion,

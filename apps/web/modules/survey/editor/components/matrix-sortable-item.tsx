@@ -5,12 +5,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, TrashIcon } from "lucide-react";
 import type { JSX } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyMatrixQuestion,
-  TSurveyMatrixQuestionChoice,
-} from "@formbricks/types/surveys/types";
+import { type TI18nString } from "@formbricks/types/i18n";
+import { TSurvey, TSurveyMatrixQuestion, TSurveyMatrixQuestionChoice } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";

@@ -1,5 +1,6 @@
 import { TFunction } from "i18next";
-import { TSurveyQuestionTypeEnum, ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/types";
+import { ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const getLogicRules = (t: TFunction) => {
   return {
