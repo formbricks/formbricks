@@ -23,43 +23,47 @@ const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
 
+  // First, fetch authentication and environment data (required for all subsequent calls)
   const { session, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
-  const survey = await getSurvey(params.surveyId);
+  // Parallelize independent data fetches that only depend on session/environment
+  const [survey, user, tags, isContactsEnabled, responseCount, displayCount, locale, organizationId] =
+    await Promise.all([
+      getSurvey(params.surveyId),
+      getUser(session.user.id),
+      getTagsByEnvironmentId(params.environmentId),
+      getIsContactsEnabled(),
+      getResponseCountBySurveyId(params.surveyId),
+      getDisplayCountBySurveyId(params.surveyId),
+      findMatchingLocale(),
+      getOrganizationIdFromEnvironmentId(environment.id),
+    ]);
 
   if (!survey) {
     throw new Error(t("common.survey_not_found"));
   }
 
-  const user = await getUser(session.user.id);
-
   if (!user) {
     throw new Error(t("common.user_not_found"));
   }
 
-  const tags = await getTagsByEnvironmentId(params.environmentId);
-
-  const isContactsEnabled = await getIsContactsEnabled();
-  const segments = isContactsEnabled ? await getSegments(params.environmentId) : [];
-
-  // Get response count for the CTA component
-  const responseCount = await getResponseCountBySurveyId(params.surveyId);
-  const displayCount = await getDisplayCountBySurveyId(params.surveyId);
-
-  const locale = await findMatchingLocale();
-  const publicDomain = getPublicDomain();
-
-  const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
   if (!organizationId) {
     throw new Error(t("common.organization_not_found"));
   }
+
+  // Fetch segments (depends on isContactsEnabled check)
+  const segments = isContactsEnabled ? await getSegments(params.environmentId) : [];
+
+  const publicDomain = getPublicDomain();
+
+  // Fetch organization billing (depends on organizationId)
   const organizationBilling = await getOrganizationBilling(organizationId);
   if (!organizationBilling) {
     throw new Error(t("common.organization_not_found"));
   }
 
+  // Parallelize quotas check and fetch
   const isQuotasAllowed = await getIsQuotasEnabled(organizationBilling.plan);
-
   const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
 
   return (
