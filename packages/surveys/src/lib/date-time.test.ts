@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { formatDateWithOrdinal, getMonthName, getOrdinalDate, isValidDateString } from "./date-time";
+import { formatDateWithOrdinal, getMonthName, getOrdinalDate, isValidDateString, parseDateOnly } from "./date-time";
 
 // Manually define getOrdinalSuffix for testing as it's not exported
 // Or, if preferred, we can test it implicitly via formatDateWithOrdinal and getOrdinalDate
@@ -179,5 +179,61 @@ describe("formatDateWithOrdinal", () => {
 
     const date4 = new Date(2024, 0, 4); // January 4th
     expect(formatDateWithOrdinal(date4, "fr-FR")).toBe("jeudi, janvier 4th, 2024");
+  });
+
+  describe("parseDateOnly", () => {
+    test("should parse date-only string as local date (not UTC)", () => {
+      const dateString = "2024-01-15";
+      const parsedDate = parseDateOnly(dateString);
+
+      // Verify it's the correct date regardless of timezone
+      expect(parsedDate.getFullYear()).toBe(2024);
+      expect(parsedDate.getMonth()).toBe(0); // January is 0
+      expect(parsedDate.getDate()).toBe(15);
+    });
+
+    test("should handle dates that would shift to previous day with UTC parsing", () => {
+      // This date would be Jan 14, 23:00 UTC-1 when parsed as UTC
+      // But parseDateOnly should give us Jan 15 in local time
+      const dateString = "2024-01-15";
+      const parsedDate = parseDateOnly(dateString);
+
+      // Should always be January 15th
+      expect(parsedDate.getMonth()).toBe(0);
+      expect(parsedDate.getDate()).toBe(15);
+    });
+
+    test("should parse different dates correctly", () => {
+      expect(parseDateOnly("2024-02-29").getDate()).toBe(29); // Leap year
+      expect(parseDateOnly("2024-12-31").getDate()).toBe(31);
+      expect(parseDateOnly("2023-01-01").getDate()).toBe(1);
+    });
+
+    test("should create date at local midnight (not UTC)", () => {
+      const dateString = "2024-01-15";
+      const parsedDate = parseDateOnly(dateString);
+
+      // Date should be at local midnight (00:00:00)
+      expect(parsedDate.getHours()).toBe(0);
+      expect(parsedDate.getMinutes()).toBe(0);
+      expect(parsedDate.getSeconds()).toBe(0);
+    });
+
+    test("should handle edge cases", () => {
+      // First day of year
+      const jan1 = parseDateOnly("2024-01-01");
+      expect(jan1.getMonth()).toBe(0);
+      expect(jan1.getDate()).toBe(1);
+
+      // Last day of year
+      const dec31 = parseDateOnly("2024-12-31");
+      expect(dec31.getMonth()).toBe(11);
+      expect(dec31.getDate()).toBe(31);
+
+      // Leap year day
+      const leapDay = parseDateOnly("2024-02-29");
+      expect(leapDay.getMonth()).toBe(1);
+      expect(leapDay.getDate()).toBe(29);
+    });
   });
 });
