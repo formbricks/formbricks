@@ -1238,21 +1238,54 @@
         "requestBody": {
           "content": {
             "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "data": {
+                      "hs8yd14l9h8u353tjmv6rzaw": "clicked",
+                      "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
+                    },
+                    "finished": false,
+                    "meta": {
+                      "action": "test action",
+                      "source": "Postman API",
+                      "url": "https://postman.com"
+                    },
+                    "surveyId": "{{surveyId}}",
+                    "userId": "{{userId}}"
+                  }
+                }
+              },
               "schema": {
-                "example": {
-                  "data": {
-                    "hs8yd14l9h8u353tjmv6rzaw": "clicked",
-                    "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
+                "properties": {
+                  "data": { "additionalProperties": true, "type": "object" },
+                  "finished": { "type": "boolean" },
+                  "language": {
+                    "enum": [
+                      "en-US",
+                      "de-DE",
+                      "pt-BR",
+                      "fr-FR",
+                      "zh-Hant-TW",
+                      "pt-PT",
+                      "ro-RO",
+                      "ja-JP",
+                      "zh-Hans-CN"
+                    ],
+                    "type": "string"
                   },
-                  "finished": false,
                   "meta": {
-                    "action": "test action",
-                    "source": "Postman API",
-                    "url": "https://postman.com"
+                    "properties": {
+                      "action": { "type": "string" },
+                      "source": { "type": "string" },
+                      "url": { "type": "string" }
+                    },
+                    "type": "object"
                   },
-                  "surveyId": "{{surveyId}}",
-                  "userId": "{{userId}} (optional)"
+                  "surveyId": { "type": "string" },
+                  "userId": { "type": "string" }
                 },
+                "required": ["surveyId"],
                 "type": "object"
               }
             }
@@ -2361,20 +2394,55 @@
                   },
                   "noCodeConfig": {
                     "description": "Configuration object required when type is 'noCode'. Defines the conditions for triggering the action. Not needed for 'code' type.",
-                    "example": {
-                      "elementSelector": {
-                        "cssSelector": ".button-class",
-                        "innerHtml": "Click me"
-                      },
-                      "type": "click",
-                      "urlFilters": [
-                        {
-                          "rule": "contains",
-                          "value": "https://www.google.com"
-                        }
-                      ]
-                    },
                     "nullable": true,
+                    "properties": {
+                      "elementSelector": {
+                        "description": "Element selector (required for click type)",
+                        "properties": {
+                          "cssSelector": {
+                            "description": "CSS selector for the element",
+                            "type": "string"
+                          },
+                          "innerHtml": {
+                            "description": "Inner HTML text to match",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "description": "Type of no-code trigger",
+                        "enum": ["click", "pageView", "exitIntent", "fiftyPercentScroll"],
+                        "type": "string"
+                      },
+                      "urlFilters": {
+                        "items": {
+                          "properties": {
+                            "rule": {
+                              "description": "URL matching rule",
+                              "enum": [
+                                "exactMatch",
+                                "contains",
+                                "startsWith",
+                                "endsWith",
+                                "notMatch",
+                                "notContains",
+                                "matchesRegex"
+                              ],
+                              "type": "string"
+                            },
+                            "value": {
+                              "description": "URL pattern to match",
+                              "type": "string"
+                            }
+                          },
+                          "required": ["rule", "value"],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": ["type", "urlFilters"],
                     "type": "object"
                   },
                   "type": {
@@ -5021,17 +5089,62 @@
         "requestBody": {
           "content": {
             "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "createdAt": "2024-09-05T08:44:16.051Z",
+                    "data": {
+                      "hg508afs7lgx8nlni5dtit5u": ["Hello World"]
+                    },
+                    "finished": false,
+                    "language": "en-US",
+                    "surveyId": "clwj7hi7r0000vfhpfze6vjdg",
+                    "updatedAt": "2024-09-05T08:44:16.051Z"
+                  }
+                }
+              },
               "schema": {
-                "example": {
-                  "createdAt": "2024-09-05T08:44:16.051Z",
-                  "data": {
-                    "hg508afs7lgx8nlni5dtit5u": ["Hello World"]
+                "properties": {
+                  "createdAt": {
+                    "description": "Creation timestamp (optional; usually set by server)",
+                    "format": "date-time",
+                    "type": "string"
                   },
-                  "finished": false,
-                  "language": "default",
-                  "surveyId": "clwj7hi7r0000vfhpfze6vjdg",
-                  "updatedAt": "2024-09-05T08:44:16.051Z"
+                  "data": {
+                    "additionalProperties": true,
+                    "description": "Answers keyed by questionId; value shape depends on question type",
+                    "type": "object"
+                  },
+                  "finished": {
+                    "description": "Whether the response is marked as finished",
+                    "type": "boolean"
+                  },
+                  "language": {
+                    "description": "Locale of the response",
+                    "enum": [
+                      "en-US",
+                      "de-DE",
+                      "pt-BR",
+                      "fr-FR",
+                      "zh-Hant-TW",
+                      "pt-PT",
+                      "ro-RO",
+                      "ja-JP",
+                      "zh-Hans-CN"
+                    ],
+                    "type": "string"
+                  },
+                  "surveyId": {
+                    "description": "The ID of the survey this response belongs to",
+                    "type": "string"
+                  },
+                  "updatedAt": {
+                    "description": "Update timestamp (optional; usually set by server)",
+                    "format": "date-time",
+                    "type": "string"
+                  }
                 },
+                "required": ["surveyId"],
                 "type": "object"
               }
             }
@@ -5768,6 +5881,32 @@
                   "allowedFileExtensions": {
                     "description": "Optional. List of allowed file extensions.",
                     "items": {
+                      "enum": [
+                        "heic",
+                        "png",
+                        "jpeg",
+                        "jpg",
+                        "webp",
+                        "pdf",
+                        "eml",
+                        "doc",
+                        "docx",
+                        "xls",
+                        "xlsx",
+                        "ppt",
+                        "pptx",
+                        "txt",
+                        "csv",
+                        "mp4",
+                        "mov",
+                        "avi",
+                        "mkv",
+                        "webm",
+                        "zip",
+                        "rar",
+                        "7z",
+                        "tar"
+                      ],
                       "type": "string"
                     },
                     "type": "array"
@@ -6108,113 +6247,162 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "example": {
-                  "autoClose": null,
-                  "autoComplete": null,
-                  "createdBy": null,
-                  "delay": 0,
-                  "displayLimit": null,
-                  "displayOption": "displayOnce",
-                  "displayPercentage": null,
-                  "endings": [
-                    {
-                      "buttonLabel": {
-                        "default": "Create your own Survey"
+              "examples": {
+                "default": {
+                  "value": {
+                    "autoClose": null,
+                    "autoComplete": null,
+                    "createdBy": null,
+                    "delay": 0,
+                    "displayLimit": null,
+                    "displayOption": "displayOnce",
+                    "displayPercentage": null,
+                    "endings": [
+                      {
+                        "buttonLabel": { "default": "Create your own Survey" },
+                        "buttonLink": "https://formbricks.com/signup",
+                        "headline": { "default": "Thank you!" },
+                        "id": "p73t62dgwq0cvmtt6ug0hmfc",
+                        "subheader": { "default": "We appreciate your feedback." },
+                        "type": "endScreen"
+                      }
+                    ],
+                    "environmentId": "{{environmentId}}",
+                    "hiddenFields": { "enabled": false, "fieldIds": [] },
+                    "isVerifyEmailEnabled": false,
+                    "languages": [],
+                    "name": "Example Survey",
+                    "pin": null,
+                    "productOverwrites": null,
+                    "questions": [
+                      {
+                        "headline": { "default": "What would you like to know?" },
+                        "id": "ovpy6va1hab7fl12n913zua0",
+                        "inputType": "text",
+                        "placeholder": { "default": "Type your answer here..." },
+                        "required": true,
+                        "subheader": { "default": "This is an example survey." },
+                        "type": "openText"
                       },
-                      "buttonLink": "https://formbricks.com/signup",
-                      "headline": {
-                        "default": "Thank you!"
+                      {
+                        "choices": [
+                          { "id": "xpoxuu3sifk1ee8he67ctf5i", "label": { "default": "Sun \u2600\ufe0f" } },
+                          { "id": "hnsovcdmxtcbly6tig1az3qc", "label": { "default": "Ocean \ud83c\udf0a" } },
+                          { "id": "kcnelzdxknvwo8fq20d3nrr5", "label": { "default": "Palms \ud83c\udf34" } }
+                        ],
+                        "headline": { "default": "What's important on vacay?" },
+                        "id": "awkn2llljy7a4oulp5t15yec",
+                        "required": true,
+                        "shuffleOption": "none",
+                        "type": "multipleChoiceMulti"
+                      }
+                    ],
+                    "recontactDays": null,
+                    "redirectUrl": null,
+                    "segmentId": null,
+                    "showLanguageSwitch": null,
+                    "singleUse": { "enabled": false, "isEncrypted": true },
+                    "status": "inProgress",
+                    "styling": null,
+                    "surveyClosedMessage": null,
+                    "triggers": [],
+                    "type": "link",
+                    "welcomeCard": {
+                      "enabled": true,
+                      "fileUrl": "",
+                      "headline": { "default": "Welcome!" },
+                      "html": {
+                        "default": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span style=\"white-space: pre-wrap;\">Thanks for providing your feedback - let's go!</span></p>"
                       },
-                      "id": "p73t62dgwq0cvmtt6ug0hmfc",
-                      "subheader": {
-                        "default": "We appreciate your feedback."
-                      },
-                      "type": "endScreen"
+                      "showResponseCount": false,
+                      "timeToFinish": false
                     }
-                  ],
-                  "environmentId": "{{environmentId}}",
-                  "hiddenFields": {
-                    "enabled": false,
-                    "fieldIds": []
-                  },
-                  "isVerifyEmailEnabled": false,
-                  "languages": [],
-                  "name": "Example Survey",
-                  "pin": null,
-                  "productOverwrites": null,
-                  "questions": [
-                    {
-                      "headline": {
-                        "default": "What would you like to know?"
-                      },
-                      "id": "ovpy6va1hab7fl12n913zua0",
-                      "inputType": "text",
-                      "placeholder": {
-                        "default": "Type your answer here..."
-                      },
-                      "required": true,
-                      "subheader": {
-                        "default": "This is an example survey."
-                      },
-                      "type": "openText"
-                    },
-                    {
-                      "choices": [
-                        {
-                          "id": "xpoxuu3sifk1ee8he67ctf5i",
-                          "label": {
-                            "default": "Sun \u2600\ufe0f"
-                          }
-                        },
-                        {
-                          "id": "hnsovcdmxtcbly6tig1az3qc",
-                          "label": {
-                            "default": "Ocean \ud83c\udf0a"
-                          }
-                        },
-                        {
-                          "id": "kcnelzdxknvwo8fq20d3nrr5",
-                          "label": {
-                            "default": "Palms \ud83c\udf34"
-                          }
-                        }
-                      ],
-                      "headline": {
-                        "default": "What's important on vacay?"
-                      },
-                      "id": "awkn2llljy7a4oulp5t15yec",
-                      "required": true,
-                      "shuffleOption": "none",
-                      "type": "multipleChoiceMulti"
-                    }
-                  ],
-                  "recontactDays": null,
-                  "redirectUrl": null,
-                  "segmentId": null,
-                  "showLanguageSwitch": null,
-                  "singleUse": {
-                    "enabled": false,
-                    "isEncrypted": true
-                  },
-                  "status": "inProgress",
-                  "styling": null,
-                  "surveyClosedMessage": null,
-                  "triggers": [],
-                  "type": "link",
-                  "welcomeCard": {
-                    "enabled": true,
-                    "fileUrl": "",
-                    "headline": {
-                      "default": "Welcome!"
-                    },
-                    "html": {
-                      "default": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span style=\"white-space: pre-wrap;\">Thanks for providing your feedback - let's go!</span></p>"
-                    },
-                    "showResponseCount": false,
-                    "timeToFinish": false
                   }
+                }
+              },
+              "schema": {
+                "properties": {
+                  "displayOption": {
+                    "enum": ["displayOnce", "displayMultiple", "respondMultiple", "displaySome"],
+                    "type": "string"
+                  },
+                  "environmentId": { "type": "string" },
+                  "languages": {
+                    "items": {
+                      "properties": {
+                        "default": { "type": "boolean" },
+                        "enabled": { "type": "boolean" },
+                        "language": {
+                          "enum": [
+                            "en-US",
+                            "de-DE",
+                            "pt-BR",
+                            "fr-FR",
+                            "zh-Hant-TW",
+                            "pt-PT",
+                            "ro-RO",
+                            "ja-JP",
+                            "zh-Hans-CN"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "name": { "type": "string" },
+                  "questions": {
+                    "items": {
+                      "properties": {
+                        "date": {
+                          "properties": {
+                            "format": { "enum": ["M-d-y", "d-M-y", "y-M-d"], "type": "string" }
+                          },
+                          "type": "object"
+                        },
+                        "id": { "type": "string" },
+                        "inputType": {
+                          "enum": ["text", "email", "url", "number", "phone"],
+                          "type": "string"
+                        },
+                        "rating": {
+                          "properties": {
+                            "range": { "enum": [3, 4, 5, 6, 7, 10], "type": "integer" },
+                            "scale": { "enum": ["number", "smiley", "star"], "type": "string" }
+                          },
+                          "type": "object"
+                        },
+                        "shuffleOption": { "enum": ["none", "all", "exceptLast"], "type": "string" },
+                        "type": {
+                          "enum": [
+                            "address",
+                            "cta",
+                            "consent",
+                            "date",
+                            "fileUpload",
+                            "matrix",
+                            "multipleChoiceMulti",
+                            "multipleChoiceSingle",
+                            "nps",
+                            "openText",
+                            "pictureSelection",
+                            "rating",
+                            "cal",
+                            "ranking",
+                            "contactInfo"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "status": { "enum": ["draft", "inProgress", "paused", "completed"], "type": "string" },
+                  "type": { "enum": ["link", "app"], "type": "string" }
                 },
+                "required": ["environmentId", "name", "type", "status"],
                 "type": "object"
               }
             }
@@ -7468,11 +7656,41 @@
         "requestBody": {
           "content": {
             "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
+                    "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
+                  }
+                }
+              },
               "schema": {
-                "example": {
-                  "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
-                  "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
+                "properties": {
+                  "name": {
+                    "description": "Optional name for the webhook",
+                    "type": "string"
+                  },
+                  "surveyIds": {
+                    "description": "Optional list of survey IDs to filter webhook calls",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "triggers": {
+                    "description": "List of events that trigger this webhook",
+                    "items": {
+                      "enum": ["responseCreated", "responseUpdated", "responseFinished"],
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "url": {
+                    "description": "The webhook URL to call when triggers are fired",
+                    "type": "string"
+                  }
                 },
+                "required": ["url", "triggers"],
                 "type": "object"
               }
             }
