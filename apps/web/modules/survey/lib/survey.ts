@@ -47,9 +47,6 @@ export const selectSurvey = {
           id: true,
           code: true,
           alias: true,
-          createdAt: true,
-          updatedAt: true,
-          projectId: true,
         },
       },
     },
@@ -59,8 +56,6 @@ export const selectSurvey = {
       actionClass: {
         select: {
           id: true,
-          createdAt: true,
-          updatedAt: true,
           environmentId: true,
           name: true,
           description: true,
@@ -72,7 +67,12 @@ export const selectSurvey = {
     },
   },
   segment: {
-    include: {
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      isPrivate: true,
+      filters: true,
       surveys: {
         select: {
           id: true,

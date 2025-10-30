@@ -11,14 +11,12 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
-import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { LinkSurvey } from "@/modules/survey/link/components/link-survey";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
+import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
-import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 
 interface SurveyRendererProps {
   survey: TSurvey;
@@ -29,7 +27,7 @@ interface SurveyRendererProps {
     preview?: string;
   };
   singleUseId?: string;
-  singleUseResponse?: Pick<Response, "id" | "finished"> | undefined;
+  singleUseResponse?: Pick<Response, "id" | "finished">;
   contactId?: string;
   isPreview: boolean;
 }
@@ -42,7 +40,6 @@ export const renderSurvey = async ({
   contactId,
   isPreview,
 }: SurveyRendererProps) => {
-  const locale = await findMatchingLocale();
   const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
 
@@ -50,22 +47,22 @@ export const renderSurvey = async ({
     notFound();
   }
 
-  const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
-  const organizationBilling = await getOrganizationBilling(organizationId);
-  if (!organizationBilling) {
-    throw new Error("Organization not found");
-  }
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
+  const { project, organizationBilling } = await getEnvironmentContextForLinkSurvey(survey.environmentId);
+
+  const [locale, isMultiLanguageAllowed, responseCount] = await Promise.all([
+    findMatchingLocale(),
+    getMultiLanguagePermission(organizationBilling.plan),
+    survey.welcomeCard.showResponseCount ? getResponseCountBySurveyId(survey.id) : Promise.resolve(undefined),
+  ]);
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
 
   if (survey.status !== "inProgress") {
-    const project = await getProjectByEnvironmentId(survey.environmentId);
     return (
       <SurveyInactive
         status={survey.status}
         surveyClosedMessage={survey.surveyClosedMessage}
-        project={project || undefined}
+        project={project}
       />
     );
   }
@@ -82,12 +79,6 @@ export const renderSurvey = async ({
       emailVerificationStatus = emailVerificationDetails.status;
       verifiedEmail = emailVerificationDetails.email;
     }
-  }
-
-  // get project
-  const project = await getProjectByEnvironmentId(survey.environmentId);
-  if (!project) {
-    throw new Error("Project not found");
   }
 
   const getLanguageCode = (): string => {
@@ -108,7 +99,6 @@ export const renderSurvey = async ({
 
   const languageCode = getLanguageCode();
   const isSurveyPinProtected = Boolean(survey.pin);
-  const responseCount = await getResponseCountBySurveyId(survey.id);
   const publicDomain = getPublicDomain();
 
   if (isSurveyPinProtected) {
@@ -143,7 +133,7 @@ export const renderSurvey = async ({
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
-      responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
+      responseCount={responseCount}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
       isEmbed={isEmbed}
