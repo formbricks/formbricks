@@ -2818,8 +2818,25 @@ const isInvalidOperatorsForElementType = (
       }
       break;
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
-    case TSurveyElementTypeEnum.MultipleChoiceMulti:
       if (!["equals", "doesNotEqual", "isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+    case TSurveyElementTypeEnum.PictureSelection:
+    case TSurveyElementTypeEnum.Ranking:
+      if (
+        ![
+          "equals",
+          "doesNotEqual",
+          "includesAllOf",
+          "includesOneOf",
+          "doesNotIncludeAllOf",
+          "doesNotIncludeOneOf",
+          "isSubmitted",
+          "isSkipped",
+        ].includes(operator)
+      ) {
         isInvalidOperator = true;
       }
       break;
@@ -2847,11 +2864,6 @@ const isInvalidOperatorsForElementType = (
       break;
     case TSurveyElementTypeEnum.Consent:
       if (!["isAccepted", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.PictureSelection:
-      if (!["equals", "doesNotEqual", "isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;
@@ -2909,11 +2921,6 @@ const isInvalidOperatorsForElementType = (
           "isSkipped",
         ].includes(operator)
       ) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.Ranking:
-      if (!["equals", "doesNotEqual", "isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;
@@ -3075,6 +3082,78 @@ const validateBlockConditions = (
               message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
+          } else {
+            // Validate that the choice ID exists in the element's choices
+            const choiceMatch = element.choices.find((c) => c.id === rightOperand.value);
+            if (!choiceMatch) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
+                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        }
+      } else if (
+        element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+        element.type === TSurveyElementTypeEnum.PictureSelection ||
+        element.type === TSurveyElementTypeEnum.Ranking
+      ) {
+        if (rightOperand?.type !== "static") {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          });
+        } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
+          if (typeof rightOperand.value !== "string") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            // Validate that the choice ID exists in the element's choices
+            const choiceMatch = element.choices.find((c) => c.id === rightOperand.value);
+            if (!choiceMatch) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
+                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (
+          ["includesAllOf", "includesOneOf", "doesNotIncludeAllOf", "doesNotIncludeOneOf"].includes(
+            condition.operator
+          )
+        ) {
+          if (!Array.isArray(rightOperand.value)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            rightOperand.value.forEach((value) => {
+              if (typeof value !== "string") {
+                issues.push({
+                  code: z.ZodIssueCode.custom,
+                  message: `Conditional Logic: Each value in the right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                  path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                });
+              }
+            });
+
+            // Validate that all choice IDs exist in the element's choices
+            const choiceIds = element.choices.map((c) => c.id);
+            if (rightOperand.value.some((value) => !choiceIds.includes(value))) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: One or more choices selected in right operand do not exist in the element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              });
+            }
           }
         }
       }

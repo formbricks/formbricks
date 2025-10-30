@@ -18,9 +18,11 @@ export const findBlocksWithCyclicLogic = (blocks: TSurveyBlock[]): TSurveyBlockI
             const destination = jumpAction.target;
             if (!visited[destination] && checkForCyclicLogic(destination)) {
               cyclicBlocks.add(blockId);
+              recStack[blockId] = false;
               return true;
             } else if (recStack[destination]) {
               cyclicBlocks.add(blockId);
+              recStack[blockId] = false;
               return true;
             }
           }
@@ -32,9 +34,11 @@ export const findBlocksWithCyclicLogic = (blocks: TSurveyBlock[]): TSurveyBlockI
         const fallbackBlockId = block.logicFallback;
         if (!visited[fallbackBlockId] && checkForCyclicLogic(fallbackBlockId)) {
           cyclicBlocks.add(blockId);
+          recStack[blockId] = false;
           return true;
         } else if (recStack[fallbackBlockId]) {
           cyclicBlocks.add(blockId);
+          recStack[blockId] = false;
           return true;
         }
       }
@@ -42,8 +46,16 @@ export const findBlocksWithCyclicLogic = (blocks: TSurveyBlock[]): TSurveyBlockI
       // Handle default behavior: move to the next block if no jump actions or fallback logic is defined
       const nextBlockIndex = blocks.findIndex((b) => b.id === blockId) + 1;
       const nextBlock = blocks[nextBlockIndex] as TSurveyBlock | undefined;
-      if (nextBlock && !visited[nextBlock.id] && checkForCyclicLogic(nextBlock.id)) {
-        return true;
+      if (nextBlock) {
+        if (!visited[nextBlock.id] && checkForCyclicLogic(nextBlock.id)) {
+          cyclicBlocks.add(blockId);
+          recStack[blockId] = false;
+          return true;
+        } else if (recStack[nextBlock.id]) {
+          cyclicBlocks.add(blockId);
+          recStack[blockId] = false;
+          return true;
+        }
       }
     }
 
