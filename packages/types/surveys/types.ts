@@ -2804,10 +2804,10 @@ const isInvalidOperatorsForElementType = (
             ![
               "equals",
               "doesNotEqual",
-              "lessThan",
-              "lessEqual",
-              "greaterThan",
-              "greaterEqual",
+              "isLessThan",
+              "isLessThanOrEqual",
+              "isGreaterThan",
+              "isGreaterThanOrEqual",
               "isSubmitted",
               "isSkipped",
             ].includes(operator)
@@ -2829,10 +2829,10 @@ const isInvalidOperatorsForElementType = (
         ![
           "equals",
           "doesNotEqual",
-          "lessThan",
-          "lessEqual",
-          "greaterThan",
-          "greaterEqual",
+          "isLessThan",
+          "isLessThanOrEqual",
+          "isGreaterThan",
+          "isGreaterThanOrEqual",
           "isSubmitted",
           "isSkipped",
         ].includes(operator)
