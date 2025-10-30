@@ -46,6 +46,7 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
                     {navElem.href ? (
                       <Link
                         href={navElem.href}
+                        prefetch={false}
                         {...(navElem.onClick ? { onClick: navElem.onClick } : {})}
                         className={cn(
                           navElem.id === activeId
