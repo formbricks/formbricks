@@ -26,6 +26,7 @@ interface ResponsePageProps {
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  initialResponses?: TResponseWithQuotas[];
 }
 
 export const ResponsePage = ({
@@ -39,11 +40,12 @@ export const ResponsePage = ({
   isReadOnly,
   isQuotasAllowed,
   quotas,
+  initialResponses = [],
 }: ResponsePageProps) => {
-  const [responses, setResponses] = useState<TResponseWithQuotas[]>([]);
+  const [responses, setResponses] = useState<TResponseWithQuotas[]>(initialResponses);
   const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
+  const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
+  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(false);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const filters = useMemo(
@@ -94,7 +96,7 @@ export const ResponsePage = ({
   }, [searchParams, resetState]);
 
   useEffect(() => {
-    const fetchInitialResponses = async () => {
+    const fetchFilteredResponses = async () => {
       try {
         setFetchingFirstPage(true);
         let responses: TResponseWithQuotas[] = [];
@@ -110,14 +112,24 @@ export const ResponsePage = ({
 
         if (responses.length < responsesPerPage) {
           setHasMore(false);
+        } else {
+          setHasMore(true);
         }
         setResponses(responses);
       } finally {
         setFetchingFirstPage(false);
       }
     };
-    fetchInitialResponses();
-  }, [surveyId, filters, responsesPerPage]);
+
+    // Only fetch if filters are applied (not on initial mount with no filters)
+    const hasFilters =
+      (selectedFilter && Object.keys(selectedFilter).length > 0) ||
+      (dateRange && (dateRange.from || dateRange.to));
+
+    if (hasFilters) {
+      fetchFilteredResponses();
+    }
+  }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   useEffect(() => {
     setPage(1);

@@ -4,7 +4,7 @@ import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surv
 import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED, RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByEnvironmentId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
@@ -62,6 +62,9 @@ const Page = async (props) => {
 
   const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
 
+  // Fetch initial responses on the server to prevent duplicate client-side fetch
+  const initialResponses = await getResponses(params.surveyId, RESPONSES_PER_PAGE, 0);
+
   return (
     <PageContentWrapper>
       <PageHeader
@@ -94,6 +97,7 @@ const Page = async (props) => {
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
+        initialResponses={initialResponses}
       />
     </PageContentWrapper>
   );
