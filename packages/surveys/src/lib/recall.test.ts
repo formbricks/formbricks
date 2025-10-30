@@ -16,6 +16,7 @@ vi.mock("./date-time", () => ({
   isValidDateString: (val: string) => /^\d{4}-\d{2}-\d{2}$/.test(val) || /^\d{2}-\d{2}-\d{4}$/.test(val),
   formatDateWithOrdinal: (date: Date) =>
     `${date.getUTCFullYear()}-${("0" + (date.getUTCMonth() + 1)).slice(-2)}-${("0" + date.getUTCDate()).slice(-2)}_formatted`,
+  parseDateOnly: (val: string) => new Date(val),
 }));
 
 describe("replaceRecallInfo", () => {

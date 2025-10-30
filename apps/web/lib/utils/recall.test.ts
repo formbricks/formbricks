@@ -43,6 +43,7 @@ vi.mock("@/lib/utils/datetime", () => ({
   formatDateWithOrdinal: vi.fn((date) => {
     return "January 1st, 2023";
   }),
+    parseDateOnly: vi.fn((value) => new Date(value)),
 }));
 
 describe("recall utility functions", () => {

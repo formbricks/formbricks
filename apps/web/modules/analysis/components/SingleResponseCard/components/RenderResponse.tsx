@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
-import { formatDateWithOrdinal } from "@/lib/utils/datetime";
+import { formatDateWithOrdinal, parseDateOnly } from "@/lib/utils/datetime";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
@@ -70,7 +70,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyQuestionTypeEnum.Date:
       if (typeof responseData === "string") {
-        const parsedDate = new Date(responseData);
+        const parsedDate = parseDateOnly(responseData);
 
         const formattedDate = isNaN(parsedDate.getTime()) ? responseData : formatDateWithOrdinal(parsedDate);
 

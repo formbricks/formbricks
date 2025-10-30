@@ -50,3 +50,15 @@ export const formatDateWithOrdinal = (date: Date, locale: string = "en-US"): str
   const year = date.getFullYear();
   return `${dayOfWeek}, ${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
 };
+
+/**
+ * Parse a date-only string (YYYY-MM-DD) as a local date, avoiding UTC conversion issues.
+ * This prevents timezone-related date shifts when displaying dates.
+ *
+ * @param dateString - Date string in YYYY-MM-DD format
+ * @returns Date object representing the date in local timezone
+ */
+export const parseDateOnly = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+};
