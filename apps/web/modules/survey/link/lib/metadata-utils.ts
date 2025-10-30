@@ -1,8 +1,10 @@
 import { Metadata } from "next";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { getSurvey } from "@/modules/survey/lib/survey";
 
 type TBasicSurveyMetadata = {
@@ -53,7 +55,9 @@ export const getBasicSurveyMetadata = async (
   const titleFromMetadata = metadata?.title ? getLocalizedValue(metadata.title, langCode) || "" : undefined;
   const titleFromWelcome =
     welcomeCard?.enabled && welcomeCard.headline
-      ? getLocalizedValue(welcomeCard.headline, langCode) || ""
+      ? getTextContent(
+          getLocalizedValue(recallToHeadline(welcomeCard.headline, survey, false, langCode), langCode)
+        ) || ""
       : undefined;
   let title = titleFromMetadata || titleFromWelcome || surveyData.name;
 
