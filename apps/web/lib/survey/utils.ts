@@ -1,7 +1,9 @@
 import "server-only";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { isValidImageFile } from "@/modules/storage/utils";
 
@@ -55,4 +57,65 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
       });
     }
   });
+};
+
+/**
+ * Validates that all image URLs in blocks (elements and their choices) are valid
+ * @param blocks - Array of survey blocks to validate
+ * @returns Result with void data on success or Error on failure
+ */
+export const checkForInvalidImagesInBlocks = (blocks: TSurveyBlock[]): Result<void, Error> => {
+  for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
+    const block = blocks[blockIdx];
+
+    for (let elementIdx = 0; elementIdx < block.elements.length; elementIdx++) {
+      const element = block.elements[elementIdx];
+
+      // Check element imageUrl
+      if (element.imageUrl) {
+        if (!isValidImageFile(element.imageUrl)) {
+          return err(
+            new Error(
+              `Invalid image URL in element "${element.id}" (index ${elementIdx}) of block "${block.name}" (index ${blockIdx})`
+            )
+          );
+        }
+      }
+
+      // Check choices for picture selection and multiple choice elements
+      if ("choices" in element && Array.isArray(element.choices)) {
+        for (let choiceIdx = 0; choiceIdx < element.choices.length; choiceIdx++) {
+          const choice = element.choices[choiceIdx];
+          if ("imageUrl" in choice && choice.imageUrl) {
+            if (!isValidImageFile(choice.imageUrl)) {
+              return err(
+                new Error(
+                  `Invalid image URL in choice ${choiceIdx} of element "${element.id}" in block "${block.name}"`
+                )
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return ok(undefined);
+};
+
+/**
+ * Strips isDraft field from elements before saving to database
+ * Note: Blocks don't have isDraft since block IDs are CUIDs (not user-editable)
+ * Only element IDs need protection as they're user-editable and used in responses
+ * @param blocks - Array of survey blocks
+ * @returns New array with isDraft stripped from all elements
+ */
+export const stripIsDraftFromBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] => {
+  return blocks.map((block) => ({
+    ...block,
+    elements: block.elements.map((element) => {
+      const { isDraft, ...elementRest } = element;
+      return elementRest;
+    }),
+  }));
 };
