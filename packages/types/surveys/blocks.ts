@@ -6,36 +6,10 @@ import {
   ZActionNumberVariableCalculateOperator,
   ZActionTextVariableCalculateOperator,
   ZConditionGroup,
+  ZDynamicLogicFieldValue,
 } from "./logic";
 
-// Block ID - CUID (system-generated, NOT user-editable)
-export const ZSurveyBlockId = z.string().cuid2();
-
-export type TSurveyBlockId = z.infer<typeof ZSurveyBlockId>;
-
-// Copy condition types from types.ts for block logic
-const ZDynamicQuestion = z.object({
-  type: z.literal("question"),
-  value: z.string().min(1, "Conditional Logic: Question id cannot be empty"),
-  meta: z.record(z.string()).optional(),
-});
-
-const ZDynamicVariable = z.object({
-  type: z.literal("variable"),
-  value: z
-    .string()
-    .cuid2({ message: "Conditional Logic: Variable id must be a valid cuid" })
-    .min(1, "Conditional Logic: Variable id cannot be empty"),
-});
-
-const ZDynamicHiddenField = z.object({
-  type: z.literal("hiddenField"),
-  value: z.string().min(1, "Conditional Logic: Hidden field id cannot be empty"),
-});
-
-const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDynamicHiddenField], {
-  message: "Conditional Logic: Invalid dynamic field value",
-});
+export const ZSurveyBlockId = ZId;
 
 // Block Logic - Actions
 const ZActionCalculateBase = z.object({

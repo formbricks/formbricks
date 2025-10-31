@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZUrl } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
 import { FORBIDDEN_IDS } from "./validation";
@@ -51,11 +52,11 @@ export type TSurveyElementId = z.infer<typeof ZSurveyElementId>;
 // Base element (like ZSurveyQuestionBase but WITHOUT logic, buttonLabel, backButtonLabel)
 export const ZSurveyElementBase = z.object({
   id: ZSurveyElementId,
-  type: z.string(),
+  type: z.nativeEnum(TSurveyElementTypeEnum),
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
-  imageUrl: z.string().optional(),
-  videoUrl: z.string().optional(),
+  imageUrl: ZUrl.optional(),
+  videoUrl: ZUrl.optional(),
   required: z.boolean(),
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),

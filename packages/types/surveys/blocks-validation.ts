@@ -1,11 +1,11 @@
-import type { TActionJumpToBlock, TSurveyBlock, TSurveyBlockId, TSurveyBlockLogicAction } from "./blocks";
+import type { TActionJumpToBlock, TSurveyBlock, TSurveyBlockLogicAction } from "./blocks";
 
-export const findBlocksWithCyclicLogic = (blocks: TSurveyBlock[]): TSurveyBlockId[] => {
+export const findBlocksWithCyclicLogic = (blocks: TSurveyBlock[]): string[] => {
   const visited: Record<string, boolean> = {};
   const recStack: Record<string, boolean> = {};
-  const cyclicBlocks = new Set<TSurveyBlockId>();
+  const cyclicBlocks = new Set<string>();
 
-  const checkForCyclicLogic = (blockId: TSurveyBlockId): boolean => {
+  const checkForCyclicLogic = (blockId: string): boolean => {
     if (!visited[blockId]) {
       visited[blockId] = true;
       recStack[blockId] = true;
