@@ -409,6 +409,7 @@ export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
 
 export const ZResponseTableData = z.object({
   responseId: z.string(),
+  singleUseId: z.string().nullable(),
   createdAt: z.date(),
   status: z.string(),
   verifiedEmail: z.string(),

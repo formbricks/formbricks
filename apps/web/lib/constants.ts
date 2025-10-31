@@ -183,21 +183,17 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
 export enum PROJECT_FEATURE_KEYS {
   FREE = "free",
   STARTUP = "startup",
-  SCALE = "scale",
-  ENTERPRISE = "enterprise",
+  CUSTOM = "custom",
 }
 
 export enum STRIPE_PROJECT_NAMES {
   STARTUP = "Formbricks Startup",
-  SCALE = "Formbricks Scale",
-  ENTERPRISE = "Formbricks Enterprise",
+  CUSTOM = "Formbricks Custom",
 }
 
 export enum STRIPE_PRICE_LOOKUP_KEYS {
   STARTUP_MAY25_MONTHLY = "STARTUP_MAY25_MONTHLY",
   STARTUP_MAY25_YEARLY = "STARTUP_MAY25_YEARLY",
-  SCALE_MONTHLY = "formbricks_scale_monthly",
-  SCALE_YEARLY = "formbricks_scale_yearly",
 }
 
 export const BILLING_LIMITS = {
@@ -211,10 +207,10 @@ export const BILLING_LIMITS = {
     RESPONSES: 5000,
     MIU: 7500,
   },
-  SCALE: {
-    PROJECTS: 5,
-    RESPONSES: 10000,
-    MIU: 30000,
+  CUSTOM: {
+    PROJECTS: null,
+    RESPONSES: null,
+    MIU: null,
   },
 } as const;
 

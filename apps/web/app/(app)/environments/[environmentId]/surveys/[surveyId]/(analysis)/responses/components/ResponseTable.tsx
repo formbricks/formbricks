@@ -39,6 +39,12 @@ import {
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 
+const SkeletonCell = () => (
+  <Skeleton className="w-full">
+    <div className="h-6"></div>
+  </Skeleton>
+);
+
 interface ResponseTableProps {
   data: TResponseTableData[];
   survey: TSurvey;
@@ -55,6 +61,8 @@ interface ResponseTableProps {
   locale: TUserLocale;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  selectedResponseId: string | null;
+  setSelectedResponseId: (id: string | null) => void;
 }
 
 export const ResponseTable = ({
@@ -73,12 +81,13 @@ export const ResponseTable = ({
   locale,
   isQuotasAllowed,
   quotas,
+  selectedResponseId,
+  setSelectedResponseId,
 }: ResponseTableProps) => {
   const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
-  const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
   const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -86,7 +95,10 @@ export const ResponseTable = ({
 
   const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn);
+  const columns = useMemo(
+    () => generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t, showQuotasColumn),
+    [survey, isExpanded, isReadOnly, t, showQuotasColumn]
+  );
 
   // Save settings to localStorage when they change
   useEffect(() => {
@@ -110,7 +122,13 @@ export const ResponseTable = ({
 
   // Memoize table data and columns
   const tableData: TResponseTableData[] = useMemo(
-    () => (isFetchingFirstPage ? Array(10).fill({}) : data),
+    () =>
+      isFetchingFirstPage
+        ? Array.from(
+            { length: 10 },
+            (_, index) => ({ responseId: `skeleton-${index}` }) as TResponseTableData
+          )
+        : data,
     [data, isFetchingFirstPage]
   );
 
@@ -119,11 +137,7 @@ export const ResponseTable = ({
       isFetchingFirstPage
         ? columns.map((column) => ({
             ...column,
-            cell: () => (
-              <Skeleton className="w-full">
-                <div className="h-6"></div>
-              </Skeleton>
-            ),
+            cell: SkeletonCell,
           }))
         : columns,
     [columns, isFetchingFirstPage]
@@ -247,8 +261,8 @@ export const ResponseTable = ({
                   </TableRow>
                 ))}
               </TableHeader>
-
-              <TableBody ref={parent}>
+              {/* disable auto animation if there are more than 200 responses for performance optimizations  */}
+              <TableBody ref={responses && responses.length > 200 ? undefined : parent}>
                 {table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -261,7 +275,6 @@ export const ResponseTable = ({
                         row={row}
                         isExpanded={isExpanded ?? false}
                         setSelectedResponseId={setSelectedResponseId}
-                        responses={responses}
                       />
                     ))}
                   </TableRow>

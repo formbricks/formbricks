@@ -2,11 +2,13 @@ import "server-only";
 import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@/lib/posthogServer";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { captureTelemetry } from "@/lib/telemetry";
+import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/contact";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
@@ -54,6 +56,7 @@ export const createResponse = async (
   const {
     surveyId,
     displayId,
+    userId,
     finished,
     data,
     language,
@@ -67,6 +70,17 @@ export const createResponse = async (
   } = responseInput;
 
   try {
+    let contact: { id: string; attributes: TContactAttributes } | null = null;
+
+    // If userId is provided, look up the contact by userId
+    if (userId) {
+      const contactResult = await getContactByUserId(environmentId, userId);
+      if (!contactResult.ok) {
+        return err(contactResult.error);
+      }
+      contact = contactResult.data;
+    }
+
     let ttc = {};
     if (initialTtc) {
       if (finished) {
@@ -83,6 +97,14 @@ export const createResponse = async (
         },
       },
       display: displayId ? { connect: { id: displayId } } : undefined,
+      ...(contact?.id && {
+        contact: {
+          connect: {
+            id: contact.id,
+          },
+        },
+        contactAttributes: contact.attributes,
+      }),
       finished,
       data,
       language,

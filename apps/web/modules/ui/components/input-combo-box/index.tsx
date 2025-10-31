@@ -265,7 +265,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               <button autoFocus className="sr-only" aria-hidden type="button" />
             )}
 
-            <CommandList className="p-1">
+            <CommandList className="border-0 p-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
                 {emptyDropdownText ?? t("environments.surveys.edit.no_option_found")}
               </CommandEmpty>

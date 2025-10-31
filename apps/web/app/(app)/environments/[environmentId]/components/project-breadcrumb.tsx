@@ -3,9 +3,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { ChevronDownIcon, ChevronRightIcon, CogIcon, FolderOpenIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import { getProjectsForSwitcherAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateProjectModal } from "@/modules/projects/components/create-project-modal";
 import { ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
@@ -18,10 +20,11 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
+import { useProject } from "../context/environment-context";
 
 interface ProjectBreadcrumbProps {
   currentProjectId: string;
-  projects: { id: string; name: string }[];
+  currentProjectName?: string; // Optional: pass directly if context not available
   isOwnerOrManager: boolean;
   organizationProjectsLimit: number;
   isFormbricksCloud: boolean;
@@ -32,9 +35,19 @@ interface ProjectBreadcrumbProps {
   isEnvironmentBreadcrumbVisible: boolean;
 }
 
+const isActiveProjectSetting = (pathname: string, settingId: string): boolean => {
+  // Match /project/{settingId} or /project/{settingId}/... but exclude settings paths
+  if (pathname.includes("/settings/")) {
+    return false;
+  }
+  // Check if path matches /project/{settingId} (with optional trailing path)
+  const pattern = new RegExp(`/project/${settingId}(?:/|$)`);
+  return pattern.test(pathname);
+};
+
 export const ProjectBreadcrumb = ({
   currentProjectId,
-  projects,
+  currentProjectName,
   isOwnerOrManager,
   organizationProjectsLimit,
   isFormbricksCloud,
@@ -49,8 +62,40 @@ export const ProjectBreadcrumb = ({
   const [openCreateProjectModal, setOpenCreateProjectModal] = useState(false);
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
+
+  // Get current project name from context OR prop
+  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
+  const { project: currentProject } = useProject();
+  const projectName = currentProject?.name || currentProjectName || "";
+
+  // Lazy-load projects when dropdown opens
+  useEffect(() => {
+    // Only fetch when dropdown opened for first time (and no error state)
+    if (isProjectDropdownOpen && projects.length === 0 && !isLoadingProjects && !loadError) {
+      setIsLoadingProjects(true);
+      setLoadError(null); // Clear any previous errors
+      getProjectsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
+        if (result?.data) {
+          // Sort projects by name
+          const sorted = result.data.toSorted((a, b) => a.name.localeCompare(b.name));
+          setProjects(sorted);
+        } else {
+          // Handle server errors or validation errors
+          const errorMessage = getFormattedErrorMessage(result);
+          const error = new Error(errorMessage);
+          logger.error(error, "Failed to load projects");
+          Sentry.captureException(error);
+          setLoadError(errorMessage || t("common.failed_to_load_projects"));
+        }
+        setIsLoadingProjects(false);
+      });
+    }
+  }, [isProjectDropdownOpen, currentOrganizationId, projects.length, isLoadingProjects, loadError, t]);
 
   const projectSettings = [
     {
@@ -90,8 +135,6 @@ export const ProjectBreadcrumb = ({
     },
   ];
 
-  const currentProject = projects.find((project) => project.id === currentProjectId);
-
   if (!currentProject) {
     const errorMessage = `Project not found for project id: ${currentProjectId}`;
     logger.error(errorMessage);
@@ -101,8 +144,9 @@ export const ProjectBreadcrumb = ({
 
   const handleProjectChange = (projectId: string) => {
     if (projectId === currentProjectId) return;
-    setIsLoading(true);
-    router.push(`/projects/${projectId}/`);
+    startTransition(() => {
+      router.push(`/projects/${projectId}/`);
+    });
   };
 
   const handleAddProject = () => {
@@ -111,6 +155,12 @@ export const ProjectBreadcrumb = ({
       return;
     }
     setOpenCreateProjectModal(true);
+  };
+
+  const handleProjectSettingsNavigation = (settingId: string) => {
+    startTransition(() => {
+      router.push(`/environments/${currentEnvironmentId}/project/${settingId}`);
+    });
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
@@ -149,8 +199,8 @@ export const ProjectBreadcrumb = ({
           asChild>
           <div className="flex items-center gap-1">
             <FolderOpenIcon className="h-3 w-3" strokeWidth={1.5} />
-            <span>{currentProject.name}</span>
-            {isLoading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+            <span>{projectName}</span>
+            {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isProjectDropdownOpen ? (
               <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
             ) : (
@@ -164,26 +214,48 @@ export const ProjectBreadcrumb = ({
             <FolderOpenIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
             {t("common.choose_project")}
           </div>
-          <DropdownMenuGroup>
-            {projects.map((proj) => (
-              <DropdownMenuCheckboxItem
-                key={proj.id}
-                checked={proj.id === currentProject.id}
-                onClick={() => handleProjectChange(proj.id)}
-                className="cursor-pointer">
-                <div className="flex items-center gap-2">
-                  <span>{proj.name}</span>
-                </div>
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuGroup>
-          {isOwnerOrManager && (
-            <DropdownMenuCheckboxItem
-              onClick={handleAddProject}
-              className="w-full cursor-pointer justify-between">
-              <span>{t("common.add_new_project")}</span>
-              <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
-            </DropdownMenuCheckboxItem>
+          {isLoadingProjects && (
+            <div className="flex items-center justify-center py-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          )}
+          {!isLoadingProjects && loadError && (
+            <div className="px-2 py-4">
+              <p className="mb-2 text-sm text-red-600">{loadError}</p>
+              <button
+                onClick={() => {
+                  setLoadError(null);
+                  setProjects([]);
+                }}
+                className="text-xs text-slate-600 underline hover:text-slate-800">
+                {t("common.try_again")}
+              </button>
+            </div>
+          )}
+          {!isLoadingProjects && !loadError && (
+            <>
+              <DropdownMenuGroup>
+                {projects.map((proj) => (
+                  <DropdownMenuCheckboxItem
+                    key={proj.id}
+                    checked={proj.id === currentProjectId}
+                    onClick={() => handleProjectChange(proj.id)}
+                    className="cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <span>{proj.name}</span>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuGroup>
+              {isOwnerOrManager && (
+                <DropdownMenuCheckboxItem
+                  onClick={handleAddProject}
+                  className="w-full cursor-pointer justify-between">
+                  <span>{t("common.add_new_project")}</span>
+                  <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                </DropdownMenuCheckboxItem>
+              )}
+            </>
           )}
           <DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -194,8 +266,8 @@ export const ProjectBreadcrumb = ({
             {projectSettings.map((setting) => (
               <DropdownMenuCheckboxItem
                 key={setting.id}
-                checked={pathname.includes(setting.id)}
-                onClick={() => router.push(setting.href)}
+                checked={isActiveProjectSetting(pathname, setting.id)}
+                onClick={() => handleProjectSettingsNavigation(setting.id)}
                 className="cursor-pointer">
                 {setting.label}
               </DropdownMenuCheckboxItem>

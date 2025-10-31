@@ -104,7 +104,7 @@ export const TagsCombobox = ({
               }}
             />
           </div>
-          <CommandList>
+          <CommandList className="border-0">
             <CommandGroup>
               {tagsToSearch?.map((tag) => {
                 return (

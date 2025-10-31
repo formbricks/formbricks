@@ -7,6 +7,7 @@ import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/ty
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TResponseMeta } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
@@ -275,7 +276,7 @@ const extractResponses = async (
     );
     questions.push(
       parseRecallInfo(
-        getLocalizedValue(question?.headline, "default"),
+        getTextContent(getLocalizedValue(question?.headline, "default")),
         integrationType === "slack" ? pipelineData.response.data : emptyResponseObject,
         integrationType === "slack" ? pipelineData.response.variables : {}
       ) || ""
