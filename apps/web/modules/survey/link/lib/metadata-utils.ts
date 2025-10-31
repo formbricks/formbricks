@@ -56,7 +56,7 @@ export const getBasicSurveyMetadata = async (
   const titleFromWelcome =
     welcomeCard?.enabled && welcomeCard.headline
       ? getTextContent(
-          getLocalizedValue(recallToHeadline(welcomeCard.headline, survey, false, langCode), langCode)
+          getLocalizedValue(recallToHeadline(welcomeCard.headline, surveyData, false, langCode), langCode)
         ) || ""
       : undefined;
   let title = titleFromMetadata || titleFromWelcome || surveyData.name;
