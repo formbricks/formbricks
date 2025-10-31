@@ -8137,7 +8137,7 @@
   },
   "servers": [
     {
-      "url": "http://{{baseurl}}",
+      "url": "https://{baseurl}",
       "variables": {
         "baseurl": {
           "default": "localhost:3000"
