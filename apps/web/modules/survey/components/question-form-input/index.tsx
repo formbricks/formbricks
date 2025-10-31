@@ -5,8 +5,8 @@ import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { type TI18nString } from "@formbricks/types/i18n";
 import {
-  TI18nString,
   TSurvey,
   TSurveyEndScreenCard,
   TSurveyQuestion,

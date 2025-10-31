@@ -1,6 +1,6 @@
 import { TFunction } from "i18next";
+import { type TI18nString } from "@formbricks/types/i18n";
 import {
-  TI18nString,
   TSurvey,
   TSurveyMatrixQuestion,
   TSurveyMultipleChoiceQuestion,

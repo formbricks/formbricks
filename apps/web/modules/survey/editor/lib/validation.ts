@@ -2,9 +2,9 @@
 import { TFunction } from "i18next";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
+import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
-  TI18nString,
   TInputFieldConfig,
   TSurvey,
   TSurveyAddressQuestion,

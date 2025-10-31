@@ -1,9 +1,8 @@
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   TActionCalculate,
-  TConditionGroup,
-  TSingleCondition,
   TSurveyLogicAction,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,

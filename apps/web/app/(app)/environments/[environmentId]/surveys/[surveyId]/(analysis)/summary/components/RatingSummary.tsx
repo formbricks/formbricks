@@ -3,8 +3,8 @@
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { type TI18nString } from "@formbricks/types/i18n";
 import {
-  TI18nString,
   TSurvey,
   TSurveyQuestionId,
   TSurveyQuestionSummaryRating,

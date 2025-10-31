@@ -37,6 +37,7 @@ export const selectSurvey = {
   status: true,
   welcomeCard: true,
   questions: true,
+  blocks: true,
   endings: true,
   hiddenFields: true,
   variables: true,

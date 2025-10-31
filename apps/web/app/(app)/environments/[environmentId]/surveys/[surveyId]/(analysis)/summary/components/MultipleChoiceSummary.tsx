@@ -4,8 +4,8 @@ import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TI18nString } from "@formbricks/types/i18n";
 import {
-  TI18nString,
   TSurvey,
   TSurveyQuestionId,
   TSurveyQuestionSummaryMultipleChoice,

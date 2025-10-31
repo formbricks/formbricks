@@ -5,8 +5,10 @@ import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIco
 import { useTranslation } from "react-i18next";
 import {
   TActionNumberVariableCalculateOperator,
-  TActionObjective,
   TActionTextVariableCalculateOperator,
+} from "@formbricks/types/surveys/logic";
+import {
+  TActionObjective,
   TActionVariableValueType,
   TSurvey,
   TSurveyLogic,

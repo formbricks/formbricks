@@ -3668,6 +3668,7 @@ export const previewSurvey = (projectName: string, t: TFunction) => {
         isDraft: true,
       },
     ],
+    blocks: [],
     endings: [
       {
         id: "cltyqp5ng000108l9dmxw6nde",

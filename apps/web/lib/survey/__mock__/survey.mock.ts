@@ -261,6 +261,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   variables: [],
   showLanguageSwitch: null,
   metadata: {},
+  blocks: [],
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -282,6 +283,7 @@ export const mockSurveyOutput: SurveyMock = {
   languages: mockSurveyLanguages,
   followUps: [],
   variables: [],
+  blocks: [],
   showLanguageSwitch: null,
   ...baseSurveyProperties,
 };
@@ -311,6 +313,7 @@ export const updateSurveyInput: TSurvey = {
   variables: [],
   followUps: [],
   metadata: {},
+  blocks: [],
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

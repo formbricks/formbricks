@@ -1,19 +1,21 @@
 import { TFunction } from "i18next";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
+import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TConditionGroup,
-  TI18nString,
   TLeftOperand,
   TRightOperand,
   TSingleCondition,
+  TSurveyLogicConditionsOperator,
+} from "@formbricks/types/surveys/logic";
+import {
   TSurvey,
   TSurveyEndings,
   TSurveyLogic,
   TSurveyLogicAction,
   TSurveyLogicActions,
-  TSurveyLogicConditionsOperator,
   TSurveyQuestion,
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,

@@ -249,6 +249,7 @@ const getExistingSurvey = async (surveyId: string) => {
       },
       welcomeCard: true,
       questions: true,
+      blocks: true,
       endings: true,
       variables: true,
       hiddenFields: true,
