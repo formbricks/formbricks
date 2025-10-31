@@ -173,7 +173,7 @@ export const renderSurvey = async ({
  */
 function computeStyling(
   projectStyling: TProjectStyling,
-  surveyStyling?: TSurveyStyling
+  surveyStyling?: TSurveyStyling | null
 ): TProjectStyling | TSurveyStyling {
   if (!projectStyling.allowStyleOverwrite) {
     return projectStyling;
