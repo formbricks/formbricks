@@ -671,7 +671,17 @@ export const ZSurvey = z
         });
       }
     }),
-    blocks: ZSurveyBlocks.default([]),
+    blocks: ZSurveyBlocks.default([]).superRefine((blocks, ctx) => {
+      const blockIds = blocks.map((b) => b.id);
+      const uniqueBlockIds = new Set(blockIds);
+      if (uniqueBlockIds.size !== blockIds.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Block IDs must be unique",
+          path: [blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
+        });
+      }
+    }),
     endings: ZSurveyEndings.superRefine((endings, ctx) => {
       const endingIds = endings.map((q) => q.id);
       const uniqueEndingIds = new Set(endingIds);
