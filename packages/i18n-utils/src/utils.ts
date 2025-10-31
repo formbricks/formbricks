@@ -2612,6 +2612,16 @@ export const iso639Languages: TIso639Language[] = [
 
 export const getLanguageLabel = (languageCode: string, locale: string): string | undefined => {
   const language = iso639Languages.find((lang) => lang.alpha2 === languageCode);
-  // Type assertion to tell TypeScript that we know the structure of label
-  return language?.label[locale as keyof typeof language.label];
+  if (!language) {
+    return undefined;
+  }
+
+  // Try to read the label for the requested locale. Not every ISO-639 entry
+  // has translations for every UI locale (for example Dutch strings were added
+  // later), so we gracefully fall back to English when a localized label is
+  // missing. Consumers expect a non-empty label in dropdowns and status chips,
+  // so returning "en-US" keeps the UI readable instead of rendering nothing.
+  const localizedLabel = language.label[locale as keyof typeof language.label];
+
+  return localizedLabel ?? language.label["en-US"];
 };
