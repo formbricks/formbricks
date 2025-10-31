@@ -1261,17 +1261,8 @@
                   "data": { "additionalProperties": true, "type": "object" },
                   "finished": { "type": "boolean" },
                   "language": {
-                    "enum": [
-                      "en-US",
-                      "de-DE",
-                      "pt-BR",
-                      "fr-FR",
-                      "zh-Hant-TW",
-                      "pt-PT",
-                      "ro-RO",
-                      "ja-JP",
-                      "zh-Hans-CN"
-                    ],
+                    "description": "Language of the response (survey should have this language enabled)",
+                    "enum": ["en", "de", "pt", "etc.."],
                     "type": "string"
                   },
                   "meta": {
@@ -5097,7 +5088,7 @@
                       "hg508afs7lgx8nlni5dtit5u": ["Hello World"]
                     },
                     "finished": false,
-                    "language": "en-US",
+                    "language": "en",
                     "surveyId": "clwj7hi7r0000vfhpfze6vjdg",
                     "updatedAt": "2024-09-05T08:44:16.051Z"
                   }
@@ -5120,18 +5111,8 @@
                     "type": "boolean"
                   },
                   "language": {
-                    "description": "Locale of the response",
-                    "enum": [
-                      "en-US",
-                      "de-DE",
-                      "pt-BR",
-                      "fr-FR",
-                      "zh-Hant-TW",
-                      "pt-PT",
-                      "ro-RO",
-                      "ja-JP",
-                      "zh-Hans-CN"
-                    ],
+                    "description": "Language of the response (survey should have this language enabled)",
+                    "enum": ["en", "de", "pt", "etc.."],
                     "type": "string"
                   },
                   "surveyId": {
@@ -6333,17 +6314,8 @@
                         "default": { "type": "boolean" },
                         "enabled": { "type": "boolean" },
                         "language": {
-                          "enum": [
-                            "en-US",
-                            "de-DE",
-                            "pt-BR",
-                            "fr-FR",
-                            "zh-Hant-TW",
-                            "pt-PT",
-                            "ro-RO",
-                            "ja-JP",
-                            "zh-Hans-CN"
-                          ],
+                          "description": "Language of the survey (This language should exist in your environment)",
+                          "enum": ["en", "de", "pt", "etc.."],
                           "type": "string"
                         }
                       },
