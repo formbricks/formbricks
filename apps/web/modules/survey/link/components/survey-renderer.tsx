@@ -1,6 +1,7 @@
 import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import {
   IMPRINT_URL,
   IS_FORMBRICKS_CLOUD,
@@ -12,9 +13,11 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
-import { LinkSurvey } from "@/modules/survey/link/components/link-survey";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
+import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
+import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
+import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 
@@ -25,6 +28,7 @@ interface SurveyRendererProps {
     lang?: string;
     embed?: string;
     preview?: string;
+    suId?: string;
   };
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
@@ -67,7 +71,12 @@ export const renderSurvey = async ({
     );
   }
 
-  // verify email: Check if the survey requires email verification
+  // Check if single-use survey has already been completed
+  if (singleUseResponse?.finished) {
+    return <SurveyCompletedMessage singleUseMessage={survey.singleUse} project={project} />;
+  }
+
+  // Handle email verification flow if enabled
   let emailVerificationStatus = "";
   let verifiedEmail: string | undefined = undefined;
 
@@ -81,27 +90,36 @@ export const renderSurvey = async ({
     }
   }
 
-  const getLanguageCode = (): string => {
-    if (!langParam || !isMultiLanguageAllowed) return "default";
-    else {
-      const selectedLanguage = survey.languages.find((surveyLanguage) => {
-        return (
-          surveyLanguage.language.code === langParam.toLowerCase() ||
-          surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
-        );
-      });
-      if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
-        return "default";
-      }
-      return selectedLanguage.language.code;
+  if (survey.isVerifyEmailEnabled && emailVerificationStatus !== "verified" && !isPreview) {
+    if (emailVerificationStatus === "fishy") {
+      return (
+        <VerifyEmail
+          survey={survey}
+          isErrorComponent={true}
+          languageCode={getLanguageCode(langParam, isMultiLanguageAllowed, survey)}
+          styling={project.styling}
+          locale={locale}
+        />
+      );
     }
-  };
+    return (
+      <VerifyEmail
+        singleUseId={searchParams.suId ?? ""}
+        survey={survey}
+        languageCode={getLanguageCode(langParam, isMultiLanguageAllowed, survey)}
+        styling={project.styling}
+        locale={locale}
+      />
+    );
+  }
 
-  const languageCode = getLanguageCode();
-  const isSurveyPinProtected = Boolean(survey.pin);
+  // Compute final styling based on project and survey settings
+  const styling = computeStyling(project.styling, survey.styling);
+  const languageCode = getLanguageCode(langParam, isMultiLanguageAllowed, survey);
   const publicDomain = getPublicDomain();
 
-  if (isSurveyPinProtected) {
+  // Handle PIN-protected surveys
+  if (survey.pin) {
     return (
       <PinScreen
         surveyId={survey.id}
@@ -125,26 +143,65 @@ export const renderSurvey = async ({
     );
   }
 
+  // Render interactive survey with client component for interactivity
   return (
-    <LinkSurvey
+    <SurveyClientWrapper
       survey={survey}
       project={project}
+      styling={styling}
       publicDomain={publicDomain}
-      emailVerificationStatus={emailVerificationStatus}
-      singleUseId={singleUseId}
-      singleUseResponse={singleUseResponse}
       responseCount={responseCount}
-      verifiedEmail={verifiedEmail}
       languageCode={languageCode}
       isEmbed={isEmbed}
-      IMPRINT_URL={IMPRINT_URL}
-      PRIVACY_URL={PRIVACY_URL}
-      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-      locale={locale}
-      isPreview={isPreview}
+      singleUseId={singleUseId}
+      singleUseResponseId={singleUseResponse?.id}
       contactId={contactId}
       recaptchaSiteKey={RECAPTCHA_SITE_KEY}
       isSpamProtectionEnabled={isSpamProtectionEnabled}
+      isPreview={isPreview}
+      verifiedEmail={verifiedEmail}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
     />
   );
 };
+
+/**
+ * Determines which styling to use based on project and survey settings.
+ * Returns survey styling if theme overwriting is enabled, otherwise returns project styling.
+ */
+function computeStyling(
+  projectStyling: TProjectStyling,
+  surveyStyling?: TSurveyStyling
+): TProjectStyling | TSurveyStyling {
+  if (!projectStyling.allowStyleOverwrite) {
+    return projectStyling;
+  }
+  return surveyStyling?.overwriteThemeStyling ? surveyStyling : projectStyling;
+}
+
+/**
+ * Determines the language code to use for the survey.
+ * Checks URL parameter against available survey languages and returns
+ * "default" if multi-language is not allowed or language is not found.
+ */
+function getLanguageCode(
+  langParam: string | undefined,
+  isMultiLanguageAllowed: boolean,
+  survey: TSurvey
+): string {
+  if (!langParam || !isMultiLanguageAllowed) return "default";
+
+  const selectedLanguage = survey.languages.find((surveyLanguage) => {
+    return (
+      surveyLanguage.language.code === langParam.toLowerCase() ||
+      surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
+    );
+  });
+
+  if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
+    return "default";
+  }
+  return selectedLanguage.language.code;
+}

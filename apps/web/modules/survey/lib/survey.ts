@@ -45,7 +45,10 @@ export const selectSurvey = {
       language: {
         select: {
           id: true,
+          createdAt: true,
+          updatedAt: true,
           code: true,
+          projectId: true,
           alias: true,
         },
       },
@@ -56,6 +59,8 @@ export const selectSurvey = {
       actionClass: {
         select: {
           id: true,
+          createdAt: true,
+          updatedAt: true,
           environmentId: true,
           name: true,
           description: true,
@@ -69,6 +74,9 @@ export const selectSurvey = {
   segment: {
     select: {
       id: true,
+      createdAt: true,
+      updatedAt: true,
+      environmentId: true,
       title: true,
       description: true,
       isPrivate: true,

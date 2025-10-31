@@ -66,7 +66,10 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
             language: {
               select: {
                 id: true,
+                createdAt: true,
+                updatedAt: true,
                 code: true,
+                projectId: true,
                 alias: true,
               },
             },
@@ -77,6 +80,8 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
             actionClass: {
               select: {
                 id: true,
+                createdAt: true,
+                updatedAt: true,
                 environmentId: true,
                 name: true,
                 description: true,
@@ -90,6 +95,9 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         segment: {
           select: {
             id: true,
+            createdAt: true,
+            updatedAt: true,
+            environmentId: true,
             title: true,
             description: true,
             isPrivate: true,
