@@ -1,20 +1,19 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getSurveyMetadata } from "@/modules/survey/link/lib/data";
+import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 
 export const getMetadataForLinkSurvey = async (
   surveyId: string,
   languageCode?: string
 ): Promise<Metadata> => {
-  const survey = await getSurveyMetadata(surveyId);
+  const survey = await getSurveyWithMetadata(surveyId);
 
-  if (!survey || survey.type !== "link" || survey.status === "draft") {
+  if (!survey || survey?.type !== "link" || survey?.status === "draft") {
     notFound();
   }
 
-  // Get enhanced metadata that includes custom link metadata
-  const { title, description, ogImage } = await getBasicSurveyMetadata(surveyId, languageCode);
+  const { title, description, ogImage } = await getBasicSurveyMetadata(surveyId, languageCode, survey);
   const surveyBrandColor = survey.styling?.brandColor?.light;
 
   // Use the shared function for creating the base metadata but override with custom data

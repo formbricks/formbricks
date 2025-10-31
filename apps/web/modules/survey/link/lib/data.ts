@@ -66,11 +66,11 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
             language: {
               select: {
                 id: true,
-                code: true,
-                alias: true,
                 createdAt: true,
                 updatedAt: true,
+                code: true,
                 projectId: true,
+                alias: true,
               },
             },
           },
@@ -93,7 +93,15 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
           },
         },
         segment: {
-          include: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            environmentId: true,
+            title: true,
+            description: true,
+            isPrivate: true,
+            filters: true,
             surveys: {
               select: {
                 id: true,
