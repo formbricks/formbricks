@@ -981,21 +981,15 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     describe("Performance and Resource Exhaustion", () => {
-      test(
-        "should handle rapid token creation without memory leaks",
-        () => {
-          const iterations = 300; // Plenty of iterations to exercise the hot path without hammering CI runners.
-          const tokens: string[] = new Array(iterations);
-          for (let i = 0; i < iterations; i++) {
-            tokens[i] = createToken(`user-${i}`);
-          }
+      test("should handle rapid token creation without memory leaks", () => {
+        const tokens: string[] = [];
+        for (let i = 0; i < 1000; i++) {
+          tokens.push(createToken(`user-${i}`));
+        }
 
-          expect(tokens.length).toBe(iterations);
-          expect(tokens.every((token) => typeof token === "string")).toBe(true);
-        },
-        // Signing hundreds of JWTs touches Node crypto; allow more than Vitest's default 5s budget.
-        15000
-      );
+        expect(tokens.length).toBe(1000);
+        expect(tokens.every((token) => typeof token === "string")).toBe(true);
+      });
 
       test("should handle rapid token verification", async () => {
         const token = createToken(mockUser.id);
