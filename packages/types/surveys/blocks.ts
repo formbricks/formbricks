@@ -59,7 +59,7 @@ export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 export const ZActionRequireAnswer = z.object({
   id: ZId,
   objective: z.literal("requireAnswer"),
-  target: ZSurveyElementId, // Targets elements, validated to be outside current block
+  target: ZSurveyElementId,
 });
 
 export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
@@ -103,7 +103,6 @@ export const ZSurveyBlock = z
     logicFallback: ZSurveyBlockId.optional(),
     buttonLabel: ZI18nString.optional(),
     backButtonLabel: ZI18nString.optional(),
-    isDraft: z.boolean().optional(),
   })
   .superRefine((block, ctx) => {
     // Validate element IDs are unique within block
