@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
@@ -228,19 +229,29 @@ export const PreviewSurvey = ({
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center py-4" id="survey-preview">
       <motion.div
-        variants={previewParentContainerVariant}
-        animate={isFullScreenPreview ? "expanded" : "shrink"}
+        className={cn(
+          "absolute z-50 flex h-full w-fit items-center justify-center",
+          isFullScreenPreview && "fixed left-0 top-0 h-full w-full bg-zinc-500/50 backdrop-blur-md"
+        )}
+        transition={{
+          duration: 0,
+          ease: "easeInOut",
+          type: "linear",
+        }}
       />
       <motion.div
         layout
-        variants={previewScreenVariants}
-        animate={
-          isFullScreenPreview
-            ? previewPosition === "relative"
-              ? "expanded"
-              : "expanded_with_fixed_positioning"
-            : "shrink"
-        }
+        style={{
+          position: isFullScreenPreview ? "absolute" : "relative",
+          zIndex: 50,
+          left: isFullScreenPreview && 50,
+          top: isFullScreenPreview && 0,
+        }}
+        transition={{
+          duration: 0,
+          ease: "easeInOut",
+          type: "linear",
+        }}
         className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300">
         {previewMode === "mobile" && (
           <>
@@ -340,8 +351,7 @@ export const PreviewSurvey = ({
                       className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                       onClick={() => {
                         setShrink(true);
-                        setPreviewPosition("relative");
-                        setTimeout(() => setIsFullScreenPreview(false), 300);
+                        setIsFullScreenPreview(false);
                       }}
                     />
                   ) : (
@@ -350,7 +360,6 @@ export const PreviewSurvey = ({
                       onClick={() => {
                         setShrink(false);
                         setIsFullScreenPreview(true);
-                        setTimeout(() => setPreviewPosition("fixed"), 300);
                       }}
                     />
                   )}
@@ -417,7 +426,7 @@ export const PreviewSurvey = ({
       </motion.div>
 
       {/* for toggling between mobile and desktop mode  */}
-      <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
+      <div className="absolute bottom-3 mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
           active={previewMode === "mobile"}
           icon={<SmartphoneIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
