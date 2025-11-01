@@ -2,27 +2,18 @@
 
 import { Environment, Project } from "@prisma/client";
 import { Variants, motion } from "framer-motion";
-import {
-  ExpandIcon,
-  MonitorIcon,
-  ShrinkIcon,
-  SmartphoneIcon,
-} from "lucide-react";
+import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
-import {
-  TSurvey,
-  TSurveyQuestionId,
-  TSurveyStyling,
-} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { TabOption } from "./components/tab-option";
-import { cn } from "@/lib/cn";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -65,7 +56,7 @@ const previewParentContainerVariant: Variants = {
   },
 };
 
-let setQuestionId = (_: string) => { };
+let setQuestionId = (_: string) => {};
 
 export const PreviewSurvey = ({
   questionId,
@@ -123,13 +114,11 @@ export const PreviewSurvey = ({
 
   const { placement: surveyPlacement } = projectOverwrites || {};
   const { darkOverlay: surveyDarkOverlay } = projectOverwrites || {};
-  const { clickOutsideClose: surveyClickOutsideClose } =
-    projectOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
   const placement = surveyPlacement || project.placement;
   const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
-  const clickOutsideClose =
-    surveyClickOutsideClose ?? project.clickOutsideClose;
+  const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
   const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
     // allow style overwrite is disabled from the project
@@ -163,7 +152,7 @@ export const PreviewSurvey = ({
       if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
       setQuestionId(newQuestionId);
     },
-    [survey.welcomeCard.enabled],
+    [survey.welcomeCard.enabled]
   );
 
   useEffect(() => {
@@ -199,9 +188,7 @@ export const PreviewSurvey = ({
       setPreviewMode(storePreviewMode);
     }, 10);
 
-    setQuestionId(
-      survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id,
-    );
+    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   };
 
   useEffect(() => {
@@ -240,15 +227,11 @@ export const PreviewSurvey = ({
   };
 
   return (
-    <div
-      className="flex h-full w-full flex-col items-center justify-items-center py-4"
-      id="survey-preview"
-    >
+    <div className="flex h-full w-full flex-col items-center justify-items-center py-4" id="survey-preview">
       <motion.div
         className={cn(
-          "absolute z-50 flex h-full w-fit items-center justify-center bg-red-500",
-          isFullScreenPreview &&
-          "fixed left-0 top-0 h-full w-full bg-zinc-500/50 backdrop-blur-md",
+          "absolute z-50 flex h-full w-fit items-center justify-center",
+          isFullScreenPreview && "fixed left-0 top-0 h-full w-full bg-zinc-500/50 backdrop-blur-md"
         )}
         transition={{
           duration: 0,
@@ -269,8 +252,7 @@ export const PreviewSurvey = ({
           ease: "easeInOut",
           type: "linear",
         }}
-        className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300"
-      >
+        className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
@@ -283,8 +265,7 @@ export const PreviewSurvey = ({
               surveyType={survey.type}
               styling={styling}
               ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
-              isMobilePreview
-            >
+              isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
@@ -293,8 +274,7 @@ export const PreviewSurvey = ({
                   darkOverlay={darkOverlay}
                   clickOutsideClose={clickOutsideClose}
                   borderRadius={styling?.roundness ?? 8}
-                  background={styling?.cardBackgroundColor?.light}
-                >
+                  background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
                     isPreviewMode={true}
                     survey={survey}
@@ -315,11 +295,7 @@ export const PreviewSurvey = ({
                 <div className="flex h-full w-full flex-col justify-center px-1">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
-                      <ClientLogo
-                        environmentId={environment.id}
-                        projectLogo={project.logo}
-                        previewSurvey
-                      />
+                      <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                     )}
                   </div>
                   <div className="z-10 w-full rounded-lg border border-transparent">
@@ -360,10 +336,7 @@ export const PreviewSurvey = ({
                       setTimeout(() => setPreviewPosition("fixed"), 300);
                     }
                   }}
-                  aria-label={
-                    isFullScreenPreview ? "Shrink Preview" : "Expand Preview"
-                  }
-                ></button>
+                  aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>
@@ -403,8 +376,7 @@ export const PreviewSurvey = ({
                 darkOverlay={darkOverlay}
                 previewMode="desktop"
                 borderRadius={styling.roundness ?? 8}
-                background={styling.cardBackgroundColor?.light}
-              >
+                background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
                   isPreviewMode={true}
                   survey={survey}
@@ -426,15 +398,10 @@ export const PreviewSurvey = ({
                 surveyType={survey.type}
                 styling={styling}
                 ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
-                isEditorView
-              >
+                isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
-                    <ClientLogo
-                      environmentId={environment.id}
-                      projectLogo={project.logo}
-                      previewSurvey
-                    />
+                    <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                   )}
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
