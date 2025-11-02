@@ -333,6 +333,26 @@ describe("Element Operations", () => {
       }
     });
 
+    test("should return error for duplicate element ID within same block", () => {
+      const survey = createMockSurvey();
+      const duplicateElement = {
+        id: "elem-1", // Already exists in block-1
+        type: TSurveyElementTypeEnum.Rating,
+        headline: { default: "Duplicate in same block" },
+        required: false,
+        range: 5,
+        scale: "star",
+      } as any;
+
+      // Try to add to the same block where elem-1 already exists
+      const result = addElementToBlock(survey, "block-1", duplicateElement);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.message).toContain("already exists");
+      }
+    });
+
     test("should return error for non-existent block", () => {
       const survey = createMockSurvey();
       const element = {
@@ -362,6 +382,42 @@ describe("Element Operations", () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.blocks![0].elements[0].headline.default).toBe("Updated Question");
+      }
+    });
+
+    test("should allow updating element ID to a unique ID", () => {
+      const survey = createMockSurvey();
+      const result = updateElementInBlock(survey, "block-1", "elem-1", {
+        id: "elem-new-id",
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.blocks![0].elements[0].id).toBe("elem-new-id");
+      }
+    });
+
+    test("should return error when updating element ID to duplicate within same block", () => {
+      const survey = createMockSurvey();
+      const result = updateElementInBlock(survey, "block-1", "elem-1", {
+        id: "elem-2", // elem-2 already exists in block-1
+      });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.message).toContain("already exists");
+      }
+    });
+
+    test("should return error when updating element ID to duplicate in another block", () => {
+      const survey = createMockSurvey();
+      const result = updateElementInBlock(survey, "block-1", "elem-1", {
+        id: "elem-3", // elem-3 exists in block-2
+      });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.message).toContain("already exists");
       }
     });
 

@@ -151,6 +151,7 @@ export const duplicateBlock = (
   const elementsWithNewIds = blockToDuplicate.elements.map((element) => ({
     ...element,
     id: createId(),
+    isDraft: true,
   }));
 
   const duplicatedBlock: TSurveyBlock = {
@@ -239,9 +240,9 @@ export const addElementToBlock = (
     return err(new Error(`Block with ID "${blockId}" not found`));
   }
 
-  // Validate element ID is unique across all blocks
-  if (!isElementIdUnique(element.id, blocks, blockId)) {
-    return err(new Error(`Element ID "${element.id}" already exists in another block`));
+  // Validate element ID is unique across all blocks (including the target block)
+  if (!isElementIdUnique(element.id, blocks)) {
+    return err(new Error(`Element ID "${element.id}" already exists`));
   }
 
   const block = { ...blocks[blockIndex] };
@@ -294,6 +295,13 @@ export const updateElementInBlock = (
 
   if (elementIndex === -1) {
     return err(new Error(`Element with ID "${elementId}" not found in block "${blockId}"`));
+  }
+
+  // If changing the element ID, validate the new ID is unique across all blocks
+  if (updatedAttributes.id && updatedAttributes.id !== elementId) {
+    if (!isElementIdUnique(updatedAttributes.id, blocks)) {
+      return err(new Error(`Element ID "${updatedAttributes.id}" already exists`));
+    }
   }
 
   elements[elementIndex] = {

@@ -627,12 +627,14 @@ export const createSurvey = async (
       checkForInvalidImagesInQuestions(data.questions);
     }
 
-    // Add blocks validation
+    // Add blocks validation and strip isDraft
     if (data.blocks && data.blocks.length > 0) {
       const blocksValidation = checkForInvalidImagesInBlocks(data.blocks);
       if (!blocksValidation.ok) {
         throw blocksValidation.error;
       }
+      // Strip isDraft from elements before persisting
+      data.blocks = stripIsDraftFromBlocks(data.blocks);
     }
 
     const survey = await prisma.survey.create({
