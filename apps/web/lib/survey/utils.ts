@@ -76,7 +76,7 @@ export const checkForInvalidImagesInBlocks = (blocks: TSurveyBlock[]): Result<vo
         if (!isValidImageFile(element.imageUrl)) {
           return err(
             new Error(
-              `Invalid image URL in element "${element.id}" (index ${elementIdx}) of block "${block.name}" (index ${blockIdx})`
+              `Invalid image URL in element "${element.id}" (element ${elementIdx + 1}) of block "${block.name}" (block ${blockIdx + 1})`
             )
           );
         }
@@ -90,7 +90,7 @@ export const checkForInvalidImagesInBlocks = (blocks: TSurveyBlock[]): Result<vo
             if (!isValidImageFile(choice.imageUrl)) {
               return err(
                 new Error(
-                  `Invalid image URL in choice ${choiceIdx} of element "${element.id}" in block "${block.name}"`
+                  `Invalid image URL in choice ${choiceIdx + 1} of element "${element.id}" in block "${block.name}"`
                 )
               );
             }
