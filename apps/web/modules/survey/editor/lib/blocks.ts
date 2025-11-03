@@ -127,16 +127,9 @@ export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey, E
  * mapping old element IDs to new ones and updating jumpToBlock targets.
  * @param survey - The survey containing the block
  * @param blockId - The CUID of the block to duplicate
- * @param options - Optional configuration
- * @param options.newName - Custom name for the duplicated block
- * @param options.insertAfter - Whether to insert after the original (default: true)
  * @returns Result with updated survey or Error
  */
-export const duplicateBlock = (
-  survey: TSurvey,
-  blockId: string,
-  options?: { newName?: string; insertAfter?: boolean }
-): Result<TSurvey, Error> => {
+export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey, Error> => {
   const blocks = survey.blocks || [];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -145,29 +138,28 @@ export const duplicateBlock = (
   }
 
   const blockToDuplicate = blocks[blockIndex];
-  const newBlockId = createId();
+
+  // Deep clone the block to avoid any reference issues
+  const duplicatedBlock: TSurveyBlock = structuredClone(blockToDuplicate);
+
+  // Assign new IDs
+  duplicatedBlock.id = createId();
+  duplicatedBlock.name = `${blockToDuplicate.name} (copy)`;
 
   // Generate new element IDs to avoid conflicts
-  const elementsWithNewIds = blockToDuplicate.elements.map((element) => ({
+  duplicatedBlock.elements = duplicatedBlock.elements.map((element) => ({
     ...element,
     id: createId(),
     isDraft: true,
   }));
 
-  const duplicatedBlock: TSurveyBlock = {
-    ...blockToDuplicate,
-    id: newBlockId,
-    name: options?.newName || `${blockToDuplicate.name} (copy)`,
-    elements: elementsWithNewIds,
-    // Clear logic since it references old block/element IDs
-    // In the future, we could map these references to the new IDs
-    logic: undefined,
-    logicFallback: undefined,
-  };
+  // Clear logic since it references old block/element IDs
+  // In the future, we could map these references to the new IDs
+  duplicatedBlock.logic = undefined;
+  duplicatedBlock.logicFallback = undefined;
 
   const updatedBlocks = [...blocks];
-  const insertIndex = options?.insertAfter ? blockIndex + 1 : blockIndex;
-  updatedBlocks.splice(insertIndex, 0, duplicatedBlock);
+  updatedBlocks.splice(blockIndex + 1, 0, duplicatedBlock);
 
   return ok({
     ...survey,
@@ -355,7 +347,7 @@ export const deleteElementFromBlock = (
 
 /**
  * Duplicates an element within a block
- * Generates a new element ID with "_copy_" suffix
+ * Generates a new element ID with CUID
  * Sets isDraft: true on the duplicated element
  * @param survey - The survey containing the block
  * @param blockId - The CUID of the block containing the element
@@ -384,11 +376,10 @@ export const duplicateElementInBlock = (
 
   const elementToDuplicate = elements[elementIndex];
 
-  const duplicatedElement: TSurveyElement = {
-    ...elementToDuplicate,
-    id: createId(),
-    isDraft: true,
-  } as TSurveyElement;
+  // Deep clone the element to avoid any reference issues
+  const duplicatedElement: TSurveyElement = structuredClone(elementToDuplicate);
+  duplicatedElement.id = createId();
+  duplicatedElement.isDraft = true;
 
   elements.splice(elementIndex + 1, 0, duplicatedElement);
   block.elements = elements;

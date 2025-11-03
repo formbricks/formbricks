@@ -219,16 +219,6 @@ describe("Block Operations", () => {
       }
     });
 
-    test("should use custom name if provided", () => {
-      const survey = createMockSurvey();
-      const result = duplicateBlock(survey, "block-1", { newName: "Custom Copy" });
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.blocks[1].name).toBe("Custom Copy");
-      }
-    });
-
     test("should clear logic on duplicated block", () => {
       const survey = createMockSurvey();
       survey.blocks[0].logic = [
