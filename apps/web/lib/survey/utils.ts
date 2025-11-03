@@ -1,7 +1,6 @@
 import "server-only";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TI18nString } from "@formbricks/types/i18n";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
@@ -75,12 +74,12 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
  * @returns Result with void data on success or Error on failure
  */
 const validateChoiceImage = (
-  choice: TSurveyPictureChoice | { id: string; label: TI18nString; imageUrl?: string },
+  choice: TSurveyPictureChoice,
   choiceIdx: number,
   questionIdx: number,
   blockName: string
 ): Result<void, Error> => {
-  if ("imageUrl" in choice && choice.imageUrl && !isValidImageFile(choice.imageUrl)) {
+  if (choice.imageUrl && !isValidImageFile(choice.imageUrl)) {
     return err(
       new Error(
         `Invalid image URL in choice ${choiceIdx + 1} of question ${questionIdx + 1} of block "${blockName}"`

@@ -51,14 +51,14 @@ export const addBlock = (
     elements: block.elements || [],
   };
 
-  if (index !== undefined) {
+  if (index === undefined) {
+    blocks.push(newBlock);
+  } else {
     if (index < 0 || index > blocks.length) {
       return err(new Error(`Invalid index ${index}. Must be between 0 and ${blocks.length}`));
     }
 
     blocks.splice(index, 0, newBlock);
-  } else {
-    blocks.push(newBlock);
   }
 
   updatedSurvey.blocks = blocks;
@@ -240,13 +240,13 @@ export const addElementToBlock = (
 
   const elementWithDraft = { ...element, isDraft: true };
 
-  if (index !== undefined) {
+  if (index === undefined) {
+    elements.push(elementWithDraft);
+  } else {
     if (index < 0 || index > elements.length) {
       return err(new Error(`Invalid index ${index}. Must be between 0 and ${elements.length}`));
     }
     elements.splice(index, 0, elementWithDraft);
-  } else {
-    elements.push(elementWithDraft);
   }
 
   block.elements = elements;
