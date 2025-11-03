@@ -4,11 +4,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import {
-  checkForInvalidImagesInBlocks,
-  checkForInvalidImagesInQuestions,
-  stripIsDraftFromBlocks,
-} from "@/lib/survey/utils";
+import { checkForInvalidImagesInQuestions, validateAndPrepareBlocks } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
@@ -31,12 +27,9 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     checkForInvalidImagesInQuestions(questions);
 
-    // Add blocks validation
+    // Validate and prepare blocks for persistence
     if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
-      const blocksValidation = checkForInvalidImagesInBlocks(updatedSurvey.blocks);
-      if (!blocksValidation.ok) {
-        throw blocksValidation.error;
-      }
+      data.blocks = validateAndPrepareBlocks(updatedSurvey.blocks);
     }
 
     if (languages) {
@@ -245,11 +238,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       const { isDraft, ...rest } = question;
       return rest;
     });
-
-    // Strip isDraft from elements before saving
-    if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
-      data.blocks = stripIsDraftFromBlocks(updatedSurvey.blocks);
-    }
 
     const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
     const organization = await getOrganizationAIKeys(organizationId);

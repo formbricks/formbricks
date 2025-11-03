@@ -119,3 +119,26 @@ export const stripIsDraftFromBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] =
     }),
   }));
 };
+
+/**
+ * Validates and prepares blocks for persistence
+ * - Validates all image URLs in blocks
+ * - Strips isDraft flags from elements
+ * @param blocks - Array of survey blocks to validate and prepare
+ * @returns Prepared blocks ready for database persistence
+ * @throws Error if any image validation fails
+ */
+export const validateAndPrepareBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] => {
+  if (!blocks || blocks.length === 0) {
+    return blocks;
+  }
+
+  // Validate images
+  const validation = checkForInvalidImagesInBlocks(blocks);
+  if (!validation.ok) {
+    throw validation.error;
+  }
+
+  // Strip isDraft
+  return stripIsDraftFromBlocks(blocks);
+};

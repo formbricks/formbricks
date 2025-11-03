@@ -20,6 +20,7 @@ import {
   checkForInvalidImagesInQuestions,
   stripIsDraftFromBlocks,
   transformPrismaSurvey,
+  validateAndPrepareBlocks,
 } from "./utils";
 
 interface TriggerUpdate {
@@ -627,14 +628,9 @@ export const createSurvey = async (
       checkForInvalidImagesInQuestions(data.questions);
     }
 
-    // Add blocks validation and strip isDraft
+    // Validate and prepare blocks for persistence
     if (data.blocks && data.blocks.length > 0) {
-      const blocksValidation = checkForInvalidImagesInBlocks(data.blocks);
-      if (!blocksValidation.ok) {
-        throw blocksValidation.error;
-      }
-      // Strip isDraft from elements before persisting
-      data.blocks = stripIsDraftFromBlocks(data.blocks);
+      data.blocks = validateAndPrepareBlocks(data.blocks);
     }
 
     const survey = await prisma.survey.create({
