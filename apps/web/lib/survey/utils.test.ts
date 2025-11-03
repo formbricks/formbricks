@@ -261,7 +261,7 @@ describe("checkForInvalidImagesInQuestions", () => {
   });
 });
 
-describe("checkForInvalidImagesInBlocks", () => {
+describe("checkForInvalidMediaInBlocks", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -353,7 +353,7 @@ describe("checkForInvalidImagesInBlocks", () => {
     if (!result.ok) {
       console.log(result.error);
       expect(result.error.message).toBe(
-        'Invalid image URL in choice 1 of element "welcome" in block "Welcome Block"'
+        'Invalid image URL in choice 1 of question 1 of block "Welcome Block"'
       );
     }
     expect(fileValidation.isValidImageFile).toHaveBeenCalledWith("image1.jpg");
@@ -416,7 +416,7 @@ describe("checkForInvalidImagesInBlocks", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.message).toBe(
-        'Invalid image URL in choice 2 of element "pic-select" in block "Picture Selection"'
+        'Invalid image URL in choice 2 of question 1 of block "Picture Selection"'
       );
     }
   });
@@ -472,7 +472,7 @@ describe("checkForInvalidImagesInBlocks", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.message).toContain("Invalid video URL");
-      expect(result.error.message).toContain("video-q");
+      expect(result.error.message).toContain("question 1");
       expect(result.error.message).toContain("YouTube, Vimeo, and Loom");
     }
   });
@@ -565,9 +565,7 @@ describe("checkForInvalidImagesInBlocks", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toBe(
-        'Invalid image URL in element "elem-2" (element 1) of block "Block 2" (block 2)'
-      );
+      expect(result.error.message).toBe('Invalid image URL in question 1 of block "Block 2" (block 2)');
     }
     // Should stop after finding first invalid image
     expect(fileValidation.isValidImageFile).toHaveBeenCalledTimes(2);

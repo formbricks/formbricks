@@ -70,20 +70,20 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
  * Validates a single choice's image URL
  * @param choice - Choice to validate
  * @param choiceIdx - Index of the choice for error reporting
- * @param elementId - Element ID for error reporting
+ * @param questionIdx - Index of the question for error reporting
  * @param blockName - Block name for error reporting
  * @returns Result with void data on success or Error on failure
  */
 const validateChoiceImage = (
   choice: TSurveyPictureChoice | { id: string; label: TI18nString; imageUrl?: string },
   choiceIdx: number,
-  elementId: string,
+  questionIdx: number,
   blockName: string
 ): Result<void, Error> => {
   if ("imageUrl" in choice && choice.imageUrl && !isValidImageFile(choice.imageUrl)) {
     return err(
       new Error(
-        `Invalid image URL in choice ${choiceIdx + 1} of element "${elementId}" in block "${blockName}"`
+        `Invalid image URL in choice ${choiceIdx + 1} of question ${questionIdx + 1} of block "${blockName}"`
       )
     );
   }
@@ -94,13 +94,13 @@ const validateChoiceImage = (
  * Validates choice images for picture selection elements
  * Only picture selection questions have imageUrl in choices
  * @param element - Element with choices to validate
- * @param elementId - Element ID for error reporting
+ * @param questionIdx - Index of the question for error reporting
  * @param blockName - Block name for error reporting
  * @returns Result with void data on success or Error on failure
  */
 const validatePictureSelectionChoiceImages = (
   element: TSurveyElement,
-  elementId: string,
+  questionIdx: number,
   blockName: string
 ): Result<void, Error> => {
   // Only validate choices for picture selection questions
@@ -113,7 +113,7 @@ const validatePictureSelectionChoiceImages = (
   }
 
   for (let choiceIdx = 0; choiceIdx < element.choices.length; choiceIdx++) {
-    const result = validateChoiceImage(element.choices[choiceIdx], choiceIdx, elementId, blockName);
+    const result = validateChoiceImage(element.choices[choiceIdx], choiceIdx, questionIdx, blockName);
     if (!result.ok) {
       return result;
     }
@@ -140,7 +140,7 @@ const validateElement = (
   if (element.imageUrl && !isValidImageFile(element.imageUrl)) {
     return err(
       new Error(
-        `Invalid image URL in element "${element.id}" (element ${elementIdx + 1}) of block "${blockName}" (block ${blockIdx + 1})`
+        `Invalid image URL in question ${elementIdx + 1} of block "${blockName}" (block ${blockIdx + 1})`
       )
     );
   }
@@ -149,13 +149,13 @@ const validateElement = (
   if (element.videoUrl && !isValidVideoUrl(element.videoUrl)) {
     return err(
       new Error(
-        `Invalid video URL in element "${element.id}" (element ${elementIdx + 1}) of block "${blockName}" (block ${blockIdx + 1}). Only YouTube, Vimeo, and Loom URLs are supported.`
+        `Invalid video URL in question ${elementIdx + 1} of block "${blockName}" (block ${blockIdx + 1}). Only YouTube, Vimeo, and Loom URLs are supported.`
       )
     );
   }
 
   // Check choices for picture selection
-  return validatePictureSelectionChoiceImages(element, element.id, blockName);
+  return validatePictureSelectionChoiceImages(element, elementIdx, blockName);
 };
 
 /**
