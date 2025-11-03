@@ -1,3 +1,4 @@
+import { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -13,6 +14,14 @@ import {
   updateBlock,
   updateElementInBlock,
 } from "./blocks";
+
+// Mock translation function
+const mockT: TFunction = ((key: string) => {
+  const translations: Record<string, string> = {
+    "environments.surveys.edit.untitled_block": "Untitled Block",
+  };
+  return translations[key] || key;
+}) as TFunction;
 
 // Helper to create a mock survey
 const createMockSurvey = (): TSurvey => ({
@@ -102,12 +111,6 @@ describe("Block Utility Functions", () => {
       const isUnique = isElementIdUnique("elem-1", survey.blocks);
       expect(isUnique).toBe(false);
     });
-
-    test("should skip current block when provided", () => {
-      const survey = createMockSurvey();
-      const isUnique = isElementIdUnique("elem-1", survey.blocks, "block-1");
-      expect(isUnique).toBe(true); // Skips block-1 where elem-1 exists
-    });
   });
 });
 
@@ -115,7 +118,7 @@ describe("Block Operations", () => {
   describe("addBlock", () => {
     test("should add a block to the end by default", () => {
       const survey = createMockSurvey();
-      const result = addBlock(survey, { name: "Block 3", elements: [] });
+      const result = addBlock(mockT, survey, { name: "Block 3", elements: [] });
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -127,7 +130,7 @@ describe("Block Operations", () => {
 
     test("should add a block at specific index", () => {
       const survey = createMockSurvey();
-      const result = addBlock(survey, { name: "Block 1.5", elements: [] }, 1);
+      const result = addBlock(mockT, survey, { name: "Block 1.5", elements: [] }, 1);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -138,7 +141,7 @@ describe("Block Operations", () => {
 
     test("should return error for invalid index", () => {
       const survey = createMockSurvey();
-      const result = addBlock(survey, { name: "Block X", elements: [] }, 10);
+      const result = addBlock(mockT, survey, { name: "Block X", elements: [] }, 10);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -148,7 +151,7 @@ describe("Block Operations", () => {
 
     test("should use default name if not provided", () => {
       const survey = createMockSurvey();
-      const result = addBlock(survey, { elements: [] });
+      const result = addBlock(mockT, survey, { elements: [] });
 
       expect(result.ok).toBe(true);
       if (result.ok) {

@@ -5,8 +5,13 @@ import { TI18nString } from "@formbricks/types/i18n";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElement, TSurveyPictureChoice } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+  TSurveyPictureChoice,
+} from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { isValidVideoUrl } from "@/lib/utils/video-upload";
 import { isValidImageFile } from "@/modules/storage/utils";
 
 export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
@@ -86,17 +91,23 @@ const validateChoiceImage = (
 };
 
 /**
- * Validates all choices in an element
+ * Validates choice images for picture selection elements
+ * Only picture selection questions have imageUrl in choices
  * @param element - Element with choices to validate
  * @param elementId - Element ID for error reporting
  * @param blockName - Block name for error reporting
  * @returns Result with void data on success or Error on failure
  */
-const validateElementChoices = (
+const validatePictureSelectionChoiceImages = (
   element: TSurveyElement,
   elementId: string,
   blockName: string
 ): Result<void, Error> => {
+  // Only validate choices for picture selection questions
+  if (element.type !== TSurveyElementTypeEnum.PictureSelection) {
+    return ok(undefined);
+  }
+
   if (!("choices" in element) || !Array.isArray(element.choices)) {
     return ok(undefined);
   }
@@ -112,7 +123,7 @@ const validateElementChoices = (
 };
 
 /**
- * Validates a single element's image URL and choices
+ * Validates a single element's image URL, video URL, and picture selection choice images
  * @param element - Element to validate
  * @param elementIdx - Index of the element for error reporting
  * @param blockIdx - Index of the block for error reporting
@@ -134,16 +145,28 @@ const validateElement = (
     );
   }
 
-  // Check choices
-  return validateElementChoices(element, element.id, blockName);
+  // Check element videoUrl
+  if (element.videoUrl && !isValidVideoUrl(element.videoUrl)) {
+    return err(
+      new Error(
+        `Invalid video URL in element "${element.id}" (element ${elementIdx + 1}) of block "${blockName}" (block ${blockIdx + 1}). Only YouTube, Vimeo, and Loom URLs are supported.`
+      )
+    );
+  }
+
+  // Check choices for picture selection
+  return validatePictureSelectionChoiceImages(element, element.id, blockName);
 };
 
 /**
- * Validates that all image URLs in blocks (elements and their choices) are valid
+ * Validates that all media URLs (images and videos) in blocks are valid
+ * - Validates element imageUrl
+ * - Validates element videoUrl
+ * - Validates choice imageUrl for picture selection elements
  * @param blocks - Array of survey blocks to validate
  * @returns Result with void data on success or Error on failure
  */
-export const checkForInvalidImagesInBlocks = (blocks: TSurveyBlock[]): Result<void, Error> => {
+export const checkForInvalidMediaInBlocks = (blocks: TSurveyBlock[]): Result<void, Error> => {
   for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
     const block = blocks[blockIdx];
 
@@ -177,19 +200,15 @@ export const stripIsDraftFromBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] =
 
 /**
  * Validates and prepares blocks for persistence
- * - Validates all image URLs in blocks
+ * - Validates all media URLs (images and videos) in blocks
  * - Strips isDraft flags from elements
  * @param blocks - Array of survey blocks to validate and prepare
  * @returns Prepared blocks ready for database persistence
- * @throws Error if any image validation fails
+ * @throws Error if any media validation fails
  */
-export const validateAndPrepareBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] => {
-  if (!blocks || blocks.length === 0) {
-    return blocks;
-  }
-
-  // Validate images
-  const validation = checkForInvalidImagesInBlocks(blocks);
+export const validateMediaAndPrepareBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] => {
+  // Validate media (images and videos)
+  const validation = checkForInvalidMediaInBlocks(blocks);
   if (!validation.ok) {
     throw validation.error;
   }

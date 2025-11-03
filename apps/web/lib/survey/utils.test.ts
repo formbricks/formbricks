@@ -5,11 +5,12 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import * as videoValidation from "@/lib/utils/video-upload";
 import * as fileValidation from "@/modules/storage/utils";
 import {
   anySurveyHasFilters,
-  checkForInvalidImagesInBlocks,
   checkForInvalidImagesInQuestions,
+  checkForInvalidMediaInBlocks,
   transformPrismaSurvey,
 } from "./utils";
 
@@ -268,7 +269,7 @@ describe("checkForInvalidImagesInBlocks", () => {
   test("returns ok when blocks array is empty", () => {
     const blocks: TSurveyBlock[] = [];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(true);
   });
@@ -290,7 +291,7 @@ describe("checkForInvalidImagesInBlocks", () => {
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(true);
   });
@@ -317,7 +318,7 @@ describe("checkForInvalidImagesInBlocks", () => {
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(true);
     expect(fileValidation.isValidImageFile).toHaveBeenCalledWith("image1.jpg");
@@ -346,7 +347,7 @@ describe("checkForInvalidImagesInBlocks", () => {
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -368,19 +369,19 @@ describe("checkForInvalidImagesInBlocks", () => {
         elements: [
           {
             id: "choice-q",
-            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            type: TSurveyElementTypeEnum.PictureSelection,
             headline: { default: "Pick one" },
             required: true,
             choices: [
-              { id: "c1", label: { default: "Option 1" }, imageUrl: "image1.jpg" },
-              { id: "c2", label: { default: "Option 2" }, imageUrl: "image2.jpg" },
+              { id: "c1", imageUrl: "image1.jpg" },
+              { id: "c2", imageUrl: "image2.jpg" },
             ],
           } as unknown as TSurveyElement,
         ],
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(true);
     expect(fileValidation.isValidImageFile).toHaveBeenCalledTimes(2);
@@ -410,13 +411,69 @@ describe("checkForInvalidImagesInBlocks", () => {
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.message).toBe(
         'Invalid image URL in choice 2 of element "pic-select" in block "Picture Selection"'
       );
+    }
+  });
+
+  test("returns ok when video URL is valid (YouTube)", () => {
+    vi.spyOn(videoValidation, "isValidVideoUrl").mockReturnValue(true);
+
+    const blocks: TSurveyBlock[] = [
+      {
+        id: "block-1",
+        name: "Video Block",
+        elements: [
+          {
+            id: "video-q",
+            type: TSurveyElementTypeEnum.CTA,
+            headline: { default: "Watch this" },
+            required: false,
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          } as unknown as TSurveyElement,
+        ],
+      },
+    ];
+
+    const result = checkForInvalidMediaInBlocks(blocks);
+
+    expect(result.ok).toBe(true);
+    expect(videoValidation.isValidVideoUrl).toHaveBeenCalledWith(
+      "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    );
+  });
+
+  test("returns error when video URL is invalid (not YouTube/Vimeo/Loom)", () => {
+    vi.spyOn(videoValidation, "isValidVideoUrl").mockReturnValue(false);
+
+    const blocks: TSurveyBlock[] = [
+      {
+        id: "block-1",
+        name: "Video Block",
+        elements: [
+          {
+            id: "video-q",
+            type: TSurveyElementTypeEnum.CTA,
+            headline: { default: "Watch this" },
+            required: false,
+            videoUrl: "https://example.com/video.mp4",
+          } as unknown as TSurveyElement,
+        ],
+      },
+    ];
+
+    const result = checkForInvalidMediaInBlocks(blocks);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain("Invalid video URL");
+      expect(result.error.message).toContain("video-q");
+      expect(result.error.message).toContain("YouTube, Vimeo, and Loom");
     }
   });
 
@@ -455,7 +512,7 @@ describe("checkForInvalidImagesInBlocks", () => {
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(true);
     expect(fileValidation.isValidImageFile).toHaveBeenCalledTimes(2);
@@ -504,7 +561,7 @@ describe("checkForInvalidImagesInBlocks", () => {
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -526,19 +583,16 @@ describe("checkForInvalidImagesInBlocks", () => {
         elements: [
           {
             id: "mc-q",
-            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            type: TSurveyElementTypeEnum.PictureSelection,
             headline: { default: "Pick one" },
             required: true,
-            choices: [
-              { id: "c1", label: { default: "Option 1" } }, // No imageUrl
-              { id: "c2", label: { default: "Option 2" }, imageUrl: "image.jpg" },
-            ],
+            choices: [{ id: "c1", imageUrl: "image.jpg" }],
           } as unknown as TSurveyElement,
         ],
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(true);
     // Only validates the one with imageUrl
@@ -582,7 +636,7 @@ describe("checkForInvalidImagesInBlocks", () => {
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(true);
     expect(fileValidation.isValidImageFile).toHaveBeenCalledTimes(3);
@@ -601,20 +655,20 @@ describe("checkForInvalidImagesInBlocks", () => {
         elements: [
           {
             id: "elem-1",
-            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            type: TSurveyElementTypeEnum.PictureSelection,
             headline: { default: "Choose" },
             required: true,
             imageUrl: "element-image.jpg",
             choices: [
-              { id: "c1", label: { default: "A" }, imageUrl: "choice1.jpg" },
-              { id: "c2", label: { default: "B" }, imageUrl: "choice2.jpg" },
+              { id: "c1", imageUrl: "choice1.jpg" },
+              { id: "c2", imageUrl: "choice2.jpg" },
             ],
           } as unknown as TSurveyElement,
         ],
       },
     ];
 
-    const result = checkForInvalidImagesInBlocks(blocks);
+    const result = checkForInvalidMediaInBlocks(blocks);
 
     expect(result.ok).toBe(true);
     expect(fileValidation.isValidImageFile).toHaveBeenCalledTimes(3);

@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { TFunction } from "i18next";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -12,18 +13,10 @@ import { TSurvey } from "@formbricks/types/surveys/types";
  * Checks if an element ID is unique across all blocks
  * @param elementId - The element ID to check
  * @param blocks - Array of all blocks in the survey
- * @param currentBlockId - Optional block ID to skip (for updates within same block)
  * @returns true if the element ID is unique, false otherwise
  */
-export const isElementIdUnique = (
-  elementId: string,
-  blocks: TSurveyBlock[],
-  currentBlockId?: string
-): boolean => {
+export const isElementIdUnique = (elementId: string, blocks: TSurveyBlock[]): boolean => {
   for (const block of blocks) {
-    // Skip current block if provided (for updates within same block)
-    if (currentBlockId && block.id === currentBlockId) continue;
-
     if (block.elements.some((e) => e.id === elementId)) {
       return false;
     }
@@ -43,6 +36,7 @@ export const isElementIdUnique = (
  * @returns Result with updated survey or Error
  */
 export const addBlock = (
+  t: TFunction,
   survey: TSurvey,
   block: Omit<Partial<TSurveyBlock>, "id">,
   index?: number
@@ -51,13 +45,13 @@ export const addBlock = (
   const blocks = [...(survey.blocks || [])];
 
   const newBlock: TSurveyBlock = {
-    id: createId(),
-    name: block.name || "Untitled Block",
-    elements: block.elements || [],
     ...block,
+    id: createId(),
+    name: block.name || t("environments.surveys.edit.untitled_block"),
+    elements: block.elements || [],
   };
 
-  if (index) {
+  if (index !== undefined) {
     if (index < 0 || index > blocks.length) {
       return err(new Error(`Invalid index ${index}. Must be between 0 and ${blocks.length}`));
     }
@@ -81,8 +75,13 @@ export const addBlock = (
 export const updateBlock = (
   survey: TSurvey,
   blockId: string,
-  updatedAttributes: Partial<TSurveyBlock>
+  updatedAttributes: Omit<Partial<TSurveyBlock>, "id">
 ): Result<TSurvey, Error> => {
+  // id is not allowed from the types but this will also prevent the error during runtime
+  if ("id" in updatedAttributes) {
+    return err(new Error("Block ID cannot be updated"));
+  }
+
   const blocks = [...(survey.blocks || [])];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -108,10 +107,9 @@ export const updateBlock = (
  * @returns Result with updated survey or Error
  */
 export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey, Error> => {
-  const blocks = [...(survey.blocks || [])];
-  const filteredBlocks = blocks.filter((b) => b.id !== blockId);
+  const filteredBlocks = survey.blocks?.filter((b) => b.id !== blockId) || [];
 
-  if (filteredBlocks.length === blocks.length) {
+  if (filteredBlocks.length === survey.blocks?.length) {
     return err(new Error(`Block with ID "${blockId}" not found`));
   }
 
@@ -242,7 +240,7 @@ export const addElementToBlock = (
 
   const elementWithDraft = { ...element, isDraft: true };
 
-  if (index) {
+  if (index !== undefined) {
     if (index < 0 || index > elements.length) {
       return err(new Error(`Invalid index ${index}. Must be between 0 and ${elements.length}`));
     }

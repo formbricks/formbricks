@@ -16,11 +16,11 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { validateInputs } from "../utils/validate";
 import {
-  checkForInvalidImagesInBlocks,
   checkForInvalidImagesInQuestions,
+  checkForInvalidMediaInBlocks,
   stripIsDraftFromBlocks,
   transformPrismaSurvey,
-  validateAndPrepareBlocks,
+  validateMediaAndPrepareBlocks,
 } from "./utils";
 
 interface TriggerUpdate {
@@ -304,11 +304,11 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     checkForInvalidImagesInQuestions(questions);
 
-    // Add blocks image validation
+    // Add blocks media validation
     if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
-      const blocksValidation = checkForInvalidImagesInBlocks(updatedSurvey.blocks);
+      const blocksValidation = checkForInvalidMediaInBlocks(updatedSurvey.blocks);
       if (!blocksValidation.ok) {
-        throw blocksValidation.error;
+        throw new InvalidInputError(blocksValidation.error.message);
       }
     }
 
@@ -630,7 +630,7 @@ export const createSurvey = async (
 
     // Validate and prepare blocks for persistence
     if (data.blocks && data.blocks.length > 0) {
-      data.blocks = validateAndPrepareBlocks(data.blocks);
+      data.blocks = validateMediaAndPrepareBlocks(data.blocks);
     }
 
     const survey = await prisma.survey.create({

@@ -4,7 +4,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { checkForInvalidImagesInQuestions, validateAndPrepareBlocks } from "@/lib/survey/utils";
+import { checkForInvalidImagesInQuestions, validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
@@ -29,7 +29,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     // Validate and prepare blocks for persistence
     if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
-      data.blocks = validateAndPrepareBlocks(updatedSurvey.blocks);
+      data.blocks = validateMediaAndPrepareBlocks(updatedSurvey.blocks);
     }
 
     if (languages) {
