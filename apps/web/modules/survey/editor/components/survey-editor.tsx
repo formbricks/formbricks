@@ -176,7 +176,7 @@ export const SurveyEditor = ({
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
-          className="relative z-0 w-1/2 flex-1 overflow-y-auto bg-slate-50 focus:outline-none"
+          className="relative z-0 w-2/3 flex-1 overflow-y-auto bg-slate-50 focus:outline-none"
           ref={surveyEditorRef}>
           <SurveyEditorTabs
             activeId={activeView}
