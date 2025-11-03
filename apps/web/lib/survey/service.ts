@@ -15,7 +15,13 @@ import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { validateInputs } from "../utils/validate";
-import { checkForInvalidImagesInQuestions, transformPrismaSurvey } from "./utils";
+import {
+  checkForInvalidImagesInQuestions,
+  checkForInvalidMediaInBlocks,
+  stripIsDraftFromBlocks,
+  transformPrismaSurvey,
+  validateMediaAndPrepareBlocks,
+} from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -298,6 +304,14 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     checkForInvalidImagesInQuestions(questions);
 
+    // Add blocks media validation
+    if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
+      const blocksValidation = checkForInvalidMediaInBlocks(updatedSurvey.blocks);
+      if (!blocksValidation.ok) {
+        throw new InvalidInputError(blocksValidation.error.message);
+      }
+    }
+
     if (languages) {
       // Process languages update logic here
       // Extract currentLanguageIds and updatedLanguageIds
@@ -505,6 +519,11 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       return rest;
     });
 
+    // Strip isDraft from elements before saving
+    if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
+      data.blocks = stripIsDraftFromBlocks(updatedSurvey.blocks);
+    }
+
     const organization = await getOrganizationByEnvironmentId(environmentId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
@@ -609,6 +628,11 @@ export const createSurvey = async (
       checkForInvalidImagesInQuestions(data.questions);
     }
 
+    // Validate and prepare blocks for persistence
+    if (data.blocks && data.blocks.length > 0) {
+      data.blocks = validateMediaAndPrepareBlocks(data.blocks);
+    }
+
     const survey = await prisma.survey.create({
       data: {
         ...data,
@@ -623,14 +647,6 @@ export const createSurvey = async (
 
     // if the survey created is an "app" survey, we also create a private segment for it.
     if (survey.type === "app") {
-      // const newSegment = await createSegment({
-      //   environmentId: parsedEnvironmentId,
-      //   surveyId: survey.id,
-      //   filters: [],
-      //   title: survey.id,
-      //   isPrivate: true,
-      // });
-
       const newSegment = await prisma.segment.create({
         data: {
           title: survey.id,
