@@ -1,9 +1,11 @@
 import "server-only";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { TI18nString } from "@formbricks/types/i18n";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement, TSurveyPictureChoice } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { isValidImageFile } from "@/modules/storage/utils";
 
@@ -60,6 +62,83 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
 };
 
 /**
+ * Validates a single choice's image URL
+ * @param choice - Choice to validate
+ * @param choiceIdx - Index of the choice for error reporting
+ * @param elementId - Element ID for error reporting
+ * @param blockName - Block name for error reporting
+ * @returns Result with void data on success or Error on failure
+ */
+const validateChoiceImage = (
+  choice: TSurveyPictureChoice | { id: string; label: TI18nString; imageUrl?: string },
+  choiceIdx: number,
+  elementId: string,
+  blockName: string
+): Result<void, Error> => {
+  if ("imageUrl" in choice && choice.imageUrl && !isValidImageFile(choice.imageUrl)) {
+    return err(
+      new Error(
+        `Invalid image URL in choice ${choiceIdx + 1} of element "${elementId}" in block "${blockName}"`
+      )
+    );
+  }
+  return ok(undefined);
+};
+
+/**
+ * Validates all choices in an element
+ * @param element - Element with choices to validate
+ * @param elementId - Element ID for error reporting
+ * @param blockName - Block name for error reporting
+ * @returns Result with void data on success or Error on failure
+ */
+const validateElementChoices = (
+  element: TSurveyElement,
+  elementId: string,
+  blockName: string
+): Result<void, Error> => {
+  if (!("choices" in element) || !Array.isArray(element.choices)) {
+    return ok(undefined);
+  }
+
+  for (let choiceIdx = 0; choiceIdx < element.choices.length; choiceIdx++) {
+    const result = validateChoiceImage(element.choices[choiceIdx], choiceIdx, elementId, blockName);
+    if (!result.ok) {
+      return result;
+    }
+  }
+
+  return ok(undefined);
+};
+
+/**
+ * Validates a single element's image URL and choices
+ * @param element - Element to validate
+ * @param elementIdx - Index of the element for error reporting
+ * @param blockIdx - Index of the block for error reporting
+ * @param blockName - Block name for error reporting
+ * @returns Result with void data on success or Error on failure
+ */
+const validateElement = (
+  element: TSurveyElement,
+  elementIdx: number,
+  blockIdx: number,
+  blockName: string
+): Result<void, Error> => {
+  // Check element imageUrl
+  if (element.imageUrl && !isValidImageFile(element.imageUrl)) {
+    return err(
+      new Error(
+        `Invalid image URL in element "${element.id}" (element ${elementIdx + 1}) of block "${blockName}" (block ${blockIdx + 1})`
+      )
+    );
+  }
+
+  // Check choices
+  return validateElementChoices(element, element.id, blockName);
+};
+
+/**
  * Validates that all image URLs in blocks (elements and their choices) are valid
  * @param blocks - Array of survey blocks to validate
  * @returns Result with void data on success or Error on failure
@@ -69,33 +148,9 @@ export const checkForInvalidImagesInBlocks = (blocks: TSurveyBlock[]): Result<vo
     const block = blocks[blockIdx];
 
     for (let elementIdx = 0; elementIdx < block.elements.length; elementIdx++) {
-      const element = block.elements[elementIdx];
-
-      // Check element imageUrl
-      if (element.imageUrl) {
-        if (!isValidImageFile(element.imageUrl)) {
-          return err(
-            new Error(
-              `Invalid image URL in element "${element.id}" (element ${elementIdx + 1}) of block "${block.name}" (block ${blockIdx + 1})`
-            )
-          );
-        }
-      }
-
-      // Check choices for picture selection and multiple choice elements
-      if ("choices" in element && Array.isArray(element.choices)) {
-        for (let choiceIdx = 0; choiceIdx < element.choices.length; choiceIdx++) {
-          const choice = element.choices[choiceIdx];
-          if ("imageUrl" in choice && choice.imageUrl) {
-            if (!isValidImageFile(choice.imageUrl)) {
-              return err(
-                new Error(
-                  `Invalid image URL in choice ${choiceIdx + 1} of element "${element.id}" in block "${block.name}"`
-                )
-              );
-            }
-          }
-        }
+      const result = validateElement(block.elements[elementIdx], elementIdx, blockIdx, block.name);
+      if (!result.ok) {
+        return result;
       }
     }
   }

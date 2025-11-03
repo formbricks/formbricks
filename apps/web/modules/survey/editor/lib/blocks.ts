@@ -57,10 +57,11 @@ export const addBlock = (
     ...block,
   };
 
-  if (index !== undefined) {
+  if (index) {
     if (index < 0 || index > blocks.length) {
       return err(new Error(`Invalid index ${index}. Must be between 0 and ${blocks.length}`));
     }
+
     blocks.splice(index, 0, newBlock);
   } else {
     blocks.push(newBlock);
@@ -123,7 +124,6 @@ export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey, E
 /**
  * Duplicates a block with new IDs for the block and all elements
  * Note: Logic is cleared because it would reference old block/element IDs.
- * TODO: In the future, we could update logic references like questions do,
  * mapping old element IDs to new ones and updating jumpToBlock targets.
  * @param survey - The survey containing the block
  * @param blockId - The CUID of the block to duplicate
@@ -166,7 +166,7 @@ export const duplicateBlock = (
   };
 
   const updatedBlocks = [...blocks];
-  const insertIndex = options?.insertAfter !== false ? blockIndex + 1 : blockIndex;
+  const insertIndex = options?.insertAfter ? blockIndex + 1 : blockIndex;
   updatedBlocks.splice(insertIndex, 0, duplicatedBlock);
 
   return ok({
@@ -250,7 +250,7 @@ export const addElementToBlock = (
 
   const elementWithDraft = { ...element, isDraft: true };
 
-  if (index !== undefined) {
+  if (index) {
     if (index < 0 || index > elements.length) {
       return err(new Error(`Invalid index ${index}. Must be between 0 and ${elements.length}`));
     }
