@@ -1,30 +1,28 @@
+import { Cell, Row, flexRender } from "@tanstack/react-table";
+import { Maximize2Icon } from "lucide-react";
+import React from "react";
+import { TResponseTableData } from "@formbricks/types/responses";
 import { cn } from "@/lib/cn";
 import { getCommonPinningStyles } from "@/modules/ui/components/data-table/lib/utils";
 import { TableCell } from "@/modules/ui/components/table";
-import { Cell, Row, flexRender } from "@tanstack/react-table";
-import { Maximize2Icon } from "lucide-react";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 
 interface ResponseTableCellProps {
   cell: Cell<TResponseTableData, unknown>;
   row: Row<TResponseTableData>;
   isExpanded: boolean;
   setSelectedResponseId: (responseId: string | null) => void;
-  responses: TResponse[] | null;
 }
 
-export const ResponseTableCell = ({
+const ResponseTableCellComponent = ({
   cell,
   row,
   isExpanded,
   setSelectedResponseId,
-  responses,
 }: ResponseTableCellProps) => {
   // Function to handle cell click
   const handleCellClick = () => {
     if (cell.column.id !== "select") {
-      const response = responses?.find((response) => response.id === row.id);
-      if (response) setSelectedResponseId(response.id);
+      setSelectedResponseId(row.id);
     }
   };
 
@@ -66,3 +64,5 @@ export const ResponseTableCell = ({
     </TableCell>
   );
 };
+
+export const ResponseTableCell = React.memo(ResponseTableCellComponent);

@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
@@ -49,7 +49,7 @@ export type TQuestion = {
   preset: any;
 };
 
-export const getQuestionTypes = (t: TFnType): TQuestion[] => [
+export const getQuestionTypes = (t: TFunction): TQuestion[] => [
   {
     id: QuestionId.OpenText,
     label: t("templates.free_text"),
@@ -292,7 +292,7 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
   },
 ];
 
-export const getCXQuestionTypes = (t: TFnType) =>
+export const getCXQuestionTypes = (t: TFunction) =>
   getQuestionTypes(t).filter((questionType) => {
     return [
       TSurveyQuestionTypeEnum.OpenText,
@@ -305,7 +305,7 @@ export const getCXQuestionTypes = (t: TFnType) =>
     ].includes(questionType.id as TSurveyQuestionTypeEnum);
   });
 
-export const getQuestionIconMap = (t: TFnType): Record<TSurveyQuestionTypeEnum, JSX.Element> =>
+export const getQuestionIconMap = (t: TFunction): Record<TSurveyQuestionTypeEnum, JSX.Element> =>
   getQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
@@ -314,7 +314,7 @@ export const getQuestionIconMap = (t: TFnType): Record<TSurveyQuestionTypeEnum, 
     {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
   );
 
-export const getQuestionNameMap = (t: TFnType) =>
+export const getQuestionNameMap = (t: TFunction) =>
   getQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
@@ -323,7 +323,7 @@ export const getQuestionNameMap = (t: TFnType) =>
     {}
   ) as Record<TSurveyQuestionTypeEnum, string>;
 
-export const getQuestionIcon = (type: TSurveyQuestionTypeEnum, t: TFnType) => {
+export const getQuestionIcon = (type: TSurveyQuestionTypeEnum, t: TFunction) => {
   return getQuestionTypes(t).find((questionType) => questionType.id === type)?.icon;
 };
 
@@ -332,7 +332,7 @@ export const VARIABLES_ICON_MAP = {
   number: <FileDigitIcon className="h-4 w-4" />,
 };
 
-export const getCXQuestionNameMap = (t: TFnType) =>
+export const getCXQuestionNameMap = (t: TFunction) =>
   getCXQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
@@ -345,12 +345,12 @@ export const universalQuestionPresets = {
   required: false,
 };
 
-export const getQuestionDefaults = (id: string, project: any, t: TFnType) => {
+export const getQuestionDefaults = (id: string, project: any, t: TFunction) => {
   const questionType = getQuestionTypes(t).find((questionType) => questionType.id === id);
   return replaceQuestionPresetPlaceholders(questionType?.preset, project);
 };
 
-export const getTSurveyQuestionTypeEnumName = (id: string, t: TFnType) => {
+export const getTSurveyQuestionTypeEnumName = (id: string, t: TFunction) => {
   const questionType = getQuestionTypes(t).find((questionType) => questionType.id === id);
   return questionType?.label;
 };

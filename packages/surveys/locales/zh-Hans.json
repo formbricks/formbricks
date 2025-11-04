@@ -48,7 +48,6 @@
       "duplicate_files": "以下文件已上传：{duplicateNames}。不允许重复文件。",
       "file_size_exceeded": "以下文件超过了最大大小 {maxSizeInMB} MB，已被移除：{fileNames}",
       "file_size_exceeded_alert": "文件应小于 {maxSizeInMB} MB",
-      "native_upload_failed": "上传原始文件时出错。",
       "no_valid_file_types_selected": "未选择有效的文件类型。请选择有效的文件类型。",
       "only_one_file_can_be_uploaded_at_a_time": "一次只能上传一个文件。",
       "upload_failed": "上传失败！请重试。",
@@ -59,7 +58,9 @@
       "title": "此设备不支持垃圾邮件保护。"
     },
     "please_book_an_appointment": "请预约",
+    "please_enter_a_valid_email_address": "请输入有效的电子邮件地址",
     "please_enter_a_valid_phone_number": "请输入有效的电话号码",
+    "please_enter_a_valid_url": "请输入有效的URL",
     "please_fill_out_this_field": "请填写此字段",
     "please_rank_all_items_before_submitting": "请在提交之前对所有项目进行排名",
     "please_select_a_date": "请选择一个日期",

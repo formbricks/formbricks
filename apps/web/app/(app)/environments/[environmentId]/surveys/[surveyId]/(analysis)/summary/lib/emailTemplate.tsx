@@ -2,8 +2,8 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getStyling } from "@/lib/utils/styling";
+import { getTranslate } from "@/lingodotdev/server";
 import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
-import { getTranslate } from "@/tolgee/server";
 
 export const getEmailTemplateHtml = async (surveyId: string, locale: string) => {
   const t = await getTranslate();

@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -23,6 +23,7 @@ interface CalQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const CalQuestionForm = ({
@@ -35,10 +36,11 @@ export const CalQuestionForm = ({
   isInvalid,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: CalQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [isCalHostEnabled, setIsCalHostEnabled] = useState(!!question.calHost);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   useEffect(() => {
     if (!isCalHostEnabled) {
       updateQuestion(questionIdx, { calHost: undefined });
@@ -64,6 +66,7 @@ export const CalQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div>
         {question.subheader !== undefined && (
@@ -82,6 +85,7 @@ export const CalQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

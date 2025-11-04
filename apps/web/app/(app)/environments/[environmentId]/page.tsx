@@ -1,8 +1,8 @@
+import { redirect } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { redirect } from "next/navigation";
 
 const EnvironmentPage = async (props) => {
   const params = await props.params;

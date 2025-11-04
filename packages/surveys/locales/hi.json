@@ -48,7 +48,6 @@
       "duplicate_files": "निम्नलिखित फ़ाइलें पहले से ही अपलोड की गई हैं: {duplicateNames}। डुप्लिकेट फ़ाइलों की अनुमति नहीं है।",
       "file_size_exceeded": "निम्नलिखित फ़ाइल(ें) अधिकतम आकार {maxSizeInMB} MB से अधिक हैं और हटा दी गई हैं: {fileNames}",
       "file_size_exceeded_alert": "फ़ाइल {maxSizeInMB} MB से कम होनी चाहिए",
-      "native_upload_failed": "नेटिव फ़ाइल अपलोड करने में त्रुटि।",
       "no_valid_file_types_selected": "कोई मान्य फ़ाइल प्रकार नहीं चुना गया है। कृपया एक मान्य फ़ाइल प्रकार चुनें।",
       "only_one_file_can_be_uploaded_at_a_time": "एक समय में केवल एक फ़ाइल अपलोड की जा सकती है।",
       "upload_failed": "अपलोड विफल! कृपया पुनः प्रयास करें।",
@@ -59,7 +58,9 @@
       "title": "यह डिवाइस स्पैम सुरक्षा का समर्थन नहीं करता है।"
     },
     "please_book_an_appointment": "कृपया एक अपॉइंटमेंट बुक करें",
+    "please_enter_a_valid_email_address": "कृपया एक वैध ईमेल पता दर्ज करें",
     "please_enter_a_valid_phone_number": "कृपया एक वैध फोन नंबर दर्ज करें",
+    "please_enter_a_valid_url": "कृपया एक वैध URL दर्ज करें",
     "please_fill_out_this_field": "कृपया इस फील्ड को भरें",
     "please_rank_all_items_before_submitting": "जमा करने से पहले कृपया सभी आइटम्स को रैंक करें",
     "please_select_a_date": "कृपया एक तारीख चुनें",

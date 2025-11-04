@@ -1,11 +1,4 @@
 import { prisma } from "@/lib/__mocks__/database";
-import { getActionClasses } from "@/lib/actionClass/service";
-import {
-  getOrganizationByEnvironmentId,
-  subscribeOrganizationMembersToSurveyResponses,
-} from "@/lib/organization/service";
-import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
-import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import { ActionClass, Prisma, Survey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
@@ -15,6 +8,13 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getActionClasses } from "@/lib/actionClass/service";
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "@/lib/organization/service";
+import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
+import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import {
   mockActionClass,
   mockId,

@@ -1,19 +1,20 @@
 "use client";
 
+import { Language } from "@prisma/client";
+import { TFunction } from "i18next";
+import { PlusIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
+import type { TProject } from "@formbricks/types/project";
+import { TUserLocale } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { Language } from "@prisma/client";
-import { TFnType, useTranslate } from "@tolgee/react";
-import { PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
-import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
-import type { TProject } from "@formbricks/types/project";
-import { TUserLocale } from "@formbricks/types/user";
 import {
   createLanguageAction,
   deleteLanguageAction,
@@ -36,7 +37,7 @@ const checkIfDuplicateExists = (arr: string[]) => {
   return new Set(arr).size !== arr.length;
 };
 
-const validateLanguages = (languages: Language[], t: TFnType) => {
+const validateLanguages = (languages: Language[], t: TFunction) => {
   const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
   const languageAliases = languages
     .filter((language) => language.alias)
@@ -61,7 +62,10 @@ const validateLanguages = (languages: Language[], t: TFnType) => {
     return false;
   }
 
-  // Check if the chosen alias matches an ISO identifier of a language that hasn't been added
+  // Prevent choosing an alias that clashes with the ISO code of some other
+  // language. Without this guard users could create ambiguous language entries
+  // (e.g. alias "nl" pointing to a non-Dutch language) which later breaks the
+  // dropdowns that rely on ISO identifiers.
   for (const alias of languageAliases) {
     if (iso639Languages.some((language) => language.alpha2 === alias && !languageCodes.includes(alias))) {
       toast.error(t("environments.project.languages.conflict_between_selected_alias_and_another_language"), {
@@ -82,7 +86,7 @@ export function EditLanguage({
   environmentId,
   isFormbricksCloud,
 }: EditLanguageProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [languages, setLanguages] = useState<Language[]>(project.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
@@ -286,7 +290,7 @@ const EditSaveButtons: React.FC<{
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
-  t: TFnType;
+  t: TFunction;
 }> = ({ isEditing, onEdit, onSave, onCancel, disabled, t }) =>
   isEditing ? (
     <div className="flex gap-4">

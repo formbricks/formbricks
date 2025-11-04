@@ -1,3 +1,7 @@
+import { useEffect, useState } from "preact/hooks";
+import type { JSX } from "react";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -6,10 +10,6 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "preact/hooks";
-import type { JSX } from "react";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import {
   ConfusedFace,
   FrowningFace,
@@ -39,6 +39,7 @@ interface RatingQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards: boolean;
 }
 
 export function RatingQuestion({
@@ -55,6 +56,7 @@ export function RatingQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
@@ -113,7 +115,7 @@ export function RatingQuestion({
   };
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

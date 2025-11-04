@@ -1,0 +1,73 @@
+{
+  "common": {
+    "and": "en",
+    "apply": "Toepassen",
+    "auto_close_wrapper": "Automatisch sluitende wrapper",
+    "back": "Terug",
+    "click_or_drag_to_upload_files": "Klik of sleep om bestanden te uploaden.",
+    "close_survey": "Enquête sluiten",
+    "company_logo": "Bedrijfslogo",
+    "delete_file": "Bestand verwijderen",
+    "file_upload": "Bestand uploaden",
+    "finish": "Voltooien",
+    "language_switch": "Taalschakelaar",
+    "less_than_x_minutes": "{count, plural, one {minder dan 1 minuut} other {minder dan {count} minuten}}",
+    "move_down": "Verplaats {item} naar beneden",
+    "move_up": "Verplaats {item} omhoog",
+    "next": "Volgende",
+    "open_in_new_tab": "Openen in nieuw tabblad",
+    "optional": "Optioneel",
+    "options": "Opties",
+    "people_responded": "{count, plural, one {1 persoon heeft gereageerd} other {{count} mensen hebben gereageerd}}",
+    "please_retry_now_or_try_again_later": "Probeer het nu opnieuw of probeer het later opnieuw.",
+    "powered_by": "Aangedreven door",
+    "privacy_policy": "Privacybeleid",
+    "protected_by_reCAPTCHA_and_the_Google": "Beschermd door reCAPTCHA en Google",
+    "question": "Vraag",
+    "question_video": "Vraagvideo",
+    "ranking_items": "Items rangschikken",
+    "respondents_will_not_see_this_card": "Respondenten zien deze kaart niet",
+    "retry": "Opnieuw proberen",
+    "select_a_date": "Selecteer een datum",
+    "select_for_ranking": "Selecteer {item} voor rangschikking",
+    "sending_responses": "Reacties verzenden...",
+    "takes": "Neemt",
+    "terms_of_service": "Servicevoorwaarden",
+    "the_servers_cannot_be_reached_at_the_moment": "De servers zijn momenteel niet bereikbaar.",
+    "they_will_be_redirected_immediately": "Ze worden onmiddellijk doorgestuurd",
+    "upload_files_by_clicking_or_dragging_them_here": "Upload bestanden door ze hierheen te klikken of te slepen",
+    "uploading": "Uploaden",
+    "x_minutes": "{count, plural, one {1 minuut} other {{count} minuten}}",
+    "x_plus_minutes": "{count}+ minuten",
+    "you_have_selected_x_date": "Je hebt {date} geselecteerd",
+    "you_have_successfully_uploaded_the_file": "Je hebt het bestand {fileName} succesvol geüpload",
+    "your_feedback_is_stuck": "Je feedback blijft hangen :("
+  },
+  "errors": {
+    "file_input": {
+      "duplicate_files": "De volgende bestanden zijn al geüpload: {duplicateNames}. Dubbele bestanden zijn niet toegestaan.",
+      "file_size_exceeded": "De volgende bestanden overschrijden de maximale grootte van {maxSizeInMB} MB en zijn verwijderd: {fileNames}",
+      "file_size_exceeded_alert": "Het bestand moet kleiner zijn dan {maxSizeInMB} MB",
+      "no_valid_file_types_selected": "Geen geldige bestandstypen geselecteerd. Selecteer een geldig bestandstype.",
+      "only_one_file_can_be_uploaded_at_a_time": "Er kan slechts één bestand tegelijk worden geüpload.",
+      "upload_failed": "Uploaden mislukt! Probeer het opnieuw.",
+      "you_can_only_upload_a_maximum_of_files": "Je kunt maximaal {FILE_LIMIT} bestanden uploaden."
+    },
+    "invalid_device_error": {
+      "message": "Schakel de spambeveiliging uit in de enquête-instellingen om dit apparaat te blijven gebruiken.",
+      "title": "Dit apparaat ondersteunt geen spambeveiliging."
+    },
+    "please_book_an_appointment": "Maak een afspraak",
+    "please_enter_a_valid_email_address": "Voer een geldig e-mailadres in",
+    "please_enter_a_valid_phone_number": "Voer een geldig telefoonnummer in",
+    "please_enter_a_valid_url": "Voer een geldige URL in",
+    "please_fill_out_this_field": "Vul dit veld in",
+    "please_rank_all_items_before_submitting": "Rangschik alle items voordat u ze verzendt",
+    "please_select_a_date": "Selecteer een datum",
+    "please_upload_a_file": "Upload een bestand",
+    "recaptcha_error": {
+      "message": "Uw reactie kan niet worden verzonden omdat deze is gemarkeerd als geautomatiseerde activiteit. Als u ademhaalt, probeer het dan opnieuw.",
+      "title": "We konden niet verifiëren dat je een mens bent."
+    }
+  }
+}

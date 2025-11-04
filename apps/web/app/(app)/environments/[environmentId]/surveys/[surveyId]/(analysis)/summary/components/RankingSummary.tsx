@@ -1,7 +1,7 @@
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionSummaryRanking } from "@formbricks/types/surveys/types";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
-import { useTranslate } from "@tolgee/react";
-import { TSurvey, TSurveyQuestionSummaryRanking } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -12,7 +12,7 @@ interface RankingSummaryProps {
 
 export const RankingSummary = ({ questionSummary, survey }: RankingSummaryProps) => {
   // sort by count and transform to array
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     return a.avgRanking - b.avgRanking; // Sort by count
   });

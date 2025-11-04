@@ -1,6 +1,6 @@
-import * as constants from "@/lib/constants";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
+import * as constants from "@/lib/constants";
 import { getSurveyFollowUpsPermission } from "./utils";
 
 vi.mock("@/lib/constants", async () => {
@@ -10,6 +10,8 @@ vi.mock("@/lib/constants", async () => {
     IS_FORMBRICKS_CLOUD: true,
     PROJECT_FEATURE_KEYS: {
       FREE: "free",
+      STARTUP: "startup",
+      CUSTOM: "custom",
     },
   };
 });
@@ -24,8 +26,13 @@ describe("getSurveyFollowUpsPermission", () => {
     expect(result).toBe(false);
   });
 
-  test("should return true for non-free plan on Formbricks Cloud", async () => {
+  test("should return false for startup plan on Formbricks Cloud", async () => {
     const result = await getSurveyFollowUpsPermission("startup" as TOrganizationBillingPlan);
+    expect(result).toBe(false);
+  });
+
+  test("should return true for custom plan on Formbricks Cloud", async () => {
+    const result = await getSurveyFollowUpsPermission("custom" as TOrganizationBillingPlan);
     expect(result).toBe(true);
   });
 

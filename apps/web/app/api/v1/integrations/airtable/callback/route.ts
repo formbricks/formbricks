@@ -1,12 +1,12 @@
+import { NextRequest } from "next/server";
+import * as z from "zod";
+import { logger } from "@formbricks/logger";
 import { responses } from "@/app/lib/api/response";
 import { TSessionAuthentication, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
-import { NextRequest } from "next/server";
-import * as z from "zod";
-import { logger } from "@formbricks/logger";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {

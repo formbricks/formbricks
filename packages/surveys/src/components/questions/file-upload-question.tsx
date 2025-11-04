@@ -1,15 +1,15 @@
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { QuestionMedia } from "@/components/general/question-media";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getLocalizedValue } from "@/lib/i18n";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { BackButton } from "../buttons/back-button";
 import { FileInput } from "../general/file-input";
 import { Subheader } from "../general/subheader";
@@ -30,6 +30,7 @@ interface FileUploadQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  fullSizeCards: boolean;
 }
 
 export function FileUploadQuestion({
@@ -47,6 +48,7 @@ export function FileUploadQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  fullSizeCards,
 }: Readonly<FileUploadQuestionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -55,7 +57,7 @@ export function FileUploadQuestion({
   const isCurrent = question.id === currentQuestionId;
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

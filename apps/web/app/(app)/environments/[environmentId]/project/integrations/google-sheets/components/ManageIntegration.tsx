@@ -1,21 +1,21 @@
 "use client";
 
-import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
-import { timeSince } from "@/lib/time";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Button } from "@/modules/ui/components/button";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
-import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/google-sheet";
 import { TUserLocale } from "@formbricks/types/user";
+import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
+import { timeSince } from "@/lib/time";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 
 interface ManageIntegrationProps {
   environment: TEnvironment;
@@ -34,7 +34,7 @@ export const ManageIntegration = ({
   setSelectedIntegration,
   locale,
 }: ManageIntegrationProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   let integrationArray: TIntegrationGoogleSheetsConfigData[] = [];
   if (googleSheetIntegration?.config.data) {

@@ -1,5 +1,3 @@
-import { WEBAPP_URL } from "@/lib/constants";
-import { getPublicDomain } from "@/lib/getPublicUrl";
 import { randomUUID } from "crypto";
 import { logger } from "@formbricks/logger";
 import {
@@ -12,6 +10,8 @@ import {
 } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TAccessType } from "@formbricks/types/storage";
+import { WEBAPP_URL } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { sanitizeFileName } from "./utils";
 
 export const getSignedUrlForUpload = async (

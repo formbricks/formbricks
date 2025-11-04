@@ -1,5 +1,3 @@
-import { createEnvironment } from "@/lib/environment/service";
-import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -8,6 +6,8 @@ import { StorageErrorCode } from "@formbricks/storage";
 import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { ZProject } from "@formbricks/types/project";
+import { createEnvironment } from "@/lib/environment/service";
+import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
 import { createProject, deleteProject, updateProject } from "./project";
 
 const baseProject = {

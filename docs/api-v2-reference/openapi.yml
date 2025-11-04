@@ -97,10 +97,44 @@ paths:
         content:
           application/json:
             schema:
+              type: object
+              properties:
+                surveyId:
+                  type: string
+                  description: The ID of the survey this response belongs to
+                responses:
+                  type: object
+                  additionalProperties: true
+                  description: Answers keyed by questionId; value shape depends on question type
+                finished:
+                  type: boolean
+                  description: Whether the response is marked as finished
+                language:
+                  type: string
+                  enum:
+                    [
+                      "en-US",
+                      "de-DE",
+                      "pt-BR",
+                      "fr-FR",
+                      "zh-Hant-TW",
+                      "pt-PT",
+                      "ro-RO",
+                      "ja-JP",
+                      "zh-Hans-CN",
+                    ]
+                  description: Locale of the response
+                meta:
+                  type: object
+                  properties:
+                    action: { type: string }
+                    source: { type: string }
+                    url: { type: string }
+                  description: Optional metadata about the response
+              required: ["surveyId"]
               example:
                 surveyId: survey123
                 responses: {}
-              type: object
       responses:
         "201":
           content:
@@ -136,9 +170,15 @@ paths:
         content:
           application/json:
             schema:
+              type: object
+              properties:
+                attributes:
+                  type: object
+                  additionalProperties: true
+                  description: Key-value pairs of contact attributes
+              required: ["attributes"]
               example:
                 attributes: {}
-              type: object
       responses:
         "200":
           content:

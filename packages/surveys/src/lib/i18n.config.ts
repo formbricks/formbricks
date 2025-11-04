@@ -9,6 +9,7 @@ import frTranslations from "../../locales/fr.json";
 import hiTranslations from "../../locales/hi.json";
 import itTranslations from "../../locales/it.json";
 import jaTranslations from "../../locales/ja.json";
+import nlTranslations from "../../locales/nl.json";
 import ptTranslations from "../../locales/pt.json";
 import roTranslations from "../../locales/ro.json";
 import ruTranslations from "../../locales/ru.json";
@@ -20,7 +21,7 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: "en",
-    supportedLngs: ["en", "de", "it", "fr", "es", "ar", "pt", "ro", "ja", "ru", "uz", "zh-Hans", "hi"],
+    supportedLngs: ["en", "de", "it", "fr", "es", "ar", "pt", "ro", "ja", "ru", "uz", "zh-Hans", "hi", "nl"],
 
     resources: {
       en: { translation: enTranslations },
@@ -32,6 +33,7 @@ i18n
       pt: { translation: ptTranslations },
       ro: { translation: roTranslations },
       ja: { translation: jaTranslations },
+      nl: { translation: nlTranslations },
       ru: { translation: ruTranslations },
       uz: { translation: uzTranslations },
       "zh-Hans": { translation: zhHansTranslations },

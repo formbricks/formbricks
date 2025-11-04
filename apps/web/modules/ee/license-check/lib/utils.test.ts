@@ -1,7 +1,7 @@
-import * as constants from "@/lib/constants";
-import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { Organization } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import * as constants from "@/lib/constants";
+import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import * as licenseModule from "./license";
 import {
   getAccessControlPermission,
@@ -94,7 +94,7 @@ describe("License Utils", () => {
     test("should return true if license active and plan is not FREE (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
-      const result = await getRemoveBrandingPermission(constants.PROJECT_FEATURE_KEYS.SCALE);
+      const result = await getRemoveBrandingPermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
       expect(result).toBe(true);
     });
 
@@ -129,7 +129,7 @@ describe("License Utils", () => {
     test("should return true if license active and plan is not FREE (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
-      const result = await getWhiteLabelPermission(constants.PROJECT_FEATURE_KEYS.SCALE);
+      const result = await getWhiteLabelPermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
       expect(result).toBe(true);
     });
 
@@ -154,27 +154,17 @@ describe("License Utils", () => {
       expect(result).toBe(true);
     });
 
-    test("should return true if license active, accessControl enabled and plan is SCALE (cloud)", async () => {
+    test("should return true if license active, accessControl enabled and plan is CUSTOM (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,
         features: { ...defaultFeatures, accessControl: true },
       });
-      const result = await getAccessControlPermission(constants.PROJECT_FEATURE_KEYS.SCALE);
+      const result = await getAccessControlPermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
       expect(result).toBe(true);
     });
 
-    test("should return true if license active, accessControl enabled and plan is ENTERPRISE (cloud)", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        features: { ...defaultFeatures, accessControl: true },
-      });
-      const result = await getAccessControlPermission(constants.PROJECT_FEATURE_KEYS.ENTERPRISE);
-      expect(result).toBe(true);
-    });
-
-    test("should return false if license active, accessControl enabled but plan is not SCALE or ENTERPRISE (cloud)", async () => {
+    test("should return false if license active, accessControl enabled but plan is not CUSTOM (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,
@@ -182,6 +172,16 @@ describe("License Utils", () => {
       });
       const result = await getAccessControlPermission(constants.PROJECT_FEATURE_KEYS.STARTUP);
       expect(result).toBe(false);
+    });
+
+    test("should return true if license active, accessControl enabled and plan is CUSTOM (cloud)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, accessControl: true },
+      });
+      const result = await getAccessControlPermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
+      expect(result).toBe(true);
     });
 
     test("should return true if license active but accessControl feature disabled because of fallback", async () => {
@@ -211,7 +211,7 @@ describe("License Utils", () => {
     test("should return true if license active and plan is not FREE (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue(defaultLicense);
-      const result = await getBiggerUploadFileSizePermission(constants.PROJECT_FEATURE_KEYS.SCALE);
+      const result = await getBiggerUploadFileSizePermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
       expect(result).toBe(true);
     });
 
@@ -243,27 +243,17 @@ describe("License Utils", () => {
       expect(result).toBe(true);
     });
 
-    test("should return true if license active, multiLanguageSurveys enabled and plan is SCALE (cloud)", async () => {
+    test("should return true if license active, multiLanguageSurveys enabled and plan is CUSTOM (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,
         features: { ...defaultFeatures, multiLanguageSurveys: true },
       });
-      const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.SCALE);
+      const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
       expect(result).toBe(true);
     });
 
-    test("should return true if license active, multiLanguageSurveys enabled and plan is ENTERPRISE (cloud)", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        features: { ...defaultFeatures, multiLanguageSurveys: true },
-      });
-      const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.ENTERPRISE);
-      expect(result).toBe(true);
-    });
-
-    test("should return false if license active, multiLanguageSurveys enabled but plan is not SCALE or ENTERPRISE (cloud)", async () => {
+    test("should return false if license active, multiLanguageSurveys enabled but plan is not CUSTOM (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,
@@ -271,6 +261,16 @@ describe("License Utils", () => {
       });
       const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.STARTUP);
       expect(result).toBe(false);
+    });
+
+    test("should return true if license active, multiLanguageSurveys enabled and plan is CUSTOM (cloud)", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, multiLanguageSurveys: true },
+      });
+      const result = await getMultiLanguagePermission(constants.PROJECT_FEATURE_KEYS.CUSTOM);
+      expect(result).toBe(true);
     });
 
     test("should return true if license active but multiLanguageSurveys feature disabled because of fallback", async () => {
@@ -420,17 +420,17 @@ describe("License Utils", () => {
       vi.mocked(constants).IS_RECAPTCHA_CONFIGURED = true; // reset for other tests
     });
 
-    test("should return true if license active, feature enabled, and plan is SCALE (cloud)", async () => {
+    test("should return true if license active, feature enabled, and plan is CUSTOM (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,
         features: { ...defaultFeatures, spamProtection: true },
       });
-      const result = await getIsSpamProtectionEnabled(constants.PROJECT_FEATURE_KEYS.SCALE);
+      const result = await getIsSpamProtectionEnabled(constants.PROJECT_FEATURE_KEYS.CUSTOM);
       expect(result).toBe(true);
     });
 
-    test("should return false if license active, feature enabled, but plan is not SCALE or ENTERPRISE (cloud)", async () => {
+    test("should return false if license active, feature enabled, but plan is not CUSTOM (cloud)", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(licenseModule.getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,

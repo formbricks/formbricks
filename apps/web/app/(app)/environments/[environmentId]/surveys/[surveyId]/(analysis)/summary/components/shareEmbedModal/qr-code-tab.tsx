@@ -1,21 +1,21 @@
 "use client";
 
-import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/get-qr-code-options";
-import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
 import { Download, LoaderCircle } from "lucide-react";
 import QRCodeStyling from "qr-code-styling";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/get-qr-code-options";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
 
 interface QRCodeTabProps {
   surveyUrl: string;
 }
 
 export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const qrCodeRef = useRef<HTMLDivElement>(null);
   const qrInstance = useRef<QRCodeStyling | null>(null);
   const [isLoading, setIsLoading] = useState(false);

@@ -1,9 +1,9 @@
-import { QuestionCard } from "@/modules/survey/editor/components/question-card";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "@prisma/client";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { QuestionCard } from "@/modules/survey/editor/components/question-card";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;
@@ -24,6 +24,7 @@ interface QuestionsDraggableProps {
   responseCount: number;
   onAlertTrigger: () => void;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed: boolean;
 }
 
 export const QuestionsDroppable = ({
@@ -45,6 +46,7 @@ export const QuestionsDroppable = ({
   responseCount,
   onAlertTrigger,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: QuestionsDraggableProps) => {
   const [parent] = useAutoAnimate();
 
@@ -75,6 +77,7 @@ export const QuestionsDroppable = ({
             responseCount={responseCount}
             onAlertTrigger={onAlertTrigger}
             isStorageConfigured={isStorageConfigured}
+            isExternalUrlsAllowed={isExternalUrlsAllowed}
           />
         ))}
       </SortableContext>

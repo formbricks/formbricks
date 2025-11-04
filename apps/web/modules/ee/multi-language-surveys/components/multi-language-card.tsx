@@ -1,5 +1,15 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Language } from "@prisma/client";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { ArrowUpRight, Languages } from "lucide-react";
+import Link from "next/link";
+import type { FC } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -8,16 +18,6 @@ import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Language } from "@prisma/client";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
-import { ArrowUpRight, Languages } from "lucide-react";
-import Link from "next/link";
-import type { FC } from "react";
-import { useEffect, useMemo, useState } from "react";
-import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { DefaultLanguageSelect } from "./default-language-select";
 import { SecondaryLanguageSelect } from "./secondary-language-select";
 
@@ -53,7 +53,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   setSelectedLanguageCode,
   locale,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId === "multiLanguage";
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);

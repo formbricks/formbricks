@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { type JSX } from "react";
+import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
@@ -16,6 +16,7 @@ interface ConsentQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const ConsentQuestionForm = ({
@@ -28,8 +29,9 @@ export const ConsentQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: ConsentQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   // Common props shared across all QuestionFormInput components
   const commonInputProps = {
@@ -41,6 +43,7 @@ export const ConsentQuestionForm = ({
     setSelectedLanguageCode,
     locale,
     isStorageConfigured,
+    isExternalUrlsAllowed,
   };
 
   return (

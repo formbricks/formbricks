@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -10,8 +12,6 @@ import {
   CommandList,
 } from "@/modules/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import { useTranslate } from "@tolgee/react";
-import { useState } from "react";
 
 interface MergeTagsComboboxProps {
   tags: Tag[];
@@ -24,7 +24,7 @@ type Tag = {
 };
 
 export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 
@@ -46,7 +46,7 @@ export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) =>
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
             />
           </div>
-          <CommandList>
+          <CommandList className="border-0">
             <CommandEmpty>
               <div className="p-2 text-sm text-slate-500">{t("environments.project.tags.no_tag_found")}</div>
             </CommandEmpty>

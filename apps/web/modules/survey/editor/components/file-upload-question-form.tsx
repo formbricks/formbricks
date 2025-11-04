@@ -2,11 +2,11 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { PlusIcon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -29,6 +29,7 @@ interface FileUploadFormProps {
   isFormbricksCloud: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const FileUploadQuestionForm = ({
@@ -43,9 +44,10 @@ export const FileUploadQuestionForm = ({
   isFormbricksCloud,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isMaxSizeError, setMaxSizeError] = useState(false);
   const {
     billingInfo,
@@ -146,6 +148,7 @@ export const FileUploadQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -164,6 +167,7 @@ export const FileUploadQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

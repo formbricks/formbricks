@@ -1,11 +1,11 @@
+import { Prisma } from "@prisma/client";
+import { prisma } from "@formbricks/database";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TDisplayCreateInputV2,
   ZDisplayCreateInputV2,
 } from "@/app/api/v2/client/[environmentId]/displays/types/display";
 import { validateInputs } from "@/lib/utils/validate";
-import { Prisma } from "@prisma/client";
-import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { doesContactExist } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promise<{ id: string }> => {

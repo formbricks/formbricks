@@ -1,3 +1,8 @@
+import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSegment } from "@formbricks/types/segment";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { QuotasCard } from "@/modules/ee/quotas/components/quotas-card";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
@@ -7,11 +12,6 @@ import { ResponseOptionsCard } from "@/modules/survey/editor/components/response
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
-import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SettingsViewProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;

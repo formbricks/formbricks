@@ -1,12 +1,12 @@
 "use server";
 
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteUser, getUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const deleteUserAction = authenticatedActionClient.action(
   withAuditLogging(

@@ -5,9 +5,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -64,6 +64,7 @@ interface QuestionCardProps {
   responseCount: number;
   onAlertTrigger: () => void;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed: boolean;
 }
 
 export const QuestionCard = ({
@@ -88,11 +89,12 @@ export const QuestionCard = ({
   responseCount,
   onAlertTrigger,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
   });
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
@@ -294,6 +296,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
@@ -306,6 +309,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
@@ -318,6 +322,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
@@ -331,6 +336,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
@@ -344,6 +350,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
@@ -357,6 +364,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
@@ -369,6 +377,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
@@ -381,6 +390,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
@@ -407,6 +417,7 @@ export const QuestionCard = ({
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
@@ -420,6 +431,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
@@ -432,6 +444,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
@@ -444,6 +457,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
@@ -456,6 +470,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
@@ -469,6 +484,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
+              isExternalUrlsAllowed={isExternalUrlsAllowed}
             />
           ) : null}
           <div className="mt-4">

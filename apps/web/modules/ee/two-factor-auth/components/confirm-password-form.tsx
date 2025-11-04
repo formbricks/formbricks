@@ -1,16 +1,16 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { setupTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslate } from "@tolgee/react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import { ZUserPassword } from "@formbricks/types/user";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 const ZConfirmPasswordFormState = z.object({
@@ -39,7 +39,7 @@ export const ConfirmPasswordForm = ({
     resolver: zodResolver(ZConfirmPasswordFormState),
   });
   const { handleSubmit } = form;
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const onSubmit: SubmitHandler<TConfirmPasswordFormState> = async (data) => {
     const setupTwoFactorAuthResponse = await setupTwoFactorAuthAction({ password: data.password });

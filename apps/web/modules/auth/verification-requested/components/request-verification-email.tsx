@@ -1,10 +1,10 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
 import { resendVerificationEmailAction } from "../actions";
 
 interface RequestVerificationEmailProps {
@@ -12,7 +12,7 @@ interface RequestVerificationEmailProps {
 }
 
 export const RequestVerificationEmail = ({ email }: RequestVerificationEmailProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {

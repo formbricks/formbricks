@@ -1,8 +1,8 @@
+import { controllers } from "@boxyhq/saml-jackson";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@/lib/constants";
 import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
 import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
-import { controllers } from "@boxyhq/saml-jackson";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import init from "../jackson";
 
 vi.mock("@/lib/constants", () => ({

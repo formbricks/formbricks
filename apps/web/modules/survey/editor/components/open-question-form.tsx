@@ -1,9 +1,9 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { JSX, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
@@ -29,6 +29,7 @@ interface OpenQuestionFormProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const OpenQuestionForm = ({
@@ -41,8 +42,9 @@ export const OpenQuestionForm = ({
   setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
+  isExternalUrlsAllowed,
 }: OpenQuestionFormProps): JSX.Element => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const questionTypes = [
     { value: "text", label: t("common.text"), icon: <MessageSquareTextIcon className="h-4 w-4" /> },
     { value: "email", label: t("common.email"), icon: <MailIcon className="h-4 w-4" /> },
@@ -79,7 +81,7 @@ export const OpenQuestionForm = ({
     } else {
       setIsCharLimitEnabled(false);
     }
-  }, []);
+  }, [question?.charLimit?.max, question?.charLimit?.min]);
 
   return (
     <form>
@@ -96,6 +98,7 @@ export const OpenQuestionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!question.headline?.default || question.headline.default.trim() === ""}
+        isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
       <div ref={parent}>
@@ -115,6 +118,7 @@ export const OpenQuestionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!question.subheader?.default || question.subheader.default.trim() === ""}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
           </div>

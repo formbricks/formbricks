@@ -48,7 +48,6 @@
       "duplicate_files": "Следующие файлы уже загружены: {duplicateNames}. Дублирующие файлы не допускаются.",
       "file_size_exceeded": "Следующие файлы превышают максимальный размер {maxSizeInMB} МБ и были удалены: {fileNames}",
       "file_size_exceeded_alert": "Файл должен быть меньше {maxSizeInMB} МБ",
-      "native_upload_failed": "Ошибка загрузки исходного файла.",
       "no_valid_file_types_selected": "Не выбраны допустимые типы файлов. Пожалуйста, выберите допустимый тип файла.",
       "only_one_file_can_be_uploaded_at_a_time": "Можно загрузить только один файл за раз.",
       "upload_failed": "Ошибка загрузки! Пожалуйста, попробуйте снова.",
@@ -59,7 +58,9 @@
       "title": "Это устройство не поддерживает защиту от спама."
     },
     "please_book_an_appointment": "Пожалуйста, запишитесь на приём",
+    "please_enter_a_valid_email_address": "Пожалуйста, введите действительный адрес электронной почты",
     "please_enter_a_valid_phone_number": "Пожалуйста, введите действительный номер телефона",
+    "please_enter_a_valid_url": "Пожалуйста, введите действительный URL-адрес",
     "please_fill_out_this_field": "Пожалуйста, заполните это поле",
     "please_rank_all_items_before_submitting": "Пожалуйста, оцените все элементы перед отправкой",
     "please_select_a_date": "Пожалуйста, выберите дату",

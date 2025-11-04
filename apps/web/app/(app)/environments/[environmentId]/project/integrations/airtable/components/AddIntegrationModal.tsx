@@ -1,11 +1,12 @@
 "use client";
 
-import { TFnType, useTranslate } from "@tolgee/react";
+import { TFunction } from "i18next";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Control, Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
@@ -58,7 +59,7 @@ type AddIntegrationModalProps = {
 } & EditModeProps;
 
 const NoBaseFoundError = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <Alert>
       <AlertTitle>{t("environments.integrations.airtable.no_bases_found")}</AlertTitle>
@@ -80,7 +81,7 @@ const renderQuestionSelection = ({
   includeCreatedAt,
   setIncludeCreatedAt,
 }: {
-  t: TFnType;
+  t: TFunction;
   selectedSurvey: TSurvey;
   control: Control<IntegrationModalInputs>;
   includeVariables: boolean;
@@ -153,7 +154,7 @@ export const AddIntegrationModal = ({
   isEditMode,
   defaultData,
 }: AddIntegrationModalProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const router = useRouter();
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
   const [isLoading, setIsLoading] = useState(false);

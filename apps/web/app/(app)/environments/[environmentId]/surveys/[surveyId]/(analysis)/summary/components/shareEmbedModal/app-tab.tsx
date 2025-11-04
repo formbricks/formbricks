@@ -1,10 +1,5 @@
 "use client";
 
-import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
-import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
-import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { H4, InlineSmall, Small } from "@/modules/ui/components/typography";
-import { useTranslate } from "@tolgee/react";
 import {
   CodeXmlIcon,
   MousePointerClickIcon,
@@ -15,11 +10,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ReactNode, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSegment } from "@formbricks/types/segment";
+import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { H4, InlineSmall, Small } from "@/modules/ui/components/typography";
 import { DocumentationLinksSection } from "./documentation-links-section";
 
-const createDocumentationLinks = (t: ReturnType<typeof useTranslate>["t"]) => [
+const createDocumentationLinks = (t: ReturnType<typeof useTranslation>["t"]) => [
   {
     href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#html",
     title: t("environments.surveys.summary.in_app.html_embed"),
@@ -42,14 +42,14 @@ const createDocumentationLinks = (t: ReturnType<typeof useTranslate>["t"]) => [
   },
 ];
 
-const createNoCodeConfigType = (t: ReturnType<typeof useTranslate>["t"]) => ({
+const createNoCodeConfigType = (t: ReturnType<typeof useTranslation>["t"]) => ({
   click: t("environments.actions.click"),
   pageView: t("environments.actions.page_view"),
   exitIntent: t("environments.actions.exit_intent"),
   fiftyPercentScroll: t("environments.actions.fifty_percent_scroll"),
 });
 
-const formatRecontactDaysString = (days: number, t: ReturnType<typeof useTranslate>["t"]) => {
+const formatRecontactDaysString = (days: number, t: ReturnType<typeof useTranslation>["t"]) => {
   if (days === 0) {
     return t("environments.surveys.summary.in_app.display_criteria.time_based_always");
   } else if (days === 1) {
@@ -86,7 +86,7 @@ const DisplayCriteriaItem = ({ icon, title, titleSuffix, description }: DisplayC
 };
 
 export const AppTab = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { environment, project } = useEnvironment();
   const { survey } = useSurvey();
 

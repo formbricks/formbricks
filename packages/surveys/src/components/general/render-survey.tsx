@@ -1,6 +1,6 @@
-import { checkIfSurveyIsRTL } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { checkIfSurveyIsRTL } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 

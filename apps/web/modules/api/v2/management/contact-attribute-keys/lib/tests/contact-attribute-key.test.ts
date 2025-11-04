@@ -1,11 +1,11 @@
-import {
-  TContactAttributeKeyInput,
-  TGetContactAttributeKeysFilter,
-} from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import {
+  TContactAttributeKeyInput,
+  TGetContactAttributeKeysFilter,
+} from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "../contact-attribute-key";
 
 vi.mock("@formbricks/database", () => ({

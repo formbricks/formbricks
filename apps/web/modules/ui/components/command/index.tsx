@@ -1,5 +1,7 @@
 "use client";
 
+import { Command as CommandPrimitive } from "cmdk";
+import * as React from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +10,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { cn } from "@/modules/ui/lib/utils";
-import { Command as CommandPrimitive } from "cmdk";
-import { SearchIcon } from "lucide-react";
-import * as React from "react";
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
@@ -60,17 +59,14 @@ function CommandInput({
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Input> & { hidden?: boolean }) {
   return (
-    <div data-slot="command-input-wrapper" className={cn("flex items-center")}>
-      <SearchIcon className="h-4 w-4 shrink-0 text-slate-500" />
-      <CommandPrimitive.Input
-        data-slot="command-input"
-        className={cn(
-          "outline-hidden flex h-10 w-full rounded-md bg-transparent py-3 text-sm placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
-        {...props}
-      />
-    </div>
+    <CommandPrimitive.Input
+      data-slot="command-input"
+      className={cn(
+        "outline-hidden flex h-9 w-full rounded-md bg-transparent py-3 text-sm placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
   );
 }
 
@@ -78,7 +74,10 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
   return (
     <CommandPrimitive.List
       data-slot="command-list"
-      className={cn("max-h-[300px] scroll-py-1 overflow-y-auto overflow-x-hidden", className)}
+      className={cn(
+        "max-h-[300px] scroll-py-1 overflow-y-auto overflow-x-hidden rounded-md border border-slate-300 bg-white",
+        className
+      )}
       {...props}
     />
   );
@@ -116,7 +115,7 @@ function CommandItem({ className, ...props }: React.ComponentProps<typeof Comman
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground outline-hidden relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground outline-hidden relative flex cursor-default select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm data-[disabled=true]:pointer-events-none data-[selected=true]:cursor-pointer data-[selected=true]:bg-slate-100 data-[disabled=true]:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -137,11 +136,11 @@ function CommandShortcut({ className, ...props }: React.ComponentProps<"span">) 
 export {
   Command,
   CommandDialog,
-  CommandInput,
-  CommandList,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
-  CommandShortcut,
+  CommandList,
   CommandSeparator,
+  CommandShortcut,
 };

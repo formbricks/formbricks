@@ -1,23 +1,6 @@
 "use client";
 
-import {
-  DateRange,
-  useResponseFilter,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
-import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
-import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
-import { Calendar } from "@/modules/ui/components/calendar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-import { cn } from "@/modules/ui/lib/utils";
 import * as Sentry from "@sentry/nextjs";
-import { TFnType, useTranslate } from "@tolgee/react";
 import {
   differenceInDays,
   endOfMonth,
@@ -33,11 +16,28 @@ import {
   subQuarters,
   subYears,
 } from "date-fns";
-import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon, Loader2Icon } from "lucide-react";
+import { TFunction } from "i18next";
+import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ResponseFilter } from "./ResponseFilter";
+import {
+  DateRange,
+  useResponseFilter,
+} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
+import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
+import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
+import { Calendar } from "@/modules/ui/components/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { PopoverTriggerButton, ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {
   FROM = "common.from",
@@ -49,7 +49,7 @@ enum FilterDownload {
   FILTER = "common.filter",
 }
 
-const getFilterDropDownLabels = (t: TFnType) => ({
+const getFilterDropDownLabels = (t: TFunction) => ({
   ALL_TIME: t("environments.surveys.summary.all_time"),
   LAST_7_DAYS: t("environments.surveys.summary.last_7_days"),
   LAST_30_DAYS: t("environments.surveys.summary.last_30_days"),
@@ -67,7 +67,7 @@ interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getDateRangeLabel = (from: Date, to: Date, t: TFnType) => {
+const getDateRangeLabel = (from: Date, to: Date, t: TFunction) => {
   const dateRanges = [
     {
       label: getFilterDropDownLabels(t).LAST_7_DAYS,
@@ -126,7 +126,7 @@ const getDateRangeLabel = (from: Date, to: Date, t: TFnType) => {
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
     dateRange.from && dateRange.to
@@ -136,6 +136,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
+  const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
@@ -269,201 +270,179 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());
   return (
-    <>
-      <div className="relative flex justify-between">
-        <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter survey={survey} />
-          <DropdownMenu
-            onOpenChange={(value) => {
-              value && handleDatePickerClose();
-              setIsFilterDropDownOpen(value);
-            }}>
-            <DropdownMenuTrigger>
-              <div className="flex min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
-                <span className="text-sm text-slate-700">
-                  {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE
-                    ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
-                        dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
-                      }`
-                    : filterRange}
-                </span>
-                {isFilterDropDownOpen ? (
-                  <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
-                ) : (
-                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                )}
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).ALL_TIME);
-                  setDateRange({ from: undefined, to: getTodayDate() });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).ALL_TIME}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).LAST_7_DAYS);
-                  setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_7_DAYS}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).LAST_30_DAYS);
-                  setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_30_DAYS}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).THIS_MONTH);
-                  setDateRange({ from: startOfMonth(new Date()), to: getTodayDate() });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_MONTH}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).LAST_MONTH);
-                  setDateRange({
-                    from: startOfMonth(subMonths(new Date(), 1)),
-                    to: endOfMonth(subMonths(getTodayDate(), 1)),
-                  });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_MONTH}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).THIS_QUARTER);
-                  setDateRange({ from: startOfQuarter(new Date()), to: endOfQuarter(getTodayDate()) });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_QUARTER}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).LAST_QUARTER);
-                  setDateRange({
-                    from: startOfQuarter(subQuarters(new Date(), 1)),
-                    to: endOfQuarter(subQuarters(getTodayDate(), 1)),
-                  });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_QUARTER}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).LAST_6_MONTHS);
-                  setDateRange({
-                    from: startOfMonth(subMonths(new Date(), 6)),
-                    to: endOfMonth(getTodayDate()),
-                  });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_6_MONTHS}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).THIS_YEAR);
-                  setDateRange({ from: startOfYear(new Date()), to: endOfYear(getTodayDate()) });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_YEAR}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setFilterRange(getFilterDropDownLabels(t).LAST_YEAR);
-                  setDateRange({
-                    from: startOfYear(subYears(new Date(), 1)),
-                    to: endOfYear(subYears(getTodayDate(), 1)),
-                  });
-                }}>
-                <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_YEAR}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setIsDatePickerOpen(true);
-                  setFilterRange(getFilterDropDownLabels(t).CUSTOM_RANGE);
-                  setSelectingDate(DateSelected.FROM);
-                }}>
-                <p className="text-sm text-slate-700 hover:ring-0">
-                  {getFilterDropDownLabels(t).CUSTOM_RANGE}
-                </p>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu
-            onOpenChange={(value) => {
-              value && handleDatePickerClose();
-            }}>
-            <DropdownMenuTrigger
-              asChild
-              className={cn(
-                "focus:bg-muted cursor-pointer outline-none",
-                isDownloading && "cursor-not-allowed opacity-50"
-              )}
-              disabled={isDownloading}
-              data-testid="fb__custom-filter-download-responses-button">
-              <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
-                <div className="hidden w-full items-center justify-between sm:flex">
-                  <span className="text-sm text-slate-700">{t("common.download")}</span>
-                  {isDownloading ? (
-                    <Loader2Icon className="ml-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
-                  )}
-                </div>
-                <DownloadIcon className="block h-4 sm:hidden" />
-              </div>
-            </DropdownMenuTrigger>
+    <div className="relative flex justify-between">
+      <div className="flex justify-stretch gap-x-1.5">
+        <ResponseFilter survey={survey} />
+        <DropdownMenu
+          onOpenChange={(value) => {
+            value && handleDatePickerClose();
+            setIsFilterDropDownOpen(value);
+          }}>
+          <DropdownMenuTrigger asChild>
+            <PopoverTriggerButton isOpen={isFilterDropDownOpen}>
+              {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE
+                ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
+                    dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
+                  }`
+                : filterRange}
+            </PopoverTriggerButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).ALL_TIME);
+                setDateRange({ from: undefined, to: getTodayDate() });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).ALL_TIME}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).LAST_7_DAYS);
+                setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_7_DAYS}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).LAST_30_DAYS);
+                setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_30_DAYS}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).THIS_MONTH);
+                setDateRange({ from: startOfMonth(new Date()), to: getTodayDate() });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_MONTH}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).LAST_MONTH);
+                setDateRange({
+                  from: startOfMonth(subMonths(new Date(), 1)),
+                  to: endOfMonth(subMonths(getTodayDate(), 1)),
+                });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_MONTH}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).THIS_QUARTER);
+                setDateRange({ from: startOfQuarter(new Date()), to: endOfQuarter(getTodayDate()) });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_QUARTER}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).LAST_QUARTER);
+                setDateRange({
+                  from: startOfQuarter(subQuarters(new Date(), 1)),
+                  to: endOfQuarter(subQuarters(getTodayDate(), 1)),
+                });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_QUARTER}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).LAST_6_MONTHS);
+                setDateRange({
+                  from: startOfMonth(subMonths(new Date(), 6)),
+                  to: endOfMonth(getTodayDate()),
+                });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_6_MONTHS}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).THIS_YEAR);
+                setDateRange({ from: startOfYear(new Date()), to: endOfYear(getTodayDate()) });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).THIS_YEAR}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setFilterRange(getFilterDropDownLabels(t).LAST_YEAR);
+                setDateRange({
+                  from: startOfYear(subYears(new Date(), 1)),
+                  to: endOfYear(subYears(getTodayDate(), 1)),
+                });
+              }}>
+              <p className="text-slate-700">{getFilterDropDownLabels(t).LAST_YEAR}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setIsDatePickerOpen(true);
+                setFilterRange(getFilterDropDownLabels(t).CUSTOM_RANGE);
+                setSelectingDate(DateSelected.FROM);
+              }}>
+              <p className="text-sm text-slate-700 hover:ring-0">{getFilterDropDownLabels(t).CUSTOM_RANGE}</p>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu
+          onOpenChange={(value) => {
+            value && handleDatePickerClose();
+            setIsDownloadDropDownOpen(value);
+          }}>
+          <DropdownMenuTrigger asChild>
+            <PopoverTriggerButton isOpen={isDownloadDropDownOpen} disabled={isDownloading}>
+              <span className="flex items-center gap-2">
+                {t("common.download")}
+                {isDownloading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+              </span>
+            </PopoverTriggerButton>
+          </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                data-testid="fb__custom-filter-download-all-csv"
-                onClick={async () => {
-                  await handleDownloadResponses(FilterDownload.ALL, "csv");
-                }}>
-                <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                data-testid="fb__custom-filter-download-all-xlsx"
-                onClick={async () => {
-                  await handleDownloadResponses(FilterDownload.ALL, "xlsx");
-                }}>
-                <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                data-testid="fb__custom-filter-download-filtered-csv"
-                onClick={async () => {
-                  await handleDownloadResponses(FilterDownload.FILTER, "csv");
-                }}>
-                <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                data-testid="fb__custom-filter-download-filtered-xlsx"
-                onClick={async () => {
-                  await handleDownloadResponses(FilterDownload.FILTER, "xlsx");
-                }}>
-                <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_excel")}</p>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        {isDatePickerOpen && (
-          <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
-            <Calendar
-              autoFocus
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={hoveredRange ? hoveredRange : dateRange}
-              numberOfMonths={2}
-              onDayClick={(date) => handleDateChange(date)}
-              onDayMouseEnter={handleDateHoveredChange}
-              onDayMouseLeave={() => setHoveredRange(null)}
-              classNames={{
-                day_today: "hover:bg-slate-200 bg-white",
-              }}
-            />
-          </div>
-        )}
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem
+              data-testid="fb__custom-filter-download-all-csv"
+              onClick={async () => {
+                await handleDownloadResponses(FilterDownload.ALL, "csv");
+              }}>
+              <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              data-testid="fb__custom-filter-download-all-xlsx"
+              onClick={async () => {
+                await handleDownloadResponses(FilterDownload.ALL, "xlsx");
+              }}>
+              <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              data-testid="fb__custom-filter-download-filtered-csv"
+              onClick={async () => {
+                await handleDownloadResponses(FilterDownload.FILTER, "csv");
+              }}>
+              <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_csv")}</p>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              data-testid="fb__custom-filter-download-filtered-xlsx"
+              onClick={async () => {
+                await handleDownloadResponses(FilterDownload.FILTER, "xlsx");
+              }}>
+              <p className="text-slate-700">{t("environments.surveys.summary.filtered_responses_excel")}</p>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </>
+      {isDatePickerOpen && (
+        <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
+          <Calendar
+            autoFocus
+            mode="range"
+            defaultMonth={dateRange?.from}
+            selected={hoveredRange || dateRange}
+            numberOfMonths={2}
+            onDayClick={(date) => handleDateChange(date)}
+            onDayMouseEnter={handleDateHoveredChange}
+            onDayMouseLeave={() => setHoveredRange(null)}
+            classNames={{
+              day_today: "hover:bg-slate-200 bg-white",
+            }}
+          />
+        </div>
+      )}
+    </div>
   );
 };

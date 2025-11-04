@@ -1,3 +1,11 @@
+import { headers } from "next/headers";
+import { NextRequest } from "next/server";
+import { UAParser } from "ua-parser-js";
+import { logger } from "@formbricks/logger";
+import { ZId } from "@formbricks/types/common";
+import { InvalidInputError } from "@formbricks/types/errors";
+import { TResponseWithQuotaFull } from "@formbricks/types/quota";
+import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -7,14 +15,6 @@ import { getSurvey } from "@/lib/survey/service";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateFileUploads } from "@/modules/storage/utils";
-import { headers } from "next/headers";
-import { NextRequest } from "next/server";
-import { UAParser } from "ua-parser-js";
-import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
-import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 
 interface Context {

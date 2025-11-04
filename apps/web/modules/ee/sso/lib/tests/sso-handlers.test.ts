@@ -1,3 +1,6 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
+import type { TUser } from "@formbricks/types/user";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -11,9 +14,6 @@ import {
   getIsSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
-import type { TUser } from "@formbricks/types/user";
 import { handleSsoCallback } from "../sso-handlers";
 import {
   mockAccount,

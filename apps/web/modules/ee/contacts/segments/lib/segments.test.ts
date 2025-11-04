@@ -1,6 +1,3 @@
-import { getEnvironment } from "@/lib/environment/service";
-import { getSurvey } from "@/lib/survey/service";
-import { validateInputs } from "@/lib/utils/validate";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -20,6 +17,9 @@ import {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import { TSegmentFilter } from "@formbricks/types/segment";
+import { getEnvironment } from "@/lib/environment/service";
+import { getSurvey } from "@/lib/survey/service";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   PrismaSegment,
   cloneSegment,

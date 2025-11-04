@@ -1,5 +1,17 @@
 "use client";
 
+import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
+import Image from "next/image";
+import React, {
+  ForwardRefExoticComponent,
+  Fragment,
+  RefAttributes,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import {
   Command,
@@ -21,18 +33,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslate } from "@tolgee/react";
-import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
-import Image from "next/image";
-import React, {
-  ForwardRefExoticComponent,
-  Fragment,
-  RefAttributes,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
@@ -88,7 +88,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   comboboxClasses,
   emptyDropdownText,
 }) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
   const [isClearing, setIsClearing] = useState(false);
   const [open, setOpen] = useState(false);
@@ -265,7 +265,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               <button autoFocus className="sr-only" aria-hidden type="button" />
             )}
 
-            <CommandList className="p-1">
+            <CommandList className="border-0 p-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
                 {emptyDropdownText ?? t("environments.surveys.edit.no_option_found")}
               </CommandEmpty>

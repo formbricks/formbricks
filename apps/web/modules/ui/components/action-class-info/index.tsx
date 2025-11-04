@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 
 interface ActionClassInfoProps {
@@ -13,7 +13,7 @@ const InfoItem = ({ children }: { children: React.ReactNode }) => (
 );
 
 export const ActionClassInfo = ({ actionClass, className = "" }: ActionClassInfoProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const renderUrlFilters = () => {
     const urlFilters = actionClass.noCodeConfig?.urlFilters;

@@ -1,5 +1,8 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
+import { TOrganization } from "@formbricks/types/organizations";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
@@ -8,9 +11,6 @@ import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utils
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
-import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 
 interface MembersInfoProps {
   organization: TOrganization;
@@ -39,7 +39,7 @@ export const MembersInfo = ({
   isUserManagementDisabledFromUi,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const getMembershipBadge = (member: TMember | TInvite) => {
     if (isInvitee(member)) {

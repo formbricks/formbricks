@@ -1,3 +1,7 @@
+import { NextRequest } from "next/server";
+import { z } from "zod";
+import { logger } from "@formbricks/logger";
+import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -15,10 +19,6 @@ import {
   ZUserInputPatch,
 } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { NextRequest } from "next/server";
-import { z } from "zod";
-import { logger } from "@formbricks/logger";
-import { OrganizationAccessType } from "@formbricks/types/api-key";
 
 export const GET = async (request: NextRequest, props: { params: Promise<{ organizationId: string }> }) =>
   authenticatedApiClient({

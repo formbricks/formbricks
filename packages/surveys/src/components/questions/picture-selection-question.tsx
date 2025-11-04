@@ -1,3 +1,7 @@
+import { useEffect, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyPictureSelectionQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -9,10 +13,6 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { getOriginalFileNameFromUrl } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyPictureSelectionQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
@@ -29,6 +29,7 @@ interface PictureSelectionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards: boolean;
 }
 
 export function PictureSelectionQuestion({
@@ -45,6 +46,7 @@ export function PictureSelectionQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<PictureSelectionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -101,7 +103,7 @@ export function PictureSelectionQuestion({
   const questionChoices = question.choices;
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

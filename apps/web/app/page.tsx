@@ -1,3 +1,6 @@
+import type { Session } from "next-auth";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -7,9 +10,6 @@ import { getUserProjectEnvironmentsByOrganizationIds } from "@/lib/project/servi
 import { getUser } from "@/lib/user/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
-import type { Session } from "next-auth";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 
 const Page = async () => {
   const session: Session | null = await getServerSession(authOptions);

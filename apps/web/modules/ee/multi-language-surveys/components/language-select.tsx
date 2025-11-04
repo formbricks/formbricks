@@ -1,14 +1,14 @@
 "use client";
 
+import { Language } from "@prisma/client";
+import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TIso639Language, iso639Languages } from "@formbricks/i18n-utils/src/utils";
+import { TUserLocale } from "@formbricks/types/user";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { Language } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
-import { ChevronDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { TIso639Language, iso639Languages } from "@formbricks/i18n-utils/src/utils";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface LanguageSelectProps {
   language: Language;
@@ -18,7 +18,7 @@ interface LanguageSelectProps {
 }
 
 export function LanguageSelect({ language, onLanguageChange, disabled, locale }: LanguageSelectProps) {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState(
@@ -43,8 +43,13 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
     setIsOpen(false);
   };
 
+  // Most ISO entries don't ship with every locale translation, so fall back to
+  // English to keep the dropdown readable for locales such as Dutch that were
+  // added recently.
+  const getLabelForLocale = (item: TIso639Language) => item.label[locale] ?? item.label["en-US"];
+
   const filteredItems = items.filter((item) =>
-    item.label[locale].toLowerCase().includes(searchTerm.toLowerCase())
+    getLabelForLocale(item).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Focus the input when the dropdown is opened
@@ -61,7 +66,9 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         disabled={disabled}
         onClick={toggleDropdown}
         variant="ghost">
-        <span className="mr-2">{selectedOption?.label[locale] ?? t("common.select")}</span>
+        <span className="mr-2">
+          {selectedOption ? getLabelForLocale(selectedOption) : t("common.select")}
+        </span>
         <ChevronDown className="h-4 w-4" />
       </Button>
       <div
@@ -84,7 +91,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
               onClick={() => {
                 handleOptionSelect(item);
               }}>
-              {item.label[locale]}
+              {getLabelForLocale(item)}
             </button>
           ))}
         </div>

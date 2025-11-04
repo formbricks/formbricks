@@ -1,16 +1,16 @@
 "use client";
 
+import { DownloadIcon, FileIcon } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { getOriginalFileNameFromUrl } from "@/modules/storage/utils";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslate } from "@tolgee/react";
-import { DownloadIcon, FileIcon } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface FileUploadSummaryProps {
@@ -27,7 +27,7 @@ export const FileUploadSummary = ({
   locale,
 }: FileUploadSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>

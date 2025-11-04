@@ -1,8 +1,8 @@
-import { validateInputs } from "@/lib/utils/validate";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import { getWebhookCountBySource } from "./webhook";
 
 vi.mock("@/lib/utils/validate");

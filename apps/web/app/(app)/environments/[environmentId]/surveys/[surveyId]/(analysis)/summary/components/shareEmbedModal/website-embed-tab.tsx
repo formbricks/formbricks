@@ -1,12 +1,12 @@
 "use client";
 
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
-import { Button } from "@/modules/ui/components/button";
-import { CodeBlock } from "@/modules/ui/components/code-block";
-import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
+import { CodeBlock } from "@/modules/ui/components/code-block";
 
 interface WebsiteEmbedTabProps {
   surveyUrl: string;
@@ -14,7 +14,7 @@ interface WebsiteEmbedTabProps {
 
 export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
   const [embedModeEnabled, setEmbedModeEnabled] = useState(false);
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const iframeCode = `<div style="position: relative; height:80dvh; overflow:auto;"> 
   <iframe 

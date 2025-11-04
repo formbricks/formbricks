@@ -1,5 +1,5 @@
-import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import { useTranslation } from "react-i18next";
+import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
 interface ErrorComponentProps {
   readonly errorType: TResponseErrorCodesEnum.RecaptchaError | TResponseErrorCodesEnum.InvalidDeviceError;

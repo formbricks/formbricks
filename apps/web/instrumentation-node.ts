@@ -1,5 +1,4 @@
 // instrumentation-node.ts
-import { env } from "@/lib/env";
 import { PrometheusExporter } from "@opentelemetry/exporter-prometheus";
 import { HostMetrics } from "@opentelemetry/host-metrics";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
@@ -14,6 +13,7 @@ import {
 } from "@opentelemetry/resources";
 import { MeterProvider } from "@opentelemetry/sdk-metrics";
 import { logger } from "@formbricks/logger";
+import { env } from "@/lib/env";
 
 const exporter = new PrometheusExporter({
   port: env.PROMETHEUS_EXPORTER_PORT ? parseInt(env.PROMETHEUS_EXPORTER_PORT) : 9464,

@@ -1,3 +1,6 @@
+import { useState } from "preact/hooks";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyNPSQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -7,9 +10,6 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useState } from "preact/hooks";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyNPSQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
@@ -26,6 +26,7 @@ interface NPSQuestionProps {
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  fullSizeCards: boolean;
 }
 
 export function NPSQuestion({
@@ -42,6 +43,7 @@ export function NPSQuestion({
   currentQuestionId,
   isBackButtonHidden,
   dir = "auto",
+  fullSizeCards,
 }: Readonly<NPSQuestionProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
@@ -70,7 +72,7 @@ export function NPSQuestion({
   };
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

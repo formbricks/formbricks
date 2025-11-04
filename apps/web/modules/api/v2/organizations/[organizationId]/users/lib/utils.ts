@@ -1,6 +1,6 @@
+import { Prisma } from "@prisma/client";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
-import { Prisma } from "@prisma/client";
 
 export const getUsersQuery = (organizationId: string, params?: TGetUsersFilter) => {
   let query: Prisma.UserFindManyArgs = {

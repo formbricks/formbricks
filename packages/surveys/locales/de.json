@@ -48,7 +48,6 @@
       "duplicate_files": "Die folgenden Dateien sind bereits hochgeladen: {duplicateNames}. Doppelte Dateien sind nicht erlaubt.",
       "file_size_exceeded": "Die folgenden Dateien überschreiten die maximale Größe von {maxSizeInMB} MB und wurden entfernt: {fileNames}",
       "file_size_exceeded_alert": "Die Datei sollte kleiner als {maxSizeInMB} MB sein",
-      "native_upload_failed": "Fehler beim Hochladen der nativen Datei.",
       "no_valid_file_types_selected": "Keine gültigen Dateitypen ausgewählt. Bitte wählen Sie einen gültigen Dateityp.",
       "only_one_file_can_be_uploaded_at_a_time": "Es kann nur eine Datei gleichzeitig hochgeladen werden.",
       "upload_failed": "Upload fehlgeschlagen! Bitte versuchen Sie es erneut.",
@@ -59,7 +58,9 @@
       "title": "Dieses Gerät unterstützt keinen Spam-Schutz."
     },
     "please_book_an_appointment": "Bitte vereinbaren Sie einen Termin",
+    "please_enter_a_valid_email_address": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "please_enter_a_valid_phone_number": "Bitte geben Sie eine gültige Telefonnummer ein",
+    "please_enter_a_valid_url": "Bitte geben Sie eine gültige URL ein",
     "please_fill_out_this_field": "Bitte füllen Sie dieses Feld aus",
     "please_rank_all_items_before_submitting": "Bitte ordnen Sie alle Elemente vor dem Absenden",
     "please_select_a_date": "Bitte wählen Sie ein Datum aus",

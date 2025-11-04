@@ -1,7 +1,6 @@
 "use client";
 
-import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslate } from "@tolgee/react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -9,6 +8,7 @@ import {
   TSurveyQuestionSummaryConsent,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -25,7 +25,7 @@ interface ConsentSummaryProps {
 }
 
 export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSummaryProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const summaryItems = [
     {
       title: t("common.accepted"),

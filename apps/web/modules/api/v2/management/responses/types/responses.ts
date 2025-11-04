@@ -1,6 +1,6 @@
-import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import { z } from "zod";
 import { ZResponse } from "@formbricks/database/zod/responses";
+import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 
 export const ZGetResponsesFilter = ZGetFilter.extend({
   surveyId: z.string().cuid2().optional(),
@@ -32,16 +32,20 @@ export const ZResponseInput = ZResponse.pick({
   variables: true,
   ttc: true,
   meta: true,
-}).partial({
-  displayId: true,
-  singleUseId: true,
-  endingId: true,
-  language: true,
-  variables: true,
-  ttc: true,
-  meta: true,
-  createdAt: true,
-  updatedAt: true,
-});
+})
+  .partial({
+    displayId: true,
+    singleUseId: true,
+    endingId: true,
+    language: true,
+    variables: true,
+    ttc: true,
+    meta: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    userId: z.string().optional(),
+  });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;

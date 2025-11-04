@@ -13,7 +13,6 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
 import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
-import { useTranslate } from "@tolgee/react";
 import type { RangeSelection } from "lexical";
 import {
   $createParagraphNode,
@@ -25,6 +24,7 @@ import {
 } from "lexical";
 import { AtSign, Bold, ChevronDownIcon, Italic, Link, PencilIcon, Underline } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -112,7 +112,7 @@ export const ToolbarPlugin = (
 ) => {
   const [editor] = useLexicalComposerContext();
 
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const toolbarRef = useRef(null);
   const [blockType, setBlockType] = useState("paragraph");
   const [isLink, setIsLink] = useState(false);
@@ -274,6 +274,8 @@ export const ToolbarPlugin = (
         });
       });
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -315,6 +317,14 @@ export const ToolbarPlugin = (
 
   if (!props.editable) return <></>;
 
+  const getLinkItemTooltipText = () => {
+    if (!props.isExternalUrlsAllowed) {
+      return t("environments.surveys.edit.external_urls_paywall_tooltip");
+    }
+
+    return isLink ? t("environments.surveys.edit.edit_link") : t("environments.surveys.edit.insert_link");
+  };
+
   const items = [
     {
       key: "bold",
@@ -345,10 +355,8 @@ export const ToolbarPlugin = (
       icon: Link,
       onClick: insertLink,
       active: isLink,
-      tooltipText: isLink
-        ? t("environments.surveys.edit.edit_link")
-        : t("environments.surveys.edit.insert_link"),
-      disabled: !isLink && !hasTextSelection,
+      tooltipText: getLinkItemTooltipText(),
+      disabled: !props.isExternalUrlsAllowed || (!isLink && !hasTextSelection),
     },
     {
       key: "recall",

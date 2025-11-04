@@ -1,8 +1,8 @@
-import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
-import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { getOrganization, updateOrganization } from "@/lib/organization/service";
 
 export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
@@ -30,4 +30,12 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
       period: "monthly",
     },
   });
+
+  logger.info(
+    {
+      organizationId,
+      subscriptionId: stripeSubscriptionObject.id,
+    },
+    "Subscription cancelled - downgraded to FREE plan"
+  );
 };

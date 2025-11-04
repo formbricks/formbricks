@@ -34,8 +34,11 @@
     "prepare": "husky install",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
-    "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./apps/web/locales/*.json",
-    "i18n:generate": " pnpm --filter @formbricks/surveys i18n:generate"
+    "i18n:generate": " pnpm --filter @formbricks/surveys i18n:generate",
+    "generate-translations": "cd apps/web && npx lingo.dev@latest i18n",
+    "scan-translations": "pnpm --filter @formbricks/i18n-utils scan-translations",
+    "i18n": "pnpm generate-translations && pnpm scan-translations",
+    "i18n:validate": "pnpm scan-translations"
   },
   "dependencies": {
     "react": "19.1.0",
@@ -46,6 +49,7 @@
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.52.0",
     "eslint": "8.57.0",
+    "glob": "^11.0.2",
     "husky": "9.1.7",
     "lint-staged": "16.0.0",
     "rimraf": "6.0.1",
@@ -75,7 +79,7 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "next-auth@4.24.11": "patches/next-auth@4.24.11.patch"
+      "next-auth@4.24.12": "patches/next-auth@4.24.12.patch"
     },
     "overrides": {
       "axios": ">=1.12.2",

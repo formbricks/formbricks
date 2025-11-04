@@ -1,3 +1,8 @@
+import { useEffect } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
+import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { LoadingSpinner } from "@/components/general/loading-spinner";
@@ -6,11 +11,6 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
-import { useEffect } from "preact/hooks";
-import { useTranslation } from "react-i18next";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
-import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface EndingCardProps {
   survey: TJsEnvironmentStateSurvey;
@@ -24,6 +24,7 @@ interface EndingCardProps {
   variablesData: TResponseVariables;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   isPreviewMode: boolean;
+  fullSizeCards: boolean;
 }
 
 export function EndingCard({
@@ -38,6 +39,7 @@ export function EndingCard({
   variablesData,
   onOpenExternalURL,
   isPreviewMode,
+  fullSizeCards,
 }: EndingCardProps) {
   const { t } = useTranslation();
   const media =
@@ -112,7 +114,7 @@ export function EndingCard({
   }, [isCurrent]);
 
   return (
-    <ScrollableContainer>
+    <ScrollableContainer fullSizeCards={fullSizeCards}>
       <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>

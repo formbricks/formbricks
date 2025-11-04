@@ -48,7 +48,6 @@
       "duplicate_files": "Următoarele fișiere sunt deja încărcate: {duplicateNames}. Fișierele duplicate nu sunt permise.",
       "file_size_exceeded": "Următoarele fișiere depășesc dimensiunea maximă de {maxSizeInMB} MB și au fost eliminate: {fileNames}",
       "file_size_exceeded_alert": "Fișierul trebuie să fie mai mic de {maxSizeInMB} MB",
-      "native_upload_failed": "Eroare la încărcarea fișierului nativ.",
       "no_valid_file_types_selected": "Nu au fost selectate tipuri de fișiere valide. Te rugăm să selectezi un tip de fișier valid.",
       "only_one_file_can_be_uploaded_at_a_time": "Poți încărca doar un singur fișier odată.",
       "upload_failed": "Încărcarea a eșuat! Te rugăm să încerci din nou.",
@@ -59,7 +58,9 @@
       "title": "Acest dispozitiv nu acceptă protecția împotriva spamului."
     },
     "please_book_an_appointment": "Vă rugăm să faceți o programare",
+    "please_enter_a_valid_email_address": "Vă rugăm să introduceți o adresă de email validă",
     "please_enter_a_valid_phone_number": "Vă rugăm să introduceți un număr de telefon valid",
+    "please_enter_a_valid_url": "Vă rugăm să introduceți un URL valid",
     "please_fill_out_this_field": "Vă rugăm să completați acest câmp",
     "please_rank_all_items_before_submitting": "Vă rugăm să clasificați toate elementele înainte de a trimite",
     "please_select_a_date": "Vă rugăm să selectați o dată",

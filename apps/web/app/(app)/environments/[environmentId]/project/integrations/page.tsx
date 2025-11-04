@@ -1,3 +1,7 @@
+import { TFunction } from "i18next";
+import Image from "next/image";
+import { redirect } from "next/navigation";
+import { TIntegrationType } from "@formbricks/types/integration";
 import { getWebhookCountBySource } from "@/app/(app)/environments/[environmentId]/project/integrations/lib/webhook";
 import ActivePiecesLogo from "@/images/activepieces.webp";
 import AirtableLogo from "@/images/airtableLogo.svg";
@@ -10,18 +14,14 @@ import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import { getIntegrations } from "@/lib/integration/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslate } from "@/tolgee/server";
-import { TFnType } from "@tolgee/react";
-import Image from "next/image";
-import { redirect } from "next/navigation";
-import { TIntegrationType } from "@formbricks/types/integration";
 
-const getStatusText = (count: number, t: TFnType, type: string) => {
+const getStatusText = (count: number, t: TFunction, type: string) => {
   if (count === 1) return `1 ${type}`;
   if (count === 0) return t("common.not_connected");
   return `${count} ${type}s`;

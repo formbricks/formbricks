@@ -5,14 +5,14 @@ import {
   organizationEnvironments,
   organizationId,
 } from "./__mocks__/organization.mock";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import {
   getAllEnvironmentsFromOrganizationId,
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
   getOrganizationIdFromEnvironmentId,
 } from "@/modules/api/v2/management/responses/lib/organization";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {

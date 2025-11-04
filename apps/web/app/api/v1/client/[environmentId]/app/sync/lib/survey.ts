@@ -1,10 +1,4 @@
 import "server-only";
-import { getProjectByEnvironmentId } from "@/lib/project/service";
-import { getSurveys } from "@/lib/survey/service";
-import { anySurveyHasFilters } from "@/lib/survey/utils";
-import { diffInDays } from "@/lib/utils/datetime";
-import { validateInputs } from "@/lib/utils/validate";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -12,6 +6,12 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getProjectByEnvironmentId } from "@/lib/project/service";
+import { getSurveys } from "@/lib/survey/service";
+import { anySurveyHasFilters } from "@/lib/survey/utils";
+import { diffInDays } from "@/lib/utils/datetime";
+import { validateInputs } from "@/lib/utils/validate";
+import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
 export const getSyncSurveys = reactCache(
   async (

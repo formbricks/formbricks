@@ -1,4 +1,4 @@
-import { TFnType } from "@tolgee/react";
+import { TFunction } from "i18next";
 
 export type TPricingPlan = {
   id: string;
@@ -14,7 +14,7 @@ export type TPricingPlan = {
   href?: string;
 };
 
-export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
+export const getCloudPricingData = (t: TFunction): { plans: TPricingPlan[] } => {
   const freePlan: TPricingPlan = {
     id: "free",
     name: t("environments.settings.billing.free"),
@@ -52,13 +52,12 @@ export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
       t("environments.settings.billing.7500_contacts"),
       t("environments.settings.billing.3_projects"),
       t("environments.settings.billing.remove_branding"),
-      t("environments.settings.billing.email_follow_ups"),
       t("environments.settings.billing.attribute_based_targeting"),
     ],
   };
 
   const customPlan: TPricingPlan = {
-    id: "enterprise",
+    id: "custom",
     name: t("environments.settings.billing.custom"),
     featured: false,
     CTA: t("common.request_pricing"),
@@ -69,6 +68,7 @@ export const getCloudPricingData = (t: TFnType): { plans: TPricingPlan[] } => {
     },
     mainFeatures: [
       t("environments.settings.billing.everything_in_startup"),
+      t("environments.settings.billing.email_follow_ups"),
       t("environments.settings.billing.custom_response_limit"),
       t("environments.settings.billing.custom_contacts_limit"),
       t("environments.settings.billing.custom_project_limit"),

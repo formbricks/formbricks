@@ -1,11 +1,11 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
-import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   return (
     <div className="mt-6 p-6">
       <GoBackButton />

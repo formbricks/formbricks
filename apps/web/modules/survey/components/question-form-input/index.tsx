@@ -1,10 +1,10 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslate } from "@tolgee/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   TI18nString,
   TSurvey,
@@ -60,6 +60,7 @@ interface QuestionFormInputProps {
   autoFocus?: boolean;
   firstRender?: boolean;
   setFirstRender?: (value: boolean) => void;
+  isExternalUrlsAllowed?: boolean;
 }
 
 export const QuestionFormInput = ({
@@ -85,8 +86,9 @@ export const QuestionFormInput = ({
   autoFocus,
   firstRender: externalFirstRender,
   setFirstRender: externalSetFirstRender,
+  isExternalUrlsAllowed,
 }: QuestionFormInputProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
@@ -363,6 +365,7 @@ export const QuestionFormInput = ({
                 questionId={questionId}
                 isCard={isWelcomeCard || isEndingCard}
                 autoFocus={autoFocus}
+                isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
 

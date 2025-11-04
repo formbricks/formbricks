@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
@@ -26,7 +26,7 @@ interface PricingTableProps {
   projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
-    ENTERPRISE: string;
+    CUSTOM: string;
   };
   hasBillingRights: boolean;
 }
@@ -41,7 +41,7 @@ export const PricingTable = ({
   stripePriceLookupKeys,
   hasBillingRights,
 }: PricingTableProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>(
     organization.billing.period ?? "monthly"
   );
@@ -127,11 +127,11 @@ export const PricingTable = ({
   };
 
   const responsesUnlimitedCheck =
-    organization.billing.plan === "enterprise" && organization.billing.limits.monthly.responses === null;
+    organization.billing.plan === "custom" && organization.billing.limits.monthly.responses === null;
   const peopleUnlimitedCheck =
-    organization.billing.plan === "enterprise" && organization.billing.limits.monthly.miu === null;
+    organization.billing.plan === "custom" && organization.billing.limits.monthly.miu === null;
   const projectsUnlimitedCheck =
-    organization.billing.plan === "enterprise" && organization.billing.limits.projects === null;
+    organization.billing.plan === "custom" && organization.billing.limits.projects === null;
 
   return (
     <main>

@@ -1,9 +1,9 @@
+import Image from "next/image";
+import { useTranslation } from "react-i18next";
+import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslate } from "@tolgee/react";
-import Image from "next/image";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 interface OptionIdsProps {
   question: TSurveyQuestion;
@@ -11,7 +11,7 @@ interface OptionIdsProps {
 }
 
 export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) => {
-  const { t } = useTranslate();
+  const { t } = useTranslation();
 
   const renderChoiceIds = () => {
     switch (question.type) {

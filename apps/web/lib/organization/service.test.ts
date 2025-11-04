@@ -1,9 +1,9 @@
-import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
-import { updateUser } from "@/lib/user/service";
 import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
+import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@/lib/constants";
+import { updateUser } from "@/lib/user/service";
 import {
   createOrganization,
   getOrganization,

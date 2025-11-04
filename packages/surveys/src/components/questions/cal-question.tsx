@@ -1,3 +1,7 @@
+import { useCallback, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import { type TSurveyCalQuestion, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { CalEmbed } from "@/components/general/cal-embed";
@@ -10,10 +14,6 @@ import {
 } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useCallback, useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import { type TSurveyCalQuestion, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;
@@ -29,6 +29,7 @@ interface CalQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  fullSizeCards: boolean;
 }
 
 export function CalQuestion({
@@ -44,6 +45,7 @@ export function CalQuestion({
   setTtc,
   currentQuestionId,
   isBackButtonHidden,
+  fullSizeCards,
 }: Readonly<CalQuestionProps>) {
   const { t } = useTranslation();
   const [startTime, setStartTime] = useState(performance.now());
@@ -60,7 +62,7 @@ export function CalQuestion({
   }, [onChange, onSubmit, question.id, setTtc, startTime, ttc]);
 
   return (
-    <ScrollableContainer ref={scrollableRef}>
+    <ScrollableContainer ref={scrollableRef} fullSizeCards={fullSizeCards}>
       <form
         key={question.id}
         onSubmit={(e) => {

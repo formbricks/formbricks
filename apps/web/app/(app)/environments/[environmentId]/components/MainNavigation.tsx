@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslate } from "@tolgee/react";
 import {
   ArrowUpRightIcon,
   ChevronRightIcon,
@@ -17,6 +16,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -42,7 +42,7 @@ interface NavigationProps {
   environment: TEnvironment;
   user: TUser;
   organization: TOrganization;
-  projects: { id: string; name: string }[];
+  project: { id: string; name: string };
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
@@ -52,20 +52,19 @@ export const MainNavigation = ({
   environment,
   organization,
   user,
-  projects,
+  project,
   membershipRole,
   isFormbricksCloud,
   isDevelopment,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { t } = useTranslate();
+  const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
-  const project = projects.find((project) => project.id === environment.projectId);
   const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
 
   const isOwnerOrManager = isManager || isOwner;

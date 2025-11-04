@@ -1,13 +1,7 @@
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TLanguage } from "@formbricks/types/project";
 import { TI18nString, TSurveyLanguage } from "@formbricks/types/surveys/types";
-import { INVISIBLE_REGEX } from "@/lib/i18n/constants";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-
-// https://github.com/tolgee/tolgee-js/blob/main/packages/web/src/package/observers/invisible/secret.ts
-const removeTolgeeInvisibleMarks = (str: string) => {
-  return str.replace(INVISIBLE_REGEX, "");
-};
 
 // Helper function to create an i18nString from a regular string.
 export const createI18nString = (
@@ -36,7 +30,7 @@ export const createI18nString = (
   } else {
     // It's a regular string, so create a new i18n object
     const i18nString: any = {
-      [targetLanguageCode ?? "default"]: removeTolgeeInvisibleMarks(text),
+      [targetLanguageCode ?? "default"]: text,
     };
 
     // Initialize all provided languages with empty strings
@@ -143,6 +137,7 @@ export const appLanguages = [
       "ro-RO": "Engleză (SUA)",
       "ja-JP": "英語（米国）",
       "zh-Hans-CN": "英语（美国）",
+      "nl-NL": "Engels (VS)",
     },
   },
   {
@@ -157,6 +152,7 @@ export const appLanguages = [
       "ro-RO": "Germană",
       "ja-JP": "ドイツ語",
       "zh-Hans-CN": "德语",
+      "nl-NL": "Duits",
     },
   },
   {
@@ -171,6 +167,7 @@ export const appLanguages = [
       "ro-RO": "Portugheză (Brazilia)",
       "ja-JP": "ポルトガル語（ブラジル）",
       "zh-Hans-CN": "葡萄牙语（巴西）",
+      "nl-NL": "Portugees (Brazilië)",
     },
   },
   {
@@ -185,6 +182,7 @@ export const appLanguages = [
       "ro-RO": "Franceză",
       "ja-JP": "フランス語",
       "zh-Hans-CN": "法语",
+      "nl-NL": "Frans",
     },
   },
   {
@@ -199,6 +197,7 @@ export const appLanguages = [
       "ro-RO": "Chineză (Tradicională)",
       "ja-JP": "中国語（繁体字）",
       "zh-Hans-CN": "繁体中文",
+      "nl-NL": "Chinees (Traditioneel)",
     },
   },
   {
@@ -213,6 +212,7 @@ export const appLanguages = [
       "ro-RO": "Portugheză (Portugalia)",
       "ja-JP": "ポルトガル語（ポルトガル）",
       "zh-Hans-CN": "葡萄牙语（葡萄牙）",
+      "nl-NL": "Portugees (Portugal)",
     },
   },
   {
@@ -227,6 +227,7 @@ export const appLanguages = [
       "ro-RO": "Română",
       "ja-JP": "ルーマニア語",
       "zh-Hans-CN": "罗马尼亚语",
+      "nl-NL": "Roemeens",
     },
   },
   {
@@ -241,6 +242,7 @@ export const appLanguages = [
       "ro-RO": "Japoneză",
       "ja-JP": "日本語",
       "zh-Hans-CN": "日语",
+      "nl-NL": "Japans",
     },
   },
   {
@@ -255,6 +257,22 @@ export const appLanguages = [
       "ro-RO": "Chineză (Simplificată)",
       "ja-JP": "中国語（簡体字）",
       "zh-Hans-CN": "简体中文",
+      "nl-NL": "Chinees (Vereenvoudigd)",
+    },
+  },
+  {
+    code: "nl-NL",
+    label: {
+      "en-US": "Dutch",
+      "de-DE": "Niederländisch",
+      "pt-BR": "Holandês",
+      "fr-FR": "Néerlandais",
+      "zh-Hant-TW": "荷蘭語",
+      "pt-PT": "Holandês",
+      "ro-RO": "Olandeză",
+      "ja-JP": "オランダ語",
+      "zh-Hans-CN": "荷兰语",
+      "nl-NL": "Nederlands",
     },
   },
 ];

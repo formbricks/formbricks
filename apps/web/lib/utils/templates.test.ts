@@ -1,9 +1,9 @@
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { replacePresetPlaceholders, replaceQuestionPresetPlaceholders } from "./templates";
 
 // Mock the imported functions

@@ -1,7 +1,7 @@
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { OrganizationRole } from "@prisma/client";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 export const getRoles = (): Result<{ data: string[] }, ApiErrorResponseV2> => {
   try {

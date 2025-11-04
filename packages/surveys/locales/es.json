@@ -48,7 +48,6 @@
       "duplicate_files": "Los siguientes archivos ya están subidos: {duplicateNames}. No se permiten archivos duplicados.",
       "file_size_exceeded": "Los siguientes archivos exceden el tamaño máximo de {maxSizeInMB} MB y fueron eliminados: {fileNames}",
       "file_size_exceeded_alert": "El archivo debe ser menor de {maxSizeInMB} MB",
-      "native_upload_failed": "Error al subir el archivo nativo.",
       "no_valid_file_types_selected": "No se han seleccionado tipos de archivo válidos. Por favor, selecciona un tipo de archivo válido.",
       "only_one_file_can_be_uploaded_at_a_time": "Solo se puede subir un archivo a la vez.",
       "upload_failed": "¡Subida fallida! Por favor, inténtalo de nuevo.",
@@ -59,7 +58,9 @@
       "title": "Este dispositivo no es compatible con la protección contra spam."
     },
     "please_book_an_appointment": "Por favor, reserve una cita",
+    "please_enter_a_valid_email_address": "Por favor, introduce una dirección de correo electrónico válida",
     "please_enter_a_valid_phone_number": "Por favor, introduzca un número de teléfono válido",
+    "please_enter_a_valid_url": "Por favor, introduce una URL válida",
     "please_fill_out_this_field": "Por favor, complete este campo",
     "please_rank_all_items_before_submitting": "Por favor, clasifique todos los elementos antes de enviar",
     "please_select_a_date": "Por favor, seleccione una fecha",

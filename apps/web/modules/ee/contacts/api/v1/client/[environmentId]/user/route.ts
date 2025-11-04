@@ -1,11 +1,11 @@
-import { responses } from "@/app/lib/api/response";
-import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
+import { responses } from "@/app/lib/api/response";
+import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
 
 export const OPTIONS = async (): Promise<Response> => {
