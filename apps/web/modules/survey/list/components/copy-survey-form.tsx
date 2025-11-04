@@ -129,7 +129,6 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: C
 
           return {
             operation: copySurveyToOtherEnvironmentAction({
-              environmentId: survey.environmentId,
               surveyId: survey.id,
               targetEnvironmentId: environmentId,
             }),
