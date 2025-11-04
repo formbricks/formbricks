@@ -721,14 +721,14 @@ checksums:
     environments/project/api_keys/secret: f041e5eb96121c8b4f2b8af7e0f83a9b
     environments/project/api_keys/unable_to_delete_api_key: 1fd76d9a22c5f5f8c241c4891fca8295
     environments/project/app-connection/app_connection: 778d2305e1a9c8efe91c2c7b4af37ae4
-    environments/project/app-connection/app_connection_description: 01327bfae3da950d796890b6605afed2
+    environments/project/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd
     environments/project/app-connection/cache_update_delay_description: 1cb2c46fdb6762ccb348d21086063a4f
     environments/project/app-connection/cache_update_delay_title: fef7f99f0228f9e30093574ac7770e7e
     environments/project/app-connection/environment_id: 3dba898b081c18cd4cae131765ef411f
     environments/project/app-connection/environment_id_description: 8b4a763d069b000cfa1a2025a13df80c
     environments/project/app-connection/formbricks_sdk_connected: 29e8a40ad6a7fdb5af5ee9451a70a9aa
     environments/project/app-connection/formbricks_sdk_not_connected: 557c534e665750978ba6edb0eacb428e
-    environments/project/app-connection/formbricks_sdk_not_connected_description: 666b2b25f06e76554cc2d60f925bcd4b
+    environments/project/app-connection/formbricks_sdk_not_connected_description: 4ddbacae084238bd0cefeded0fe9dbb9
     environments/project/app-connection/how_to_setup: 3bad40037f280b47fe6418fcbeb4c717
     environments/project/app-connection/how_to_setup_description: 2ae5cd9456a8acd3986e3d3678e70ed2
     environments/project/app-connection/receiving_data: 9f2a48c0b0278861add70b526061264c
