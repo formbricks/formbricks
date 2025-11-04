@@ -289,12 +289,6 @@ If you prefer to add MinIO to your own `docker-compose.yml`, follow these steps:
   docker compose exec formbricks sh -c 'wget -O- http://minio:9000/minio/health/ready'
   ```
 
-<Warning>
-  For production deployments with HTTPS and a subdomain, use the
-  <a href="/self-hosting/setup/one-click">one-click setup script</a>. It configures Traefik, TLS (Let’s
-  Encrypt), CORS, rate limiting, and sane defaults for MinIO.
-</Warning>
-
 ### Production Setup with Traefik
 
 For production deployments, use the [one-click setup script](/self-hosting/setup/one-click) which automatically configures:
