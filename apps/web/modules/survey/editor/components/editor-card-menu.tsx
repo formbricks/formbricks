@@ -70,10 +70,9 @@ export const EditorCardMenu = ({
 
     return undefined;
   });
+  const questions = survey.blocks.flatMap((block) => block.elements);
   const isDeleteDisabled =
-    cardType === "question"
-      ? survey.questions.length === 1
-      : survey.type === "link" && survey.endings.length === 1;
+    cardType === "question" ? questions.length === 1 : survey.type === "link" && survey.endings.length === 1;
 
   const availableQuestionTypes = isCxMode ? getCXQuestionNameMap(t) : getQuestionNameMap(t);
 

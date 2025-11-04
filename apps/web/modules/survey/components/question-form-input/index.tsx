@@ -6,6 +6,7 @@ import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -92,7 +93,9 @@ export const QuestionFormInput = ({
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
-  const question: TSurveyQuestion = localSurvey.questions[questionIdx];
+  const questions = localSurvey.blocks?.flatMap((block) => block.elements) ?? localSurvey.questions;
+
+  const question: TSurveyElement = questions[questionIdx];
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
@@ -100,7 +103,7 @@ export const QuestionFormInput = ({
     return isChoice || isMatrixLabelColumn || isMatrixLabelRow ? id.split("-")[0] : id;
   }, [id, isChoice, isMatrixLabelColumn, isMatrixLabelRow]);
 
-  const isEndingCard = questionIdx >= localSurvey.questions.length;
+  const isEndingCard = questionIdx >= questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
@@ -108,7 +111,7 @@ export const QuestionFormInput = ({
     return isWelcomeCard
       ? "start"
       : isEndingCard
-        ? localSurvey.endings[questionIdx - localSurvey.questions.length].id
+        ? localSurvey.endings[questionIdx - questions.length].id
         : question.id;
     //eslint-disable-next-line
   }, [isWelcomeCard, isEndingCard, question?.id]);
@@ -133,7 +136,7 @@ export const QuestionFormInput = ({
     }
 
     if (isEndingCard) {
-      return getEndingCardText(localSurvey, id, surveyLanguageCodes, questionIdx);
+      return getEndingCardText(localSurvey, questions, id, surveyLanguageCodes, questionIdx);
     }
 
     if ((isMatrixLabelColumn || isMatrixLabelRow) && typeof index === "number") {
@@ -160,6 +163,7 @@ export const QuestionFormInput = ({
     localSurvey,
     question,
     questionIdx,
+    questions,
     surveyLanguageCodes,
   ]);
 

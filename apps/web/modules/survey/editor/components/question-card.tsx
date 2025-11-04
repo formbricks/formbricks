@@ -9,6 +9,8 @@ import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
+import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
   TSurveyQuestion,
@@ -36,6 +38,7 @@ import { OpenQuestionForm } from "@/modules/survey/editor/components/open-questi
 import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
 import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-question-form";
 import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
+import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -49,6 +52,13 @@ interface QuestionCardProps {
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (questionIdx: number, logicFallback: string | undefined) => void;
+  updateBlockButtonLabel: (
+    blockIndex: number,
+    labelKey: "buttonLabel" | "backButtonLabel",
+    labelValue: TI18nString | undefined
+  ) => void;
   deleteQuestion: (questionIdx: number) => void;
   duplicateQuestion: (questionIdx: number) => void;
   activeQuestionId: TSurveyQuestionId | null;
@@ -74,6 +84,9 @@ export const QuestionCard = ({
   questionIdx,
   moveQuestion,
   updateQuestion,
+  updateBlockLogic,
+  updateBlockLogicFallback,
+  updateBlockButtonLabel,
   duplicateQuestion,
   deleteQuestion,
   activeQuestionId,
@@ -97,19 +110,30 @@ export const QuestionCard = ({
   const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const open = activeQuestionId === question.id;
-  const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
+
+  // Find the parent block for this question/element to get its logic
+  const { blockIndex: parentBlockIndex } = findElementLocation(localSurvey, question.id);
+  const parentBlock = parentBlockIndex !== -1 ? localSurvey.blocks[parentBlockIndex] : undefined;
+  const blockLogic = parentBlock?.logic ?? [];
+
+  const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);
   const [parent] = useAutoAnimate();
+
+  // Get button labels from the parent block (not from element)
+  const blockButtonLabel = parentBlock?.buttonLabel;
+  const blockBackButtonLabel = parentBlock?.backButtonLabel;
 
   const updateEmptyButtonLabels = (
     labelKey: "buttonLabel" | "backButtonLabel",
     labelValue: TI18nString,
-    skipIndex: number
+    skipBlockIndex: number
   ) => {
-    localSurvey.questions.forEach((q, index) => {
-      if (index === skipIndex) return;
-      const currentLabel = q[labelKey];
+    // Update button labels for all blocks except the one at skipBlockIndex
+    localSurvey.blocks.forEach((block, index) => {
+      if (index === skipBlockIndex) return;
+      const currentLabel = block[labelKey];
       if (!currentLabel || currentLabel[selectedLanguageCode]?.trim() === "") {
-        updateQuestion(index, { [labelKey]: labelValue });
+        updateBlockButtonLabel(index, labelKey, labelValue);
       }
     });
   };
@@ -169,7 +193,11 @@ export const QuestionCard = ({
   const handleRequiredToggle = () => {
     // Fix for NPS and Rating questions having missing translations when buttonLabel is not removed
     if (!question.required && (question.type === "nps" || question.type === "rating")) {
-      updateQuestion(questionIdx, { required: true, buttonLabel: undefined });
+      // Remove buttonLabel from the block when making NPS/Rating required
+      if (parentBlockIndex !== -1) {
+        updateBlockButtonLabel(parentBlockIndex, "buttonLabel", undefined);
+      }
+      updateQuestion(questionIdx, { required: true });
     } else {
       updateQuestion(questionIdx, { required: !question.required });
     }
@@ -510,7 +538,7 @@ export const QuestionCard = ({
                     {questionIdx !== 0 && (
                       <QuestionFormInput
                         id="backButtonLabel"
-                        value={question.backButtonLabel}
+                        value={blockBackButtonLabel}
                         label={t("environments.surveys.edit.back_button_label")}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
@@ -522,12 +550,22 @@ export const QuestionCard = ({
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         locale={locale}
                         onBlur={(e) => {
-                          if (!question.backButtonLabel) return;
+                          if (!blockBackButtonLabel) return;
                           let translatedBackButtonLabel = {
-                            ...question.backButtonLabel,
+                            ...blockBackButtonLabel,
                             [selectedLanguageCode]: e.target.value,
                           };
-                          updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, 0);
+                          if (parentBlockIndex === -1) return;
+                          updateBlockButtonLabel(
+                            parentBlockIndex,
+                            "backButtonLabel",
+                            translatedBackButtonLabel
+                          );
+                          updateEmptyButtonLabels(
+                            "backButtonLabel",
+                            translatedBackButtonLabel,
+                            parentBlockIndex
+                          );
                         }}
                         isStorageConfigured={isStorageConfigured}
                       />
@@ -535,7 +573,7 @@ export const QuestionCard = ({
                     <div className="w-full">
                       <QuestionFormInput
                         id="buttonLabel"
-                        value={question.buttonLabel}
+                        value={blockButtonLabel}
                         label={t("environments.surveys.edit.next_button_label")}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
@@ -546,18 +584,18 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         onBlur={(e) => {
-                          if (!question.buttonLabel) return;
+                          if (!blockButtonLabel) return;
                           let translatedNextButtonLabel = {
-                            ...question.buttonLabel,
+                            ...blockButtonLabel,
                             [selectedLanguageCode]: e.target.value,
                           };
-
-                          if (questionIdx === localSurvey.questions.length - 1) return;
-                          updateEmptyButtonLabels(
-                            "buttonLabel",
-                            translatedNextButtonLabel,
-                            localSurvey.questions.length - 1
-                          );
+                          if (parentBlockIndex === -1) return;
+                          updateBlockButtonLabel(parentBlockIndex, "buttonLabel", translatedNextButtonLabel);
+                          // Don't propagate to last block
+                          const lastBlockIndex = localSurvey.blocks.length - 1;
+                          if (parentBlockIndex !== lastBlockIndex) {
+                            updateEmptyButtonLabels("buttonLabel", translatedNextButtonLabel, lastBlockIndex);
+                          }
                         }}
                         locale={locale}
                         isStorageConfigured={isStorageConfigured}
@@ -571,7 +609,7 @@ export const QuestionCard = ({
                     <div className="mt-4">
                       <QuestionFormInput
                         id="backButtonLabel"
-                        value={question.backButtonLabel}
+                        value={blockBackButtonLabel}
                         label={`"Back" Button Label`}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
@@ -582,16 +620,37 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         locale={locale}
+                        onBlur={(e) => {
+                          if (!blockBackButtonLabel) return;
+                          const translatedBackButtonLabel = {
+                            ...blockBackButtonLabel,
+                            [selectedLanguageCode]: e.target.value,
+                          };
+                          if (parentBlockIndex === -1) return;
+                          updateBlockButtonLabel(
+                            parentBlockIndex,
+                            "backButtonLabel",
+                            translatedBackButtonLabel
+                          );
+                          updateEmptyButtonLabels(
+                            "backButtonLabel",
+                            translatedBackButtonLabel,
+                            parentBlockIndex
+                          );
+                        }}
                         isStorageConfigured={isStorageConfigured}
                       />
                     </div>
                   )}
 
                 <AdvancedSettings
-                  question={question}
+                  // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the question type to the respective element type in all the question forms.
+                  question={question as unknown as TSurveyElement}
                   questionIdx={questionIdx}
                   localSurvey={localSurvey}
                   updateQuestion={updateQuestion}
+                  updateBlockLogic={updateBlockLogic}
+                  updateBlockLogicFallback={updateBlockLogicFallback}
                   selectedLanguageCode={selectedLanguageCode}
                 />
               </Collapsible.CollapsibleContent>

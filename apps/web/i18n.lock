@@ -1352,6 +1352,7 @@ checksums:
     environments/surveys/edit/is_skipped: 9fb90b6578f603cca37d4e6c912bb401
     environments/surveys/edit/is_submitted: 13e774a97ad5f5609555e6f99514e70f
     environments/surveys/edit/italic: 555c60fb1d12ae305136202afa6deb3d
+    environments/surveys/edit/jump_to_block: 2fc00bd725c44f98861051c57bb2c392
     environments/surveys/edit/jump_to_question: 742aabed8845190825418aa429f01b2d
     environments/surveys/edit/keep_current_order: a7c944ad6b3515f2c4f83a2c81f8fc26
     environments/surveys/edit/keep_showing_while_conditions_match: 2574802d87bd6da151c9145aacce7281
@@ -1532,6 +1533,7 @@ checksums:
     environments/surveys/edit/unlock_targeting_title: 6098caf969cac64cd54e217471ae42d4
     environments/surveys/edit/unsaved_changes_warning: a164f276c9f7344022aa4640b32abcf9
     environments/surveys/edit/until_they_submit_a_response: c980c520f5b5883ed46f2e1c006082b5
+    environments/surveys/edit/untitled_block: fdaa045139deff5cc65fa027df0cc22e
     environments/surveys/edit/upgrade_notice_description: 32b66a4f257ad8d38bc38dcc95fe23c4
     environments/surveys/edit/upgrade_notice_title: 40866066ebc558ad0c92a4f19f12090c
     environments/surveys/edit/upload: 4a6c84aa16db0f4e5697f49b45257bc7

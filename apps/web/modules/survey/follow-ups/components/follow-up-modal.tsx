@@ -17,7 +17,8 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -100,14 +101,15 @@ export const FollowUpModal = ({
   const [firstRender, setFirstRender] = useState(true);
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
-    const { questions } = localSurvey;
+    // Derive questions from blocks
+    const questions = localSurvey.blocks.flatMap((block) => block.elements);
 
     const openTextAndContactQuestions = questions.filter((question) => {
-      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+      if (question.type === TSurveyElementTypeEnum.ContactInfo) {
         return question.email.show;
       }
 
-      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+      if (question.type === TSurveyElementTypeEnum.OpenText) {
         if (question.inputType === "email") {
           return true;
         }
@@ -145,7 +147,7 @@ export const FollowUpModal = ({
         ],
         id: question.id,
         type:
-          question.type === TSurveyQuestionTypeEnum.OpenText
+          question.type === TSurveyElementTypeEnum.OpenText
             ? "openTextQuestion"
             : ("contactInfoQuestion" as EmailSendToOption["type"]),
       })),

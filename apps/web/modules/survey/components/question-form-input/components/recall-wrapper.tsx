@@ -189,7 +189,8 @@ export const RecallWrapper = ({
       const info = extractRecallInfo(recallItem.label);
       if (info) {
         const recallItemId = extractId(info);
-        const recallQuestion = localSurvey.questions.find((q) => q.id === recallItemId);
+        const questions = localSurvey.blocks.flatMap((block) => block.elements);
+        const recallQuestion = questions.find((q) => q.id === recallItemId);
         if (recallQuestion) {
           // replace nested recall with "___"
           return [recallItem.label.replace(info, "___")];

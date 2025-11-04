@@ -1,7 +1,10 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "@prisma/client";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { useMemo } from "react";
+import { TI18nString } from "@formbricks/types/i18n";
+import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurvey, TSurveyQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionCard } from "@/modules/survey/editor/components/question-card";
 
@@ -10,6 +13,13 @@ interface QuestionsDraggableProps {
   project: Project;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (questionIdx: number, logicFallback: string | undefined) => void;
+  updateBlockButtonLabel: (
+    blockIndex: number,
+    labelKey: "buttonLabel" | "backButtonLabel",
+    labelValue: TI18nString | undefined
+  ) => void;
   deleteQuestion: (questionIdx: number) => void;
   duplicateQuestion: (questionIdx: number) => void;
   activeQuestionId: TSurveyQuestionId | null;
@@ -39,6 +49,9 @@ export const QuestionsDroppable = ({
   setActiveQuestionId,
   setSelectedLanguageCode,
   updateQuestion,
+  updateBlockLogic,
+  updateBlockLogicFallback,
+  updateBlockButtonLabel,
   addQuestion,
   isFormbricksCloud,
   isCxMode,
@@ -50,25 +63,33 @@ export const QuestionsDroppable = ({
 }: QuestionsDraggableProps) => {
   const [parent] = useAutoAnimate();
 
+  // Derive questions from blocks for display
+  const questions = useMemo(() => {
+    return localSurvey.blocks.flatMap((block) => block.elements);
+  }, [localSurvey.blocks]);
+
   return (
     <div className="group mb-5 flex w-full flex-col gap-5" ref={parent}>
-      <SortableContext items={localSurvey.questions} strategy={verticalListSortingStrategy}>
-        {localSurvey.questions.map((question, questionIdx) => (
+      <SortableContext items={questions} strategy={verticalListSortingStrategy}>
+        {questions.map((question, questionIdx) => (
           <QuestionCard
             key={question.id}
             localSurvey={localSurvey}
             project={project}
-            question={question}
+            question={question as unknown as TSurveyQuestion}
             questionIdx={questionIdx}
             moveQuestion={moveQuestion}
             updateQuestion={updateQuestion}
+            updateBlockLogic={updateBlockLogic}
+            updateBlockLogicFallback={updateBlockLogicFallback}
+            updateBlockButtonLabel={updateBlockButtonLabel}
             duplicateQuestion={duplicateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             deleteQuestion={deleteQuestion}
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
-            lastQuestion={questionIdx === localSurvey.questions.length - 1}
+            lastQuestion={questionIdx === questions.length - 1}
             isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
             addQuestion={addQuestion}
             isFormbricksCloud={isFormbricksCloud}

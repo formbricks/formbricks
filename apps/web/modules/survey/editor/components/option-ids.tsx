@@ -1,12 +1,12 @@
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
 interface OptionIdsProps {
-  question: TSurveyQuestion;
+  question: TSurveyElement;
   selectedLanguageCode: string;
 }
 
@@ -15,9 +15,9 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
 
   const renderChoiceIds = () => {
     switch (question.type) {
-      case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
-      case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
-      case TSurveyQuestionTypeEnum.Ranking:
+      case TSurveyElementTypeEnum.MultipleChoiceSingle:
+      case TSurveyElementTypeEnum.MultipleChoiceMulti:
+      case TSurveyElementTypeEnum.Ranking:
         return (
           <div className="flex flex-col gap-2">
             {question.choices.map((choice) => (
@@ -28,7 +28,7 @@ export const OptionIds = ({ question, selectedLanguageCode }: OptionIdsProps) =>
           </div>
         );
 
-      case TSurveyQuestionTypeEnum.PictureSelection:
+      case TSurveyElementTypeEnum.PictureSelection:
         return (
           <div className="flex flex-col gap-3">
             {question.choices.map((choice) => {

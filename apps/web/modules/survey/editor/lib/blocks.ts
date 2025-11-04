@@ -388,3 +388,26 @@ export const duplicateElementInBlock = (
     blocks,
   });
 };
+
+/**
+ * Find the location of an element within the survey blocks
+ * @param survey - The survey object
+ * @param elementId - The ID of the element to find
+ * @returns Object containing blockId, blockIndex, and elementIndex
+ */
+export const findElementLocation = (
+  survey: TSurvey,
+  elementId: string
+): { blockId: string | null; blockIndex: number; elementIndex: number } => {
+  const blocks = survey.blocks;
+
+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+    const block = blocks[blockIndex];
+    const elementIndex = block.elements.findIndex((e) => e.id === elementId);
+    if (elementIndex !== -1) {
+      return { blockId: block.id, blockIndex, elementIndex };
+    }
+  }
+
+  return { blockId: null, blockIndex: -1, elementIndex: -1 };
+};

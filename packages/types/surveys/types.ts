@@ -658,9 +658,8 @@ export const ZSurvey = z
     recontactDays: z.number().nullable(),
     displayLimit: z.number().nullable(),
     welcomeCard: ZSurveyWelcomeCard,
-    questions: ZSurveyQuestions.min(1, {
-      message: "Survey must have at least one question",
-    }).superRefine((questions, ctx) => {
+    // TODO: Remove this once blocks are the single source of truth
+    questions: ZSurveyQuestions.default([]).superRefine((questions, ctx) => {
       const questionIds = questions.map((q) => q.id);
       const uniqueQuestionIds = new Set(questionIds);
       if (uniqueQuestionIds.size !== questionIds.length) {
@@ -742,14 +741,14 @@ export const ZSurvey = z
   .superRefine((survey, ctx) => {
     const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;
 
-    // Validate: must have questions OR blocks, not both
+    // Validate: must have questions OR blocks with elements, not both
     const hasQuestions = questions.length > 0;
-    const hasBlocks = blocks.length > 0;
+    const hasBlocks = blocks.length > 0 && blocks.some((b) => b.elements.length > 0);
 
     if (!hasQuestions && !hasBlocks) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Survey must have either questions or blocks",
+        message: "Survey must have either questions or blocks with elements",
         path: ["questions"],
       });
     }
@@ -1599,11 +1598,13 @@ export const ZSurvey = z
       if (blocksWithCyclicLogic.length > 0) {
         blocksWithCyclicLogic.forEach((blockId) => {
           const blockIndex = blocks.findIndex((b) => b.id === blockId);
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
-            path: ["blocks", blockIndex, "logic"],
-          });
+          if (blockIndex !== -1) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
+              path: ["blocks", blockIndex, "logic"],
+            });
+          }
         });
       }
     }
@@ -3496,8 +3497,8 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
   })
   .extend({
     name: z.string(), // Keep name required
-    questions: ZSurvey.innerType().shape.questions, // Keep questions required and with its original validation
-    blocks: ZSurveyBlocks.default([]),
+    questions: ZSurvey.innerType().shape.questions,
+    blocks: ZSurvey.innerType().shape.blocks,
     languages: z.array(ZSurveyLanguage).default([]),
     welcomeCard: ZSurveyWelcomeCard.default({
       enabled: false,
@@ -3522,8 +3523,8 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurvey.in
   .extend({
     name: z.string(), // Keep name required
     environmentId: z.string(),
-    questions: ZSurvey.innerType().shape.questions, // Keep questions required and with its original validation
-    blocks: ZSurveyBlocks.default([]),
+    questions: ZSurvey.innerType().shape.questions,
+    blocks: ZSurvey.innerType().shape.blocks,
     languages: z.array(ZSurveyLanguage).default([]),
     welcomeCard: ZSurveyWelcomeCard.default({
       enabled: false,

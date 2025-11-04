@@ -3,8 +3,11 @@
 import { ArrowRightIcon } from "lucide-react";
 import { ReactElement, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { getLocalizedValue } from "@/lib/i18n/utils";
+import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { recallToHeadline } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
@@ -18,9 +21,11 @@ import {
 
 interface LogicEditorProps {
   localSurvey: TSurvey;
-  logicItem: TSurveyLogic;
+  logicItem: TSurveyBlockLogic;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  question: TSurveyQuestion;
+  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (questionIdx: number, logicFallback: string | undefined) => void;
+  question: TSurveyElement;
   questionIdx: number;
   logicIdx: number;
   isLast: boolean;
@@ -30,6 +35,8 @@ export function LogicEditor({
   localSurvey,
   logicItem,
   updateQuestion,
+  updateBlockLogic,
+  updateBlockLogicFallback,
   question,
   questionIdx,
   logicIdx,
@@ -37,6 +44,13 @@ export function LogicEditor({
 }: LogicEditorProps) {
   const { t } = useTranslation();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
+
+  // Find the parent block for this question/element to get its logicFallback
+  const parentBlock = localSurvey.blocks?.find((block) =>
+    block.elements.some((element) => element.id === question.id)
+  );
+  const blockLogicFallback = parentBlock?.logicFallback;
+
   const fallbackOptions = useMemo(() => {
     let options: {
       icon?: ReactElement;
@@ -44,12 +58,19 @@ export function LogicEditor({
       value: string;
     }[] = [];
 
-    for (let i = questionIdx + 1; i < localSurvey.questions.length; i++) {
-      const ques = localSurvey.questions[i];
+    // Derive questions from blocks
+    const allQuestions = localSurvey.blocks.flatMap((b) => b.elements);
+    const blocks = localSurvey.blocks;
+
+    for (let i = questionIdx + 1; i < allQuestions.length; i++) {
+      const ques = allQuestions[i];
+      // Find block ID for this question
+      const block = blocks.find((b) => b.elements.some((e) => e.id === ques.id));
+
       options.push({
         icon: QUESTIONS_ICON_MAP[ques.type],
-        label: getLocalizedValue(ques.headline, "default"),
-        value: ques.id,
+        label: getTextContent(recallToHeadline(ques.headline, localSurvey, false, "default").default ?? ""),
+        value: block?.id ?? ques.id, // Block ID if blocks exist, otherwise question ID
       });
     }
 
@@ -57,20 +78,24 @@ export function LogicEditor({
       options.push({
         label:
           ending.type === "endScreen"
-            ? getLocalizedValue(ending.headline, "default") || t("environments.surveys.edit.end_screen_card")
+            ? getTextContent(
+                recallToHeadline(ending.headline ?? { default: "" }, localSurvey, false, "default").default ??
+                  ""
+              ) || t("environments.surveys.edit.end_screen_card")
             : ending.label || t("environments.surveys.edit.redirect_thank_you_card"),
         value: ending.id,
       });
     });
 
     return options;
-  }, [localSurvey.questions, localSurvey.endings, question.id, t]);
+  }, [localSurvey, questionIdx, QUESTIONS_ICON_MAP, t]);
 
   return (
     <div className="flex w-full min-w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
       <LogicEditorConditions
         conditions={logicItem.conditions}
         updateQuestion={updateQuestion}
+        updateBlockLogic={updateBlockLogic}
         question={question}
         questionIdx={questionIdx}
         localSurvey={localSurvey}
@@ -81,6 +106,7 @@ export function LogicEditor({
         logicIdx={logicIdx}
         question={question}
         updateQuestion={updateQuestion}
+        updateBlockLogic={updateBlockLogic}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
       />
@@ -95,11 +121,9 @@ export function LogicEditor({
           </p>
           <Select
             autoComplete="true"
-            defaultValue={question.logicFallback || "defaultSelection"}
+            defaultValue={blockLogicFallback || "defaultSelection"}
             onValueChange={(val) => {
-              updateQuestion(questionIdx, {
-                logicFallback: val === "defaultSelection" ? undefined : val,
-              });
+              updateBlockLogicFallback(questionIdx, val === "defaultSelection" ? undefined : val);
             }}>
             <SelectTrigger className="w-auto bg-white">
               <SelectValue />

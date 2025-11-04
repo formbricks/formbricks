@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { duplicateLogicItem } from "@/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
@@ -33,8 +35,10 @@ import { Label } from "@/modules/ui/components/label";
 interface ConditionalLogicProps {
   localSurvey: TSurvey;
   questionIdx: number;
-  question: TSurveyQuestion;
+  question: TSurveyElement;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
+  updateBlockLogicFallback: (questionIdx: number, logicFallback: string | undefined) => void;
 }
 
 export function ConditionalLogic({
@@ -42,6 +46,8 @@ export function ConditionalLogic({
   question,
   questionIdx,
   updateQuestion,
+  updateBlockLogic,
+  updateBlockLogicFallback,
 }: ConditionalLogicProps) {
   const { t } = useTranslation();
   const transformedSurvey = useMemo(() => {
@@ -51,10 +57,18 @@ export function ConditionalLogic({
     return modifiedSurvey;
   }, [localSurvey]);
 
+  // Find the parent block for this question/element to get its logic
+  const parentBlock = localSurvey.blocks.find((block) =>
+    block.elements.some((element) => element.id === question.id)
+  );
+
+  const blockLogic = useMemo(() => parentBlock?.logic ?? [], [parentBlock?.logic]);
+  const blockLogicFallback = parentBlock?.logicFallback;
+
   const addLogic = () => {
     const operator = getDefaultOperatorForQuestion(question, t);
 
-    const initialCondition: TSurveyLogic = {
+    const initialCondition: TSurveyBlockLogic = {
       id: createId(),
       conditions: {
         id: createId(),
@@ -73,55 +87,49 @@ export function ConditionalLogic({
       actions: [
         {
           id: createId(),
-          objective: "jumpToQuestion",
+          objective: "jumpToBlock",
           target: "",
         },
       ],
     };
 
-    updateQuestion(questionIdx, {
-      logic: [...(question?.logic ?? []), initialCondition],
-    });
+    updateBlockLogic(questionIdx, [...blockLogic, initialCondition]);
   };
 
   const handleRemoveLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(blockLogic);
     const isLast = logicCopy.length === 1;
     logicCopy.splice(logicItemIdx, 1);
 
-    updateQuestion(questionIdx, {
-      logic: logicCopy,
-      logicFallback: isLast ? undefined : question.logicFallback,
-    });
+    updateBlockLogic(questionIdx, logicCopy);
+    if (isLast) {
+      updateBlockLogicFallback(questionIdx, undefined);
+    }
   };
 
   const moveLogic = (from: number, to: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(blockLogic);
     const [movedItem] = logicCopy.splice(from, 1);
     logicCopy.splice(to, 0, movedItem);
 
-    updateQuestion(questionIdx, {
-      logic: logicCopy,
-    });
+    updateBlockLogic(questionIdx, logicCopy);
   };
 
   const duplicateLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(blockLogic);
     const logicItem = logicCopy[logicItemIdx];
     const newLogicItem = duplicateLogicItem(logicItem);
     logicCopy.splice(logicItemIdx + 1, 0, newLogicItem);
 
-    updateQuestion(questionIdx, {
-      logic: logicCopy,
-    });
+    updateBlockLogic(questionIdx, logicCopy);
   };
   const [parent] = useAutoAnimate();
 
   useEffect(() => {
-    if (question.logic?.length === 0 && question.logicFallback) {
-      updateQuestion(questionIdx, { logicFallback: undefined });
+    if (blockLogic.length === 0 && blockLogicFallback) {
+      updateBlockLogicFallback(questionIdx, undefined);
     }
-  }, [question.logic, questionIdx, question.logicFallback, updateQuestion]);
+  }, [blockLogic, questionIdx, blockLogicFallback, updateBlockLogicFallback]);
 
   return (
     <div className="mt-4" ref={parent}>
@@ -130,20 +138,22 @@ export function ConditionalLogic({
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
-      {question.logic && question.logic.length > 0 && (
+      {blockLogic.length > 0 && (
         <div className="mt-2 flex flex-col gap-4" ref={parent}>
-          {question.logic.map((logicItem, logicItemIdx) => (
+          {blockLogic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}
               className="relative flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <LogicEditor
                 localSurvey={transformedSurvey}
-                logicItem={logicItem}
+                logicItem={logicItem as TSurveyBlockLogic}
                 updateQuestion={updateQuestion}
+                updateBlockLogic={updateBlockLogic}
+                updateBlockLogicFallback={updateBlockLogicFallback}
                 question={question}
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
-                isLast={logicItemIdx === (question.logic ?? []).length - 1}
+                isLast={logicItemIdx === blockLogic.length - 1}
               />
 
               {logicItem.conditions.conditions.length > 1 && (
@@ -173,7 +183,7 @@ export function ConditionalLogic({
                       {t("common.move_up")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      disabled={logicItemIdx === (question.logic ?? []).length - 1}
+                      disabled={logicItemIdx === blockLogic.length - 1}
                       onClick={() => {
                         moveLogic(logicItemIdx, logicItemIdx + 1);
                       }}

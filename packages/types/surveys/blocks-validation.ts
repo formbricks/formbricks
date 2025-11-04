@@ -16,6 +16,12 @@ export const findBlocksWithCyclicLogic = (blocks: TSurveyBlock[]): string[] => {
           const jumpActions = findJumpToBlockActions(logic.actions);
           for (const jumpAction of jumpActions) {
             const destination = jumpAction.target;
+
+            // Skip if destination is not a valid block ID (it's an ending card)
+            if (!blocks.find((b) => b.id === destination)) {
+              continue;
+            }
+
             if (!visited[destination] && checkForCyclicLogic(destination)) {
               cyclicBlocks.add(blockId);
               recStack[blockId] = false;
@@ -32,14 +38,18 @@ export const findBlocksWithCyclicLogic = (blocks: TSurveyBlock[]): string[] => {
       // Check fallback logic
       if (block?.logicFallback) {
         const fallbackBlockId = block.logicFallback;
-        if (!visited[fallbackBlockId] && checkForCyclicLogic(fallbackBlockId)) {
-          cyclicBlocks.add(blockId);
-          recStack[blockId] = false;
-          return true;
-        } else if (recStack[fallbackBlockId]) {
-          cyclicBlocks.add(blockId);
-          recStack[blockId] = false;
-          return true;
+
+        // Skip if fallback is not a valid block (it's an ending card)
+        if (blocks.find((b) => b.id === fallbackBlockId)) {
+          if (!visited[fallbackBlockId] && checkForCyclicLogic(fallbackBlockId)) {
+            cyclicBlocks.add(blockId);
+            recStack[blockId] = false;
+            return true;
+          } else if (recStack[fallbackBlockId]) {
+            cyclicBlocks.add(blockId);
+            recStack[blockId] = false;
+            return true;
+          }
         }
       }
 

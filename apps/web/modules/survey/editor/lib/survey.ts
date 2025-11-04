@@ -4,7 +4,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { checkForInvalidImagesInQuestions, validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
+import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
@@ -24,8 +24,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
       updatedSurvey;
-
-    checkForInvalidImagesInQuestions(questions);
 
     // Validate and prepare blocks for persistence
     if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
@@ -233,11 +231,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             : undefined,
       };
     }
-
-    data.questions = questions.map((question) => {
-      const { isDraft, ...rest } = question;
-      return rest;
-    });
 
     const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
     const organization = await getOrganizationAIKeys(organizationId);

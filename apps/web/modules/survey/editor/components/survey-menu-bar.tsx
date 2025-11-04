@@ -12,7 +12,6 @@ import { TSegment } from "@formbricks/types/segment";
 import {
   TSurvey,
   TSurveyEditorTabs,
-  TSurveyQuestion,
   ZSurvey,
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
@@ -171,12 +170,14 @@ export const SurveyMenuBar = ({
     if (!localSurveyValidation.success) {
       const currentError = localSurveyValidation.error.errors[0];
 
-      if (currentError.path[0] === "questions") {
-        const questionIdx = currentError.path[1];
-        const question: TSurveyQuestion = localSurvey.questions[questionIdx];
-        if (question) {
+      if (currentError.path[0] === "blocks") {
+        const blockIdx = currentError.path[1];
+        const elementIdx = currentError.path[3]; // path is ["blocks", blockIdx, "elements", elementIdx, ...]
+        const block = localSurvey.blocks?.[blockIdx];
+        const element = block?.elements[elementIdx];
+        if (element) {
           setInvalidQuestions((prevInvalidQuestions) =>
-            prevInvalidQuestions ? [...prevInvalidQuestions, question.id] : [question.id]
+            prevInvalidQuestions ? [...prevInvalidQuestions, element.id] : [element.id]
           );
         }
       } else if (currentError.path[0] === "welcomeCard") {
@@ -235,10 +236,19 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      localSurvey.questions = localSurvey.questions.map((question) => {
-        const { isDraft, ...rest } = question;
-        return rest;
-      });
+      // Clean up blocks by removing isDraft from elements
+      if (localSurvey.blocks) {
+        localSurvey.blocks = localSurvey.blocks.map((block) => ({
+          ...block,
+          elements: block.elements.map((element) => {
+            const { isDraft, ...rest } = element;
+            return rest;
+          }),
+        }));
+      }
+
+      // Set questions to empty array for blocks-based surveys
+      localSurvey.questions = [];
 
       localSurvey.endings = localSurvey.endings.map((ending) => {
         if (ending.type === "redirectToUrl") {

@@ -15,16 +15,12 @@ import { Language, Project } from "@prisma/client";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { findBlocksWithCyclicLogic } from "@formbricks/types/surveys/blocks-validation";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
-import {
-  TSurvey,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-  TSurveyQuestionId,
-} from "@formbricks/types/surveys/types";
-import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
+import { TSurvey, TSurveyQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
@@ -39,6 +35,13 @@ import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome
 import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
 import { QuestionsDroppable } from "@/modules/survey/editor/components/questions-droppable";
 import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
+import {
+  addBlock,
+  deleteBlock,
+  duplicateBlock,
+  moveBlock,
+  updateElementInBlock,
+} from "@/modules/survey/editor/lib/blocks";
 import { findQuestionUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import {
   isEndingCardValid,
@@ -91,14 +94,40 @@ export const QuestionsView = ({
   isExternalUrlsAllowed,
 }: QuestionsViewProps) => {
   const { t } = useTranslation();
+
+  // Derive questions from blocks for display
+  const questions = useMemo(() => {
+    return localSurvey.blocks.flatMap((block) => block.elements);
+  }, [localSurvey.blocks]);
+
   const internalQuestionIdMap = useMemo(() => {
-    return localSurvey.questions.reduce((acc, question) => {
+    return questions.reduce((acc, question) => {
       acc[question.id] = createId();
       return acc;
     }, {});
-  }, [localSurvey.questions]);
+  }, [questions]);
 
   const surveyLanguages = localSurvey.languages;
+
+  const findElementLocation = (elementId: string) => {
+    const blocks = localSurvey.blocks;
+
+    for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+      const block = blocks[blockIndex];
+      const elementIndex = block.elements.findIndex((e) => e.id === elementId);
+      if (elementIndex !== -1) {
+        return { blockId: block.id, blockIndex, elementIndex };
+      }
+    }
+
+    return { blockId: null, blockIndex: -1, elementIndex: -1 };
+  };
+
+  const getQuestionIdFromBlockId = (block: TSurveyBlock): string => block.elements[0].id;
+
+  const getBlockName = (index: number): string => {
+    return `Block ${index + 1}`;
+  };
 
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     const updateConditions = (conditions: TConditionGroup): TConditionGroup => {
@@ -128,11 +157,12 @@ export const QuestionsView = ({
       return updatedCondition;
     };
 
-    const updateActions = (actions: TSurveyLogicAction[]): TSurveyLogicAction[] => {
+    const updateActions = (actions: TSurveyBlockLogicAction[]): TSurveyBlockLogicAction[] => {
       return actions.map((action) => {
         let updatedAction = { ...action };
 
-        if (updatedAction.objective === "jumpToQuestion" && updatedAction.target === compareId) {
+        // Handle jumpToBlock actions (blocks model)
+        if (updatedAction.objective === "jumpToBlock" && updatedAction.target === compareId) {
           updatedAction.target = updatedId;
         }
 
@@ -144,29 +174,43 @@ export const QuestionsView = ({
       });
     };
 
+    const updatedBlocks = survey.blocks.map((block) => {
+      const updatedElements = block.elements.map((element) => {
+        let updatedElement = { ...element };
+
+        if (element.headline[selectedLanguageCode]?.includes(`recall:${compareId}`)) {
+          updatedElement.headline = {
+            ...element.headline,
+            [selectedLanguageCode]: element.headline[selectedLanguageCode].replaceAll(
+              `recall:${compareId}`,
+              `recall:${updatedId}`
+            ),
+          };
+        }
+
+        return updatedElement;
+      });
+
+      // Update block-level logic
+      let updatedLogic = block.logic;
+      if (block.logic) {
+        updatedLogic = block.logic.map((logicRule: TSurveyBlockLogic) => ({
+          ...logicRule,
+          conditions: updateConditions(logicRule.conditions),
+          actions: updateActions(logicRule.actions),
+        }));
+      }
+
+      return {
+        ...block,
+        elements: updatedElements,
+        logic: updatedLogic,
+      };
+    });
+
     return {
       ...survey,
-      questions: survey.questions.map((question) => {
-        let updatedQuestion = { ...question };
-
-        if (question.headline[selectedLanguageCode].includes(`recall:${compareId}`)) {
-          question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replaceAll(
-            `recall:${compareId}`,
-            `recall:${updatedId}`
-          );
-        }
-
-        // Update advanced logic
-        if (question.logic) {
-          updatedQuestion.logic = question.logic.map((logicRule: TSurveyLogic) => ({
-            ...logicRule,
-            conditions: updateConditions(logicRule.conditions),
-            actions: updateActions(logicRule.actions),
-          }));
-        }
-
-        return updatedQuestion;
-      }),
+      blocks: updatedBlocks,
     };
   };
 
@@ -206,15 +250,21 @@ export const QuestionsView = ({
       return;
     }
 
-    const isFirstQuestion = question.id === localSurvey.questions[0].id;
+    const firstElement = localSurvey.blocks?.[0]?.elements[0];
+    const isFirstQuestion = firstElement ? question.id === firstElement.id : false;
 
-    if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
-      // If question is valid, we now check for cyclic logic
-      const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(localSurvey.questions);
+    if (validateQuestion(question as unknown as TSurveyQuestion, surveyLanguages, isFirstQuestion)) {
+      const blocksWithCyclicLogic = findBlocksWithCyclicLogic(localSurvey.blocks);
 
-      if (questionsWithCyclicLogic.includes(question.id) && !invalidQuestions.includes(question.id)) {
-        setInvalidQuestions([...invalidQuestions, question.id]);
-        return;
+      for (const blockId of blocksWithCyclicLogic) {
+        const block = localSurvey.blocks.find((b) => b.id === blockId);
+        if (block) {
+          const questionId = getQuestionIdFromBlockId(block);
+          if (questionId === question.id) {
+            setInvalidQuestions([...invalidQuestions, question.id]);
+            return;
+          }
+        }
       }
 
       setInvalidQuestions(invalidQuestions.filter((id) => id !== question.id));
@@ -226,47 +276,147 @@ export const QuestionsView = ({
   };
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
+    const question = questions[questionIdx];
+    if (!question) return;
+
+    const { blockId, blockIndex } = findElementLocation(question.id);
+    if (!blockId || blockIndex === -1) return;
+
     let updatedSurvey = { ...localSurvey };
-    if ("id" in updatedAttributes) {
+
+    // Handle block-level attributes (logic, logicFallback, buttonLabel, backButtonLabel) separately
+    const blockLevelAttributes: any = {};
+    const elementLevelAttributes: any = {};
+
+    Object.keys(updatedAttributes).forEach((key) => {
+      if (key === "logic" || key === "logicFallback" || key === "buttonLabel" || key === "backButtonLabel") {
+        blockLevelAttributes[key] = updatedAttributes[key];
+      } else {
+        elementLevelAttributes[key] = updatedAttributes[key];
+      }
+    });
+
+    // Update block-level attributes if any
+    if (Object.keys(blockLevelAttributes).length > 0) {
+      const blocks = [...(updatedSurvey.blocks ?? [])];
+      blocks[blockIndex] = {
+        ...blocks[blockIndex],
+        ...blockLevelAttributes,
+      };
+      updatedSurvey = { ...updatedSurvey, blocks };
+    }
+
+    // Handle element ID changes
+    if ("id" in elementLevelAttributes) {
       // if the survey question whose id is to be changed is linked to logic of any other survey then changing it
-      const initialQuestionId = updatedSurvey.questions[questionIdx].id;
-      updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id);
+      const initialQuestionId = question.id;
+      updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, elementLevelAttributes.id);
       if (invalidQuestions?.includes(initialQuestionId)) {
         setInvalidQuestions(
-          invalidQuestions.map((id) => (id === initialQuestionId ? updatedAttributes.id : id))
+          invalidQuestions.map((id) => (id === initialQuestionId ? elementLevelAttributes.id : id))
         );
       }
 
       // relink the question to internal Id
-      internalQuestionIdMap[updatedAttributes.id] =
-        internalQuestionIdMap[localSurvey.questions[questionIdx].id];
-      delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
-      setActiveQuestionId(updatedAttributes.id);
+      internalQuestionIdMap[elementLevelAttributes.id] = internalQuestionIdMap[question.id];
+      delete internalQuestionIdMap[question.id];
+      setActiveQuestionId(elementLevelAttributes.id);
     }
 
-    updatedSurvey.questions[questionIdx] = {
-      ...updatedSurvey.questions[questionIdx],
-      ...updatedAttributes,
+    // Update element-level attributes if any
+    if (Object.keys(elementLevelAttributes).length > 0) {
+      const attributesToCheck = ["upperLabel", "lowerLabel"];
+
+      // If the value of upperLabel or lowerLabel is equal to {default:""}, then delete the key
+      const cleanedAttributes = { ...elementLevelAttributes };
+      attributesToCheck.forEach((attribute) => {
+        if (Object.keys(cleanedAttributes).includes(attribute)) {
+          const currentLabel = cleanedAttributes[attribute];
+          if (
+            currentLabel &&
+            Object.keys(currentLabel).length === 1 &&
+            currentLabel["default"].trim() === ""
+          ) {
+            delete cleanedAttributes[attribute];
+          }
+        }
+      });
+
+      const result = updateElementInBlock(updatedSurvey, blockId, question.id, cleanedAttributes);
+
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+
+      updatedSurvey = result.data;
+
+      // Validate the updated question
+      const updatedQuestion = updatedSurvey.blocks
+        ?.flatMap((b) => b.elements)
+        .find((q) => q.id === (cleanedAttributes.id ?? question.id));
+      if (updatedQuestion) {
+        validateSurveyQuestion(updatedQuestion as unknown as TSurveyQuestion);
+      }
+    }
+
+    setLocalSurvey(updatedSurvey);
+  };
+
+  // Update block logic (block-level property)
+  const updateBlockLogic = (questionIdx: number, logic: TSurveyBlockLogic[]) => {
+    const question = questions[questionIdx];
+    if (!question) return;
+
+    const { blockIndex } = findElementLocation(question.id);
+    if (blockIndex === -1) return;
+
+    const blocks = [...(localSurvey.blocks ?? [])];
+    blocks[blockIndex] = {
+      ...blocks[blockIndex],
+      logic,
     };
 
-    const attributesToCheck = ["buttonLabel", "upperLabel", "lowerLabel"];
+    setLocalSurvey({ ...localSurvey, blocks });
+  };
 
-    // If the value of buttonLabel, lowerLabel or upperLabel is equal to {default:""}, then delete buttonLabel key
-    attributesToCheck.forEach((attribute) => {
-      if (Object.keys(updatedAttributes).includes(attribute)) {
-        const currentLabel = updatedSurvey.questions[questionIdx][attribute];
-        if (currentLabel && Object.keys(currentLabel).length === 1 && currentLabel["default"].trim() === "") {
-          delete updatedSurvey.questions[questionIdx][attribute];
-        }
-      }
-    });
-    setLocalSurvey(updatedSurvey);
-    validateSurveyQuestion(updatedSurvey.questions[questionIdx]);
+  // Update block logic fallback (block-level property)
+  const updateBlockLogicFallback = (questionIdx: number, logicFallback: string | undefined) => {
+    const question = questions[questionIdx];
+    if (!question) return;
+
+    const { blockIndex } = findElementLocation(question.id);
+    if (blockIndex === -1) return;
+
+    const blocks = [...(localSurvey.blocks ?? [])];
+    blocks[blockIndex] = {
+      ...blocks[blockIndex],
+      logicFallback,
+    };
+
+    setLocalSurvey({ ...localSurvey, blocks });
+  };
+
+  // Update block button label (block-level property)
+  const updateBlockButtonLabel = (
+    blockIndex: number,
+    labelKey: "buttonLabel" | "backButtonLabel",
+    labelValue: TI18nString | undefined
+  ) => {
+    const blocks = [...(localSurvey.blocks ?? [])];
+    blocks[blockIndex] = {
+      ...blocks[blockIndex],
+      [labelKey]: labelValue,
+    };
+    setLocalSurvey({ ...localSurvey, blocks });
   };
 
   const deleteQuestion = (questionIdx: number) => {
-    const questionId = localSurvey.questions[questionIdx].id;
-    const activeQuestionIdTemp = activeQuestionId ?? localSurvey.questions[0].id;
+    const question = questions[questionIdx];
+    if (!question) return;
+
+    const questionId = question.id;
+    const activeQuestionIdTemp = activeQuestionId ?? questions[0]?.id;
     let updatedSurvey: TSurvey = { ...localSurvey };
 
     // checking if this question is used in logic of any other question
@@ -277,7 +427,7 @@ export const QuestionsView = ({
     }
 
     const recallQuestionIdx = isUsedInRecall(localSurvey, questionId);
-    if (recallQuestionIdx === localSurvey.questions.length) {
+    if (recallQuestionIdx === questions.length) {
       toast.error(t("environments.surveys.edit.question_used_in_recall_ending_card"));
       return;
     }
@@ -300,26 +450,43 @@ export const QuestionsView = ({
     }
 
     // check if we are recalling from this question for every language
-    updatedSurvey.questions.forEach((question) => {
-      for (const [languageCode, headline] of Object.entries(question.headline)) {
-        if (headline.includes(`recall:${questionId}`)) {
-          const recallInfo = extractRecallInfo(headline);
-          if (recallInfo) {
-            question.headline[languageCode] = headline.replace(recallInfo, "");
+    updatedSurvey.blocks = (updatedSurvey.blocks ?? []).map((block) => ({
+      ...block,
+      elements: block.elements.map((element) => {
+        const updatedElement = { ...element };
+        for (const [languageCode, headline] of Object.entries(element.headline)) {
+          if (headline.includes(`recall:${questionId}`)) {
+            const recallInfo = extractRecallInfo(headline);
+            if (recallInfo) {
+              updatedElement.headline = {
+                ...updatedElement.headline,
+                [languageCode]: headline.replace(recallInfo, ""),
+              };
+            }
           }
         }
-      }
-    });
+        return updatedElement;
+      }),
+    }));
 
-    updatedSurvey.questions.splice(questionIdx, 1);
+    // Find and delete the block containing this question
+    const { blockId } = findElementLocation(questionId);
+    if (!blockId) return;
+
+    const result = deleteBlock(updatedSurvey, blockId);
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
 
     const firstEndingCard = localSurvey.endings[0];
-    setLocalSurvey(updatedSurvey);
+    setLocalSurvey(result.data);
     delete internalQuestionIdMap[questionId];
 
     if (questionId === activeQuestionIdTemp) {
-      if (questionIdx <= localSurvey.questions.length && localSurvey.questions.length > 0) {
-        setActiveQuestionId(localSurvey.questions[questionIdx % localSurvey.questions.length].id);
+      const newQuestions = result.data.blocks?.flatMap((b) => b.elements) ?? [];
+      if (questionIdx <= newQuestions.length && newQuestions.length > 0) {
+        setActiveQuestionId(newQuestions[questionIdx % newQuestions.length].id);
       } else if (firstEndingCard) {
         setActiveQuestionId(firstEndingCard.id);
       }
@@ -329,42 +496,52 @@ export const QuestionsView = ({
   };
 
   const duplicateQuestion = (questionIdx: number) => {
-    const questionToDuplicate = structuredClone(localSurvey.questions[questionIdx]);
+    const question = questions[questionIdx];
+    if (!question) return;
 
-    const newQuestionId = createId();
+    const { blockId } = findElementLocation(question.id);
+    if (!blockId) return;
 
-    // create a copy of the question with a new id
-    const duplicatedQuestion = {
-      ...questionToDuplicate,
-      id: newQuestionId,
-    };
+    const result = duplicateBlock(localSurvey, blockId);
 
-    // insert the new question right after the original one
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
 
-    setLocalSurvey(updatedSurvey);
-    setActiveQuestionId(newQuestionId);
-    internalQuestionIdMap[newQuestionId] = createId();
+    // The duplicated block has new element IDs, find the first one
+    const allBlocks = result.data.blocks ?? [];
+    const { blockIndex } = findElementLocation(question.id);
+    const duplicatedBlock = allBlocks[blockIndex + 1];
+    const newElementId = duplicatedBlock?.elements[0]?.id;
 
+    if (newElementId) {
+      setActiveQuestionId(newElementId);
+      internalQuestionIdMap[newElementId] = createId();
+    }
+
+    setLocalSurvey(result.data);
     toast.success(t("environments.surveys.edit.question_duplicated"));
   };
 
   const addQuestion = (question: TSurveyQuestion, index?: number) => {
-    const updatedSurvey = { ...localSurvey };
-    const newQuestions = [...localSurvey.questions];
-
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
     const updatedQuestion = addMultiLanguageLabels(question, languageSymbols);
 
-    if (index !== undefined) {
-      newQuestions.splice(index, 0, { ...updatedQuestion, isDraft: true });
-    } else {
-      newQuestions.push({ ...updatedQuestion, isDraft: true });
-    }
-    updatedSurvey.questions = newQuestions;
+    const blockName = getBlockName(index ?? questions.length);
+    const newBlock = {
+      name: blockName,
+      elements: [{ ...updatedQuestion, isDraft: true }],
+    };
 
-    setLocalSurvey(updatedSurvey);
+    const result = addBlock(t, localSurvey, newBlock, index);
+
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
+
+    setLocalSurvey(result.data);
     setActiveQuestionId(question.id);
     internalQuestionIdMap[question.id] = createId();
   };
@@ -380,12 +557,21 @@ export const QuestionsView = ({
   };
 
   const moveQuestion = (questionIndex: number, up: boolean) => {
-    const newQuestions = Array.from(localSurvey.questions);
-    const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
-    const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
-    newQuestions.splice(destinationIndex, 0, reorderedQuestion);
-    const updatedSurvey = { ...localSurvey, questions: newQuestions };
-    setLocalSurvey(updatedSurvey);
+    const question = questions[questionIndex];
+    if (!question) return;
+
+    const { blockId } = findElementLocation(question.id);
+    if (!blockId) return;
+
+    const direction = up ? "up" : "down";
+    const result = moveBlock(localSurvey, blockId, direction);
+
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
+    }
+
+    setLocalSurvey(result.data);
   };
 
   //useEffect to validate survey when changes are made to languages
@@ -393,9 +579,9 @@ export const QuestionsView = ({
     if (!invalidQuestions) return;
     let updatedInvalidQuestions: string[] = invalidQuestions;
     // Validate each question
-    localSurvey.questions.forEach((question, index) => {
+    questions.forEach((question, index) => {
       updatedInvalidQuestions = validateSurveyQuestionsInBatch(
-        question,
+        question as unknown as TSurveyQuestion,
         updatedInvalidQuestions,
         surveyLanguages,
         index === 0
@@ -405,7 +591,7 @@ export const QuestionsView = ({
     if (JSON.stringify(updatedInvalidQuestions) !== JSON.stringify(invalidQuestions)) {
       setInvalidQuestions(updatedInvalidQuestions);
     }
-  }, [localSurvey.questions, surveyLanguages, invalidQuestions, setInvalidQuestions]);
+  }, [questions, surveyLanguages, invalidQuestions, setInvalidQuestions]);
 
   useEffect(() => {
     const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
@@ -429,13 +615,24 @@ export const QuestionsView = ({
   const onQuestionCardDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    const newQuestions = Array.from(localSurvey.questions);
-    const sourceIndex = newQuestions.findIndex((question) => question.id === active.id);
-    const destinationIndex = newQuestions.findIndex((question) => question.id === over?.id);
-    const [reorderedQuestion] = newQuestions.splice(sourceIndex, 1);
-    newQuestions.splice(destinationIndex, 0, reorderedQuestion);
-    const updatedSurvey = { ...localSurvey, questions: newQuestions };
-    setLocalSurvey(updatedSurvey);
+    // Find source and destination block indices
+    const sourceQuestion = questions.find((q) => q.id === active.id);
+    const destQuestion = questions.find((q) => q.id === over?.id);
+
+    if (!sourceQuestion || !destQuestion) return;
+
+    const { blockIndex: sourceBlockIndex } = findElementLocation(sourceQuestion.id);
+    const { blockIndex: destBlockIndex } = findElementLocation(destQuestion.id);
+
+    if (sourceBlockIndex === -1 || destBlockIndex === -1) return;
+    if (sourceBlockIndex === destBlockIndex) return; // No move needed
+
+    // Reorder blocks
+    const blocks = [...(localSurvey.blocks ?? [])];
+    const [movedBlock] = blocks.splice(sourceBlockIndex, 1);
+    blocks.splice(destBlockIndex, 0, movedBlock);
+
+    setLocalSurvey({ ...localSurvey, blocks });
   };
 
   const onEndingCardDragEnd = (event: DragEndEvent) => {
@@ -480,6 +677,9 @@ export const QuestionsView = ({
           project={project}
           moveQuestion={moveQuestion}
           updateQuestion={updateQuestion}
+          updateBlockLogic={updateBlockLogic}
+          updateBlockLogicFallback={updateBlockLogicFallback}
+          updateBlockButtonLabel={updateBlockButtonLabel}
           duplicateQuestion={duplicateQuestion}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}

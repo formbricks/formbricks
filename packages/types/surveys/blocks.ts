@@ -54,6 +54,8 @@ export const ZActionCalculate = z.union([ZActionCalculateText, ZActionCalculateN
 
 export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 
+export type TSurveyBlockLogicActionObjective = "calculate" | "requireAnswer" | "jumpToBlock";
+
 // RequireAnswer action - targets element IDs
 
 export const ZActionRequireAnswer = z.object({
@@ -80,15 +82,12 @@ export const ZSurveyBlockLogicAction = z.union([ZActionCalculate, ZActionRequire
 
 export type TSurveyBlockLogicAction = z.infer<typeof ZSurveyBlockLogicAction>;
 
-const ZSurveyBlockLogicActions = z.array(ZSurveyBlockLogicAction);
-export type TSurveyBlockLogicActions = z.infer<typeof ZSurveyBlockLogicActions>;
-
 // Block Logic
 
 export const ZSurveyBlockLogic = z.object({
   id: ZId,
   conditions: ZConditionGroup,
-  actions: ZSurveyBlockLogicActions,
+  actions: z.array(ZSurveyBlockLogicAction),
 });
 
 export type TSurveyBlockLogic = z.infer<typeof ZSurveyBlockLogic>;

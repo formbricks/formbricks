@@ -62,6 +62,11 @@ export function LocalizedEditor({
   autoFocus,
   isExternalUrlsAllowed,
 }: Readonly<LocalizedEditorProps>) {
+  // Derive questions from blocks for migrated surveys
+  const questions = useMemo(
+    () => localSurvey.blocks.flatMap((block) => block.elements),
+    [localSurvey.blocks]
+  );
   const { t } = useTranslation();
 
   const isInComplete = useMemo(
@@ -99,12 +104,12 @@ export function LocalizedEditor({
           }
 
           // Check if the question still exists before updating
-          const currentQuestion = localSurvey.questions[questionIdx];
+          const currentQuestion = questions[questionIdx];
 
           // if this is a card, we wanna check if the card exists in the localSurvey
           if (isCard) {
             const isWelcomeCard = questionIdx === -1;
-            const isEndingCard = questionIdx >= localSurvey.questions.length;
+            const isEndingCard = questionIdx >= questions.length;
 
             // For ending cards, check if the field exists before updating
             if (isEndingCard) {

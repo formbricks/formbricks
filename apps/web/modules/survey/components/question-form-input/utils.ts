@@ -1,5 +1,6 @@
 import { TFunction } from "i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
   TSurveyMatrixQuestion,
@@ -51,11 +52,12 @@ export const getWelcomeCardText = (
 
 export const getEndingCardText = (
   survey: TSurvey,
+  questions: TSurveyElement[],
   id: string,
   surveyLanguageCodes: string[],
   questionIdx: number
 ): TI18nString => {
-  const endingCardIndex = questionIdx - survey.questions.length;
+  const endingCardIndex = questionIdx - questions.length;
   const card = survey.endings[endingCardIndex];
   if (card.type === "endScreen") {
     return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);
@@ -69,8 +71,9 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
     case -1: // Welcome Card
       return false;
     default:
-      // Regular Survey Question
-      const question = localSurvey.questions[questionIdx];
+      // Regular Survey Question - derive questions from blocks
+      const questions = localSurvey.blocks.flatMap((block) => block.elements);
+      const question = questions[questionIdx];
       return (!!question && !!question.imageUrl) || (!!question && !!question.videoUrl);
   }
 };

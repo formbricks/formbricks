@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZProjectConfigChannel, ZProjectConfigIndustry } from "./project";
+import { ZSurveyBlocks } from "./surveys/blocks";
 import {
   ZSurveyEndings,
   ZSurveyHiddenFields,
@@ -27,7 +28,8 @@ export const ZTemplate = z.object({
   preset: z.object({
     name: z.string(),
     welcomeCard: ZSurveyWelcomeCard,
-    questions: ZSurveyQuestions,
+    blocks: ZSurveyBlocks.default([]),
+    questions: ZSurveyQuestions.default([]),
     endings: ZSurveyEndings,
     hiddenFields: ZSurveyHiddenFields,
   }),

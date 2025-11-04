@@ -80,7 +80,14 @@ export const QuotaModal = ({
   const { t } = useTranslation();
   const [openConfirmationModal, setOpenConfirmationModal] = useState(false);
   const [openConfirmChangesInInclusionCriteria, setOpenConfirmChangesInInclusionCriteria] = useState(false);
+
+  // Derive questions from blocks (with fallback to legacy questions)
+  const questions = useMemo(() => {
+    return survey.blocks.flatMap((block) => block.elements);
+  }, [survey.blocks]);
+
   const defaultValues = useMemo(() => {
+    const firstQuestion = questions[0];
     return {
       name: quota?.name || "",
       limit: quota?.limit || 1,
@@ -89,8 +96,8 @@ export const QuotaModal = ({
         conditions: [
           {
             id: createId(),
-            leftOperand: { type: "question", value: survey.questions[0]?.id },
-            operator: getDefaultOperatorForQuestion(survey.questions[0], t),
+            leftOperand: { type: "question", value: firstQuestion?.id },
+            operator: firstQuestion ? getDefaultOperatorForQuestion(firstQuestion, t) : "equals",
           },
         ],
       },
@@ -99,7 +106,7 @@ export const QuotaModal = ({
       countPartialSubmissions: quota?.countPartialSubmissions || false,
       surveyId: survey.id,
     };
-  }, [quota, survey]);
+  }, [quota, survey, questions, t]);
 
   const form = useForm<TSurveyQuotaInput>({
     defaultValues,

@@ -15,13 +15,8 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  TSurvey,
-  TSurveyHiddenFields,
-  TSurveyQuestion,
-  TSurveyQuestionId,
-  TSurveyRecallItem,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyHiddenFields, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
 import {
   DropdownMenu,
@@ -46,7 +41,7 @@ const questionIconMapping = {
 
 interface RecallItemSelectProps {
   localSurvey: TSurvey;
-  questionId: TSurveyQuestionId;
+  questionId: TSurveyElementId;
   addRecallItem: (question: TSurveyRecallItem) => void;
   setShowRecallItemSelect: (show: boolean) => void;
   recallItems: TSurveyRecallItem[];
@@ -64,14 +59,14 @@ export const RecallItemSelect = ({
 }: RecallItemSelectProps) => {
   const [searchValue, setSearchValue] = useState("");
   const { t } = useTranslation();
-  const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
+  const isNotAllowedQuestionType = (question: TSurveyElement): boolean => {
     return (
-      question.type === "fileUpload" ||
-      question.type === "cta" ||
-      question.type === "consent" ||
-      question.type === "pictureSelection" ||
-      question.type === "cal" ||
-      question.type === "matrix"
+      question.type === TSurveyElementTypeEnum.FileUpload ||
+      question.type === TSurveyElementTypeEnum.CTA ||
+      question.type === TSurveyElementTypeEnum.Consent ||
+      question.type === TSurveyElementTypeEnum.PictureSelection ||
+      question.type === TSurveyElementTypeEnum.Cal ||
+      question.type === TSurveyElementTypeEnum.Matrix
     );
   };
 
@@ -114,11 +109,14 @@ export const RecallItemSelect = ({
     const isWelcomeCard = questionId === "start";
     if (isWelcomeCard) return [];
 
-    const isEndingCard = !localSurvey.questions.map((question) => question.id).includes(questionId);
+    // Derive questions from blocks or fall back to legacy questions array
+    const questions = localSurvey.blocks.flatMap((block) => block.elements);
+
+    const isEndingCard = !questions.map((question) => question.id).includes(questionId);
     const idx = isEndingCard
-      ? localSurvey.questions.length
-      : localSurvey.questions.findIndex((recallQuestion) => recallQuestion.id === questionId);
-    const filteredQuestions = localSurvey.questions
+      ? questions.length
+      : questions.findIndex((recallQuestion) => recallQuestion.id === questionId);
+    const filteredQuestions = questions
       .filter((question, index) => {
         const notAllowed = isNotAllowedQuestionType(question);
         return (
@@ -130,7 +128,7 @@ export const RecallItemSelect = ({
       });
 
     return filteredQuestions;
-  }, [localSurvey.questions, questionId, recallItemIds, selectedLanguageCode]);
+  }, [localSurvey.blocks, questionId, recallItemIds, selectedLanguageCode]);
 
   const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
     return [...surveyQuestionRecallItems, ...hiddenFieldRecallItems, ...variableRecallItems].filter(
@@ -146,7 +144,9 @@ export const RecallItemSelect = ({
   const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
       case "question":
-        const question = localSurvey.questions.find((question) => question.id === recallItem.id);
+        // Derive questions from blocks or fall back to legacy questions array
+        const questions = localSurvey.blocks.flatMap((block) => block.elements);
+        const question = questions.find((question) => question.id === recallItem.id);
         if (question) {
           return questionIconMapping[question?.type as keyof typeof questionIconMapping];
         }

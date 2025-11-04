@@ -45,27 +45,31 @@ export const HiddenFieldsCard = ({
   };
 
   const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
-    const questions = [...localSurvey.questions];
+    let updatedSurvey = { ...localSurvey };
 
-    // Remove recall info from question headlines
+    // Remove recall info from question/element headlines
     if (currentFieldId) {
-      questions.forEach((question) => {
-        for (const [languageCode, headline] of Object.entries(question.headline)) {
-          if (headline.includes(`recall:${currentFieldId}`)) {
-            const recallInfo = extractRecallInfo(headline);
-            if (recallInfo) {
-              question.headline[languageCode] = headline.replace(recallInfo, "");
+      updatedSurvey.blocks = updatedSurvey.blocks.map((block) => ({
+        ...block,
+        elements: block.elements.map((element) => {
+          const updatedElement = { ...element };
+          for (const [languageCode, headline] of Object.entries(element.headline)) {
+            if (headline.includes(`recall:${currentFieldId}`)) {
+              const recallInfo = extractRecallInfo(headline);
+              if (recallInfo) {
+                updatedElement.headline[languageCode] = headline.replace(recallInfo, "");
+              }
             }
           }
-        }
-      });
+          return updatedElement;
+        }),
+      }));
     }
 
     setLocalSurvey({
-      ...localSurvey,
-      questions,
+      ...updatedSurvey,
       hiddenFields: {
-        ...localSurvey.hiddenFields,
+        ...updatedSurvey.hiddenFields,
         ...data,
       },
     });
@@ -93,7 +97,8 @@ export const HiddenFieldsCard = ({
       );
       return;
     }
-    if (recallQuestionIdx === localSurvey.questions.length) {
+    const totalQuestions = localSurvey.blocks.flatMap((b) => b.elements).length;
+    if (recallQuestionIdx === totalQuestions) {
       toast.error(
         t("environments.surveys.edit.hidden_field_used_in_recall_ending_card", { hiddenField: fieldId })
       );
@@ -191,7 +196,8 @@ export const HiddenFieldsCard = ({
             className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
-              const existingQuestionIds = localSurvey.questions.map((question) => question.id);
+              const existingElements = localSurvey.blocks.flatMap((b) => b.elements);
+              const existingQuestionIds = existingElements.map((question) => question.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
               const validateIdError = validateId(

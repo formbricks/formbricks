@@ -13,7 +13,8 @@ import { render } from "@react-email/render";
 import { TFunction } from "i18next";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
-import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { type TSurvey, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -77,13 +78,26 @@ export async function PreviewEmailTemplate({
   const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
-  const firstQuestion = survey.questions[0];
+  // Derive questions from blocks
+  const questions = survey.blocks.flatMap((block) => block.elements);
+  const firstQuestion = questions[0] as TSurveyElement;
   const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
   const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
+  const getButtonLabel = (survey: TSurvey, defaultLanguageCode: string) => {
+    const ctaQuestionBlock = survey.blocks.find((block) =>
+      block.elements.some((element) => element.type === TSurveyElementTypeEnum.CTA)
+    );
+    if (ctaQuestionBlock) {
+      return getLocalizedValue(ctaQuestionBlock.buttonLabel, defaultLanguageCode);
+    }
+
+    return t("common.next");
+  };
+
   switch (firstQuestion.type) {
-    case TSurveyQuestionTypeEnum.OpenText:
+    case TSurveyElementTypeEnum.OpenText:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -91,7 +105,7 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.Consent:
+    case TSurveyElementTypeEnum.Consent:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -120,7 +134,7 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.NPS:
+    case TSurveyElementTypeEnum.NPS:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Section className="w-full justify-center">
@@ -169,7 +183,7 @@ export async function PreviewEmailTemplate({
           </Section>
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.CTA:
+    case TSurveyElementTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -187,13 +201,13 @@ export async function PreviewEmailTemplate({
                 isLight(brandColor) ? "text-black" : "text-white"
               )}
               href={`${urlWithPrefilling}${firstQuestion.id}=clicked`}>
-              {getLocalizedValue(firstQuestion.buttonLabel, defaultLanguageCode)}
+              {getButtonLabel(survey, defaultLanguageCode)}
             </EmailButton>
           </Container>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.Rating:
+    case TSurveyElementTypeEnum.Rating:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Section className="w-full">
@@ -246,7 +260,7 @@ export async function PreviewEmailTemplate({
           </Section>
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -262,7 +276,7 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.Ranking:
+    case TSurveyElementTypeEnum.Ranking:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -278,7 +292,7 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
+    case TSurveyElementTypeEnum.MultipleChoiceSingle:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -295,7 +309,7 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.PictureSelection:
+    case TSurveyElementTypeEnum.PictureSelection:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -321,7 +335,7 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.Cal:
+    case TSurveyElementTypeEnum.Cal:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Container>
@@ -337,7 +351,7 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.Date:
+    case TSurveyElementTypeEnum.Date:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -350,7 +364,7 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.Matrix:
+    case TSurveyElementTypeEnum.Matrix:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -391,8 +405,8 @@ export async function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionTypeEnum.Address:
-    case TSurveyQuestionTypeEnum.ContactInfo:
+    case TSurveyElementTypeEnum.Address:
+    case TSurveyElementTypeEnum.ContactInfo:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
@@ -407,7 +421,7 @@ export async function PreviewEmailTemplate({
         </EmailTemplateWrapper>
       );
 
-    case TSurveyQuestionTypeEnum.FileUpload:
+    case TSurveyElementTypeEnum.FileUpload:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <QuestionHeader headline={headline} subheader={subheader} className="mr-8" />
