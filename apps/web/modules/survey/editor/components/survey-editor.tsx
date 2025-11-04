@@ -176,7 +176,7 @@ export const SurveyEditor = ({
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
-          className="relative z-0 w-1/2 flex-1 overflow-y-auto bg-slate-50 focus:outline-none"
+          className="relative z-0 w-full overflow-y-auto bg-slate-50 focus:outline-none md:w-2/3"
           ref={surveyEditorRef}>
           <SurveyEditorTabs
             activeId={activeView}
@@ -260,7 +260,7 @@ export const SurveyEditor = ({
           )}
         </main>
 
-        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
+        <aside className="group hidden w-1/3 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
           <PreviewSurvey
             survey={localSurvey}
             questionId={activeQuestionId}
