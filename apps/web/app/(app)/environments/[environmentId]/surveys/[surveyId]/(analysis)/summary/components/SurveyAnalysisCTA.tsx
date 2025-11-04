@@ -96,7 +96,6 @@ export const SurveyAnalysisCTA = ({
   const duplicateSurveyAndRoute = async (surveyId: string) => {
     setLoading(true);
     const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
-      environmentId: environment.id,
       surveyId: surveyId,
       targetEnvironmentId: environment.id,
     });

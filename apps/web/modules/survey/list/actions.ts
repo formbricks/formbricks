@@ -1,12 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
+  getEnvironmentIdFromSurveyId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
   getProjectIdFromEnvironmentId,
@@ -50,7 +51,6 @@ export const getSurveyAction = authenticatedActionClient
   });
 
 const ZCopySurveyToOtherEnvironmentAction = z.object({
-  environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   targetEnvironmentId: z.string().cuid2(),
 });
@@ -66,9 +66,10 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
         parsedInput,
       }: {
         ctx: AuthenticatedActionClientCtx;
-        parsedInput: Record<string, any>;
+        parsedInput: z.infer<typeof ZCopySurveyToOtherEnvironmentAction>;
       }) => {
-        const sourceEnvironmentProjectId = await getProjectIdIfEnvironmentExists(parsedInput.environmentId);
+        const sourceEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+        const sourceEnvironmentProjectId = await getProjectIdIfEnvironmentExists(sourceEnvironmentId);
         const targetEnvironmentProjectId = await getProjectIdIfEnvironmentExists(
           parsedInput.targetEnvironmentId
         );
@@ -76,13 +77,25 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
         if (!sourceEnvironmentProjectId || !targetEnvironmentProjectId) {
           throw new ResourceNotFoundError(
             "Environment",
-            sourceEnvironmentProjectId ? parsedInput.targetEnvironmentId : parsedInput.environmentId
+            sourceEnvironmentProjectId ? parsedInput.targetEnvironmentId : sourceEnvironmentId
           );
         }
 
+        const sourceEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(sourceEnvironmentId);
+        const targetEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
+          parsedInput.targetEnvironmentId
+        );
+
+        if (sourceEnvironmentOrganizationId !== targetEnvironmentOrganizationId) {
+          throw new OperationNotAllowedError(
+            "Source and target environments must be in the same organization"
+          );
+        }
+
+        // authorization check for source environment
         await checkAuthorizationUpdated({
           userId: ctx.user.id,
-          organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+          organizationId: sourceEnvironmentOrganizationId,
           access: [
             {
               type: "organization",
@@ -96,9 +109,10 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           ],
         });
 
+        // authorization check for target environment
         await checkAuthorizationUpdated({
           userId: ctx.user.id,
-          organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+          organizationId: targetEnvironmentOrganizationId,
           access: [
             {
               type: "organization",
@@ -112,12 +126,10 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           ],
         });
 
-        ctx.auditLoggingCtx.organizationId = await getOrganizationIdFromEnvironmentId(
-          parsedInput.environmentId
-        );
+        ctx.auditLoggingCtx.organizationId = sourceEnvironmentOrganizationId;
         ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
         const result = await copySurveyToOtherEnvironment(
-          parsedInput.environmentId,
+          sourceEnvironmentId,
           parsedInput.surveyId,
           parsedInput.targetEnvironmentId,
           ctx.user.id
