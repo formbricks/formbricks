@@ -2101,6 +2101,7 @@ checksums:
     templates/csat_survey_question_3_headline: 25974b7f1692cad41908fe305830b6c0
     templates/csat_survey_question_3_placeholder: 3ec4d0b6bb1f26bb2c32e9e8bd377ae3
     templates/cta_description: bc94a2ddc965b286a8677b0642696c7e
+    templates/custom_survey_block_1_name: 5e1b4dce0cb70662441b663507a69454
     templates/custom_survey_description: 0492afdea2ef1bd683eaf48a2bad2caa
     templates/custom_survey_name: 6fc756927ca9ea22c26368cccd64a67e
     templates/custom_survey_question_1_headline: 0abf9d41e0b5c5567c3833fd63048398

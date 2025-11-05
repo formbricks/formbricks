@@ -371,13 +371,14 @@ export const QuestionsView = ({
     const { blockIndex } = findElementLocation(question.id);
     if (blockIndex === -1) return;
 
-    const blocks = [...(localSurvey.blocks ?? [])];
-    blocks[blockIndex] = {
-      ...blocks[blockIndex],
-      logic,
-    };
-
-    setLocalSurvey({ ...localSurvey, blocks });
+    setLocalSurvey((prevSurvey) => {
+      const blocks = [...(prevSurvey.blocks ?? [])];
+      blocks[blockIndex] = {
+        ...blocks[blockIndex],
+        logic,
+      };
+      return { ...prevSurvey, blocks };
+    });
   };
 
   // Update block logic fallback (block-level property)
@@ -388,13 +389,14 @@ export const QuestionsView = ({
     const { blockIndex } = findElementLocation(question.id);
     if (blockIndex === -1) return;
 
-    const blocks = [...(localSurvey.blocks ?? [])];
-    blocks[blockIndex] = {
-      ...blocks[blockIndex],
-      logicFallback,
-    };
-
-    setLocalSurvey({ ...localSurvey, blocks });
+    setLocalSurvey((prevSurvey) => {
+      const blocks = [...(prevSurvey.blocks ?? [])];
+      blocks[blockIndex] = {
+        ...blocks[blockIndex],
+        logicFallback,
+      };
+      return { ...prevSurvey, blocks };
+    });
   };
 
   // Update block button label (block-level property)
@@ -403,12 +405,22 @@ export const QuestionsView = ({
     labelKey: "buttonLabel" | "backButtonLabel",
     labelValue: TI18nString | undefined
   ) => {
-    const blocks = [...(localSurvey.blocks ?? [])];
-    blocks[blockIndex] = {
-      ...blocks[blockIndex],
-      [labelKey]: labelValue,
-    };
-    setLocalSurvey({ ...localSurvey, blocks });
+    setLocalSurvey((prevSurvey) => {
+      const blocks = [...(prevSurvey.blocks ?? [])];
+
+      // Bounds check
+      if (blockIndex < 0 || blockIndex >= blocks.length) {
+        console.error(`Invalid blockIndex: ${blockIndex}`);
+        return prevSurvey;
+      }
+
+      blocks[blockIndex] = {
+        ...blocks[blockIndex],
+        [labelKey]: labelValue,
+      };
+
+      return { ...prevSurvey, blocks };
+    });
   };
 
   const deleteQuestion = (questionIdx: number) => {

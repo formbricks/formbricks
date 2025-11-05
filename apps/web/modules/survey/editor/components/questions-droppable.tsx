@@ -76,6 +76,8 @@ export const QuestionsDroppable = ({
             key={question.id}
             localSurvey={localSurvey}
             project={project}
+            // TODO: Refactor question forms to use TSurveyElement instead of TSurveyQuestion
+            // The forms no longer need TSurveyQuestion since logic/buttonLabel are now block-level
             question={question as unknown as TSurveyQuestion}
             questionIdx={questionIdx}
             moveQuestion={moveQuestion}
