@@ -3,7 +3,6 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
