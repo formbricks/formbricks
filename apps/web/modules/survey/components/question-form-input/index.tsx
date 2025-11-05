@@ -6,13 +6,12 @@ import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
   TSurveyEndScreenCard,
   TSurveyQuestion,
   TSurveyQuestionChoice,
-  TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -93,7 +92,7 @@ export const QuestionFormInput = ({
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
-  const questions = localSurvey.blocks?.flatMap((block) => block.elements) ?? localSurvey.questions;
+  const questions = localSurvey.blocks.flatMap((block) => block.elements);
 
   const question: TSurveyElement = questions[questionIdx];
   const isChoice = id.includes("choice");
@@ -147,9 +146,9 @@ export const QuestionFormInput = ({
       (question &&
         (id.includes(".")
           ? // Handle nested properties
-            (question[id.split(".")[0] as keyof TSurveyQuestion] as any)?.[id.split(".")[1]]
+            (question[id.split(".")[0] as keyof TSurveyElement] as any)?.[id.split(".")[1]]
           : // Original behavior
-            (question[id as keyof TSurveyQuestion] as TI18nString))) ||
+            (question[id as keyof TSurveyElement] as TI18nString))) ||
       createI18nString("", surveyLanguageCodes)
     );
   }, [
@@ -297,7 +296,7 @@ export const QuestionFormInput = ({
   const renderRemoveDescriptionButton = () => {
     if (
       question &&
-      (question.type === TSurveyQuestionTypeEnum.CTA || question.type === TSurveyQuestionTypeEnum.Consent)
+      (question.type === TSurveyElementTypeEnum.CTA || question.type === TSurveyElementTypeEnum.Consent)
     ) {
       return false;
     }

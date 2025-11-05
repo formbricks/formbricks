@@ -427,7 +427,7 @@ export function Survey({
         ) {
           const { jumpTarget, requiredQuestionIds, calculations } = performActions(
             localSurvey,
-            logic.actions as TSurveyBlockLogicAction[], //TODO: Temporary type assertion until the survey editor poc is completed, fix properly later
+            logic.actions as TSurveyBlockLogicAction[], // TODO: Temporary type assertion until the survey editor poc is completed, fix properly later
             localResponseData,
             calculationResults
           );

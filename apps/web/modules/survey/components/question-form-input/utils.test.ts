@@ -225,7 +225,7 @@ describe("utils", () => {
         pin: null,
       } as unknown as TSurvey;
 
-      const result = getEndingCardText(survey, "headline", surveyLanguageCodes, 0);
+      const result = getEndingCardText(survey, [], "headline", surveyLanguageCodes, 0);
       expect(result).toEqual(createI18nString("End Screen", surveyLanguageCodes));
     });
 
@@ -257,7 +257,7 @@ describe("utils", () => {
         pin: null,
       } as unknown as TSurvey;
 
-      const result = getEndingCardText(survey, "headline", surveyLanguageCodes, 0);
+      const result = getEndingCardText(survey, [], "headline", surveyLanguageCodes, 0);
       expect(result).toEqual(createI18nString("", surveyLanguageCodes));
     });
   });
@@ -294,14 +294,19 @@ describe("utils", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
-        questions: [
+        blocks: [
           {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText,
-            headline: createI18nString("Question?", surveyLanguageCodes),
-            required: true,
-            imageUrl: "https://example.com/image.jpg",
-          } as unknown as TSurveyQuestion,
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyQuestionTypeEnum.OpenText,
+                headline: createI18nString("Question?", surveyLanguageCodes),
+                required: true,
+                imageUrl: "https://example.com/image.jpg",
+              },
+            ],
+          },
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},
@@ -326,14 +331,19 @@ describe("utils", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
-        questions: [
+        blocks: [
           {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText,
-            headline: createI18nString("Question?", surveyLanguageCodes),
-            required: true,
-            videoUrl: "https://example.com/video.mp4",
-          } as unknown as TSurveyQuestion,
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyQuestionTypeEnum.OpenText,
+                headline: createI18nString("Question?", surveyLanguageCodes),
+                required: true,
+                videoUrl: "https://example.com/video.mp4",
+              },
+            ],
+          },
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},
@@ -358,13 +368,18 @@ describe("utils", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
-        questions: [
+        blocks: [
           {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText,
-            headline: createI18nString("Question?", surveyLanguageCodes),
-            required: true,
-          } as unknown as TSurveyQuestion,
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyQuestionTypeEnum.OpenText,
+                headline: createI18nString("Question?", surveyLanguageCodes),
+                required: true,
+              },
+            ],
+          },
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},

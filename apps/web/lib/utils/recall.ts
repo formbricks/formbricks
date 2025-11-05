@@ -146,7 +146,8 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): T
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
 export const replaceHeadlineRecall = <T extends TSurvey>(survey: T, language: string): T => {
   const modifiedSurvey = structuredClone(survey);
-  modifiedSurvey.questions.forEach((question) => {
+  const questions = modifiedSurvey.blocks.flatMap((b) => b.elements);
+  questions.forEach((question) => {
     question.headline = recallToHeadline(question.headline, modifiedSurvey, false, language);
   });
   return modifiedSurvey;

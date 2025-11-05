@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import { TSurveyLogic, TSurveyLogicAction, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
@@ -206,13 +207,13 @@ describe("surveyLogic", () => {
   });
 
   test("getUpdatedActionBody returns new action bodies correctly", () => {
-    const base: TSurveyLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
+    const base: TSurveyBlockLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     const calc = getUpdatedActionBody(base, "calculate");
     expect(calc.objective).toBe("calculate");
     const req = getUpdatedActionBody(calc, "requireAnswer");
     expect(req.objective).toBe("requireAnswer");
-    const jump = getUpdatedActionBody(req, "jumpToQuestion");
-    expect(jump.objective).toBe("jumpToQuestion");
+    const jump = getUpdatedActionBody(req, "jumpToBlock");
+    expect(jump.objective).toBe("jumpToBlock");
   });
 
   test("evaluateLogic handles AND/OR groups and single conditions", () => {
@@ -244,7 +245,7 @@ describe("surveyLogic", () => {
   test("performActions calculates, requires, and jumps correctly", () => {
     const data: TResponseData = { q: "5" };
     const initialVars: TResponseVariables = {};
-    const actions: TSurveyLogicAction[] = [
+    const actions: TSurveyBlockLogicAction[] = [
       {
         id: "a1",
         objective: "calculate",
@@ -253,7 +254,7 @@ describe("surveyLogic", () => {
         value: { type: "static", value: 3 },
       },
       { id: "a2", objective: "requireAnswer", target: "q2" },
-      { id: "a3", objective: "jumpToQuestion", target: "q3" },
+      { id: "a3", objective: "jumpToBlock", target: "q3" },
     ];
     const result = performActions(mockSurvey, actions, data, initialVars);
     expect(result.calculations.v).toBe(3);
