@@ -190,7 +190,8 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
               <div key={option.id}>
                 <Label
                   htmlFor={`waiting-time-${option.id}`}
-                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4"
+                  data-testid={`waiting-time-option-${option.id}`}>
                   <RadioGroupItem
                     value={option.id}
                     id={`waiting-time-${option.id}`}
@@ -257,11 +258,12 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
               <div key={option.id}>
                 <Label
                   key={option.name}
-                  htmlFor={option.name}
-                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                  htmlFor={`recontact-option-${option.id}`}
+                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4"
+                  data-testid={`recontact-option-${option.id}`}>
                   <RadioGroupItem
                     value={option.id}
-                    id={option.name}
+                    id={`recontact-option-${option.id}`}
                     className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                   />
                   <div>
