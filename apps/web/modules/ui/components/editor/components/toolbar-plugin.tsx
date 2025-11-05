@@ -262,21 +262,26 @@ export const ToolbarPlugin = (
         const root = $getRoot();
         root.clear();
         root.append(...nodes);
-
-        editor.registerUpdateListener(({ editorState }) => {
-          editorState.read(() => {
-            const textInHtml = $generateHtmlFromNodes(editor)
-              .replace(/&lt;/g, "<")
-              .replace(/&gt;/g, ">")
-              .replace(/white-space:\s*pre-wrap;?/g, "");
-            setText.current(textInHtml);
-          });
-        });
       });
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Register text-saving update listener - always active for each editor instance
+  useEffect(() => {
+    const unregister = editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        const textInHtml = $generateHtmlFromNodes(editor)
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/white-space:\s*pre-wrap;?/g, "");
+        setText.current(textInHtml);
+      });
+    });
+
+    return unregister;
+  }, [editor]);
 
   useEffect(() => {
     return mergeRegister(
