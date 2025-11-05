@@ -81,7 +81,6 @@ export const QuotaModal = ({
   const [openConfirmationModal, setOpenConfirmationModal] = useState(false);
   const [openConfirmChangesInInclusionCriteria, setOpenConfirmChangesInInclusionCriteria] = useState(false);
 
-  // Derive questions from blocks (with fallback to legacy questions)
   const questions = useMemo(() => {
     return survey.blocks.flatMap((block) => block.elements);
   }, [survey.blocks]);

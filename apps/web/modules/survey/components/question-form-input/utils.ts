@@ -70,11 +70,12 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
   switch (questionIdx) {
     case -1: // Welcome Card
       return false;
-    default:
+    default: {
       // Regular Survey Question - derive questions from blocks
       const questions = localSurvey.blocks.flatMap((block) => block.elements);
       const question = questions[questionIdx];
       return (!!question && !!question.imageUrl) || (!!question && !!question.videoUrl);
+    }
   }
 };
 

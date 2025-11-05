@@ -49,6 +49,7 @@ export function LogicEditor({
   const parentBlock = localSurvey.blocks?.find((block) =>
     block.elements.some((element) => element.id === question.id)
   );
+
   const blockLogicFallback = parentBlock?.logicFallback;
 
   const fallbackOptions = useMemo(() => {
@@ -62,15 +63,29 @@ export function LogicEditor({
     const allQuestions = localSurvey.blocks.flatMap((b) => b.elements);
     const blocks = localSurvey.blocks;
 
+    // Track which blocks we've already added to avoid duplicates when a block has multiple elements
+    const addedBlockIds = new Set<string>();
+
+    // Iterate over the questions AFTER the current question
     for (let i = questionIdx + 1; i < allQuestions.length; i++) {
       const ques = allQuestions[i];
-      // Find block ID for this question
       const block = blocks.find((b) => b.elements.some((e) => e.id === ques.id));
 
+      if (!block) continue;
+
+      // Skip if we've already added this block
+      if (addedBlockIds.has(block.id)) continue;
+
+      addedBlockIds.add(block.id);
+
+      // Use the first element's headline as the block label
+      const firstElement = block.elements[0];
       options.push({
-        icon: QUESTIONS_ICON_MAP[ques.type],
-        label: getTextContent(recallToHeadline(ques.headline, localSurvey, false, "default").default ?? ""),
-        value: block?.id ?? ques.id, // Block ID if blocks exist, otherwise question ID
+        icon: QUESTIONS_ICON_MAP[firstElement.type],
+        label: getTextContent(
+          recallToHeadline(firstElement.headline, localSurvey, false, "default").default ?? ""
+        ),
+        value: block.id,
       });
     }
 

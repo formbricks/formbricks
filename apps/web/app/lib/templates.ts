@@ -3603,7 +3603,7 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
       blocks: [
         {
           id: createId(),
-          name: "Block 1",
+          name: t("templates.custom_survey_block_1_name"),
           elements: [
             {
               id: createId(),

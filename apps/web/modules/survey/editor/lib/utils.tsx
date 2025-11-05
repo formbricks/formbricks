@@ -953,17 +953,32 @@ export const getActionTargetOptions = (
   }
 
   // For jumpToBlock, we need block IDs
+  // Track which blocks we've already added to avoid duplicates when a block has multiple elements
   const blocks = localSurvey.blocks ?? [];
-  const questionOptions = questions.map((question) => {
+  const addedBlockIds = new Set<string>();
+  const questionOptions: TComboboxOption[] = [];
+
+  for (const question of questions) {
     // Find which block this question belongs to
     const block = blocks.find((b) => b.elements.some((e) => e.id === question.id));
-    const processedHeadline = recallToHeadline(question.headline, localSurvey, false, "default");
-    return {
-      icon: getQuestionIconMapping(t)[question.type],
+
+    if (!block) continue;
+
+    // Skip if we've already added this block
+    if (addedBlockIds.has(block.id)) continue;
+
+    // Mark this block as added
+    addedBlockIds.add(block.id);
+
+    // Use the first element's headline as the block label
+    const firstElement = block.elements[0];
+    const processedHeadline = recallToHeadline(firstElement.headline, localSurvey, false, "default");
+    questionOptions.push({
+      icon: getQuestionIconMapping(t)[firstElement.type],
       label: getTextContent(processedHeadline.default ?? ""),
-      value: block?.id ?? question.id, // Block ID for jumpToBlock
-    };
-  });
+      value: block.id,
+    });
+  }
 
   // Ending cards
   const endingCardOptions = localSurvey.endings.map((ending) => {

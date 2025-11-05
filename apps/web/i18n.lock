@@ -1352,7 +1352,6 @@ checksums:
     environments/surveys/edit/is_skipped: 9fb90b6578f603cca37d4e6c912bb401
     environments/surveys/edit/is_submitted: 13e774a97ad5f5609555e6f99514e70f
     environments/surveys/edit/italic: 555c60fb1d12ae305136202afa6deb3d
-    environments/surveys/edit/jump_to_block: 2fc00bd725c44f98861051c57bb2c392
     environments/surveys/edit/jump_to_question: 742aabed8845190825418aa429f01b2d
     environments/surveys/edit/keep_current_order: a7c944ad6b3515f2c4f83a2c81f8fc26
     environments/surveys/edit/keep_showing_while_conditions_match: 2574802d87bd6da151c9145aacce7281
