@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -11,6 +11,7 @@ import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/typ
 import { validateId } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { findHiddenFieldUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -43,6 +44,8 @@ export const HiddenFieldsCard = ({
       setActiveQuestionId(null);
     }
   };
+
+  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
     let updatedSurvey = { ...localSurvey };
@@ -97,7 +100,8 @@ export const HiddenFieldsCard = ({
       );
       return;
     }
-    const totalQuestions = localSurvey.blocks.flatMap((b) => b.elements).length;
+
+    const totalQuestions = questions.length;
     if (recallQuestionIdx === totalQuestions) {
       toast.error(
         t("environments.surveys.edit.hidden_field_used_in_recall_ending_card", { hiddenField: fieldId })
@@ -196,8 +200,7 @@ export const HiddenFieldsCard = ({
             className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
-              const existingElements = localSurvey.blocks.flatMap((b) => b.elements);
-              const existingQuestionIds = existingElements.map((question) => question.id);
+              const existingQuestionIds = questions.map((question) => question.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
               const validateIdError = validateId(

@@ -13,7 +13,7 @@ import { render } from "@react-email/render";
 import { TFunction } from "i18next";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -22,6 +22,7 @@ import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
+import { findElementLocation, getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 import { QuestionHeader } from "./email-question-header";
 
@@ -78,23 +79,16 @@ export async function PreviewEmailTemplate({
   const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
+
   // Derive questions from blocks
-  const questions = survey.blocks.flatMap((block) => block.elements);
-  const firstQuestion = questions[0] as TSurveyElement;
+  const questions = getQuestionsFromBlocks(survey.blocks);
+  const firstQuestion = questions[0];
+
+  const { block } = findElementLocation(survey, firstQuestion.id);
+
   const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
   const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
-
-  const getButtonLabel = (survey: TSurvey, defaultLanguageCode: string) => {
-    const ctaQuestionBlock = survey.blocks.find((block) =>
-      block.elements.some((element) => element.type === TSurveyElementTypeEnum.CTA)
-    );
-    if (ctaQuestionBlock) {
-      return getLocalizedValue(ctaQuestionBlock.buttonLabel, defaultLanguageCode);
-    }
-
-    return t("common.next");
-  };
 
   switch (firstQuestion.type) {
     case TSurveyElementTypeEnum.OpenText:
@@ -201,7 +195,7 @@ export async function PreviewEmailTemplate({
                 isLight(brandColor) ? "text-black" : "text-white"
               )}
               href={`${urlWithPrefilling}${firstQuestion.id}=clicked`}>
-              {getButtonLabel(survey, defaultLanguageCode)}
+              {getLocalizedValue(block?.buttonLabel, defaultLanguageCode)}
             </EmailButton>
           </Container>
           <EmailFooter />

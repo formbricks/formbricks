@@ -24,6 +24,32 @@ export const isElementIdUnique = (elementId: string, blocks: TSurveyBlock[]): bo
   return true;
 };
 
+/**
+ * Find the location of an element within the survey blocks
+ * @param survey - The survey object
+ * @param elementId - The ID of the element to find
+ * @returns Object containing blockId, blockIndex, elementIndex and the block
+ */
+export const findElementLocation = (
+  survey: TSurvey,
+  elementId: string
+): { blockId: string | null; blockIndex: number; elementIndex: number; block: TSurveyBlock | null } => {
+  const blocks = survey.blocks;
+
+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+    const block = blocks[blockIndex];
+    const elementIndex = block.elements.findIndex((e) => e.id === elementId);
+    if (elementIndex !== -1) {
+      return { blockId: block.id, blockIndex, elementIndex, block };
+    }
+  }
+
+  return { blockId: null, blockIndex: -1, elementIndex: -1, block: null };
+};
+
+export const getQuestionsFromBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] =>
+  blocks.flatMap((block) => block.elements);
+
 // ============================================
 // BLOCK OPERATIONS
 // ============================================
@@ -387,27 +413,4 @@ export const duplicateElementInBlock = (
     ...survey,
     blocks,
   });
-};
-
-/**
- * Find the location of an element within the survey blocks
- * @param survey - The survey object
- * @param elementId - The ID of the element to find
- * @returns Object containing blockId, blockIndex, and elementIndex
- */
-export const findElementLocation = (
-  survey: TSurvey,
-  elementId: string
-): { blockId: string | null; blockIndex: number; elementIndex: number } => {
-  const blocks = survey.blocks;
-
-  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
-    const block = blocks[blockIndex];
-    const elementIndex = block.elements.findIndex((e) => e.id === elementId);
-    if (elementIndex !== -1) {
-      return { blockId: block.id, blockIndex, elementIndex };
-    }
-  }
-
-  return { blockId: null, blockIndex: -1, elementIndex: -1 };
 };

@@ -22,6 +22,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
@@ -102,7 +103,7 @@ export const FollowUpModal = ({
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
     // Derive questions from blocks
-    const questions = localSurvey.blocks.flatMap((block) => block.elements);
+    const questions = getQuestionsFromBlocks(localSurvey.blocks);
 
     const openTextAndContactQuestions = questions.filter((question) => {
       if (question.type === TSurveyElementTypeEnum.ContactInfo) {

@@ -66,13 +66,12 @@ export const getEndingCardText = (
   }
 };
 
-export const determineImageUploaderVisibility = (questionIdx: number, localSurvey: TSurvey) => {
+export const determineImageUploaderVisibility = (questionIdx: number, questions: TSurveyElement[]) => {
   switch (questionIdx) {
     case -1: // Welcome Card
       return false;
     default: {
       // Regular Survey Question - derive questions from blocks
-      const questions = localSurvey.blocks.flatMap((block) => block.elements);
       const question = questions[questionIdx];
       return (!!question && !!question.imageUrl) || (!!question && !!question.videoUrl);
     }

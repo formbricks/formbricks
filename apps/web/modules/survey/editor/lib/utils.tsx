@@ -24,6 +24,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { findElementLocation, getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
@@ -112,7 +113,7 @@ export const getConditionValueOptions = (
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   const variables = localSurvey.variables ?? [];
   // Derive questions from blocks
-  const questions = localSurvey.blocks.flatMap((block) => block.elements.map((element) => element));
+  const questions = getQuestionsFromBlocks(localSurvey.blocks);
 
   const groupedOptions: TComboboxGroupedOption[] = [];
   const questionOptions: TComboboxOption[] = [];
@@ -278,7 +279,7 @@ export const getDefaultOperatorForQuestion = (
 
 export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurvey: TSurvey): string => {
   if (condition.leftOperand.type === "question") {
-    const questions = localSurvey.blocks.flatMap((block) => block.elements.map((element) => element));
+    const questions = getQuestionsFromBlocks(localSurvey.blocks);
     const question = questions.find((q) => q.id === condition.leftOperand.value);
     if (question && question.type === TSurveyElementTypeEnum.Matrix) {
       if (condition.leftOperand?.meta?.row !== undefined) {
@@ -303,7 +304,7 @@ export const getConditionOperatorOptions = (
     return getLogicRules(t).hiddenField.options;
   } else if (condition.leftOperand.type === "question") {
     // Derive questions from blocks
-    const questions = localSurvey.blocks.flatMap((block) => block.elements.map((element) => element));
+    const questions = getQuestionsFromBlocks(localSurvey.blocks);
     const question = questions.find((question) => {
       let leftOperandQuestionId = condition.leftOperand.value;
       if (question.type === TSurveyElementTypeEnum.Matrix) {
@@ -349,7 +350,7 @@ export const getMatchValueProps = (
   }
 
   // Derive questions from blocks
-  const allQuestions = localSurvey.blocks.flatMap((block) => block.elements.map((element) => element));
+  const allQuestions = getQuestionsFromBlocks(localSurvey.blocks);
   let questions = allQuestions.filter((_, idx) =>
     typeof questionIdx === "undefined" ? true : idx <= questionIdx
   );
@@ -1068,7 +1069,7 @@ export const getActionValueOptions = (
   questionIdx: number,
   t: TFunction
 ): TComboboxGroupedOption[] => {
-  const questions = localSurvey.blocks.flatMap((block) => block.elements.map((element) => element));
+  const questions = getQuestionsFromBlocks(localSurvey.blocks);
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
   const filteredQuestions = questions.filter((_, idx) => idx <= questionIdx);
@@ -1250,6 +1251,13 @@ const isUsedInRightOperand = (
 };
 
 export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQuestionId): number => {
+  const { block } = findElementLocation(survey, questionId);
+
+  // The parent block for this questionId was not found in the survey, while this shouldn't happen but we still have a safety check and return -1
+  if (!block) {
+    return -1;
+  }
+
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
       // It's a TConditionGroup
@@ -1264,10 +1272,11 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
   };
 
   const isUsedInAction = (action: TSurveyBlockLogicAction): boolean => {
-    return (
-      // Note: jumpToBlock targets block IDs, not question IDs, so we only check requireAnswer
-      action.objective === "requireAnswer" && action.target === questionId
-    );
+    if (action.objective === "requireAnswer" && action.target === questionId) {
+      return true;
+    }
+
+    return action.objective === "jumpToBlock" && action.target === block.id;
   };
 
   const isUsedInLogicRule = (logicRule: TSurveyBlockLogic): boolean => {
@@ -1275,14 +1284,20 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
   };
 
   // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = (survey.blocks?.flatMap((b) => b.elements) ?? []) as unknown as TSurveyQuestion[];
+  const questions = getQuestionsFromBlocks(survey.blocks);
 
-  return questions.findIndex(
-    (question) =>
-      question.logicFallback === questionId ||
-      (question.id !== questionId &&
-        (question.logic as unknown as TSurveyBlockLogic[])?.some(isUsedInLogicRule))
-  );
+  return questions.findIndex((question) => {
+    const { block } = findElementLocation(survey, question.id);
+
+    if (!block) {
+      return false;
+    }
+
+    return (
+      block.logicFallback === questionId ||
+      (question.id !== questionId && block.logic?.some(isUsedInLogicRule))
+    );
+  });
 };
 
 export const isUsedInQuota = (
@@ -1439,11 +1454,17 @@ export const findOptionUsedInLogic = (
   };
 
   // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = (survey.blocks?.flatMap((b) => b.elements) ?? []) as unknown as TSurveyQuestion[];
+  const questions = getQuestionsFromBlocks(survey.blocks);
 
-  return questions.findIndex((question) =>
-    (question.logic as unknown as TSurveyBlockLogic[])?.some(isUsedInLogicRule)
-  );
+  return questions.findIndex((question) => {
+    const { block } = findElementLocation(survey, question.id);
+
+    if (!block) {
+      return false;
+    }
+
+    return block.logic?.some(isUsedInLogicRule);
+  });
 };
 
 export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number => {
@@ -1471,9 +1492,15 @@ export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): nu
   // Derive questions from blocks (cast as questions to access logic properties)
   const questions = (survey.blocks?.flatMap((b) => b.elements) ?? []) as unknown as TSurveyQuestion[];
 
-  return questions.findIndex((question) =>
-    (question.logic as unknown as TSurveyBlockLogic[])?.some(isUsedInLogicRule)
-  );
+  return questions.findIndex((question) => {
+    const { block } = findElementLocation(survey, question.id);
+
+    if (!block) {
+      return false;
+    }
+
+    return block.logic?.some(isUsedInLogicRule);
+  });
 };
 
 export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number => {
@@ -1496,11 +1523,17 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   };
 
   // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = (survey.blocks?.flatMap((b) => b.elements) ?? []) as unknown as TSurveyQuestion[];
+  const questions = getQuestionsFromBlocks(survey.blocks);
 
-  return questions.findIndex((question) =>
-    (question.logic as unknown as TSurveyBlockLogic[])?.some(isUsedInLogicRule)
-  );
+  return questions.findIndex((question) => {
+    const { block } = findElementLocation(survey, question.id);
+
+    if (!block) {
+      return false;
+    }
+
+    return block.logic?.some(isUsedInLogicRule);
+  });
 };
 
 export const getSurveyFollowUpActionDefaultBody = (t: TFunction): string => {
@@ -1520,11 +1553,15 @@ export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string)
   };
 
   // Derive questions from blocks (cast as questions to access logic properties)
-  const questions = (survey.blocks?.flatMap((b) => b.elements) ?? []) as unknown as TSurveyQuestion[];
+  const questions = getQuestionsFromBlocks(survey.blocks);
 
-  return questions.findIndex(
-    (question) =>
-      question.logicFallback === endingCardId ||
-      (question.logic as unknown as TSurveyBlockLogic[])?.some(isUsedInLogicRule)
-  );
+  return questions.findIndex((question) => {
+    const { block } = findElementLocation(survey, question.id);
+
+    if (!block) {
+      return false;
+    }
+
+    return block.logicFallback === endingCardId || block.logic?.some(isUsedInLogicRule);
+  });
 };

@@ -9,6 +9,7 @@ import { getTextContent, isValidHTML } from "@formbricks/types/surveys/validatio
 import { TUserLocale } from "@formbricks/types/user";
 import { md } from "@/lib/markdownIt";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { isLabelValidForAllLanguages } from "@/modules/survey/editor/lib/validation";
 import { Editor } from "@/modules/ui/components/editor";
 import { LanguageIndicator } from "./language-indicator";
@@ -63,10 +64,7 @@ export function LocalizedEditor({
   isExternalUrlsAllowed,
 }: Readonly<LocalizedEditorProps>) {
   // Derive questions from blocks for migrated surveys
-  const questions = useMemo(
-    () => localSurvey.blocks.flatMap((block) => block.elements),
-    [localSurvey.blocks]
-  );
+  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
   const { t } = useTranslation();
 
   const isInComplete = useMemo(

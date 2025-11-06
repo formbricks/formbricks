@@ -16,6 +16,7 @@ import {
   toggleGroupConnector,
   updateCondition,
 } from "@/lib/surveyLogic/utils";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
@@ -56,7 +57,7 @@ export function createSharedConditionsFactory(
   const { onConditionsChange } = updateCallbacks;
 
   // Derive questions from blocks
-  const questions = survey.blocks.flatMap((block) => block.elements.map((element) => element));
+  const questions = getQuestionsFromBlocks(survey.blocks);
 
   // Handles special update logic for matrix questions, setting appropriate operators and metadata
   const handleMatrixQuestionUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {

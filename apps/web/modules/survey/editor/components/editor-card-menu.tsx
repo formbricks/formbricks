@@ -12,6 +12,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import {
   getCXQuestionNameMap,
   getQuestionDefaults,
@@ -70,7 +71,8 @@ export const EditorCardMenu = ({
 
     return undefined;
   });
-  const questions = survey.blocks.flatMap((block) => block.elements);
+
+  const questions = getQuestionsFromBlocks(survey.blocks);
   const isDeleteDisabled =
     cardType === "question" ? questions.length === 1 : survey.type === "link" && survey.endings.length === 1;
 

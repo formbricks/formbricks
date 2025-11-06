@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { extractRecallInfo } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
@@ -78,7 +79,7 @@ export const SurveyVariablesCardItem = ({
   // Removed auto-submit effect
 
   const onVariableDelete = (variableToDelete: TSurveyVariable) => {
-    const questions = localSurvey.blocks.flatMap((block) => block.elements);
+    const questions = getQuestionsFromBlocks(localSurvey.blocks);
     const quesIdx = findVariableUsedInLogic(localSurvey, variableToDelete.id);
 
     if (quesIdx !== -1) {

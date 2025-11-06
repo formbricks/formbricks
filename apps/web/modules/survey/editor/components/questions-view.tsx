@@ -39,6 +39,8 @@ import {
   addBlock,
   deleteBlock,
   duplicateBlock,
+  findElementLocation,
+  getQuestionsFromBlocks,
   moveBlock,
   updateElementInBlock,
 } from "@/modules/survey/editor/lib/blocks";
@@ -96,9 +98,7 @@ export const QuestionsView = ({
   const { t } = useTranslation();
 
   // Derive questions from blocks for display
-  const questions = useMemo(() => {
-    return localSurvey.blocks.flatMap((block) => block.elements);
-  }, [localSurvey.blocks]);
+  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const internalQuestionIdMap = useMemo(() => {
     return questions.reduce((acc, question) => {
@@ -108,20 +108,6 @@ export const QuestionsView = ({
   }, [questions]);
 
   const surveyLanguages = localSurvey.languages;
-
-  const findElementLocation = (elementId: string) => {
-    const blocks = localSurvey.blocks;
-
-    for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
-      const block = blocks[blockIndex];
-      const elementIndex = block.elements.findIndex((e) => e.id === elementId);
-      if (elementIndex !== -1) {
-        return { blockId: block.id, blockIndex, elementIndex };
-      }
-    }
-
-    return { blockId: null, blockIndex: -1, elementIndex: -1 };
-  };
 
   const getQuestionIdFromBlockId = (block: TSurveyBlock): string => block.elements[0].id;
 
@@ -279,7 +265,7 @@ export const QuestionsView = ({
     const question = questions[questionIdx];
     if (!question) return;
 
-    const { blockId, blockIndex } = findElementLocation(question.id);
+    const { blockId, blockIndex } = findElementLocation(localSurvey, question.id);
     if (!blockId || blockIndex === -1) return;
 
     let updatedSurvey = { ...localSurvey };
@@ -368,7 +354,7 @@ export const QuestionsView = ({
     const question = questions[questionIdx];
     if (!question) return;
 
-    const { blockIndex } = findElementLocation(question.id);
+    const { blockIndex } = findElementLocation(localSurvey, question.id);
     if (blockIndex === -1) return;
 
     setLocalSurvey((prevSurvey) => {
@@ -386,7 +372,7 @@ export const QuestionsView = ({
     const question = questions[questionIdx];
     if (!question) return;
 
-    const { blockIndex } = findElementLocation(question.id);
+    const { blockIndex } = findElementLocation(localSurvey, question.id);
     if (blockIndex === -1) return;
 
     setLocalSurvey((prevSurvey) => {
@@ -482,7 +468,7 @@ export const QuestionsView = ({
     }));
 
     // Find and delete the block containing this question
-    const { blockId } = findElementLocation(questionId);
+    const { blockId } = findElementLocation(localSurvey, questionId);
     if (!blockId) return;
 
     const result = deleteBlock(updatedSurvey, blockId);
@@ -511,7 +497,7 @@ export const QuestionsView = ({
     const question = questions[questionIdx];
     if (!question) return;
 
-    const { blockId } = findElementLocation(question.id);
+    const { blockId } = findElementLocation(localSurvey, question.id);
     if (!blockId) return;
 
     const result = duplicateBlock(localSurvey, blockId);
@@ -523,7 +509,7 @@ export const QuestionsView = ({
 
     // The duplicated block has new element IDs, find the first one
     const allBlocks = result.data.blocks ?? [];
-    const { blockIndex } = findElementLocation(question.id);
+    const { blockIndex } = findElementLocation(localSurvey, question.id);
     const duplicatedBlock = allBlocks[blockIndex + 1];
     const newElementId = duplicatedBlock?.elements[0]?.id;
 
@@ -572,7 +558,7 @@ export const QuestionsView = ({
     const question = questions[questionIndex];
     if (!question) return;
 
-    const { blockId } = findElementLocation(question.id);
+    const { blockId } = findElementLocation(localSurvey, question.id);
     if (!blockId) return;
 
     const direction = up ? "up" : "down";
@@ -633,8 +619,8 @@ export const QuestionsView = ({
 
     if (!sourceQuestion || !destQuestion) return;
 
-    const { blockIndex: sourceBlockIndex } = findElementLocation(sourceQuestion.id);
-    const { blockIndex: destBlockIndex } = findElementLocation(destQuestion.id);
+    const { blockIndex: sourceBlockIndex } = findElementLocation(localSurvey, sourceQuestion.id);
+    const { blockIndex: destBlockIndex } = findElementLocation(localSurvey, destQuestion.id);
 
     if (sourceBlockIndex === -1 || destBlockIndex === -1) return;
     if (sourceBlockIndex === destBlockIndex) return; // No move needed

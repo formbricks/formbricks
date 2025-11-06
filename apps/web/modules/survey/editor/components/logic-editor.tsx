@@ -10,6 +10,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import {
   Select,
@@ -60,7 +61,7 @@ export function LogicEditor({
     }[] = [];
 
     // Derive questions from blocks
-    const allQuestions = localSurvey.blocks.flatMap((b) => b.elements);
+    const allQuestions = getQuestionsFromBlocks(localSurvey.blocks);
     const blocks = localSurvey.blocks;
 
     // Track which blocks we've already added to avoid duplicates when a block has multiple elements

@@ -9,6 +9,7 @@ import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -43,7 +44,7 @@ export const EndScreenForm = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
-  const questions = localSurvey.blocks.flatMap((block) => block.elements);
+  const questions = getQuestionsFromBlocks(localSurvey.blocks);
 
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&

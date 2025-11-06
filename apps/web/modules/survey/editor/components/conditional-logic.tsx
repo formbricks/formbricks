@@ -58,8 +58,9 @@ export function ConditionalLogic({
   }, [localSurvey]);
 
   // Find the parent block for this question/element to get its logic
-  const parentBlock = localSurvey.blocks.find((block) =>
-    block.elements.some((element) => element.id === question.id)
+  const parentBlock = useMemo(
+    () => localSurvey.blocks.find((block) => block.elements.some((element) => element.id === question.id)),
+    [localSurvey.blocks, question.id]
   );
 
   const blockLogic = useMemo(() => parentBlock?.logic ?? [], [parentBlock?.logic]);
@@ -146,7 +147,7 @@ export function ConditionalLogic({
               className="relative flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <LogicEditor
                 localSurvey={transformedSurvey}
-                logicItem={logicItem as TSurveyBlockLogic}
+                logicItem={logicItem}
                 updateQuestion={updateQuestion}
                 updateBlockLogic={updateBlockLogic}
                 updateBlockLogicFallback={updateBlockLogicFallback}

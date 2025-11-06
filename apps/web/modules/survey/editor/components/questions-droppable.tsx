@@ -7,6 +7,7 @@ import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionCard } from "@/modules/survey/editor/components/question-card";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;
@@ -64,9 +65,7 @@ export const QuestionsDroppable = ({
   const [parent] = useAutoAnimate();
 
   // Derive questions from blocks for display
-  const questions = useMemo(() => {
-    return localSurvey.blocks.flatMap((block) => block.elements);
-  }, [localSurvey.blocks]);
+  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   return (
     <div className="group mb-5 flex w-full flex-col gap-5" ref={parent}>

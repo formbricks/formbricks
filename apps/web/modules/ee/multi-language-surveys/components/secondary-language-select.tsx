@@ -1,10 +1,10 @@
 "use client";
 
 import { Language } from "@prisma/client";
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
@@ -33,9 +33,7 @@ export function SecondaryLanguageSelect({
     );
   };
 
-  const questions = useMemo(() => {
-    return localSurvey.blocks.flatMap((block) => block.elements);
-  }, [localSurvey.blocks]);
+  const questions = getQuestionsFromBlocks(localSurvey.blocks);
 
   return (
     <div className="space-y-2">

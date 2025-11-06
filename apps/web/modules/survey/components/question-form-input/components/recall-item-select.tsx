@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyHiddenFields, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +71,8 @@ export const RecallItemSelect = ({
     );
   };
 
+  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+
   const recallItemIds = useMemo(() => {
     return recallItems.map((recallItem) => recallItem.id);
   }, [recallItems]);
@@ -109,9 +112,6 @@ export const RecallItemSelect = ({
     const isWelcomeCard = questionId === "start";
     if (isWelcomeCard) return [];
 
-    // Derive questions from blocks or fall back to legacy questions array
-    const questions = localSurvey.blocks.flatMap((block) => block.elements);
-
     const isEndingCard = !questions.map((question) => question.id).includes(questionId);
     const idx = isEndingCard
       ? questions.length
@@ -128,7 +128,7 @@ export const RecallItemSelect = ({
       });
 
     return filteredQuestions;
-  }, [localSurvey.blocks, questionId, recallItemIds, selectedLanguageCode]);
+  }, [questionId, questions, recallItemIds, selectedLanguageCode]);
 
   const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
     return [...surveyQuestionRecallItems, ...hiddenFieldRecallItems, ...variableRecallItems].filter(
@@ -144,8 +144,6 @@ export const RecallItemSelect = ({
   const getRecallItemIcon = (recallItem: TSurveyRecallItem) => {
     switch (recallItem.type) {
       case "question":
-        // Derive questions from blocks or fall back to legacy questions array
-        const questions = localSurvey.blocks.flatMap((block) => block.elements);
         const question = questions.find((question) => question.id === recallItem.id);
         if (question) {
           return questionIconMapping[question?.type as keyof typeof questionIconMapping];
