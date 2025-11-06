@@ -1,10 +1,9 @@
 import DOMPurify from "isomorphic-dompurify";
-import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { isValidHTML } from "@/lib/html-utils";
 
 interface SubheaderProps {
   subheader?: string;
-  questionId: TSurveyQuestionId;
+  questionId: string;
 }
 
 export function Subheader({ subheader, questionId }: SubheaderProps) {

@@ -7,7 +7,7 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
-import { calculateElementIdx } from "@/lib/utils";
+import { calculateElementIdx, getQuestionsFromSurvey } from "@/lib/utils";
 import { Headline } from "./headline";
 import { Subheader } from "./subheader";
 
@@ -84,13 +84,14 @@ export function WelcomeCard({
   const { t } = useTranslation();
 
   const calculateTimeToComplete = () => {
-    let totalCards = survey.questions.length;
+    const questions = getQuestionsFromSurvey(survey);
+    let totalCards = questions.length;
     if (survey.endings.length > 0) totalCards += 1;
     let idx = calculateElementIdx(survey, 0, totalCards);
     if (idx === 0.5) {
       idx = 1;
     }
-    const timeInSeconds = (survey.questions.length / idx) * 15; //15 seconds per question.
+    const timeInSeconds = (questions.length / idx) * 15; //15 seconds per question.
     if (timeInSeconds > 360) {
       // If it's more than 6 minutes
       return t("common.x_plus_minutes", { count: 6 });

@@ -1,5 +1,5 @@
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
-import { type TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
 
@@ -68,12 +68,12 @@ export const replaceRecallInfo = (
   return modifiedText;
 };
 
-export const parseRecallInformation = (
-  question: TSurveyQuestion,
+export const parseRecallInformation = <T extends TSurveyElement>(
+  question: T,
   languageCode: string,
   responseData: TResponseData,
   variables: TResponseVariables
-) => {
+): T => {
   const modifiedQuestion = JSON.parse(JSON.stringify(question));
   if (question.headline[languageCode].includes("recall:")) {
     modifiedQuestion.headline[languageCode] = replaceRecallInfo(
@@ -94,7 +94,7 @@ export const parseRecallInformation = (
     );
   }
   if (
-    (question.type === TSurveyQuestionTypeEnum.CTA || question.type === TSurveyQuestionTypeEnum.Consent) &&
+    (question.type === TSurveyElementTypeEnum.CTA || question.type === TSurveyElementTypeEnum.Consent) &&
     question.subheader &&
     question.subheader[languageCode].includes("recall:") &&
     modifiedQuestion.subheader

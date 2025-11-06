@@ -1,11 +1,8 @@
 import { type JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
+import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type {
-  TSurveyMatrixQuestion,
-  TSurveyMatrixQuestionChoice,
-  TSurveyQuestionId,
-} from "@formbricks/types/surveys/types";
+import type { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -17,7 +14,9 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
 
 interface MatrixQuestionProps {
-  question: TSurveyMatrixQuestion;
+  question: TSurveyMatrixElement;
+  buttonLabel?: TI18nString;
+  backButtonLabel?: TI18nString;
   value: Record<string, string>;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -27,13 +26,15 @@ interface MatrixQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  currentQuestionId: TSurveyQuestionId;
+  currentQuestionId: string;
   isBackButtonHidden: boolean;
   fullSizeCards: boolean;
 }
 
 export function MatrixQuestion({
   question,
+  buttonLabel,
+  backButtonLabel,
   value,
   onChange,
   onSubmit,
@@ -77,7 +78,7 @@ export function MatrixQuestion({
       let responseValue =
         Object.entries(value).length !== 0
           ? { ...value }
-          : question.rows.reduce((obj: Record<string, string>, row: TSurveyMatrixQuestionChoice) => {
+          : question.rows.reduce((obj: Record<string, string>, row: TSurveyMatrixElementChoice) => {
               obj[getLocalizedValue(row.label, languageCode)] = ""; // Initialize each row key with an empty string
               return obj;
             }, {});
@@ -203,13 +204,13 @@ export function MatrixQuestion({
         </div>
         <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
           <SubmitButton
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
             isLastQuestion={isLastQuestion}
             tabIndex={isCurrent ? 0 : -1}
           />
           {!isFirstQuestion && !isBackButtonHidden && (
             <BackButton
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
               onClick={handleBackButtonClick}
               tabIndex={isCurrent ? 0 : -1}
             />

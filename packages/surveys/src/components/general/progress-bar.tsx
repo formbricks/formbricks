@@ -1,24 +1,25 @@
 import { useCallback, useMemo } from "preact/hooks";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { Progress } from "@/components/general/progress";
-import { calculateElementIdx } from "@/lib/utils";
+import { calculateElementIdx, getQuestionsFromSurvey } from "@/lib/utils";
 
 interface ProgressBarProps {
   survey: TJsEnvironmentStateSurvey;
-  questionId: TSurveyQuestionId;
+  questionId: string;
 }
 
 export function ProgressBar({ survey, questionId }: ProgressBarProps) {
+  const questions = useMemo(() => getQuestionsFromSurvey(survey), [survey]);
   const currentQuestionIdx = useMemo(
-    () => survey.questions.findIndex((q) => q.id === questionId),
-    [survey, questionId]
+    () => questions.findIndex((q) => q.id === questionId),
+    [questions, questionId]
   );
+
   const endingCardIds = useMemo(() => survey.endings.map((ending) => ending.id), [survey.endings]);
 
   const calculateProgress = useCallback(
     (index: number) => {
-      let totalCards = survey.questions.length;
+      let totalCards = questions.length;
       if (endingCardIds.length > 0) totalCards += 1;
       let idx = index;
 
@@ -27,12 +28,12 @@ export function ProgressBar({ survey, questionId }: ProgressBarProps) {
       const elementIdx = calculateElementIdx(survey, idx, totalCards);
       return elementIdx / totalCards;
     },
-    [survey, endingCardIds.length]
+    [survey, questions.length, endingCardIds.length]
   );
 
   const progressArray = useMemo(() => {
-    return survey.questions.map((_, index) => calculateProgress(index));
-  }, [calculateProgress, survey]);
+    return questions.map((_, index) => calculateProgress(index));
+  }, [calculateProgress, questions]);
 
   const progressValue = useMemo(() => {
     if (questionId === "start") {

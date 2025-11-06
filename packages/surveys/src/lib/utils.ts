@@ -2,13 +2,9 @@ import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-h
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TAllowedFileExtension, mimeTypes } from "@formbricks/types/storage";
-import {
-  type TShuffleOption,
-  type TSurveyLogic,
-  type TSurveyLogicAction,
-  type TSurveyQuestion,
-  type TSurveyQuestionChoice,
-} from "@formbricks/types/surveys/types";
+import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { type TSurveyElement } from "@formbricks/types/surveys/elements";
+import { type TShuffleOption, type TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
 export const cn = (...classes: string[]) => {
@@ -83,40 +79,49 @@ export const calculateElementIdx = (
   currentQustionIdx: number,
   totalCards: number
 ): number => {
-  const currentQuestion = survey.questions[currentQustionIdx];
+  const questions = getQuestionsFromSurvey(survey);
+  const currentQuestion = questions[currentQustionIdx];
   const middleIdx = Math.floor(totalCards / 2);
-  const possibleNextQuestions = getPossibleNextQuestions(currentQuestion);
+  const possibleNextBlockIds = getPossibleNextBlocks(survey, currentQuestion);
   const endingCardIds = survey.endings.map((ending) => ending.id);
+
+  // Convert block IDs to element IDs (get first element of each block)
+  const possibleNextQuestionIds = possibleNextBlockIds
+    .map((blockId) => getFirstElementIdInBlock(survey, blockId))
+    .filter((id): id is string => id !== undefined);
+
   const getLastQuestionIndex = () => {
-    const lastQuestion = survey.questions
-      .filter((q) => possibleNextQuestions.includes(q.id))
-      .sort((a, b) => survey.questions.indexOf(a) - survey.questions.indexOf(b))
+    const lastQuestion = questions
+      .filter((q) => possibleNextQuestionIds.includes(q.id))
+      .sort((a, b) => questions.indexOf(a) - questions.indexOf(b))
       .pop();
-    return survey.questions.findIndex((e) => e.id === lastQuestion?.id);
+    return questions.findIndex((e) => e.id === lastQuestion?.id);
   };
 
   let elementIdx = currentQustionIdx + 1;
   const lastprevQuestionIdx = getLastQuestionIndex();
 
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
-  if (possibleNextQuestions.some((id) => endingCardIds.includes(id))) elementIdx = middleIdx;
+  if (possibleNextBlockIds.some((id) => endingCardIds.includes(id))) elementIdx = middleIdx;
   return elementIdx;
 };
 
-const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
-  if (!question.logic) return [];
+const getPossibleNextBlocks = (survey: TJsEnvironmentStateSurvey, element: TSurveyElement): string[] => {
+  // In the blocks model, logic is stored at the block level
+  const parentBlock = findBlockByElementId(survey, element.id);
+  if (!parentBlock?.logic) return [];
 
-  const possibleDestinations: string[] = [];
+  const possibleBlockIds: string[] = [];
 
-  question.logic.forEach((logic: TSurveyLogic) => {
-    logic.actions.forEach((action: TSurveyLogicAction) => {
-      if (action.objective === "jumpToQuestion") {
-        possibleDestinations.push(action.target);
+  parentBlock.logic.forEach((logic: TSurveyBlockLogic) => {
+    logic.actions.forEach((action: TSurveyBlockLogicAction) => {
+      if (action.objective === "jumpToBlock") {
+        possibleBlockIds.push(action.target);
       }
     });
   });
 
-  return possibleDestinations;
+  return possibleBlockIds;
 };
 
 export const isFulfilled = <T>(val: PromiseSettledResult<T>): val is PromiseFulfilledResult<T> => {
@@ -192,7 +197,8 @@ export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCo
     }
   }
 
-  for (const question of survey.questions) {
+  const questions = getQuestionsFromSurvey(survey);
+  for (const question of questions) {
     const questionHeadline = question.headline[languageCode];
 
     // the first non-empty question headline is the survey direction
@@ -202,4 +208,39 @@ export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCo
   }
 
   return false;
+};
+
+/**
+ * Derives a flat array of elements from the survey's blocks structure.
+ * @param survey The survey object with blocks
+ * @returns An array of TSurveyElement (pure elements without block-level properties)
+ */
+export const getQuestionsFromSurvey = (survey: TJsEnvironmentStateSurvey): TSurveyElement[] => {
+  return survey.blocks?.flatMap((block) => block.elements) ?? [];
+};
+
+/**
+ * Finds the parent block that contains the specified element ID.
+ * Useful for accessing block-level properties like logic and button labels.
+ * @param survey The survey object with blocks
+ * @param elementId The ID of the element to find
+ * @returns The parent block or undefined if not found
+ */
+export const findBlockByElementId = (survey: TJsEnvironmentStateSurvey, elementId: string) => {
+  return survey.blocks?.find((b) => b.elements.some((e) => e.id === elementId));
+};
+
+/**
+ * Converts a block ID to the first element ID in that block.
+ * Used for navigation when logic jumps to a block.
+ * @param survey The survey object with blocks
+ * @param blockId The block ID to convert
+ * @returns The first element ID in the block, or undefined if block not found or empty
+ */
+export const getFirstElementIdInBlock = (
+  survey: TJsEnvironmentStateSurvey,
+  blockId: string
+): string | undefined => {
+  const block = survey.blocks?.find((b) => b.id === blockId);
+  return block?.elements[0]?.id;
 };

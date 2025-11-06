@@ -3,8 +3,8 @@ import type { JSX } from "react";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
-import { type TSurveyQuestionId, type TSurveyStyling } from "@formbricks/types/surveys/types";
-import { cn } from "@/lib/utils";
+import { TSurveyStyling } from "@formbricks/types/surveys/types";
+import { cn, getQuestionsFromSurvey } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
 
 // offset = 0 -> Current question card
@@ -12,11 +12,11 @@ import { StackedCard } from "./stacked-card";
 // offset > 0 -> Question that aren't answered yet
 interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;
-  currentQuestionId: TSurveyQuestionId;
+  currentQuestionId: string;
   survey: TJsEnvironmentStateSurvey;
   getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
   styling: TProjectStyling | TSurveyStyling;
-  setQuestionId: (questionId: TSurveyQuestionId) => void;
+  setQuestionId: (questionId: string) => void;
   shouldResetQuestionId?: boolean;
   fullSizeCards: boolean;
 }
@@ -43,14 +43,15 @@ export function StackedCardsContainer({
   const [cardHeight, setCardHeight] = useState("auto");
   const [cardWidth, setCardWidth] = useState<number>(0);
 
+  const questions = useMemo(() => getQuestionsFromSurvey(survey), [survey]);
+
   const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;
-    if (!survey.questions.map((question) => question.id).includes(currentQuestionId)) {
-      return survey.questions.length;
+    if (!questions.map((question) => question.id).includes(currentQuestionId)) {
+      return questions.length;
     }
-    return survey.questions.findIndex((question) => question.id === currentQuestionId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when currentQuestionId changes
-  }, [currentQuestionId, survey.welcomeCard.enabled, survey.questions.length]);
+    return questions.findIndex((question) => question.id === currentQuestionId);
+  }, [currentQuestionId, survey, questions]);
 
   const [prevQuestionIdx, setPrevQuestionIdx] = useState(questionIdxTemp - 1);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(questionIdxTemp);
@@ -134,7 +135,7 @@ export function StackedCardsContainer({
   // Reset question progress, when card arrangement changes
   useEffect(() => {
     if (shouldResetQuestionId) {
-      setQuestionId(survey.welcomeCard.enabled ? "start" : survey.questions[0]?.id);
+      setQuestionId(survey.welcomeCard.enabled ? "start" : questions[0]?.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when cardArrangement changes
   }, [cardArrangement]);
@@ -164,7 +165,7 @@ export function StackedCardsContainer({
           (dynamicQuestionIndex, index) => {
             const hasEndingCard = survey.endings.length > 0;
             // Check for hiding extra card
-            if (dynamicQuestionIndex > survey.questions.length + (hasEndingCard ? 0 : -1)) return;
+            if (dynamicQuestionIndex > questions.length + (hasEndingCard ? 0 : -1)) return;
             const offset = index - 1;
             return (
               <StackedCard

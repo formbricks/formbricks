@@ -1,7 +1,8 @@
 import { useEffect, useState } from "preact/hooks";
 import type { JSX } from "react";
+import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -25,7 +26,9 @@ import {
 import { Subheader } from "../general/subheader";
 
 interface RatingQuestionProps {
-  question: TSurveyRatingQuestion;
+  question: TSurveyRatingElement;
+  buttonLabel?: TI18nString;
+  backButtonLabel?: TI18nString;
   value?: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -36,7 +39,7 @@ interface RatingQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: TSurveyQuestionId;
+  currentQuestionId: string;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
@@ -44,6 +47,8 @@ interface RatingQuestionProps {
 
 export function RatingQuestion({
   question,
+  buttonLabel,
+  backButtonLabel,
   value,
   onChange,
   onSubmit,
@@ -273,7 +278,7 @@ export function RatingQuestion({
           ) : (
             <SubmitButton
               tabIndex={isCurrent ? 0 : -1}
-              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
               isLastQuestion={isLastQuestion}
             />
           )}
@@ -281,7 +286,7 @@ export function RatingQuestion({
           {!isFirstQuestion && !isBackButtonHidden && (
             <BackButton
               tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);

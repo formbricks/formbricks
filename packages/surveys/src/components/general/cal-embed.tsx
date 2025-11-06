@@ -1,10 +1,10 @@
 import snippet from "@calcom/embed-snippet";
 import { useEffect, useMemo } from "preact/hooks";
-import { type TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { type TSurveyCalElement } from "@formbricks/types/surveys/elements";
 import { cn } from "@/lib/utils";
 
 interface CalEmbedProps {
-  question: TSurveyCalQuestion;
+  question: TSurveyCalElement;
   onSuccessfulBooking: () => void;
 }
 
