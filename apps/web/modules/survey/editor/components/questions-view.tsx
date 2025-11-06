@@ -396,7 +396,6 @@ export const QuestionsView = ({
 
       // Bounds check
       if (blockIndex < 0 || blockIndex >= blocks.length) {
-        console.error(`Invalid blockIndex: ${blockIndex}`);
         return prevSurvey;
       }
 
