@@ -9,6 +9,7 @@ import { getTextContent, isValidHTML } from "@formbricks/types/surveys/validatio
 import { TUserLocale } from "@formbricks/types/user";
 import { md } from "@/lib/markdownIt";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { isLabelValidForAllLanguages } from "@/modules/survey/editor/lib/validation";
 import { Editor } from "@/modules/ui/components/editor";
 import { LanguageIndicator } from "./language-indicator";
@@ -62,6 +63,8 @@ export function LocalizedEditor({
   autoFocus,
   isExternalUrlsAllowed,
 }: Readonly<LocalizedEditorProps>) {
+  // Derive questions from blocks for migrated surveys
+  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
   const { t } = useTranslation();
 
   const isInComplete = useMemo(
@@ -99,12 +102,12 @@ export function LocalizedEditor({
           }
 
           // Check if the question still exists before updating
-          const currentQuestion = localSurvey.questions[questionIdx];
+          const currentQuestion = questions[questionIdx];
 
           // if this is a card, we wanna check if the card exists in the localSurvey
           if (isCard) {
             const isWelcomeCard = questionIdx === -1;
-            const isEndingCard = questionIdx >= localSurvey.questions.length;
+            const isEndingCard = questionIdx >= questions.length;
 
             // For ending cards, check if the field exists before updating
             if (isEndingCard) {

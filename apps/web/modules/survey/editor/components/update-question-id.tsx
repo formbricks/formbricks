@@ -3,15 +3,17 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
 interface UpdateQuestionIdProps {
   localSurvey: TSurvey;
-  question: TSurveyQuestion;
+  question: TSurveyElement;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
 }
@@ -35,7 +37,8 @@ export const UpdateQuestionId = ({
       return;
     }
 
-    const questionIds = localSurvey.questions.map((q) => q.id);
+    const questions = getQuestionsFromBlocks(localSurvey.blocks);
+    const questionIds = questions.map((q) => q.id);
     const endingCardIds = localSurvey.endings.map((e) => e.id);
     const hiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
 

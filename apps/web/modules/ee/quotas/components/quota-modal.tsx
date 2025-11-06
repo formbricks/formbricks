@@ -20,6 +20,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { getDefaultOperatorForQuestion } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -80,7 +81,11 @@ export const QuotaModal = ({
   const { t } = useTranslation();
   const [openConfirmationModal, setOpenConfirmationModal] = useState(false);
   const [openConfirmChangesInInclusionCriteria, setOpenConfirmChangesInInclusionCriteria] = useState(false);
+
+  const questions = useMemo(() => getQuestionsFromBlocks(survey.blocks), [survey.blocks]);
+
   const defaultValues = useMemo(() => {
+    const firstQuestion = questions[0];
     return {
       name: quota?.name || "",
       limit: quota?.limit || 1,
@@ -89,8 +94,8 @@ export const QuotaModal = ({
         conditions: [
           {
             id: createId(),
-            leftOperand: { type: "question", value: survey.questions[0]?.id },
-            operator: getDefaultOperatorForQuestion(survey.questions[0], t),
+            leftOperand: { type: "question", value: firstQuestion?.id },
+            operator: firstQuestion ? getDefaultOperatorForQuestion(firstQuestion, t) : "equals",
           },
         ],
       },
@@ -99,7 +104,7 @@ export const QuotaModal = ({
       countPartialSubmissions: quota?.countPartialSubmissions || false,
       surveyId: survey.id,
     };
-  }, [quota, survey]);
+  }, [quota, survey, questions, t]);
 
   const form = useForm<TSurveyQuotaInput>({
     defaultValues,

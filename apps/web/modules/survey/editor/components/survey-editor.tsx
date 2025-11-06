@@ -109,8 +109,10 @@ export const SurveyEditor = ({
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
 
-      if (survey.questions.length > 0) {
-        setActiveQuestionId(survey.questions[0].id);
+      // Set first element from first block, or first question for legacy surveys
+      const firstBlock = survey.blocks[0];
+      if (firstBlock) {
+        setActiveQuestionId(firstBlock.elements?.[0]?.id);
       }
     }
 
@@ -137,11 +139,12 @@ export const SurveyEditor = ({
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
-    if (localSurvey?.questions?.length && localSurvey.questions.length > 0) {
-      setActiveQuestionId(localSurvey.questions[0].id);
+    const firstBlock = localSurvey?.blocks[0];
+    if (firstBlock) {
+      setActiveQuestionId(firstBlock.elements[0]?.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey?.type, survey?.questions]);
+  }, [localSurvey?.type]);
 
   useEffect(() => {
     if (!localSurvey?.languages) return;

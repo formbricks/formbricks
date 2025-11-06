@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -11,6 +11,7 @@ import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/typ
 import { validateId } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { findHiddenFieldUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -44,28 +45,34 @@ export const HiddenFieldsCard = ({
     }
   };
 
-  const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
-    const questions = [...localSurvey.questions];
+  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
-    // Remove recall info from question headlines
+  const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
+    let updatedSurvey = { ...localSurvey };
+
+    // Remove recall info from question/element headlines
     if (currentFieldId) {
-      questions.forEach((question) => {
-        for (const [languageCode, headline] of Object.entries(question.headline)) {
-          if (headline.includes(`recall:${currentFieldId}`)) {
-            const recallInfo = extractRecallInfo(headline);
-            if (recallInfo) {
-              question.headline[languageCode] = headline.replace(recallInfo, "");
+      updatedSurvey.blocks = updatedSurvey.blocks.map((block) => ({
+        ...block,
+        elements: block.elements.map((element) => {
+          const updatedElement = { ...element };
+          for (const [languageCode, headline] of Object.entries(element.headline)) {
+            if (headline.includes(`recall:${currentFieldId}`)) {
+              const recallInfo = extractRecallInfo(headline);
+              if (recallInfo) {
+                updatedElement.headline[languageCode] = headline.replace(recallInfo, "");
+              }
             }
           }
-        }
-      });
+          return updatedElement;
+        }),
+      }));
     }
 
     setLocalSurvey({
-      ...localSurvey,
-      questions,
+      ...updatedSurvey,
       hiddenFields: {
-        ...localSurvey.hiddenFields,
+        ...updatedSurvey.hiddenFields,
         ...data,
       },
     });
@@ -93,7 +100,9 @@ export const HiddenFieldsCard = ({
       );
       return;
     }
-    if (recallQuestionIdx === localSurvey.questions.length) {
+
+    const totalQuestions = questions.length;
+    if (recallQuestionIdx === totalQuestions) {
       toast.error(
         t("environments.surveys.edit.hidden_field_used_in_recall_ending_card", { hiddenField: fieldId })
       );
@@ -191,7 +200,7 @@ export const HiddenFieldsCard = ({
             className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
-              const existingQuestionIds = localSurvey.questions.map((question) => question.id);
+              const existingQuestionIds = questions.map((question) => question.id);
               const existingEndingCardIds = localSurvey.endings.map((ending) => ending.id);
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
               const validateIdError = validateId(

@@ -1,11 +1,11 @@
 import { TFunction } from "i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import {
-  TSurvey,
-  TSurveyMatrixQuestion,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyQuestion,
-} from "@formbricks/types/surveys/types";
+  TSurveyElement,
+  TSurveyMatrixElement,
+  TSurveyMultipleChoiceElement,
+} from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 import { isLabelValidForAllLanguages } from "@/lib/i18n/utils";
 
@@ -21,21 +21,21 @@ export const getIndex = (id: string, isChoice: boolean) => {
 };
 
 export const getChoiceLabel = (
-  question: TSurveyQuestion,
+  question: TSurveyElement,
   choiceIdx: number,
   surveyLanguageCodes: string[]
 ): TI18nString => {
-  const choiceQuestion = question as TSurveyMultipleChoiceQuestion;
+  const choiceQuestion = question as TSurveyMultipleChoiceElement;
   return choiceQuestion.choices[choiceIdx]?.label || createI18nString("", surveyLanguageCodes);
 };
 
 export const getMatrixLabel = (
-  question: TSurveyQuestion,
+  question: TSurveyElement,
   idx: number,
   surveyLanguageCodes: string[],
   type: "row" | "column"
 ): TI18nString => {
-  const matrixQuestion = question as TSurveyMatrixQuestion;
+  const matrixQuestion = question as TSurveyMatrixElement;
   const matrixFields = type === "row" ? matrixQuestion.rows : matrixQuestion.columns;
   return matrixFields[idx]?.label || createI18nString("", surveyLanguageCodes);
 };
@@ -51,27 +51,30 @@ export const getWelcomeCardText = (
 
 export const getEndingCardText = (
   survey: TSurvey,
+  questions: TSurveyElement[],
   id: string,
   surveyLanguageCodes: string[],
   questionIdx: number
 ): TI18nString => {
-  const endingCardIndex = questionIdx - survey.questions.length;
+  const endingCardIndex = questionIdx - questions.length;
   const card = survey.endings[endingCardIndex];
-  if (card.type === "endScreen") {
+
+  if (card?.type === "endScreen") {
     return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);
   } else {
     return createI18nString("", surveyLanguageCodes);
   }
 };
 
-export const determineImageUploaderVisibility = (questionIdx: number, localSurvey: TSurvey) => {
+export const determineImageUploaderVisibility = (questionIdx: number, questions: TSurveyElement[]) => {
   switch (questionIdx) {
     case -1: // Welcome Card
       return false;
-    default:
-      // Regular Survey Question
-      const question = localSurvey.questions[questionIdx];
+    default: {
+      // Regular Survey Question - derive questions from blocks
+      const question = questions[questionIdx];
       return (!!question && !!question.imageUrl) || (!!question && !!question.videoUrl);
+    }
   }
 };
 

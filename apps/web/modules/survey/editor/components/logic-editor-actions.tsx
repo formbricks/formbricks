@@ -4,17 +4,16 @@ import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
+  TSurveyBlockLogic,
+  TSurveyBlockLogicAction,
+  TSurveyBlockLogicActionObjective,
+} from "@formbricks/types/surveys/blocks";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import {
   TActionNumberVariableCalculateOperator,
   TActionTextVariableCalculateOperator,
 } from "@formbricks/types/surveys/logic";
-import {
-  TActionObjective,
-  TActionVariableValueType,
-  TSurvey,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-} from "@formbricks/types/surveys/types";
+import { TActionVariableValueType, TSurvey } from "@formbricks/types/surveys/types";
 import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
 import {
   getActionObjectiveOptions,
@@ -22,7 +21,7 @@ import {
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
-  hasJumpToQuestionAction,
+  hasJumpToBlockAction,
 } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -36,10 +35,11 @@ import { cn } from "@/modules/ui/lib/utils";
 
 interface LogicEditorActions {
   localSurvey: TSurvey;
-  logicItem: TSurveyLogic;
+  logicItem: TSurveyBlockLogic;
   logicIdx: number;
-  question: TSurveyQuestion;
+  question: TSurveyElement;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateBlockLogic: (questionIdx: number, logic: TSurveyBlockLogic[]) => void;
   questionIdx: number;
 }
 
@@ -48,17 +48,24 @@ export function LogicEditorActions({
   logicItem,
   logicIdx,
   question,
-  updateQuestion,
+  updateBlockLogic,
   questionIdx,
 }: LogicEditorActions) {
   const actions = logicItem.actions;
   const { t } = useTranslation();
+
+  // Find the parent block for this question/element to get its logic
+  const parentBlock = localSurvey.blocks?.find((block) =>
+    block.elements.some((element) => element.id === question.id)
+  );
+  const blockLogic = parentBlock?.logic ?? [];
+
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
     actionIdx: number,
-    action?: TSurveyLogicAction
+    action?: TSurveyBlockLogicAction
   ) => {
-    const logicCopy = structuredClone(question.logic) ?? [];
+    const logicCopy = structuredClone(blockLogic);
     const currentLogicItem = logicCopy[logicIdx];
     const actionsClone = currentLogicItem.actions;
 
@@ -69,7 +76,7 @@ export function LogicEditorActions({
       case "addBelow":
         actionsClone.splice(actionIdx + 1, 0, {
           id: createId(),
-          objective: hasJumpToQuestionAction(logicItem.actions) ? "requireAnswer" : "jumpToQuestion",
+          objective: hasJumpToBlockAction(logicItem.actions) ? "requireAnswer" : "jumpToBlock",
           target: "",
         });
         break;
@@ -82,28 +89,26 @@ export function LogicEditorActions({
         break;
     }
 
-    updateQuestion(questionIdx, {
-      logic: logicCopy,
-    });
+    updateBlockLogic(questionIdx, logicCopy);
   };
 
-  const handleObjectiveChange = (actionIdx: number, objective: TActionObjective) => {
+  const handleObjectiveChange = (actionIdx: number, objective: TSurveyBlockLogicActionObjective) => {
     const action = actions[actionIdx];
     const actionBody = getUpdatedActionBody(action, objective);
     handleActionsChange("update", actionIdx, actionBody);
   };
 
-  const handleValuesChange = (actionIdx: number, values: Partial<TSurveyLogicAction>) => {
+  const handleValuesChange = (actionIdx: number, values: Partial<TSurveyBlockLogicAction>) => {
     const action = actions[actionIdx];
-    const actionBody = { ...action, ...values } as TSurveyLogicAction;
+    const actionBody = { ...action, ...values } as TSurveyBlockLogicAction;
     handleActionsChange("update", actionIdx, actionBody);
   };
 
   const filteredObjectiveOptions = getActionObjectiveOptions(t).filter(
-    (option) => option.value !== "jumpToQuestion"
+    (option) => option.value !== "jumpToBlock"
   );
 
-  const jumpToQuestionActionIdx = actions.findIndex((action) => action.objective === "jumpToQuestion");
+  const jumpToBlockActionIdx = actions.findIndex((action) => action.objective === "jumpToBlock");
 
   return (
     <div className="flex grow flex-col gap-2">
@@ -129,12 +134,12 @@ export function LogicEditorActions({
                     key={`objective-${action.id}`}
                     showSearch={false}
                     options={
-                      jumpToQuestionActionIdx === -1 || idx === jumpToQuestionActionIdx
+                      jumpToBlockActionIdx === -1 || idx === jumpToBlockActionIdx
                         ? getActionObjectiveOptions(t)
                         : filteredObjectiveOptions
                     }
                     value={action.objective}
-                    onChangeValue={(val: TActionObjective) => {
+                    onChangeValue={(val: TSurveyBlockLogicActionObjective) => {
                       handleObjectiveChange(idx, val);
                     }}
                     comboboxClasses="grow"

@@ -2,12 +2,8 @@ import "@testing-library/jest-dom/vitest";
 import { TFunction } from "i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type TI18nString } from "@formbricks/types/i18n";
-import {
-  TSurvey,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 import * as i18nUtils from "@/lib/i18n/utils";
 import {
@@ -48,7 +44,7 @@ describe("utils", () => {
   describe("getChoiceLabel", () => {
     test("returns the choice label from a question", () => {
       const surveyLanguageCodes = ["en"];
-      const choiceQuestion: TSurveyMultipleChoiceQuestion = {
+      const choiceQuestion = {
         id: "q1",
         type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
         headline: createI18nString("Question?", surveyLanguageCodes),
@@ -57,7 +53,7 @@ describe("utils", () => {
           { id: "c1", label: createI18nString("Choice 1", surveyLanguageCodes) },
           { id: "c2", label: createI18nString("Choice 2", surveyLanguageCodes) },
         ],
-      };
+      } as unknown as TSurveyElement;
 
       const result = getChoiceLabel(choiceQuestion, 1, surveyLanguageCodes);
       expect(result).toEqual(createI18nString("Choice 2", surveyLanguageCodes));
@@ -65,13 +61,13 @@ describe("utils", () => {
 
     test("returns empty i18n string when choice doesn't exist", () => {
       const surveyLanguageCodes = ["en"];
-      const choiceQuestion: TSurveyMultipleChoiceQuestion = {
+      const choiceQuestion = {
         id: "q1",
         type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
         headline: createI18nString("Question?", surveyLanguageCodes),
         required: true,
         choices: [],
-      };
+      } as unknown as TSurveyElement;
 
       const result = getChoiceLabel(choiceQuestion, 0, surveyLanguageCodes);
       expect(result).toEqual(createI18nString("", surveyLanguageCodes));
@@ -94,7 +90,7 @@ describe("utils", () => {
           { id: "col-1", label: createI18nString("Column 1", surveyLanguageCodes) },
           { id: "col-2", label: createI18nString("Column 2", surveyLanguageCodes) },
         ],
-      } as unknown as TSurveyQuestion;
+      } as unknown as TSurveyElement;
 
       const result = getMatrixLabel(matrixQuestion, 1, surveyLanguageCodes, "row");
       expect(result).toEqual(createI18nString("Row 2", surveyLanguageCodes));
@@ -115,7 +111,7 @@ describe("utils", () => {
           { id: "col-1", label: createI18nString("Column 1", surveyLanguageCodes) },
           { id: "col-2", label: createI18nString("Column 2", surveyLanguageCodes) },
         ],
-      } as unknown as TSurveyQuestion;
+      } as unknown as TSurveyElement;
 
       const result = getMatrixLabel(matrixQuestion, 0, surveyLanguageCodes, "column");
       expect(result).toEqual(createI18nString("Column 1", surveyLanguageCodes));
@@ -130,7 +126,7 @@ describe("utils", () => {
         required: true,
         rows: [],
         columns: [],
-      } as unknown as TSurveyQuestion;
+      } as unknown as TSurveyElement;
 
       const result = getMatrixLabel(matrixQuestion, 0, surveyLanguageCodes, "row");
       expect(result).toEqual(createI18nString("", surveyLanguageCodes));
@@ -225,7 +221,7 @@ describe("utils", () => {
         pin: null,
       } as unknown as TSurvey;
 
-      const result = getEndingCardText(survey, "headline", surveyLanguageCodes, 0);
+      const result = getEndingCardText(survey, [], "headline", surveyLanguageCodes, 0);
       expect(result).toEqual(createI18nString("End Screen", surveyLanguageCodes));
     });
 
@@ -257,32 +253,14 @@ describe("utils", () => {
         pin: null,
       } as unknown as TSurvey;
 
-      const result = getEndingCardText(survey, "headline", surveyLanguageCodes, 0);
+      const result = getEndingCardText(survey, [], "headline", surveyLanguageCodes, 0);
       expect(result).toEqual(createI18nString("", surveyLanguageCodes));
     });
   });
 
   describe("determineImageUploaderVisibility", () => {
     test("returns false for welcome card", () => {
-      const survey = {
-        id: "survey1",
-        name: "Test Survey",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: "draft",
-        questions: [],
-        welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
-        styling: {},
-        environmentId: "env1",
-        type: "app",
-        triggers: [],
-        recontactDays: null,
-        endings: [],
-        delay: 0,
-        pin: null,
-      } as unknown as TSurvey;
-
-      const result = determineImageUploaderVisibility(-1, survey);
+      const result = determineImageUploaderVisibility(-1, []);
       expect(result).toBe(false);
     });
 
@@ -294,14 +272,19 @@ describe("utils", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
-        questions: [
+        blocks: [
           {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText,
-            headline: createI18nString("Question?", surveyLanguageCodes),
-            required: true,
-            imageUrl: "https://example.com/image.jpg",
-          } as unknown as TSurveyQuestion,
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyQuestionTypeEnum.OpenText,
+                headline: createI18nString("Question?", surveyLanguageCodes),
+                required: true,
+                imageUrl: "https://example.com/image.jpg",
+              },
+            ],
+          },
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},
@@ -314,7 +297,7 @@ describe("utils", () => {
         pin: null,
       } as unknown as TSurvey;
 
-      const result = determineImageUploaderVisibility(0, survey);
+      const result = determineImageUploaderVisibility(0, survey.blocks[0].elements);
       expect(result).toBe(true);
     });
 
@@ -326,14 +309,19 @@ describe("utils", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
-        questions: [
+        blocks: [
           {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText,
-            headline: createI18nString("Question?", surveyLanguageCodes),
-            required: true,
-            videoUrl: "https://example.com/video.mp4",
-          } as unknown as TSurveyQuestion,
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyQuestionTypeEnum.OpenText,
+                headline: createI18nString("Question?", surveyLanguageCodes),
+                required: true,
+                videoUrl: "https://example.com/video.mp4",
+              },
+            ],
+          },
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},
@@ -346,7 +334,7 @@ describe("utils", () => {
         pin: null,
       } as unknown as TSurvey;
 
-      const result = determineImageUploaderVisibility(0, survey);
+      const result = determineImageUploaderVisibility(0, survey.blocks[0].elements);
       expect(result).toBe(true);
     });
 
@@ -358,13 +346,18 @@ describe("utils", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         status: "draft",
-        questions: [
+        blocks: [
           {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText,
-            headline: createI18nString("Question?", surveyLanguageCodes),
-            required: true,
-          } as unknown as TSurveyQuestion,
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyQuestionTypeEnum.OpenText,
+                headline: createI18nString("Question?", surveyLanguageCodes),
+                required: true,
+              },
+            ],
+          },
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},
@@ -377,7 +370,7 @@ describe("utils", () => {
         pin: null,
       } as unknown as TSurvey;
 
-      const result = determineImageUploaderVisibility(0, survey);
+      const result = determineImageUploaderVisibility(0, survey.blocks[0].elements);
       expect(result).toBe(false);
     });
   });

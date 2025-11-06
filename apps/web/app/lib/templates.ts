@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { TFunction } from "i18next";
-import { TSurvey, TSurveyOpenTextQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum, TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 import {
   buildCTAQuestion,
@@ -3598,19 +3599,26 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
     preset: {
       ...getDefaultSurveyPreset(t),
       name: t("templates.custom_survey_name"),
-      questions: [
+      questions: [],
+      blocks: [
         {
           id: createId(),
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: createI18nString(t("templates.custom_survey_question_1_headline"), []),
-          placeholder: createI18nString(t("templates.custom_survey_question_1_placeholder"), []),
-          buttonLabel: createI18nString(t("templates.next"), []),
-          required: true,
-          inputType: "text",
-          charLimit: {
-            enabled: false,
-          },
-        } as TSurveyOpenTextQuestion,
+          name: t("templates.custom_survey_block_1_name"),
+          elements: [
+            {
+              id: createId(),
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: createI18nString(t("templates.custom_survey_question_1_headline"), []),
+              placeholder: createI18nString(t("templates.custom_survey_question_1_placeholder"), []),
+              buttonLabel: createI18nString(t("templates.next"), []),
+              required: true,
+              inputType: "text",
+              charLimit: {
+                enabled: false,
+              },
+            } as TSurveyOpenTextElement,
+          ],
+        },
       ],
     },
   };

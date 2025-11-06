@@ -2,15 +2,16 @@
 
 import { Language } from "@prisma/client";
 import { useTranslation } from "react-i18next";
-import type { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
   projectLanguages: Language[];
   defaultLanguage: Language;
   setSelectedLanguageCode: (languageCode: string) => void;
-  setActiveQuestionId: (questionId: TSurveyQuestionId) => void;
+  setActiveQuestionId: (questionId: string) => void;
   localSurvey: TSurvey;
   updateSurveyLanguages: (language: Language) => void;
   locale: TUserLocale;
@@ -32,6 +33,8 @@ export function SecondaryLanguageSelect({
     );
   };
 
+  const questions = getQuestionsFromBlocks(localSurvey.blocks);
+
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-slate-800">
@@ -46,7 +49,7 @@ export function SecondaryLanguageSelect({
             language={language}
             onEdit={() => {
               setSelectedLanguageCode(language.code);
-              setActiveQuestionId(localSurvey.questions[0]?.id);
+              setActiveQuestionId(questions[0]?.id);
             }}
             onToggle={() => {
               updateSurveyLanguages(language);

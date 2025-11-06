@@ -10,6 +10,7 @@ import type {
   TResponseVariables,
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -426,7 +427,7 @@ export function Survey({
         ) {
           const { jumpTarget, requiredQuestionIds, calculations } = performActions(
             localSurvey,
-            logic.actions,
+            logic.actions as TSurveyBlockLogicAction[], // TODO: Temporary type assertion until the survey editor poc is completed, fix properly later
             localResponseData,
             calculationResults
           );

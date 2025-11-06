@@ -1532,6 +1532,7 @@ checksums:
     environments/surveys/edit/unlock_targeting_title: 6098caf969cac64cd54e217471ae42d4
     environments/surveys/edit/unsaved_changes_warning: a164f276c9f7344022aa4640b32abcf9
     environments/surveys/edit/until_they_submit_a_response: c980c520f5b5883ed46f2e1c006082b5
+    environments/surveys/edit/untitled_block: fdaa045139deff5cc65fa027df0cc22e
     environments/surveys/edit/upgrade_notice_description: 32b66a4f257ad8d38bc38dcc95fe23c4
     environments/surveys/edit/upgrade_notice_title: 40866066ebc558ad0c92a4f19f12090c
     environments/surveys/edit/upload: 4a6c84aa16db0f4e5697f49b45257bc7
@@ -2100,6 +2101,7 @@ checksums:
     templates/csat_survey_question_3_headline: 25974b7f1692cad41908fe305830b6c0
     templates/csat_survey_question_3_placeholder: 3ec4d0b6bb1f26bb2c32e9e8bd377ae3
     templates/cta_description: bc94a2ddc965b286a8677b0642696c7e
+    templates/custom_survey_block_1_name: 5e1b4dce0cb70662441b663507a69454
     templates/custom_survey_description: 0492afdea2ef1bd683eaf48a2bad2caa
     templates/custom_survey_name: 6fc756927ca9ea22c26368cccd64a67e
     templates/custom_survey_question_1_headline: 0abf9d41e0b5c5567c3833fd63048398

@@ -1,12 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import {
-  TSurveyLogicAction,
-  TSurveyQuestionTypeEnum,
-  TSurveyVariable,
-} from "@formbricks/types/surveys/types";
+import { TSurveyQuestionTypeEnum, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { evaluateLogic, isConditionGroup, performActions } from "./logic";
 
 // Mock the imported function
@@ -362,10 +359,10 @@ describe("Survey Logic", () => {
     };
 
     test("performs jump action", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var1",
-          objective: "jumpToQuestion",
+          objective: "jumpToBlock",
           target: "q5",
         },
       ];
@@ -377,7 +374,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs require answer action", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var1",
           objective: "requireAnswer",
@@ -392,7 +389,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs calculate action - add", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -407,7 +404,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs calculate action - subtract", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -422,7 +419,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs calculate action - multiply", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -437,7 +434,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs calculate action - divide", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -452,7 +449,7 @@ describe("Survey Logic", () => {
     });
 
     test("handles divide by zero", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -467,7 +464,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs calculate action - assign", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -482,7 +479,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs calculate action - concat", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var1",
           objective: "calculate",
@@ -497,7 +494,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs calculate action with question value", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -512,7 +509,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs calculate action with variable value", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -527,7 +524,7 @@ describe("Survey Logic", () => {
     });
 
     test("performs multiple actions in order", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
           objective: "calculate",
@@ -542,7 +539,7 @@ describe("Survey Logic", () => {
         },
         {
           id: "var2",
-          objective: "jumpToQuestion",
+          objective: "jumpToBlock",
           target: "q5",
         },
       ];
@@ -554,15 +551,15 @@ describe("Survey Logic", () => {
     });
 
     test("takes first jump target when multiple jump actions exist", () => {
-      const actions: TSurveyLogicAction[] = [
+      const actions: TSurveyBlockLogicAction[] = [
         {
           id: "var2",
-          objective: "jumpToQuestion",
+          objective: "jumpToBlock",
           target: "q2",
         },
         {
           id: "var2",
-          objective: "jumpToQuestion",
+          objective: "jumpToBlock",
           target: "q3",
         },
       ];

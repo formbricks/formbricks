@@ -6,12 +6,12 @@ import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
   TSurveyEndScreenCard,
   TSurveyQuestion,
   TSurveyQuestionChoice,
-  TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -21,6 +21,7 @@ import { recallToHeadline } from "@/lib/utils/recall";
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
@@ -92,7 +93,10 @@ export const QuestionFormInput = ({
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
-  const question: TSurveyQuestion = localSurvey.questions[questionIdx];
+
+  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+
+  const question: TSurveyElement = questions[questionIdx];
   const isChoice = id.includes("choice");
   const isMatrixLabelRow = id.includes("row");
   const isMatrixLabelColumn = id.includes("column");
@@ -100,7 +104,7 @@ export const QuestionFormInput = ({
     return isChoice || isMatrixLabelColumn || isMatrixLabelRow ? id.split("-")[0] : id;
   }, [id, isChoice, isMatrixLabelColumn, isMatrixLabelRow]);
 
-  const isEndingCard = questionIdx >= localSurvey.questions.length;
+  const isEndingCard = questionIdx >= questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
@@ -108,7 +112,7 @@ export const QuestionFormInput = ({
     return isWelcomeCard
       ? "start"
       : isEndingCard
-        ? localSurvey.endings[questionIdx - localSurvey.questions.length].id
+        ? localSurvey.endings[questionIdx - questions.length].id
         : question.id;
     //eslint-disable-next-line
   }, [isWelcomeCard, isEndingCard, question?.id]);
@@ -133,7 +137,7 @@ export const QuestionFormInput = ({
     }
 
     if (isEndingCard) {
-      return getEndingCardText(localSurvey, id, surveyLanguageCodes, questionIdx);
+      return getEndingCardText(localSurvey, questions, id, surveyLanguageCodes, questionIdx);
     }
 
     if ((isMatrixLabelColumn || isMatrixLabelRow) && typeof index === "number") {
@@ -144,9 +148,9 @@ export const QuestionFormInput = ({
       (question &&
         (id.includes(".")
           ? // Handle nested properties
-            (question[id.split(".")[0] as keyof TSurveyQuestion] as any)?.[id.split(".")[1]]
+            (question[id.split(".")[0] as keyof TSurveyElement] as any)?.[id.split(".")[1]]
           : // Original behavior
-            (question[id as keyof TSurveyQuestion] as TI18nString))) ||
+            (question[id as keyof TSurveyElement] as TI18nString))) ||
       createI18nString("", surveyLanguageCodes)
     );
   }, [
@@ -160,12 +164,13 @@ export const QuestionFormInput = ({
     localSurvey,
     question,
     questionIdx,
+    questions,
     surveyLanguageCodes,
   ]);
 
   const [text, setText] = useState(elementText);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
-    determineImageUploaderVisibility(questionIdx, localSurvey)
+    determineImageUploaderVisibility(questionIdx, questions)
   );
 
   const highlightContainerRef = useRef<HTMLInputElement>(null);
@@ -293,7 +298,7 @@ export const QuestionFormInput = ({
   const renderRemoveDescriptionButton = () => {
     if (
       question &&
-      (question.type === TSurveyQuestionTypeEnum.CTA || question.type === TSurveyQuestionTypeEnum.Consent)
+      (question.type === TSurveyElementTypeEnum.CTA || question.type === TSurveyElementTypeEnum.Consent)
     ) {
       return false;
     }

@@ -2248,6 +2248,7 @@
     "csat_survey_question_3_headline": "Ugh, sorry! Is there anything we can do to improve your experience?",
     "csat_survey_question_3_placeholder": "Type your answer here...",
     "cta_description": "Display information and prompt users to take a specific action",
+    "custom_survey_block_1_name": "Block 1",
     "custom_survey_description": "Create a survey without template.",
     "custom_survey_name": "Start from scratch",
     "custom_survey_question_1_headline": "What would you like to know?",

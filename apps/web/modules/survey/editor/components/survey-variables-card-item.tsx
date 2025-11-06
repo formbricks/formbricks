@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { extractRecallInfo } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
@@ -78,7 +79,7 @@ export const SurveyVariablesCardItem = ({
   // Removed auto-submit effect
 
   const onVariableDelete = (variableToDelete: TSurveyVariable) => {
-    const questions = [...localSurvey.questions];
+    const questions = getQuestionsFromBlocks(localSurvey.blocks);
     const quesIdx = findVariableUsedInLogic(localSurvey, variableToDelete.id);
 
     if (quesIdx !== -1) {
@@ -101,7 +102,7 @@ export const SurveyVariablesCardItem = ({
       return;
     }
 
-    if (recallQuestionIdx === localSurvey.questions.length) {
+    if (recallQuestionIdx === questions.length) {
       toast.error(
         t("environments.surveys.edit.variable_used_in_recall_ending_card", {
           variable: variableToDelete.name,
@@ -131,21 +132,27 @@ export const SurveyVariablesCardItem = ({
       );
       return;
     }
-    // remove recall references
-    questions.forEach((question) => {
-      for (const [languageCode, headline] of Object.entries(question.headline)) {
-        if (headline.includes(`recall:${variableToDelete.id}`)) {
-          const recallInfo = extractRecallInfo(headline);
-          if (recallInfo) {
-            question.headline[languageCode] = headline.replace(recallInfo, "");
-          }
-        }
-      }
-    });
 
+    // remove recall references from blocks
     setLocalSurvey((prevSurvey) => {
+      const updatedBlocks = prevSurvey.blocks.map((block) => ({
+        ...block,
+        elements: block.elements.map((element) => {
+          const updatedHeadline = { ...element.headline };
+          for (const [languageCode, headline] of Object.entries(element.headline)) {
+            if (headline.includes(`recall:${variableToDelete.id}`)) {
+              const recallInfo = extractRecallInfo(headline);
+              if (recallInfo) {
+                updatedHeadline[languageCode] = headline.replace(recallInfo, "");
+              }
+            }
+          }
+          return { ...element, headline: updatedHeadline };
+        }),
+      }));
+
       const updatedVariables = prevSurvey.variables.filter((v) => v.id !== variableToDelete.id);
-      return { ...prevSurvey, variables: updatedVariables, questions };
+      return { ...prevSurvey, variables: updatedVariables, blocks: updatedBlocks };
     });
   };
 

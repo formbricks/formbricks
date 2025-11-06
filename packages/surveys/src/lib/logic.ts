@@ -1,13 +1,8 @@
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TActionCalculate, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import {
-  TActionCalculate,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyVariable,
-} from "@formbricks/types/surveys/types";
+import { TSurveyQuestion, TSurveyQuestionTypeEnum, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n";
 
 const getVariableValue = (
@@ -51,7 +46,7 @@ export const evaluateLogic = (
 
 export const performActions = (
   survey: TJsEnvironmentStateSurvey,
-  actions: TSurveyLogicAction[],
+  actions: TSurveyBlockLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
 ): {
@@ -72,7 +67,7 @@ export const performActions = (
       case "requireAnswer":
         requiredQuestionIds.push(action.target);
         break;
-      case "jumpToQuestion":
+      case "jumpToBlock":
         if (!jumpTarget) {
           jumpTarget = action.target;
         }

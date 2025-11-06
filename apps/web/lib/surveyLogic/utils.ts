@@ -1,12 +1,14 @@
 import { createId } from "@paralleldrive/cuid2";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import {
+  TSurveyBlockLogic,
+  TSurveyBlockLogicAction,
+  TSurveyBlockLogicActionObjective,
+} from "@formbricks/types/surveys/blocks";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   TActionCalculate,
-  TActionObjective,
-  TSurveyLogic,
-  TSurveyLogicAction,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
@@ -19,7 +21,7 @@ export const isConditionGroup = (condition: TCondition): condition is TCondition
   return (condition as TConditionGroup).connector !== undefined;
 };
 
-export const duplicateLogicItem = (logicItem: TSurveyLogic): TSurveyLogic => {
+export const duplicateLogicItem = (logicItem: TSurveyBlockLogic): TSurveyBlockLogic => {
   const duplicateConditionGroup = (group: TConditionGroup): TConditionGroup => {
     return {
       ...group,
@@ -41,7 +43,7 @@ export const duplicateLogicItem = (logicItem: TSurveyLogic): TSurveyLogic => {
     };
   };
 
-  const duplicateAction = (action: TSurveyLogicAction): TSurveyLogicAction => {
+  const duplicateAction = (action: TSurveyBlockLogicAction): TSurveyBlockLogicAction => {
     return {
       ...action,
       id: createId(),
@@ -197,9 +199,9 @@ export const updateCondition = (
 };
 
 export const getUpdatedActionBody = (
-  action: TSurveyLogicAction,
-  objective: TActionObjective
-): TSurveyLogicAction => {
+  action: TSurveyBlockLogicAction,
+  objective: TSurveyBlockLogicActionObjective
+): TSurveyBlockLogicAction => {
   if (objective === action.objective) return action;
   switch (objective) {
     case "calculate":
@@ -216,12 +218,14 @@ export const getUpdatedActionBody = (
         objective: "requireAnswer",
         target: "",
       };
-    case "jumpToQuestion":
+    case "jumpToBlock":
       return {
         id: action.id,
-        objective: "jumpToQuestion",
+        objective: "jumpToBlock",
         target: "",
       };
+    default:
+      return action;
   }
 };
 
@@ -622,7 +626,7 @@ const getRightOperandValue = (
 
 export const performActions = (
   survey: TJsEnvironmentStateSurvey,
-  actions: TSurveyLogicAction[],
+  actions: TSurveyBlockLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
 ): {
@@ -643,7 +647,7 @@ export const performActions = (
       case "requireAnswer":
         requiredQuestionIds.push(action.target);
         break;
-      case "jumpToQuestion":
+      case "jumpToBlock":
         if (!jumpTarget) {
           jumpTarget = action.target;
         }

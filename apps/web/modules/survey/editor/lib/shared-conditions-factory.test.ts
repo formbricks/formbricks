@@ -100,28 +100,33 @@ describe("shared-conditions-factory", () => {
     id: "survey1",
     name: "Test Survey",
     type: "app",
-    questions: [
+    blocks: [
       {
-        id: "question1",
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Question 1" },
-        required: false,
-        inputType: "text",
-        charLimit: { enabled: false },
-      },
-      {
-        id: "matrix-question",
-        type: TSurveyQuestionTypeEnum.Matrix,
-        headline: { default: "Matrix Question" },
-        required: false,
-        shuffleOption: "none",
-        rows: [
-          { id: "row1", label: { default: "Row 1" } },
-          { id: "row2", label: { default: "Row 2" } },
-        ],
-        columns: [
-          { id: "col1", label: { default: "Column 1" } },
-          { id: "col2", label: { default: "Column 2" } },
+        id: "block1",
+        elements: [
+          {
+            id: "question1",
+            type: TSurveyQuestionTypeEnum.OpenText,
+            headline: { default: "Question 1" },
+            required: false,
+            inputType: "text",
+            charLimit: { enabled: false },
+          },
+          {
+            id: "matrix-question",
+            type: TSurveyQuestionTypeEnum.Matrix,
+            headline: { default: "Matrix Question" },
+            required: false,
+            shuffleOption: "none",
+            rows: [
+              { id: "row1", label: { default: "Row 1" } },
+              { id: "row2", label: { default: "Row 2" } },
+            ],
+            columns: [
+              { id: "col1", label: { default: "Column 1" } },
+              { id: "col2", label: { default: "Column 2" } },
+            ],
+          },
         ],
       },
     ],

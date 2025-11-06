@@ -1,12 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import { TFunction } from "i18next";
 import { TSurveyQuotaLogic } from "@formbricks/types/quota";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TConditionGroup,
   TSingleCondition,
   TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
   createGroupFromResource,
@@ -15,6 +16,7 @@ import {
   toggleGroupConnector,
   updateCondition,
 } from "@/lib/surveyLogic/utils";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
@@ -54,13 +56,16 @@ export function createSharedConditionsFactory(
   const { survey, t, questionIdx, getDefaultOperator, includeCreateGroup = false } = params;
   const { onConditionsChange } = updateCallbacks;
 
+  // Derive questions from blocks
+  const questions = getQuestionsFromBlocks(survey.blocks);
+
   // Handles special update logic for matrix questions, setting appropriate operators and metadata
   const handleMatrixQuestionUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {
     if (updates.leftOperand && updates.leftOperand.type === "question") {
       const [questionId, rowId] = updates.leftOperand.value.split(".");
-      const questionEntity = survey.questions.find((q) => q.id === questionId);
+      const questionEntity = questions.find((q) => q.id === questionId);
 
-      if (questionEntity && questionEntity.type === TSurveyQuestionTypeEnum.Matrix) {
+      if (questionEntity && questionEntity.type === TSurveyElementTypeEnum.Matrix) {
         if (updates.leftOperand.value.includes(".")) {
           // Matrix question with rowId is selected
           onConditionsChange((conditions) => {
@@ -103,12 +108,11 @@ export function createSharedConditionsFactory(
     // Creates and adds a new empty condition below the specified condition
     onAddConditionBelow: (resourceId: string) => {
       // When adding a condition in the context of a specific question, default to that question
-      const defaultLeftOperandValue =
-        questionIdx !== undefined ? survey.questions[questionIdx].id : survey.questions[0].id;
+      const defaultLeftOperandValue = questionIdx !== undefined ? questions[questionIdx].id : questions[0].id;
       const defaultOperator =
         questionIdx !== undefined
-          ? getDefaultOperatorForQuestion(survey.questions[questionIdx], t)
-          : getDefaultOperatorForQuestion(survey.questions[0], t);
+          ? getDefaultOperatorForQuestion(questions[questionIdx], t)
+          : getDefaultOperatorForQuestion(questions[0], t);
       const newCondition: TSingleCondition = {
         id: createId(),
         leftOperand: { value: defaultLeftOperandValue, type: "question" },
@@ -150,7 +154,7 @@ export function createSharedConditionsFactory(
       // Check if the operator is correct for the question
       if (updates.leftOperand?.type === "question" && updates.operator) {
         const questionId = updates.leftOperand.value.split(".")[0];
-        const question = survey.questions.find((q) => q.id === questionId);
+        const question = questions.find((q) => q.id === questionId);
 
         if (question) {
           const operatorOptions = getQuestionOperatorOptions(question, t);
