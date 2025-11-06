@@ -14,7 +14,6 @@ interface ModalProps {
   darkOverlay: boolean;
   borderRadius?: number;
   background?: string;
-  onCloseComplete?: () => void;
 }
 
 export const Modal = ({
@@ -26,7 +25,6 @@ export const Modal = ({
   darkOverlay,
   borderRadius,
   background,
-  onCloseComplete,
 }: ModalProps) => {
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -113,20 +111,6 @@ export const Modal = ({
   useEffect(() => {
     setShow(isOpen);
   }, [isOpen]);
-
-  // Notify parent after slide-out transition completes when closing
-  useEffect(() => {
-    if (!show && onCloseComplete && modalRef.current) {
-      const node = modalRef.current;
-      const handleTransitionEnd = () => {
-        onCloseComplete();
-      };
-      node.addEventListener("transitionend", handleTransitionEnd, { once: true });
-      return () => {
-        node.removeEventListener("transitionend", handleTransitionEnd);
-      };
-    }
-  }, [show, onCloseComplete]);
 
   useEffect(() => {
     if (modalRef.current) {
