@@ -195,7 +195,7 @@ export const PreviewSurvey = ({
           type: "spring",
         }}
         className={cn(
-          "z-50 flex h-[95%] w-full items-center justify-center overflow-hidden rounded-lg border border-slate-300",
+          "z-50 flex h-[95%] w-full items-center justify-center overflow-hidden rounded-lg border border-slate-300 bg-slate-50",
           isFullScreenPreview && "absolute z-50 h-[95%] w-[95%]"
         )}>
         {previewMode === "mobile" && (
