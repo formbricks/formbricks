@@ -186,7 +186,7 @@ export const PreviewSurvey = ({
       <motion.div
         layout
         style={{
-          left: isFullScreenPreview ? 50 : undefined,
+          left: isFullScreenPreview ? "2.5%" : undefined,
           top: isFullScreenPreview ? 0 : undefined,
         }}
         transition={{
@@ -195,7 +195,7 @@ export const PreviewSurvey = ({
           type: "spring",
         }}
         className={cn(
-          "relative z-50 flex h-[95%] w-full items-center justify-center overflow-hidden rounded-lg border border-slate-300",
+          "z-50 flex h-[95%] w-full items-center justify-center overflow-hidden rounded-lg border border-slate-300",
           isFullScreenPreview && "absolute z-50 h-[95%] w-[95%]"
         )}>
         {previewMode === "mobile" && (
@@ -365,7 +365,7 @@ export const PreviewSurvey = ({
       </motion.div>
 
       {/* for toggling between mobile and desktop mode  */}
-      <div className="relative mt-2 flex rounded-full border-2 border-slate-300 p-1">
+      <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
           active={previewMode === "mobile"}
           icon={<SmartphoneIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
