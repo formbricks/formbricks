@@ -6,9 +6,11 @@ import {
   Cog,
   LogOutIcon,
   MessageCircle,
+  MoonIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RocketIcon,
+  SunIcon,
   UserCircleIcon,
   UserIcon,
 } from "lucide-react";
@@ -24,6 +26,7 @@ import { TUser } from "@formbricks/types/user";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { isNewerVersion } from "@/app/(app)/environments/[environmentId]/lib/utils";
 import FBLogo from "@/images/formbricks-wordmark.svg";
+import FBLogos from "@/images/logo-dark.svg";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
@@ -66,7 +69,7 @@ export const MainNavigation = ({
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
-
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">("light");
   const isOwnerOrManager = isManager || isOwner;
 
   const toggleSidebar = () => {
@@ -93,6 +96,22 @@ export const MainNavigation = ({
       setIsCollapsed(true);
     }
   }, [pathname]);
+
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    if (savedTheme) {
+      setCurrentTheme(savedTheme);
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
+    }
+  }, []);
+
+  // Handle theme change
+  const handleThemeChange = (theme: "light" | "dark") => {
+    setCurrentTheme(theme);
+    localStorage.setItem("theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  };
 
   const mainNavigation = useMemo(
     () => [
@@ -175,7 +194,12 @@ export const MainNavigation = ({
                     "flex items-center justify-center transition-opacity duration-100",
                     isTextVisible ? "opacity-0" : "opacity-100"
                   )}>
-                  <Image src={FBLogo} width={160} height={30} alt={t("environments.formbricks_logo")} />
+                  <Image
+                    src={currentTheme === "dark" ? FBLogos : FBLogo}
+                    width={160}
+                    height={30}
+                    alt={t("environments.formbricks_logo")}
+                  />
                 </Link>
               )}
               <Button
@@ -283,6 +307,28 @@ export const MainNavigation = ({
                       </DropdownMenuItem>
                     </Link>
                   ))}
+
+                  {/* Theme selection */}
+                  <DropdownMenuItem
+                    onClick={() => handleThemeChange(currentTheme === "light" ? "dark" : "light")}
+                    className="cursor-pointer"
+                    key={"theme-toggle"}>
+                    {currentTheme === "light" ? (
+                      <MoonIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                    ) : (
+                      <SunIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                    )}
+                    {currentTheme === "light" ? (
+                      <div className="flex w-full items-center justify-between">
+                        <span>{t("Dark")}</span>
+                      </div>
+                    ) : (
+                      <div className="flex w-full items-center justify-between">
+                        <span>{t("Light")}</span>
+                      </div>
+                    )}
+                  </DropdownMenuItem>
+
                   {/* Logout */}
                   <DropdownMenuItem
                     onClick={async () => {
