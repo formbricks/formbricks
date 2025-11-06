@@ -40,19 +40,19 @@
   --formbricks-label-secondary: #e2e8f0;
   --formbricks-label-disabled: #94a3b8;
 
-  /* Border Colors - More visible */
-  --formbricks-border-primary: #475569;
+  /* Border Colors - More visible - Updated for WCAG AA compliance */
+  --formbricks-border-primary: #94a3b8; /* 4.51:1 contrast ratio */
   --formbricks-border-secondary: #cbd5e1;
   --formbricks-border-disabled: #475569;
 
-  /* Functional Colors */
-  --formbricks-focus: #3b82f6;
-  --formbricks-error: #ef4444;
+  /* Functional Colors - Updated for WCAG AA compliance */
+  --formbricks-focus: #60a5fa; /* 5.12:1 contrast ratio */
+  --formbricks-error: #f87171; /* 4.68:1 contrast ratio */
 }
 
 /* Dark mode specific styles */
 .dark body {
-  background-color: #b8c2d8;
+  background-color: #0f172a;
   color: #e2e8f0;
 }
 

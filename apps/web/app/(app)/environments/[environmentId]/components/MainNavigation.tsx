@@ -320,11 +320,11 @@ export const MainNavigation = ({
                     )}
                     {currentTheme === "light" ? (
                       <div className="flex w-full items-center justify-between">
-                        <span>{t("Dark")}</span>
+                        <span>{"Dark"}</span>
                       </div>
                     ) : (
                       <div className="flex w-full items-center justify-between">
-                        <span>{t("Light")}</span>
+                        <span>{"Light"}</span>
                       </div>
                     )}
                   </DropdownMenuItem>
