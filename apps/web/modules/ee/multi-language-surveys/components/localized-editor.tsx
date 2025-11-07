@@ -30,6 +30,7 @@ interface LocalizedEditorProps {
   isCard?: boolean; // Flag to indicate if this is a welcome/ending card
   autoFocus?: boolean;
   isExternalUrlsAllowed?: boolean;
+  suppressUpdates?: () => boolean; // Function to check if updates should be suppressed (e.g., during deletion)
 }
 
 const checkIfValueIsIncomplete = (
@@ -62,6 +63,7 @@ export function LocalizedEditor({
   isCard,
   autoFocus,
   isExternalUrlsAllowed,
+  suppressUpdates,
 }: Readonly<LocalizedEditorProps>) {
   // Derive questions from blocks for migrated surveys
   const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
@@ -96,6 +98,12 @@ export function LocalizedEditor({
         key={`${questionId}-${id}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
+          // Early exit if updates are suppressed (e.g., during deletion)
+          // This prevents race conditions where setText fires with stale props before React updates state
+          if (suppressUpdates?.()) {
+            return;
+          }
+
           let sanitizedContent = v;
           if (!isExternalUrlsAllowed) {
             sanitizedContent = v.replaceAll(/<a[^>]*>(.*?)<\/a>/gi, "$1");
@@ -131,7 +139,8 @@ export function LocalizedEditor({
             return;
           }
 
-          if (currentQuestion && currentQuestion[id] !== undefined) {
+          // Check if the field exists on the question (not just if it's not undefined)
+          if (currentQuestion && id in currentQuestion && currentQuestion[id] !== undefined) {
             const translatedContent = {
               ...value,
               [selectedLanguageCode]: sanitizedContent,

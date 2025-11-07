@@ -290,6 +290,7 @@ export const QuestionFormInput = ({
 
   const [animationParent] = useAutoAnimate();
   const [internalFirstRender, setInternalFirstRender] = useState(true);
+  const suppressEditorUpdatesRef = useRef(false);
 
   // Use external firstRender state if provided, otherwise use internal state
   const firstRender = externalFirstRender ?? internalFirstRender;
@@ -371,6 +372,7 @@ export const QuestionFormInput = ({
                 isCard={isWelcomeCard || isEndingCard}
                 autoFocus={autoFocus}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
+                suppressUpdates={() => suppressEditorUpdatesRef.current}
               />
             </div>
 
@@ -399,12 +401,25 @@ export const QuestionFormInput = ({
                   onClick={(e) => {
                     e.preventDefault();
 
+                    // Suppress Editor updates BEFORE calling updateQuestion to prevent race condition
+                    // Use ref for immediate synchronous access
+                    if (id === "subheader") {
+                      suppressEditorUpdatesRef.current = true;
+                    }
+
                     if (updateSurvey) {
                       updateSurvey({ subheader: undefined });
                     }
 
                     if (updateQuestion) {
                       updateQuestion(questionIdx, { subheader: undefined });
+                    }
+
+                    // Re-enable updates after a short delay to allow state to update
+                    if (id === "subheader") {
+                      setTimeout(() => {
+                        suppressEditorUpdatesRef.current = false;
+                      }, 100);
                     }
                   }}>
                   <TrashIcon />
@@ -449,7 +464,7 @@ export const QuestionFormInput = ({
               onAddFallback={() => {
                 inputRef.current?.focus();
               }}
-              isRecallAllowed={id === "headline" || id === "subheader"}
+              isRecallAllowed={false}
               usedLanguageCode={usedLanguageCode}
               render={({
                 value,
@@ -460,32 +475,6 @@ export const QuestionFormInput = ({
               }) => {
                 return (
                   <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
-                    {showImageUploader && id === "headline" && (
-                      <FileInput
-                        id="question-image"
-                        allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-                        environmentId={localSurvey.environmentId}
-                        onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
-                          if (url) {
-                            const update =
-                              fileType === "video"
-                                ? { videoUrl: url[0], imageUrl: undefined }
-                                : { imageUrl: url[0], videoUrl: undefined };
-                            if (isEndingCard && updateSurvey) {
-                              updateSurvey(update);
-                            } else if (updateQuestion) {
-                              updateQuestion(questionIdx, update);
-                            }
-                          }
-                        }}
-                        fileUrl={getFileUrl()}
-                        videoUrl={getVideoUrl()}
-                        isVideoAllowed={true}
-                        maxSizeInMB={5}
-                        isStorageConfigured={isStorageConfigured}
-                      />
-                    )}
-
                     <div className="flex w-full items-center space-x-2">
                       <div className="group relative w-full">
                         {languageIndicator}
@@ -532,52 +521,11 @@ export const QuestionFormInput = ({
                             isTranslationIncomplete
                           }
                           autoComplete={isRecallSelectVisible ? "off" : "on"}
-                          autoFocus={id === "headline"}
+                          autoFocus={false}
                           onKeyDown={handleKeyDown}
                         />
                         {recallComponents}
                       </div>
-
-                      <>
-                        {id === "headline" && !isWelcomeCard && (
-                          <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
-                            <Button
-                              variant="secondary"
-                              size="icon"
-                              aria-label="Toggle image uploader"
-                              data-testid="toggle-image-uploader-button"
-                              className="ml-2"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setShowImageUploader((prev) => !prev);
-                              }}>
-                              <ImagePlusIcon />
-                            </Button>
-                          </TooltipRenderer>
-                        )}
-                        {renderRemoveDescriptionButton() ? (
-                          <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
-                            <Button
-                              variant="secondary"
-                              size="icon"
-                              aria-label="Remove description"
-                              className="ml-2"
-                              onClick={(e) => {
-                                e.preventDefault();
-
-                                if (updateSurvey) {
-                                  updateSurvey({ subheader: undefined });
-                                }
-
-                                if (updateQuestion) {
-                                  updateQuestion(questionIdx, { subheader: undefined });
-                                }
-                              }}>
-                              <TrashIcon />
-                            </Button>
-                          </TooltipRenderer>
-                        ) : null}
-                      </>
                     </div>
                   </div>
                 );
