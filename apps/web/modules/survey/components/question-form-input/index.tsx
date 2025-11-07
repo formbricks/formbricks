@@ -335,8 +335,8 @@ export const QuestionFormInput = ({
                 if (url) {
                   const update =
                     fileType === "video"
-                      ? { videoUrl: url[0], imageUrl: "" }
-                      : { imageUrl: url[0], videoUrl: "" };
+                      ? { videoUrl: url[0], imageUrl: undefined }
+                      : { imageUrl: url[0], videoUrl: undefined };
                   if ((isWelcomeCard || isEndingCard) && updateSurvey) {
                     updateSurvey(update);
                   } else if (updateQuestion) {
@@ -469,8 +469,8 @@ export const QuestionFormInput = ({
                           if (url) {
                             const update =
                               fileType === "video"
-                                ? { videoUrl: url[0], imageUrl: "" }
-                                : { imageUrl: url[0], videoUrl: "" };
+                                ? { videoUrl: url[0], imageUrl: undefined }
+                                : { imageUrl: url[0], videoUrl: undefined };
                             if (isEndingCard && updateSurvey) {
                               updateSurvey(update);
                             } else if (updateQuestion) {

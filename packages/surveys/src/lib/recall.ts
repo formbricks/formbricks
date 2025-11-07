@@ -68,12 +68,12 @@ export const replaceRecallInfo = (
   return modifiedText;
 };
 
-export const parseRecallInformation = <T extends TSurveyElement>(
-  question: T,
+export const parseRecallInformation = (
+  question: TSurveyElement,
   languageCode: string,
   responseData: TResponseData,
   variables: TResponseVariables
-): T => {
+): TSurveyElement => {
   const modifiedQuestion = JSON.parse(JSON.stringify(question));
   if (question.headline[languageCode].includes("recall:")) {
     modifiedQuestion.headline[languageCode] = replaceRecallInfo(

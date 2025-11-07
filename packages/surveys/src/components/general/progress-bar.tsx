@@ -19,7 +19,7 @@ export function ProgressBar({ survey, questionId }: ProgressBarProps) {
 
   const calculateProgress = useCallback(
     (index: number) => {
-      let totalCards = questions.length;
+      let totalCards = survey.blocks.length;
       if (endingCardIds.length > 0) totalCards += 1;
       let idx = index;
 
@@ -28,7 +28,7 @@ export function ProgressBar({ survey, questionId }: ProgressBarProps) {
       const elementIdx = calculateElementIdx(survey, idx, totalCards);
       return elementIdx / totalCards;
     },
-    [survey, questions.length, endingCardIds.length]
+    [survey, endingCardIds.length]
   );
 
   const progressArray = useMemo(() => {

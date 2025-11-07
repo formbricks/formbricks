@@ -215,9 +215,8 @@ export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCo
  * @param survey The survey object with blocks
  * @returns An array of TSurveyElement (pure elements without block-level properties)
  */
-export const getQuestionsFromSurvey = (survey: TJsEnvironmentStateSurvey): TSurveyElement[] => {
-  return survey.blocks?.flatMap((block) => block.elements) ?? [];
-};
+export const getQuestionsFromSurvey = (survey: TJsEnvironmentStateSurvey): TSurveyElement[] =>
+  survey.blocks.flatMap((block) => block.elements);
 
 /**
  * Finds the parent block that contains the specified element ID.
@@ -226,9 +225,8 @@ export const getQuestionsFromSurvey = (survey: TJsEnvironmentStateSurvey): TSurv
  * @param elementId The ID of the element to find
  * @returns The parent block or undefined if not found
  */
-export const findBlockByElementId = (survey: TJsEnvironmentStateSurvey, elementId: string) => {
-  return survey.blocks?.find((b) => b.elements.some((e) => e.id === elementId));
-};
+export const findBlockByElementId = (survey: TJsEnvironmentStateSurvey, elementId: string) =>
+  survey.blocks.find((b) => b.elements.some((e) => e.id === elementId));
 
 /**
  * Converts a block ID to the first element ID in that block.
@@ -241,6 +239,6 @@ export const getFirstElementIdInBlock = (
   survey: TJsEnvironmentStateSurvey,
   blockId: string
 ): string | undefined => {
-  const block = survey.blocks?.find((b) => b.id === blockId);
+  const block = survey.blocks.find((b) => b.id === blockId);
   return block?.elements[0]?.id;
 };
