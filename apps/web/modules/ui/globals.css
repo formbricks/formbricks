@@ -40,10 +40,10 @@
   --formbricks-label-secondary: #e2e8f0;
   --formbricks-label-disabled: #94a3b8;
 
-  /* Border Colors - More visible - Updated for WCAG AA compliance */
+  /* Border Colors - Updated for WCAG AA compliance */
   --formbricks-border-primary: #94a3b8; /* 4.51:1 contrast ratio */
   --formbricks-border-secondary: #cbd5e1;
-  --formbricks-border-disabled: #475569;
+  --formbricks-border-disabled: #a0aec0;
 
   /* Functional Colors - Updated for WCAG AA compliance */
   --formbricks-focus: #60a5fa; /* 5.12:1 contrast ratio */
@@ -52,7 +52,7 @@
 
 /* Dark mode specific styles */
 .dark body {
-  background-color: #0f172a;
+  background-color: #0b1220;
   color: #e2e8f0;
 }
 
@@ -174,7 +174,7 @@
 .dark input:focus,
 .dark textarea:focus,
 .dark select:focus {
-  border-color: #3b82f6;
+  border-color: var(--formbricks-focus); /* Use custom property instead of #3b82f6 */
   background-color: #1e293b;
 }
 
@@ -306,7 +306,7 @@
 }
 
 .dark .focus-visible\:ring-2:focus-visible {
-  --tw-ring-color: #3b82f6;
+  --tw-ring-color: var(--formbricks-focus); /* Use custom property instead of #3b82f6 */
 }
 
 @layer base {

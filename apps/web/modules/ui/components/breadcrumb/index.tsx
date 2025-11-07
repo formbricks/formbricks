@@ -36,7 +36,7 @@ const BreadcrumbItem = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex items-center gap-1.5 space-x-1 rounded-md px-1.5 py-1",
-      !isHighlighted && "hover:bg-white hover:outline hover:outline-slate-300",
+      !isHighlighted && "hover:bg-slate-100 hover:outline hover:outline-slate-300 dark:hover:text-white",
       isActive && "bg-slate-100 outline outline-slate-300",
       isHighlighted && "bg-red-800 text-white outline hover:bg-red-700 hover:outline-red-800",
       className
