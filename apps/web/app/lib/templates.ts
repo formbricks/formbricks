@@ -1,8 +1,19 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TFunction } from "i18next";
-import { TSurveyElementTypeEnum, TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TTemplate } from "@formbricks/types/templates";
+import type { TFunction } from "i18next";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import type { TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
+import type { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import type { TTemplate } from "@formbricks/types/templates";
+import {
+  buildBlock,
+  buildCTAElement,
+  buildConsentElement,
+  buildMultipleChoiceElement,
+  buildOpenTextElement,
+  buildRatingElement,
+  createBlockJumpLogic,
+} from "@/app/lib/survey-block-builder";
 import {
   buildCTAQuestion,
   buildConsentQuestion,
@@ -20,8 +31,10 @@ import {
 import { createI18nString } from "@/lib/i18n/utils";
 
 const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
+  const reusableElementIds = [createId(), createId(), createId()];
+  const block8Id = createId(); // Pre-generate ID for Block 8 (referenced by Block 6 logic)
   const localSurvey = getDefaultSurveyPreset(t);
+
   return buildSurvey(
     {
       name: t("templates.card_abandonment_survey"),
@@ -30,87 +43,127 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
       channels: ["app", "website", "link"],
       description: t("templates.card_abandonment_survey_description"),
       endings: localSurvey.endings,
-      questions: [
-        buildCTAQuestion({
-          id: reusableQuestionIds[0],
-          subheader: t("templates.card_abandonment_survey_question_1_html"),
-          logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
-          headline: t("templates.card_abandonment_survey_question_1_headline"),
-          required: false,
+      blocks: [
+        buildBlock({
+          name: "Block 1",
+          elements: [
+            buildCTAElement({
+              id: reusableElementIds[0],
+              subheader: t("templates.card_abandonment_survey_question_1_html"),
+              headline: t("templates.card_abandonment_survey_question_1_headline"),
+              required: false,
+              buttonExternal: false,
+              dismissButtonLabel: t("templates.card_abandonment_survey_question_1_dismiss_button_label"),
+            }),
+          ],
+          logic: [createBlockJumpLogic(reusableElementIds[0], localSurvey.endings[0].id, "isSkipped")],
           buttonLabel: t("templates.card_abandonment_survey_question_1_button_label"),
-          buttonExternal: false,
-          dismissButtonLabel: t("templates.card_abandonment_survey_question_1_dismiss_button_label"),
           t,
         }),
-        buildMultipleChoiceQuestion({
-          headline: t("templates.card_abandonment_survey_question_2_headline"),
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          subheader: t("templates.card_abandonment_survey_question_2_subheader"),
-          choices: [
-            t("templates.card_abandonment_survey_question_2_choice_1"),
-            t("templates.card_abandonment_survey_question_2_choice_2"),
-            t("templates.card_abandonment_survey_question_2_choice_3"),
-            t("templates.card_abandonment_survey_question_2_choice_4"),
-            t("templates.card_abandonment_survey_question_2_choice_5"),
-            t("templates.card_abandonment_survey_question_2_choice_6"),
+        buildBlock({
+          name: "Block 2",
+          elements: [
+            buildMultipleChoiceElement({
+              headline: t("templates.card_abandonment_survey_question_2_headline"),
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              subheader: t("templates.card_abandonment_survey_question_2_subheader"),
+              choices: [
+                t("templates.card_abandonment_survey_question_2_choice_1"),
+                t("templates.card_abandonment_survey_question_2_choice_2"),
+                t("templates.card_abandonment_survey_question_2_choice_3"),
+                t("templates.card_abandonment_survey_question_2_choice_4"),
+                t("templates.card_abandonment_survey_question_2_choice_5"),
+                t("templates.card_abandonment_survey_question_2_choice_6"),
+              ],
+              containsOther: true,
+            }),
           ],
-          containsOther: true,
           t,
         }),
-        buildOpenTextQuestion({
-          headline: t("templates.card_abandonment_survey_question_3_headline"),
-          required: false,
-          inputType: "text",
-          t,
-        }),
-        buildRatingQuestion({
-          headline: t("templates.card_abandonment_survey_question_4_headline"),
-          required: true,
-          scale: "number",
-          range: 5,
-          lowerLabel: t("templates.card_abandonment_survey_question_4_lower_label"),
-          upperLabel: t("templates.card_abandonment_survey_question_4_upper_label"),
-          t,
-        }),
-        buildMultipleChoiceQuestion({
-          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-          headline: t("templates.card_abandonment_survey_question_5_headline"),
-          subheader: t("templates.card_abandonment_survey_question_5_subheader"),
-
-          required: true,
-          choices: [
-            t("templates.card_abandonment_survey_question_5_choice_1"),
-            t("templates.card_abandonment_survey_question_5_choice_2"),
-            t("templates.card_abandonment_survey_question_5_choice_3"),
-            t("templates.card_abandonment_survey_question_5_choice_4"),
-            t("templates.card_abandonment_survey_question_5_choice_5"),
-            t("templates.card_abandonment_survey_question_5_choice_6"),
+        buildBlock({
+          name: "Block 3",
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.card_abandonment_survey_question_3_headline"),
+              required: false,
+              inputType: "text",
+            }),
           ],
-          containsOther: true,
           t,
         }),
-        buildConsentQuestion({
-          id: reusableQuestionIds[1],
-          logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[2], "isSkipped")],
-          headline: t("templates.card_abandonment_survey_question_6_headline"),
-          subheader: "",
-          required: false,
-          label: t("templates.card_abandonment_survey_question_6_label"),
+        buildBlock({
+          name: "Block 4",
+          elements: [
+            buildRatingElement({
+              headline: t("templates.card_abandonment_survey_question_4_headline"),
+              required: true,
+              scale: "number",
+              range: 5,
+              lowerLabel: t("templates.card_abandonment_survey_question_4_lower_label"),
+              upperLabel: t("templates.card_abandonment_survey_question_4_upper_label"),
+            }),
+          ],
           t,
         }),
-        buildOpenTextQuestion({
-          headline: t("templates.card_abandonment_survey_question_7_headline"),
-          required: true,
-          inputType: "email",
-          longAnswer: false,
-          placeholder: "example@email.com",
+        buildBlock({
+          name: "Block 5",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+              headline: t("templates.card_abandonment_survey_question_5_headline"),
+              subheader: t("templates.card_abandonment_survey_question_5_subheader"),
+              required: true,
+              choices: [
+                t("templates.card_abandonment_survey_question_5_choice_1"),
+                t("templates.card_abandonment_survey_question_5_choice_2"),
+                t("templates.card_abandonment_survey_question_5_choice_3"),
+                t("templates.card_abandonment_survey_question_5_choice_4"),
+                t("templates.card_abandonment_survey_question_5_choice_5"),
+                t("templates.card_abandonment_survey_question_5_choice_6"),
+              ],
+              containsOther: true,
+            }),
+          ],
           t,
         }),
-        buildOpenTextQuestion({
-          id: reusableQuestionIds[2],
-          headline: t("templates.card_abandonment_survey_question_8_headline"),
-          required: false,
-          inputType: "text",
+        buildBlock({
+          name: "Block 6",
+          elements: [
+            buildConsentElement({
+              id: reusableElementIds[1],
+              headline: t("templates.card_abandonment_survey_question_6_headline"),
+              subheader: "",
+              required: false,
+              label: t("templates.card_abandonment_survey_question_6_label"),
+            }),
+          ],
+          logic: [createBlockJumpLogic(reusableElementIds[1], block8Id, "isSkipped")],
+          t,
+        }),
+        buildBlock({
+          name: "Block 7",
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.card_abandonment_survey_question_7_headline"),
+              required: true,
+              inputType: "email",
+              longAnswer: false,
+              placeholder: "example@email.com",
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          id: block8Id,
+          name: "Block 8",
+          elements: [
+            buildOpenTextElement({
+              id: reusableElementIds[2],
+              headline: t("templates.card_abandonment_survey_question_8_headline"),
+              required: false,
+              inputType: "text",
+            }),
+          ],
           buttonLabel: t("templates.finish"),
           t,
         }),
