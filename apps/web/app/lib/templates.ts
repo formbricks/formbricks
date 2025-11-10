@@ -12,11 +12,11 @@ import {
   buildMultipleChoiceElement,
   buildOpenTextElement,
   buildRatingElement,
+  createBlockChoiceJumpLogic,
   createBlockJumpLogic,
 } from "@/app/lib/survey-block-builder";
 import {
   buildCTAQuestion,
-  buildConsentQuestion,
   buildMultipleChoiceQuestion,
   buildNPSQuestion,
   buildOpenTextQuestion,
@@ -174,7 +174,8 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
 };
 
 const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
+  const reusableElementIds = [createId(), createId(), createId()];
+  const block8Id = createId(); // Pre-generate ID for Block 8 (referenced by Block 7 logic)
   const localSurvey = getDefaultSurveyPreset(t);
 
   return buildSurvey(
@@ -185,86 +186,127 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
       channels: ["app", "website"],
       description: t("templates.site_abandonment_survey_description"),
       endings: localSurvey.endings,
-      questions: [
-        buildCTAQuestion({
-          id: reusableQuestionIds[0],
-          subheader: t("templates.site_abandonment_survey_question_1_html"),
-          logic: [createJumpLogic(reusableQuestionIds[0], localSurvey.endings[0].id, "isSkipped")],
-          headline: t("templates.site_abandonment_survey_question_2_headline"),
-          required: false,
+      blocks: [
+        buildBlock({
+          name: "Block 1",
+          elements: [
+            buildCTAElement({
+              id: reusableElementIds[0],
+              subheader: t("templates.site_abandonment_survey_question_1_html"),
+              headline: t("templates.site_abandonment_survey_question_2_headline"),
+              required: false,
+              buttonExternal: false,
+              dismissButtonLabel: t("templates.site_abandonment_survey_question_2_dismiss_button_label"),
+            }),
+          ],
+          logic: [createBlockJumpLogic(reusableElementIds[0], localSurvey.endings[0].id, "isSkipped")],
           buttonLabel: t("templates.site_abandonment_survey_question_2_button_label"),
-          buttonExternal: false,
-          dismissButtonLabel: t("templates.site_abandonment_survey_question_2_dismiss_button_label"),
           t,
         }),
-        buildMultipleChoiceQuestion({
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: t("templates.site_abandonment_survey_question_3_headline"),
-          subheader: t("templates.site_abandonment_survey_question_3_subheader"),
-          required: true,
-          shuffleOption: "none",
-          choices: [
-            t("templates.site_abandonment_survey_question_3_choice_1"),
-            t("templates.site_abandonment_survey_question_3_choice_2"),
-            t("templates.site_abandonment_survey_question_3_choice_3"),
-            t("templates.site_abandonment_survey_question_3_choice_4"),
-            t("templates.site_abandonment_survey_question_3_choice_5"),
-            t("templates.site_abandonment_survey_question_3_choice_6"),
-          ],
-          containsOther: true,
-          t,
-        }),
-        buildOpenTextQuestion({
-          headline: t("templates.site_abandonment_survey_question_4_headline"),
-          required: false,
-          inputType: "text",
-          t,
-        }),
-        buildRatingQuestion({
-          headline: t("templates.site_abandonment_survey_question_5_headline"),
-          required: true,
-          scale: "number",
-          range: 5,
-          lowerLabel: t("templates.site_abandonment_survey_question_5_lower_label"),
-          upperLabel: t("templates.site_abandonment_survey_question_5_upper_label"),
-          t,
-        }),
-        buildMultipleChoiceQuestion({
-          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-          headline: t("templates.site_abandonment_survey_question_6_headline"),
-          subheader: t("templates.site_abandonment_survey_question_6_subheader"),
-          required: true,
-          choices: [
-            t("templates.site_abandonment_survey_question_6_choice_1"),
-            t("templates.site_abandonment_survey_question_6_choice_2"),
-            t("templates.site_abandonment_survey_question_6_choice_3"),
-            t("templates.site_abandonment_survey_question_6_choice_4"),
-            t("templates.site_abandonment_survey_question_6_choice_5"),
+        buildBlock({
+          name: "Block 2",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: t("templates.site_abandonment_survey_question_3_headline"),
+              subheader: t("templates.site_abandonment_survey_question_3_subheader"),
+              required: true,
+              shuffleOption: "none",
+              choices: [
+                t("templates.site_abandonment_survey_question_3_choice_1"),
+                t("templates.site_abandonment_survey_question_3_choice_2"),
+                t("templates.site_abandonment_survey_question_3_choice_3"),
+                t("templates.site_abandonment_survey_question_3_choice_4"),
+                t("templates.site_abandonment_survey_question_3_choice_5"),
+                t("templates.site_abandonment_survey_question_3_choice_6"),
+              ],
+              containsOther: true,
+            }),
           ],
           t,
         }),
-        buildConsentQuestion({
-          id: reusableQuestionIds[1],
-          logic: [createJumpLogic(reusableQuestionIds[1], reusableQuestionIds[2], "isSkipped")],
-          headline: t("templates.site_abandonment_survey_question_7_headline"),
-          subheader: "",
-          required: false,
-          label: t("templates.site_abandonment_survey_question_7_label"),
+        buildBlock({
+          name: "Block 3",
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.site_abandonment_survey_question_4_headline"),
+              required: false,
+              inputType: "text",
+            }),
+          ],
           t,
         }),
-        buildOpenTextQuestion({
-          headline: t("templates.site_abandonment_survey_question_8_headline"),
-          required: true,
-          inputType: "email",
-          longAnswer: false,
-          placeholder: "example@email.com",
+        buildBlock({
+          name: "Block 4",
+          elements: [
+            buildRatingElement({
+              headline: t("templates.site_abandonment_survey_question_5_headline"),
+              required: true,
+              scale: "number",
+              range: 5,
+              lowerLabel: t("templates.site_abandonment_survey_question_5_lower_label"),
+              upperLabel: t("templates.site_abandonment_survey_question_5_upper_label"),
+            }),
+          ],
           t,
         }),
-        buildOpenTextQuestion({
-          id: reusableQuestionIds[2],
-          headline: t("templates.site_abandonment_survey_question_9_headline"),
-          required: false,
-          inputType: "text",
+        buildBlock({
+          name: "Block 5",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+              headline: t("templates.site_abandonment_survey_question_6_headline"),
+              subheader: t("templates.site_abandonment_survey_question_6_subheader"),
+              required: true,
+              choices: [
+                t("templates.site_abandonment_survey_question_6_choice_1"),
+                t("templates.site_abandonment_survey_question_6_choice_2"),
+                t("templates.site_abandonment_survey_question_6_choice_3"),
+                t("templates.site_abandonment_survey_question_6_choice_4"),
+                t("templates.site_abandonment_survey_question_6_choice_5"),
+              ],
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: "Block 6",
+          elements: [
+            buildConsentElement({
+              id: reusableElementIds[1],
+              headline: t("templates.site_abandonment_survey_question_7_headline"),
+              subheader: "",
+              required: false,
+              label: t("templates.site_abandonment_survey_question_7_label"),
+            }),
+          ],
+          logic: [createBlockJumpLogic(reusableElementIds[1], block8Id, "isSkipped")],
+          t,
+        }),
+        buildBlock({
+          name: "Block 7",
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.site_abandonment_survey_question_8_headline"),
+              required: true,
+              inputType: "email",
+              longAnswer: false,
+              placeholder: "example@email.com",
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          id: block8Id,
+          name: "Block 8",
+          elements: [
+            buildOpenTextElement({
+              id: reusableElementIds[2],
+              headline: t("templates.site_abandonment_survey_question_9_headline"),
+              required: false,
+              inputType: "text",
+            }),
+          ],
           t,
         }),
       ],
@@ -412,8 +454,12 @@ const onboardingSegmentation = (t: TFunction): TTemplate => {
 };
 
 const churnSurvey = (t: TFunction): TTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
+  const reusableElementIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
+  const block2Id = createId(); // Pre-generate IDs for blocks referenced by logic
+  const block3Id = createId();
+  const block4Id = createId();
+  const block5Id = createId();
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
@@ -423,76 +469,109 @@ const churnSurvey = (t: TFunction): TTemplate => {
       channels: ["app", "link"],
       description: t("templates.churn_survey_description"),
       endings: localSurvey.endings,
-      questions: [
-        buildMultipleChoiceQuestion({
-          id: reusableQuestionIds[0],
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          shuffleOption: "none",
+      blocks: [
+        buildBlock({
+          name: "Block 1",
+          elements: [
+            buildMultipleChoiceElement({
+              id: reusableElementIds[0],
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              shuffleOption: "none",
+              choices: [
+                t("templates.churn_survey_question_1_choice_1"),
+                t("templates.churn_survey_question_1_choice_2"),
+                t("templates.churn_survey_question_1_choice_3"),
+                t("templates.churn_survey_question_1_choice_4"),
+                t("templates.churn_survey_question_1_choice_5"),
+              ],
+              choiceIds: [
+                reusableOptionIds[0],
+                reusableOptionIds[1],
+                reusableOptionIds[2],
+                reusableOptionIds[3],
+                reusableOptionIds[4],
+              ],
+              headline: t("templates.churn_survey_question_1_headline"),
+              required: true,
+              subheader: t("templates.churn_survey_question_1_subheader"),
+            }),
+          ],
           logic: [
-            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[0], reusableQuestionIds[1]),
-            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[1], reusableQuestionIds[2]),
-            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[2], reusableQuestionIds[3]),
-            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[3], reusableQuestionIds[4]),
-            createChoiceJumpLogic(reusableQuestionIds[0], reusableOptionIds[4], localSurvey.endings[0].id),
+            createBlockChoiceJumpLogic(reusableElementIds[0], reusableOptionIds[0], block2Id),
+            createBlockChoiceJumpLogic(reusableElementIds[0], reusableOptionIds[1], block3Id),
+            createBlockChoiceJumpLogic(reusableElementIds[0], reusableOptionIds[2], block4Id),
+            createBlockChoiceJumpLogic(reusableElementIds[0], reusableOptionIds[3], block5Id),
+            createBlockChoiceJumpLogic(
+              reusableElementIds[0],
+              reusableOptionIds[4],
+              localSurvey.endings[0].id
+            ),
           ],
-          choices: [
-            t("templates.churn_survey_question_1_choice_1"),
-            t("templates.churn_survey_question_1_choice_2"),
-            t("templates.churn_survey_question_1_choice_3"),
-            t("templates.churn_survey_question_1_choice_4"),
-            t("templates.churn_survey_question_1_choice_5"),
-          ],
-          choiceIds: [
-            reusableOptionIds[0],
-            reusableOptionIds[1],
-            reusableOptionIds[2],
-            reusableOptionIds[3],
-            reusableOptionIds[4],
-          ],
-          headline: t("templates.churn_survey_question_1_headline"),
-          required: true,
-          subheader: t("templates.churn_survey_question_1_subheader"),
           t,
         }),
-        buildOpenTextQuestion({
-          id: reusableQuestionIds[1],
-          logic: [createJumpLogic(reusableQuestionIds[1], localSurvey.endings[0].id, "isSubmitted")],
-          headline: t("templates.churn_survey_question_2_headline"),
-          required: true,
+        buildBlock({
+          id: block2Id,
+          name: "Block 2",
+          elements: [
+            buildOpenTextElement({
+              id: reusableElementIds[1],
+              headline: t("templates.churn_survey_question_2_headline"),
+              required: true,
+              inputType: "text",
+            }),
+          ],
+          logic: [createBlockJumpLogic(reusableElementIds[1], localSurvey.endings[0].id, "isSubmitted")],
           buttonLabel: t("templates.churn_survey_question_2_button_label"),
-          inputType: "text",
           t,
         }),
-        buildCTAQuestion({
-          id: reusableQuestionIds[2],
-          subheader: t("templates.churn_survey_question_3_html"),
-          logic: [createJumpLogic(reusableQuestionIds[2], localSurvey.endings[0].id, "isClicked")],
-          headline: t("templates.churn_survey_question_3_headline"),
-          required: true,
-          buttonUrl: "https://formbricks.com",
+        buildBlock({
+          id: block3Id,
+          name: "Block 3",
+          elements: [
+            buildCTAElement({
+              id: reusableElementIds[2],
+              subheader: t("templates.churn_survey_question_3_html"),
+              headline: t("templates.churn_survey_question_3_headline"),
+              required: true,
+              buttonUrl: "https://formbricks.com",
+              buttonExternal: true,
+              dismissButtonLabel: t("templates.churn_survey_question_3_dismiss_button_label"),
+            }),
+          ],
+          logic: [createBlockJumpLogic(reusableElementIds[2], localSurvey.endings[0].id, "isClicked")],
           buttonLabel: t("templates.churn_survey_question_3_button_label"),
-          buttonExternal: true,
-          dismissButtonLabel: t("templates.churn_survey_question_3_dismiss_button_label"),
           t,
         }),
-        buildOpenTextQuestion({
-          id: reusableQuestionIds[3],
-          logic: [createJumpLogic(reusableQuestionIds[3], localSurvey.endings[0].id, "isSubmitted")],
-          headline: t("templates.churn_survey_question_4_headline"),
-          required: true,
-          inputType: "text",
+        buildBlock({
+          id: block4Id,
+          name: "Block 4",
+          elements: [
+            buildOpenTextElement({
+              id: reusableElementIds[3],
+              headline: t("templates.churn_survey_question_4_headline"),
+              required: true,
+              inputType: "text",
+            }),
+          ],
+          logic: [createBlockJumpLogic(reusableElementIds[3], localSurvey.endings[0].id, "isSubmitted")],
           t,
         }),
-        buildCTAQuestion({
-          id: reusableQuestionIds[4],
-          subheader: t("templates.churn_survey_question_5_html"),
-          logic: [createJumpLogic(reusableQuestionIds[4], localSurvey.endings[0].id, "isClicked")],
-          headline: t("templates.churn_survey_question_5_headline"),
-          required: true,
-          buttonUrl: "mailto:ceo@company.com",
+        buildBlock({
+          id: block5Id,
+          name: "Block 5",
+          elements: [
+            buildCTAElement({
+              id: reusableElementIds[4],
+              subheader: t("templates.churn_survey_question_5_html"),
+              headline: t("templates.churn_survey_question_5_headline"),
+              required: true,
+              buttonUrl: "mailto:ceo@company.com",
+              buttonExternal: true,
+              dismissButtonLabel: t("templates.churn_survey_question_5_dismiss_button_label"),
+            }),
+          ],
+          logic: [createBlockJumpLogic(reusableElementIds[4], localSurvey.endings[0].id, "isClicked")],
           buttonLabel: t("templates.churn_survey_question_5_button_label"),
-          buttonExternal: true,
-          dismissButtonLabel: t("templates.churn_survey_question_5_dismiss_button_label"),
           t,
         }),
       ],
@@ -585,105 +664,155 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app", "link"],
       description: t("templates.usability_rating_description"),
-      questions: [
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_1_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+      blocks: [
+        buildBlock({
+          name: "Block 1",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_1_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_2_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 2",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_2_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_3_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 3",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_3_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_4_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 4",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_4_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_5_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 5",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_5_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_6_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 6",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_6_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_7_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 7",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_7_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_8_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 8",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_8_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_9_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 9",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_9_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.usability_question_10_headline"),
-          required: true,
-          lowerLabel: t("templates.strongly_disagree"),
-          upperLabel: t("templates.strongly_agree"),
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 10",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.usability_question_10_headline"),
+              required: true,
+              lowerLabel: t("templates.strongly_disagree"),
+              upperLabel: t("templates.strongly_agree"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           t,
         }),
       ],
@@ -1428,7 +1557,8 @@ const feedbackBox = (t: TFunction): TTemplate => {
 };
 
 const integrationSetupSurvey = (t: TFunction): TTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
+  const reusableElementIds = [createId(), createId(), createId()];
+  const block3Id = createId(); // Pre-generate ID for Block 3 (referenced by Block 1 logic)
 
   return buildSurvey(
     {
@@ -1437,9 +1567,21 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.integration_setup_survey_description"),
-      questions: [
-        buildRatingQuestion({
-          id: reusableQuestionIds[0],
+      blocks: [
+        buildBlock({
+          name: "Block 1",
+          elements: [
+            buildRatingElement({
+              id: reusableElementIds[0],
+              range: 5,
+              scale: "number",
+              headline: t("templates.integration_setup_survey_question_1_headline"),
+              required: true,
+              lowerLabel: t("templates.integration_setup_survey_question_1_lower_label"),
+              upperLabel: t("templates.integration_setup_survey_question_1_upper_label"),
+              isColorCodingEnabled: false,
+            }),
+          ],
           logic: [
             {
               id: createId(),
@@ -1450,7 +1592,7 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      value: reusableQuestionIds[0],
+                      value: reusableElementIds[0],
                       type: "question",
                     },
                     operator: "isGreaterThanOrEqual",
@@ -1464,35 +1606,39 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
               actions: [
                 {
                   id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
+                  objective: "jumpToBlock",
+                  target: block3Id,
                 },
               ],
             },
           ],
-          range: 5,
-          scale: "number",
-          headline: t("templates.integration_setup_survey_question_1_headline"),
-          required: true,
-          lowerLabel: t("templates.integration_setup_survey_question_1_lower_label"),
-          upperLabel: t("templates.integration_setup_survey_question_1_upper_label"),
-          isColorCodingEnabled: false,
           t,
         }),
-        buildOpenTextQuestion({
-          id: reusableQuestionIds[1],
-          headline: t("templates.integration_setup_survey_question_2_headline"),
-          required: false,
-          placeholder: t("templates.integration_setup_survey_question_2_placeholder"),
-          inputType: "text",
+        buildBlock({
+          name: "Block 2",
+          elements: [
+            buildOpenTextElement({
+              id: reusableElementIds[1],
+              headline: t("templates.integration_setup_survey_question_2_headline"),
+              required: false,
+              placeholder: t("templates.integration_setup_survey_question_2_placeholder"),
+              inputType: "text",
+            }),
+          ],
           t,
         }),
-        buildOpenTextQuestion({
-          id: reusableQuestionIds[2],
-          headline: t("templates.integration_setup_survey_question_3_headline"),
-          required: false,
-          subheader: t("templates.integration_setup_survey_question_3_subheader"),
-          inputType: "text",
+        buildBlock({
+          id: block3Id,
+          name: "Block 3",
+          elements: [
+            buildOpenTextElement({
+              id: reusableElementIds[2],
+              headline: t("templates.integration_setup_survey_question_3_headline"),
+              required: false,
+              subheader: t("templates.integration_setup_survey_question_3_subheader"),
+              inputType: "text",
+            }),
+          ],
           buttonLabel: t("templates.finish"),
           t,
         }),
@@ -1510,22 +1656,26 @@ const newIntegrationSurvey = (t: TFunction): TTemplate => {
       industries: ["saas"],
       channels: ["app"],
       description: t("templates.new_integration_survey_description"),
-      questions: [
-        buildMultipleChoiceQuestion({
-          id: createId(),
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: t("templates.new_integration_survey_question_1_headline"),
-          required: true,
-          shuffleOption: "none",
-          choices: [
-            t("templates.new_integration_survey_question_1_choice_1"),
-            t("templates.new_integration_survey_question_1_choice_2"),
-            t("templates.new_integration_survey_question_1_choice_3"),
-            t("templates.new_integration_survey_question_1_choice_4"),
-            t("templates.new_integration_survey_question_1_choice_5"),
+      blocks: [
+        buildBlock({
+          name: "Block 1",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: t("templates.new_integration_survey_question_1_headline"),
+              required: true,
+              shuffleOption: "none",
+              choices: [
+                t("templates.new_integration_survey_question_1_choice_1"),
+                t("templates.new_integration_survey_question_1_choice_2"),
+                t("templates.new_integration_survey_question_1_choice_3"),
+                t("templates.new_integration_survey_question_1_choice_4"),
+                t("templates.new_integration_survey_question_1_choice_5"),
+              ],
+              containsOther: true,
+            }),
           ],
           buttonLabel: t("templates.finish"),
-          containsOther: true,
           t,
         }),
       ],
@@ -2131,77 +2281,105 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.career_development_survey_description"),
-      questions: [
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.career_development_survey_question_1_headline"),
-          lowerLabel: t("templates.career_development_survey_question_1_lower_label"),
-          upperLabel: t("templates.career_development_survey_question_1_upper_label"),
-          required: true,
-          t,
-        }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.career_development_survey_question_2_headline"),
-          lowerLabel: t("templates.career_development_survey_question_2_lower_label"),
-          upperLabel: t("templates.career_development_survey_question_2_upper_label"),
-          required: true,
-          t,
-        }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.career_development_survey_question_3_headline"),
-          lowerLabel: t("templates.career_development_survey_question_3_lower_label"),
-          upperLabel: t("templates.career_development_survey_question_3_upper_label"),
-          required: true,
-          t,
-        }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.career_development_survey_question_4_headline"),
-          lowerLabel: t("templates.career_development_survey_question_4_lower_label"),
-          upperLabel: t("templates.career_development_survey_question_4_upper_label"),
-          required: true,
-          t,
-        }),
-        buildMultipleChoiceQuestion({
-          id: createId(),
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: t("templates.career_development_survey_question_5_headline"),
-          subheader: t("templates.career_development_survey_question_5_subheader"),
-          required: true,
-          shuffleOption: "none",
-          choices: [
-            t("templates.career_development_survey_question_5_choice_1"),
-            t("templates.career_development_survey_question_5_choice_2"),
-            t("templates.career_development_survey_question_5_choice_3"),
-            t("templates.career_development_survey_question_5_choice_4"),
-            t("templates.career_development_survey_question_5_choice_5"),
-            t("templates.career_development_survey_question_5_choice_6"),
+      blocks: [
+        buildBlock({
+          name: "Block 1",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.career_development_survey_question_1_headline"),
+              lowerLabel: t("templates.career_development_survey_question_1_lower_label"),
+              upperLabel: t("templates.career_development_survey_question_1_upper_label"),
+              required: true,
+            }),
           ],
-          containsOther: true,
           t,
         }),
-        buildMultipleChoiceQuestion({
-          id: createId(),
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: t("templates.career_development_survey_question_6_headline"),
-          subheader: t("templates.career_development_survey_question_6_subheader"),
-          required: true,
-          shuffleOption: "exceptLast",
-          choices: [
-            t("templates.career_development_survey_question_6_choice_1"),
-            t("templates.career_development_survey_question_6_choice_2"),
-            t("templates.career_development_survey_question_6_choice_3"),
-            t("templates.career_development_survey_question_6_choice_4"),
-            t("templates.career_development_survey_question_6_choice_5"),
-            t("templates.career_development_survey_question_6_choice_6"),
+        buildBlock({
+          name: "Block 2",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.career_development_survey_question_2_headline"),
+              lowerLabel: t("templates.career_development_survey_question_2_lower_label"),
+              upperLabel: t("templates.career_development_survey_question_2_upper_label"),
+              required: true,
+            }),
           ],
-          containsOther: true,
+          t,
+        }),
+        buildBlock({
+          name: "Block 3",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.career_development_survey_question_3_headline"),
+              lowerLabel: t("templates.career_development_survey_question_3_lower_label"),
+              upperLabel: t("templates.career_development_survey_question_3_upper_label"),
+              required: true,
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: "Block 4",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.career_development_survey_question_4_headline"),
+              lowerLabel: t("templates.career_development_survey_question_4_lower_label"),
+              upperLabel: t("templates.career_development_survey_question_4_upper_label"),
+              required: true,
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: "Block 5",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: t("templates.career_development_survey_question_5_headline"),
+              subheader: t("templates.career_development_survey_question_5_subheader"),
+              required: true,
+              shuffleOption: "none",
+              choices: [
+                t("templates.career_development_survey_question_5_choice_1"),
+                t("templates.career_development_survey_question_5_choice_2"),
+                t("templates.career_development_survey_question_5_choice_3"),
+                t("templates.career_development_survey_question_5_choice_4"),
+                t("templates.career_development_survey_question_5_choice_5"),
+                t("templates.career_development_survey_question_5_choice_6"),
+              ],
+              containsOther: true,
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: "Block 6",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: t("templates.career_development_survey_question_6_headline"),
+              subheader: t("templates.career_development_survey_question_6_subheader"),
+              required: true,
+              shuffleOption: "exceptLast",
+              choices: [
+                t("templates.career_development_survey_question_6_choice_1"),
+                t("templates.career_development_survey_question_6_choice_2"),
+                t("templates.career_development_survey_question_6_choice_3"),
+                t("templates.career_development_survey_question_6_choice_4"),
+                t("templates.career_development_survey_question_6_choice_5"),
+                t("templates.career_development_survey_question_6_choice_6"),
+              ],
+              containsOther: true,
+            }),
+          ],
           t,
         }),
       ],
@@ -2218,76 +2396,96 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
       industries: ["saas", "eCommerce", "other"],
       channels: ["link"],
       description: t("templates.professional_development_survey_description"),
-      questions: [
-        buildMultipleChoiceQuestion({
-          id: createId(),
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: t("templates.professional_development_survey_question_1_headline"),
-          required: true,
-          shuffleOption: "none",
-          choices: [
-            t("templates.professional_development_survey_question_1_choice_1"),
-            t("templates.professional_development_survey_question_1_choice_2"),
+      blocks: [
+        buildBlock({
+          name: "Block 1",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: t("templates.professional_development_survey_question_1_headline"),
+              required: true,
+              shuffleOption: "none",
+              choices: [
+                t("templates.professional_development_survey_question_1_choice_1"),
+                t("templates.professional_development_survey_question_1_choice_2"),
+              ],
+            }),
           ],
           t,
         }),
-
-        buildMultipleChoiceQuestion({
-          id: createId(),
-          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-          headline: t("templates.professional_development_survey_question_2_headline"),
-          subheader: t("templates.professional_development_survey_question_2_subheader"),
-          required: true,
-          shuffleOption: "exceptLast",
-          choices: [
-            t("templates.professional_development_survey_question_2_choice_1"),
-            t("templates.professional_development_survey_question_2_choice_2"),
-            t("templates.professional_development_survey_question_2_choice_3"),
-            t("templates.professional_development_survey_question_2_choice_4"),
-            t("templates.professional_development_survey_question_2_choice_5"),
-            t("templates.professional_development_survey_question_2_choice_6"),
-          ],
-          containsOther: true,
-          t,
-        }),
-        buildMultipleChoiceQuestion({
-          id: createId(),
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: t("templates.professional_development_survey_question_3_headline"),
-          required: true,
-          shuffleOption: "none",
-          choices: [
-            t("templates.professional_development_survey_question_3_choice_1"),
-            t("templates.professional_development_survey_question_3_choice_2"),
+        buildBlock({
+          name: "Block 2",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+              headline: t("templates.professional_development_survey_question_2_headline"),
+              subheader: t("templates.professional_development_survey_question_2_subheader"),
+              required: true,
+              shuffleOption: "exceptLast",
+              choices: [
+                t("templates.professional_development_survey_question_2_choice_1"),
+                t("templates.professional_development_survey_question_2_choice_2"),
+                t("templates.professional_development_survey_question_2_choice_3"),
+                t("templates.professional_development_survey_question_2_choice_4"),
+                t("templates.professional_development_survey_question_2_choice_5"),
+                t("templates.professional_development_survey_question_2_choice_6"),
+              ],
+              containsOther: true,
+            }),
           ],
           t,
         }),
-        buildRatingQuestion({
-          range: 5,
-          scale: "number",
-          headline: t("templates.professional_development_survey_question_4_headline"),
-          lowerLabel: t("templates.professional_development_survey_question_4_lower_label"),
-          upperLabel: t("templates.professional_development_survey_question_4_upper_label"),
-          required: true,
-          isColorCodingEnabled: false,
+        buildBlock({
+          name: "Block 3",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: t("templates.professional_development_survey_question_3_headline"),
+              required: true,
+              shuffleOption: "none",
+              choices: [
+                t("templates.professional_development_survey_question_3_choice_1"),
+                t("templates.professional_development_survey_question_3_choice_2"),
+              ],
+            }),
+          ],
           t,
         }),
-        buildMultipleChoiceQuestion({
-          id: createId(),
-          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-          headline: t("templates.professional_development_survey_question_5_headline"),
-          required: true,
-          shuffleOption: "exceptLast",
-          choices: [
-            t("templates.professional_development_survey_question_5_choice_1"),
-            t("templates.professional_development_survey_question_5_choice_2"),
-            t("templates.professional_development_survey_question_5_choice_3"),
-            t("templates.professional_development_survey_question_5_choice_4"),
-            t("templates.professional_development_survey_question_5_choice_5"),
-            t("templates.professional_development_survey_question_5_choice_6"),
+        buildBlock({
+          name: "Block 4",
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "number",
+              headline: t("templates.professional_development_survey_question_4_headline"),
+              lowerLabel: t("templates.professional_development_survey_question_4_lower_label"),
+              upperLabel: t("templates.professional_development_survey_question_4_upper_label"),
+              required: true,
+              isColorCodingEnabled: false,
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: "Block 5",
+          elements: [
+            buildMultipleChoiceElement({
+              type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+              headline: t("templates.professional_development_survey_question_5_headline"),
+              required: true,
+              shuffleOption: "exceptLast",
+              choices: [
+                t("templates.professional_development_survey_question_5_choice_1"),
+                t("templates.professional_development_survey_question_5_choice_2"),
+                t("templates.professional_development_survey_question_5_choice_3"),
+                t("templates.professional_development_survey_question_5_choice_4"),
+                t("templates.professional_development_survey_question_5_choice_5"),
+                t("templates.professional_development_survey_question_5_choice_6"),
+              ],
+              containsOther: true,
+            }),
           ],
           buttonLabel: t("templates.finish"),
-          containsOther: true,
           t,
         }),
       ],
@@ -3696,40 +3894,50 @@ export const previewSurvey = (projectName: string, t: TFunction) => {
     },
     styling: null,
     segment: null,
-    questions: [
+    questions: [],
+    blocks: [
       {
-        ...buildMultipleChoiceQuestion({
-          id: "rjpu42ps6dzirsn9ds6eydgt",
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          choiceIds: ["x6wty2s72v7vd538aadpurqx", "fbcj4530t2n357ymjp2h28d6"],
-          choices: [
-            t("templates.preview_survey_question_2_choice_1_label"),
-            t("templates.preview_survey_question_2_choice_2_label"),
-          ],
-          headline: t("templates.preview_survey_question_2_headline"),
-          backButtonLabel: t("templates.preview_survey_question_2_back_button_label"),
-          required: true,
-          shuffleOption: "none",
-          t,
-        }),
-        isDraft: true,
+        id: createId(),
+        name: "Block 1",
+        elements: [
+          {
+            ...buildMultipleChoiceElement({
+              id: "rjpu42ps6dzirsn9ds6eydgt",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              choiceIds: ["x6wty2s72v7vd538aadpurqx", "fbcj4530t2n357ymjp2h28d6"],
+              choices: [
+                t("templates.preview_survey_question_2_choice_1_label"),
+                t("templates.preview_survey_question_2_choice_2_label"),
+              ],
+              headline: t("templates.preview_survey_question_2_headline"),
+              required: true,
+              shuffleOption: "none",
+            }),
+            isDraft: true,
+          },
+        ],
+        backButtonLabel: createI18nString(t("templates.preview_survey_question_2_back_button_label"), []),
       },
       {
-        ...buildRatingQuestion({
-          id: "lbdxozwikh838yc6a8vbwuju",
-          range: 5,
-          scale: "star",
-          headline: t("templates.preview_survey_question_1_headline", { projectName }),
-          required: true,
-          subheader: t("templates.preview_survey_question_1_subheader"),
-          lowerLabel: t("templates.preview_survey_question_1_lower_label"),
-          upperLabel: t("templates.preview_survey_question_1_upper_label"),
-          t,
-        }),
-        isDraft: true,
+        id: createId(),
+        name: "Block 2",
+        elements: [
+          {
+            ...buildRatingElement({
+              id: "lbdxozwikh838yc6a8vbwuju",
+              range: 5,
+              scale: "star",
+              headline: t("templates.preview_survey_question_1_headline", { projectName }),
+              required: true,
+              subheader: t("templates.preview_survey_question_1_subheader"),
+              lowerLabel: t("templates.preview_survey_question_1_lower_label"),
+              upperLabel: t("templates.preview_survey_question_1_upper_label"),
+            }),
+            isDraft: true,
+          },
+        ],
       },
     ],
-    blocks: [],
     endings: [
       {
         id: "cltyqp5ng000108l9dmxw6nde",

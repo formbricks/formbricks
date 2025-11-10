@@ -6,6 +6,7 @@ import type {
   TSurveyConsentElement,
   TSurveyElement,
   TSurveyMultipleChoiceElement,
+  TSurveyNPSElement,
   TSurveyOpenTextElement,
   TSurveyOpenTextElementInputType,
   TSurveyRatingElement,
@@ -179,6 +180,35 @@ export const buildCTAElement = ({
     required: required ?? false,
     buttonExternal,
     buttonUrl,
+  };
+};
+
+export const buildNPSElement = ({
+  id,
+  headline,
+  subheader,
+  lowerLabel,
+  upperLabel,
+  required,
+  isColorCodingEnabled = false,
+}: {
+  id?: string;
+  headline: string;
+  subheader?: string;
+  lowerLabel?: string;
+  upperLabel?: string;
+  required?: boolean;
+  isColorCodingEnabled?: boolean;
+}): TSurveyNPSElement => {
+  return {
+    id: id ?? createId(),
+    type: TSurveyElementTypeEnum.NPS,
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
+    required: required ?? false,
+    isColorCodingEnabled,
+    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
+    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
   };
 };
 
