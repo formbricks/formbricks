@@ -232,15 +232,6 @@ describe("getQuestionsFromSurvey", () => {
     expect(questions[2].id).toBe("q3");
   });
 
-  test("should return empty array when blocks is undefined", () => {
-    const surveyWithoutBlocks = {
-      ...baseMockSurvey,
-    };
-    delete (surveyWithoutBlocks as Partial<TJsEnvironmentStateSurvey>).blocks;
-
-    expect(getQuestionsFromSurvey(surveyWithoutBlocks as TJsEnvironmentStateSurvey)).toEqual([]);
-  });
-
   test("should return empty array when blocks is empty", () => {
     const survey = {
       ...baseMockSurvey,

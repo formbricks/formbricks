@@ -21,23 +21,40 @@ import {
 } from "lucide-react";
 import type { JSX } from "react";
 import {
-  TSurveyQuestionTypeEnum as QuestionId,
-  TSurveyAddressQuestion,
-  TSurveyCTAQuestion,
-  TSurveyCalQuestion,
-  TSurveyConsentQuestion,
-  TSurveyContactInfoQuestion,
-  TSurveyDateQuestion,
-  TSurveyFileUploadQuestion,
-  TSurveyMatrixQuestion,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyNPSQuestion,
-  TSurveyOpenTextQuestion,
-  TSurveyPictureSelectionQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyRankingQuestion,
-  TSurveyRatingQuestion,
-} from "@formbricks/types/surveys/types";
+  TSurveyAddressElement,
+  TSurveyCTAElement,
+  TSurveyCalElement,
+  TSurveyConsentElement,
+  TSurveyContactInfoElement,
+  TSurveyDateElement,
+  TSurveyElementTypeEnum,
+  TSurveyFileUploadElement,
+  TSurveyMatrixElement,
+  TSurveyMultipleChoiceElement,
+  TSurveyNPSElement,
+  TSurveyOpenTextElement,
+  TSurveyPictureSelectionElement,
+  TSurveyRankingElement,
+  TSurveyRatingElement,
+} from "@formbricks/types/surveys/elements";
+// import {
+//   TSurveyQuestionTypeEnum as QuestionId,
+//   TSurveyAddressQuestion,
+//   TSurveyCTAQuestion,
+//   TSurveyCalQuestion,
+//   TSurveyConsentQuestion,
+//   TSurveyContactInfoQuestion,
+//   TSurveyDateQuestion,
+//   TSurveyFileUploadQuestion,
+//   TSurveyMatrixQuestion,
+//   TSurveyMultipleChoiceQuestion,
+//   TSurveyNPSQuestion,
+//   TSurveyOpenTextQuestion,
+//   TSurveyPictureSelectionQuestion,
+//   TSurveyQuestionTypeEnum,
+//   TSurveyRankingQuestion,
+//   TSurveyRatingQuestion,
+// } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 import { replaceQuestionPresetPlaceholders } from "@/lib/utils/templates";
 
@@ -51,7 +68,7 @@ export type TQuestion = {
 
 export const getQuestionTypes = (t: TFunction): TQuestion[] => [
   {
-    id: QuestionId.OpenText,
+    id: TSurveyElementTypeEnum.OpenText,
     label: t("templates.free_text"),
     description: t("templates.free_text_description"),
     icon: MessageSquareTextIcon,
@@ -62,10 +79,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       inputType: "text",
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyOpenTextQuestion>,
+    } as Partial<TSurveyOpenTextElement>,
   },
   {
-    id: QuestionId.MultipleChoiceSingle,
+    id: TSurveyElementTypeEnum.MultipleChoiceSingle,
     label: t("templates.single_select"),
     description: t("templates.single_select_description"),
     icon: Rows3Icon,
@@ -84,10 +101,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       shuffleOption: "none",
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyMultipleChoiceQuestion>,
+    } as Partial<TSurveyMultipleChoiceElement>,
   },
   {
-    id: QuestionId.MultipleChoiceMulti,
+    id: TSurveyElementTypeEnum.MultipleChoiceMulti,
     label: t("templates.multi_select"),
     description: t("templates.multi_select_description"),
     icon: ListIcon,
@@ -110,10 +127,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       shuffleOption: "none",
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyMultipleChoiceQuestion>,
+    } as Partial<TSurveyMultipleChoiceElement>,
   },
   {
-    id: QuestionId.PictureSelection,
+    id: TSurveyElementTypeEnum.PictureSelection,
     label: t("templates.picture_selection"),
     description: t("templates.picture_selection_description"),
     icon: ImageIcon,
@@ -123,10 +140,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       choices: [],
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyPictureSelectionQuestion>,
+    } as Partial<TSurveyPictureSelectionElement>,
   },
   {
-    id: QuestionId.Rating,
+    id: TSurveyElementTypeEnum.Rating,
     label: t("templates.rating"),
     description: t("templates.rating_description"),
     icon: StarIcon,
@@ -138,10 +155,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       upperLabel: createI18nString(t("templates.rating_upper_label"), []),
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyRatingQuestion>,
+    } as Partial<TSurveyRatingElement>,
   },
   {
-    id: QuestionId.NPS,
+    id: TSurveyElementTypeEnum.NPS,
     label: t("templates.nps"),
     description: t("templates.nps_description"),
     icon: PresentationIcon,
@@ -151,10 +168,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       upperLabel: createI18nString(t("templates.nps_upper_label"), []),
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyNPSQuestion>,
+    } as Partial<TSurveyNPSElement>,
   },
   {
-    id: QuestionId.Ranking,
+    id: TSurveyElementTypeEnum.Ranking,
     label: t("templates.ranking"),
     description: t("templates.ranking_description"),
     icon: ListOrderedIcon,
@@ -172,10 +189,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       ],
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyRankingQuestion>,
+    } as Partial<TSurveyRankingElement>,
   },
   {
-    id: QuestionId.Matrix,
+    id: TSurveyElementTypeEnum.Matrix,
     label: t("templates.matrix"),
     description: t("templates.matrix_description"),
     icon: Grid3X3Icon,
@@ -192,10 +209,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
       shuffleOption: "none",
-    } as Partial<TSurveyMatrixQuestion>,
+    } as Partial<TSurveyMatrixElement>,
   },
   {
-    id: QuestionId.CTA,
+    id: TSurveyElementTypeEnum.CTA,
     label: t("templates.statement_call_to_action"),
     description: t("templates.cta_description"),
     icon: MousePointerClickIcon,
@@ -206,10 +223,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       buttonExternal: false,
       dismissButtonLabel: createI18nString(t("templates.skip"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyCTAQuestion>,
+    } as Partial<TSurveyCTAElement>,
   },
   {
-    id: QuestionId.Consent,
+    id: TSurveyElementTypeEnum.Consent,
     label: t("templates.consent"),
     description: t("templates.consent_description"),
     icon: CheckIcon,
@@ -219,10 +236,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       label: createI18nString("", []),
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyConsentQuestion>,
+    } as Partial<TSurveyConsentElement>,
   },
   {
-    id: QuestionId.FileUpload,
+    id: TSurveyElementTypeEnum.FileUpload,
     label: t("templates.file_upload"),
     description: t("templates.file_upload_description"),
     icon: ArrowUpFromLineIcon,
@@ -231,10 +248,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       allowMultipleFiles: false,
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyFileUploadQuestion>,
+    } as Partial<TSurveyFileUploadElement>,
   },
   {
-    id: QuestionId.Date,
+    id: TSurveyElementTypeEnum.Date,
     label: t("templates.date"),
     description: t("templates.date_description"),
     icon: CalendarDaysIcon,
@@ -243,10 +260,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       format: "M-d-y",
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyDateQuestion>,
+    } as Partial<TSurveyDateElement>,
   },
   {
-    id: QuestionId.Cal,
+    id: TSurveyElementTypeEnum.Cal,
     label: t("templates.schedule_a_meeting"),
     description: t("templates.schedule_a_meeting_description"),
     icon: PhoneIcon,
@@ -255,10 +272,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       calUserName: "rick/get-rick-rolled",
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyCalQuestion>,
+    } as Partial<TSurveyCalElement>,
   },
   {
-    id: QuestionId.Address,
+    id: TSurveyElementTypeEnum.Address,
     label: t("templates.address"),
     description: t("templates.address_description"),
     icon: HomeIcon,
@@ -272,10 +289,10 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       country: { show: true, required: true, placeholder: { default: "Country" } },
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyAddressQuestion>,
+    } as Partial<TSurveyAddressElement>,
   },
   {
-    id: QuestionId.ContactInfo,
+    id: TSurveyElementTypeEnum.ContactInfo,
     label: t("templates.contact_info"),
     description: t("templates.contact_info_description"),
     icon: ContactIcon,
@@ -288,30 +305,30 @@ export const getQuestionTypes = (t: TFunction): TQuestion[] => [
       company: { show: true, required: true, placeholder: { default: "Company" } },
       buttonLabel: createI18nString(t("templates.next"), []),
       backButtonLabel: createI18nString(t("templates.back"), []),
-    } as Partial<TSurveyContactInfoQuestion>,
+    } as Partial<TSurveyContactInfoElement>,
   },
 ];
 
 export const getCXQuestionTypes = (t: TFunction) =>
   getQuestionTypes(t).filter((questionType) => {
     return [
-      TSurveyQuestionTypeEnum.OpenText,
-      TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-      TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-      TSurveyQuestionTypeEnum.Rating,
-      TSurveyQuestionTypeEnum.NPS,
-      TSurveyQuestionTypeEnum.Consent,
-      TSurveyQuestionTypeEnum.CTA,
-    ].includes(questionType.id as TSurveyQuestionTypeEnum);
+      TSurveyElementTypeEnum.OpenText,
+      TSurveyElementTypeEnum.MultipleChoiceSingle,
+      TSurveyElementTypeEnum.MultipleChoiceMulti,
+      TSurveyElementTypeEnum.Rating,
+      TSurveyElementTypeEnum.NPS,
+      TSurveyElementTypeEnum.Consent,
+      TSurveyElementTypeEnum.CTA,
+    ].includes(questionType.id as TSurveyElementTypeEnum);
   });
 
-export const getQuestionIconMap = (t: TFunction): Record<TSurveyQuestionTypeEnum, JSX.Element> =>
+export const getQuestionIconMap = (t: TFunction): Record<TSurveyElementTypeEnum, JSX.Element> =>
   getQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
       [curr.id]: <curr.icon className="h-4 w-4" />,
     }),
-    {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
+    {} as Record<TSurveyElementTypeEnum, JSX.Element>
   );
 
 export const getQuestionNameMap = (t: TFunction) =>
@@ -321,9 +338,9 @@ export const getQuestionNameMap = (t: TFunction) =>
       [curr.id]: curr.label,
     }),
     {}
-  ) as Record<TSurveyQuestionTypeEnum, string>;
+  ) as Record<TSurveyElementTypeEnum, string>;
 
-export const getQuestionIcon = (type: TSurveyQuestionTypeEnum, t: TFunction) => {
+export const getQuestionIcon = (type: TSurveyElementTypeEnum, t: TFunction) => {
   return getQuestionTypes(t).find((questionType) => questionType.id === type)?.icon;
 };
 
@@ -339,7 +356,7 @@ export const getCXQuestionNameMap = (t: TFunction) =>
       [curr.id]: curr.label,
     }),
     {}
-  ) as Record<TSurveyQuestionTypeEnum, string>;
+  ) as Record<TSurveyElementTypeEnum, string>;
 
 export const universalQuestionPresets = {
   required: false,

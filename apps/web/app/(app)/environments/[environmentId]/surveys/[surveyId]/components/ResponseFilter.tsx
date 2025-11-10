@@ -4,7 +4,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   SelectedFilterValue,
   TResponseStatus,
@@ -25,7 +26,7 @@ import {
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyQuestionTypeEnum | "Attributes" | "Tags" | "Languages" | "Quotas";
+  type: TSurveyElementTypeEnum | "Attributes" | "Tags" | "Languages" | "Quotas";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
