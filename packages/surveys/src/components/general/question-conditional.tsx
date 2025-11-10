@@ -1,13 +1,9 @@
-import { useEffect } from "react";
-import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { useEffect, useMemo } from "react";
+import { type TJsEnvironmentStateSurvey, type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
-import {
-  type TSurveyQuestion,
-  type TSurveyQuestionChoice,
-  type TSurveyQuestionId,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { type TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
 import { AddressQuestion } from "@/components/questions/address-question";
 import { CalQuestion } from "@/components/questions/cal-question";
 import { ConsentQuestion } from "@/components/questions/consent-question";
@@ -24,9 +20,11 @@ import { PictureSelectionQuestion } from "@/components/questions/picture-selecti
 import { RankingQuestion } from "@/components/questions/ranking-question";
 import { RatingQuestion } from "@/components/questions/rating-question";
 import { getLocalizedValue } from "@/lib/i18n";
+import { findBlockByElementId } from "@/lib/utils";
 
 interface QuestionConditionalProps {
-  question: TSurveyQuestion;
+  survey: TJsEnvironmentStateSurvey;
+  question: TSurveyElement;
   value: TResponseDataValue;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -41,7 +39,7 @@ interface QuestionConditionalProps {
   setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
   autoFocusEnabled: boolean;
-  currentQuestionId: TSurveyQuestionId;
+  currentQuestionId: string;
   isBackButtonHidden: boolean;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
@@ -49,6 +47,7 @@ interface QuestionConditionalProps {
 }
 
 export function QuestionConditional({
+  survey,
   question,
   value,
   onChange,
@@ -70,6 +69,11 @@ export function QuestionConditional({
   dir,
   fullSizeCards,
 }: QuestionConditionalProps) {
+  // Get block-level properties from the parent block
+  const parentBlock = useMemo(() => findBlockByElementId(survey, question.id), [survey, question.id]);
+  const buttonLabel = parentBlock?.buttonLabel;
+  const backButtonLabel = parentBlock?.backButtonLabel;
+
   const getResponseValueForRankingQuestion = (
     value: string[],
     choices: TSurveyQuestionChoice[]
@@ -90,7 +94,7 @@ export function QuestionConditional({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we want to run this only once when the question renders for the first time
   }, []);
 
-  return question.type === TSurveyQuestionTypeEnum.OpenText ? (
+  return question.type === TSurveyElementTypeEnum.OpenText ? (
     <OpenTextQuestion
       key={question.id}
       question={question}
@@ -108,8 +112,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
+  ) : question.type === TSurveyElementTypeEnum.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       key={question.id}
       question={question}
@@ -127,8 +133,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
+  ) : question.type === TSurveyElementTypeEnum.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
       key={question.id}
       question={question}
@@ -146,8 +154,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
+  ) : question.type === TSurveyElementTypeEnum.NPS ? (
     <NPSQuestion
       key={question.id}
       question={question}
@@ -165,8 +175,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
+  ) : question.type === TSurveyElementTypeEnum.CTA ? (
     <CTAQuestion
       key={question.id}
       question={question}
@@ -184,8 +196,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       onOpenExternalURL={onOpenExternalURL}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
+  ) : question.type === TSurveyElementTypeEnum.Rating ? (
     <RatingQuestion
       key={question.id}
       question={question}
@@ -203,8 +217,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
+  ) : question.type === TSurveyElementTypeEnum.Consent ? (
     <ConsentQuestion
       key={question.id}
       question={question}
@@ -222,8 +238,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.Date ? (
+  ) : question.type === TSurveyElementTypeEnum.Date ? (
     <DateQuestion
       key={question.id}
       question={question}
@@ -241,7 +259,7 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       fullSizeCards={fullSizeCards}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
+  ) : question.type === TSurveyElementTypeEnum.PictureSelection ? (
     <PictureSelectionQuestion
       key={question.id}
       question={question}
@@ -259,8 +277,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
+  ) : question.type === TSurveyElementTypeEnum.FileUpload ? (
     <FileUploadQuestion
       key={question.id}
       surveyId={surveyId}
@@ -280,7 +300,7 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       fullSizeCards={fullSizeCards}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
+  ) : question.type === TSurveyElementTypeEnum.Cal ? (
     <CalQuestion
       key={question.id}
       question={question}
@@ -297,8 +317,10 @@ export function QuestionConditional({
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
+  ) : question.type === TSurveyElementTypeEnum.Matrix ? (
     <MatrixQuestion
       question={question}
       value={typeof value === "object" && !Array.isArray(value) ? value : {}}
@@ -313,8 +335,10 @@ export function QuestionConditional({
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.Address ? (
+  ) : question.type === TSurveyElementTypeEnum.Address ? (
     <AddressQuestion
       question={question}
       value={Array.isArray(value) ? value : undefined}
@@ -331,8 +355,10 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
+  ) : question.type === TSurveyElementTypeEnum.Ranking ? (
     <RankingQuestion
       question={question}
       value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, question.choices) : []}
@@ -349,7 +375,7 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       fullSizeCards={fullSizeCards}
     />
-  ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
+  ) : question.type === TSurveyElementTypeEnum.ContactInfo ? (
     <ContactInfoQuestion
       question={question}
       value={Array.isArray(value) ? value : undefined}
@@ -366,6 +392,8 @@ export function QuestionConditional({
       isBackButtonHidden={isBackButtonHidden}
       dir={dir}
       fullSizeCards={fullSizeCards}
+      buttonLabel={buttonLabel}
+      backButtonLabel={backButtonLabel}
     />
   ) : null;
 }

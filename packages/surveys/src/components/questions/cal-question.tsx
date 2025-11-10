@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import { type TSurveyCalQuestion, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import type { TSurveyCalElement } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { CalEmbed } from "@/components/general/cal-embed";
@@ -16,7 +17,9 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CalQuestionProps {
-  question: TSurveyCalQuestion;
+  question: TSurveyCalElement;
+  buttonLabel?: TI18nString;
+  backButtonLabel?: TI18nString;
   value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -27,13 +30,15 @@ interface CalQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: TSurveyQuestionId;
+  currentQuestionId: string;
   isBackButtonHidden: boolean;
   fullSizeCards: boolean;
 }
 
 export function CalQuestion({
   question,
+  buttonLabel,
+  backButtonLabel,
   value,
   onChange,
   onSubmit,
@@ -103,7 +108,7 @@ export function CalQuestion({
         </div>
         <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
           <SubmitButton
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
             isLastQuestion={isLastQuestion}
             tabIndex={isCurrent ? 0 : -1}
           />
@@ -111,7 +116,7 @@ export function CalQuestion({
           <div />
           {!isFirstQuestion && !isBackButtonHidden && (
             <BackButton
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
               onClick={() => {
                 onBack();
               }}

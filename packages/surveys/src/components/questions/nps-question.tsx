@@ -1,6 +1,7 @@
 import { useState } from "preact/hooks";
+import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyNPSQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import type { TSurveyNPSElement } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -12,7 +13,9 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 
 interface NPSQuestionProps {
-  question: TSurveyNPSQuestion;
+  question: TSurveyNPSElement;
+  buttonLabel?: TI18nString;
+  backButtonLabel?: TI18nString;
   value?: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -23,7 +26,7 @@ interface NPSQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: TSurveyQuestionId;
+  currentQuestionId: string;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
@@ -31,6 +34,8 @@ interface NPSQuestionProps {
 
 export function NPSQuestion({
   question,
+  buttonLabel,
+  backButtonLabel,
   value,
   onChange,
   onSubmit,
@@ -170,14 +175,14 @@ export function NPSQuestion({
           ) : (
             <SubmitButton
               tabIndex={isCurrent ? 0 : -1}
-              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
               isLastQuestion={isLastQuestion}
             />
           )}
           {!isFirstQuestion && !isBackButtonHidden && (
             <BackButton
               tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);

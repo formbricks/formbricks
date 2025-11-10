@@ -2829,13 +2829,12 @@ const isInvalidOperatorsForElementType = (
       }
       break;
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
-      if (!["equals", "doesNotEqual", "isSubmitted", "isSkipped"].includes(operator)) {
+      if (!["equals", "doesNotEqual", "equalsOneOf", "isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
     case TSurveyElementTypeEnum.PictureSelection:
-    case TSurveyElementTypeEnum.Ranking:
       if (
         ![
           "equals",
@@ -2848,6 +2847,11 @@ const isInvalidOperatorsForElementType = (
           "isSkipped",
         ].includes(operator)
       ) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyElementTypeEnum.Ranking:
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;
@@ -2889,7 +2893,7 @@ const isInvalidOperatorsForElementType = (
       }
       break;
     case TSurveyElementTypeEnum.Date:
-      if (!["equals", "doesNotEqual", "isSubmitted", "isSkipped"].includes(operator)) {
+      if (!["equals", "doesNotEqual", "isBefore", "isAfter", "isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;
@@ -2898,40 +2902,20 @@ const isInvalidOperatorsForElementType = (
         ![
           "isPartiallySubmitted",
           "isCompletelySubmitted",
+          "isSkipped",
+          "isEmpty",
+          "isNotEmpty",
+          "isAnyOf",
           "equals",
           "doesNotEqual",
-          "isSubmitted",
-          "isSkipped",
         ].includes(operator)
       ) {
         isInvalidOperator = true;
       }
       break;
     case TSurveyElementTypeEnum.Address:
-      if (
-        ![
-          "isPartiallySubmitted",
-          "isCompletelySubmitted",
-          "isEmpty",
-          "isNotEmpty",
-          "isSubmitted",
-          "isSkipped",
-        ].includes(operator)
-      ) {
-        isInvalidOperator = true;
-      }
-      break;
     case TSurveyElementTypeEnum.ContactInfo:
-      if (
-        ![
-          "isPartiallySubmitted",
-          "isCompletelySubmitted",
-          "isEmpty",
-          "isNotEmpty",
-          "isSubmitted",
-          "isSkipped",
-        ].includes(operator)
-      ) {
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;

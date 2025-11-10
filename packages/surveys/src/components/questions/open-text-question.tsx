@@ -2,8 +2,9 @@ import { type RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { ZEmail, ZUrl } from "@formbricks/types/common";
+import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import type { TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -14,7 +15,9 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface OpenTextQuestionProps {
-  question: TSurveyOpenTextQuestion;
+  question: TSurveyOpenTextElement;
+  buttonLabel?: TI18nString;
+  backButtonLabel?: TI18nString;
   value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -26,7 +29,7 @@ interface OpenTextQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: TSurveyQuestionId;
+  currentQuestionId: string;
   isBackButtonHidden: boolean;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
@@ -34,6 +37,8 @@ interface OpenTextQuestionProps {
 
 export function OpenTextQuestion({
   question,
+  buttonLabel,
+  backButtonLabel,
   value,
   onChange,
   onSubmit,
@@ -196,14 +201,14 @@ export function OpenTextQuestion({
         <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-pt-4">
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />
           {!isFirstQuestion && !isBackButtonHidden && (
             <BackButton
               tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
               onClick={() => {
                 const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedttc);

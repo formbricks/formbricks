@@ -2,8 +2,9 @@ import { describe, expect, test, vi } from "vitest";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import { TSurveyQuestionTypeEnum, TSurveyVariable } from "@formbricks/types/surveys/types";
+import { TSurveyVariable } from "@formbricks/types/surveys/types";
 import { evaluateLogic, isConditionGroup, performActions } from "./logic";
 
 // Mock the imported function
@@ -27,92 +28,99 @@ describe("Survey Logic", () => {
   const mockSurvey: TJsEnvironmentStateSurvey = {
     id: "survey1",
     name: "Test Survey",
-    questions: [
+    questions: [], // Deprecated - using blocks instead
+    blocks: [
       {
-        id: "q1",
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Question 1" },
-        subheader: { default: "Enter some text" },
-        required: true,
-        inputType: "text",
-        charLimit: { enabled: false },
-      },
-      {
-        id: "q2",
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Question 2" },
-        subheader: { default: "Enter a number" },
-        required: true,
-        inputType: "number",
-        charLimit: { enabled: false },
-      },
-      {
-        id: "q3",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-        headline: { default: "Question 3" },
-        subheader: { default: "Select one option" },
-        required: true,
-        choices: [
-          { id: "opt1", label: { default: "Option 1", es: "Opción 1" } },
-          { id: "opt2", label: { default: "Option 2", es: "Opción 2" } },
-          { id: "other", label: { default: "Other", es: "Otro" } },
+        id: "block1",
+        name: "Block 1",
+        elements: [
+          {
+            id: "q1",
+            type: TSurveyElementTypeEnum.OpenText,
+            headline: { default: "Question 1" },
+            subheader: { default: "Enter some text" },
+            required: true,
+            inputType: "text",
+            charLimit: { enabled: false },
+          },
+          {
+            id: "q2",
+            type: TSurveyElementTypeEnum.OpenText,
+            headline: { default: "Question 2" },
+            subheader: { default: "Enter a number" },
+            required: true,
+            inputType: "number",
+            charLimit: { enabled: false },
+          },
+          {
+            id: "q3",
+            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            headline: { default: "Question 3" },
+            subheader: { default: "Select one option" },
+            required: true,
+            choices: [
+              { id: "opt1", label: { default: "Option 1", es: "Opción 1" } },
+              { id: "opt2", label: { default: "Option 2", es: "Opción 2" } },
+              { id: "other", label: { default: "Other", es: "Otro" } },
+            ],
+          },
+          {
+            id: "q4",
+            type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+            headline: { default: "Question 4" },
+            subheader: { default: "Select multiple options" },
+            required: true,
+            choices: [
+              { id: "opt1", label: { default: "Option 1", es: "Opción 1" } },
+              { id: "opt2", label: { default: "Option 2", es: "Opción 2" } },
+              { id: "opt3", label: { default: "Option 3", es: "Opción 3" } },
+            ],
+          },
+          {
+            id: "q5",
+            type: TSurveyElementTypeEnum.Date,
+            headline: { default: "Question 5" },
+            subheader: { default: "Select a date" },
+            required: true,
+            format: "d-M-y",
+          },
+          {
+            id: "q6",
+            type: TSurveyElementTypeEnum.FileUpload,
+            headline: { default: "Question 6" },
+            subheader: { default: "Upload a file" },
+            required: true,
+            allowMultipleFiles: true,
+          },
+          {
+            id: "q7",
+            type: TSurveyElementTypeEnum.PictureSelection,
+            headline: { default: "Question 7" },
+            subheader: { default: "Select pictures" },
+            required: true,
+            allowMulti: true,
+            choices: [
+              { id: "pic1", imageUrl: "url1" },
+              { id: "pic2", imageUrl: "url2" },
+            ],
+          },
+          {
+            id: "q8",
+            type: TSurveyElementTypeEnum.Matrix,
+            headline: { default: "Question 8" },
+            subheader: { default: "Matrix question" },
+            required: true,
+            rows: [
+              { id: "row1", label: { default: "Row 1", es: "Fila 1" } },
+              { id: "row2", label: { default: "Row 2", es: "Fila 2" } },
+            ],
+            columns: [
+              { id: "col1", label: { default: "Column 1", es: "Columna 1" } },
+              { id: "col2", label: { default: "Column 2", es: "Columna 2" } },
+            ],
+            shuffleOption: "none",
+          },
         ],
-      },
-      {
-        id: "q4",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-        headline: { default: "Question 4" },
-        subheader: { default: "Select multiple options" },
-        required: true,
-        choices: [
-          { id: "opt1", label: { default: "Option 1", es: "Opción 1" } },
-          { id: "opt2", label: { default: "Option 2", es: "Opción 2" } },
-          { id: "opt3", label: { default: "Option 3", es: "Opción 3" } },
-        ],
-      },
-      {
-        id: "q5",
-        type: TSurveyQuestionTypeEnum.Date,
-        headline: { default: "Question 5" },
-        subheader: { default: "Select a date" },
-        required: true,
-        format: "d-M-y",
-      },
-      {
-        id: "q6",
-        type: TSurveyQuestionTypeEnum.FileUpload,
-        headline: { default: "Question 6" },
-        subheader: { default: "Upload a file" },
-        required: true,
-        allowMultipleFiles: true,
-      },
-      {
-        id: "q7",
-        type: TSurveyQuestionTypeEnum.PictureSelection,
-        headline: { default: "Question 7" },
-        subheader: { default: "Select pictures" },
-        required: true,
-        allowMulti: true,
-        choices: [
-          { id: "pic1", imageUrl: "url1" },
-          { id: "pic2", imageUrl: "url2" },
-        ],
-      },
-      {
-        id: "q8",
-        type: TSurveyQuestionTypeEnum.Matrix,
-        headline: { default: "Question 8" },
-        subheader: { default: "Matrix question" },
-        required: true,
-        rows: [
-          { id: "row1", label: { default: "Row 1", es: "Fila 1" } },
-          { id: "row2", label: { default: "Row 2", es: "Fila 2" } },
-        ],
-        columns: [
-          { id: "col1", label: { default: "Column 1", es: "Columna 1" } },
-          { id: "col2", label: { default: "Column 2", es: "Columna 2" } },
-        ],
-        shuffleOption: "none",
       },
     ],
     variables: mockVariables,
@@ -1180,21 +1188,27 @@ describe("Survey Logic", () => {
       // Mock survey with date questions
       const dateSurvey: TJsEnvironmentStateSurvey = {
         ...mockSurvey,
-        questions: [
-          ...mockSurvey.questions,
+        blocks: [
+          ...mockSurvey.blocks,
           {
-            id: "dateQ1",
-            type: TSurveyQuestionTypeEnum.Date,
-            headline: { default: "Date Question 1" },
-            required: true,
-            format: "d-M-y",
-          },
-          {
-            id: "dateQ2",
-            type: TSurveyQuestionTypeEnum.Date,
-            headline: { default: "Date Question 2" },
-            required: true,
-            format: "d-M-y",
+            id: "dateBlock",
+            name: "Date Block",
+            elements: [
+              {
+                id: "dateQ1",
+                type: TSurveyElementTypeEnum.Date,
+                headline: { default: "Date Question 1" },
+                required: true,
+                format: "d-M-y",
+              },
+              {
+                id: "dateQ2",
+                type: TSurveyElementTypeEnum.Date,
+                headline: { default: "Date Question 2" },
+                required: true,
+                format: "d-M-y",
+              },
+            ],
           },
         ],
       };
@@ -1230,16 +1244,22 @@ describe("Survey Logic", () => {
 
       const multiSurvey: TJsEnvironmentStateSurvey = {
         ...mockSurvey,
-        questions: [
-          ...mockSurvey.questions,
+        blocks: [
+          ...mockSurvey.blocks,
           {
-            id: "multiQ",
-            type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-            headline: { default: "Multiple Choice" },
-            required: true,
-            choices: [
-              { id: "opt1", label: { default: "Option 1" } },
-              { id: "opt2", label: { default: "Option 2" } },
+            id: "multiBlock",
+            name: "Multi Choice Block",
+            elements: [
+              {
+                id: "multiQ",
+                type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+                headline: { default: "Multiple Choice" },
+                required: true,
+                choices: [
+                  { id: "opt1", label: { default: "Option 1" } },
+                  { id: "opt2", label: { default: "Option 2" } },
+                ],
+              },
             ],
           },
         ],
@@ -1353,17 +1373,23 @@ describe("Survey Logic", () => {
     test("getLeftOperandValue with edge cases", () => {
       const specialSurvey: TJsEnvironmentStateSurvey = {
         ...mockSurvey,
-        questions: [
-          ...mockSurvey.questions,
+        blocks: [
+          ...mockSurvey.blocks,
           {
-            id: "multiChoiceWithOther",
-            type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-            headline: { default: "Multiple Choice With Other" },
-            required: true,
-            choices: [
-              { id: "opt1", label: { default: "Option 1" } },
-              { id: "opt2", label: { default: "Option 2" } },
-              { id: "other", label: { default: "Other" } },
+            id: "specialBlock",
+            name: "Special Block",
+            elements: [
+              {
+                id: "multiChoiceWithOther",
+                type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+                headline: { default: "Multiple Choice With Other" },
+                required: true,
+                choices: [
+                  { id: "opt1", label: { default: "Option 1" } },
+                  { id: "opt2", label: { default: "Option 2" } },
+                  { id: "other", label: { default: "Other" } },
+                ],
+              },
             ],
           },
         ],

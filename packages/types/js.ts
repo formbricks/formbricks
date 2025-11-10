@@ -13,6 +13,7 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
     name: true,
     welcomeCard: true,
     questions: true,
+    blocks: true,
     variables: true,
     type: true,
     showLanguageSwitch: true,

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker, { DatePickerProps } from "react-date-picker";
 import { useTranslation } from "react-i18next";
+import { TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import type { TSurveyDateElement } from "@formbricks/types/surveys/elements";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -16,7 +17,9 @@ import { cn } from "@/lib/utils";
 import "../../styles/date-picker.css";
 
 interface DateQuestionProps {
-  question: TSurveyDateQuestion;
+  question: TSurveyDateElement;
+  buttonLabel?: TI18nString;
+  backButtonLabel?: TI18nString;
   value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -28,7 +31,7 @@ interface DateQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: TSurveyQuestionId;
+  currentQuestionId: string;
   isBackButtonHidden: boolean;
   fullSizeCards: boolean;
 }
@@ -84,6 +87,8 @@ function CalendarCheckIcon() {
 
 export function DateQuestion({
   question,
+  buttonLabel,
+  backButtonLabel,
   value,
   onSubmit,
   onBack,
@@ -275,12 +280,12 @@ export function DateQuestion({
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             isLastQuestion={isLastQuestion}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            buttonLabel={buttonLabel ? getLocalizedValue(buttonLabel, languageCode) : undefined}
           />
           {!isFirstQuestion && !isBackButtonHidden && (
             <BackButton
               tabIndex={isCurrent ? 0 : -1}
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+              backButtonLabel={backButtonLabel ? getLocalizedValue(backButtonLabel, languageCode) : undefined}
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);

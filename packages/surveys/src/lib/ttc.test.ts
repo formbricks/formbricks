@@ -1,7 +1,6 @@
 import { act, renderHook } from "@testing-library/preact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TResponseTtc } from "@formbricks/types/responses";
-import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getUpdatedTtc, useTtc } from "./ttc";
 
 describe("getUpdatedTtc", () => {
@@ -31,7 +30,7 @@ describe("useTtc", () => {
   let mockSetStartTime: ReturnType<typeof vi.fn>;
   let currentTime = 0;
   let initialProps: {
-    questionId: TSurveyQuestionId;
+    questionId: string;
     ttc: TResponseTtc;
     setTtc: ReturnType<typeof vi.fn>;
     startTime: number;
@@ -48,7 +47,7 @@ describe("useTtc", () => {
     vi.spyOn(document, "removeEventListener");
 
     initialProps = {
-      questionId: "q1" as TSurveyQuestionId,
+      questionId: "q1",
       ttc: {} as TResponseTtc,
       setTtc: mockSetTtc,
       startTime: 0,

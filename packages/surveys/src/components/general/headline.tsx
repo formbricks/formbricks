@@ -1,11 +1,10 @@
 import DOMPurify from "isomorphic-dompurify";
 import { useTranslation } from "react-i18next";
-import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { isValidHTML } from "@/lib/html-utils";
 
 interface HeadlineProps {
   headline: string;
-  questionId: TSurveyQuestionId;
+  questionId: string;
   required?: boolean;
   alignTextCenter?: boolean;
 }

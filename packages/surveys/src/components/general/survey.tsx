@@ -10,8 +10,6 @@ import type {
   TResponseVariables,
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
 import { FormbricksBranding } from "@/components/general/formbricks-branding";
@@ -29,11 +27,17 @@ import { evaluateLogic, performActions } from "@/lib/logic";
 import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
-import { cn, getDefaultLanguageCode } from "@/lib/utils";
+import {
+  cn,
+  findBlockByElementId,
+  getDefaultLanguageCode,
+  getFirstElementIdInBlock,
+  getQuestionsFromSurvey,
+} from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
 interface VariableStackEntry {
-  questionId: TSurveyQuestionId;
+  questionId: string;
   variables: TResponseVariables;
 }
 
@@ -142,12 +146,15 @@ export function Survey({
     return null;
   }, [appUrl, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
+  const questions = useMemo(() => getQuestionsFromSurvey(localSurvey), [localSurvey]);
+
   const originalQuestionRequiredStates = useMemo(() => {
-    return survey.questions.reduce<Record<string, boolean>>((acc, question) => {
+    return questions.reduce<Record<string, boolean>>((acc, question) => {
       acc[question.id] = question.required;
       return acc;
     }, {});
-  }, [survey.questions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only recompute when blocks structure changes
+  }, [survey.blocks]);
 
   // state to keep track of the questions that were made required by each specific question's logic
   const questionRequiredByMap = useRef<Record<string, string[]>>({});
@@ -174,7 +181,7 @@ export function Survey({
     } else if (localSurvey.welcomeCard.enabled) {
       return "start";
     }
-    return localSurvey.questions[0]?.id;
+    return questions[0]?.id;
   });
   const [errorType, setErrorType] = useState<TResponseErrorCodesEnum | undefined>(undefined);
   const [showError, setShowError] = useState(false);
@@ -196,8 +203,8 @@ export function Survey({
     return styling.cardArrangement?.appSurveys ?? "straight";
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 
-  const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
-  const currentQuestion = localSurvey.questions[currentQuestionIndex];
+  const currentQuestionIndex = questions.findIndex((q) => q.id === questionId);
+  const currentQuestion = questions[currentQuestionIndex];
 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
@@ -345,15 +352,18 @@ export function Survey({
   const makeQuestionsRequired = (requiredQuestionIds: string[]): void => {
     setlocalSurvey((prevSurvey) => ({
       ...prevSurvey,
-      questions: prevSurvey.questions.map((question) => {
-        if (requiredQuestionIds.includes(question.id)) {
-          return {
-            ...question,
-            required: true,
-          };
-        }
-        return question;
-      }),
+      blocks: prevSurvey.blocks.map((block) => ({
+        ...block,
+        elements: block.elements.map((element) => {
+          if (requiredQuestionIds.includes(element.id)) {
+            return {
+              ...element,
+              required: true,
+            };
+          }
+          return element;
+        }),
+      })),
     }));
   };
 
@@ -363,15 +373,18 @@ export function Survey({
     if (questionsToRevert.length > 0) {
       setlocalSurvey((prevSurvey) => ({
         ...prevSurvey,
-        questions: prevSurvey.questions.map((question) => {
-          if (questionsToRevert.includes(question.id)) {
-            return {
-              ...question,
-              required: originalQuestionRequiredStates[question.id] ?? question.required,
-            };
-          }
-          return question;
-        }),
+        blocks: prevSurvey.blocks.map((block) => ({
+          ...block,
+          elements: block.elements.map((element) => {
+            if (questionsToRevert.includes(element.id)) {
+              return {
+                ...element,
+                required: originalQuestionRequiredStates[element.id] ?? element.required,
+              };
+            }
+            return element;
+          }),
+        })),
       }));
 
       // remove the question from the map
@@ -379,7 +392,7 @@ export function Survey({
     }
   };
 
-  const pushVariableState = (currentQuestionId: TSurveyQuestionId) => {
+  const pushVariableState = (currentQuestionId: string) => {
     setVariableStack((prevStack) => [
       ...prevStack,
       { questionId: currentQuestionId, variables: { ...currentVariables } },
@@ -399,8 +412,7 @@ export function Survey({
 
   const evaluateLogicAndGetNextQuestionId = (
     data: TResponseData
-  ): { nextQuestionId: TSurveyQuestionId | undefined; calculatedVariables: TResponseVariables } => {
-    const questions = survey.questions;
+  ): { nextQuestionId: string | undefined; calculatedVariables: TResponseVariables } => {
     const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
 
     if (questionId === "start")
@@ -414,8 +426,10 @@ export function Survey({
     let calculationResults = { ...currentVariables };
     const localResponseData = { ...responseData, ...data };
 
-    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
-      for (const logic of currentQuestion.logic) {
+    // Get logic from the parent block (logic is at block level, not element level)
+    const currentQuestionBlock = findBlockByElementId(localSurvey, currentQuestion.id);
+    if (currentQuestionBlock?.logic && currentQuestionBlock.logic.length > 0) {
+      for (const logic of currentQuestionBlock.logic) {
         if (
           evaluateLogic(
             localSurvey,
@@ -427,7 +441,7 @@ export function Survey({
         ) {
           const { jumpTarget, requiredQuestionIds, calculations } = performActions(
             localSurvey,
-            logic.actions as TSurveyBlockLogicAction[], // TODO: Temporary type assertion until the survey editor poc is completed, fix properly later
+            logic.actions,
             localResponseData,
             calculationResults
           );
@@ -442,9 +456,9 @@ export function Survey({
       }
     }
 
-    // Use logicFallback if no jump target was set
-    if (!firstJumpTarget && currentQuestion.logicFallback) {
-      firstJumpTarget = currentQuestion.logicFallback;
+    // Use logicFallback if no jump target was set (logicFallback is at block level)
+    if (!firstJumpTarget && currentQuestionBlock?.logicFallback) {
+      firstJumpTarget = currentQuestionBlock.logicFallback;
     }
 
     if (allRequiredQuestionIds.length > 0) {
@@ -454,8 +468,19 @@ export function Survey({
       makeQuestionsRequired(allRequiredQuestionIds);
     }
 
+    // Convert block ID to element ID if jumping to a block
+    // (performActions returns block IDs for jumpToBlock actions)
+    let resolvedJumpTarget = firstJumpTarget;
+    if (firstJumpTarget) {
+      // Try to convert block ID to element ID
+      const elementId = getFirstElementIdInBlock(localSurvey, firstJumpTarget);
+      if (elementId) {
+        resolvedJumpTarget = elementId;
+      }
+    }
+
     // Return the first jump target if found, otherwise go to the next question or ending
-    const nextQuestionId = firstJumpTarget ?? questions[currentQuestionIndex + 1]?.id ?? firstEndingId;
+    const nextQuestionId = resolvedJumpTarget ?? questions[currentQuestionIndex + 1]?.id ?? firstEndingId;
 
     return { nextQuestionId, calculatedVariables: calculationResults };
   };
@@ -583,8 +608,7 @@ export function Survey({
 
     const { nextQuestionId, calculatedVariables } = evaluateLogicAndGetNextQuestionId(surveyResponseData);
     const finished =
-      nextQuestionId === undefined ||
-      !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
+      nextQuestionId === undefined || !questions.map((question) => question.id).includes(nextQuestionId);
 
     setIsSurveyFinished(finished);
 
@@ -621,7 +645,7 @@ export function Survey({
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array
-      prevQuestionId = localSurvey.questions[currentQuestionIndex - 1]?.id;
+      prevQuestionId = questions[currentQuestionIndex - 1]?.id;
     }
     popVariableState();
     if (!prevQuestionId) throw new Error("Question not found");
@@ -631,7 +655,7 @@ export function Survey({
   };
 
   const getQuestionPrefillData = (
-    prefillQuestionId: TSurveyQuestionId,
+    prefillQuestionId: string,
     offset: number
   ): TResponseDataValue | undefined => {
     if (offset === 0 && prefillResponseData) {
@@ -657,7 +681,7 @@ export function Survey({
           return (
             <ResponseErrorComponent
               responseData={responseData}
-              questions={localSurvey.questions}
+              questions={questions}
               onRetry={retryResponse}
             />
           );
@@ -697,7 +721,7 @@ export function Survey({
             fullSizeCards={fullSizeCards}
           />
         );
-      } else if (questionIdx >= localSurvey.questions.length) {
+      } else if (questionIdx >= questions.length) {
         const endingCard = localSurvey.endings.find((ending) => {
           return ending.id === questionId;
         });
@@ -720,11 +744,12 @@ export function Survey({
           );
         }
       } else {
-        const question = localSurvey.questions[questionIdx];
+        const question = questions[questionIdx];
         return (
           Boolean(question) && (
             <QuestionConditional
               key={question.id}
+              survey={localSurvey}
               surveyId={localSurvey.id}
               question={parseRecallInformation(question, selectedLanguage, responseData, currentVariables)}
               value={responseData[question.id]}
@@ -734,10 +759,10 @@ export function Survey({
               ttc={ttc}
               setTtc={setTtc}
               onFileUpload={onFileUpload}
-              isFirstQuestion={question.id === localSurvey.questions[0]?.id}
+              isFirstQuestion={question.id === questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
-              isLastQuestion={question.id === localSurvey.questions[localSurvey.questions.length - 1].id}
+              isLastQuestion={question.id === questions[questions.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
               currentQuestionId={questionId}
