@@ -366,7 +366,7 @@ export const QuotaModal = ({
                             <div className="space-y-2">
                               <FormControl>
                                 <EndingCardSelector
-                                  endings={survey.endings}
+                                  survey={survey}
                                   value={endingCardField.value || ""}
                                   onChange={(value) => {
                                     form.setValue("endingCardId", value, {

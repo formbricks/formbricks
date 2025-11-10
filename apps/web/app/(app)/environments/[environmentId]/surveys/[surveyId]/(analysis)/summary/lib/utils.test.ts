@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { constructToastMessage, convertFloatTo2Decimal, convertFloatToNDecimal } from "./utils";
 
 describe("Utils Tests", () => {
@@ -34,29 +35,40 @@ describe("Utils Tests", () => {
       type: "app",
       environmentId: "env1",
       status: "draft",
-      questions: [
+      blocks: [
         {
-          id: "q1",
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Q1" },
-          required: false,
-        } as unknown as TSurveyQuestion,
-        {
-          id: "q2",
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Q2" },
-          required: false,
-          choices: [{ id: "c1", label: { default: "Choice 1" } }],
-        },
-        {
-          id: "q3",
-          type: TSurveyQuestionTypeEnum.Matrix,
-          headline: { default: "Q3" },
-          required: false,
-          rows: [{ id: "r1", label: { default: "Row 1" } }],
-          columns: [{ id: "col1", label: { default: "Col 1" } }],
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Q1" },
+              required: false,
+              charLimit: { enabled: false },
+            },
+            {
+              id: "q2",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "Q2" },
+              required: false,
+              choices: [{ id: "c1", label: { default: "Choice 1" } }],
+              buttonLabel: { default: "Next" },
+              shuffleOption: "none",
+            },
+            {
+              id: "q3",
+              type: TSurveyElementTypeEnum.Matrix,
+              headline: { default: "Q3" },
+              required: false,
+              rows: [{ id: "r1", label: { default: "Row 1" } }],
+              columns: [{ id: "col1", label: { default: "Col 1" } }],
+              buttonLabel: { default: "Next" },
+            },
+          ],
         },
       ],
+      questions: [],
       triggers: [],
       recontactDays: null,
       autoClose: null,
@@ -74,7 +86,7 @@ describe("Utils Tests", () => {
 
     test("should construct message for matrix question type", () => {
       const message = constructToastMessage(
-        TSurveyQuestionTypeEnum.Matrix,
+        TSurveyElementTypeEnum.Matrix,
         "is",
         mockSurvey,
         "q3",
@@ -95,7 +107,7 @@ describe("Utils Tests", () => {
     });
 
     test("should construct message for matrix question type with array filterComboBoxValue", () => {
-      const message = constructToastMessage(TSurveyQuestionTypeEnum.Matrix, "is", mockSurvey, "q3", mockT, [
+      const message = constructToastMessage(TSurveyElementTypeEnum.Matrix, "is", mockSurvey, "q3", mockT, [
         "MatrixValue1",
         "MatrixValue2",
       ]);
@@ -114,7 +126,7 @@ describe("Utils Tests", () => {
 
     test("should construct message when filterComboBoxValue is undefined (skipped)", () => {
       const message = constructToastMessage(
-        TSurveyQuestionTypeEnum.OpenText,
+        TSurveyElementTypeEnum.OpenText,
         "is skipped",
         mockSurvey,
         "q1",
@@ -134,7 +146,7 @@ describe("Utils Tests", () => {
 
     test("should construct message for non-matrix question with string filterComboBoxValue", () => {
       const message = constructToastMessage(
-        TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        TSurveyElementTypeEnum.MultipleChoiceSingle,
         "is",
         mockSurvey,
         "q2",
@@ -156,7 +168,7 @@ describe("Utils Tests", () => {
 
     test("should construct message for non-matrix question with array filterComboBoxValue", () => {
       const message = constructToastMessage(
-        TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+        TSurveyElementTypeEnum.MultipleChoiceMulti,
         "includes all of",
         mockSurvey,
         "q2", // Assuming q2 can be multi for this test case logic
@@ -178,7 +190,7 @@ describe("Utils Tests", () => {
 
     test("should handle questionId not found in survey", () => {
       const message = constructToastMessage(
-        TSurveyQuestionTypeEnum.OpenText,
+        TSurveyElementTypeEnum.OpenText,
         "is",
         mockSurvey,
         "qNonExistent",

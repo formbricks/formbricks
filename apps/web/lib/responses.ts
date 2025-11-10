@@ -1,13 +1,15 @@
 import { TResponse, TResponseDataValue } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { parseRecallInfo } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { getLanguageCode, getLocalizedValue } from "./i18n/utils";
 
 // function to convert response value of type string | number | string[] or Record<string, string> to string | string[]
 export const convertResponseValue = (
   answer: TResponseDataValue,
-  question: TSurveyQuestion
+  question: TSurveyElement
 ): string | string[] => {
   switch (question.type) {
     case "ranking":
@@ -34,15 +36,17 @@ export const convertResponseValue = (
 export const getQuestionResponseMapping = (
   survey: TSurvey,
   response: TResponse
-): { question: string; response: string | string[]; type: TSurveyQuestionType }[] => {
+): { question: string; response: string | string[]; type: TSurveyElementTypeEnum }[] => {
   const questionResponseMapping: {
     question: string;
     response: string | string[];
-    type: TSurveyQuestionType;
+    type: TSurveyElementTypeEnum;
   }[] = [];
   const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 
-  for (const question of survey.questions) {
+  const questions = getQuestionsFromBlocks(survey.blocks);
+
+  for (const question of questions) {
     const answer = response.data[question.id];
 
     questionResponseMapping.push({

@@ -1,9 +1,6 @@
 import { TResponseData } from "@formbricks/types/responses";
-import {
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
 import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 
@@ -34,7 +31,7 @@ export const validateOtherOptionLengthForMultipleChoice = ({
   responseLanguage,
 }: {
   responseData?: TResponseData;
-  surveyQuestions: TSurveyQuestion[];
+  surveyQuestions: TSurveyElement[];
   responseLanguage?: string;
 }): string | undefined => {
   if (!responseData) return undefined;
@@ -43,8 +40,8 @@ export const validateOtherOptionLengthForMultipleChoice = ({
     if (!question) continue;
 
     const isMultiChoice =
-      question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-      question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle;
+      question.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+      question.type === TSurveyElementTypeEnum.MultipleChoiceSingle;
 
     if (!isMultiChoice) continue;
 

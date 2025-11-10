@@ -215,3 +215,37 @@ export const validateMediaAndPrepareBlocks = (blocks: TSurveyBlock[]): TSurveyBl
   // Strip isDraft
   return stripIsDraftFromBlocks(blocks);
 };
+
+/**
+ * Derives a flat array of elements from the survey's blocks structure
+ * Useful for server-side processing where we need to iterate over all questions
+ * Note: This is duplicated from the client-side editor utils since this file is server-only
+ * @param blocks - Array of survey blocks
+ * @returns Flat array of all elements across all blocks
+ */
+export const getQuestionsFromBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] => {
+  return blocks.flatMap((block) => block.elements);
+};
+
+/**
+ * Find the location of an element within the survey blocks
+ * @param survey - The survey object
+ * @param elementId - The ID of the element to find
+ * @returns Object containing blockId, blockIndex, elementIndex and the block
+ */
+export const findElementLocation = (
+  survey: TSurvey,
+  elementId: string
+): { blockId: string | null; blockIndex: number; elementIndex: number; block: TSurveyBlock | null } => {
+  const blocks = survey.blocks;
+
+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+    const block = blocks[blockIndex];
+    const elementIndex = block.elements.findIndex((e) => e.id === elementId);
+    if (elementIndex !== -1) {
+      return { blockId: block.id, blockIndex, elementIndex, block };
+    }
+  }
+
+  return { blockId: null, blockIndex: -1, elementIndex: -1, block: null };
+};

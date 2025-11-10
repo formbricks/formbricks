@@ -10,6 +10,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { capturePosthogEnvironmentEvent } from "@/lib/posthogServer";
 import { getSurvey } from "@/lib/survey/service";
+import { getQuestionsFromBlocks } from "@/lib/survey/utils";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/question";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
@@ -91,7 +92,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   // Validate response data for "other" options exceeding character limit
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
     responseData: responseInputData.data,
-    surveyQuestions: survey.questions,
+    surveyQuestions: getQuestionsFromBlocks(survey.blocks),
     responseLanguage: responseInputData.language,
   });
 

@@ -1,14 +1,8 @@
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
 import { TResponseDataValue } from "@formbricks/types/responses";
-import {
-  TSurvey,
-  TSurveyMatrixQuestion,
-  TSurveyPictureSelectionQuestion,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyRatingQuestion,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getChoiceIdByValue } from "@/lib/response/utils";
@@ -24,7 +18,7 @@ import { ResponseBadges } from "@/modules/ui/components/response-badges";
 
 interface RenderResponseProps {
   responseData: TResponseDataValue;
-  question: TSurveyQuestion;
+  question: TSurveyElement;
   survey: TSurvey;
   language: string | null;
   isExpanded?: boolean;
@@ -56,19 +50,19 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   };
   const questionType = question.type;
   switch (questionType) {
-    case TSurveyQuestionTypeEnum.Rating:
+    case TSurveyElementTypeEnum.Rating:
       if (typeof responseData === "number") {
         return (
           <RatingResponse
             scale={question.scale}
             answer={responseData}
             range={question.range}
-            addColors={(question as TSurveyRatingQuestion).isColorCodingEnabled}
+            addColors={question.isColorCodingEnabled}
           />
         );
       }
       break;
-    case TSurveyQuestionTypeEnum.Date:
+    case TSurveyElementTypeEnum.Date:
       if (typeof responseData === "string") {
         const parsedDate = new Date(responseData);
 
@@ -77,11 +71,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         return <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDate}</p>;
       }
       break;
-    case TSurveyQuestionTypeEnum.PictureSelection:
+    case TSurveyElementTypeEnum.PictureSelection:
       if (Array.isArray(responseData)) {
         return (
           <PictureSelectionResponse
-            choices={(question as TSurveyPictureSelectionQuestion).choices}
+            choices={question.choices}
             selected={responseData}
             isExpanded={isExpanded}
             showId={showId}
@@ -89,16 +83,16 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         );
       }
       break;
-    case TSurveyQuestionTypeEnum.FileUpload:
+    case TSurveyElementTypeEnum.FileUpload:
       if (Array.isArray(responseData)) {
         return <FileUploadResponse selected={responseData} />;
       }
       break;
-    case TSurveyQuestionTypeEnum.Matrix:
+    case TSurveyElementTypeEnum.Matrix:
       if (typeof responseData === "object" && !Array.isArray(responseData)) {
         return (
           <>
-            {(question as TSurveyMatrixQuestion).rows.map((row) => {
+            {question.rows.map((row) => {
               const languagCode = getLanguageCode(survey.languages, language);
               const rowValueInSelectedLanguage = getLocalizedValue(row.label, languagCode);
               if (!responseData[rowValueInSelectedLanguage]) return null;
@@ -112,14 +106,14 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         );
       }
       break;
-    case TSurveyQuestionTypeEnum.Address:
-    case TSurveyQuestionTypeEnum.ContactInfo:
+    case TSurveyElementTypeEnum.Address:
+    case TSurveyElementTypeEnum.ContactInfo:
       if (Array.isArray(responseData)) {
         return <ArrayResponse value={responseData} />;
       }
       break;
 
-    case TSurveyQuestionTypeEnum.Cal:
+    case TSurveyElementTypeEnum.Cal:
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
@@ -131,7 +125,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         );
       }
       break;
-    case TSurveyQuestionTypeEnum.Consent:
+    case TSurveyElementTypeEnum.Consent:
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
@@ -143,7 +137,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         );
       }
       break;
-    case TSurveyQuestionTypeEnum.CTA:
+    case TSurveyElementTypeEnum.CTA:
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges
@@ -155,9 +149,9 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         );
       }
       break;
-    case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
-    case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
-    case TSurveyQuestionTypeEnum.Ranking:
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+    case TSurveyElementTypeEnum.MultipleChoiceSingle:
+    case TSurveyElementTypeEnum.Ranking:
       if (typeof responseData === "string" || typeof responseData === "number") {
         const choiceId = getChoiceIdByValue(responseData.toString(), question);
         return (
@@ -174,7 +168,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         });
         return (
           <>
-            {questionType === TSurveyQuestionTypeEnum.Ranking ? (
+            {questionType === TSurveyElementTypeEnum.Ranking ? (
               <RankingResponse value={itemsArray} isExpanded={isExpanded} showId={showId} />
             ) : (
               <ResponseBadges items={itemsArray} isExpanded={isExpanded} showId={showId} />

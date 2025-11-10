@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { TResponseData, TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { SurveyLinkUsed } from "@/modules/survey/link/components/survey-link-used";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
@@ -59,13 +60,14 @@ export const LinkSurvey = ({
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const suId = searchParams.get("suId");
+  const questions = useMemo(() => getQuestionsFromBlocks(survey.blocks), [survey.blocks]);
 
   const startAt = searchParams.get("startAt");
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
     if (survey.welcomeCard.enabled && startAt === "start") return true;
 
-    const isValid = survey.questions.some((question) => question.id === startAt);
+    const isValid = questions.some((question) => question.id === startAt);
 
     // To remove startAt query param from URL if it is not valid:
     if (!isValid && typeof window !== "undefined") {
@@ -75,7 +77,7 @@ export const LinkSurvey = ({
     }
 
     return isValid;
-  }, [survey, startAt]);
+  }, [startAt, survey.welcomeCard.enabled, questions]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
 
@@ -156,7 +158,7 @@ export const LinkSurvey = ({
   };
 
   const handleResetSurvey = () => {
-    setQuestionId(survey.welcomeCard.enabled ? "start" : survey.questions[0].id);
+    setQuestionId(survey.welcomeCard.enabled ? "start" : questions[0].id);
     setResponseData({});
   };
 

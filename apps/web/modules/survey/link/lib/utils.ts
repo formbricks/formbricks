@@ -1,6 +1,8 @@
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 
 export const getPrefillValue = (
   survey: TSurvey,
@@ -8,17 +10,21 @@ export const getPrefillValue = (
   languageId: string
 ): TResponseData | undefined => {
   const prefillAnswer: TResponseData = {};
-  let questionIdxMap: Record<string, number> = {};
 
-  survey.questions.forEach((q, idx) => {
-    questionIdxMap[q.id] = idx;
-  });
+  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questionIdxMap = questions.reduce(
+    (acc, question, idx) => {
+      acc[question.id] = idx;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   searchParams.forEach((value, key) => {
     if (FORBIDDEN_IDS.includes(key)) return;
     const questionId = key;
     const questionIdx = questionIdxMap[questionId];
-    const question = survey.questions[questionIdx];
+    const question = questions[questionIdx];
     const answer = value;
     if (question) {
       if (checkValidity(question, answer, languageId)) {
@@ -30,14 +36,14 @@ export const getPrefillValue = (
   return Object.keys(prefillAnswer).length > 0 ? prefillAnswer : undefined;
 };
 
-const checkValidity = (question: TSurveyQuestion, answer: string, language: string): boolean => {
+const checkValidity = (question: TSurveyElement, answer: string, language: string): boolean => {
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
-      case TSurveyQuestionTypeEnum.OpenText: {
+      case TSurveyElementTypeEnum.OpenText: {
         return true;
       }
-      case TSurveyQuestionTypeEnum.MultipleChoiceSingle: {
+      case TSurveyElementTypeEnum.MultipleChoiceSingle: {
         const hasOther = question.choices[question.choices.length - 1].id === "other";
         if (!hasOther) {
           if (!question.choices.find((choice) => choice.label[language] === answer)) return false;
@@ -50,7 +56,7 @@ const checkValidity = (question: TSurveyQuestion, answer: string, language: stri
 
         return true;
       }
-      case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
+      case TSurveyElementTypeEnum.MultipleChoiceMulti: {
         const answerChoices = answer.split(",");
         const hasOther = question.choices[question.choices.length - 1].id === "other";
         if (!hasOther) {
@@ -64,7 +70,7 @@ const checkValidity = (question: TSurveyQuestion, answer: string, language: stri
         }
         return true;
       }
-      case TSurveyQuestionTypeEnum.NPS: {
+      case TSurveyElementTypeEnum.NPS: {
         const cleanedAnswer = answer.replace(/&/g, ";");
         const answerNumber = Number(JSON.parse(cleanedAnswer));
 
@@ -72,23 +78,23 @@ const checkValidity = (question: TSurveyQuestion, answer: string, language: stri
         if (answerNumber < 0 || answerNumber > 10) return false;
         return true;
       }
-      case TSurveyQuestionTypeEnum.CTA: {
+      case TSurveyElementTypeEnum.CTA: {
         if (question.required && answer === "dismissed") return false;
         if (answer !== "clicked" && answer !== "dismissed") return false;
         return true;
       }
-      case TSurveyQuestionTypeEnum.Consent: {
+      case TSurveyElementTypeEnum.Consent: {
         if (question.required && answer === "dismissed") return false;
         if (answer !== "accepted" && answer !== "dismissed") return false;
         return true;
       }
-      case TSurveyQuestionTypeEnum.Rating: {
+      case TSurveyElementTypeEnum.Rating: {
         const cleanedAnswer = answer.replace(/&/g, ";");
         const answerNumber = Number(JSON.parse(cleanedAnswer));
         if (answerNumber < 1 || answerNumber > question.range) return false;
         return true;
       }
-      case TSurveyQuestionTypeEnum.PictureSelection: {
+      case TSurveyElementTypeEnum.PictureSelection: {
         const answerChoices = answer.split(",");
         return answerChoices.every((ans: string) => !isNaN(Number(ans)));
       }
@@ -101,28 +107,28 @@ const checkValidity = (question: TSurveyQuestion, answer: string, language: stri
 };
 
 const transformAnswer = (
-  question: TSurveyQuestion,
+  question: TSurveyElement,
   answer: string,
   language: string
 ): string | number | string[] => {
   switch (question.type) {
-    case TSurveyQuestionTypeEnum.OpenText:
-    case TSurveyQuestionTypeEnum.MultipleChoiceSingle: {
+    case TSurveyElementTypeEnum.OpenText:
+    case TSurveyElementTypeEnum.MultipleChoiceSingle: {
       return answer;
     }
-    case TSurveyQuestionTypeEnum.Consent:
-    case TSurveyQuestionTypeEnum.CTA: {
+    case TSurveyElementTypeEnum.Consent:
+    case TSurveyElementTypeEnum.CTA: {
       if (answer === "dismissed") return "";
       return answer;
     }
 
-    case TSurveyQuestionTypeEnum.Rating:
-    case TSurveyQuestionTypeEnum.NPS: {
+    case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.NPS: {
       const cleanedAnswer = answer.replace(/&/g, ";");
       return Number(JSON.parse(cleanedAnswer));
     }
 
-    case TSurveyQuestionTypeEnum.PictureSelection: {
+    case TSurveyElementTypeEnum.PictureSelection: {
       const answerChoicesIdx = answer.split(",");
       const answerArr: string[] = [];
 
@@ -135,7 +141,7 @@ const transformAnswer = (
       return answerArr.slice(0, 1);
     }
 
-    case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
+    case TSurveyElementTypeEnum.MultipleChoiceMulti: {
       let ansArr = answer.split(",");
       const hasOthers = question.choices[question.choices.length - 1].id === "other";
       if (!hasOthers) return ansArr;

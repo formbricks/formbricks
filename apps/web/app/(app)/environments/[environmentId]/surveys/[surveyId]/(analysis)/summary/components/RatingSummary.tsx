@@ -4,24 +4,20 @@ import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
-import {
-  TSurvey,
-  TSurveyQuestionId,
-  TSurveyQuestionSummaryRating,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyElementSummaryRating, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {
-  questionSummary: TSurveyQuestionSummaryRating;
+  questionSummary: TSurveyElementSummaryRating;
   survey: TSurvey;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    questionType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;

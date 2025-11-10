@@ -5,7 +5,8 @@ import { TFunction } from "i18next";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
 import { TResponseTableData } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
@@ -13,6 +14,7 @@ import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -29,7 +31,7 @@ import {
 } from "../lib/utils";
 
 const getQuestionColumnsData = (
-  question: TSurveyQuestion,
+  question: TSurveyElement,
   survey: TSurvey,
   isExpanded: boolean,
   t: TFunction
@@ -54,7 +56,7 @@ const getQuestionColumnsData = (
   };
 
   // Helper function to get localized question headline
-  const getQuestionHeadline = (question: TSurveyQuestion, survey: TSurvey) => {
+  const getQuestionHeadline = (question: TSurveyElement, survey: TSurvey) => {
     return getTextContent(
       getLocalizedValue(recallToHeadline(question.headline, survey, false, "default"), "default")
     );
@@ -265,7 +267,9 @@ export const generateResponseTableColumns = (
   t: TFunction,
   showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
-  const questionColumns = survey.questions.flatMap((question) =>
+  // Derive questions from blocks - cast to TSurveyQuestion[] as they have the same structure
+  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questionColumns = questions.flatMap((question) =>
     getQuestionColumnsData(question, survey, isExpanded, t)
   );
 

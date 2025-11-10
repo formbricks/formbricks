@@ -10,7 +10,24 @@ import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlocks } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
-import { type TSurveyElement, TSurveyElementTypeEnum } from "./elements";
+import {
+  type TSurveyElement,
+  TSurveyElementTypeEnum,
+  ZSurveyAddressElement,
+  ZSurveyCTAElement,
+  ZSurveyCalElement,
+  ZSurveyConsentElement,
+  ZSurveyContactInfoElement,
+  ZSurveyDateElement,
+  ZSurveyFileUploadElement,
+  ZSurveyMatrixElement,
+  ZSurveyMultipleChoiceElement,
+  ZSurveyNPSElement,
+  ZSurveyOpenTextElement,
+  ZSurveyPictureSelectionElement,
+  ZSurveyRankingElement,
+  ZSurveyRatingElement,
+} from "./elements";
 import { validateElementLabels } from "./elements-validation";
 import {
   type TConditionGroup,
@@ -1708,20 +1725,22 @@ export const ZSurvey = z
     });
 
     if (survey.followUps.length) {
+      const questionsFromBlocks = survey.blocks.flatMap((block: TSurveyBlock) => block.elements);
+
       survey.followUps
         .filter((followUp) => !followUp.deleted)
         .forEach((followUp, index) => {
           if (followUp.action.properties.to) {
             const validOptions = [
-              ...survey.questions
+              ...questionsFromBlocks
                 .filter((q) => {
-                  if (q.type === TSurveyQuestionTypeEnum.OpenText) {
+                  if (q.type === TSurveyElementTypeEnum.OpenText) {
                     if (q.inputType === "email") {
                       return true;
                     }
                   }
 
-                  if (q.type === TSurveyQuestionTypeEnum.ContactInfo) {
+                  if (q.type === TSurveyElementTypeEnum.ContactInfo) {
                     return q.email.show;
                   }
 
@@ -3529,9 +3548,9 @@ export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
 export type TSurveyEditorTabs = "questions" | "settings" | "styling" | "followUps";
 
-export const ZSurveyQuestionSummaryOpenText = z.object({
-  type: z.literal("openText"),
-  question: ZSurveyOpenTextQuestion,
+export const ZSurveyElementSummaryOpenText = z.object({
+  type: z.literal(TSurveyElementTypeEnum.OpenText),
+  question: ZSurveyOpenTextElement,
   responseCount: z.number(),
   samples: z.array(
     z.object({
@@ -3549,11 +3568,14 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;
+export type TSurveyElementSummaryOpenText = z.infer<typeof ZSurveyElementSummaryOpenText>;
 
-export const ZSurveyQuestionSummaryMultipleChoice = z.object({
-  type: z.union([z.literal("multipleChoiceMulti"), z.literal("multipleChoiceSingle")]),
-  question: ZSurveyMultipleChoiceQuestion,
+export const ZSurveyElementSummaryMultipleChoice = z.object({
+  type: z.union([
+    z.literal(TSurveyElementTypeEnum.MultipleChoiceMulti),
+    z.literal(TSurveyElementTypeEnum.MultipleChoiceSingle),
+  ]),
+  question: ZSurveyMultipleChoiceElement,
   responseCount: z.number(),
   selectionCount: z.number(),
   choices: z.array(
@@ -3579,11 +3601,11 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryMultipleChoice = z.infer<typeof ZSurveyQuestionSummaryMultipleChoice>;
+export type TSurveyElementSummaryMultipleChoice = z.infer<typeof ZSurveyElementSummaryMultipleChoice>;
 
-export const ZSurveyQuestionSummaryPictureSelection = z.object({
-  type: z.literal("pictureSelection"),
-  question: ZSurveyPictureSelectionQuestion,
+export const ZSurveyElementSummaryPictureSelection = z.object({
+  type: z.literal(TSurveyElementTypeEnum.PictureSelection),
+  question: ZSurveyPictureSelectionElement,
   responseCount: z.number(),
   selectionCount: z.number(),
   choices: z.array(
@@ -3596,11 +3618,11 @@ export const ZSurveyQuestionSummaryPictureSelection = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryPictureSelection = z.infer<typeof ZSurveyQuestionSummaryPictureSelection>;
+export type TSurveyElementSummaryPictureSelection = z.infer<typeof ZSurveyElementSummaryPictureSelection>;
 
-export const ZSurveyQuestionSummaryRating = z.object({
-  type: z.literal("rating"),
-  question: ZSurveyRatingQuestion,
+export const ZSurveyElementSummaryRating = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Rating),
+  question: ZSurveyRatingElement,
   responseCount: z.number(),
   average: z.number(),
   choices: z.array(
@@ -3615,11 +3637,11 @@ export const ZSurveyQuestionSummaryRating = z.object({
   }),
 });
 
-export type TSurveyQuestionSummaryRating = z.infer<typeof ZSurveyQuestionSummaryRating>;
+export type TSurveyElementSummaryRating = z.infer<typeof ZSurveyElementSummaryRating>;
 
-export const ZSurveyQuestionSummaryNps = z.object({
-  type: z.literal("nps"),
-  question: ZSurveyNPSQuestion,
+export const ZSurveyElementSummaryNps = z.object({
+  type: z.literal(TSurveyElementTypeEnum.NPS),
+  question: ZSurveyNPSElement,
   responseCount: z.number(),
   total: z.number(),
   score: z.number(),
@@ -3641,11 +3663,11 @@ export const ZSurveyQuestionSummaryNps = z.object({
   }),
 });
 
-export type TSurveyQuestionSummaryNps = z.infer<typeof ZSurveyQuestionSummaryNps>;
+export type TSurveyElementSummaryNps = z.infer<typeof ZSurveyElementSummaryNps>;
 
-export const ZSurveyQuestionSummaryCta = z.object({
-  type: z.literal("cta"),
-  question: ZSurveyCTAQuestion,
+export const ZSurveyElementSummaryCta = z.object({
+  type: z.literal(TSurveyElementTypeEnum.CTA),
+  question: ZSurveyCTAElement,
   impressionCount: z.number(),
   clickCount: z.number(),
   skipCount: z.number(),
@@ -3656,11 +3678,11 @@ export const ZSurveyQuestionSummaryCta = z.object({
   }),
 });
 
-export type TSurveyQuestionSummaryCta = z.infer<typeof ZSurveyQuestionSummaryCta>;
+export type TSurveyElementSummaryCta = z.infer<typeof ZSurveyElementSummaryCta>;
 
-export const ZSurveyQuestionSummaryConsent = z.object({
-  type: z.literal("consent"),
-  question: ZSurveyConsentQuestion,
+export const ZSurveyElementSummaryConsent = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Consent),
+  question: ZSurveyConsentElement,
   responseCount: z.number(),
   accepted: z.object({
     count: z.number(),
@@ -3672,11 +3694,11 @@ export const ZSurveyQuestionSummaryConsent = z.object({
   }),
 });
 
-export type TSurveyQuestionSummaryConsent = z.infer<typeof ZSurveyQuestionSummaryConsent>;
+export type TSurveyElementSummaryConsent = z.infer<typeof ZSurveyElementSummaryConsent>;
 
-export const ZSurveyQuestionSummaryDate = z.object({
-  type: z.literal("date"),
-  question: ZSurveyDateQuestion,
+export const ZSurveyElementSummaryDate = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Date),
+  question: ZSurveyDateElement,
   responseCount: z.number(),
   samples: z.array(
     z.object({
@@ -3694,11 +3716,11 @@ export const ZSurveyQuestionSummaryDate = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryDate = z.infer<typeof ZSurveyQuestionSummaryDate>;
+export type TSurveyElementSummaryDate = z.infer<typeof ZSurveyElementSummaryDate>;
 
-export const ZSurveyQuestionSummaryFileUpload = z.object({
-  type: z.literal("fileUpload"),
-  question: ZSurveyFileUploadQuestion,
+export const ZSurveyElementSummaryFileUpload = z.object({
+  type: z.literal(TSurveyElementTypeEnum.FileUpload),
+  question: ZSurveyFileUploadElement,
   responseCount: z.number(),
   files: z.array(
     z.object({
@@ -3716,11 +3738,11 @@ export const ZSurveyQuestionSummaryFileUpload = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryFileUpload = z.infer<typeof ZSurveyQuestionSummaryFileUpload>;
+export type TSurveyElementSummaryFileUpload = z.infer<typeof ZSurveyElementSummaryFileUpload>;
 
-export const ZSurveyQuestionSummaryCal = z.object({
-  type: z.literal("cal"),
-  question: ZSurveyCalQuestion,
+export const ZSurveyElementSummaryCal = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Cal),
+  question: ZSurveyCalElement,
   responseCount: z.number(),
   booked: z.object({
     count: z.number(),
@@ -3732,11 +3754,11 @@ export const ZSurveyQuestionSummaryCal = z.object({
   }),
 });
 
-export type TSurveyQuestionSummaryCal = z.infer<typeof ZSurveyQuestionSummaryCal>;
+export type TSurveyElementSummaryCal = z.infer<typeof ZSurveyElementSummaryCal>;
 
-export const ZSurveyQuestionSummaryMatrix = z.object({
-  type: z.literal("matrix"),
-  question: ZSurveyMatrixQuestion,
+export const ZSurveyElementSummaryMatrix = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Matrix),
+  question: ZSurveyMatrixElement,
   responseCount: z.number(),
   data: z.array(
     z.object({
@@ -3752,9 +3774,9 @@ export const ZSurveyQuestionSummaryMatrix = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryMatrix = z.infer<typeof ZSurveyQuestionSummaryMatrix>;
+export type TSurveyElementSummaryMatrix = z.infer<typeof ZSurveyElementSummaryMatrix>;
 
-export const ZSurveyQuestionSummaryHiddenFields = z.object({
+export const ZSurveyElementSummaryHiddenFields = z.object({
   type: z.literal("hiddenField"),
   id: z.string(),
   responseCount: z.number(),
@@ -3773,11 +3795,11 @@ export const ZSurveyQuestionSummaryHiddenFields = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryHiddenFields = z.infer<typeof ZSurveyQuestionSummaryHiddenFields>;
+export type TSurveyElementSummaryHiddenFields = z.infer<typeof ZSurveyElementSummaryHiddenFields>;
 
-export const ZSurveyQuestionSummaryAddress = z.object({
-  type: z.literal("address"),
-  question: ZSurveyAddressQuestion,
+export const ZSurveyElementSummaryAddress = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Address),
+  question: ZSurveyAddressElement,
   responseCount: z.number(),
   samples: z.array(
     z.object({
@@ -3795,11 +3817,11 @@ export const ZSurveyQuestionSummaryAddress = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryAddress = z.infer<typeof ZSurveyQuestionSummaryAddress>;
+export type TSurveyElementSummaryAddress = z.infer<typeof ZSurveyElementSummaryAddress>;
 
-export const ZSurveyQuestionSummaryContactInfo = z.object({
-  type: z.literal("contactInfo"),
-  question: ZSurveyContactInfoQuestion,
+export const ZSurveyElementSummaryContactInfo = z.object({
+  type: z.literal(TSurveyElementTypeEnum.ContactInfo),
+  question: ZSurveyContactInfoElement,
   responseCount: z.number(),
   samples: z.array(
     z.object({
@@ -3817,11 +3839,11 @@ export const ZSurveyQuestionSummaryContactInfo = z.object({
   ),
 });
 
-export type TSurveyQuestionSummaryContactInfo = z.infer<typeof ZSurveyQuestionSummaryContactInfo>;
+export type TSurveyElementSummaryContactInfo = z.infer<typeof ZSurveyElementSummaryContactInfo>;
 
-export const ZSurveyQuestionSummaryRanking = z.object({
-  type: z.literal("ranking"),
-  question: ZSurveyRankingQuestion,
+export const ZSurveyElementSummaryRanking = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Ranking),
+  question: ZSurveyRankingElement,
   responseCount: z.number(),
   choices: z.array(
     z.object({
@@ -3845,26 +3867,26 @@ export const ZSurveyQuestionSummaryRanking = z.object({
     })
   ),
 });
-export type TSurveyQuestionSummaryRanking = z.infer<typeof ZSurveyQuestionSummaryRanking>;
+export type TSurveyElementSummaryRanking = z.infer<typeof ZSurveyElementSummaryRanking>;
 
-export const ZSurveyQuestionSummary = z.union([
-  ZSurveyQuestionSummaryOpenText,
-  ZSurveyQuestionSummaryMultipleChoice,
-  ZSurveyQuestionSummaryPictureSelection,
-  ZSurveyQuestionSummaryRating,
-  ZSurveyQuestionSummaryNps,
-  ZSurveyQuestionSummaryCta,
-  ZSurveyQuestionSummaryConsent,
-  ZSurveyQuestionSummaryDate,
-  ZSurveyQuestionSummaryFileUpload,
-  ZSurveyQuestionSummaryCal,
-  ZSurveyQuestionSummaryMatrix,
-  ZSurveyQuestionSummaryAddress,
-  ZSurveyQuestionSummaryRanking,
-  ZSurveyQuestionSummaryContactInfo,
+export const ZSurveyElementSummary = z.union([
+  ZSurveyElementSummaryOpenText,
+  ZSurveyElementSummaryMultipleChoice,
+  ZSurveyElementSummaryPictureSelection,
+  ZSurveyElementSummaryRating,
+  ZSurveyElementSummaryNps,
+  ZSurveyElementSummaryCta,
+  ZSurveyElementSummaryConsent,
+  ZSurveyElementSummaryDate,
+  ZSurveyElementSummaryFileUpload,
+  ZSurveyElementSummaryCal,
+  ZSurveyElementSummaryMatrix,
+  ZSurveyElementSummaryAddress,
+  ZSurveyElementSummaryRanking,
+  ZSurveyElementSummaryContactInfo,
 ]);
 
-export type TSurveyQuestionSummary = z.infer<typeof ZSurveyQuestionSummary>;
+export type TSurveyElementSummary = z.infer<typeof ZSurveyElementSummary>;
 
 export const ZSurveySummary = z.object({
   meta: z.object({
@@ -3882,7 +3904,7 @@ export const ZSurveySummary = z.object({
   dropOff: z.array(
     z.object({
       questionId: z.string().cuid2(),
-      questionType: ZSurveyQuestionType,
+      questionType: z.nativeEnum(TSurveyElementTypeEnum),
       headline: z.string(),
       ttc: z.number(),
       impressions: z.number(),
@@ -3899,7 +3921,7 @@ export const ZSurveySummary = z.object({
       percentage: z.number(),
     })
   ),
-  summary: z.array(z.union([ZSurveyQuestionSummary, ZSurveyQuestionSummaryHiddenFields])),
+  summary: z.array(z.union([ZSurveyElementSummary, ZSurveyElementSummaryHiddenFields])),
 });
 
 export type TSurveySummary = z.infer<typeof ZSurveySummary>;

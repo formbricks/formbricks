@@ -4,7 +4,7 @@ import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys/types";
+import { TSurveyElementSummaryHiddenFields } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
@@ -13,7 +13,7 @@ import { Button } from "@/modules/ui/components/button";
 
 interface HiddenFieldsSummaryProps {
   environment: TEnvironment;
-  questionSummary: TSurveyQuestionSummaryHiddenFields;
+  questionSummary: TSurveyElementSummaryHiddenFields;
   locale: TUserLocale;
 }
 

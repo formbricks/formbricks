@@ -1,5 +1,7 @@
 import { TFunction } from "i18next";
-import { TSurvey, TSurveyQuestionId, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 
 export const convertFloatToNDecimal = (num: number, N: number = 2) => {
   return Math.round(num * Math.pow(10, N)) / Math.pow(10, N);
@@ -10,14 +12,16 @@ export const convertFloatTo2Decimal = (num: number) => {
 };
 
 export const constructToastMessage = (
-  questionType: TSurveyQuestionTypeEnum,
+  questionType: TSurveyElementTypeEnum,
   filterValue: string,
   survey: TSurvey,
   questionId: TSurveyQuestionId,
   t: TFunction,
   filterComboBoxValue?: string | string[]
 ) => {
-  const questionIdx = survey.questions.findIndex((question) => question.id === questionId);
+  // Derive questions from blocks
+  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questionIdx = questions.findIndex((question) => question.id === questionId);
   if (questionType === "matrix") {
     return t("environments.surveys.summary.added_filter_for_responses_where_answer_to_question", {
       questionIdx: questionIdx + 1,

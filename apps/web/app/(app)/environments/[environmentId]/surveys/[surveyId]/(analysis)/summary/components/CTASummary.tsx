@@ -2,13 +2,13 @@
 
 import { InboxIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryCta } from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface CTASummaryProps {
-  questionSummary: TSurveyQuestionSummaryCta;
+  questionSummary: TSurveyElementSummaryCta;
   survey: TSurvey;
 }
 

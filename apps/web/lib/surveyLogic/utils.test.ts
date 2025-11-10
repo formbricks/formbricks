@@ -1,9 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import { TSurveyLogic, TSurveyLogicAction, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
   createGroupFromResource,
@@ -32,9 +33,6 @@ describe("surveyLogic", () => {
     type: "link",
     status: "inProgress",
     welcomeCard: {
-      html: {
-        default: "Thanks for providing your feedback - let's go!‌‌‍‍‌‍‍‍‌‌‌‍‍‌‌‌‍‌‌‌‌‌‍‌‍‌‌",
-      },
       enabled: false,
       headline: {
         default: "Welcome!‌‌‍‍‌‍‍‍‌‌‌‍‍‌‌‌‌‌‌‌‌‌‍‌‍‌‌",
@@ -45,25 +43,28 @@ describe("surveyLogic", () => {
       timeToFinish: false,
       showResponseCount: false,
     },
-    questions: [
+    blocks: [
       {
-        id: "vjniuob08ggl8dewl0hwed41",
-        type: TSurveyQuestionTypeEnum.OpenText,
-        headline: {
-          default: "What would you like to know?‌‌‍‍‌‍‍‍‌‌‌‍‍‌‍‍‌‌‌‌‌‌‍‌‍‌‌",
-        },
-        required: true,
-        charLimit: {},
-        inputType: "email",
-        longAnswer: false,
-        buttonLabel: {
-          default: "Next‌‌‍‍‌‍‍‍‌‌‌‍‍‍‌‌‌‌‌‌‌‌‍‌‍‌‌",
-        },
-        placeholder: {
-          default: "example@email.com",
-        },
+        id: "block1",
+        name: "Block 1",
+        elements: [
+          {
+            id: "vjniuob08ggl8dewl0hwed41",
+            type: TSurveyElementTypeEnum.OpenText,
+            headline: {
+              default: "What would you like to know?‌‌‍‍‌‍‍‍‌‌‌‍‍‌‍‍‌‌‌‌‌‌‍‌‍‌‌",
+            },
+            required: true,
+            charLimit: { enabled: false },
+            inputType: "email",
+            placeholder: {
+              default: "example@email.com",
+            },
+          },
+        ],
       },
     ],
+    questions: [],
     endings: [
       {
         id: "gt1yoaeb5a3istszxqbl08mk",
@@ -128,7 +129,7 @@ describe("surveyLogic", () => {
   });
 
   test("duplicateLogicItem duplicates IDs recursively", () => {
-    const logic: TSurveyLogic = {
+    const logic: TSurveyBlockLogic = {
       id: "L1",
       conditions: simpleGroup(),
       actions: [{ id: "A1", objective: "requireAnswer", target: "q1" }],
@@ -459,7 +460,7 @@ describe("surveyLogic", () => {
       variables: [{ id: "v", name: "num", type: "number", value: 0 }],
     };
     const data: TResponseData = { q: 2 };
-    const actions: TSurveyLogicAction[] = [
+    const actions: TSurveyBlockLogicAction[] = [
       {
         id: "a1",
         objective: "calculate",
@@ -746,84 +747,87 @@ describe("surveyLogic", () => {
   test("getLeftOperandValue handles different question types", () => {
     const surveyWithQuestions: TJsEnvironmentStateSurvey = {
       ...mockSurvey,
-      questions: [
-        ...mockSurvey.questions,
+      blocks: [
         {
-          id: "numQuestion",
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Number question" },
-          required: true,
-          inputType: "number",
-          charLimit: { enabled: false },
-        },
-        {
-          id: "mcSingle",
-          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "MC Single" },
-          required: true,
-          choices: [
-            { id: "choice1", label: { default: "Choice 1" } },
-            { id: "choice2", label: { default: "Choice 2" } },
-            { id: "other", label: { default: "Other" } },
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            ...mockSurvey.blocks[0].elements,
+            {
+              id: "numQuestion",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Number question" },
+              required: true,
+              inputType: "number",
+              charLimit: { enabled: false },
+            },
+            {
+              id: "mcSingle",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "MC Single" },
+              required: true,
+              choices: [
+                { id: "choice1", label: { default: "Choice 1" } },
+                { id: "choice2", label: { default: "Choice 2" } },
+                { id: "other", label: { default: "Other" } },
+              ],
+              shuffleOption: "none",
+            },
+            {
+              id: "mcMulti",
+              type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+              headline: { default: "MC Multi" },
+              required: true,
+              choices: [
+                { id: "choice1", label: { default: "Choice 1" } },
+                { id: "choice2", label: { default: "Choice 2" } },
+              ],
+              shuffleOption: "none",
+            },
+            {
+              id: "matrixQ",
+              type: TSurveyElementTypeEnum.Matrix,
+              headline: { default: "Matrix Question" },
+              required: true,
+              rows: [
+                { id: "row-1", label: { default: "Row 1" } },
+                { id: "row-2", label: { default: "Row 2" } },
+              ],
+              columns: [
+                { id: "col-1", label: { default: "Column 1" } },
+                { id: "col-2", label: { default: "Column 2" } },
+              ],
+              shuffleOption: "none",
+            },
+            {
+              id: "pictureQ",
+              type: TSurveyElementTypeEnum.PictureSelection,
+              allowMulti: false,
+              headline: { default: "Picture Selection" },
+              required: true,
+              choices: [
+                { id: "pic1", imageUrl: "url1" },
+                { id: "pic2", imageUrl: "url2" },
+              ],
+            },
+            {
+              id: "dateQ",
+              type: TSurveyElementTypeEnum.Date,
+              format: "M-d-y",
+              headline: { default: "Date Question" },
+              required: true,
+            },
+            {
+              id: "fileQ",
+              type: TSurveyElementTypeEnum.FileUpload,
+              allowMultipleFiles: false,
+              headline: { default: "File Upload" },
+              required: true,
+            },
           ],
-          buttonLabel: { default: "Next" },
-        },
-        {
-          id: "mcMulti",
-          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-          headline: { default: "MC Multi" },
-          required: true,
-          choices: [
-            { id: "choice1", label: { default: "Choice 1" } },
-            { id: "choice2", label: { default: "Choice 2" } },
-          ],
-          buttonLabel: { default: "Next" },
-        },
-        {
-          id: "matrixQ",
-          type: TSurveyQuestionTypeEnum.Matrix,
-          headline: { default: "Matrix Question" },
-          required: true,
-          rows: [
-            { id: "row-1", label: { default: "Row 1" } },
-            { id: "row-2", label: { default: "Row 2" } },
-          ],
-          columns: [
-            { id: "col-1", label: { default: "Column 1" } },
-            { id: "col-2", label: { default: "Column 2" } },
-          ],
-          buttonLabel: { default: "Next" },
-          shuffleOption: "none",
-        },
-        {
-          id: "pictureQ",
-          type: TSurveyQuestionTypeEnum.PictureSelection,
-          allowMulti: false,
-          headline: { default: "Picture Selection" },
-          required: true,
-          choices: [
-            { id: "pic1", imageUrl: "url1" },
-            { id: "pic2", imageUrl: "url2" },
-          ],
-          buttonLabel: { default: "Next" },
-        },
-        {
-          id: "dateQ",
-          type: TSurveyQuestionTypeEnum.Date,
-          format: "M-d-y",
-          headline: { default: "Date Question" },
-          required: true,
-          buttonLabel: { default: "Next" },
-        },
-        {
-          id: "fileQ",
-          type: TSurveyQuestionTypeEnum.FileUpload,
-          allowMultipleFiles: false,
-          headline: { default: "File Upload" },
-          required: true,
-          buttonLabel: { default: "Next" },
         },
       ],
+      questions: [],
       variables: [
         { id: "numVar", name: "numberVar", type: "number", value: 5 },
         { id: "textVar", name: "textVar", type: "text", value: "hello" },
@@ -1004,17 +1008,24 @@ describe("surveyLogic", () => {
   test("getRightOperandValue handles different data types and sources", () => {
     const surveyWithVars: TJsEnvironmentStateSurvey = {
       ...mockSurvey,
-      questions: [
-        ...mockSurvey.questions,
+      blocks: [
         {
-          id: "question1",
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Question 1" },
-          required: true,
-          inputType: "text",
-          charLimit: { enabled: false },
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            ...mockSurvey.blocks[0].elements,
+            {
+              id: "question1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Question 1" },
+              required: true,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+          ],
         },
       ],
+      questions: [],
       variables: [
         { id: "numVar", name: "numberVar", type: "number", value: 5 },
         { id: "textVar", name: "textVar", type: "text", value: "hello" },
@@ -1315,19 +1326,24 @@ describe("surveyLogic", () => {
   test("getLeftOperandValue handles number input type with non-number value", () => {
     const surveyWithNumberInput: TJsEnvironmentStateSurvey = {
       ...mockSurvey,
-      questions: [
+      blocks: [
         {
-          id: "numQuestion",
-          type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Number question" },
-          required: true,
-          inputType: "number",
-          placeholder: { default: "Enter a number" },
-          buttonLabel: { default: "Next" },
-          longAnswer: false,
-          charLimit: {},
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "numQuestion",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Number question" },
+              required: true,
+              inputType: "number",
+              placeholder: { default: "Enter a number" },
+              charLimit: { enabled: false },
+            },
+          ],
         },
       ],
+      questions: [],
     };
 
     const condition: TSingleCondition = {

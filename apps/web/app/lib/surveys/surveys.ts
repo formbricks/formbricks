@@ -5,7 +5,8 @@ import {
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TTag } from "@formbricks/types/tags";
 import {
@@ -21,6 +22,7 @@ import {
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 
 const conditionOptions = {
   openText: ["is"],
@@ -79,8 +81,9 @@ export const generateQuestionAndFilterOptions = (
   let questionFilterOptions: any = [];
 
   let questionsOptions: any = [];
+  const questions = getQuestionsFromBlocks(survey.blocks);
 
-  survey.questions.forEach((q) => {
+  questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
       questionsOptions.push({
         label: getTextContent(
@@ -93,16 +96,16 @@ export const generateQuestionAndFilterOptions = (
     }
   });
   questionOptions = [...questionOptions, { header: OptionsType.QUESTIONS, option: questionsOptions }];
-  survey.questions.forEach((q) => {
+  questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
-      if (q.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
+      if (q.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
           id: q.id,
         });
-      } else if (q.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
+      } else if (q.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
@@ -111,14 +114,14 @@ export const generateQuestionAndFilterOptions = (
             : [""],
           id: q.id,
         });
-      } else if (q.type === TSurveyQuestionTypeEnum.PictureSelection) {
+      } else if (q.type === TSurveyElementTypeEnum.PictureSelection) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices ? q?.choices?.map((_, idx) => `Picture ${idx + 1}`) : [""],
           id: q.id,
         });
-      } else if (q.type === TSurveyQuestionTypeEnum.Matrix) {
+      } else if (q.type === TSurveyElementTypeEnum.Matrix) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: q.rows.flatMap((row) => Object.values(row)),
@@ -311,12 +314,13 @@ export const getFormattedFilters = (
 
   // for questions
   if (questions.length) {
+    const surveyQuestions = getQuestionsFromBlocks(survey.blocks);
     questions.forEach(({ filterType, questionType }) => {
       if (!filters.data) filters.data = {};
       switch (questionType.questionType) {
-        case TSurveyQuestionTypeEnum.OpenText:
-        case TSurveyQuestionTypeEnum.Address:
-        case TSurveyQuestionTypeEnum.ContactInfo: {
+        case TSurveyElementTypeEnum.OpenText:
+        case TSurveyElementTypeEnum.Address:
+        case TSurveyElementTypeEnum.ContactInfo: {
           if (filterType.filterComboBoxValue === "Filled out") {
             filters.data[questionType.id ?? ""] = {
               op: "filledOut",
@@ -328,7 +332,7 @@ export const getFormattedFilters = (
           }
           break;
         }
-        case TSurveyQuestionTypeEnum.Ranking: {
+        case TSurveyElementTypeEnum.Ranking: {
           if (filterType.filterComboBoxValue === "Filled out") {
             filters.data[questionType.id ?? ""] = {
               op: "submitted",
@@ -340,8 +344,8 @@ export const getFormattedFilters = (
           }
           break;
         }
-        case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
-        case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
+        case TSurveyElementTypeEnum.MultipleChoiceSingle:
+        case TSurveyElementTypeEnum.MultipleChoiceMulti: {
           if (filterType.filterValue === "Includes either") {
             filters.data[questionType.id ?? ""] = {
               op: "includesOne",
@@ -355,8 +359,8 @@ export const getFormattedFilters = (
           }
           break;
         }
-        case TSurveyQuestionTypeEnum.NPS:
-        case TSurveyQuestionTypeEnum.Rating: {
+        case TSurveyElementTypeEnum.NPS:
+        case TSurveyElementTypeEnum.Rating: {
           if (filterType.filterValue === "Is equal to") {
             filters.data[questionType.id ?? ""] = {
               op: "equals",
@@ -388,7 +392,7 @@ export const getFormattedFilters = (
           }
           break;
         }
-        case TSurveyQuestionTypeEnum.CTA: {
+        case TSurveyElementTypeEnum.CTA: {
           if (filterType.filterComboBoxValue === "Clicked") {
             filters.data[questionType.id ?? ""] = {
               op: "clicked",
@@ -400,7 +404,7 @@ export const getFormattedFilters = (
           }
           break;
         }
-        case TSurveyQuestionTypeEnum.Consent: {
+        case TSurveyElementTypeEnum.Consent: {
           if (filterType.filterComboBoxValue === "Accepted") {
             filters.data[questionType.id ?? ""] = {
               op: "accepted",
@@ -412,12 +416,12 @@ export const getFormattedFilters = (
           }
           break;
         }
-        case TSurveyQuestionTypeEnum.PictureSelection: {
+        case TSurveyElementTypeEnum.PictureSelection: {
           const questionId = questionType.id ?? "";
-          const question = survey.questions.find((q) => q.id === questionId);
+          const question = surveyQuestions.find((q) => q.id === questionId);
 
           if (
-            question?.type !== TSurveyQuestionTypeEnum.PictureSelection ||
+            question?.type !== TSurveyElementTypeEnum.PictureSelection ||
             !Array.isArray(filterType.filterComboBoxValue)
           ) {
             return;
@@ -441,7 +445,7 @@ export const getFormattedFilters = (
           }
           break;
         }
-        case TSurveyQuestionTypeEnum.Matrix: {
+        case TSurveyElementTypeEnum.Matrix: {
           if (
             filterType.filterValue &&
             filterType.filterComboBoxValue &&

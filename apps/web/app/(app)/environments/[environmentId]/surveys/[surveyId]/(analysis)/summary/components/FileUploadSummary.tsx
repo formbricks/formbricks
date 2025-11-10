@@ -4,7 +4,7 @@ import { DownloadIcon, FileIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryFileUpload } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
@@ -14,7 +14,7 @@ import { Button } from "@/modules/ui/components/button";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface FileUploadSummaryProps {
-  questionSummary: TSurveyQuestionSummaryFileUpload;
+  questionSummary: TSurveyElementSummaryFileUpload;
   environmentId: string;
   survey: TSurvey;
   locale: TUserLocale;
