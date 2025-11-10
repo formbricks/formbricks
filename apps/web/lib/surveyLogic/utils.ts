@@ -9,6 +9,7 @@ import {
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   TActionCalculate,
+  TSurveyLogicAction,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
@@ -626,7 +627,7 @@ const getRightOperandValue = (
 
 export const performActions = (
   survey: TJsEnvironmentStateSurvey,
-  actions: TSurveyBlockLogicAction[],
+  actions: TSurveyBlockLogicAction[] | TSurveyLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
 ): {
@@ -648,6 +649,8 @@ export const performActions = (
         requiredQuestionIds.push(action.target);
         break;
       case "jumpToBlock":
+      case "jumpToQuestion":
+        // Backward compatibility: handle old question-level logic (jumpToQuestion)
         if (!jumpTarget) {
           jumpTarget = action.target;
         }

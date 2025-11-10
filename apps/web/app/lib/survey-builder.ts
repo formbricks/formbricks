@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TFunction } from "i18next";
-import {
+import type { TFunction } from "i18next";
+import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import type {
   TShuffleOption,
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
@@ -14,11 +15,11 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
   TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 
 const getDefaultButtonLabel = (label: string | undefined, t: TFunction) =>
@@ -63,8 +64,15 @@ export const buildMultipleChoiceQuestion = ({
     headline: createI18nString(headline, []),
     choices: choices.map((choice, index) => {
       const isLastIndex = index === choices.length - 1;
-      const id = containsOther && isLastIndex ? "other" : choiceIds ? choiceIds[index] : createId();
-      return { id, label: createI18nString(choice, []) };
+      let choiceId: string;
+      if (containsOther && isLastIndex) {
+        choiceId = "other";
+      } else if (choiceIds) {
+        choiceId = choiceIds[index];
+      } else {
+        choiceId = createId();
+      }
+      return { id: choiceId, label: createI18nString(choice, []) };
     }),
     buttonLabel: getDefaultButtonLabel(buttonLabel, t),
     backButtonLabel: getDefaultBackButtonLabel(backButtonLabel, t),
@@ -378,12 +386,13 @@ export const getDefaultSurveyPreset = (t: TFunction): TTemplate["preset"] => {
     endings: [getDefaultEndingCard([], t)],
     hiddenFields: hiddenFieldsDefault,
     questions: [],
+    blocks: [],
   };
 };
 
 /**
  * Generic builder for survey.
- * @param config - The configuration for survey settings and questions.
+ * @param config - The configuration for survey settings and questions/blocks.
  * @param t - The translation function.
  */
 export const buildSurvey = (
@@ -393,7 +402,8 @@ export const buildSurvey = (
     channels: ("link" | "app" | "website")[];
     role: TTemplateRole;
     description: string;
-    questions: TSurveyQuestion[];
+    questions?: TSurveyQuestion[];
+    blocks?: TSurveyBlock[];
     endings?: TSurveyEnding[];
     hiddenFields?: TSurveyHiddenFields;
   },
@@ -409,7 +419,8 @@ export const buildSurvey = (
     preset: {
       ...localSurvey,
       name: config.name,
-      questions: config.questions,
+      blocks: config.blocks ?? [],
+      questions: config.questions ?? [],
       endings: config.endings ?? localSurvey.endings,
       hiddenFields: config.hiddenFields ?? hiddenFieldsDefault,
     },
