@@ -10,15 +10,16 @@ import {
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
 import {
-  TSurvey,
-  TSurveyMultipleChoiceQuestion,
-  TSurveyPictureSelectionQuestion,
-  TSurveyQuestion,
-  TSurveyRankingQuestion,
-} from "@formbricks/types/surveys/types";
+  TSurveyElement,
+  TSurveyMultipleChoiceElement,
+  TSurveyPictureSelectionElement,
+  TSurveyRankingElement,
+} from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
 import { getFormattedDateTimeString } from "../utils/datetime";
@@ -33,7 +34,7 @@ import { sanitizeString } from "../utils/strings";
  */
 export const extractChoiceIdsFromResponse = (
   responseValue: TResponseDataValue,
-  question: TSurveyQuestion,
+  question: TSurveyElement,
   language: string = "default"
 ): string[] => {
   // Type guard to ensure the question has choices
@@ -92,7 +93,7 @@ export const extractChoiceIdsFromResponse = (
 
 export const getChoiceIdByValue = (
   value: string,
-  question: TSurveyMultipleChoiceQuestion | TSurveyRankingQuestion | TSurveyPictureSelectionQuestion
+  question: TSurveyMultipleChoiceElement | TSurveyRankingElement | TSurveyPictureSelectionElement
 ) => {
   if (question.type === "pictureSelection") {
     return question.choices.find((choice) => choice.imageUrl === value)?.id ?? "other";
@@ -329,7 +330,8 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     const data: Prisma.ResponseWhereInput[] = [];
 
     Object.entries(filterCriteria.data).forEach(([key, val]) => {
-      const question = survey.questions.find((question) => question.id === key);
+      const questions = getElementsFromBlocks(survey.blocks);
+      const question = questions.find((question) => question.id === key);
 
       switch (val.op) {
         case "submitted":
@@ -663,7 +665,9 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
   const modifiedSurvey = replaceHeadlineRecall(survey, "default");
 
-  const questions = modifiedSurvey.questions.map((question, idx) => {
+  const modifiedQuestions = getElementsFromBlocks(modifiedSurvey.blocks);
+
+  const questions = modifiedQuestions.map((question, idx) => {
     const headline = getTextContent(getLocalizedValue(question.headline, "default")) ?? question.id;
     if (question.type === "matrix") {
       return question.rows.map((row) => {
@@ -731,7 +735,8 @@ export const getResponsesJson = (
     // survey response data
     questionsHeadlines.forEach((questionHeadline) => {
       const questionIndex = parseInt(questionHeadline[0]) - 1;
-      const question = survey?.questions[questionIndex];
+      const questions = getElementsFromBlocks(survey.blocks);
+      const question = questions[questionIndex];
       const answer = response.data[question.id];
 
       if (question.type === "matrix") {

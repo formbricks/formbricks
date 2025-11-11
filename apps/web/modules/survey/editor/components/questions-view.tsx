@@ -40,11 +40,11 @@ import {
   deleteBlock,
   duplicateBlock,
   findElementLocation,
-  getQuestionsFromBlocks,
   moveBlock,
   updateElementInBlock,
 } from "@/modules/survey/editor/lib/blocks";
 import { findQuestionUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -98,7 +98,7 @@ export const QuestionsView = ({
   const { t } = useTranslation();
 
   // Derive questions from blocks for display
-  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const questions = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const internalQuestionIdMap = useMemo(() => {
     return questions.reduce((acc, question) => {

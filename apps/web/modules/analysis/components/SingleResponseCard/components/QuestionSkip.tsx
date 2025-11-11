@@ -3,7 +3,7 @@
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 interface QuestionSkipProps {
   skippedQuestions: string[] | undefined;
   status: string;
-  questions: TSurveyQuestion[];
+  questions: TSurveyElement[];
   isFirstQuestionAnswered?: boolean;
   responseData: TResponseData;
 }

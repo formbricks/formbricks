@@ -19,10 +19,9 @@ import { useTranslation } from "react-i18next";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
@@ -30,6 +29,7 @@ import {
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -103,7 +103,7 @@ export const FollowUpModal = ({
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
     // Derive questions from blocks
-    const questions = getQuestionsFromBlocks(localSurvey.blocks);
+    const questions = getElementsFromBlocks(localSurvey.blocks);
 
     const openTextAndContactQuestions = questions.filter((question) => {
       if (question.type === TSurveyElementTypeEnum.ContactInfo) {
@@ -143,9 +143,9 @@ export const FollowUpModal = ({
 
     return [
       ...openTextAndContactQuestions.map((question) => ({
-        label: recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[
-          selectedLanguageCode
-        ],
+        label: getTextContent(
+          recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]
+        ),
         id: question.id,
         type:
           question.type === TSurveyElementTypeEnum.OpenText
@@ -520,7 +520,14 @@ export const FollowUpModal = ({
                                   const getEndingLabel = (): string => {
                                     if (ending.type === "endScreen") {
                                       return (
-                                        getLocalizedValue(ending.headline, selectedLanguageCode) || "Ending"
+                                        getTextContent(
+                                          recallToHeadline(
+                                            ending.headline ?? {},
+                                            localSurvey,
+                                            false,
+                                            selectedLanguageCode
+                                          )[selectedLanguageCode]
+                                        ) || "Ending"
                                       );
                                     }
 

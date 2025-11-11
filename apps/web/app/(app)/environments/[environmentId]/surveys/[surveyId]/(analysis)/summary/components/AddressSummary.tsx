@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryAddress } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
@@ -11,7 +11,7 @@ import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface AddressSummaryProps {
-  questionSummary: TSurveyQuestionSummaryAddress;
+  questionSummary: TSurveyElementSummaryAddress;
   environmentId: string;
   survey: TSurvey;
   locale: TUserLocale;

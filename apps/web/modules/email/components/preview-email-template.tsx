@@ -22,7 +22,8 @@ import { COLOR_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
-import { findElementLocation, getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 import { QuestionHeader } from "./email-question-header";
 
@@ -81,7 +82,7 @@ export async function PreviewEmailTemplate({
   const defaultLanguageCode = "default";
 
   // Derive questions from blocks
-  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questions = getElementsFromBlocks(survey.blocks);
   const firstQuestion = questions[0];
 
   const { block } = findElementLocation(survey, firstQuestion.id);

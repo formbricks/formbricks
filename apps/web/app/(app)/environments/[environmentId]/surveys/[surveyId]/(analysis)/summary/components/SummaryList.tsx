@@ -4,7 +4,8 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyQuestionId, TSurveyQuestionTypeEnum, TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import {
@@ -45,9 +46,9 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
   const { t } = useTranslation();
   const setFilter = (
-    questionId: TSurveyQuestionId,
+    questionId: string,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    questionType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => {
@@ -111,7 +112,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
         />
       ) : (
         summary.map((questionSummary) => {
-          if (questionSummary.type === TSurveyQuestionTypeEnum.OpenText) {
+          if (questionSummary.type === TSurveyElementTypeEnum.OpenText) {
             return (
               <OpenTextSummary
                 key={questionSummary.question.id}
@@ -123,8 +124,8 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
             );
           }
           if (
-            questionSummary.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-            questionSummary.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+            questionSummary.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+            questionSummary.type === TSurveyElementTypeEnum.MultipleChoiceMulti
           ) {
             return (
               <MultipleChoiceSummary
@@ -137,7 +138,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.NPS) {
+          if (questionSummary.type === TSurveyElementTypeEnum.NPS) {
             return (
               <NPSSummary
                 key={questionSummary.question.id}
@@ -147,7 +148,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.CTA) {
+          if (questionSummary.type === TSurveyElementTypeEnum.CTA) {
             return (
               <CTASummary
                 key={questionSummary.question.id}
@@ -156,7 +157,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.Rating) {
+          if (questionSummary.type === TSurveyElementTypeEnum.Rating) {
             return (
               <RatingSummary
                 key={questionSummary.question.id}
@@ -166,7 +167,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.Consent) {
+          if (questionSummary.type === TSurveyElementTypeEnum.Consent) {
             return (
               <ConsentSummary
                 key={questionSummary.question.id}
@@ -176,7 +177,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.PictureSelection) {
+          if (questionSummary.type === TSurveyElementTypeEnum.PictureSelection) {
             return (
               <PictureChoiceSummary
                 key={questionSummary.question.id}
@@ -186,7 +187,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.Date) {
+          if (questionSummary.type === TSurveyElementTypeEnum.Date) {
             return (
               <DateQuestionSummary
                 key={questionSummary.question.id}
@@ -197,7 +198,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.FileUpload) {
+          if (questionSummary.type === TSurveyElementTypeEnum.FileUpload) {
             return (
               <FileUploadSummary
                 key={questionSummary.question.id}
@@ -208,7 +209,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.Cal) {
+          if (questionSummary.type === TSurveyElementTypeEnum.Cal) {
             return (
               <CalSummary
                 key={questionSummary.question.id}
@@ -218,7 +219,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.Matrix) {
+          if (questionSummary.type === TSurveyElementTypeEnum.Matrix) {
             return (
               <MatrixQuestionSummary
                 key={questionSummary.question.id}
@@ -228,7 +229,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.Address) {
+          if (questionSummary.type === TSurveyElementTypeEnum.Address) {
             return (
               <AddressSummary
                 key={questionSummary.question.id}
@@ -239,7 +240,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.Ranking) {
+          if (questionSummary.type === TSurveyElementTypeEnum.Ranking) {
             return (
               <RankingSummary
                 key={questionSummary.question.id}
@@ -258,7 +259,7 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               />
             );
           }
-          if (questionSummary.type === TSurveyQuestionTypeEnum.ContactInfo) {
+          if (questionSummary.type === TSurveyElementTypeEnum.ContactInfo) {
             return (
               <ContactInfoSummary
                 key={questionSummary.question.id}

@@ -67,7 +67,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![0].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -81,7 +81,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![0].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -95,7 +95,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![1].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -109,7 +109,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![1].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -123,7 +123,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[2].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![2].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -137,7 +137,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![3].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -151,7 +151,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![3].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -165,7 +165,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![4].conditions,
       "default"
     );
     expect(result).toBe(true);
@@ -179,7 +179,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![4].conditions,
       "default"
     );
     expect(result).toBe(false);
@@ -193,7 +193,7 @@ describe("evaluateLogic with mockSurveyWithLogic", () => {
       mockSurveyWithLogic,
       data,
       variablesData,
-      mockSurveyWithLogic.questions[5].logic![0].conditions,
+      mockSurveyWithLogic.blocks[0].logic![5].conditions,
       "default"
     );
     expect(result).toBe(true);

@@ -2,23 +2,19 @@
 
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
-import {
-  TSurvey,
-  TSurveyQuestionId,
-  TSurveyQuestionSummaryNps,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyElementSummaryNps, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface NPSSummaryProps {
-  questionSummary: TSurveyQuestionSummaryNps;
+  questionSummary: TSurveyElementSummaryNps;
   survey: TSurvey;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    questionType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;

@@ -6,7 +6,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { checkForInvalidImagesInQuestions } from "@/lib/survey/utils";
+import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
@@ -33,7 +33,7 @@ vi.mock("react", async (importOriginal) => {
 });
 
 vi.mock("@/lib/survey/utils", () => ({
-  checkForInvalidImagesInQuestions: vi.fn(),
+  checkForInvalidMediaInBlocks: vi.fn(() => ({ ok: true, data: undefined })),
 }));
 
 vi.mock("@/lib/utils/validate", () => ({
@@ -100,7 +100,7 @@ vi.mock("@formbricks/logger", () => ({
 // Helper to reset mocks
 const resetMocks = () => {
   vi.mocked(reactCache).mockClear();
-  vi.mocked(checkForInvalidImagesInQuestions).mockClear();
+  vi.mocked(checkForInvalidMediaInBlocks).mockClear();
   vi.mocked(validateInputs).mockClear();
   vi.mocked(buildOrderByClause).mockClear();
   vi.mocked(buildWhereClause).mockClear();
@@ -418,7 +418,14 @@ const mockExistingSurveyDetails = {
   type: "web" as any,
   languages: [{ default: true, enabled: true, language: { code: "en", alias: "English" } }],
   welcomeCard: { enabled: true, headline: { default: "Welcome!" } },
-  questions: [{ id: "q1", type: "openText", headline: { default: "Question 1" } }],
+  blocks: [
+    {
+      id: "block1",
+      name: "Block 1",
+      elements: [{ id: "q1", type: "openText", headline: { default: "Question 1" } }],
+    },
+  ],
+  questions: [],
   endings: [{ type: "default", headline: { default: "Thanks!" } }],
   variables: [{ id: "var1", name: "Var One" }],
   hiddenFields: { enabled: true, fieldIds: ["hf1"] },
@@ -546,7 +553,7 @@ describe("copySurveyToOtherEnvironment", () => {
         }),
       })
     );
-    expect(checkForInvalidImagesInQuestions).toHaveBeenCalledWith(mockExistingSurveyDetails.questions);
+    expect(checkForInvalidMediaInBlocks).toHaveBeenCalledWith(mockExistingSurveyDetails.blocks);
   });
 
   test("should copy survey to the same environment successfully", async () => {

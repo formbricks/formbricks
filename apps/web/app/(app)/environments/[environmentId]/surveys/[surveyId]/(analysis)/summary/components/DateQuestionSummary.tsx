@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryDate } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
@@ -13,7 +13,7 @@ import { Button } from "@/modules/ui/components/button";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface DateQuestionSummary {
-  questionSummary: TSurveyQuestionSummaryDate;
+  questionSummary: TSurveyElementSummaryDate;
   environmentId: string;
   survey: TSurvey;
   locale: TUserLocale;

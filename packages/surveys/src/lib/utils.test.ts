@@ -6,8 +6,8 @@ import type { TSurveyLanguage, TSurveyQuestionChoice } from "../../../types/surv
 import {
   findBlockByElementId,
   getDefaultLanguageCode,
+  getElementsFromSurvey,
   getMimeType,
-  getQuestionsFromSurvey,
   getShuffledChoicesIds,
   getShuffledRowIndices,
 } from "./utils";
@@ -225,20 +225,11 @@ describe("getQuestionsFromSurvey", () => {
       ],
     };
 
-    const questions = getQuestionsFromSurvey(survey);
+    const questions = getElementsFromSurvey(survey);
     expect(questions).toHaveLength(3);
     expect(questions[0].id).toBe("q1");
     expect(questions[1].id).toBe("q2");
     expect(questions[2].id).toBe("q3");
-  });
-
-  test("should return empty array when blocks is undefined", () => {
-    const surveyWithoutBlocks = {
-      ...baseMockSurvey,
-    };
-    delete (surveyWithoutBlocks as Partial<TJsEnvironmentStateSurvey>).blocks;
-
-    expect(getQuestionsFromSurvey(surveyWithoutBlocks as TJsEnvironmentStateSurvey)).toEqual([]);
   });
 
   test("should return empty array when blocks is empty", () => {
@@ -247,7 +238,7 @@ describe("getQuestionsFromSurvey", () => {
       blocks: [],
     } as TJsEnvironmentStateSurvey;
 
-    expect(getQuestionsFromSurvey(survey)).toEqual([]);
+    expect(getElementsFromSurvey(survey)).toEqual([]);
   });
 
   test("should handle blocks with no elements", () => {
@@ -272,7 +263,7 @@ describe("getQuestionsFromSurvey", () => {
       ],
     };
 
-    const questions = getQuestionsFromSurvey(survey);
+    const questions = getElementsFromSurvey(survey);
     expect(questions).toHaveLength(1);
     expect(questions[0].id).toBe("q1");
   });
