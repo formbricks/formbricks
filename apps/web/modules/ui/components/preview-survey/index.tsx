@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
@@ -78,7 +78,7 @@ export const PreviewSurvey = ({
   const [shrink, setShrink] = useState(false);
   const { projectOverwrites } = survey || {};
 
-  const questions = useMemo(() => getQuestionsFromBlocks(survey.blocks), [survey.blocks]);
+  const questions = useMemo(() => getElementsFromBlocks(survey.blocks), [survey.blocks]);
 
   const previewScreenVariants: Variants = {
     expanded: {

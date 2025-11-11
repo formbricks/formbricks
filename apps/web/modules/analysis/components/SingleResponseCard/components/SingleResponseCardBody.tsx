@@ -8,7 +8,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { isValidValue } from "../util";
 import { HiddenFields } from "./HiddenFields";
 import { QuestionSkip } from "./QuestionSkip";
@@ -27,8 +27,7 @@ export const SingleResponseCardBody = ({
   response,
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
-  // Derive questions from blocks - cast to TSurveyQuestion[] as they have the same structure
-  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questions = getElementsFromBlocks(survey.blocks);
   const isFirstQuestionAnswered = questions[0] ? !!response.data[questions[0].id] : false;
   const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {

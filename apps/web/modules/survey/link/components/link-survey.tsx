@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { TResponseData, TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { SurveyLinkUsed } from "@/modules/survey/link/components/survey-link-used";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
@@ -60,7 +60,7 @@ export const LinkSurvey = ({
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const suId = searchParams.get("suId");
-  const questions = useMemo(() => getQuestionsFromBlocks(survey.blocks), [survey.blocks]);
+  const questions = useMemo(() => getElementsFromBlocks(survey.blocks), [survey.blocks]);
 
   const startAt = searchParams.get("startAt");
   const isStartAtValid = useMemo(() => {

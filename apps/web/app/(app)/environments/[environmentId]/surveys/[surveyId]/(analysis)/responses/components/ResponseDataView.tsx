@@ -10,7 +10,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 interface ResponseDataViewProps {
   survey: TSurvey;
@@ -57,7 +57,7 @@ export const extractResponseData = (response: TResponseWithQuotas, survey: TSurv
   const responseData: Record<string, any> = {};
 
   // Derive questions from blocks
-  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questions = getElementsFromBlocks(survey.blocks);
 
   for (const question of questions) {
     const responseValue = response.data[question.id];

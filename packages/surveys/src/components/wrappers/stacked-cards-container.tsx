@@ -4,7 +4,7 @@ import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
-import { cn, getQuestionsFromSurvey } from "@/lib/utils";
+import { cn, getElementsFromSurvey } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
 
 // offset = 0 -> Current question card
@@ -43,7 +43,7 @@ export function StackedCardsContainer({
   const [cardHeight, setCardHeight] = useState("auto");
   const [cardWidth, setCardWidth] = useState<number>(0);
 
-  const questions = useMemo(() => getQuestionsFromSurvey(survey), [survey]);
+  const questions = useMemo(() => getElementsFromSurvey(survey), [survey]);
 
   const questionIdxTemp = useMemo(() => {
     if (currentQuestionId === "start") return survey.welcomeCard.enabled ? -1 : 0;

@@ -219,11 +219,11 @@ export const validateMediaAndPrepareBlocks = (blocks: TSurveyBlock[]): TSurveyBl
 /**
  * Derives a flat array of elements from the survey's blocks structure
  * Useful for server-side processing where we need to iterate over all questions
- * Note: This is duplicated from the client-side editor utils since this file is server-only
+ * Note: This is duplicated from the client-side survey utils since this file is server-only
  * @param blocks - Array of survey blocks
  * @returns Flat array of all elements across all blocks
  */
-export const getQuestionsFromBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] => {
+export const getElementsFromBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] => {
   return blocks.flatMap((block) => block.elements);
 };
 

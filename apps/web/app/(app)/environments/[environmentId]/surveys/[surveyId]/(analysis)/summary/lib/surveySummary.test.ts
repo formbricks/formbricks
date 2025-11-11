@@ -12,7 +12,7 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   getQuestionSummary,
   getResponsesForSummary,
@@ -263,7 +263,7 @@ describe("getSurveySummaryDropOff", () => {
     const displayCount = 5; // 5 displays
     const dropOff = getSurveySummaryDropOff(
       surveyWithBlocks,
-      getQuestionsFromBlocks(surveyWithBlocks.blocks),
+      getElementsFromBlocks(surveyWithBlocks.blocks),
       responses,
       displayCount
     );
@@ -402,7 +402,7 @@ describe("getSurveySummaryDropOff", () => {
 
     const dropOff = getSurveySummaryDropOff(
       surveyWithLogic,
-      getQuestionsFromBlocks(surveyWithLogic.blocks),
+      getElementsFromBlocks(surveyWithLogic.blocks),
       responses,
       1
     );
@@ -473,7 +473,7 @@ describe("getQuestionSummary", () => {
   test("summarizes OpenText questions", async () => {
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       mockDropOff
     );
@@ -487,7 +487,7 @@ describe("getQuestionSummary", () => {
   test("summarizes MultipleChoiceSingle questions", async () => {
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       mockDropOff
     );
@@ -505,7 +505,7 @@ describe("getQuestionSummary", () => {
   test("summarizes HiddenFields", async () => {
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       mockDropOff
     );
@@ -573,7 +573,7 @@ describe("getQuestionSummary", () => {
 
       const summary = await getQuestionSummary(
         survey,
-        getQuestionsFromBlocks(survey.blocks),
+        getElementsFromBlocks(survey.blocks),
         responses,
         dropOff
       );
@@ -659,7 +659,7 @@ describe("getQuestionSummary", () => {
 
       const summary = await getQuestionSummary(
         survey,
-        getQuestionsFromBlocks(survey.blocks),
+        getElementsFromBlocks(survey.blocks),
         responses,
         dropOff
       );
@@ -741,7 +741,7 @@ describe("getQuestionSummary", () => {
 
       const summary = await getQuestionSummary(
         survey,
-        getQuestionsFromBlocks(survey.blocks),
+        getElementsFromBlocks(survey.blocks),
         responses,
         dropOff
       );
@@ -805,7 +805,7 @@ describe("getQuestionSummary", () => {
 
       const summary = await getQuestionSummary(
         survey,
-        getQuestionsFromBlocks(survey.blocks),
+        getElementsFromBlocks(survey.blocks),
         responses,
         dropOff
       );
@@ -869,7 +869,7 @@ describe("getQuestionSummary", () => {
 
       const summary = await getQuestionSummary(
         survey,
-        getQuestionsFromBlocks(survey.blocks),
+        getElementsFromBlocks(survey.blocks),
         responses,
         dropOff
       );
@@ -1247,7 +1247,7 @@ describe("Address and ContactInfo question types", () => {
 
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1324,7 +1324,7 @@ describe("Address and ContactInfo question types", () => {
 
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1379,7 +1379,7 @@ describe("Address and ContactInfo question types", () => {
 
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1452,7 +1452,7 @@ describe("Address and ContactInfo question types", () => {
 
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1521,7 +1521,7 @@ describe("Address and ContactInfo question types", () => {
 
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1584,7 +1584,7 @@ describe("Address and ContactInfo question types", () => {
 
     const summary = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1671,7 +1671,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1775,7 +1775,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1884,7 +1884,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -1976,7 +1976,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2048,7 +2048,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2125,7 +2125,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2207,7 +2207,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2319,7 +2319,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2386,7 +2386,7 @@ describe("Matrix question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2479,7 +2479,7 @@ describe("NPS question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2573,7 +2573,7 @@ describe("NPS question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2640,7 +2640,7 @@ describe("NPS question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2726,7 +2726,7 @@ describe("NPS question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2820,7 +2820,7 @@ describe("Rating question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2922,7 +2922,7 @@ describe("Rating question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -2982,7 +2982,7 @@ describe("Rating question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3060,7 +3060,7 @@ describe("PictureSelection question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3139,7 +3139,7 @@ describe("PictureSelection question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3201,7 +3201,7 @@ describe("PictureSelection question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3296,7 +3296,7 @@ describe("CTA question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3362,7 +3362,7 @@ describe("CTA question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3442,7 +3442,7 @@ describe("Consent question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3502,7 +3502,7 @@ describe("Consent question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3558,7 +3558,7 @@ describe("Consent question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3623,7 +3623,7 @@ describe("Date question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3682,7 +3682,7 @@ describe("Date question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3733,7 +3733,7 @@ describe("Date question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3801,7 +3801,7 @@ describe("FileUpload question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3860,7 +3860,7 @@ describe("FileUpload question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3936,7 +3936,7 @@ describe("Cal question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -3997,7 +3997,7 @@ describe("Cal question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );
@@ -4054,7 +4054,7 @@ describe("Cal question type tests", () => {
 
     const summary: any = await getQuestionSummary(
       survey,
-      getQuestionsFromBlocks(survey.blocks),
+      getElementsFromBlocks(survey.blocks),
       responses,
       dropOff
     );

@@ -4,7 +4,7 @@ import { Language } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
@@ -33,7 +33,7 @@ export function SecondaryLanguageSelect({
     );
   };
 
-  const questions = getQuestionsFromBlocks(localSurvey.blocks);
+  const questions = getElementsFromBlocks(localSurvey.blocks);
 
   return (
     <div className="space-y-2">

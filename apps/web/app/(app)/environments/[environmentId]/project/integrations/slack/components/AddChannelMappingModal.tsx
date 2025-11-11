@@ -18,7 +18,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -74,7 +74,7 @@ export const AddChannelMappingModal = ({
   };
 
   const questions = useMemo(
-    () => (selectedSurvey ? getQuestionsFromBlocks(selectedSurvey.blocks) : []),
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
     [selectedSurvey]
   );
 

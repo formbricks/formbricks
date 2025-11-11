@@ -79,7 +79,7 @@ export const calculateElementIdx = (
   currentQustionIdx: number,
   totalCards: number
 ): number => {
-  const questions = getQuestionsFromSurvey(survey);
+  const questions = getElementsFromSurvey(survey);
   const currentQuestion = questions[currentQustionIdx];
   const middleIdx = Math.floor(totalCards / 2);
   const possibleNextBlockIds = getPossibleNextBlocks(survey, currentQuestion);
@@ -197,7 +197,7 @@ export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCo
     }
   }
 
-  const questions = getQuestionsFromSurvey(survey);
+  const questions = getElementsFromSurvey(survey);
   for (const question of questions) {
     const questionHeadline = question.headline[languageCode];
 
@@ -215,7 +215,7 @@ export const checkIfSurveyIsRTL = (survey: TJsEnvironmentStateSurvey, languageCo
  * @param survey The survey object with blocks
  * @returns An array of TSurveyElement (pure elements without block-level properties)
  */
-export const getQuestionsFromSurvey = (survey: TJsEnvironmentStateSurvey): TSurveyElement[] =>
+export const getElementsFromSurvey = (survey: TJsEnvironmentStateSurvey): TSurveyElement[] =>
   survey.blocks.flatMap((block) => block.elements);
 
 /**

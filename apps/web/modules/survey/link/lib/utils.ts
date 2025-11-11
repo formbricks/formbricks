@@ -2,7 +2,7 @@ import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 export const getPrefillValue = (
   survey: TSurvey,
@@ -11,7 +11,7 @@ export const getPrefillValue = (
 ): TResponseData | undefined => {
   const prefillAnswer: TResponseData = {};
 
-  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questions = getElementsFromBlocks(survey.blocks);
   const questionIdxMap = questions.reduce(
     (acc, question, idx) => {
       acc[question.id] = idx;

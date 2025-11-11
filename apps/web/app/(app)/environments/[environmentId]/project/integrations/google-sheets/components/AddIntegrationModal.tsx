@@ -22,7 +22,7 @@ import {
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -87,7 +87,7 @@ export const AddIntegrationModal = ({
   };
 
   const questions = useMemo(
-    () => (selectedSurvey ? getQuestionsFromBlocks(selectedSurvey.blocks) : []),
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
     [selectedSurvey]
   );
 

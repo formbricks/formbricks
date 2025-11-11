@@ -23,7 +23,7 @@ import {
 import NotionLogo from "@/images/notion.png";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -93,7 +93,7 @@ export const AddIntegrationModal = ({
   };
 
   const questions = useMemo(
-    () => (selectedSurvey ? getQuestionsFromBlocks(selectedSurvey.blocks) : []),
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
     [selectedSurvey]
   );
 

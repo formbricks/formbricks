@@ -8,7 +8,7 @@ import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { deleteResponseAction, getResponseAction } from "./actions";
@@ -51,7 +51,7 @@ export const SingleResponseCard = ({
 
   const skippedQuestions: string[][] = useMemo(() => {
     // Derive questions from blocks
-    const questions = getQuestionsFromBlocks(survey.blocks);
+    const questions = getElementsFromBlocks(survey.blocks);
 
     const flushTemp = (temp: string[], result: string[][], shouldReverse = false) => {
       if (temp.length > 0) {

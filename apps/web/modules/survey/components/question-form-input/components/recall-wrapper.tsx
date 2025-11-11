@@ -18,7 +18,7 @@ import {
 } from "@/lib/utils/recall";
 import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
 import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 
 interface RecallWrapperRenderProps {
@@ -190,7 +190,7 @@ export const RecallWrapper = ({
       const info = extractRecallInfo(recallItem.label);
       if (info) {
         const recallItemId = extractId(info);
-        const questions = getQuestionsFromBlocks(localSurvey.blocks);
+        const questions = getElementsFromBlocks(localSurvey.blocks);
         const recallQuestion = questions.find((q) => q.id === recallItemId);
         if (recallQuestion) {
           // replace nested recall with "___"

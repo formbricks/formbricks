@@ -22,7 +22,7 @@ import { BaseSelectDropdown } from "@/app/(app)/environments/[environmentId]/pro
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
 import AirtableLogo from "@/images/airtableLogo.svg";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -200,7 +200,7 @@ export const AddIntegrationModal = ({
 
   const selectedSurvey = surveys.find((item) => item.id === survey);
   const questions = useMemo(
-    () => (selectedSurvey ? getQuestionsFromBlocks(selectedSurvey.blocks) : []),
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
     [selectedSurvey]
   );
 

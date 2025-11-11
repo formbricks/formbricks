@@ -17,7 +17,7 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { writeData as writeNotionData } from "@/lib/notion/service";
 import { processResponseData } from "@/lib/responses";
 import { writeDataToSlack } from "@/lib/slack/service";
-import { getQuestionsFromBlocks } from "@/lib/survey/utils";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
@@ -239,7 +239,7 @@ const extractResponses = async (
   const questions: string[] = [];
 
   // Derive questions from blocks
-  const surveyQuestions = getQuestionsFromBlocks(survey.blocks);
+  const surveyQuestions = getElementsFromBlocks(survey.blocks);
 
   for (const questionId of questionIds) {
     //check for hidden field Ids
@@ -327,7 +327,7 @@ const buildNotionPayloadProperties = (
   const responses = data.response.data;
 
   // Derive questions from blocks
-  const surveyQuestions = getQuestionsFromBlocks(surveyData.blocks);
+  const surveyQuestions = getElementsFromBlocks(surveyData.blocks);
 
   const mappingQIds = mapping
     .filter((m) => m.question.type === TSurveyElementTypeEnum.PictureSelection)

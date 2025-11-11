@@ -1,6 +1,6 @@
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getQuestionsFromBlocks } from "@/lib/survey/utils";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
@@ -20,8 +20,8 @@ export const checkExternalUrlsPermission = async (
   newSurvey: TSurvey,
   oldSurvey: TSurvey | null
 ): Promise<void> => {
-  const newQuestions = getQuestionsFromBlocks(newSurvey.blocks);
-  const oldQuestions = oldSurvey?.blocks ? getQuestionsFromBlocks(oldSurvey.blocks) : [];
+  const newQuestions = getElementsFromBlocks(newSurvey.blocks);
+  const oldQuestions = oldSurvey?.blocks ? getElementsFromBlocks(oldSurvey.blocks) : [];
 
   const organizationBilling = await getOrganizationBilling(organizationId);
   if (!organizationBilling) {

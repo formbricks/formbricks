@@ -37,24 +37,6 @@ import {
   TSurveyRankingElement,
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
-// import {
-//   TSurveyQuestionTypeEnum as QuestionId,
-//   TSurveyAddressQuestion,
-//   TSurveyCTAQuestion,
-//   TSurveyCalQuestion,
-//   TSurveyConsentQuestion,
-//   TSurveyContactInfoQuestion,
-//   TSurveyDateQuestion,
-//   TSurveyFileUploadQuestion,
-//   TSurveyMatrixQuestion,
-//   TSurveyMultipleChoiceQuestion,
-//   TSurveyNPSQuestion,
-//   TSurveyOpenTextQuestion,
-//   TSurveyPictureSelectionQuestion,
-//   TSurveyQuestionTypeEnum,
-//   TSurveyRankingQuestion,
-//   TSurveyRatingQuestion,
-// } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 import { replaceQuestionPresetPlaceholders } from "@/lib/utils/templates";
 

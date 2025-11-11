@@ -18,14 +18,20 @@ export const survey: Pick<Survey, "id" | "questions" | "blocks"> = {
   ],
   blocks: [
     {
-      id: "i0e9y9ya4pl9iyrurlrak3yq",
-      type: TSurveyElementTypeEnum.OpenText,
-      headline: { default: "Question Text", de: "Fragetext" },
-      required: false,
-      inputType: "text",
-      charLimit: {
-        enabled: false,
-      },
+      id: "block1",
+      name: "Block 1",
+      elements: [
+        {
+          id: "i0e9y9ya4pl9iyrurlrak3yq",
+          type: TSurveyElementTypeEnum.OpenText,
+          headline: { default: "Question Text", de: "Fragetext" },
+          required: false,
+          inputType: "text",
+          charLimit: 1000,
+          subheader: { default: "" },
+          placeholder: { default: "" },
+        },
+      ],
     },
   ],
 };
