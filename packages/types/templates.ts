@@ -39,7 +39,7 @@ export type TTemplate = z.infer<typeof ZTemplate>;
 
 export const ZXMTemplate = z.object({
   name: z.string(),
-  questions: ZSurveyQuestions,
+  blocks: ZSurveyBlocks,
   endings: ZSurveyEndings,
   styling: ZSurveyStyling,
 });
