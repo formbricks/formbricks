@@ -5,13 +5,8 @@ import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surv
 import { TTemplate } from "@formbricks/types/templates";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import {
-  getChannelMapping,
-  getIndustryMapping,
-  getRoleMapping,
-  replacePresetPlaceholders,
-  replaceQuestionPresetPlaceholders,
-} from "./utils";
+import { replacePresetPlaceholders, replaceQuestionPresetPlaceholders } from "@/lib/utils/templates";
+import { getChannelMapping, getIndustryMapping, getRoleMapping } from "./utils";
 
 vi.mock("@/lib/i18n/utils", () => ({
   getLocalizedValue: vi.fn(),
