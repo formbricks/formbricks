@@ -213,6 +213,12 @@ const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurv
       script.src = `${config.get().appUrl}/js/surveys.umd.cjs`;
       script.async = true;
       script.onload = () => {
+        // Apply stored nonce if it was set before surveys package loaded
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing internal nonce storage
+        const storedNonce = (window as any).__formbricksNonce;
+        if (storedNonce && window.formbricksSurveys?.setNonce) {
+          window.formbricksSurveys.setNonce(storedNonce);
+        }
         resolve(window.formbricksSurveys);
       };
       script.onerror = (error) => {

@@ -8,25 +8,74 @@ import preflight from "@/styles/preflight.css?inline";
 import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
 
+// Store the nonce globally for style elements
+let styleNonce: string | undefined;
+
+/**
+ * Set the CSP nonce to be applied to all style elements
+ * @param nonce - The CSP nonce value (without 'nonce-' prefix)
+ */
+export const setStyleNonce = (nonce: string | undefined): void => {
+  styleNonce = nonce;
+
+  // Update existing style elements if they exist
+  const existingStyleElement = document.getElementById("formbricks__css");
+  if (existingStyleElement && nonce) {
+    existingStyleElement.setAttribute("nonce", nonce);
+  }
+
+  const existingCustomStyleElement = document.getElementById("formbricks__css__custom");
+  if (existingCustomStyleElement && nonce) {
+    existingCustomStyleElement.setAttribute("nonce", nonce);
+  }
+};
+
+export const getStyleNonce = (): string | undefined => {
+  return styleNonce;
+};
+
 export const addStylesToDom = () => {
   if (document.getElementById("formbricks__css") === null) {
     const styleElement = document.createElement("style");
     styleElement.id = "formbricks__css";
+
+    // Apply nonce if available
+    if (styleNonce) {
+      styleElement.setAttribute("nonce", styleNonce);
+    }
+
     styleElement.innerHTML =
       preflight + global + editorCss + datePickerCss + calendarCss + datePickerCustomCss;
     document.head.appendChild(styleElement);
+  } else {
+    // If style element already exists, update its nonce if needed
+    const existingStyleElement = document.getElementById("formbricks__css");
+    if (existingStyleElement && styleNonce && !existingStyleElement.getAttribute("nonce")) {
+      existingStyleElement.setAttribute("nonce", styleNonce);
+    }
   }
 };
 
 export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }): void => {
   // Check if the style element already exists
-  let styleElement = document.getElementById("formbricks__css__custom");
+  let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 
   // If the style element doesn't exist, create it and append to the head
   if (!styleElement) {
     styleElement = document.createElement("style");
     styleElement.id = "formbricks__css__custom";
+
+    // Apply nonce if available
+    if (styleNonce) {
+      styleElement.setAttribute("nonce", styleNonce);
+    }
+
     document.head.appendChild(styleElement);
+  } else {
+    // Update nonce if it wasn't set before
+    if (styleNonce && !styleElement.getAttribute("nonce")) {
+      styleElement.setAttribute("nonce", styleNonce);
+    }
   }
 
   // Start the innerHTML string with :root
