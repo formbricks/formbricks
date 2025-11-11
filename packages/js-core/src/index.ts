@@ -88,13 +88,13 @@ const setNonce = (nonce: string | undefined): void => {
   void storedNonce; // Store for potential future use
 
   // Store nonce on window for access when surveys package loads
-  if (typeof window !== "undefined") {
-    window.__formbricksNonce = nonce;
+  if (typeof globalThis.window !== "undefined") {
+    globalThis.window.__formbricksNonce = nonce;
   }
 
   // Set nonce in surveys package if it's already loaded
-  if (typeof window !== "undefined" && window.formbricksSurveys?.setNonce) {
-    window.formbricksSurveys.setNonce(nonce);
+  if (typeof globalThis.window !== "undefined" && globalThis.window.formbricksSurveys?.setNonce) {
+    globalThis.window.formbricksSurveys.setNonce(nonce);
   }
 };
 

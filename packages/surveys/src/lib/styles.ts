@@ -60,8 +60,14 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 
-  // If the style element doesn't exist, create it and append to the head
-  if (!styleElement) {
+  // If the style element exists, update nonce if needed
+  if (styleElement) {
+    // Update nonce if it wasn't set before
+    if (styleNonce && !styleElement.getAttribute("nonce")) {
+      styleElement.setAttribute("nonce", styleNonce);
+    }
+  } else {
+    // Create it and append to the head
     styleElement = document.createElement("style");
     styleElement.id = "formbricks__css__custom";
 
@@ -71,11 +77,6 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     }
 
     document.head.appendChild(styleElement);
-  } else {
-    // Update nonce if it wasn't set before
-    if (styleNonce && !styleElement.getAttribute("nonce")) {
-      styleElement.setAttribute("nonce", styleNonce);
-    }
   }
 
   // Start the innerHTML string with :root

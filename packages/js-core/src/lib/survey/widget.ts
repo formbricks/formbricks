@@ -201,24 +201,24 @@ export const removeWidgetContainer = (): void => {
   document.getElementById(CONTAINER_ID)?.remove();
 };
 
-const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {
+const loadFormbricksSurveysExternally = (): Promise<typeof globalThis.window.formbricksSurveys> => {
   const config = Config.getInstance();
 
   return new Promise((resolve, reject) => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- We need to check if the formbricksSurveys object exists
-    if (window.formbricksSurveys) {
-      resolve(window.formbricksSurveys);
+    if (globalThis.window.formbricksSurveys) {
+      resolve(globalThis.window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
       script.src = `${config.get().appUrl}/js/surveys.umd.cjs`;
       script.async = true;
       script.onload = () => {
         // Apply stored nonce if it was set before surveys package loaded
-        const storedNonce = window.__formbricksNonce;
-        if (storedNonce && window.formbricksSurveys) {
-          window.formbricksSurveys.setNonce(storedNonce);
+        const storedNonce = globalThis.window.__formbricksNonce;
+        if (storedNonce && globalThis.window.formbricksSurveys) {
+          globalThis.window.formbricksSurveys.setNonce(storedNonce);
         }
-        resolve(window.formbricksSurveys);
+        resolve(globalThis.window.formbricksSurveys);
       };
       script.onerror = (error) => {
         console.error("Failed to load Formbricks Surveys library:", error);
