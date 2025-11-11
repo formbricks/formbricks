@@ -623,6 +623,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
   const reusableElementIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
   const block3Id = createId(); // Pre-generate ID for Block 3 (referenced by Block 1 logic)
+  const block4Id = createId();
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
@@ -663,7 +664,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
               inputType: "text",
             }),
           ],
-          logic: [createBlockJumpLogic(reusableElementIds[1], reusableElementIds[3], "isSubmitted")],
+          logic: [createBlockJumpLogic(reusableElementIds[1], block4Id, "isSubmitted")],
           t,
         }),
         buildBlock({
@@ -681,6 +682,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
           t,
         }),
         buildBlock({
+          id: block4Id,
           name: "Block 4",
           elements: [
             buildMultipleChoiceElement({
@@ -904,6 +906,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
   const block3Id = createId();
   const block4Id = createId();
   const block5Id = createId();
+  const block6Id = createId(); // Block 6 referenced by blocks 2, 3, and 5
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
@@ -964,7 +967,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
               inputType: "text",
             }),
           ],
-          logic: [createBlockJumpLogic(reusableElementIds[1], reusableElementIds[5], "isSubmitted")],
+          logic: [createBlockJumpLogic(reusableElementIds[1], block6Id, "isSubmitted")],
           buttonLabel: t("templates.improve_trial_conversion_question_2_button_label"),
           t,
         }),
@@ -979,7 +982,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
               inputType: "text",
             }),
           ],
-          logic: [createBlockJumpLogic(reusableElementIds[2], reusableElementIds[5], "isSubmitted")],
+          logic: [createBlockJumpLogic(reusableElementIds[2], block6Id, "isSubmitted")],
           buttonLabel: t("templates.improve_trial_conversion_question_2_button_label"),
           t,
         }),
@@ -1013,11 +1016,12 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
               inputType: "text",
             }),
           ],
-          logic: [createBlockJumpLogic(reusableElementIds[4], reusableElementIds[5], "isSubmitted")],
+          logic: [createBlockJumpLogic(reusableElementIds[4], block6Id, "isSubmitted")],
           buttonLabel: t("templates.improve_trial_conversion_question_5_button_label"),
           t,
         }),
         buildBlock({
+          id: block6Id,
           name: "Block 6",
           elements: [
             buildOpenTextElement({
@@ -1748,6 +1752,7 @@ const feedbackBox = (t: TFunction): TTemplate => {
   const reusableElementIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId()];
   const block2Id = createId(); // Pre-generate IDs for blocks referenced by logic
+  const block3Id = createId(); // Block 3 referenced by block 2
   const block4Id = createId();
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
@@ -1795,10 +1800,11 @@ const feedbackBox = (t: TFunction): TTemplate => {
               inputType: "text",
             }),
           ],
-          logic: [createBlockJumpLogic(reusableElementIds[1], reusableElementIds[2], "isSubmitted")],
+          logic: [createBlockJumpLogic(reusableElementIds[1], block3Id, "isSubmitted")],
           t,
         }),
         buildBlock({
+          id: block3Id,
           name: "Block 3",
           elements: [
             buildCTAElement({
@@ -3965,7 +3971,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
               inputType: "text",
             }),
           ],
-          logic: [createBlockJumpLogic(reusableElementIds[5], reusableElementIds[7], "isSubmitted")],
+          logic: [createBlockJumpLogic(reusableElementIds[5], block8Id, "isSubmitted")],
           t,
         }),
         buildBlock({
