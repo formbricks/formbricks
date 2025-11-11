@@ -114,7 +114,12 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
   };
 
   const handleOverwriteDaysChange = (event) => {
-    const value = Number(event.target.value);
+    let value = Number(event.target.value);
+    if (Number.isNaN(value) || value < 1) {
+      value = 1;
+    } else if (value > 365) {
+      value = 365;
+    }
     setInputDays(value);
 
     const updatedSurvey = { ...localSurvey, recontactDays: value };
@@ -122,7 +127,10 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
   };
 
   const handleDisplayLimitChange = (event) => {
-    const value = Number(event.target.value);
+    let value = Number(event.target.value);
+    if (Number.isNaN(value) || value < 1) {
+      value = 1;
+    }
     setDisplayLimit(value);
 
     const updatedSurvey = { ...localSurvey, displayLimit: value } satisfies TSurvey;
@@ -210,6 +218,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                         <Input
                           type="number"
                           min="1"
+                          max="365"
                           id="overwriteDays"
                           value={inputDays}
                           onChange={handleOverwriteDaysChange}

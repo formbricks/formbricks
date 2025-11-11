@@ -428,6 +428,9 @@ const mockExistingSurveyDetails = {
   styling: { theme: {} },
   segment: null,
   followUps: [{ name: "Follow Up 1", trigger: {}, action: {} }],
+  displayOption: "respondMultiple" as any,
+  recontactDays: 7,
+  displayLimit: 5,
   triggers: [
     {
       actionClass: {
@@ -752,6 +755,42 @@ describe("copySurveyToOtherEnvironment", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           triggers: { create: [] },
+        }),
+      })
+    );
+  });
+
+  test("should copy recontact options (displayOption, recontactDays, displayLimit)", async () => {
+    await copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, userId);
+
+    expect(prisma.survey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          displayOption: "respondMultiple",
+          recontactDays: 7,
+          displayLimit: 5,
+        }),
+      })
+    );
+  });
+
+  test("should copy recontact options with null values", async () => {
+    const surveyWithNullRecontact = {
+      ...mockExistingSurveyDetails,
+      displayOption: "displayOnce" as any,
+      recontactDays: null,
+      displayLimit: null,
+    };
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue(surveyWithNullRecontact as any);
+
+    await copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, userId);
+
+    expect(prisma.survey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          displayOption: "displayOnce",
+          recontactDays: null,
+          displayLimit: null,
         }),
       })
     );
