@@ -11,8 +11,8 @@ import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/typ
 import { validateId } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { findHiddenFieldUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -45,7 +45,7 @@ export const HiddenFieldsCard = ({
     }
   };
 
-  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const questions = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
     let updatedSurvey = { ...localSurvey };

@@ -43,7 +43,7 @@ import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { buildWhereClause } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
-import { findElementLocation, getQuestionsFromBlocks } from "@/lib/survey/utils";
+import { findElementLocation, getElementsFromBlocks } from "@/lib/survey/utils";
 import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { convertFloatTo2Decimal } from "./utils";
@@ -989,7 +989,7 @@ export const getSurveySummary = reactCache(
       }
 
       // Derive questions once from blocks
-      const questions = getQuestionsFromBlocks(survey.blocks);
+      const questions = getElementsFromBlocks(survey.blocks);
 
       const batchSize = 5000;
       const hasFilter = Object.keys(filterCriteria ?? {}).length > 0;

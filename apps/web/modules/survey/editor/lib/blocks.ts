@@ -47,9 +47,6 @@ export const findElementLocation = (
   return { blockId: null, blockIndex: -1, elementIndex: -1, block: null };
 };
 
-export const getQuestionsFromBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] =>
-  blocks.flatMap((block) => block.elements);
-
 // ============================================
 // BLOCK OPERATIONS
 // ============================================

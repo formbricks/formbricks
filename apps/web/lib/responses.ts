@@ -3,7 +3,7 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { parseRecallInfo } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getLanguageCode, getLocalizedValue } from "./i18n/utils";
 
 // function to convert response value of type string | number | string[] or Record<string, string> to string | string[]
@@ -44,7 +44,7 @@ export const getQuestionResponseMapping = (
   }[] = [];
   const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 
-  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questions = getElementsFromBlocks(survey.blocks);
 
   for (const question of questions) {
     const answer = response.data[question.id];

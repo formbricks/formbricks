@@ -22,7 +22,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
@@ -30,6 +29,7 @@ import {
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -103,7 +103,7 @@ export const FollowUpModal = ({
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
     // Derive questions from blocks
-    const questions = getQuestionsFromBlocks(localSurvey.blocks);
+    const questions = getElementsFromBlocks(localSurvey.blocks);
 
     const openTextAndContactQuestions = questions.filter((question) => {
       if (question.type === TSurveyElementTypeEnum.ContactInfo) {

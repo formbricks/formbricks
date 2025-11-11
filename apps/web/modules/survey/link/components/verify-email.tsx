@@ -13,7 +13,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { isSurveyResponsePresentAction, sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
@@ -54,7 +54,7 @@ export const VerifyEmail = ({
     return replaceHeadlineRecall(survey, "default");
   }, [survey]);
 
-  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const questions = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const { isSubmitting } = form.formState;
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);

@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -37,7 +37,7 @@ export const UpdateQuestionId = ({
       return;
     }
 
-    const questions = getQuestionsFromBlocks(localSurvey.blocks);
+    const questions = getElementsFromBlocks(localSurvey.blocks);
     const questionIds = questions.map((q) => q.id);
     const endingCardIds = localSurvey.endings.map((e) => e.id);
     const hiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];

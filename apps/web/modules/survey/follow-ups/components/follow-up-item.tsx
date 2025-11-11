@@ -8,9 +8,9 @@ import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -47,7 +47,7 @@ export const FollowUpItem = ({
     if (!to) return true;
 
     // Derive questions from blocks
-    const questions = getQuestionsFromBlocks(localSurvey.blocks);
+    const questions = getElementsFromBlocks(localSurvey.blocks);
 
     const matchedQuestion = questions.find((question) => {
       if (question.id !== to) {

@@ -19,7 +19,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
 import { getFormattedDateTimeString } from "../utils/datetime";
@@ -330,7 +330,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     const data: Prisma.ResponseWhereInput[] = [];
 
     Object.entries(filterCriteria.data).forEach(([key, val]) => {
-      const questions = getQuestionsFromBlocks(survey.blocks);
+      const questions = getElementsFromBlocks(survey.blocks);
       const question = questions.find((question) => question.id === key);
 
       switch (val.op) {
@@ -665,7 +665,7 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
   const modifiedSurvey = replaceHeadlineRecall(survey, "default");
 
-  const modifiedQuestions = getQuestionsFromBlocks(modifiedSurvey.blocks);
+  const modifiedQuestions = getElementsFromBlocks(modifiedSurvey.blocks);
 
   const questions = modifiedQuestions.map((question, idx) => {
     const headline = getTextContent(getLocalizedValue(question.headline, "default")) ?? question.id;
@@ -735,7 +735,7 @@ export const getResponsesJson = (
     // survey response data
     questionsHeadlines.forEach((questionHeadline) => {
       const questionIndex = parseInt(questionHeadline[0]) - 1;
-      const questions = getQuestionsFromBlocks(survey.blocks);
+      const questions = getElementsFromBlocks(survey.blocks);
       const question = questions[questionIndex];
       const answer = response.data[question.id];
 

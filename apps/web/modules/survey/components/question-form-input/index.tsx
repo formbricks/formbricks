@@ -21,7 +21,7 @@ import { recallToHeadline } from "@/lib/utils/recall";
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
 import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
@@ -94,7 +94,7 @@ export const QuestionFormInput = ({
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
 
-  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const questions = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const question: TSurveyElement = questions[questionIdx];
   const isChoice = id.includes("choice");

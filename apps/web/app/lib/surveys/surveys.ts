@@ -22,7 +22,7 @@ import {
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 const conditionOptions = {
   openText: ["is"],
@@ -81,7 +81,7 @@ export const generateQuestionAndFilterOptions = (
   let questionFilterOptions: any = [];
 
   let questionsOptions: any = [];
-  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questions = getElementsFromBlocks(survey.blocks);
 
   questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
@@ -314,7 +314,7 @@ export const getFormattedFilters = (
 
   // for questions
   if (questions.length) {
-    const surveyQuestions = getQuestionsFromBlocks(survey.blocks);
+    const surveyQuestions = getElementsFromBlocks(survey.blocks);
     questions.forEach(({ filterType, questionType }) => {
       if (!filters.data) filters.data = {};
       switch (questionType.questionType) {

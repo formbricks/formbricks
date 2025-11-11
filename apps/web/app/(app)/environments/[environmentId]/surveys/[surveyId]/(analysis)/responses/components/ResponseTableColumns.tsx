@@ -14,7 +14,7 @@ import { getContactIdentifier } from "@/lib/utils/contact";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -267,8 +267,7 @@ export const generateResponseTableColumns = (
   t: TFunction,
   showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
-  // Derive questions from blocks - cast to TSurveyQuestion[] as they have the same structure
-  const questions = getQuestionsFromBlocks(survey.blocks);
+  const questions = getElementsFromBlocks(survey.blocks);
   const questionColumns = questions.flatMap((question) =>
     getQuestionColumnsData(question, survey, isExpanded, t)
   );
