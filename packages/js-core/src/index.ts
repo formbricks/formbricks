@@ -82,14 +82,11 @@ const registerRouteChange = async (): Promise<void> => {
  */
 const setNonce = (nonce: string | undefined): void => {
   // Store nonce on window for access when surveys package loads
-  if (globalThis.window) {
-    globalThis.window.__formbricksNonce = nonce;
-  }
+  globalThis.window.__formbricksNonce = nonce;
 
   // Set nonce in surveys package if it's already loaded
-  if (globalThis.window && globalThis.window.formbricksSurveys?.setNonce) {
-    globalThis.window.formbricksSurveys.setNonce(nonce);
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
+  globalThis.window.formbricksSurveys?.setNonce?.(nonce);
 };
 
 const formbricks = {

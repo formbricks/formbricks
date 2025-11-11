@@ -215,7 +215,7 @@ const loadFormbricksSurveysExternally = (): Promise<typeof globalThis.window.for
       script.onload = () => {
         // Apply stored nonce if it was set before surveys package loaded
         const storedNonce = globalThis.window.__formbricksNonce;
-        if (storedNonce && globalThis.window.formbricksSurveys) {
+        if (storedNonce) {
           globalThis.window.formbricksSurveys.setNonce(storedNonce);
         }
         resolve(globalThis.window.formbricksSurveys);
