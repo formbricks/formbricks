@@ -6,15 +6,11 @@ import {
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import {
-  TActionCalculate,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyVariable,
-} from "@formbricks/types/surveys/types";
+import { TActionCalculate, TSurveyLogicAction, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
 
@@ -267,14 +263,17 @@ const evaluateSingleCondition = (
       condition.leftOperand,
       selectedLanguage
     );
+
     let rightValue = condition.rightOperand
       ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
       : undefined;
 
-    let leftField: TSurveyQuestion | TSurveyVariable | string;
+    const questions = getElementsFromBlocks(localSurvey.blocks);
+
+    let leftField: TSurveyElement | TSurveyVariable | string;
 
     if (condition.leftOperand?.type === "question") {
-      leftField = localSurvey.questions.find((q) => q.id === condition.leftOperand?.value) as TSurveyQuestion;
+      leftField = questions.find((q) => q.id === condition.leftOperand?.value) ?? "";
     } else if (condition.leftOperand?.type === "variable") {
       leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand?.value) as TSurveyVariable;
     } else if (condition.leftOperand?.type === "hiddenField") {
@@ -283,12 +282,10 @@ const evaluateSingleCondition = (
       leftField = "";
     }
 
-    let rightField: TSurveyQuestion | TSurveyVariable | string;
+    let rightField: TSurveyElement | TSurveyVariable | string;
 
     if (condition.rightOperand?.type === "question") {
-      rightField = localSurvey.questions.find(
-        (q) => q.id === condition.rightOperand?.value
-      ) as TSurveyQuestion;
+      rightField = questions.find((q) => q.id === condition.rightOperand?.value) ?? "";
     } else if (condition.rightOperand?.type === "variable") {
       rightField = localSurvey.variables.find(
         (v) => v.id === condition.rightOperand?.value
@@ -311,7 +308,7 @@ const evaluateSingleCondition = (
       case "equals":
         if (condition.leftOperand.type === "question") {
           if (
-            (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+            (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
@@ -322,12 +319,12 @@ const evaluateSingleCondition = (
 
         // when left value is of openText, hiddenField, variable and right value is of multichoice
         if (condition.rightOperand?.type === "question") {
-          if ((rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
+          if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
               return rightValue.includes(leftValue as string);
             } else return false;
           } else if (
-            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+            (rightField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
@@ -346,7 +343,7 @@ const evaluateSingleCondition = (
         // when left value is of picture selection question and right value is its option
         if (
           condition.leftOperand.type === "question" &&
-          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.PictureSelection &&
+          (leftField as TSurveyElement).type === TSurveyElementTypeEnum.PictureSelection &&
           Array.isArray(leftValue) &&
           leftValue.length > 0 &&
           typeof rightValue === "string"
@@ -357,7 +354,7 @@ const evaluateSingleCondition = (
         // when left value is of date question and right value is string
         if (
           condition.leftOperand.type === "question" &&
-          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+          (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
           typeof leftValue === "string" &&
           typeof rightValue === "string"
         ) {
@@ -366,12 +363,12 @@ const evaluateSingleCondition = (
 
         // when left value is of openText, hiddenField, variable and right value is of multichoice
         if (condition.rightOperand?.type === "question") {
-          if ((rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
+          if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
               return !rightValue.includes(leftValue as string);
             } else return false;
           } else if (
-            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+            (rightField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
             typeof leftValue === "string" &&
             typeof rightValue === "string"
           ) {
@@ -402,7 +399,7 @@ const evaluateSingleCondition = (
         if (typeof leftValue === "string") {
           if (
             condition.leftOperand.type === "question" &&
-            (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.FileUpload &&
+            (leftField as TSurveyElement).type === TSurveyElementTypeEnum.FileUpload &&
             leftValue
           ) {
             return leftValue !== "skipped";
@@ -515,7 +512,8 @@ const getLeftOperandValue = (
 ) => {
   switch (leftOperand.type) {
     case "question":
-      const currentQuestion = localSurvey.questions.find((q) => q.id === leftOperand.value);
+      const questions = getElementsFromBlocks(localSurvey.blocks);
+      const currentQuestion = questions.find((q) => q.id === leftOperand.value);
       if (!currentQuestion) return undefined;
 
       const responseValue = data[leftOperand.value];

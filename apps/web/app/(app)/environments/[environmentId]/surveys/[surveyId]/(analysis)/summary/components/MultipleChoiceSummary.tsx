@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
+  TSurveyElementSummaryMultipleChoice,
   TSurveyQuestionId,
-  TSurveyQuestionSummaryMultipleChoice,
-  TSurveyQuestionTypeEnum,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
 import { getChoiceIdByValue } from "@/lib/response/utils";
@@ -22,14 +22,14 @@ import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MultipleChoiceSummaryProps {
-  questionSummary: TSurveyQuestionSummaryMultipleChoice;
+  questionSummary: TSurveyElementSummaryMultipleChoice;
   environmentId: string;
   surveyType: TSurveyType;
   survey: TSurvey;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    questionType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;

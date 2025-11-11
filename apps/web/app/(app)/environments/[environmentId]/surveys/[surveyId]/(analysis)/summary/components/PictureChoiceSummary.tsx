@@ -4,11 +4,11 @@ import { InboxIcon } from "lucide-react";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   TSurvey,
+  TSurveyElementSummaryPictureSelection,
   TSurveyQuestionId,
-  TSurveyQuestionSummaryPictureSelection,
-  TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -17,12 +17,12 @@ import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface PictureChoiceSummaryProps {
-  questionSummary: TSurveyQuestionSummaryPictureSelection;
+  questionSummary: TSurveyElementSummaryPictureSelection;
   survey: TSurvey;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    questionType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;

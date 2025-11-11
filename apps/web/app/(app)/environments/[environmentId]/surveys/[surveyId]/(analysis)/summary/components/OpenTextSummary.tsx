@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyElementSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {
-  questionSummary: TSurveyQuestionSummaryOpenText;
+  questionSummary: TSurveyElementSummaryOpenText;
   environmentId: string;
   survey: TSurvey;
   locale: TUserLocale;

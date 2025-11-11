@@ -31,8 +31,8 @@ import {
   cn,
   findBlockByElementId,
   getDefaultLanguageCode,
+  getElementsFromSurvey,
   getFirstElementIdInBlock,
-  getQuestionsFromSurvey,
 } from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
@@ -146,7 +146,7 @@ export function Survey({
     return null;
   }, [appUrl, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
-  const questions = useMemo(() => getQuestionsFromSurvey(localSurvey), [localSurvey]);
+  const questions = useMemo(() => getElementsFromSurvey(localSurvey), [localSurvey]);
 
   const originalQuestionRequiredStates = useMemo(() => {
     return questions.reduce<Record<string, boolean>>((acc, question) => {

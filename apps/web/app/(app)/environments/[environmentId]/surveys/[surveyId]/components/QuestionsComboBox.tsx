@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { Fragment, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Button } from "@/modules/ui/components/button";
@@ -55,7 +55,7 @@ export enum OptionsType {
 
 export type QuestionOption = {
   label: string;
-  questionType?: TSurveyQuestionTypeEnum;
+  questionType?: TSurveyElementTypeEnum;
   type: OptionsType;
   id: string;
 };
@@ -72,18 +72,18 @@ interface QuestionComboBoxProps {
 
 const questionIcons = {
   // questions
-  [TSurveyQuestionTypeEnum.OpenText]: MessageSquareTextIcon,
-  [TSurveyQuestionTypeEnum.Rating]: StarIcon,
-  [TSurveyQuestionTypeEnum.CTA]: MousePointerClickIcon,
-  [TSurveyQuestionTypeEnum.MultipleChoiceMulti]: ListIcon,
-  [TSurveyQuestionTypeEnum.MultipleChoiceSingle]: Rows3Icon,
-  [TSurveyQuestionTypeEnum.NPS]: NetPromoterScoreIcon,
-  [TSurveyQuestionTypeEnum.Consent]: CheckIcon,
-  [TSurveyQuestionTypeEnum.PictureSelection]: ImageIcon,
-  [TSurveyQuestionTypeEnum.Matrix]: GridIcon,
-  [TSurveyQuestionTypeEnum.Ranking]: ListOrderedIcon,
-  [TSurveyQuestionTypeEnum.Address]: HomeIcon,
-  [TSurveyQuestionTypeEnum.ContactInfo]: ContactIcon,
+  [TSurveyElementTypeEnum.OpenText]: MessageSquareTextIcon,
+  [TSurveyElementTypeEnum.Rating]: StarIcon,
+  [TSurveyElementTypeEnum.CTA]: MousePointerClickIcon,
+  [TSurveyElementTypeEnum.MultipleChoiceMulti]: ListIcon,
+  [TSurveyElementTypeEnum.MultipleChoiceSingle]: Rows3Icon,
+  [TSurveyElementTypeEnum.NPS]: NetPromoterScoreIcon,
+  [TSurveyElementTypeEnum.Consent]: CheckIcon,
+  [TSurveyElementTypeEnum.PictureSelection]: ImageIcon,
+  [TSurveyElementTypeEnum.Matrix]: GridIcon,
+  [TSurveyElementTypeEnum.Ranking]: ListOrderedIcon,
+  [TSurveyElementTypeEnum.Address]: HomeIcon,
+  [TSurveyElementTypeEnum.ContactInfo]: ContactIcon,
 
   // attributes
   [OptionsType.ATTRIBUTES]: User,

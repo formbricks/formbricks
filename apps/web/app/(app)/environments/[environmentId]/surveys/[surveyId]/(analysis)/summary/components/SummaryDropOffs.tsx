@@ -2,7 +2,8 @@
 
 import { TimerIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TSurvey, TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionIcon } from "@/modules/survey/lib/questions";
@@ -15,7 +16,7 @@ interface SummaryDropOffsProps {
 
 export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   const { t } = useTranslation();
-  const getIcon = (questionType: TSurveyQuestionType) => {
+  const getIcon = (questionType: TSurveyElementTypeEnum) => {
     const Icon = getQuestionIcon(questionType, t);
     return <Icon className="mt-[3px] h-5 w-5 shrink-0 text-slate-600" />;
   };

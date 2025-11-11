@@ -9,8 +9,8 @@ import { getTextContent, isValidHTML } from "@formbricks/types/surveys/validatio
 import { TUserLocale } from "@formbricks/types/user";
 import { md } from "@/lib/markdownIt";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getQuestionsFromBlocks } from "@/modules/survey/editor/lib/blocks";
 import { isLabelValidForAllLanguages } from "@/modules/survey/editor/lib/validation";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Editor } from "@/modules/ui/components/editor";
 import { LanguageIndicator } from "./language-indicator";
 
@@ -66,7 +66,7 @@ export function LocalizedEditor({
   suppressUpdates,
 }: Readonly<LocalizedEditorProps>) {
   // Derive questions from blocks for migrated surveys
-  const questions = useMemo(() => getQuestionsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const questions = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
   const { t } = useTranslation();
 
   const isInComplete = useMemo(

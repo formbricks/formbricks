@@ -2,22 +2,18 @@
 
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
-import {
-  TSurvey,
-  TSurveyQuestionId,
-  TSurveyQuestionSummaryMatrix,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyElementSummaryMatrix, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {
-  questionSummary: TSurveyQuestionSummaryMatrix;
+  questionSummary: TSurveyElementSummaryMatrix;
   survey: TSurvey;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
-    questionType: TSurveyQuestionTypeEnum,
+    questionType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;

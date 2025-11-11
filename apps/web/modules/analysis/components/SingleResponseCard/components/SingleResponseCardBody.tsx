@@ -8,6 +8,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { isValidValue } from "../util";
 import { HiddenFields } from "./HiddenFields";
 import { QuestionSkip } from "./QuestionSkip";
@@ -26,7 +27,8 @@ export const SingleResponseCardBody = ({
   response,
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
-  const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
+  const questions = getElementsFromBlocks(survey.blocks);
+  const isFirstQuestionAnswered = questions[0] ? !!response.data[questions[0].id] : false;
   const { t } = useTranslation();
   const formatTextWithSlashes = (text: string) => {
     // Updated regex to match content between #/ and \#
@@ -54,7 +56,7 @@ export const SingleResponseCardBody = ({
       {survey.welcomeCard.enabled && (
         <QuestionSkip
           skippedQuestions={[]}
-          questions={survey.questions}
+          questions={questions}
           status={"welcomeCard"}
           isFirstQuestionAnswered={isFirstQuestionAnswered}
           responseData={response.data}
@@ -64,7 +66,7 @@ export const SingleResponseCardBody = ({
         {survey.isVerifyEmailEnabled && response.data["verifiedEmail"] && (
           <VerifiedEmail responseData={response.data} />
         )}
-        {survey.questions.map((question) => {
+        {questions.map((question) => {
           const skipped = skippedQuestions.find((skippedQuestionElement) =>
             skippedQuestionElement.includes(question.id)
           );
@@ -103,7 +105,7 @@ export const SingleResponseCardBody = ({
               ) : (
                 <QuestionSkip
                   skippedQuestions={skipped}
-                  questions={survey.questions}
+                  questions={questions}
                   responseData={response.data}
                   status={
                     response.finished ||

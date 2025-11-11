@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "preact/hooks";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { Progress } from "@/components/general/progress";
-import { calculateElementIdx, getQuestionsFromSurvey } from "@/lib/utils";
+import { calculateElementIdx, getElementsFromSurvey } from "@/lib/utils";
 
 interface ProgressBarProps {
   survey: TJsEnvironmentStateSurvey;
@@ -9,7 +9,7 @@ interface ProgressBarProps {
 }
 
 export function ProgressBar({ survey, questionId }: ProgressBarProps) {
-  const questions = useMemo(() => getQuestionsFromSurvey(survey), [survey]);
+  const questions = useMemo(() => getElementsFromSurvey(survey), [survey]);
   const currentQuestionIdx = useMemo(
     () => questions.findIndex((q) => q.id === questionId),
     [questions, questionId]
