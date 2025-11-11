@@ -13,6 +13,7 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import {
   ERRORS,
@@ -20,9 +21,9 @@ import {
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/project/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getQuestionsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -91,6 +92,11 @@ export const AddIntegrationModal = ({
     createdAt: new Date(),
   };
 
+  const questions = useMemo(
+    () => (selectedSurvey ? getQuestionsFromBlocks(selectedSurvey.blocks) : []),
+    [selectedSurvey]
+  );
+
   const notionIntegrationData: TIntegrationInput = {
     type: "notion",
     config: {
@@ -119,10 +125,10 @@ export const AddIntegrationModal = ({
   }, [selectedDatabase?.id]);
 
   const questionItems = useMemo(() => {
-    const questions = selectedSurvey
-      ? replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((q) => ({
+    const mappedQuestions = selectedSurvey
+      ? questions.map((q) => ({
           id: q.id,
-          name: getLocalizedValue(q.headline, "default"),
+          name: getTextContent(recallToHeadline(q.headline, selectedSurvey, false, "default")["default"]),
           type: q.type,
         }))
       : [];
@@ -155,7 +161,7 @@ export const AddIntegrationModal = ({
       },
     ];
 
-    return [...questions, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
+    return [...mappedQuestions, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 
