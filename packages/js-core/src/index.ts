@@ -11,9 +11,6 @@ import { type TTrackProperties } from "@/types/survey";
 
 const queue = CommandQueue.getInstance();
 
-// Store nonce for applying when surveys package loads
-let storedNonce: string | undefined;
-
 const setup = async (setupConfig: TConfigInput): Promise<void> => {
   // If the initConfig has a userId or attributes, we need to use the legacy init
 
@@ -84,8 +81,6 @@ const registerRouteChange = async (): Promise<void> => {
  * @param nonce - The CSP nonce value (without 'nonce-' prefix), or undefined to clear
  */
 const setNonce = (nonce: string | undefined): void => {
-  storedNonce = nonce;
-
   // Store nonce on window for access when surveys package loads
   if (globalThis.window) {
     globalThis.window.__formbricksNonce = nonce;
