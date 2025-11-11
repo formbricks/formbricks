@@ -52,15 +52,22 @@ export const EnvironmentContextWrapper = ({
   organization,
   children,
 }: EnvironmentContextWrapperProps) => {
-  const environmentContextValue = useMemo(
-    () => ({
+  const environmentContextValue = useMemo(() => {
+    if (!environment?.id || !project?.id || !organization?.id) {
+      return null;
+    }
+
+    return {
       environment,
       project,
       organization,
       organizationId: project.organizationId,
-    }),
-    [environment, project, organization]
-  );
+    };
+  }, [environment, project, organization]);
+
+  if (!environmentContextValue) {
+    return null;
+  }
 
   return (
     <EnvironmentContext.Provider value={environmentContextValue}>{children}</EnvironmentContext.Provider>

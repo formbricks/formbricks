@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { EnvironmentLayout } from "@/app/(app)/environments/[environmentId]/components/EnvironmentLayout";
 import { EnvironmentContextWrapper } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -20,8 +21,18 @@ const EnvLayout = async (props: {
     return redirect(`/auth/login`);
   }
 
-  // Single consolidated data fetch (replaces ~12 individual fetches)
-  const layoutData = await getEnvironmentLayoutData(params.environmentId, session.user.id);
+  // Handle AuthorizationError gracefully during rapid navigation
+  let layoutData;
+  try {
+    layoutData = await getEnvironmentLayoutData(params.environmentId, session.user.id);
+  } catch (error) {
+    // If user doesn't have access, show not found instead of crashing
+    if (error instanceof AuthorizationError) {
+      return notFound();
+    }
+    // Re-throw other errors
+    throw error;
+  }
 
   return (
     <EnvironmentIdBaseLayout
