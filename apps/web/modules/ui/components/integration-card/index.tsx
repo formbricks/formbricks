@@ -57,14 +57,20 @@ export const Card: React.FC<CardProps> = ({
     <div className="mt-4 flex space-x-2">
       {connectHref && (
         <Button disabled={disabled} size="sm">
-          <Link href={connectHref} target={connectNewTab ? "_blank" : "_self"}>
+          <Link
+            className="dark:text-slate-950 dark:hover:text-slate-900"
+            href={connectHref}
+            target={connectNewTab ? "_blank" : "_self"}>
             {connectText}
           </Link>
         </Button>
       )}
       {docsHref && (
         <Button disabled={disabled} size="sm" variant="secondary">
-          <Link href={docsHref} target={docsNewTab ? "_blank" : "_self"}>
+          <Link
+            className="dark:text-gray-100 dark:hover:text-slate-900"
+            href={docsHref}
+            target={docsNewTab ? "_blank" : "_self"}>
             {docsText}
           </Link>
         </Button>
