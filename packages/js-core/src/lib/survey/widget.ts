@@ -214,9 +214,8 @@ const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurv
       script.async = true;
       script.onload = () => {
         // Apply stored nonce if it was set before surveys package loaded
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing internal nonce storage
-        const storedNonce = (window as any).__formbricksNonce;
-        if (storedNonce && window.formbricksSurveys?.setNonce) {
+        const storedNonce = window.__formbricksNonce;
+        if (storedNonce && window.formbricksSurveys) {
           window.formbricksSurveys.setNonce(storedNonce);
         }
         resolve(window.formbricksSurveys);
