@@ -3,7 +3,7 @@
 import { TFunction } from "i18next";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Control, Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -14,14 +14,15 @@ import {
   TIntegrationAirtableInput,
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/project/integrations/actions";
 import { BaseSelectDropdown } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/project/integrations/airtable/lib/airtable";
 import AirtableLogo from "@/images/airtableLogo.svg";
-import { getLocalizedValue } from "@/lib/i18n/utils";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -71,6 +72,7 @@ const NoBaseFoundError = () => {
 const renderQuestionSelection = ({
   t,
   selectedSurvey,
+  questions,
   control,
   includeVariables,
   setIncludeVariables,
@@ -83,6 +85,7 @@ const renderQuestionSelection = ({
 }: {
   t: TFunction;
   selectedSurvey: TSurvey;
+  questions: TSurveyElement[];
   control: Control<IntegrationModalInputs>;
   includeVariables: boolean;
   setIncludeVariables: (value: boolean) => void;
@@ -99,7 +102,7 @@ const renderQuestionSelection = ({
         <Label htmlFor="Surveys">{t("common.questions")}</Label>
         <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
           <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-            {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
+            {questions.map((question) => (
               <Controller
                 key={question.id}
                 control={control}
@@ -120,7 +123,9 @@ const renderQuestionSelection = ({
                         }}
                       />
                       <span className="ml-2">
-                        {getTextContent(getLocalizedValue(question.headline, "default"))}
+                        {getTextContent(
+                          recallToHeadline(question.headline, selectedSurvey, false, "default")["default"]
+                        )}
                       </span>
                     </label>
                   </div>
@@ -194,6 +199,11 @@ export const AddIntegrationModal = ({
   };
 
   const selectedSurvey = surveys.find((item) => item.id === survey);
+  const questions = useMemo(
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
+    [selectedSurvey]
+  );
+
   const submitHandler = async (data: IntegrationModalInputs) => {
     try {
       if (!data.base || data.base === "") {
@@ -218,7 +228,7 @@ export const AddIntegrationModal = ({
         surveyName: selectedSurvey.name,
         questionIds: data.questions,
         questions:
-          data.questions.length === selectedSurvey.questions.length
+          data.questions.length === questions.length
             ? t("common.all_questions")
             : t("common.selected_questions"),
         createdAt: new Date(),
@@ -395,6 +405,7 @@ export const AddIntegrationModal = ({
                 renderQuestionSelection({
                   t,
                   selectedSurvey,
+                  questions,
                   control,
                   includeVariables,
                   setIncludeVariables,

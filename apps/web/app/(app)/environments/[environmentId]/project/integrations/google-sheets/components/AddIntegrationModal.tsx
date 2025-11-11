@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -20,9 +20,9 @@ import {
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/environments/[environmentId]/project/integrations/google-sheets/lib/util";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { recallToHeadline } from "@/lib/utils/recall";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -86,12 +86,17 @@ export const AddIntegrationModal = ({
     },
   };
 
+  const questions = useMemo(
+    () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
+    [selectedSurvey]
+  );
+
   useEffect(() => {
     if (selectedSurvey && !selectedIntegration) {
-      const questionIds = selectedSurvey.questions.map((question) => question.id);
+      const questionIds = questions.map((question) => question.id);
       setSelectedQuestions(questionIds);
     }
-  }, [selectedIntegration, selectedSurvey]);
+  }, [questions, selectedIntegration, selectedSurvey]);
 
   useEffect(() => {
     if (selectedIntegration) {
@@ -145,7 +150,7 @@ export const AddIntegrationModal = ({
       integrationData.surveyName = selectedSurvey.name;
       integrationData.questionIds = selectedQuestions;
       integrationData.questions =
-        selectedQuestions.length === selectedSurvey?.questions.length
+        selectedQuestions.length === questions.length
           ? t("common.all_questions")
           : t("common.selected_questions");
       integrationData.createdAt = new Date();
@@ -263,7 +268,7 @@ export const AddIntegrationModal = ({
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
+                        {questions.map((question) => (
                           <div key={question.id} className="my-1 flex items-center space-x-2">
                             <label htmlFor={question.id} className="flex cursor-pointer items-center">
                               <Checkbox
@@ -277,7 +282,11 @@ export const AddIntegrationModal = ({
                                 }}
                               />
                               <span className="ml-2 w-[30rem] truncate">
-                                {getTextContent(getLocalizedValue(question.headline, "default"))}
+                                {getTextContent(
+                                  recallToHeadline(question.headline, selectedSurvey, false, "default")[
+                                    "default"
+                                  ]
+                                )}
                               </span>
                             </label>
                           </div>

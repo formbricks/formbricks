@@ -23,12 +23,8 @@ import {
   TIntegrationSlackCredential,
 } from "@formbricks/types/integration/slack";
 import { TResponse, TResponseMeta } from "@formbricks/types/responses";
-import {
-  TSurvey,
-  TSurveyOpenTextQuestion,
-  TSurveyPictureSelectionQuestion,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { writeData as googleSheetWriteData } from "@/lib/googleSheet/service";
@@ -101,33 +97,47 @@ const mockPipelineInput = {
 const mockSurvey = {
   id: surveyId,
   name: "Test Survey",
-  questions: [
+  blocks: [
     {
-      id: questionId1,
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: { default: "Question 1 {{recall:q2}}" },
-      required: true,
-    } as unknown as TSurveyOpenTextQuestion,
-    {
-      id: questionId2,
-      type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-      headline: { default: "Question 2" },
-      required: true,
-      choices: [
-        { id: "choice1", label: { default: "Choice 1" } },
-        { id: "choice2", label: { default: "Choice 2" } },
+      id: "block1",
+      name: "Block 1",
+      elements: [
+        {
+          id: questionId1,
+          type: TSurveyElementTypeEnum.OpenText,
+          headline: { default: "Question 1 {{recall:q2}}" },
+          required: true,
+          inputType: "text",
+          charLimit: 1000,
+          subheader: { default: "" },
+          placeholder: { default: "" },
+        },
+        {
+          id: questionId2,
+          type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+          headline: { default: "Question 2" },
+          required: true,
+          choices: [
+            { id: "choice1", label: { default: "Choice 1" } },
+            { id: "choice2", label: { default: "Choice 2" } },
+          ],
+          shuffleOption: "none",
+          subheader: { default: "" },
+        },
+        {
+          id: questionId3,
+          type: TSurveyElementTypeEnum.PictureSelection,
+          headline: { default: "Question 3" },
+          required: true,
+          choices: [
+            { id: "picChoice1", imageUrl: "http://image.com/1" },
+            { id: "picChoice2", imageUrl: "http://image.com/2" },
+          ],
+          allowMultiple: false,
+          subheader: { default: "" },
+        },
       ],
     },
-    {
-      id: questionId3,
-      type: TSurveyQuestionTypeEnum.PictureSelection,
-      headline: { default: "Question 3" },
-      required: true,
-      choices: [
-        { id: "picChoice1", imageUrl: "http://image.com/1" },
-        { id: "picChoice2", imageUrl: "http://image.com/2" },
-      ],
-    } as unknown as TSurveyPictureSelectionQuestion,
   ],
   hiddenFields: {
     enabled: true,

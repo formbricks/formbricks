@@ -6,7 +6,8 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-s
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TResponseMeta } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
@@ -16,6 +17,7 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { writeData as writeNotionData } from "@/lib/notion/service";
 import { processResponseData } from "@/lib/responses";
 import { writeDataToSlack } from "@/lib/slack/service";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
@@ -236,6 +238,9 @@ const extractResponses = async (
   const responses: string[] = [];
   const questions: string[] = [];
 
+  // Derive questions from blocks
+  const surveyQuestions = getElementsFromBlocks(survey.blocks);
+
   for (const questionId of questionIds) {
     //check for hidden field Ids
     if (survey.hiddenFields.fieldIds?.includes(questionId)) {
@@ -243,7 +248,7 @@ const extractResponses = async (
       questions.push(questionId);
       continue;
     }
-    const question = survey?.questions.find((q) => q.id === questionId);
+    const question = surveyQuestions.find((q) => q.id === questionId);
     if (!question) {
       continue;
     }
@@ -252,7 +257,7 @@ const extractResponses = async (
 
     if (responseValue !== undefined) {
       let answer: typeof responseValue;
-      if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
+      if (question.type === TSurveyElementTypeEnum.PictureSelection) {
         const selectedChoiceIds = responseValue as string[];
         answer = question?.choices
           .filter((choice) => selectedChoiceIds.includes(choice.id))
@@ -321,14 +326,17 @@ const buildNotionPayloadProperties = (
   const properties: any = {};
   const responses = data.response.data;
 
+  // Derive questions from blocks
+  const surveyQuestions = getElementsFromBlocks(surveyData.blocks);
+
   const mappingQIds = mapping
-    .filter((m) => m.question.type === TSurveyQuestionTypeEnum.PictureSelection)
+    .filter((m) => m.question.type === TSurveyElementTypeEnum.PictureSelection)
     .map((m) => m.question.id);
 
   Object.keys(responses).forEach((resp) => {
     if (mappingQIds.find((qId) => qId === resp)) {
       const selectedChoiceIds = responses[resp] as string[];
-      const pictureQuestion = surveyData.questions.find((q) => q.id === resp);
+      const pictureQuestion = surveyQuestions.find((q) => q.id === resp);
 
       responses[resp] = (pictureQuestion as any)?.choices
         .filter((choice) => selectedChoiceIds.includes(choice.id))
