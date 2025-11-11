@@ -36,7 +36,7 @@ export const NavigationLink = ({
                   isActive ? activeClass : inactiveClass
                 )}>
                 <Link href={href} className="flex items-center">
-                  {children}
+                  <div className="dark:text-gray-100">{children}</div>
                 </Link>
               </li>
             </TooltipTrigger>
@@ -50,10 +50,10 @@ export const NavigationLink = ({
             isActive ? activeClass : inactiveClass
           )}>
           <Link href={href} className="flex items-center">
-            {children}
+            <div className="dark:text-gray-100">{children}</div>
             <span
               className={cn(
-                "ml-2 flex transition-opacity duration-100",
+                "ml-2 flex transition-opacity duration-100 dark:text-white",
                 isTextVisible ? "opacity-0" : "opacity-100"
               )}>
               {linkText}

@@ -96,7 +96,7 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
         className={cn(
           "col-start-1 row-start-1 font-medium tracking-tight",
           size === "small" ? "flex-shrink truncate" : "col-start-1 row-start-1",
-          className
+          (className = "dark:text-blue-400")
         )}
         {...props}>
         {headingContent}
@@ -115,7 +115,7 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
       <div
         ref={ref}
         className={cn(
-          "[&_p]:leading-relaxed",
+          "dark:text-red-500 [&_p]:leading-relaxed",
           size === "small" ? "flex-shrink flex-grow-0 truncate" : "col-start-1 row-start-2",
           className
         )}

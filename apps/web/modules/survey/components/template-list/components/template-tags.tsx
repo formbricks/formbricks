@@ -94,7 +94,13 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
+      <div
+        className={cn(
+          "rounded border px-1.5 py-0.5 text-xs text-blue-500 dark:border dark:bg-blue-100",
+          roleBasedStyling
+        )}>
+        {roleTag}
+      </div>
       {industryTag && (
         <div
           className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>

@@ -180,7 +180,7 @@ export const MainNavigation = ({
       {project && (
         <aside
           className={cn(
-            "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
+            "z-40 flex flex-col justify-between border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
             !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
           <div>
@@ -320,11 +320,11 @@ export const MainNavigation = ({
                     )}
                     {currentTheme === "light" ? (
                       <div className="flex w-full items-center justify-between">
-                        <span>{"Dark"}</span>
+                        <span>{t("common.dark_mode")}</span>
                       </div>
                     ) : (
                       <div className="flex w-full items-center justify-between">
-                        <span>{"Light"}</span>
+                        <span>{t("common.light_mode")}</span>
                       </div>
                     )}
                   </DropdownMenuItem>
