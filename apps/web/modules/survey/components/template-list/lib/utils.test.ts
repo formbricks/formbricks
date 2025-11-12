@@ -1,110 +1,43 @@
 import "@testing-library/jest-dom/vitest";
 import { describe, expect, test, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TTemplate } from "@formbricks/types/templates";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { replacePresetPlaceholders, replaceQuestionPresetPlaceholders } from "@/lib/utils/templates";
+import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "./utils";
-
-vi.mock("@/lib/i18n/utils", () => ({
-  getLocalizedValue: vi.fn(),
-}));
 
 vi.mock("@/lib/pollyfills/structuredClone", () => ({
   structuredClone: vi.fn((val) => JSON.parse(JSON.stringify(val))),
 }));
 
 describe("Template utils", () => {
-  test("replaceQuestionPresetPlaceholders replaces project name in headline and subheader", () => {
-    const mockQuestion = {
-      id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: {
-        default: "How would you rate $[projectName]?",
-      },
-      subheader: {
-        default: "Tell us about $[projectName]",
-      },
-      required: false,
-    } as unknown as TSurveyQuestion;
-
-    const mockProject = {
-      id: "project-1",
-      name: "TestProject",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as unknown as TProject;
-
-    // Reset and setup mocks with simple return values
-    vi.mocked(getLocalizedValue).mockReset();
-    vi.mocked(getLocalizedValue)
-      .mockReturnValueOnce("How would you rate $[projectName]?")
-      .mockReturnValueOnce("Tell us about $[projectName]");
-
-    const result = replaceQuestionPresetPlaceholders(mockQuestion, mockProject);
-
-    expect(structuredClone).toHaveBeenCalledWith(mockQuestion);
-    expect(getLocalizedValue).toHaveBeenCalledTimes(2);
-    expect(result.headline?.default).toBe("How would you rate TestProject?");
-    expect(result.subheader?.default).toBe("Tell us about TestProject");
-  });
-
-  test("replaceQuestionPresetPlaceholders returns original question if project is null", () => {
-    const mockQuestion = {
-      id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: {
-        default: "How would you rate $[projectName]?",
-      },
-      required: false,
-    } as unknown as TSurveyQuestion;
-
-    const result = replaceQuestionPresetPlaceholders(mockQuestion, null as unknown as TProject);
-    expect(result).toBe(mockQuestion);
-  });
-
-  test("replaceQuestionPresetPlaceholders handles missing subheader", () => {
-    const mockQuestion = {
-      id: "q1",
-      type: TSurveyQuestionTypeEnum.OpenText,
-      headline: {
-        default: "How would you rate $[projectName]?",
-      },
-      required: false,
-    } as unknown as TSurveyQuestion;
-
-    const mockProject = {
-      id: "project-1",
-      name: "TestProject",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as unknown as TProject;
-    vi.mocked(getLocalizedValue).mockReturnValueOnce("How would you rate $[projectName]?");
-
-    const result = replaceQuestionPresetPlaceholders(mockQuestion, mockProject);
-
-    expect(result.headline?.default).toBe("How would you rate TestProject?");
-    expect(result.subheader).toBeUndefined();
-  });
-
-  test("replacePresetPlaceholders replaces project name in template", () => {
+  test("replacePresetPlaceholders replaces project name in template with blocks", () => {
     const mockTemplate: TTemplate = {
       name: "Test Template",
       description: "Template description",
       preset: {
         name: "$[projectName] Feedback",
-        questions: [
+        welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
+        blocks: [
           {
-            id: "q1",
-            type: TSurveyQuestionTypeEnum.OpenText,
-            headline: {
-              default: "How would you rate $[projectName]?",
-            },
-            required: false,
-          } as unknown as TSurveyQuestion,
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "elem1",
+                type: "openText",
+                headline: {
+                  default: "How would you rate $[projectName]?",
+                },
+                required: false,
+                inputType: "text",
+              } as unknown as TSurveyElement,
+            ],
+          },
         ],
+        endings: [],
+        hiddenFields: { enabled: true, fieldIds: [] },
       } as any,
     };
 
@@ -112,13 +45,11 @@ describe("Template utils", () => {
       name: "TestProject",
     };
 
-    vi.mocked(getLocalizedValue).mockReturnValueOnce("How would you rate $[projectName]?");
-
     const result = replacePresetPlaceholders(mockTemplate, mockProject);
 
     expect(structuredClone).toHaveBeenCalledWith(mockTemplate.preset);
     expect(result.preset.name).toBe("TestProject Feedback");
-    expect(result.preset.questions[0].headline?.default).toBe("How would you rate TestProject?");
+    expect(result.preset.blocks[0].elements[0].headline?.default).toBe("How would you rate TestProject?");
   });
 
   test("getChannelMapping returns correct channel mappings", () => {
