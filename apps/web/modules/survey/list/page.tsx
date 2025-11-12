@@ -8,8 +8,9 @@ import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
-import { SurveysList } from "@/modules/survey/list/components/survey-list";
-import { getSurveyCount } from "@/modules/survey/list/lib/survey";
+import { SurveysList, initialFilters } from "@/modules/survey/list/components/survey-list";
+import { getSurveyCount, getSurveys } from "@/modules/survey/list/lib/survey";
+import { getFormattedFilters } from "@/modules/survey/list/lib/utils";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -75,6 +76,10 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
 
   let content;
   if (surveyCount > 0) {
+    // Fetch initial surveys server-side with default filters
+    const filters = getFormattedFilters(initialFilters, session.user.id);
+    const initialSurveys = await getSurveys(environment.id, SURVEYS_PER_PAGE, undefined, filters);
+
     content = (
       <>
         <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
@@ -86,6 +91,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
           surveysPerPage={SURVEYS_PER_PAGE}
           currentProjectChannel={currentProjectChannel}
           locale={locale}
+          initialSurveys={initialSurveys}
         />
       </>
     );

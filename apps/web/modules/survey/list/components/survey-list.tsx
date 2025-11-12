@@ -2,7 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProjectConfigChannel } from "@formbricks/types/project";
@@ -25,6 +25,7 @@ interface SurveysListProps {
   surveysPerPage: number;
   currentProjectChannel: TProjectConfigChannel;
   locale: TUserLocale;
+  initialSurveys: TSurvey[];
 }
 
 export const initialFilters: TSurveyFilters = {
@@ -43,18 +44,25 @@ export const SurveysList = ({
   surveysPerPage: surveysLimit,
   currentProjectChannel,
   locale,
+  initialSurveys,
 }: SurveysListProps) => {
   const router = useRouter();
-  const [surveys, setSurveys] = useState<TSurvey[]>([]);
-  const [isFetching, setIsFetching] = useState(true);
-  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [surveys, setSurveys] = useState<TSurvey[]>(initialSurveys);
+  const [isFetching, setIsFetching] = useState(false);
+  const [hasMore, setHasMore] = useState<boolean>(initialSurveys.length >= surveysLimit);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 
-  const filters = useMemo(() => getFormattedFilters(surveyFilters, userId), [surveyFilters, userId]);
+  const { name, createdBy, status, type, sortBy } = surveyFilters;
+  const filters = useMemo(
+    () => getFormattedFilters(surveyFilters, userId),
+    [name, JSON.stringify(createdBy), JSON.stringify(status), JSON.stringify(type), sortBy, userId]
+  );
   const [parent] = useAutoAnimate();
+  const isInitialMount = useRef(true);
+  const initialFiltersRef = useRef(filters);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -80,28 +88,41 @@ export const SurveysList = ({
   }, [surveyFilters, isFilterInitialized]);
 
   useEffect(() => {
-    if (isFilterInitialized) {
-      const fetchInitialSurveys = async () => {
-        setIsFetching(true);
-        const res = await getSurveysAction({
-          environmentId,
-          limit: surveysLimit,
-          offset: undefined,
-          filterCriteria: filters,
-        });
-        if (res?.data) {
-          if (res.data.length < surveysLimit) {
-            setHasMore(false);
-          } else {
-            setHasMore(true);
-          }
-          setSurveys(res.data);
-          setIsFetching(false);
-        }
-      };
-      fetchInitialSurveys();
+    // Skip the first render - we already have server-rendered data
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      initialFiltersRef.current = filters;
+      return;
     }
-  }, [environmentId, surveysLimit, filters, isFilterInitialized, refreshTrigger]);
+
+    // Check if filters have actually changed from initial state
+    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(initialFiltersRef.current);
+
+    // Only fetch if filters changed OR user explicitly triggered refresh
+    if (!filtersChanged && !refreshTrigger) {
+      return;
+    }
+
+    const fetchInitialSurveys = async () => {
+      setIsFetching(true);
+      const res = await getSurveysAction({
+        environmentId,
+        limit: surveysLimit,
+        offset: undefined,
+        filterCriteria: filters,
+      });
+      if (res?.data) {
+        if (res.data.length < surveysLimit) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+        setSurveys(res.data);
+        setIsFetching(false);
+      }
+    };
+    fetchInitialSurveys();
+  }, [environmentId, surveysLimit, filters, refreshTrigger]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);

@@ -154,11 +154,12 @@ export const SurveyFilters = ({
           </div>
         )}
 
-        {(createdBy.length > 0 || status.length > 0 || type.length > 0) && (
+        {(createdBy.length > 0 || status.length > 0 || type.length > 0 || name) && (
           <Button
             size="sm"
             onClick={() => {
               setSurveyFilters(initialFilters);
+              setName(""); // Also clear the search input
               localStorage.removeItem("surveyFilters");
             }}
             className="h-8">
