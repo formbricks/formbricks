@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, Eye, ListRestart, SquarePenIcon } from "lucide-react";
+import { BellRing, Eye, ListRestart, Sparkles, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -20,7 +20,7 @@ import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/action
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
-import { resetSurveyAction } from "../actions";
+import { generateTestResponsesAction, resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
   survey: TSurvey;
@@ -65,6 +65,7 @@ export const SurveyAnalysisCTA = ({
   });
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isGeneratingResponses, setIsGeneratingResponses] = useState(false);
 
   const { organizationId, project } = useEnvironment();
   const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
@@ -149,6 +150,23 @@ export const SurveyAnalysisCTA = ({
     setIsResetModalOpen(false);
   };
 
+  const handleGenerateTestResponses = async () => {
+    if (isGeneratingResponses) return;
+    setIsGeneratingResponses(true);
+    const result = await generateTestResponsesAction({
+      surveyId: survey.id,
+      environmentId: environment.id,
+    });
+    if (result?.data?.success) {
+      toast.success(`Successfully generated ${result.data.createdCount} test responses`);
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage);
+    }
+    setIsGeneratingResponses(false);
+  };
+
   const iconActions = [
     {
       icon: BellRing,
@@ -164,6 +182,12 @@ export const SurveyAnalysisCTA = ({
         window.open(previewUrl, "_blank");
       },
       isVisible: survey.type === "link",
+    },
+    {
+      icon: Sparkles,
+      tooltip: isGeneratingResponses ? "Generating responses..." : "Generate test responses",
+      onClick: handleGenerateTestResponses,
+      isVisible: !isReadOnly,
     },
     {
       icon: ListRestart,
