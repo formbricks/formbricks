@@ -103,7 +103,7 @@ export const SurveysList = ({
       return;
     }
 
-    const fetchInitialSurveys = async () => {
+    const fetchFilteredSurveys = async () => {
       setIsFetching(true);
       const res = await getSurveysAction({
         environmentId,
@@ -121,7 +121,7 @@ export const SurveysList = ({
         setIsFetching(false);
       }
     };
-    fetchInitialSurveys();
+    fetchFilteredSurveys();
   }, [environmentId, surveysLimit, filters, refreshTrigger]);
 
   const fetchNextPage = useCallback(async () => {
